@@ -22,7 +22,8 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies and generate package-lock.json
-        run: npm install --package-lock-only
+        run: npm install
+        # run: npm install --package-lock-only
 
       - name: Check for changes
         id: git-check
