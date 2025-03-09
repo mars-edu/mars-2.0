@@ -1,5 +1,0 @@
-# https://bun.sh/docs/install/lockfile
-[install.lockfile]
-# whether to save a non-Bun lockfile alongside bun.lock
-# only "yarn" is supported
-print = "yarn"
