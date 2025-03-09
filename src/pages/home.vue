@@ -11,21 +11,11 @@
     <!-- Desktop Layout -->
     <div class="hidden md:flex h-[calc(100vh-80px)]">
       <!-- Left Sidebar - always visible on desktop -->
-      <div class="w-52 border-r border-gray-200 bg-white">
-        <div class="py-4">
-          <div
-            v-for="item in navigationItems"
-            :key="item.id"
-            class="py-3 px-4 cursor-pointer flex items-center transition-colors"
-            :class="{
-              'bg-red-100 border-l-3 border-red-600': item.id === activeNavItem,
-            }"
-            @click="activeNavItem = item.id"
-          >
-            <span>{{ item.label }}</span>
-          </div>
-        </div>
-      </div>
+      <Sidebar
+        :navigation-items="navigationItems"
+        :active-nav-item="activeNavItem"
+        @update:active-nav-item="activeNavItem = $event"
+      />
 
       <!-- Main Content Area for Desktop -->
       <div class="flex-1 overflow-y-auto p-4 bg-gray-100">
@@ -180,6 +170,7 @@ import {
   f7Tab,
 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
+import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Doodle from "@/components/Doodle/Doodle.vue";
 import Nauryz from "@/components/Doodle/components/Nauryz.vue";
 import ActivityCard from "@/components/Cards/ActivityCard.vue";
