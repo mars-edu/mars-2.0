@@ -70,7 +70,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { useRouter } from "vue-router";
+import { f7 } from "framework7-vue";
 
 interface SearchResult {
   id: string;
@@ -96,7 +96,6 @@ const emit = defineEmits<{
   (e: "disable"): void;
 }>();
 
-const router = useRouter();
 const searchInput = ref<HTMLInputElement | null>(null);
 const searchQuery = ref("");
 const isActive = ref(false);
@@ -184,7 +183,7 @@ const handleEscape = () => {
 
 const handleResultClick = (result: SearchResult) => {
   if (result.route) {
-    router.push(result.route);
+    f7.views.main.router.navigate(result.route);
   }
   clearSearch();
 };

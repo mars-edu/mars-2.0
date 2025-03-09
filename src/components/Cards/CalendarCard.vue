@@ -4,25 +4,16 @@
       <!-- Calendar Header -->
       <div class="flex justify-between mb-4">
         <div class="flex items-center space-x-3">
-          <h2 class="text-sm font-medium text-gray-900">
+          <h2 class="text-sm font-medium text-gray-900 w-full">
             {{ currentMonthYear }}
           </h2>
-          <router-link
-            :to="{
-              name: 'planning',
-              params: {
-                year: currentDate.getFullYear().toString(),
-                month: (currentDate.getMonth() + 1).toString(),
-              },
-            }"
+          <button
+            class="flex items-center space-x-2 px-3 py-1 bg-red-100 text-red-600 rounded-full text-xs font-medium hover:bg-red-200 transition-colors"
+            @click="navigateToPlanning"
           >
-            <button
-              class="flex items-center space-x-1 px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs font-medium hover:bg-red-200 transition-colors"
-            >
-              <i class="f7-icons text-xs">calendar_badge_plus</i>
-              <span>планирование</span>
-            </button>
-          </router-link>
+            <i class="f7-icons text-xs">calendar_badge_plus</i>
+            <span>планирование</span>
+          </button>
         </div>
         <div class="flex space-x-1 items-center">
           <button
@@ -85,7 +76,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useScheduleStore } from "../../stores/scheduleStore";
-import { useRouter } from "vue-router";
+import { f7 } from "framework7-vue";
 
 interface CalendarDate {
   day: number;
@@ -98,19 +89,18 @@ interface CalendarDate {
 const weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const currentDate = ref(new Date());
 const scheduleStore = useScheduleStore();
-const router = useRouter();
 
 // Function to navigate to planning page
 const navigateToPlanning = () => {
   const year = currentDate.value.getFullYear();
   const month = currentDate.value.getMonth() + 1; // JavaScript months are 0-indexed
-  router.push({
-    name: "planning",
-    params: {
-      year: year.toString(),
-      month: month.toString(),
-    },
-  });
+
+  // f7.views.main.router.navigate(`/planning/${year}/${month}/`, {
+  //   reloadCurrent: true,
+  //   history: true,
+  //   ignoreCache: true,
+  // });
+  window.location.href = `/planning/${year}/${month}/`;
 };
 
 // Function to check if a date is selected

@@ -1,7 +1,7 @@
 <template>
   <f7-app v-bind="f7params">
     <!-- Views container -->
-    <f7-view main url="/" class="safe-areas"></f7-view>
+    <f7-view main class="safe-areas"></f7-view>
   </f7-app>
 </template>
 <script setup>
