@@ -1,0 +1,66 @@
+@import './tailwind.css';
+
+/* Your app custom styles here */
+
+:root {
+  --f7-theme-color: #e53935;
+  --f7-theme-color-rgb: 229, 57, 53;
+  --f7-theme-color-shade: #d32f2f;
+  --f7-theme-color-tint: #ef5350;
+}
+body {
+  font-family: "Inter", sans-serif;
+  background-color: #f5f5f5;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+/* Custom navbar */
+.navbar {
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Custom list styles */
+.list {
+  margin: 0;
+}
+
+.list ul {
+  background-color: transparent;
+}
+
+.list .item-content {
+  padding-left: 16px;
+}
+
+.list .item-inner {
+  padding-right: 16px;
+}
+
+/* Custom button styles */
+.button {
+  text-transform: none;
+  font-weight: 500;
+}
+
+.page-content {
+  padding: 0 !important;
+}

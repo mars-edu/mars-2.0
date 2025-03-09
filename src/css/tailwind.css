@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .mars-btn {
+    @apply px-4 py-2 bg-mars-red text-white rounded-md hover:bg-mars-red-dark transition-colors;
+  }
+  
+  .mars-card {
+    @apply bg-white rounded-lg shadow-md p-4;
+  }
+  
+  .mars-sidebar-item {
+    @apply py-3 px-4 hover:bg-gray-100 rounded-md transition-colors;
+  }
+  
+  .mars-sidebar-item-active {
+    @apply bg-red-50 text-mars-red font-medium;
+  }
+} 

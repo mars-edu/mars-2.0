@@ -1,0 +1,18 @@
+{
+  "cwd": "/home/olge/SOFT/git/mars-2.0",
+  "type": [
+    "web"
+  ],
+  "name": "Mars",
+  "framework": "vue",
+  "template": "tabs",
+  "cssPreProcessor": false,
+  "bundler": "vite",
+  "theming": {
+    "customColor": false,
+    "color": "#007aff",
+    "darkMode": false,
+    "iconFonts": true
+  },
+  "customBuild": false
+}
