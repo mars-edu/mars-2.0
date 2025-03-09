@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Sun -->
+  <circle cx="100" cy="100" r="40" fill="#FFD700"/>
+  <circle cx="100" cy="100" r="35" fill="#FFA500"/>
+  
+  <!-- Decorative rays -->
+  <path d="M100 40V20" stroke="#FFD700" stroke-width="4"/>
+  <path d="M100 180V160" stroke="#FFD700" stroke-width="4"/>
+  <path d="M40 100H20" stroke="#FFD700" stroke-width="4"/>
+  <path d="M180 100H160" stroke="#FFD700" stroke-width="4"/>
+  
+  <!-- Traditional ornaments -->
+  <path d="M60 60C70 50 80 45 100 45C120 45 130 50 140 60" stroke="#FFD700" stroke-width="3" fill="none"/>
+  <path d="M60 140C70 150 80 155 100 155C120 155 130 150 140 140" stroke="#FFD700" stroke-width="3" fill="none"/>
+  
+  <!-- Spiral patterns (traditional Kazakh ornaments) -->
+  <path d="M30 30C35 25 40 23 45 25C50 27 52 32 50 37C48 42 43 44 38 42C33 40 31 35 33 30" stroke="#FFD700" stroke-width="2" fill="none"/>
+  <path d="M170 170C165 175 160 177 155 175C150 173 148 168 150 163C152 158 157 156 162 158C167 160 169 165 167 170" stroke="#FFD700" stroke-width="2" fill="none"/>
+</svg> 

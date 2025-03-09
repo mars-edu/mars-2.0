@@ -52,10 +52,9 @@
             class="w-8 h-8 rounded-full flex items-center justify-center"
             :class="getIconBackground(result.type)"
           >
-            <i
-              class="text-white text-sm"
-              :class="getIconClass(result.type)"
-            ></i>
+            <i class="f7-icons text-white text-sm">{{
+              getIconClass(result.type)
+            }}</i>
           </div>
           <div class="ml-3 min-w-0">
             <div class="text-sm font-medium text-gray-900 truncate">

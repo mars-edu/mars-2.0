@@ -7,13 +7,22 @@
           <h2 class="text-sm font-medium text-gray-900">
             {{ currentMonthYear }}
           </h2>
-          <a
-            href="#"
-            class="flex items-center space-x-1 px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs font-medium hover:bg-red-200 transition-colors"
+          <router-link
+            :to="{
+              name: 'planning',
+              params: {
+                year: currentDate.getFullYear().toString(),
+                month: (currentDate.getMonth() + 1).toString(),
+              },
+            }"
           >
-            <i class="f7-icons text-xs">calendar_badge_plus</i>
-            <span>планирование</span>
-          </a>
+            <button
+              class="flex items-center space-x-1 px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs font-medium hover:bg-red-200 transition-colors"
+            >
+              <i class="f7-icons text-xs">calendar_badge_plus</i>
+              <span>планирование</span>
+            </button>
+          </router-link>
         </div>
         <div class="flex space-x-1 items-center">
           <button
@@ -76,6 +85,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useScheduleStore } from "../../stores/scheduleStore";
+import { useRouter } from "vue-router";
 
 interface CalendarDate {
   day: number;
@@ -88,6 +98,20 @@ interface CalendarDate {
 const weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const currentDate = ref(new Date());
 const scheduleStore = useScheduleStore();
+const router = useRouter();
+
+// Function to navigate to planning page
+const navigateToPlanning = () => {
+  const year = currentDate.value.getFullYear();
+  const month = currentDate.value.getMonth() + 1; // JavaScript months are 0-indexed
+  router.push({
+    name: "planning",
+    params: {
+      year: year.toString(),
+      month: month.toString(),
+    },
+  });
+};
 
 // Function to check if a date is selected
 const isSelectedDate = (date: CalendarDate): boolean => {

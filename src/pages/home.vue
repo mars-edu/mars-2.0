@@ -1,37 +1,6 @@
 <template>
   <f7-page name="home">
-    <!-- Mobile Navbar - visible only on mobile -->
-    <f7-navbar class="md:hidden">
-      <f7-nav-left>
-        <f7-link panel-open="left" class="flex items-center">
-          <div
-            class="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center text-white font-bold text-xl"
-          >
-            <span>M</span>
-          </div>
-          <span class="font-bold text-lg ml-2">Mars</span>
-        </f7-link>
-      </f7-nav-left>
-      <f7-nav-right class="flex items-center">
-        <f7-link icon-f7="bell" class="mx-2"></f7-link>
-        <LanguageSelector
-          :languages="availableLanguages"
-          :active-language="activeLanguage"
-          @change="handleLanguageChange"
-          class="mx-2"
-        />
-        <f7-link class="mx-2">
-          <img
-            :src="avatarUrl"
-            alt="User Avatar"
-            class="w-10 h-10 rounded-full object-cover"
-          />
-        </f7-link>
-      </f7-nav-right>
-    </f7-navbar>
-
-    <!-- Desktop Header -->
-    <DesktopHeader
+    <Header
       :avatar-url="avatarUrl"
       @searchbar-enable="handleSearchbarEnable"
       @searchbar-disable="handleSearchbarDisable"
@@ -39,9 +8,10 @@
       class="hidden md:block"
     />
 
-    <div class="flex h-[calc(100vh-44px)] md:h-[calc(100vh-80px)]">
-      <!-- Left Sidebar - always visible on desktop, hidden on mobile -->
-      <div class="hidden md:block w-52 border-r border-gray-200 bg-white">
+    <!-- Desktop Layout -->
+    <div class="hidden md:flex h-[calc(100vh-80px)]">
+      <!-- Left Sidebar - always visible on desktop -->
+      <div class="w-52 border-r border-gray-200 bg-white">
         <div class="py-4">
           <div
             v-for="item in navigationItems"
@@ -57,18 +27,15 @@
         </div>
       </div>
 
-      <!-- Main Content Area -->
+      <!-- Main Content Area for Desktop -->
       <div class="flex-1 overflow-y-auto p-4 bg-gray-100">
         <!-- Mars Banner -->
-        <div
-          class="h-36 bg-red-600 rounded-xl mb-5 flex items-center justify-center relative overflow-hidden shadow-md"
-        >
-          <div class="text-5xl font-bold text-white tracking-tight">Mars</div>
-          <div class="absolute right-0 h-full w-2/5"></div>
-        </div>
+        <Doodle title="Mars" size="large" class="mb-5">
+          <Nauryz />
+        </Doodle>
 
         <!-- Content Grid -->
-        <div class="flex flex-col md:flex-row gap-4">
+        <div class="flex flex-row gap-4">
           <!-- Left Column -->
           <div class="flex-1">
             <ActivityCard class="mb-4" />
@@ -85,6 +52,73 @@
       </div>
     </div>
 
+    <!-- Mobile Layout with Tabs -->
+    <f7-tabs class="md:hidden">
+      <!-- Home Tab -->
+      <f7-tab
+        id="tab-home"
+        class="page-content"
+        :tab-active="activeNavItem === 'home'"
+      >
+        <div class="overflow-y-auto p-4 bg-gray-100 pb-16">
+          <!-- Mars Banner -->
+          <Doodle title="Mars" size="large" class="mb-4" />
+
+          <!-- Content Grid for Mobile -->
+          <div class="flex flex-col gap-4">
+            <ActivityCard class="mb-3" />
+            <AnnouncementsCard class="mb-3" />
+            <CalendarCard class="mb-3" />
+            <ScheduleCard class="mb-3" />
+            <AcademicWeekCard />
+          </div>
+        </div>
+      </f7-tab>
+
+      <!-- Schedule Tab -->
+      <f7-tab
+        id="tab-schedule"
+        class="page-content"
+        :tab-active="activeNavItem === 'schedule'"
+      >
+        <div class="overflow-y-auto p-4 bg-gray-100 pb-16">
+          <h2 class="text-2xl font-bold mb-4">Расписание</h2>
+          <CalendarCard class="mb-4" />
+          <ScheduleCard />
+        </div>
+      </f7-tab>
+
+      <!-- Journals Tab -->
+      <f7-tab
+        id="tab-journals"
+        class="page-content"
+        :tab-active="activeNavItem === 'journals'"
+      >
+        <div class="overflow-y-auto p-4 bg-gray-100 pb-16">
+          <h2 class="text-2xl font-bold mb-4">Журналы</h2>
+          <!-- Journal content here -->
+          <div class="bg-white rounded-xl p-4 shadow-sm">
+            <p class="text-gray-500">Содержимое журналов будет здесь</p>
+          </div>
+        </div>
+      </f7-tab>
+
+      <!-- RUP Tab -->
+      <f7-tab
+        id="tab-rup"
+        class="page-content"
+        :tab-active="activeNavItem === 'rup'"
+      >
+        <div class="overflow-y-auto p-4 bg-gray-100 pb-16">
+          <h2 class="text-2xl font-bold mb-4">РУП</h2>
+          <!-- RUP content here -->
+          <div class="bg-white rounded-xl p-4 shadow-sm">
+            <p class="text-gray-500">Содержимое РУП будет здесь</p>
+          </div>
+        </div>
+      </f7-tab>
+    </f7-tabs>
+
     <!-- Mobile Tabbar -->
     <f7-toolbar tabbar labels position="bottom" class="md:hidden">
       <f7-link
@@ -94,6 +128,7 @@
         :tab-link-active="item.id === activeNavItem"
         :icon-f7="item.icon"
         :text="item.label"
+        @click="activeNavItem = item.id"
       ></f7-link>
     </f7-toolbar>
 
@@ -141,9 +176,12 @@ import {
   f7ListItem,
   f7NavLeft,
   f7NavRight,
+  f7Tabs,
+  f7Tab,
 } from "framework7-vue";
-import DesktopHeader from "@/components/Header/DesktopHeader.vue";
-import LanguageSelector from "@/components/LanguageSelector.vue";
+import Header from "@/components/Header/Header.vue";
+import Doodle from "@/components/Doodle/Doodle.vue";
+import Nauryz from "@/components/Doodle/components/Nauryz.vue";
 import ActivityCard from "@/components/Cards/ActivityCard.vue";
 import AnnouncementsCard from "@/components/Cards/AnnouncementsCard.vue";
 import CalendarCard from "@/components/Cards/CalendarCard.vue";
