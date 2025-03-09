@@ -1,11 +1,11 @@
 <template>
   <div class="desktop-header desktop-only">
-    <div class="header-left">
+    <button class="header-left w-fit" @click="navigateToHome">
       <div class="mars-logo-circle">
         <span>M</span>
       </div>
       <span class="mars-title">Mars</span>
-    </div>
+    </button>
     <div class="header-center">
       <SearchBar
         @enable="emit('searchbar-enable')"
@@ -54,6 +54,10 @@ const { activeLanguage, availableLanguages, setLanguage } = useLanguage();
 const handleLanguageChange = (code: string) => {
   setLanguage(code);
   emit("language-change", code);
+};
+
+const navigateToHome = () => {
+  window.location.href = "/";
 };
 </script>
 <style scoped>
