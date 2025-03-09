@@ -35,6 +35,12 @@ export const useScheduleStore = defineStore("schedule", {
           subject: "Всемирная история",
           room: "404 каб.",
         },
+        {
+          startTime: "13:15",
+          endTime: "14:50",
+          subject: "Всемирная история",
+          room: "404 каб.",
+        },
       ],
       "2025-03-10": [
         {

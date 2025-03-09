@@ -1,6 +1,6 @@
 <template>
   <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-    <div class="p-4 flex items-center justify-between">
+    <div class="px-4 pt-4 flex items-center justify-between">
       <div>
         <h2 class="text-lg font-semibold text-gray-900">Учебная неделя</h2>
         <p class="mt-1 text-sm text-gray-500">

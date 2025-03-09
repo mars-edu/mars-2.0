@@ -5,9 +5,48 @@
       @searchbar-disable="handleSearchbarDisable"
       @language-change="handleLanguageChange"
     />
-    <div class="max-w-6xl mx-auto px-4 py-5 bg-white rounded-lg shadow-sm">
+    <div
+      class="max-w-6xl mx-auto px-4 py-5 bg-white rounded-lg shadow-sm h-full"
+    >
       <!-- Navigation tabs -->
-      <div class="flex justify-between items-center mb-6">
+      <div class="flex justify-between items-center mb-2">
+        <!-- Icon navigation buttons -->
+        <div class="flex items-center space-x-2 justify-center">
+          <button
+            class="w-10 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center"
+          >
+            <i
+              class="f7-icons text-gray-500 text-lg flex items-center justify-center"
+              >sidebar_left</i
+            >
+          </button>
+          <button
+            class="w-10 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center"
+          >
+            <i
+              class="f7-icons text-gray-500 text-lg flex items-center justify-center"
+              >briefcase</i
+            >
+          </button>
+          <button
+            class="w-10 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center"
+          >
+            <i
+              class="f7-icons text-gray-500 text-lg flex items-center justify-center"
+              >list_bullet</i
+            >
+          </button>
+          <button
+            class="w-10 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center"
+          >
+            <i
+              class="f7-icons text-gray-500 text-lg flex items-center justify-center"
+              >plus</i
+            >
+          </button>
+        </div>
+
+        <!-- Calendar navigation buttons -->
         <div class="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
           <button
             v-for="tab in ['day', 'week', 'month', 'year']"
@@ -24,35 +63,41 @@
             }}
           </button>
         </div>
-        <div class="flex items-center bg-gray-100 rounded-full pl-4 pr-2 py-1">
-          <i class="f7-icons text-gray-400 text-lg mr-2">search</i>
+
+        <div
+          class="flex items-center bg-white border border-gray-200 rounded-full pl-3 pr-1 py-3 shadow-sm"
+        >
+          <i
+            class="f7-icons text-gray-500 text-lg mr-2 flex items-center justify-center"
+            >search</i
+          >
           <input
             type="text"
-            placeholder="Поиск"
-            class="bg-transparent outline-none text-sm w-48 placeholder-gray-400"
+            placeholder="Найти"
+            class="bg-transparent outline-none text-sm w-52 placeholder-gray-400 text-gray-700"
           />
         </div>
       </div>
 
       <!-- Calendar header -->
-      <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">
-          {{ monthName }} {{ year }}г.
-        </h1>
-        <div class="text-2xl font-bold uppercase text-gray-900">
+      <div class="flex justify-between items-center mb-3">
+        <h1 class="text-xl text-gray-900">{{ monthName }} {{ year }}</h1>
+        <div class="text-xl font-bold uppercase text-gray-900">
           ПЛАНИРОВАНИЕ
         </div>
-        <button
-          @click="goToToday"
-          class="flex items-center hover:bg-gray-100 rounded-lg p-2 transition-colors"
-        >
-          <span
-            class="w-9 h-9 bg-red-600 text-white rounded-full flex items-center justify-center mr-2"
+        <div class="w-52 flex justify-end">
+          <button
+            @click="goToToday"
+            class="flex items-center w-fit hover:bg-gray-100 rounded-lg p-2 transition-colors"
           >
-            {{ todayDate }}
-          </span>
-          <span class="text-red-600 font-semibold">Сегодня</span>
-        </button>
+            <span
+              class="w-9 h-9 bg-red-600 text-white rounded-full flex items-center justify-center mr-2"
+            >
+              {{ todayDate }}
+            </span>
+            <span class="text-red-600 font-semibold">Сегодня</span>
+          </button>
+        </div>
       </div>
 
       <!-- Calendar grid -->

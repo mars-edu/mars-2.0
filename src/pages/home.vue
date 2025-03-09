@@ -9,7 +9,7 @@
     />
 
     <!-- Desktop Layout -->
-    <div class="hidden md:flex h-[calc(100vh-80px)]">
+    <div class="hidden md:flex">
       <!-- Left Sidebar - always visible on desktop -->
       <Sidebar
         :navigation-items="navigationItems"
@@ -29,9 +29,9 @@
             <AnnouncementsCard />
           </div>
 
-          <div class="flex-1">
-            <CalendarCard class="mb-4" />
-            <ScheduleCard class="mb-4" />
+          <div class="flex-1 space-y-4">
+            <CalendarCard />
+            <ScheduleCard />
           </div>
         </div>
       </div>

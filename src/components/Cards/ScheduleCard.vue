@@ -9,11 +9,11 @@
       </a>
     </div>
     <div class="p-4">
-      <div v-if="schedule.length > 0" class="space-y-3">
+      <div v-if="schedule.length > 0" class="space-y-3.5">
         <div
           v-for="(lesson, index) in schedule"
           :key="index"
-          class="group flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+          class="group flex items-center p-3.5 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
         >
           <!-- Time Column -->
           <div class="flex-shrink-0 w-20">
