@@ -19,24 +19,19 @@
 
       <!-- Main Content Area for Desktop -->
       <div class="flex-1 overflow-y-auto p-4 bg-gray-100">
-        <!-- Mars Banner -->
-        <Doodle title="Mars" size="large" class="mb-5">
-          <Nauryz />
-        </Doodle>
-
-        <!-- Content Grid -->
         <div class="flex flex-row gap-4">
-          <!-- Left Column -->
-          <div class="flex-1">
-            <ActivityCard class="mb-4" />
+          <div class="flex-1 space-y-4 min-w-[60%]">
+            <Doodle title="Mars" size="large">
+              <Nauryz />
+            </Doodle>
+            <AcademicWeekCard />
+            <ActivityCard />
             <AnnouncementsCard />
           </div>
 
-          <!-- Right Column -->
           <div class="flex-1">
             <CalendarCard class="mb-4" />
             <ScheduleCard class="mb-4" />
-            <AcademicWeekCard />
           </div>
         </div>
       </div>

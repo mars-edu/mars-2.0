@@ -38,6 +38,7 @@ export default async () => {
     },
     server: {
       host: true,
+      allowedHosts: ["fitting-rooster-aware.ngrok-free.app"],
     },
   };
 };
