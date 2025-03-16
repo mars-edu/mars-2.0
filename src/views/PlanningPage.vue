@@ -112,6 +112,8 @@
           :year="year"
           :today-date="todayDate"
           @today="goToToday"
+          @previous-month="previousMonth"
+          @next-month="nextMonth"
         />
 
         <!-- Calendar views based on active tab -->
@@ -225,6 +227,33 @@ const {
   setActiveTab,
   goToToday,
 } = useCalendar();
+
+// Add functions for month navigation
+const previousMonth = () => {
+  let newMonth = monthIndex.value - 1;
+  let newYear = parseInt(year.value);
+
+  if (newMonth < 0) {
+    newMonth = 11;
+    newYear -= 1;
+  }
+
+  setMonth(newMonth);
+  setYear(newYear.toString());
+};
+
+const nextMonth = () => {
+  let newMonth = monthIndex.value + 1;
+  let newYear = parseInt(year.value);
+
+  if (newMonth > 11) {
+    newMonth = 0;
+    newYear += 1;
+  }
+
+  setMonth(newMonth);
+  setYear(newYear.toString());
+};
 
 // Navigation tabs
 const navigationTabs = [
