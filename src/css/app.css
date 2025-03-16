@@ -71,3 +71,7 @@ body {
 .page-content {
   padding: 0 !important;
 }
+
+.popover-inner {
+  max-height: calc(100vh - 16px) !important; /* 8px margin x2 */
+}

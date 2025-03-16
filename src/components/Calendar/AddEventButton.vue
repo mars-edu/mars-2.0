@@ -15,7 +15,13 @@
     </button>
 
     <!-- Framework7 Popover -->
-    <f7-popover id="add-event-popover" style="width: 500px !important">
+    <f7-popover
+      id="add-event-popover"
+      style="width: 500px !important"
+      target="#add-button"
+      close-on-escape
+      vertical-position="right"
+    >
       <div class="event-popover">
         <!-- Header with buttons -->
         <div
