@@ -15,7 +15,7 @@
     </button>
 
     <!-- Framework7 Popover -->
-    <f7-popover id="add-event-popover">
+    <f7-popover id="add-event-popover" style="width: 500px !important">
       <div class="event-popover">
         <!-- Header with buttons -->
         <div
@@ -81,7 +81,7 @@
             class="flex justify-between items-center cursor-pointer"
             @click="openStreamSelection"
           >
-            <span class="text-sm text-gray-900">Потоки</span>
+            <span class="text-sm text-gray-900">Обучающиеся</span>
             <span class="text-gray-400 flex items-center">
               {{ participants.length || "Не выбрано" }}
               <i class="f7-icons text-gray-400 ml-1">chevron_right</i>
@@ -109,7 +109,7 @@
 
           <template v-for="(day, index) in selectedWeekDays" :key="index">
             <div class="text-gray-700 font-semibold mb-3">
-              Время ({{ day.russianWeekDay }})
+              Время на {{ day.russianWeekDay.toLowerCase() }}
             </div>
             <div class="flex items-center gap-2 mb-2">
               <span class="text-gray-500 text-sm">от</span>
@@ -134,7 +134,6 @@
             </div>
           </template>
 
-          <!-- Summary footer -->
           <div class="bg-gray-50 p-4 border-t border-gray-200">
             <div class="flex justify-between mb-2">
               <span class="text-gray-700">По плану:</span>
@@ -277,7 +276,7 @@ const weekDays = computed(() => {
     return {
       date: currentDay,
       russianAbbreviation: currentDay.format("dd").slice(0, 2).toUpperCase(),
-      isStartDate: currentDay.isSame(start, "day"),
+      isStartDate: false, // currentDay.isSame(start, "day"),
       isSelected: selectedWeekDays.value.some(
         (day) => day.weekId === (currentDay.day() + 6) % 7
       ),

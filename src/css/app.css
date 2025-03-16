@@ -71,3 +71,11 @@ body {
 .page-content {
   padding: 0 !important;
 }
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  background-color: transparent !important;
+}
