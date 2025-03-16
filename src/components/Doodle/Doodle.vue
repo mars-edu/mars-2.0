@@ -11,12 +11,15 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
+
 interface Props {
-  title: string;
   size?: "large" | "small";
 }
 
 withDefaults(defineProps<Props>(), {
   size: "large",
 });
+
+const title = ref("👋");
 </script>

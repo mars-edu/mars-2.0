@@ -1,19 +1,19 @@
 <template>
-  <f7-page name="home">
+  <f7-page name="home" class="flex flex-col h-screen">
     <Header
-      :avatar-url="avatarUrl"
       @searchbar-enable="handleSearchbarEnable"
       @searchbar-disable="handleSearchbarDisable"
       @language-change="handleLanguageChange"
-      class="hidden md:block"
+      class="hidden md:block flex-shrink-0"
     />
 
     <!-- Desktop Layout -->
-    <div class="hidden md:flex h-full">
+    <div class="hidden md:flex overflow-hidden">
       <!-- Left Sidebar - always visible on desktop -->
       <Sidebar
         :navigation-items="navigationItems"
         :active-nav-item="activeNavItem"
+        :profile-menu-items="profileMenuItems"
         @update:active-nav-item="activeNavItem = $event"
       />
 
@@ -116,35 +116,6 @@
         @click="activeNavItem = item.id"
       ></f7-link>
     </f7-toolbar>
-
-    <!-- Left Panel with User Profile - for mobile -->
-    <f7-panel left cover class="md:hidden">
-      <f7-page>
-        <f7-navbar title="Профиль"></f7-navbar>
-        <f7-block class="text-center">
-          <div
-            class="w-20 h-20 rounded-full overflow-hidden mx-auto mb-4 border-2 border-red-600"
-          >
-            <img
-              :src="avatarUrl"
-              alt="User Avatar"
-              class="w-full h-full object-cover"
-            />
-          </div>
-          <h2 class="text-xl font-semibold">{{ userName }}</h2>
-          <p class="text-gray-600">{{ userRole }}</p>
-        </f7-block>
-        <f7-list>
-          <f7-list-item
-            v-for="item in profileMenuItems"
-            :key="item.id"
-            :link="item.link"
-            :title="item.title"
-            :icon-f7="item.icon"
-          ></f7-list-item>
-        </f7-list>
-      </f7-page>
-    </f7-panel>
   </f7-page>
 </template>
 
@@ -175,16 +146,9 @@ import ScheduleCard from "@/components/Cards/ScheduleCard.vue";
 import AcademicWeekCard from "@/components/Cards/AcademicWeekCard.vue";
 import { useLanguage } from "@/composables/useLanguage";
 
-// State
 const searchbarEnabled = ref(false);
 const activeNavItem = ref("home");
-const userName = ref("Имя Пользователя");
-const userRole = ref("Студент");
-const avatarUrl = ref(
-  "https://ui-avatars.com/api/?name=User+Name&background=e53935&color=fff"
-);
 
-// Navigation items
 const navigationItems = [
   { id: "home", label: "Главная", icon: "house_fill" },
   { id: "schedule", label: "Расписание", icon: "calendar" },
@@ -192,7 +156,6 @@ const navigationItems = [
   { id: "rup", label: "РУП", icon: "book_fill" },
 ];
 
-// Profile menu items
 const profileMenuItems = [
   { id: "settings", title: "Настройки", icon: "gear", link: "#" },
   { id: "help", title: "Помощь", icon: "question_circle", link: "#" },
