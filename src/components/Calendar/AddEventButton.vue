@@ -64,30 +64,6 @@
             v-model="eventResult"
           />
 
-          <!-- РУП file upload field -->
-          <div class="border border-gray-300 rounded-lg p-3">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-gray-900">РУП</span>
-              <span v-if="rupFile" class="text-sm text-gray-500">{{
-                rupFile.name
-              }}</span>
-            </div>
-            <label
-              class="flex items-center justify-center w-full h-20 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
-            >
-              <input
-                type="file"
-                class="hidden"
-                @change="handleRupFileChange"
-                accept=".pdf,.doc,.docx,.xls,.xlsx"
-              />
-              <div class="text-center">
-                <i class="f7-icons text-gray-400 text-2xl mb-1">arrow_up_doc</i>
-                <p class="text-sm text-gray-500">Загрузите файл РУП</p>
-              </div>
-            </label>
-          </div>
-
           <!-- Start date/time -->
           <date-time-selector
             label="Начало"
@@ -163,6 +139,29 @@
               </select>
             </div>
           </template>
+
+          <div class="border border-gray-300 rounded-lg p-3">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-gray-900">РУП</span>
+              <span v-if="rupFile" class="text-sm text-gray-500">{{
+                rupFile.name
+              }}</span>
+            </div>
+            <label
+              class="flex items-center justify-center w-full h-20 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+            >
+              <input
+                type="file"
+                class="hidden"
+                @change="handleRupFileChange"
+                accept=".pdf,.doc,.docx,.xls,.xlsx"
+              />
+              <div class="text-center">
+                <i class="f7-icons text-gray-400 text-2xl mb-1">arrow_up_doc</i>
+                <p class="text-sm text-gray-500">Загрузите файл РУП</p>
+              </div>
+            </label>
+          </div>
 
           <div class="bg-gray-50 p-4 border-t border-gray-200">
             <div class="flex justify-between mb-2">
