@@ -1,6 +1,7 @@
-import path from "path";
+import path from "node:path";
 import vue from "@vitejs/plugin-vue";
 import webfontDownload from "vite-plugin-webfont-dl";
+import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 
 const SRC_DIR = path.resolve(__dirname, "./src");
 const PUBLIC_DIR = path.resolve(__dirname, "./public");
@@ -19,6 +20,7 @@ export default async () => {
       webfontDownload([
         "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
       ]),
+      ViteImageOptimizer({}),
     ],
     root: SRC_DIR,
     base: "",
@@ -35,6 +37,7 @@ export default async () => {
       alias: {
         "@": SRC_DIR,
       },
+      extensions: [".js", ".ts", ".jsx", ".tsx", ".json", ".vue"],
     },
     server: {
       host: true,

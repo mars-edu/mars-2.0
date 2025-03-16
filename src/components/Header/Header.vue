@@ -1,11 +1,6 @@
 <template>
   <div class="desktop-header desktop-only">
-    <button class="header-left w-fit" @click="navigateToHome">
-      <div class="mars-logo-circle">
-        <span>M</span>
-      </div>
-      <span class="mars-title">Mars</span>
-    </button>
+    <Logo class="header-left" />
     <div class="header-center">
       <SearchBar
         @enable="emit('searchbar-enable')"
@@ -21,7 +16,11 @@
         class="language-selector"
       />
       <div class="avatar-container">
-        <img :src="avatarUrl" alt="User Avatar" class="user-avatar" />
+        <img
+          :src="rasulZhangeldinovichProfile"
+          alt="User Avatar"
+          class="user-avatar"
+        />
       </div>
     </div>
   </div>
@@ -31,17 +30,9 @@
 import { f7Link } from "framework7-vue";
 import SearchBar from "../SearchBar.vue";
 import LanguageSelector from "../LanguageSelector.vue";
-import { useLanguage } from "@/composables/useLanguage";
-
-const props = withDefaults(
-  defineProps<{
-    avatarUrl?: string;
-  }>(),
-  {
-    avatarUrl:
-      "https://ui-avatars.com/api/?name=User+Name&background=e53935&color=fff",
-  }
-);
+import rasulZhangeldinovichProfile from "@/assets/rassul-zh-profile.jpg";
+import Logo from "../Logo/Logo.vue";
+import { useLanguage } from "@/composables/useLanguage.ts";
 
 const emit = defineEmits<{
   (e: "searchbar-enable"): void;
@@ -54,10 +45,6 @@ const { activeLanguage, availableLanguages, setLanguage } = useLanguage();
 const handleLanguageChange = (code: string) => {
   setLanguage(code);
   emit("language-change", code);
-};
-
-const navigateToHome = () => {
-  window.location.href = "/";
 };
 </script>
 <style scoped>
@@ -81,27 +68,6 @@ const navigateToHome = () => {
   display: flex;
   align-items: center;
   gap: 24px;
-}
-
-.mars-logo-circle {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background-color: #e53935; /* Mars red color */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 24px;
-  box-shadow: 0 2px 8px rgba(229, 57, 53, 0.3);
-}
-
-.mars-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #333;
-  letter-spacing: -0.5px;
 }
 
 .header-center {

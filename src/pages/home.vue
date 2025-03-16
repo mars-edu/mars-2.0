@@ -9,7 +9,7 @@
     />
 
     <!-- Desktop Layout -->
-    <div class="hidden md:flex">
+    <div class="hidden md:flex h-full">
       <!-- Left Sidebar - always visible on desktop -->
       <Sidebar
         :navigation-items="navigationItems"
@@ -21,7 +21,7 @@
       <div class="flex-1 overflow-y-auto p-4 bg-gray-100">
         <div class="flex flex-row gap-4">
           <div class="flex-1 space-y-4 min-w-[60%]">
-            <Doodle title="Mars" size="large">
+            <Doodle size="large">
               <Nauryz />
             </Doodle>
             <AcademicWeekCard />
@@ -47,7 +47,7 @@
       >
         <div class="overflow-y-auto p-4 bg-gray-100 pb-16">
           <!-- Mars Banner -->
-          <Doodle title="Mars" size="large" class="mb-4" />
+          <Doodle size="large" class="mb-4" />
 
           <!-- Content Grid for Mobile -->
           <div class="flex flex-col gap-4">
