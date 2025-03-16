@@ -82,7 +82,9 @@
       </div>
 
       <div v-else-if="activeTab === 'week'">
-        <WeeklySchedule />
+        <div class="p-4 text-center text-gray-500">
+          Представление недель в разработке
+        </div>
       </div>
 
       <div v-else-if="activeTab === 'day'">
@@ -112,7 +114,6 @@ import CalendarToolbar from "@/components/Calendar/CalendarToolbar.vue";
 import CalendarNavigation from "@/components/Calendar/CalendarNavigation.vue";
 import CalendarHeader from "@/components/Calendar/CalendarHeader.vue";
 import CalendarGrid from "@/components/Calendar/CalendarGrid.vue";
-import WeeklySchedule from "@/components/Calendar/WeeklySchedule.vue";
 import {
   Popover,
   PopoverContent,
