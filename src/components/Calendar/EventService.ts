@@ -3,6 +3,8 @@ import { ref } from "vue";
 export interface EventData {
   title: string;
   result: string;
+  rup: string;
+  file: File | null;
   startDate: string;
   startTime: string;
   endDate: string;

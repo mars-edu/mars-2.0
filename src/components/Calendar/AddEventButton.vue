@@ -64,6 +64,30 @@
             v-model="eventResult"
           />
 
+          <!-- РУП file upload field -->
+          <div class="border border-gray-300 rounded-lg p-3">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-gray-900">РУП</span>
+              <span v-if="rupFile" class="text-sm text-gray-500">{{
+                rupFile.name
+              }}</span>
+            </div>
+            <label
+              class="flex items-center justify-center w-full h-20 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+            >
+              <input
+                type="file"
+                class="hidden"
+                @change="handleRupFileChange"
+                accept=".pdf,.doc,.docx,.xls,.xlsx"
+              />
+              <div class="text-center">
+                <i class="f7-icons text-gray-400 text-2xl mb-1">arrow_up_doc</i>
+                <p class="text-sm text-gray-500">Загрузите файл РУП</p>
+              </div>
+            </label>
+          </div>
+
           <!-- Start date/time -->
           <date-time-selector
             label="Начало"
@@ -157,16 +181,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { f7, f7Popover } from "framework7-vue";
 import DateTimeSelector from "./DateTimeSelector.vue";
 import SelectInput from "./SelectInput.vue";
 import type { EventData } from "./EventService";
+import { useEventService } from "./EventService";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
 
 // Add default values:
-withDefaults(
+const props = withDefaults(
   defineProps<{
     moduleOptions: { value: string; text: string }[];
     learningOutcomeOptions: { value: string; text: string }[];
@@ -181,8 +206,11 @@ const emit = defineEmits<{
   (e: "event-added", event: EventData): void;
 }>();
 
+const { eventService } = useEventService();
+
 const eventTitle = ref("");
 const eventResult = ref("");
+const rupFile = ref<File | null>(null);
 const startDate = ref(dayjs().format("DD MMMM YYYY"));
 const startTime = ref("09:00");
 const endDate = ref(dayjs().add(1, "hour").format("DD MMMM YYYY"));
@@ -198,8 +226,15 @@ const closeAddEventPopover = () => {
   f7.popover.close("#add-event-popover");
 };
 
+const handleRupFileChange = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  if (input.files && input.files.length > 0) {
+    rupFile.value = input.files[0];
+  }
+};
+
 const validateForm = () => {
-  if (!eventTitle.value || !eventResult.value) {
+  if (!eventTitle.value || !eventResult.value || !rupFile.value) {
     formError.value = "Пожалуйста, заполните все обязательные поля";
     return false;
   }
@@ -222,6 +257,8 @@ const handleAddEvent = () => {
   emit("event-added", {
     title: eventTitle.value,
     result: eventResult.value,
+    rup: "",
+    file: rupFile.value,
     startDate: startDate.value,
     startTime: startTime.value,
     endDate: endDate.value,
@@ -235,6 +272,7 @@ const handleAddEvent = () => {
 const resetForm = () => {
   eventTitle.value = "";
   eventResult.value = "";
+  rupFile.value = null;
   startDate.value = dayjs().format("DD MMMM YYYY");
   startTime.value = "09:00";
   endDate.value = dayjs().add(1, "hour").format("DD MMMM YYYY");
