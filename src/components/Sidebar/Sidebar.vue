@@ -63,13 +63,13 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   navigationItems: () => [],
-  activeNavItem: "calendar",
+  activeNavItem: "home",
   profileMenuItems: () => [],
 });
 
 // Default navigation items if none provided
 const defaultNavigationItems: NavigationItem[] = [
-  { id: "calendar", label: "Календарь", icon: "calendar" },
+  { id: "home", label: "Главная", icon: "house" },
   { id: "schedule", label: "Расписание", icon: "clock" },
   { id: "journals", label: "Журналы", icon: "doc_text_fill" },
   { id: "settings", label: "Настройки", icon: "gear" },
