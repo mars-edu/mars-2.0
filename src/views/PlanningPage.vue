@@ -144,7 +144,6 @@ const {
 // Toolbar icons
 const toolbarIcons = [
   { name: "sidebar_left", value: "sidebar" },
-  { name: "briefcase", value: "briefcase" },
   { name: "list_bullet", value: "list" },
 ];
 

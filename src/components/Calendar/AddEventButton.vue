@@ -2,7 +2,7 @@
   <div>
     <button
       id="add-button"
-      class="w-10 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center"
+      class="w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center"
       aria-label="Add"
       type="button"
       @click="openAddEventPopover"

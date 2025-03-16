@@ -62,3 +62,11 @@ const emitChange = () => {
   emit("update:time", timeValue.value);
 };
 </script>
+
+<style lang="scss">
+.input-with-value {
+  input {
+    background-color: transparent !important;
+  }
+}
+</style>

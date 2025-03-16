@@ -1,6 +1,6 @@
 <template>
   <div class="desktop-header desktop-only">
-    <Logo class="header-left" />
+    <!-- <Logo class="header-left" /> -->
     <div class="header-center">
       <SearchBar
         @enable="emit('searchbar-enable')"

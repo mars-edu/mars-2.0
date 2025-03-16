@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex items-center bg-white border border-gray-200 rounded-full pl-3 pr-1 py-3 shadow-sm"
+    class="flex items-center bg-white border border-gray-200 rounded-full pl-3 pr-1 py-3 shadow-sm w-52"
   >
     <i
       class="f7-icons text-gray-500 text-lg mr-2 flex items-center justify-center"
@@ -9,7 +9,7 @@
     <input
       type="text"
       :placeholder="placeholder"
-      class="bg-transparent outline-none text-sm w-52 placeholder-gray-400 text-gray-700"
+      class="bg-transparent outline-none text-sm placeholder-gray-400 text-gray-700"
       v-model="searchQuery"
       @input="emitSearch"
     />
