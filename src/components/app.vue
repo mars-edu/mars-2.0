@@ -1,12 +1,11 @@
 <template>
   <f7-app v-bind="f7params">
-    <!-- Views container -->
-    <f7-view
-      main
+    <f7-view main class="safe-areas"></f7-view>
+    <!-- loadInitialPage="false"
+      preloadPreviousPage="false"
       browserHistory
-      browserHistoryInitialMatch
-      class="safe-areas"
-    ></f7-view>
+      reloadPages="true"
+      browserHistoryInitialMatch -->
   </f7-app>
 </template>
 <script setup>
