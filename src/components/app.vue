@@ -1,7 +1,12 @@
 <template>
   <f7-app v-bind="f7params">
     <!-- Views container -->
-    <f7-view main class="safe-areas"></f7-view>
+    <f7-view
+      main
+      browserHistory
+      browserHistoryInitialMatch
+      class="safe-areas"
+    ></f7-view>
   </f7-app>
 </template>
 <script setup>
@@ -11,13 +16,10 @@ import { f7, f7ready } from "framework7-vue";
 import routes from "../js/routes.js";
 import store from "../js/store";
 
-// Framework7 Parameters
 const f7params = {
-  name: "Mars", // App name
-  theme: "ios", // Automatic theme detection
-  // App store
+  name: "Mars",
+  theme: "ios",
   store: store,
-  // App routes
   routes: routes,
 };
 
