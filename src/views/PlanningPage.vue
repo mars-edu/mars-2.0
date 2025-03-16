@@ -46,7 +46,7 @@
 
       <div
         ref="calendarContainer"
-        class="max-w-6xl mx-auto px-4 py-5 bg-white rounded-lg shadow-sm flex-1 overflow-y-auto overflow-x-hidden"
+        class="max-w-8xl mx-auto px-4 py-5 bg-white rounded-lg shadow-sm flex-1 overflow-y-auto overflow-x-hidden"
       >
         <!-- Calendar toolbar with navigation -->
         <CalendarToolbar
