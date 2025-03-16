@@ -9,7 +9,7 @@
       >
         <span
           class="w-9 h-9 bg-green-600 text-white rounded-full flex items-center justify-center mr-2"
-          :class="{ 'bg-red-600': !ifHoladay }"
+          :class="{ 'bg-red-600': ifHoladay }"
         >
           {{ todayDate }}
         </span>

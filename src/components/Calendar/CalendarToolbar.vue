@@ -2,12 +2,8 @@
   <div class="flex justify-between items-center mb-2">
     <!-- Icon navigation buttons -->
     <div class="flex items-center space-x-2 justify-center">
-      <navigation-button
-        v-for="(icon, index) in icons"
-        :key="index"
-        :icon="icon.name"
-        @click="$emit('icon-click', icon.value)"
-      />
+      <sidebar-button @click="$emit('icon-click', 'sidebar')" />
+      <list-button @click="$emit('icon-click', 'list')" />
       <add-event-button
         @event-added="handleEventAdded"
         :module-options="moduleOptions"
@@ -27,14 +23,14 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import NavigationButton from "./NavigationButton.vue";
+import SidebarButton from "./SidebarButton.vue";
+import ListButton from "./ListButton.vue";
 import AddEventButton from "./AddEventButton.vue";
 import SearchInput from "./SearchInput.vue";
 import { useEventService } from "./EventService";
 import type { EventData } from "./EventService";
 
 const props = defineProps<{
-  icons: { name: string; value: string }[];
   searchPlaceholder: string;
 }>();
 
@@ -45,13 +41,22 @@ const emit = defineEmits<{
 }>();
 
 const { eventService } = useEventService();
-const moduleOptions = ref<string[]>([]);
-const learningOutcomeOptions = ref<string[]>([]);
+const moduleOptions = ref<{ value: string; text: string }[]>([]);
+const learningOutcomeOptions = ref<{ value: string; text: string }[]>([]);
 
 onMounted(async () => {
-  moduleOptions.value = await eventService.value.getModuleOptions();
-  learningOutcomeOptions.value =
+  const moduleStrings = await eventService.value.getModuleOptions();
+  moduleOptions.value = moduleStrings.map((module) => ({
+    value: module,
+    text: module,
+  }));
+
+  const learningOutcomeStrings =
     await eventService.value.getLearningOutcomeOptions();
+  learningOutcomeOptions.value = learningOutcomeStrings.map((outcome) => ({
+    value: outcome,
+    text: outcome,
+  }));
 });
 
 const handleEventAdded = async (eventData: EventData) => {

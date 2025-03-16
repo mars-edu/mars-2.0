@@ -8,13 +8,11 @@
     />
 
     <!-- Desktop Layout -->
-    <div class="hidden md:flex overflow-hidden">
+    <div class="hidden md:flex overflow-hidden flex-1">
       <!-- Left Sidebar - always visible on desktop -->
       <Sidebar
-        :navigation-items="navigationItems"
-        :active-nav-item="activeNavItem"
-        :profile-menu-items="profileMenuItems"
-        @update:active-nav-item="activeNavItem = $event"
+        v-model:activeNavItem="activeNavItem"
+        class="h-[calc(100vh-64px)] flex-shrink-0"
       />
 
       <!-- Main Content Area for Desktop -->
@@ -149,17 +147,12 @@ import { useLanguage } from "@/composables/useLanguage";
 const searchbarEnabled = ref(false);
 const activeNavItem = ref("home");
 
+// Default navigation items for mobile tabbar
 const navigationItems = [
   { id: "home", label: "Главная", icon: "house_fill" },
   { id: "schedule", label: "Расписание", icon: "calendar" },
   { id: "journals", label: "Журналы", icon: "doc_text_fill" },
   { id: "rup", label: "РУП", icon: "book_fill" },
-];
-
-const profileMenuItems = [
-  { id: "settings", title: "Настройки", icon: "gear", link: "#" },
-  { id: "help", title: "Помощь", icon: "question_circle", link: "#" },
-  { id: "logout", title: "Выйти", icon: "square_arrow_right", link: "#" },
 ];
 
 // Language management

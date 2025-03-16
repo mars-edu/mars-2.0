@@ -40,6 +40,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from "vue";
+
 interface NavigationItem {
   id: string;
   label: string;
@@ -54,18 +56,55 @@ interface ProfileMenuItem {
 }
 
 interface Props {
-  navigationItems: NavigationItem[];
-  activeNavItem: string;
-  profileMenuItems: ProfileMenuItem[];
+  navigationItems?: NavigationItem[];
+  activeNavItem?: string;
+  profileMenuItems?: ProfileMenuItem[];
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  navigationItems: () => [],
+  activeNavItem: "calendar",
+  profileMenuItems: () => [],
+});
+
+// Default navigation items if none provided
+const defaultNavigationItems: NavigationItem[] = [
+  { id: "calendar", label: "Календарь", icon: "calendar" },
+  { id: "schedule", label: "Расписание", icon: "clock" },
+  { id: "journals", label: "Журналы", icon: "doc_text_fill" },
+  { id: "settings", label: "Настройки", icon: "gear" },
+];
+
+// Default profile menu items if none provided
+const defaultProfileMenuItems: ProfileMenuItem[] = [
+  { id: "profile", title: "Профиль", icon: "person" },
+  { id: "logout", title: "Выйти", icon: "arrow_right_square" },
+];
+
+// Use provided items or defaults
+const navigationItems = computed(() =>
+  props.navigationItems && props.navigationItems.length > 0
+    ? props.navigationItems
+    : defaultNavigationItems
+);
+
+const profileMenuItems = computed(() =>
+  props.profileMenuItems && props.profileMenuItems.length > 0
+    ? props.profileMenuItems
+    : defaultProfileMenuItems
+);
 
 const emit = defineEmits<{
   (e: "update:activeNavItem", value: string): void;
 }>();
 
+// Create a computed property for activeNavItem to support v-model
+const activeNavItem = computed({
+  get: () => props.activeNavItem,
+  set: (value) => emit("update:activeNavItem", value),
+});
+
 const handleNavItemClick = (itemId: string): void => {
-  emit("update:activeNavItem", itemId);
+  activeNavItem.value = itemId;
 };
 </script>
