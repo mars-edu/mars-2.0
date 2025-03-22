@@ -33,7 +33,7 @@
           class="f7-icons text-gray-500 group-hover:text-gray-700 text-[16px]"
           >{{ item.icon }}</i
         >
-        <span class="text-sm">{{ item.title }}</span>
+        <span class="text-sm">{{ item.label }}</span>
       </div>
     </div>
   </aside>
@@ -50,7 +50,7 @@ interface NavigationItem {
 
 interface ProfileMenuItem {
   id: string;
-  title: string;
+  label: string;
   icon?: string;
   link?: string;
 }
@@ -68,30 +68,30 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 // Default navigation items if none provided
-const defaultNavigationItems: NavigationItem[] = [
+const defaultSidebarNavItems: NavigationItem[] = [
   { id: "home", label: "Главная", icon: "house" },
   { id: "schedule", label: "Расписание", icon: "clock" },
   { id: "journals", label: "Журналы", icon: "doc_text_fill" },
-  { id: "settings", label: "Настройки", icon: "gear" },
 ];
 
 // Default profile menu items if none provided
-const defaultProfileMenuItems: ProfileMenuItem[] = [
-  { id: "profile", title: "Профиль", icon: "person" },
-  { id: "logout", title: "Выйти", icon: "arrow_right_square" },
+const defaultSidebarProfileItems: ProfileMenuItem[] = [
+  { id: "settings", label: "Настройки", icon: "gear" },
+  { id: "profile", label: "Профиль", icon: "person" },
+  { id: "logout", label: "Выйти", icon: "arrow_right_square" },
 ];
 
 // Use provided items or defaults
 const navigationItems = computed(() =>
   props.navigationItems && props.navigationItems.length > 0
     ? props.navigationItems
-    : defaultNavigationItems
+    : defaultSidebarNavItems
 );
 
 const profileMenuItems = computed(() =>
   props.profileMenuItems && props.profileMenuItems.length > 0
     ? props.profileMenuItems
-    : defaultProfileMenuItems
+    : defaultSidebarProfileItems
 );
 
 const emit = defineEmits<{
