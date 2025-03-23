@@ -2,7 +2,6 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import auth from "./controllers/authController.js";
-import { getEnv } from "./utils/env.js";
 import { getPrismaClient } from "./utils/prismaClient.js";
 import type { D1Database } from "@cloudflare/workers-types";
 
@@ -20,7 +19,6 @@ api.use("*", async (c, next) => {
     throw new Error("JWT_SECRET is required");
   }
 
-  // Test D1 connection
   try {
     const prisma = getPrismaClient(c.env);
     await prisma.$queryRaw`SELECT 1`;
@@ -33,15 +31,6 @@ api.use("*", async (c, next) => {
 });
 
 api.use("*", logger());
-api.use(
-  "*",
-  cors({
-    origin: "*",
-    allowMethods: ["GET", "POST", "OPTIONS"],
-    allowHeaders: ["Content-Type"],
-    credentials: true,
-  })
-);
 
 api.get("/", (c) => {
   return c.text("Mars 2.0 API is running with Cloudflare Workers!");
@@ -59,6 +48,19 @@ api.get("/env", (c) => {
 api.route("/auth", auth);
 
 const app = new Hono<{ Bindings: Env }>();
+
+app.use(
+  "*",
+  cors({
+    origin: "http://localhost:5173",
+    allowHeaders: ["Content-Type", "Authorization"],
+    allowMethods: ["POST", "GET", "OPTIONS"],
+    exposeHeaders: ["Content-Length"],
+    maxAge: 600,
+    credentials: true,
+  })
+);
+
 app.route("/api", api);
 
 export default app;
