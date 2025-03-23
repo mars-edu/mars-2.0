@@ -12,11 +12,15 @@
     "prisma:migrate": "wrangler d1 migrations apply mars-db --local",
     "prisma:migrate:remote": "wrangler d1 migrations apply mars-db --remote",
     "prisma:studio": "prisma studio",
-    "seed": "wrangler d1 execute mars-db --local --file=./prisma/seed.sql"
+    "seed": "wrangler d1 execute mars-db --local --file=./prisma/seed.sql",
+    "prepare": "husky",
+    "pre-commit": "lint-staged"
   },
   "devDependencies": {
-    "@types/bun": "latest",
     "@cloudflare/workers-types": "^4.20250321.0",
+    "@types/bun": "latest",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.0",
     "wrangler": "^4.4.0"
   },
   "peerDependencies": {
@@ -35,5 +39,8 @@
     "prisma": "^6.5.0",
     "ts-node": "^10.9.2",
     "zod": "^3.24.2"
+  },
+  "lint-staged": {
+    "**/*.{ts,tsx}": "tsc --noEmit"
   }
 }
