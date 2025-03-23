@@ -2,13 +2,16 @@
   <f7-app v-bind="f7params">
     <!-- <f7-view class="safe-areas" :main="true"></f7-view> -->
 
-    <f7-view class="safe-areas" :main="true"></f7-view>
-    <!-- :pushState="true"
+    <f7-view
+      class="safe-areas"
+      :main="true"
+      :pushState="true"
       :loadInitialPage="false"
       :preloadPreviousPage="false"
       :browserHistory="true"
       :reloadPages="true"
-      browserHistoryInitialMatch -->
+      browserHistoryInitialMatch
+    ></f7-view>
   </f7-app>
 </template>
 
@@ -41,18 +44,18 @@ const f7params: Framework7Parameters = {
   store: store,
   routes: routes,
 
-  view: {
-    browserHistory: true,
-    browserHistorySeparator: "#",
-    browserHistoryRoot: "",
-    reloadPages: false,
-    // stackPages: true,
-    preloadPreviousPage: true,
-    // uniqueHistory: true,
-    allowDuplicateUrls: false,
-    removeElements: false,
-    xhrCache: false,
-  },
+  // view: {
+  //   browserHistory: true,
+  //   browserHistorySeparator: "#",
+  //   browserHistoryRoot: "",
+  //   reloadPages: false,
+  //   // stackPages: true,
+  //   preloadPreviousPage: true,
+  //   // uniqueHistory: true,
+  //   allowDuplicateUrls: false,
+  //   removeElements: false,
+  //   xhrCache: false,
+  // },
 
   on: {
     routeChange(newRoute: any) {

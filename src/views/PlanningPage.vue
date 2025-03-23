@@ -1,12 +1,19 @@
 <template>
-  <div class="h-screen bg-gray-50 flex flex-col" @mousemove="handleMouseMove">
-    <Header
-      @searchbar-enable="handleSearchbarEnable"
-      @searchbar-disable="handleSearchbarDisable"
-      @language-change="handleLanguageChange"
-      class="flex-shrink-0"
-    />
-    <div class="flex flex-1 overflow-hidden">
+  <f7-page
+    name="planning"
+    @page:init="onPageInit"
+    @page:mounted="onPageMounted"
+    class="bg-gray-50"
+  >
+    <div class="desktop-header-container">
+      <Header
+        @searchbar-enable="handleSearchbarEnable"
+        @searchbar-disable="handleSearchbarDisable"
+        @language-change="handleLanguageChange"
+      />
+    </div>
+
+    <f7-page-content @mousemove="handleMouseMove" class="planning-content">
       <!-- Sidebar with transition (when activated by button) -->
       <transition name="slide">
         <Sidebar
@@ -44,10 +51,7 @@
         @mouseleave="isHoveringLeftCorner = false"
       ></div>
 
-      <div
-        ref="calendarContainer"
-        class="max-w-8xl mx-auto px-4 py-5 bg-white rounded-lg shadow-sm flex-1 overflow-y-auto overflow-x-hidden"
-      >
+      <div ref="calendarContainer" class="calendar-container">
         <!-- Calendar toolbar with navigation -->
         <CalendarToolbar
           :search-placeholder="'Найти'"
@@ -141,14 +145,14 @@
           </div>
         </div>
       </div>
-    </div>
-  </div>
+    </f7-page-content>
+  </f7-page>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
 import { Teleport } from "vue";
-import { f7, f7ready } from "framework7-vue";
+import { f7, f7ready, f7Page, f7PageContent } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import { useLanguage } from "@/composables/useLanguage";
 import { useCalendar } from "@/composables/useCalendar";
@@ -266,6 +270,15 @@ const navigationTabs = [
 // Weekdays
 const weekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
+// F7 Page lifecycle handlers
+const onPageInit = () => {
+  console.log("Planning page initialized");
+};
+
+const onPageMounted = () => {
+  console.log("Planning page mounted");
+};
+
 // Get route params when component is mounted
 onMounted(() => {
   f7ready(() => {
@@ -314,6 +327,28 @@ const addEvent = () => {
 </script>
 
 <style scoped>
+.desktop-header-container {
+  flex-shrink: 0;
+}
+
+.planning-content {
+  display: flex;
+  overflow: hidden;
+  height: calc(100vh - 80px);
+}
+
+.calendar-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 .slide-enter-active,
 .slide-leave-active {
   transition: transform 0.3s ease;

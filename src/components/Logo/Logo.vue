@@ -33,6 +33,6 @@ defineProps({
 });
 
 const navigateToHome = () => {
-  f7.views.main.router.navigate("/home");
+  f7.views.main.router.navigate("/");
 };
 </script>

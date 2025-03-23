@@ -12,15 +12,8 @@ type RouteConfig = Router.RouteParameters & {
 };
 
 const routes: RouteConfig[] = [
-  // {
-  //   path: "/",
-  //   component: HomePage,
-  //   options: {
-  //     roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
-  //   },
-  // },
   {
-    path: "/home",
+    path: "/",
     component: HomePage,
     options: {
       roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
@@ -259,10 +252,10 @@ const routes: RouteConfig[] = [
     path: "/login",
     component: LoginPage,
   },
-  // {
-  //   path: "(.*)",
-  //   component: NotFoundPage,
-  // },
+  {
+    path: "(.*)",
+    component: NotFoundPage,
+  },
 ];
 
 export default routes;

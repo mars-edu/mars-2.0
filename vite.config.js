@@ -42,6 +42,16 @@ export default async () => {
     server: {
       host: true,
       allowedHosts: ["fitting-rooster-aware.ngrok-free.app"],
+      fs: {
+        strict: false,
+      },
+      hmr: {
+        overlay: false,
+      },
+      watch: {
+        usePolling: true,
+        interval: 1000,
+      },
     },
   };
 };

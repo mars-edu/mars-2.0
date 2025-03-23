@@ -171,7 +171,7 @@ import { useUserStore } from "../stores/userStore";
 import AuthService from "../services/auth";
 import Logo from "../components/Logo/Logo.vue";
 
-const defaultRedirectTo = "/home";
+const defaultRedirectTo = "/";
 
 const props = defineProps({
   redirectTo: {
