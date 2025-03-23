@@ -29,6 +29,7 @@
     "framework7-vue": "^8.3.4",
     "lucide-vue-next": "^0.482.0",
     "material-icons": "^1.13.14",
+    "ofetch": "^1.4.1",
     "pinia": "^3.0.1",
     "reka-ui": "^2.1.0",
     "sharp": "^0.33.5",

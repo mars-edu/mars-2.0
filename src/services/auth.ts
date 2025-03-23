@@ -1,5 +1,6 @@
 import { useUserStore, Role } from "../stores/userStore";
 import type { User } from "../stores/userStore";
+import { authClient } from "../lib/http-client";
 
 interface LoginCredentials {
   username: string;
@@ -15,40 +16,24 @@ interface LoginResponse {
 }
 
 export default class AuthService {
-  // API endpoint for authentication
-  private static API_URL = "http://localhost:3001/api/auth";
-
   /**
    * Authenticate user with provided credentials
    */
   static async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
-      // Call the login API endpoint
-      const response = await fetch(`${this.API_URL}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: credentials.username,
-          password: credentials.password,
-          remember: credentials.remember,
-        }),
-        credentials: "include",
-      });
+      const response = await authClient.login(credentials);
 
-      const data = await response.json();
-
-      if (data.success && data.user) {
+      if (response.success && response.user) {
         const userStore = useUserStore();
-        userStore.setUser(data.user);
+        userStore.setUser(response.user);
 
-        if (credentials.remember && data.token) {
-          userStore.setToken(data.token);
+        if (credentials.remember && response.token) {
+          userStore.setToken(response.token);
+          localStorage.setItem("auth_token", response.token);
         }
       }
 
-      return data;
+      return response;
     } catch (error) {
       console.error("Login error:", error);
       return {
@@ -63,17 +48,8 @@ export default class AuthService {
    */
   static async validateToken(token: string): Promise<LoginResponse> {
     try {
-      // Call the token validation API endpoint
-      const response = await fetch(`${this.API_URL}/validate-token`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token }),
-        credentials: "include",
-      });
-
-      return await response.json();
+      const response = await authClient.validateToken(token);
+      return response;
     } catch (error) {
       console.error("Token validation error:", error);
       return {
@@ -87,6 +63,7 @@ export default class AuthService {
    * Logout the current user
    */
   static logout(): void {
+    localStorage.removeItem("auth_token");
     const userStore = useUserStore();
     userStore.logout();
   }
