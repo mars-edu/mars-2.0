@@ -209,7 +209,9 @@ const validateForm = () => {
   return isValid;
 };
 
-const handleLogin = async () => {
+const handleLogin = async (e: Event) => {
+  e.preventDefault();
+
   if (!validateForm()) return;
 
   isLoading.value = true;
