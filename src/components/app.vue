@@ -10,11 +10,11 @@
       browserHistorySeparator="#!"
       browserHistoryRoot=""
       :iosSwipeBack="true"
-      :reloadPages="false"
+      :reloadPages="true"
       :xhrCache="false"
       :loadInitialPage="true"
-      :preloadPreviousPage="true"
-      :removeElements="false"
+      :preloadPreviousPage="false"
+      :removeElements="true"
       :uniqueHistory="true"
       :allowDuplicateUrls="false"
       browserHistoryInitialMatch
@@ -56,7 +56,9 @@ const f7params: Framework7Parameters = {
     browserHistory: true,
     browserHistorySeparator: "#!",
     browserHistoryRoot: "",
-    preloadPreviousPage: true,
+    preloadPreviousPage: false,
+    reloadPages: true,
+    removeElements: true,
   },
 
   on: {

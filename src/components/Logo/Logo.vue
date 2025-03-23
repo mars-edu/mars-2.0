@@ -38,6 +38,7 @@ defineProps({
 });
 
 const isProduction = ref(import.meta.env.MODE !== "development");
+// const isProduction = true;
 
 const navigateToHome = () => {
   f7.views.main.router.navigate("/");
