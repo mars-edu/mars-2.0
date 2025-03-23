@@ -3,6 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
+[placement]
+mode = "smart"
+
 [observability]
 enabled = true
 head_sampling_rate = 1 # optional. default = 1.
@@ -10,7 +13,7 @@ head_sampling_rate = 1 # optional. default = 1.
 [vars]
 JWT_SECRET = "0e3dff721c946ac26b873052e9e43560d0124d1548aa8cb8621daa6eb01c5735"
 JWT_EXPIRY = "24h"
-FRONTEND_URL = "http://localhost:5173"
+FRONTEND_URL = "https://mars-2-0.pages.dev"
 
 [[d1_databases]]
 binding = "DB"

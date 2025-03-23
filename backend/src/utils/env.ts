@@ -30,7 +30,6 @@ function validateEnv() {
     typeof process === "undefined" || process.env === undefined;
 
   if (isWorkerContext) {
-    // For worker context, return a basic env that will be overridden by actual bindings
     return {
       PORT: 3001,
       NODE_ENV: "development",

@@ -52,7 +52,7 @@ const app = new Hono<{ Bindings: Env }>();
 app.use(
   "*",
   cors({
-    origin: "https://mars-2-0.pages.dev",
+    origin: (origin, c) => c.env.FRONTEND_URL,
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["POST", "GET", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
