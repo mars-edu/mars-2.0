@@ -90,6 +90,7 @@ class AuthService {
 
   async validateToken(token: string) {
     try {
+      console.log("Validating token, secret: ", this.ctx.env.JWT_SECRET);
       const decoded = verify(token, this.ctx.env.JWT_SECRET) as TokenPayload;
 
       if (!decoded || !decoded.userId) {
