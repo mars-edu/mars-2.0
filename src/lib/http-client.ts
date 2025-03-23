@@ -17,13 +17,12 @@ export const httpClient = ofetch.create({
     const token = localStorage.getItem("auth_token");
     if (token) {
       options.headers = options.headers || {};
-      options.headers.Authorization = `Bearer ${token}`;
+      (options.headers as any).Authorization = `Bearer ${token}`;
     }
   },
   onResponseError({ response }) {
     if (response?.status === 401) {
       localStorage.removeItem("auth_token");
-      window.location.href = "/login";
     }
   },
 });

@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <button class="flex items-center gap-3 w-fit" @click="navigateToHome">
     <div
       :class="[
@@ -19,7 +19,7 @@
       >Mars</span
     >
   </button>
-</template>
+</template> -->
 
 <script setup lang="ts">
 import { f7 } from "framework7-vue";

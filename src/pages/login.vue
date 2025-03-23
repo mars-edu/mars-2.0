@@ -61,6 +61,7 @@
                 Запомнить меня
               </f7-checkbox>
               <f7-link
+                href="/restore-password"
                 class="text-red-600 hover:text-red-800 font-medium transition-colors duration-200 underline-offset-2 hover:underline whitespace-nowrap"
               >
                 Забыли пароль?
@@ -82,6 +83,15 @@
                 <span class="loading-spinner"></span>
               </div>
             </f7-button>
+
+            <div class="text-center mt-4">
+              <f7-link
+                href="/register"
+                class="text-red-600 hover:text-red-800 font-medium"
+              >
+                Нет аккаунта? Зарегистрироваться
+              </f7-link>
+            </div>
           </form>
         </div>
       </div>
@@ -143,6 +153,7 @@
                 >Запомнить меня</f7-checkbox
               >
               <f7-link
+                href="/restore-password"
                 class="text-red-600 hover:text-red-800 font-medium whitespace-nowrap"
                 >Забыли пароль?</f7-link
               >
@@ -157,6 +168,15 @@
             >
               Войти
             </f7-button>
+
+            <div class="text-center mt-4">
+              <f7-link
+                href="/register"
+                class="text-red-600 hover:text-red-800 font-medium"
+              >
+                Нет аккаунта? Зарегистрироваться
+              </f7-link>
+            </div>
           </form>
         </div>
       </div>
@@ -212,9 +232,16 @@ const validateForm = () => {
 const handleLogin = async (e: Event) => {
   e.preventDefault();
 
-  if (!validateForm()) return;
+  console.log("Login attempt started");
+  console.log(`Username: ${username.value}`);
+
+  if (!validateForm()) {
+    console.log("Form validation failed");
+    return;
+  }
 
   isLoading.value = true;
+  console.log("Loading state set to true");
 
   try {
     const response = await AuthService.login({
@@ -223,12 +250,16 @@ const handleLogin = async (e: Event) => {
       remember: rememberMe.value,
     });
 
+    console.log("Login service response received", response);
+
     const redirectTo = props.redirectTo || defaultRedirectTo;
-    console.log(redirectTo);
+    console.log(`Redirect destination: ${redirectTo}`);
 
     if (response.success) {
+      console.log("Login successful, navigating to redirect path");
       f7.views.main.router.navigate(redirectTo);
     } else {
+      console.log("Login failed", response.message);
       f7.toast.show({
         text: response.message || "Неверное имя пользователя или пароль",
         closeTimeout: 3000,
@@ -236,13 +267,14 @@ const handleLogin = async (e: Event) => {
       });
     }
   } catch (error) {
+    console.error("Login error", error);
     f7.toast.show({
       text: "Произошла ошибка при входе. Попробуйте позже.",
       closeTimeout: 3000,
       position: "center",
     });
-    console.error(error);
   } finally {
+    console.log("Login process completed, setting loading state to false");
     isLoading.value = false;
   }
 };
