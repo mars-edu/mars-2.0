@@ -1,5 +1,9 @@
-<!-- <template>
-  <button class="flex items-center gap-3 w-fit" @click="navigateToHome">
+<template>
+  <button
+    v-if="isProduction"
+    class="flex items-center gap-3 w-fit"
+    @click="navigateToHome"
+  >
     <div
       :class="[
         'w-12 h-12 rounded-full flex items-center justify-center font-bold text-2xl',
@@ -19,10 +23,11 @@
       >Mars</span
     >
   </button>
-</template> -->
+</template>
 
 <script setup lang="ts">
 import { f7 } from "framework7-vue";
+import { ref } from "vue";
 
 defineProps({
   variant: {
@@ -31,6 +36,8 @@ defineProps({
     validator: (value: string) => ["default", "light"].includes(value),
   },
 });
+
+const isProduction = ref(import.meta.env.MODE !== "development");
 
 const navigateToHome = () => {
   f7.views.main.router.navigate("/");
