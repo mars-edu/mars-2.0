@@ -17,67 +17,64 @@ export function useRBAC() {
 
   const getNavigationItems = computed(() => {
     const items = [
-      // Admin items
       {
         id: "home",
         label: "Главная",
-        icon: "house",
+        icon: "house_fill",
         roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
       },
       {
-        id: "students",
-        label: "Студенты",
-        icon: "person_2_fill",
-        roles: [Role.ADMIN],
-      },
-      {
-        id: "teachers",
-        label: "Преподаватели",
-        icon: "person_3_fill",
-        roles: [Role.ADMIN],
-      },
-      {
-        id: "parents",
-        label: "Родители",
-        icon: "person_2",
-        roles: [Role.ADMIN],
-      },
-      {
-        id: "settings",
-        label: "Настройки",
-        icon: "gear",
-        roles: [Role.ADMIN],
-      },
-
-      // Teacher items
-      {
-        id: "create-course",
-        label: "Создать курс",
-        icon: "plus_square_fill",
+        id: "schedule",
+        label: "Расписание",
+        icon: "calendar_fill",
         roles: [Role.TEACHER],
       },
       {
-        id: "room-booking",
-        label: "Бронирование кабинета",
-        icon: "building_2_fill",
+        id: "journals",
+        label: "Журналы",
+        icon: "document_text_fill",
         roles: [Role.TEACHER],
       },
       {
         id: "rup",
         label: "РУП",
-        icon: "doc_plaintext",
-        roles: [Role.TEACHER],
-      },
-      {
-        id: "institution-info",
-        label: "Информация об учебном заведении",
-        icon: "building",
+        icon: "document_fill",
         roles: [Role.TEACHER],
       },
       {
         id: "testing",
         label: "Тестирование",
-        icon: "checkmark_square_fill",
+        icon: "checkmark_circle_fill",
+        roles: [Role.TEACHER],
+      },
+      {
+        id: "create-course",
+        label: "Создать курс",
+        icon: "plus_circle_fill",
+        roles: [Role.TEACHER],
+      },
+      {
+        id: "report-editor",
+        label: "Редактор отчетов",
+        icon: "document_text_fill",
+        roles: [Role.TEACHER],
+      },
+      {
+        id: "room-booking",
+        label: "Бронирование кабинета",
+        icon: "building_fill",
+        roles: [Role.TEACHER],
+      },
+      {
+        id: "communication",
+        label: "Общение",
+        icon: "chat_bubble_fill",
+        roles: [Role.TEACHER],
+      },
+      {
+        id: "education-schedule",
+        label: "График образовательного процесса",
+        icon: "calendar_fill",
         roles: [Role.TEACHER],
       },
       {
@@ -87,21 +84,9 @@ export function useRBAC() {
         roles: [Role.TEACHER],
       },
       {
-        id: "education-schedule",
-        label: "График образовательного процесса",
-        icon: "calendar",
-        roles: [Role.TEACHER],
-      },
-      {
-        id: "report-editor",
-        label: "Редактор отчетов",
-        icon: "doc_text_fill",
-        roles: [Role.TEACHER],
-      },
-      {
-        id: "communication",
-        label: "Общение",
-        icon: "chat_bubble_fill",
+        id: "institution-info",
+        label: "Информация об учебном заведении",
+        icon: "building_fill",
         roles: [Role.TEACHER],
       },
     ];
@@ -114,19 +99,19 @@ export function useRBAC() {
       {
         id: "profile",
         label: "Профиль",
-        icon: "person",
+        icon: "person_fill",
         roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
       },
       {
         id: "settings",
         label: "Настройки",
-        icon: "gear",
+        icon: "gear_fill",
         roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
       },
       {
         id: "logout",
         label: "Выйти",
-        icon: "arrow_right_square",
+        icon: "arrow_right_circle_fill",
         roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
       },
     ];
