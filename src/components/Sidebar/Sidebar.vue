@@ -25,6 +25,7 @@
         v-for="item in profileMenuItems"
         :key="item.id"
         class="py-2.5 px-4 cursor-pointer flex items-center gap-3 transition-colors hover:bg-gray-50 group"
+        @click="handleProfileItemClick(item.id)"
       >
         <i
           v-if="item.icon"
@@ -40,6 +41,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useRBAC } from "@/composables/useRBAC";
+import { f7 } from "framework7-vue";
+import { useUserStore } from "@/stores/userStore";
 
 interface Props {
   activeNavItem?: string;
@@ -50,6 +53,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const { getNavigationItems, getProfileMenuItems } = useRBAC();
+const userStore = useUserStore();
 
 const navigationItems = computed(() => getNavigationItems.value);
 const profileMenuItems = computed(() => getProfileMenuItems.value);
@@ -63,7 +67,60 @@ const activeNavItem = computed({
   set: (value) => emit("update:activeNavItem", value),
 });
 
+const getRouteForItem = (itemId: string): string => {
+  switch (itemId) {
+    case "home":
+      return "/";
+    case "schedule":
+      return "/schedule/";
+    case "journals":
+      return "/journals/";
+    case "rup":
+      return "/rup/";
+    case "testing":
+      return "/testing/";
+    case "create-course":
+      return "/create-course/";
+    case "report-editor":
+      return "/report-editor/";
+    case "room-booking":
+      return "/room-booking/";
+    case "communication":
+      return "/communication/";
+    case "education-schedule":
+      return "/education-schedule/";
+    case "library":
+      return "/library/";
+    case "institution-info":
+      return "/institution-info/";
+    case "profile":
+      return "/profile/";
+    case "settings":
+      return "/settings/";
+    case "planning": {
+      const now = new Date();
+      return `/planning/${now.getFullYear()}/${now.getMonth() + 1}/`;
+    }
+    case "logout":
+      return "/login/";
+    default:
+      return "/";
+  }
+};
+
 const handleNavItemClick = (itemId: string): void => {
   activeNavItem.value = itemId;
+  const route = getRouteForItem(itemId);
+  f7.views.main.router.navigate(route);
+};
+
+const handleProfileItemClick = async (itemId: string): Promise<void> => {
+  if (itemId === "logout") {
+    await userStore.logout();
+    f7.views.main.router.navigate("/login/");
+    return;
+  }
+  const route = getRouteForItem(itemId);
+  f7.views.main.router.navigate(route);
 };
 </script>
