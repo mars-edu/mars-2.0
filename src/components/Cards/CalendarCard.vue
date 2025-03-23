@@ -95,11 +95,7 @@ const navigateToPlanning = () => {
   const year = currentDate.value.getFullYear();
   const month = currentDate.value.getMonth() + 1; // JavaScript months are 0-indexed
 
-  f7.views.main.router.navigate(`/planning/${year}/${month}/`, {
-    reloadCurrent: true,
-    history: true,
-    ignoreCache: true,
-  });
+  f7.views.main.router.navigate(`/planning/${year}/${month}/`);
   // window.location.href = `/planning/${year}/${month}/`;
 };
 

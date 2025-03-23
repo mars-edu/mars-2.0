@@ -1,6 +1,5 @@
 <template>
   <aside class="w-52 border-r border-gray-200 bg-white flex flex-col">
-    <!-- Navigation Items Section - Scrollable -->
     <div class="flex-1 overflow-y-auto">
       <nav class="py-4">
         <div
@@ -21,7 +20,6 @@
       </nav>
     </div>
 
-    <!-- Profile Menu Section - Fixed at bottom -->
     <div class="border-t border-gray-200 py-4 bg-white shrink-0">
       <div
         v-for="item in profileMenuItems"
@@ -40,65 +38,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-
-interface NavigationItem {
-  id: string;
-  label: string;
-  icon?: string;
-}
-
-interface ProfileMenuItem {
-  id: string;
-  label: string;
-  icon?: string;
-  link?: string;
-}
+import { computed } from "vue";
+import { useRBAC } from "@/composables/useRBAC";
 
 interface Props {
-  navigationItems?: NavigationItem[];
   activeNavItem?: string;
-  profileMenuItems?: ProfileMenuItem[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  navigationItems: () => [],
   activeNavItem: "home",
-  profileMenuItems: () => [],
 });
 
-// Default navigation items if none provided
-const defaultSidebarNavItems: NavigationItem[] = [
-  { id: "home", label: "Главная", icon: "house" },
-  { id: "schedule", label: "Расписание", icon: "clock" },
-  { id: "journals", label: "Журналы", icon: "doc_text_fill" },
-];
+const { getNavigationItems, getProfileMenuItems } = useRBAC();
 
-// Default profile menu items if none provided
-const defaultSidebarProfileItems: ProfileMenuItem[] = [
-  { id: "settings", label: "Настройки", icon: "gear" },
-  { id: "profile", label: "Профиль", icon: "person" },
-  { id: "logout", label: "Выйти", icon: "arrow_right_square" },
-];
-
-// Use provided items or defaults
-const navigationItems = computed(() =>
-  props.navigationItems && props.navigationItems.length > 0
-    ? props.navigationItems
-    : defaultSidebarNavItems
-);
-
-const profileMenuItems = computed(() =>
-  props.profileMenuItems && props.profileMenuItems.length > 0
-    ? props.profileMenuItems
-    : defaultSidebarProfileItems
-);
+const navigationItems = computed(() => getNavigationItems.value);
+const profileMenuItems = computed(() => getProfileMenuItems.value);
 
 const emit = defineEmits<{
   (e: "update:activeNavItem", value: string): void;
 }>();
 
-// Create a computed property for activeNavItem to support v-model
 const activeNavItem = computed({
   get: () => props.activeNavItem,
   set: (value) => emit("update:activeNavItem", value),

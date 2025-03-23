@@ -16,12 +16,14 @@ import "../css/framework7-icons.css";
 // Import Pinia
 import { createPinia } from "pinia";
 
+// Import auth directive
+import vAuth from "../directives/auth";
+
 import "../css/app.css";
 
 // Import App Component
 import App from "../components/app.vue";
 
-// Init Framework7-Vue Plugin
 Framework7.use(Framework7Vue);
 
 // Init App
@@ -30,6 +32,9 @@ const app = createApp(App);
 // Create and use Pinia
 const pinia = createPinia();
 app.use(pinia);
+
+// Register custom directives
+app.directive("auth", vAuth);
 
 // Register Framework7 Vue components
 registerComponents(app);

@@ -6,12 +6,14 @@
   --f7-theme-color-shade: #d32f2f;
   --f7-theme-color-tint: #ef5350;
 
-  --f7-page-transition-duration: 50ms;
+  --f7-page-transition-duration: 300ms;
   /* Default 400ms */
-  --f7-dialog-transition-duration: 50ms;
+  --f7-dialog-transition-duration: 250ms;
   /* Default 300ms */
-  --f7-popup-transition-duration: 50ms;
+  --f7-popup-transition-duration: 250ms;
   /* Default 300ms */
+  --f7-view-transition-duration: 300ms;
+  /* Add view transition duration */
 }
 
 body {
@@ -19,6 +21,14 @@ body {
   background-color: #f5f5f5;
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.page {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  will-change: transform;
 }
 
 ::-webkit-scrollbar {
