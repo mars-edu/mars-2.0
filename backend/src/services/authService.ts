@@ -61,7 +61,7 @@ class AuthService {
         };
       }
 
-      const roles = user.userRoles.map((ur: UserRole) => ur.role);
+      const roles = user.userRoles.map((ur: UserRole) => ur.role as Role);
       const { password, ...userBasicInfo } = user;
 
       const token = this.generateToken({
@@ -109,7 +109,7 @@ class AuthService {
         };
       }
 
-      const roles = user.userRoles.map((ur) => ur.role);
+      const roles = user.userRoles.map((ur) => ur.role as Role);
       const { password, ...userBasicInfo } = user;
 
       return {
