@@ -43,6 +43,7 @@ class AuthService {
       });
 
       if (!user) {
+        console.log("User not found");
         return {
           success: false,
           message: "Invalid credentials",
@@ -55,6 +56,7 @@ class AuthService {
       );
 
       if (!isValidPassword) {
+        console.log("Invalid password");
         return {
           success: false,
           message: "Invalid credentials",
