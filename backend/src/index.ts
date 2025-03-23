@@ -38,10 +38,10 @@ api.get("/", (c) => {
 
 api.get("/env", (c) => {
   return c.json({
-    hasDb: !!c.env.DB,
-    hasJwtSecret: !!c.env.JWT_SECRET,
-    hasJwtExpiry: !!c.env.JWT_EXPIRY,
-    hasFrontendUrl: !!c.env.FRONTEND_URL,
+    db: c.env.DB,
+    jwtSecret: c.env.JWT_SECRET,
+    jwtExpiry: c.env.JWT_EXPIRY,
+    frontendUrl: c.env.FRONTEND_URL,
   });
 });
 
