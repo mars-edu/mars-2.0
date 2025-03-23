@@ -1,7 +1,8 @@
-import dbService from "../utils/prisma.js";
+import prisma from "../utils/prismaClient.js";
 import { compareSync, hashSync } from "bcryptjs";
-import { sign, verify } from "jsonwebtoken";
-import env, { getEnv } from "../utils/env.js";
+import { sign, verify, SignOptions } from "jsonwebtoken";
+import env, { getEnv, Env } from "../utils/env.js";
+import { Role, User, UserRole } from "@prisma/client";
 
 const SALT_ROUNDS = 10;
 
@@ -15,38 +16,20 @@ export interface TokenPayload {
   email: string;
 }
 
-interface UserRoleData {
-  role: string;
-}
-
 class AuthService {
   async login(credentials: LoginCredentials) {
     try {
-      const db = dbService.getDatabase();
+      const user = await prisma.user.findUnique({
+        where: { email: credentials.username },
+        include: { userRoles: true },
+      });
 
-      // Query to get user with email
-      const { results: userResults } = await db
-        .prepare(
-          `SELECT id, firstName, lastName, email, password 
-         FROM User WHERE email = ?`
-        )
-        .bind(credentials.username)
-        .all();
-
-      if (!userResults || userResults.length === 0) {
+      if (!user) {
         return {
           success: false,
           message: "Неверное имя пользователя или пароль",
         };
       }
-
-      const user = userResults[0];
-
-      // Get user roles
-      const { results: roleResults } = await db
-        .prepare(`SELECT role FROM UserRole WHERE userId = ?`)
-        .bind(user.id)
-        .all();
 
       const isPasswordValid = this.validatePassword(
         credentials.password,
@@ -65,7 +48,7 @@ class AuthService {
         email: user.email,
       });
 
-      const roles = roleResults.map((ur: UserRoleData) => ur.role);
+      const roles = user.userRoles.map((ur) => ur.role);
 
       const { password, ...userBasicInfo } = user;
 
@@ -88,9 +71,8 @@ class AuthService {
 
   async validateToken(token: string) {
     try {
-      // Get environment from context if available, otherwise use the default env
-      const currentEnv = dbService.getEnv() || env;
-      const decoded = verify(token, currentEnv.JWT_SECRET) as TokenPayload;
+      const jwtSecret = env.JWT_SECRET;
+      const decoded = verify(token, jwtSecret) as TokenPayload;
 
       if (!decoded || !decoded.userId) {
         return {
@@ -99,38 +81,26 @@ class AuthService {
         };
       }
 
-      const db = dbService.getDatabase();
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+        include: { userRoles: true },
+      });
 
-      // Query to get user by ID
-      const { results: userResults } = await db
-        .prepare(
-          `SELECT id, firstName, lastName, email 
-         FROM User WHERE id = ?`
-        )
-        .bind(decoded.userId)
-        .all();
-
-      if (!userResults || userResults.length === 0) {
+      if (!user) {
         return {
           success: false,
           message: "User not found",
         };
       }
 
-      const user = userResults[0];
+      const roles = user.userRoles.map((ur) => ur.role);
 
-      // Get user roles
-      const { results: roleResults } = await db
-        .prepare(`SELECT role FROM UserRole WHERE userId = ?`)
-        .bind(user.id)
-        .all();
-
-      const roles = roleResults.map((ur: UserRoleData) => ur.role);
+      const { password, ...userBasicInfo } = user;
 
       return {
         success: true,
         user: {
-          ...user,
+          ...userBasicInfo,
           roles,
         },
       };
@@ -144,11 +114,12 @@ class AuthService {
   }
 
   private generateToken(payload: TokenPayload): string {
-    // Get environment from context if available, otherwise use the default env
-    const currentEnv = dbService.getEnv() || env;
-    return sign(payload, currentEnv.JWT_SECRET, {
-      expiresIn: currentEnv.JWT_EXPIRY,
-    });
+    const jwtSecret = env.JWT_SECRET;
+    const options: SignOptions = {
+      algorithm: "HS256",
+      expiresIn: "24h",
+    };
+    return sign(payload, jwtSecret, options);
   }
 
   hashPassword(password: string): string {
