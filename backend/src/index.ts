@@ -52,7 +52,7 @@ const app = new Hono<{ Bindings: Env }>();
 app.use(
   "*",
   cors({
-    origin: "http://localhost:5173",
+    origin: "https://mars-2-0.pages.dev",
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["POST", "GET", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
