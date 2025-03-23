@@ -52,7 +52,7 @@ const props = withDefaults(defineProps<Props>(), {
   activeNavItem: "home",
 });
 
-const { getNavigationItems, getProfileMenuItems } = useRBAC();
+const { getNavigationItems, getProfileMenuItems, getRouteForItem } = useRBAC();
 const userStore = useUserStore();
 
 const navigationItems = computed(() => getNavigationItems.value);
@@ -66,47 +66,6 @@ const activeNavItem = computed({
   get: () => props.activeNavItem,
   set: (value) => emit("update:activeNavItem", value),
 });
-
-const getRouteForItem = (itemId: string): string => {
-  switch (itemId) {
-    case "home":
-      return "/";
-    case "schedule":
-      return "/schedule/";
-    case "journals":
-      return "/journals/";
-    case "rup":
-      return "/rup/";
-    case "testing":
-      return "/testing/";
-    case "create-course":
-      return "/create-course/";
-    case "report-editor":
-      return "/report-editor/";
-    case "room-booking":
-      return "/room-booking/";
-    case "communication":
-      return "/communication/";
-    case "education-schedule":
-      return "/education-schedule/";
-    case "library":
-      return "/library/";
-    case "institution-info":
-      return "/institution-info/";
-    case "profile":
-      return "/profile/";
-    case "settings":
-      return "/settings/";
-    case "planning": {
-      const now = new Date();
-      return `/planning/${now.getFullYear()}/${now.getMonth() + 1}/`;
-    }
-    case "logout":
-      return "/login/";
-    default:
-      return "/";
-  }
-};
 
 const handleNavItemClick = (itemId: string): void => {
   activeNavItem.value = itemId;

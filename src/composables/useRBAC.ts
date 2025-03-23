@@ -6,6 +6,14 @@ export interface AccessControl {
   redirect?: string;
 }
 
+export interface NavigationItem {
+  id: string;
+  label: string;
+  icon: string;
+  roles: Role[];
+  route?: string;
+}
+
 export function useRBAC() {
   const userStore = useUserStore();
 
@@ -15,8 +23,47 @@ export function useRBAC() {
     return userStore.hasAnyRole(requiredRoles);
   };
 
+  const getRouteForItem = (itemId: string): string => {
+    switch (itemId) {
+      case "home":
+        return "/";
+      case "journals":
+        return "/journals/";
+      case "rup":
+        return "/rup/";
+      case "testing":
+        return "/testing/";
+      case "create-course":
+        return "/create-course/";
+      case "report-editor":
+        return "/report-editor/";
+      case "room-booking":
+        return "/room-booking/";
+      case "communication":
+        return "/communication/";
+      case "education-schedule":
+        return "/education-schedule/";
+      case "library":
+        return "/library/";
+      case "institution-info":
+        return "/institution-info/";
+      case "profile":
+        return "/profile/";
+      case "settings":
+        return "/settings/";
+      case "schedule": {
+        const now = new Date();
+        return `/planning/${now.getFullYear()}/${now.getMonth() + 1}/`;
+      }
+      case "logout":
+        return "/login/";
+      default:
+        return "/";
+    }
+  };
+
   const getNavigationItems = computed(() => {
-    const items = [
+    const items: NavigationItem[] = [
       {
         id: "home",
         label: "Главная",
@@ -27,67 +74,67 @@ export function useRBAC() {
         id: "schedule",
         label: "Расписание",
         icon: "calendar_fill",
-        roles: [Role.TEACHER],
+        roles: [Role.ADMIN, Role.TEACHER],
       },
       {
         id: "journals",
         label: "Журналы",
         icon: "document_text_fill",
-        roles: [Role.TEACHER],
+        roles: [Role.ADMIN, Role.TEACHER],
       },
       {
         id: "rup",
         label: "РУП",
         icon: "document_fill",
-        roles: [Role.TEACHER],
+        roles: [Role.ADMIN, Role.TEACHER],
       },
       {
         id: "testing",
         label: "Тестирование",
         icon: "checkmark_circle_fill",
-        roles: [Role.TEACHER],
+        roles: [Role.ADMIN, Role.TEACHER],
       },
       {
         id: "create-course",
         label: "Создать курс",
         icon: "plus_circle_fill",
-        roles: [Role.TEACHER],
+        roles: [Role.ADMIN, Role.TEACHER],
       },
       {
         id: "report-editor",
         label: "Редактор отчетов",
         icon: "document_text_fill",
-        roles: [Role.TEACHER],
+        roles: [Role.ADMIN, Role.TEACHER],
       },
       {
         id: "room-booking",
         label: "Бронирование кабинета",
         icon: "building_fill",
-        roles: [Role.TEACHER],
+        roles: [Role.ADMIN, Role.TEACHER],
       },
       {
         id: "communication",
         label: "Общение",
         icon: "chat_bubble_fill",
-        roles: [Role.TEACHER],
+        roles: [Role.ADMIN, Role.TEACHER],
       },
       {
         id: "education-schedule",
         label: "График образовательного процесса",
         icon: "calendar_fill",
-        roles: [Role.TEACHER],
+        roles: [Role.ADMIN, Role.TEACHER],
       },
       {
         id: "library",
         label: "Библиотека",
         icon: "book_fill",
-        roles: [Role.TEACHER],
+        roles: [Role.ADMIN, Role.TEACHER],
       },
       {
         id: "institution-info",
         label: "Информация об учебном заведении",
         icon: "building_fill",
-        roles: [Role.TEACHER],
+        roles: [Role.ADMIN, Role.TEACHER],
       },
     ];
 
@@ -95,7 +142,7 @@ export function useRBAC() {
   });
 
   const getProfileMenuItems = computed(() => {
-    const items = [
+    const items: NavigationItem[] = [
       {
         id: "profile",
         label: "Профиль",
@@ -123,5 +170,6 @@ export function useRBAC() {
     checkAccess,
     getNavigationItems,
     getProfileMenuItems,
+    getRouteForItem,
   };
 }
