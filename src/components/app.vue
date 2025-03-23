@@ -6,10 +6,17 @@
       class="safe-areas"
       :main="true"
       :pushState="true"
-      :loadInitialPage="false"
-      :preloadPreviousPage="false"
       :browserHistory="true"
-      :reloadPages="true"
+      browserHistorySeparator="#!"
+      browserHistoryRoot=""
+      :iosSwipeBack="true"
+      :reloadPages="false"
+      :xhrCache="false"
+      :loadInitialPage="true"
+      :preloadPreviousPage="true"
+      :removeElements="false"
+      :uniqueHistory="true"
+      :allowDuplicateUrls="false"
       browserHistoryInitialMatch
     ></f7-view>
   </f7-app>
@@ -44,18 +51,12 @@ const f7params: Framework7Parameters = {
   store: store,
   routes: routes,
 
-  // view: {
-  //   browserHistory: true,
-  //   browserHistorySeparator: "#",
-  //   browserHistoryRoot: "",
-  //   reloadPages: false,
-  //   // stackPages: true,
-  //   preloadPreviousPage: true,
-  //   // uniqueHistory: true,
-  //   allowDuplicateUrls: false,
-  //   removeElements: false,
-  //   xhrCache: false,
-  // },
+  view: {
+    browserHistory: true,
+    browserHistorySeparator: "#!",
+    browserHistoryRoot: "",
+    preloadPreviousPage: true,
+  },
 
   on: {
     routeChange(newRoute: any) {
