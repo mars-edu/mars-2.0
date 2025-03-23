@@ -3,16 +3,19 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "bun --watch src/index.ts",
-    "start": "bun src/index.ts",
+    "dev": "wrangler dev src/index.ts",
+    "start": "wrangler dev src/index.ts",
     "build": "tsc",
+    "deploy": "wrangler deploy src/index.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "seed": "bun prisma/seed.ts"
+    "seed": "wrangler d1 execute mars-db --local --file=./prisma/seed.sql"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@cloudflare/workers-types": "^4.20250321.0",
+    "wrangler": "^3.114.2"
   },
   "peerDependencies": {
     "typescript": "^5.8.2"
@@ -20,11 +23,9 @@
   "dependencies": {
     "@prisma/client": "^6.5.0",
     "@types/bcrypt": "^5.0.2",
-    "@types/better-sqlite3": "^7.6.12",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.13.11",
-    "bcrypt": "^5.1.1",
-    "better-sqlite3": "^11.9.1",
+    "bcryptjs": "^2.4.3",
     "hono": "^4.7.5",
     "hono-sessions": "^0.7.2",
     "jsonwebtoken": "^9.0.2",
