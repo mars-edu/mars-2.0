@@ -37,6 +37,8 @@ api.use(
   "*",
   cors({
     origin: "*",
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowHeaders: ["Content-Type"],
     credentials: true,
   })
 );
