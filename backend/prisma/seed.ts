@@ -4,12 +4,13 @@ import { hashSync } from "bcrypt";
 const prisma = new PrismaClient();
 const SALT_ROUNDS = 10;
 
-enum Role {
-  ADMIN = "ADMIN",
-  TEACHER = "TEACHER",
-  STUDENT = "STUDENT",
-  PARENT = "PARENT",
-}
+// Define role constants
+const ROLES = {
+  ADMIN: "ADMIN",
+  TEACHER: "TEACHER",
+  STUDENT: "STUDENT",
+  PARENT: "PARENT",
+} as const;
 
 async function main() {
   try {
@@ -28,13 +29,13 @@ async function main() {
       where: {
         userId_role: {
           userId: admin.id,
-          role: Role.ADMIN,
+          role: ROLES.ADMIN,
         },
       },
       update: {},
       create: {
         userId: admin.id,
-        role: Role.ADMIN,
+        role: ROLES.ADMIN,
       },
     });
 
@@ -53,13 +54,13 @@ async function main() {
       where: {
         userId_role: {
           userId: teacher.id,
-          role: Role.TEACHER,
+          role: ROLES.TEACHER,
         },
       },
       update: {},
       create: {
         userId: teacher.id,
-        role: Role.TEACHER,
+        role: ROLES.TEACHER,
       },
     });
 

@@ -26,24 +26,27 @@ export interface Env {
 
 function validateEnv() {
   // Check if we're in a Cloudflare Worker context
-  const isWorkerContext = typeof process === "undefined";
+  const isWorkerContext =
+    typeof process === "undefined" || process.env === undefined;
 
   if (isWorkerContext) {
-    // Return a dummy env for Workers, as actual env will be injected later
+    // For worker context, return a basic env that will be overridden by actual bindings
     return {
       PORT: 3001,
       NODE_ENV: "development",
       DATABASE_URL: "cloudflare_d1",
-      JWT_SECRET: "dummy_secret_for_workers" as Secret,
-      JWT_EXPIRY: "24h",
-      FRONTEND_URL: "http://localhost:5173",
+      JWT_SECRET: process?.env?.JWT_SECRET || "dummy_secret_for_workers",
+      JWT_EXPIRY: process?.env?.JWT_EXPIRY || "24h",
+      FRONTEND_URL: process?.env?.FRONTEND_URL || "http://localhost:5173",
     };
   }
 
-  // For local development, fall back to process.env
+  // For local development, use process.env
   const env = process.env;
 
-  const parsed = envSchema.safeParse(env);
+  const parsed = envSchema.safeParse({
+    ...env,
+  });
 
   if (!parsed.success) {
     console.error(
@@ -70,7 +73,5 @@ export function getEnv(env: Env) {
   };
 }
 
-// For Node.js environment
 const env = validateEnv();
-
 export default env;

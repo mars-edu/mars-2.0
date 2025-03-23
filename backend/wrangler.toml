@@ -12,6 +12,7 @@ FRONTEND_URL = "http://localhost:5173"
 binding = "DB"
 database_name = "mars-db"
 database_id = "6def8cfc-c69e-43f9-a16e-a38e370c52d7"
+migrations_dir = "prisma/migrations"
 
 [dev]
 port = 3001 

@@ -1,11 +1,12 @@
 import { Context } from "hono";
 import { Hono } from "hono";
 import { setCookie, deleteCookie, getCookie } from "hono/cookie";
-import authService from "../services/authService.js";
+import AuthService from "../services/authService.js";
+import type { Env } from "../utils/env.js";
 
-const auth = new Hono();
+const auth = new Hono<{ Bindings: Env }>();
 
-auth.post("/login", async (c: Context) => {
+auth.post("/login", async (c: Context<{ Bindings: Env }>) => {
   try {
     const { username, password, remember } = await c.req.json();
 
@@ -19,6 +20,7 @@ auth.post("/login", async (c: Context) => {
       );
     }
 
+    const authService = new AuthService(c);
     const result = await authService.login({ username, password });
 
     if (result.success && result.token && remember) {
@@ -26,7 +28,7 @@ auth.post("/login", async (c: Context) => {
         path: "/",
         httpOnly: true,
         sameSite: "Strict",
-        maxAge: 60 * 60 * 24 * 7,
+        maxAge: 60 * 60 * 24 * 7, // 7 days
         secure: process.env.NODE_ENV === "production",
       });
     }
@@ -47,10 +49,9 @@ auth.post("/login", async (c: Context) => {
   }
 });
 
-auth.post("/validate-token", async (c: Context) => {
+auth.post("/validate-token", async (c: Context<{ Bindings: Env }>) => {
   try {
     const body = await c.req.json().catch(() => ({}));
-
     const cookieToken = getCookie(c, "auth_token");
     const token = body.token || cookieToken;
 
@@ -64,6 +65,7 @@ auth.post("/validate-token", async (c: Context) => {
       );
     }
 
+    const authService = new AuthService(c);
     const result = await authService.validateToken(token);
     return c.json(result);
   } catch (error) {
