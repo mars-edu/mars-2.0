@@ -44,6 +44,7 @@ type CustomRoute = Router.Route & {
 };
 
 const userStore = useUserStore();
+console.log("[App] Component setup initiated");
 
 const f7params: Framework7Parameters = {
   name: "Mars",
@@ -60,6 +61,8 @@ const f7params: Framework7Parameters = {
 
   on: {
     routeChange(newRoute: any) {
+      console.log("[Router] Route changed:", newRoute);
+
       // Apply route middleware
       routeMiddleware({
         router: {
@@ -73,38 +76,81 @@ const f7params: Framework7Parameters = {
         to: newRoute,
         resolve: (redirect) => {
           if (redirect) {
+            console.log("[Middleware] Redirecting to:", redirect.url);
             f7.views.main.router.navigate(redirect.url, redirect.options);
+          } else {
+            console.log("[Middleware] Route approved without redirect");
           }
         },
         reject: () => {
+          console.log("[Middleware] Route rejected, redirecting to home");
           f7.views.main.router.navigate("/");
         },
       });
     },
     init() {
-      console.log("Framework7 initialized");
+      console.log("[Framework7] Framework7 initialized");
     },
   },
 };
 
 onMounted(() => {
-  f7ready(async () => {
-    // Initialize user store
-    await userStore.initialize();
+  console.log("[App] Component mounted");
+  console.log(
+    "[App] Verbose logging enabled for authentication and routing process"
+  );
 
-    // Ensure router is properly initialized
+  f7ready(async () => {
+    console.log("[F7] Framework7 ready");
+    console.log("[F7] Detailed initialization process starting");
+
+    console.log("[UserStore] Initializing user store");
+    console.log("[UserStore] Attempting to load user authentication state");
+    await userStore.initialize();
+    console.log("[UserStore] User authenticated:", userStore.isAuthenticated);
+    console.log("[UserStore] Detailed authentication state:", {
+      isAuthenticated: userStore.isAuthenticated,
+      userRoles: userStore.roles,
+    });
+
     if (f7 && f7.views && f7.views.main) {
-      // Navigate to login if not authenticated and current route requires authentication
+      console.log("[Router] Main view router initialized");
+      console.log("[Router] Detailed router configuration:", {
+        browserHistory: f7.views.main.params.browserHistory,
+        browserHistoryRoot: f7.views.main.params.browserHistoryRoot,
+      });
+
       if (!userStore.isAuthenticated) {
         const currentRoute = f7.views.main.router.currentRoute;
+        console.log(
+          "[Auth] User not authenticated, performing comprehensive route requirement check"
+        );
 
-        // Add null checks to prevent TypeError
-        if (currentRoute && currentRoute.route) {
-          const routeOptions = currentRoute.route.options as { roles?: Role[] };
-          const requiresAuth =
-            routeOptions?.roles && routeOptions.roles.length > 0;
+        console.log(
+          "[Auth] Verbose current route object details:",
+          JSON.stringify(currentRoute, null, 2)
+        );
+
+        let requiresAuth = false;
+
+        if (currentRoute) {
+          const routeMeta =
+            currentRoute.route?.meta || currentRoute.route?.options || {};
+          const roles = (routeMeta.roles as Role[]) ?? [];
+          requiresAuth = roles.length > 0;
+          console.log("[Auth] Detailed route authentication analysis:", {
+            routeMeta: routeMeta,
+            requiredRoles: roles,
+            requiresAuth: requiresAuth,
+          });
 
           if (requiresAuth) {
+            console.log("[Auth] Verbose redirect information:", {
+              reason: "Authentication required",
+              currentRoute: currentRoute.url,
+              redirectTo: "/login/",
+              redirectProps: { redirectTo: currentRoute.url },
+            });
             f7.views.main.router.navigate("/login/", {
               props: {
                 redirectTo: currentRoute.url,
@@ -112,7 +158,21 @@ onMounted(() => {
             });
           }
         }
+      } else {
+        console.log("[Auth] Verbose authentication status:", {
+          message: "User is authenticated, proceeding normally",
+          userRoles: userStore.roles,
+        });
       }
+    } else {
+      console.warn(
+        "[Router] Detailed error: Main view router not initialized properly",
+        {
+          f7Exists: !!f7,
+          viewsExists: !!f7?.views,
+          mainViewExists: !!f7?.views?.main,
+        }
+      );
     }
   });
 });
