@@ -9,9 +9,11 @@
     </div>
     <div class="header-right">
       <f7-link class="notification-icon" icon-f7="bell"></f7-link>
+      <ThemeToggle class="theme-toggle" />
       <LanguageSelector
         :languages="availableLanguages"
         :active-language="activeLanguage"
+        :theme="themeStore.currentTheme"
         @change="handleLanguageChange"
         class="language-selector"
       />
@@ -32,7 +34,11 @@ import SearchBar from "../SearchBar.vue";
 import LanguageSelector from "../LanguageSelector.vue";
 import rasulZhangeldinovichProfile from "@/assets/rassul-zh-profile.jpg";
 import Logo from "../Logo/Logo.vue";
+import ThemeToggle from "../ThemeToggle.vue";
 import { useLanguage } from "@/composables/useLanguage.ts";
+import { useThemeStore } from "@/stores/themeStore";
+
+const themeStore = useThemeStore();
 
 const emit = defineEmits<{
   (e: "searchbar-enable"): void;
@@ -55,7 +61,8 @@ const handleLanguageChange = (code: string) => {
   padding: 16px 24px;
   height: 80px;
   border-bottom: 1px solid var(--border-color);
-  background-color: white;
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   position: sticky;
   top: 0;
@@ -98,6 +105,10 @@ const handleLanguageChange = (code: string) => {
 }
 
 .language-selector {
+  margin: 0 8px;
+}
+
+.theme-toggle {
   margin: 0 8px;
 }
 

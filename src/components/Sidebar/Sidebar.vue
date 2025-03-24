@@ -1,38 +1,55 @@
 <template>
-  <aside class="w-52 border-r border-gray-200 bg-white flex flex-col">
+  <aside
+    class="w-52 border-r flex flex-col"
+    :class="[themeClasses.background, themeClasses.border]"
+  >
     <div class="flex-1 overflow-y-auto">
       <nav class="py-4">
         <div
           v-for="item in navigationItems"
           :key="item.id"
-          class="py-2.5 px-4 cursor-pointer flex items-center gap-3 transition-colors hover:bg-gray-50"
-          :class="{
-            'bg-red-50 border-l-4 border-red-600': item.id === activeNavItem,
-            'border-l-4 border-transparent': item.id !== activeNavItem,
-          }"
+          class="py-2.5 px-4 cursor-pointer flex items-center gap-3 transition-colors"
+          :class="[
+            themeClasses.hoverBackground,
+            {
+              [themeClasses.activeBackground]: item.id === activeNavItem,
+              'border-l-4 border-primary': item.id === activeNavItem,
+              'border-l-4 border-transparent': item.id !== activeNavItem,
+            },
+          ]"
           @click="handleNavItemClick(item.id)"
         >
-          <i v-if="item.icon" class="f7-icons text-gray-500 text-[16px]">{{
-            item.icon
-          }}</i>
-          <span class="text-sm font-medium">{{ item.label }}</span>
+          <i
+            v-if="item.icon"
+            class="f7-icons text-[16px]"
+            :class="themeClasses.icon"
+            >{{ item.icon }}</i
+          >
+          <span class="text-sm font-medium" :class="themeClasses.text">{{
+            item.label
+          }}</span>
         </div>
       </nav>
     </div>
 
-    <div class="border-t border-gray-200 py-4 bg-white shrink-0">
+    <div
+      class="border-t py-4 shrink-0"
+      :class="[themeClasses.background, themeClasses.border]"
+    >
       <div
         v-for="item in profileMenuItems"
         :key="item.id"
-        class="py-2.5 px-4 cursor-pointer flex items-center gap-3 transition-colors hover:bg-gray-50 group"
+        class="py-2.5 px-4 cursor-pointer flex items-center gap-3 transition-colors group"
+        :class="themeClasses.hoverBackground"
         @click="handleProfileItemClick(item.id)"
       >
         <i
           v-if="item.icon"
-          class="f7-icons text-gray-500 group-hover:text-gray-700 text-[16px]"
+          class="f7-icons text-[16px]"
+          :class="[themeClasses.icon, 'group-hover:' + themeClasses.textHover]"
           >{{ item.icon }}</i
         >
-        <span class="text-sm">{{ item.label }}</span>
+        <span class="text-sm" :class="themeClasses.text">{{ item.label }}</span>
       </div>
     </div>
   </aside>
@@ -46,10 +63,47 @@ import { useUserStore } from "@/stores/userStore";
 
 interface Props {
   activeNavItem?: string;
+  theme?: "white" | "dark" | "lavanda";
 }
 
 const props = withDefaults(defineProps<Props>(), {
   activeNavItem: "home",
+  theme: "white",
+});
+
+const themeClasses = computed(() => {
+  switch (props.theme) {
+    case "dark":
+      return {
+        background: "bg-gray-800",
+        border: "border-gray-700",
+        text: "text-gray-200",
+        textHover: "text-white",
+        icon: "text-gray-400",
+        hoverBackground: "hover:bg-gray-700",
+        activeBackground: "bg-gray-700/50",
+      };
+    case "lavanda":
+      return {
+        background: "bg-purple-50",
+        border: "border-purple-100",
+        text: "text-purple-900",
+        textHover: "text-purple-700",
+        icon: "text-purple-500",
+        hoverBackground: "hover:bg-purple-100",
+        activeBackground: "bg-purple-100/50",
+      };
+    default:
+      return {
+        background: "bg-card",
+        border: "border-border",
+        text: "text-foreground",
+        textHover: "text-foreground",
+        icon: "text-primary",
+        hoverBackground: "hover:bg-secondary",
+        activeBackground: "bg-primary/10",
+      };
+  }
 });
 
 const { getNavigationItems, getProfileMenuItems, getRouteForItem } = useRBAC();

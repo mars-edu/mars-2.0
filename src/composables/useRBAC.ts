@@ -79,13 +79,13 @@ export function useRBAC() {
       {
         id: "journals",
         label: "Журналы",
-        icon: "document_text_fill",
+        icon: "doc_text_fill",
         roles: [Role.ADMIN, Role.TEACHER],
       },
       {
         id: "rup",
         label: "РУП",
-        icon: "document_fill",
+        icon: "doc_fill",
         roles: [Role.ADMIN, Role.TEACHER],
       },
       {
@@ -103,13 +103,13 @@ export function useRBAC() {
       {
         id: "report-editor",
         label: "Редактор отчетов",
-        icon: "document_text_fill",
+        icon: "doc_text_fill",
         roles: [Role.ADMIN, Role.TEACHER],
       },
       {
         id: "room-booking",
         label: "Бронирование кабинета",
-        icon: "building_fill",
+        icon: "building_2_fill",
         roles: [Role.ADMIN, Role.TEACHER],
       },
       {
@@ -133,7 +133,7 @@ export function useRBAC() {
       {
         id: "institution-info",
         label: "Информация об учебном заведении",
-        icon: "building_fill",
+        icon: "building_2_fill",
         roles: [Role.ADMIN, Role.TEACHER],
       },
     ];

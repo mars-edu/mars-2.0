@@ -2,16 +2,14 @@
   <div>
     <div
       id="search-input"
-      class="flex items-center bg-white border border-gray-200 rounded-full pl-3 pr-1 py-3 shadow-sm w-52 cursor-pointer"
+      class="flex items-center bg-card border border-input rounded-full pl-3 pr-1 py-3 shadow-sm w-52 cursor-pointer"
       @click="openSearchPopover"
     >
       <i
-        class="f7-icons text-gray-500 text-lg mr-2 flex items-center justify-center"
+        class="f7-icons text-muted-foreground text-lg mr-2 flex items-center justify-center"
         >search</i
       >
-      <div
-        class="bg-transparent outline-none text-sm placeholder-gray-400 text-gray-700"
-      >
+      <div class="bg-transparent outline-none text-sm text-muted-foreground">
         {{ placeholder }}
       </div>
     </div>
@@ -23,15 +21,15 @@
       target="#search-input"
       close-on-escape
     >
-      <div class="search-popover">
+      <div class="search-popover bg-card">
         <!-- Header with search input -->
-        <div class="p-3 border-b border-gray-200">
-          <div class="flex items-center bg-gray-100 rounded-lg px-3 py-2">
-            <i class="f7-icons text-gray-500 text-lg mr-2">search</i>
+        <div class="p-3 border-b border-input">
+          <div class="flex items-center bg-secondary rounded-lg px-3 py-2">
+            <i class="f7-icons text-muted-foreground text-lg mr-2">search</i>
             <input
               type="text"
               :placeholder="placeholder"
-              class="bg-transparent outline-none w-full text-sm placeholder-gray-400 text-gray-700"
+              class="bg-transparent outline-none w-full text-sm placeholder-muted-foreground text-foreground"
               v-model="searchQuery"
               @input="emitSearch"
               ref="searchInputField"
@@ -39,40 +37,49 @@
             />
             <button
               v-if="searchQuery"
-              class="flex items-center justify-center w-5 h-5 rounded-full bg-gray-400/20 hover:bg-gray-400/30 transition-colors"
+              class="flex items-center justify-center w-5 h-5 rounded-full bg-muted hover:bg-muted/80 transition-colors"
               @click="clearSearch"
             >
-              <i class="f7-icons text-gray-500 text-xs">xmark</i>
+              <i class="f7-icons text-muted-foreground text-xs">xmark</i>
             </button>
           </div>
         </div>
 
         <!-- Search results -->
         <div class="p-2 max-h-80 overflow-y-auto">
-          <div v-if="!searchQuery" class="text-center text-gray-500 py-4">
+          <div
+            v-if="!searchQuery"
+            class="text-center text-muted-foreground py-4"
+          >
             Начните вводить для поиска
           </div>
           <div
             v-else-if="searchResults.length === 0"
-            class="text-center text-gray-500 py-4"
+            class="text-center text-muted-foreground py-4"
           >
             Ничего не найдено
           </div>
-          <div v-else class="divide-y divide-gray-100">
+          <div v-else class="divide-y divide-border">
             <div
               v-for="(result, index) in searchResults"
               :key="index"
-              class="py-3 px-2 flex items-center hover:bg-gray-50 cursor-pointer rounded-md"
+              class="py-3 px-2 flex items-center hover:bg-secondary cursor-pointer rounded-md"
               @click="handleResultClick(result)"
             >
               <div
-                class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center"
+                class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"
               >
-                <i class="f7-icons text-white text-sm">doc_text_fill</i>
+                <i class="f7-icons text-primary-foreground text-sm"
+                  >doc_text_fill</i
+                >
               </div>
               <div class="ml-3">
-                <div class="text-sm font-medium">{{ result.title }}</div>
-                <div class="text-xs text-gray-500">{{ result.category }}</div>
+                <div class="text-sm font-medium text-foreground">
+                  {{ result.title }}
+                </div>
+                <div class="text-xs text-muted-foreground">
+                  {{ result.category }}
+                </div>
               </div>
             </div>
           </div>

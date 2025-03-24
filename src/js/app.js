@@ -15,6 +15,7 @@ import "../css/framework7-icons.css";
 
 // Import Pinia
 import { createPinia } from "pinia";
+import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 
 // Import auth directive
 import vAuth from "../directives/auth";
@@ -31,6 +32,7 @@ const app = createApp(App);
 
 // Create and use Pinia
 const pinia = createPinia();
+pinia.use(piniaPluginPersistedstate);
 app.use(pinia);
 
 // Register custom directives

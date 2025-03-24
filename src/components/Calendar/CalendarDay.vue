@@ -1,21 +1,22 @@
 <template>
   <div
-    class="bg-white min-h-32 p-2 relative group"
+    class="bg-card min-h-32 p-2 relative group"
     :class="{
-      'bg-gray-50': [5, 6].includes(new Date(day.date).getDay()),
-      'hover:bg-gray-100': !day.isToday,
+      'bg-secondary': [5, 6].includes(new Date(day.date).getDay()),
+      'hover:bg-secondary/70': !day.isToday,
     }"
   >
     <div
       class="text-sm mb-2"
       :class="{
-        'text-gray-400': !day.isCurrentMonth,
+        'text-foreground': !day.isCurrentMonth,
+        'text-foreground': day.isCurrentMonth,
         'text-white': day.isToday,
       }"
     >
       <span
         v-if="day.isToday"
-        class="w-7 h-7 bg-red-600 rounded-full inline-flex items-center justify-center"
+        class="w-7 h-7 bg-primary rounded-full inline-flex items-center justify-center"
       >
         {{ day.dayNumber }}
       </span>
@@ -34,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { CalendarDay } from "@/composables/useCalendar";
+import type { CalendarDay } from "@/composables/useCalendar";
 import CalendarEvent from "./CalendarEvent.vue";
 
 defineProps<{
@@ -52,12 +53,12 @@ defineProps<{
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgba(156, 163, 175, 0.5);
+  background-color: rgba(var(--muted-foreground), 0.5);
   border-radius: 20px;
 }
 
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  scrollbar-color: rgba(var(--muted-foreground), 0.5) transparent;
 }
 </style>

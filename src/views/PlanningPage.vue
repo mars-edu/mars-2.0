@@ -3,7 +3,7 @@
     name="planning"
     @page:init="onPageInit"
     @page:mounted="onPageMounted"
-    class="bg-gray-50"
+    class="bg-background"
   >
     <div class="desktop-header-container">
       <Header
@@ -93,13 +93,13 @@
                 </div>
                 <div class="flex justify-end gap-2 mt-2">
                   <button
-                    class="px-3 py-1 border rounded-md"
+                    class="px-3 py-1 border border-input rounded-md bg-background text-foreground"
                     @click="isAddPopoverOpen = false"
                   >
                     Отмена
                   </button>
                   <button
-                    class="px-3 py-1 bg-blue-500 text-white rounded-md"
+                    class="px-3 py-1 bg-primary text-primary-foreground rounded-md"
                     @click="addEvent"
                   >
                     Добавить
@@ -126,21 +126,21 @@
         </div>
 
         <div v-else-if="activeTab === 'week'">
-          <div class="p-4 text-center text-gray-500">
+          <div class="p-4 text-center text-muted-foreground">
             Представление недель в разработке
           </div>
         </div>
 
         <div v-else-if="activeTab === 'day'">
           <!-- Day view component will go here -->
-          <div class="p-4 text-center text-gray-500">
+          <div class="p-4 text-center text-muted-foreground">
             Представление дня в разработке
           </div>
         </div>
 
         <div v-else-if="activeTab === 'year'">
           <!-- Year view component will go here -->
-          <div class="p-4 text-center text-gray-500">
+          <div class="p-4 text-center text-muted-foreground">
             Представление года в разработке
           </div>
         </div>
@@ -341,7 +341,8 @@ const addEvent = () => {
   max-width: 1400px;
   margin: 0 auto;
   padding: 1rem;
-  background-color: white;
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   flex: 1;
@@ -387,8 +388,8 @@ const addEvent = () => {
   left: 0;
   z-index: 100;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  background-color: white;
-  border-right: 1px solid #e5e7eb;
+  background-color: hsl(var(--card));
+  border-right: 1px solid hsl(var(--border));
   width: 13rem;
 }
 
@@ -397,7 +398,7 @@ const addEvent = () => {
   position: absolute;
   z-index: 100;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  background-color: white;
-  border-right: 1px solid #e5e7eb;
+  background-color: hsl(var(--card));
+  border-right: 1px solid hsl(var(--border));
 }
 </style>

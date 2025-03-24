@@ -1,5 +1,5 @@
 <template>
-  <f7-page name="login" class="flex flex-col min-h-screen bg-gray-50">
+  <f7-page name="login" class="flex flex-col min-h-screen bg-background">
     <div class="hidden md:flex h-full">
       <div
         class="w-1/2 bg-gradient-to-br from-red-500 to-red-700 flex flex-col items-center justify-center p-12 relative overflow-hidden"
@@ -16,17 +16,17 @@
       </div>
 
       <div
-        class="w-1/2 flex items-center justify-center p-8 bg-gray-50 relative"
+        class="w-1/2 flex items-center justify-center p-8 bg-background relative"
       >
         <Logo
           class="absolute top-8 right-8 text-red-600 transform hover:scale-105 transition-transform duration-300"
         />
         <div
-          class="bg-white rounded-3xl p-12 shadow-xl max-w-md w-full transform hover:shadow-2xl transition-all duration-300"
+          class="bg-card text-card-foreground rounded-3xl p-12 shadow-xl max-w-md w-full transform hover:shadow-2xl transition-all duration-300"
         >
           <form @submit.prevent="handleLogin" class="space-y-8">
             <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-800 mb-2">
+              <label class="block text-sm font-semibold mb-2">
                 Имя пользователя
               </label>
               <f7-input
@@ -40,9 +40,7 @@
             </div>
 
             <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-800 mb-2">
-                Пароль
-              </label>
+              <label class="block text-sm font-semibold mb-2"> Пароль </label>
               <f7-input
                 type="password"
                 v-model:value="password"
@@ -56,13 +54,13 @@
             <div class="flex items-center justify-between py-2">
               <f7-checkbox
                 v-model:checked="rememberMe"
-                class="text-gray-700 hover:text-red-600 transition-colors duration-200 flex items-center"
+                class="text-foreground hover:text-primary transition-colors duration-200 flex items-center"
               >
                 Запомнить меня
               </f7-checkbox>
               <f7-link
                 href="/restore-password"
-                class="text-red-600 hover:text-red-800 font-medium transition-colors duration-200 underline-offset-2 hover:underline whitespace-nowrap"
+                class="text-primary hover:text-primary/80 font-medium transition-colors duration-200 underline-offset-2 hover:underline whitespace-nowrap"
               >
                 Забыли пароль?
               </f7-link>
@@ -73,12 +71,12 @@
               fill
               large
               :loading="isLoading"
-              class="w-full bg-red-600 hover:bg-red-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 py-4"
+              class="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 py-4"
             >
               <span class="relative z-10">Войти</span>
               <div
                 v-if="isLoading"
-                class="absolute inset-0 flex items-center justify-center bg-red-700 rounded-xl transition-opacity duration-200"
+                class="absolute inset-0 flex items-center justify-center bg-primary/80 rounded-xl transition-opacity duration-200"
               >
                 <span class="loading-spinner"></span>
               </div>
@@ -87,7 +85,7 @@
             <div class="text-center mt-4">
               <f7-link
                 href="/register"
-                class="text-red-600 hover:text-red-800 font-medium"
+                class="text-primary hover:text-primary/80 font-medium"
               >
                 Нет аккаунта? Зарегистрироваться
               </f7-link>
@@ -107,19 +105,19 @@
         />
       </div>
 
-      <div class="flex-1 px-6 py-8 bg-gray-50">
+      <div class="flex-1 px-6 py-8 bg-background">
         <div
-          class="bg-white rounded-3xl p-8 shadow-xl mb-4 -mt-12 transform hover:shadow-2xl transition-all duration-300"
+          class="bg-card text-card-foreground rounded-3xl p-8 shadow-xl mb-4 -mt-12 transform hover:shadow-2xl transition-all duration-300"
         >
-          <h2 class="text-2xl font-bold text-gray-900 mb-2">С возвращением!</h2>
-          <p class="text-gray-600">
+          <h2 class="text-2xl font-bold mb-2">С возвращением!</h2>
+          <p class="text-muted-foreground">
             Войдите в свою учетную запись, чтобы продолжить образовательное
             путешествие.
           </p>
 
           <form @submit.prevent="handleLogin" class="space-y-6 mt-8">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
+              <label class="block text-sm font-medium mb-2">
                 Имя пользователя
               </label>
               <f7-input
@@ -133,9 +131,7 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Пароль
-              </label>
+              <label class="block text-sm font-medium mb-2"> Пароль </label>
               <f7-input
                 type="password"
                 v-model:value="password"
@@ -149,12 +145,12 @@
             <div class="flex items-center justify-between space-x-4">
               <f7-checkbox
                 v-model:checked="rememberMe"
-                class="text-gray-700 flex items-center"
+                class="text-foreground flex items-center"
                 >Запомнить меня</f7-checkbox
               >
               <f7-link
                 href="/restore-password"
-                class="text-red-600 hover:text-red-800 font-medium whitespace-nowrap"
+                class="text-primary hover:text-primary/80 font-medium whitespace-nowrap"
                 >Забыли пароль?</f7-link
               >
             </div>
@@ -164,7 +160,7 @@
               fill
               large
               :loading="isLoading"
-              class="w-full bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition-colors duration-200"
+              class="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-sm transition-colors duration-200"
             >
               Войти
             </f7-button>
@@ -172,7 +168,7 @@
             <div class="text-center mt-4">
               <f7-link
                 href="/register"
-                class="text-red-600 hover:text-red-800 font-medium"
+                class="text-primary hover:text-primary/80 font-medium"
               >
                 Нет аккаунта? Зарегистрироваться
               </f7-link>

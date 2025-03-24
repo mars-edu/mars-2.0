@@ -32,6 +32,7 @@ import { ref, onMounted, onBeforeUnmount } from "vue";
 import { f7, f7ready } from "framework7-vue";
 import type { Framework7Parameters, Router } from "framework7/types";
 import { useUserStore, Role } from "../stores/userStore";
+import { useThemeStore } from "../stores/themeStore";
 import { routeMiddleware } from "../middleware/routeMiddleware";
 import { setupCustomNavigation } from "../js/navigation";
 
@@ -45,6 +46,7 @@ type CustomRoute = Router.Route & {
 };
 
 const userStore = useUserStore();
+const themeStore = useThemeStore();
 console.log("[App] Component setup initiated");
 
 // Define type for navigation handler return
@@ -187,6 +189,8 @@ onMounted(() => {
         }
       );
     }
+
+    themeStore.initTheme();
   });
 });
 

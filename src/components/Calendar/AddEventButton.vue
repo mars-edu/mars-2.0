@@ -2,13 +2,13 @@
   <div>
     <button
       id="add-button"
-      class="w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center"
+      class="w-10 h-10 bg-card border border-input rounded-full flex items-center justify-center"
       aria-label="Add"
       type="button"
       @click="openAddEventPopover"
     >
       <i
-        class="f7-icons text-gray-500 text-lg flex items-center justify-center"
+        class="f7-icons text-foreground text-lg flex items-center justify-center"
       >
         plus
       </i>
@@ -22,20 +22,20 @@
       close-on-escape
       vertical-position="right"
     >
-      <div class="event-popover">
+      <div class="event-popover bg-card text-card-foreground">
         <!-- Header with buttons -->
         <div
-          class="flex justify-between px-2 py-3 border-b border-gray-200 text-center"
+          class="flex justify-between px-2 py-3 border-b border-input text-center"
         >
           <button
-            class="text-gray-500 hover:text-gray-700 disabled:opacity-50"
+            class="text-muted-foreground hover:text-foreground disabled:opacity-50"
             @click="closeAddEventPopover"
           >
             Отменить
           </button>
-          <span class="text-gray-900 font-semibold">Создать</span>
+          <span class="text-foreground font-semibold">Создать</span>
           <button
-            class="text-primary-600 hover:text-primary-700 disabled:text-gray-400"
+            class="text-primary hover:text-primary/80 disabled:text-muted-foreground"
             :disabled="!!formError"
             @click="handleAddEvent"
           >
@@ -43,7 +43,7 @@
           </button>
         </div>
 
-        <div v-if="formError" class="px-4 text-red-500 text-sm">
+        <div v-if="formError" class="px-4 text-destructive text-sm">
           {{ formError }}
         </div>
 
@@ -87,24 +87,23 @@
             class="flex justify-between items-center cursor-pointer"
             @click="openStreamSelection"
           >
-            <span class="text-sm text-gray-900">Обучающиеся</span>
-            <span class="text-gray-400 flex items-center">
+            <span class="text-sm text-foreground">Обучающиеся</span>
+            <span class="text-muted-foreground flex items-center">
               {{ participants.length || "Не выбрано" }}
-              <i class="f7-icons text-gray-400 ml-1">chevron_right</i>
+              <i class="f7-icons text-muted-foreground ml-1">chevron_right</i>
             </span>
           </div>
 
-          <div class="text-gray-700 font-semibold mb-3">Недели</div>
+          <div class="text-foreground font-semibold mb-3">Недели</div>
           <div class="flex justify-between gap-1">
             <div
               v-for="(day, index) in weekDays"
               :key="index"
               class="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors"
               :class="{
-                // 'bg-primary-100 text-primary-600': day.isStartDate,
-                'bg-mars-red-light text-white':
+                'bg-primary text-primary-foreground':
                   day.isSelected && !day.isStartDate,
-                'bg-gray-100 text-gray-600 hover:bg-gray-200':
+                'bg-secondary text-secondary-foreground hover:bg-secondary/80':
                   !day.isStartDate && !day.isSelected,
               }"
               @click="selectWeekDay(day)"
@@ -114,13 +113,13 @@
           </div>
 
           <template v-for="(day, index) in selectedWeekDays" :key="index">
-            <div class="text-gray-700 font-semibold mb-3">
+            <div class="text-foreground font-semibold mb-3">
               Время на {{ day.russianWeekDay.toLowerCase() }}
             </div>
             <div class="flex items-center gap-2 mb-2">
-              <span class="text-gray-500 text-sm">от</span>
+              <span class="text-muted-foreground text-sm">от</span>
               <select
-                class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                class="w-full bg-card border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
               >
                 <option value="">...</option>
                 <option>08:00</option>
@@ -129,9 +128,9 @@
                 <option>09:35</option>
                 <option>09:45</option>
               </select>
-              <span class="text-gray-500 text-sm">до</span>
+              <span class="text-muted-foreground text-sm">до</span>
               <select
-                class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                class="w-full bg-card border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
               >
                 <option value="">...</option>
                 <option>08:45</option>
@@ -140,15 +139,15 @@
             </div>
           </template>
 
-          <div class="border border-gray-300 rounded-lg p-3">
+          <div class="border border-input rounded-lg p-3">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-gray-900">РУП</span>
-              <span v-if="rupFile" class="text-sm text-gray-500">{{
+              <span class="text-sm text-foreground">РУП</span>
+              <span v-if="rupFile" class="text-sm text-muted-foreground">{{
                 rupFile.name
               }}</span>
             </div>
             <label
-              class="flex items-center justify-center w-full h-20 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+              class="flex items-center justify-center w-full h-20 border border-dashed border-input rounded-lg cursor-pointer hover:bg-secondary"
             >
               <input
                 type="file"
@@ -157,20 +156,22 @@
                 accept=".pdf,.doc,.docx,.xls,.xlsx"
               />
               <div class="text-center">
-                <i class="f7-icons text-gray-400 text-2xl mb-1">arrow_up_doc</i>
-                <p class="text-sm text-gray-500">Загрузите файл РУП</p>
+                <i class="f7-icons text-muted-foreground text-2xl mb-1"
+                  >arrow_up_doc</i
+                >
+                <p class="text-sm text-muted-foreground">Загрузите файл РУП</p>
               </div>
             </label>
           </div>
 
-          <div class="bg-gray-50 p-4 border-t border-gray-200">
+          <div class="bg-secondary p-4 border-t border-input">
             <div class="flex justify-between mb-2">
-              <span class="text-gray-700">По плану:</span>
-              <span class="text-gray-700 font-medium">36 часов</span>
+              <span class="text-foreground">По плану:</span>
+              <span class="text-foreground font-medium">36 часов</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-primary-600">Запланировано:</span>
-              <span class="text-primary-600 font-medium">38 часов</span>
+              <span class="text-primary">Запланировано:</span>
+              <span class="text-primary font-medium">38 часов</span>
             </div>
           </div>
         </div>

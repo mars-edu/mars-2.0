@@ -1,37 +1,37 @@
 <template>
   <div class="flex justify-between items-center mb-3">
     <div class="flex items-center" @wheel="handleWheel" ref="monthNavArea">
-      <h1 class="text-xl text-gray-900">{{ monthName }} {{ year }}</h1>
+      <h1 class="text-xl text-foreground">{{ monthName }} {{ year }}</h1>
       <div class="flex space-x-1 items-center ml-3">
         <button
-          class="p-1 hover:bg-gray-100 rounded transition-colors"
+          class="p-1 hover:bg-secondary rounded transition-colors"
           @click="$emit('previous-month')"
         >
-          <i class="f7-icons text-gray-600 text-sm">chevron_left</i>
+          <i class="f7-icons text-muted-foreground text-sm">chevron_left</i>
         </button>
         <button
-          class="p-1 hover:bg-gray-100 rounded transition-colors"
+          class="p-1 hover:bg-secondary rounded transition-colors"
           @click="$emit('next-month')"
         >
-          <i class="f7-icons text-gray-600 text-sm">chevron_right</i>
+          <i class="f7-icons text-muted-foreground text-sm">chevron_right</i>
         </button>
       </div>
     </div>
-    <div class="text-xl font-bold uppercase text-gray-900">ПЛАНИРОВАНИЕ</div>
+    <div class="text-xl font-bold uppercase text-foreground">ПЛАНИРОВАНИЕ</div>
     <div class="w-52 flex justify-end">
       <button
         @click="$emit('today')"
-        class="flex items-center w-fit hover:bg-gray-100 rounded-lg p-2 transition-colors"
+        class="flex items-center w-fit hover:bg-secondary rounded-lg p-2 transition-colors"
       >
         <span
-          class="w-9 h-9 bg-green-600 text-white rounded-full flex items-center justify-center mr-2"
-          :class="{ 'bg-red-600': ifHoladay }"
+          class="w-9 h-9 bg-primary text-primary-foreground rounded-full flex items-center justify-center mr-2"
+          :class="{ 'bg-destructive': ifHoladay }"
         >
           {{ todayDate }}
         </span>
         <span
-          class="text-green-600 font-semibold"
-          :class="{ 'text-red-600': ifHoladay }"
+          class="text-primary font-semibold"
+          :class="{ 'text-destructive': ifHoladay }"
           >Сегодня</span
         >
       </button>
@@ -88,15 +88,15 @@ const triggerEmit = (event: "previous-month" | "next-month" | "today") => {
     // Add visual feedback
     const button = monthNavArea.value?.querySelector("button:first-of-type");
     if (button) {
-      button.classList.add("bg-gray-100");
-      setTimeout(() => button.classList.remove("bg-gray-100"), 150);
+      button.classList.add("bg-secondary");
+      setTimeout(() => button.classList.remove("bg-secondary"), 150);
     }
   } else if (event === "next-month") {
     // Add visual feedback
     const button = monthNavArea.value?.querySelector("button:last-of-type");
     if (button) {
-      button.classList.add("bg-gray-100");
-      setTimeout(() => button.classList.remove("bg-gray-100"), 150);
+      button.classList.add("bg-secondary");
+      setTimeout(() => button.classList.remove("bg-secondary"), 150);
     }
   }
 

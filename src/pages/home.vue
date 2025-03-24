@@ -16,7 +16,7 @@
       />
 
       <!-- Main Content Area for Desktop -->
-      <div class="flex-1 overflow-y-auto p-4 bg-gray-100">
+      <div class="flex-1 overflow-y-auto p-4 bg-background text-foreground">
         <div class="flex flex-row gap-4">
           <div class="flex-1 space-y-4 min-w-[60%]">
             <Doodle size="large">
@@ -45,7 +45,7 @@
         class="page-content"
         :tab-active="activeNavItem === 'home'"
       >
-        <div class="overflow-y-auto p-4 bg-gray-100 pb-16">
+        <div class="overflow-y-auto p-4 bg-background text-foreground pb-16">
           <!-- Mars Banner -->
           <Doodle size="large" class="mb-4" />
 
@@ -66,7 +66,7 @@
         class="page-content"
         :tab-active="activeNavItem === 'schedule'"
       >
-        <div class="overflow-y-auto p-4 bg-gray-100 pb-16">
+        <div class="overflow-y-auto p-4 bg-background text-foreground pb-16">
           <h2 class="text-2xl font-bold mb-4">Расписание</h2>
           <CalendarCard class="mb-4" />
           <ScheduleCard />
@@ -79,11 +79,11 @@
         class="page-content"
         :tab-active="activeNavItem === 'journals'"
       >
-        <div class="overflow-y-auto p-4 bg-gray-100 pb-16">
+        <div class="overflow-y-auto p-4 bg-background text-foreground pb-16">
           <h2 class="text-2xl font-bold mb-4">Журналы</h2>
           <!-- Journal content here -->
-          <div class="bg-white rounded-xl p-4 shadow-sm">
-            <p class="text-gray-500">Содержимое журналов будет здесь</p>
+          <div class="bg-card text-card-foreground rounded-xl p-4 shadow-sm">
+            <p class="text-muted-foreground">Содержимое журналов будет здесь</p>
           </div>
         </div>
       </f7-tab>
@@ -94,11 +94,11 @@
         class="page-content"
         :tab-active="activeNavItem === 'rup'"
       >
-        <div class="overflow-y-auto p-4 bg-gray-100 pb-16">
+        <div class="overflow-y-auto p-4 bg-background text-foreground pb-16">
           <h2 class="text-2xl font-bold mb-4">РУП</h2>
           <!-- RUP content here -->
-          <div class="bg-white rounded-xl p-4 shadow-sm">
-            <p class="text-gray-500">Содержимое РУП будет здесь</p>
+          <div class="bg-card text-card-foreground rounded-xl p-4 shadow-sm">
+            <p class="text-muted-foreground">Содержимое РУП будет здесь</p>
           </div>
         </div>
       </f7-tab>
@@ -144,7 +144,7 @@ import AnnouncementsCard from "@/components/Cards/AnnouncementsCard.vue";
 import CalendarCard from "@/components/Cards/CalendarCard.vue";
 import ScheduleCard from "@/components/Cards/ScheduleCard.vue";
 import AcademicWeekCard from "@/components/Cards/AcademicWeekCard.vue";
-import NavigationDemo from "@/components/NavigationDemo.vue";
+import NavigationDemo from "@/components/Cards/NavigationDemo.vue";
 import { useLanguage } from "@/composables/useLanguage";
 
 const searchbarEnabled = ref(false);
