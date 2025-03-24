@@ -25,6 +25,8 @@
             <AcademicWeekCard />
             <ActivityCard />
             <AnnouncementsCard />
+
+            <NavigationDemo />
           </div>
 
           <div class="flex-1 space-y-4">
@@ -142,6 +144,7 @@ import AnnouncementsCard from "@/components/Cards/AnnouncementsCard.vue";
 import CalendarCard from "@/components/Cards/CalendarCard.vue";
 import ScheduleCard from "@/components/Cards/ScheduleCard.vue";
 import AcademicWeekCard from "@/components/Cards/AcademicWeekCard.vue";
+import NavigationDemo from "@/components/NavigationDemo.vue";
 import { useLanguage } from "@/composables/useLanguage";
 
 const searchbarEnabled = ref(false);

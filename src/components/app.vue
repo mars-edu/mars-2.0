@@ -12,7 +12,7 @@
       :iosSwipeBack="true"
       :reloadPages="true"
       :xhrCache="false"
-      :loadInitialPage="true"
+      :loadInitialPage="false"
       :preloadPreviousPage="false"
       :removeElements="true"
       :uniqueHistory="true"
@@ -28,11 +28,12 @@
     ignoreCache: true, -->
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { f7, f7ready } from "framework7-vue";
 import type { Framework7Parameters, Router } from "framework7/types";
 import { useUserStore, Role } from "../stores/userStore";
 import { routeMiddleware } from "../middleware/routeMiddleware";
+import { setupCustomNavigation } from "../js/navigation";
 
 import routes from "../js/routes";
 import store from "../js/store";
@@ -45,6 +46,12 @@ type CustomRoute = Router.Route & {
 
 const userStore = useUserStore();
 console.log("[App] Component setup initiated");
+
+// Define type for navigation handler return
+type NavigationHandler = ReturnType<typeof setupCustomNavigation>;
+
+// Create ref with proper typing
+const customNavigation = ref<NavigationHandler | null>(null);
 
 const f7params: Framework7Parameters = {
   name: "Mars",
@@ -105,6 +112,10 @@ onMounted(() => {
   f7ready(async () => {
     console.log("[F7] Framework7 ready");
     console.log("[F7] Detailed initialization process starting");
+
+    // Initialize custom navigation after F7 is ready
+    customNavigation.value = setupCustomNavigation();
+    customNavigation.value.initialize();
 
     console.log("[UserStore] Initializing user store");
     console.log("[UserStore] Attempting to load user authentication state");
@@ -177,5 +188,13 @@ onMounted(() => {
       );
     }
   });
+});
+
+// Clean up event listeners when component is unmounted
+onBeforeUnmount(() => {
+  // Destroy custom navigation handler if it exists
+  if (customNavigation.value) {
+    customNavigation.value.destroy();
+  }
 });
 </script>

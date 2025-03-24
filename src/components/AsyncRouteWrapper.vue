@@ -34,7 +34,7 @@ defineOptions({
 });
 
 const props = defineProps<{
-  asyncComponent: () => Promise<any>;
+  asyncComponent: (() => Promise<any>) | Object;
 }>();
 
 onMounted(() => {
