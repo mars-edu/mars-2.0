@@ -228,7 +228,12 @@
                 </div>
               </div>
               <div class="p-5 bg-card" v-show="modulesExpanded">
-                <!-- Module/disciplines content will go here -->
+                <div class="flex items-center gap-3">
+                  <AddModuleTemplateButton
+                    @module-template-added="handleModuleTemplateAdded"
+                  />
+                  <ColumnConfigForm @columns-saved="handleColumnsSaved" />
+                </div>
               </div>
             </div>
           </div>
@@ -392,7 +397,12 @@
             </div>
           </div>
           <div class="p-3" v-show="modulesExpanded">
-            <!-- Module/disciplines content will go here -->
+            <div class="flex items-center gap-2">
+              <AddModuleTemplateButton
+                @module-template-added="handleModuleTemplateAdded"
+              />
+              <ColumnConfigForm @columns-saved="handleColumnsSaved" />
+            </div>
           </div>
         </div>
       </div>
@@ -447,6 +457,8 @@ import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddSpecialtyButton from "@/components/AddSpecialtyButton.vue";
 import AddCourseButton from "@/components/AddCourseButton.vue";
+import AddModuleTemplateButton from "@/components/AddModuleTemplateButton.vue";
+import ColumnConfigForm from "@/components/ColumnConfigForm.vue";
 import { useLanguage } from "@/composables/useLanguage";
 
 const searchbarEnabled = ref(false);
@@ -464,6 +476,12 @@ const toggleSection = (section: "specialties" | "courses" | "modules") => {
   if (section === "courses") coursesExpanded.value = !coursesExpanded.value;
   if (section === "modules") modulesExpanded.value = !modulesExpanded.value;
 };
+
+// Add back the Column interface
+interface Column {
+  name: string;
+  width: number;
+}
 
 // Handle specialty added
 const handleSpecialtyAdded = (specialty: {
@@ -484,6 +502,23 @@ const handleCourseAdded = (course: {
 }) => {
   console.log("New course added:", course);
   // Here you would typically add the course to your state or send to backend
+};
+
+// Handle module template added
+const handleModuleTemplateAdded = (moduleTemplate: {
+  name: string;
+  code: string;
+  credits: number;
+  type: string;
+}) => {
+  console.log("New module template added:", moduleTemplate);
+  // Here you would typically add the module template to your state or send to backend
+};
+
+// Handle column saved
+const handleColumnsSaved = (columns: Column[]) => {
+  console.log("Columns saved:", columns);
+  // Here you would process the column configuration
 };
 
 // Language management
