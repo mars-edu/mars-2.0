@@ -320,7 +320,6 @@ class AuthService {
         where: {
           username: {
             equals: username,
-            mode: "insensitive",
           },
         },
       });
@@ -341,7 +340,6 @@ class AuthService {
       where: {
         username: {
           equals: username,
-          mode: "insensitive",
         },
       },
     });
