@@ -46,11 +46,10 @@ class AuthService {
 
   async login(credentials: LoginCredentials) {
     try {
-      const lowercaseUsername = credentials.username.toLowerCase();
       const user = await this.prisma.user.findFirst({
         where: {
           username: {
-            equals: lowercaseUsername,
+            equals: credentials.username,
           },
         },
       });
