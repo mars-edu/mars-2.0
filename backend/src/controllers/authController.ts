@@ -119,7 +119,11 @@ auth.post("/validate-token", async (c: Context<{ Bindings: Env }>) => {
 
     const authService = new AuthService(c);
     const result = await authService.validateToken(token);
-    return c.json(result);
+    if (result.success) {
+      return c.json(result);
+    } else {
+      return c.json(result, 401);
+    }
   } catch (error) {
     return c.json(
       {

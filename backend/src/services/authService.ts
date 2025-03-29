@@ -47,18 +47,22 @@ class AuthService {
   async login(credentials: LoginCredentials) {
     try {
       const lowercaseUsername = credentials.username.toLowerCase();
-      const user = await this.prisma.$queryRaw`
-        SELECT * FROM "User" WHERE "username" COLLATE NOCASE = ${lowercaseUsername}
-      `;
+      const user = await this.prisma.user.findFirst({
+        where: {
+          username: {
+            equals: lowercaseUsername,
+          },
+        },
+      });
 
-      if (!Array.isArray(user) || user.length !== 1) {
+      if (!user) {
         return {
           success: false,
           message: "Invalid credentials",
         };
       }
 
-      const foundUser = user[0] as User;
+      const foundUser = user as User;
 
       const userRoles = await this.prisma.userRole.findMany({
         where: { userId: foundUser.id },
@@ -312,12 +316,16 @@ class AuthService {
     let counter = 1;
 
     while (!isUnique) {
-      const lowercaseUsername = username.toLowerCase();
-      const existingUser = await this.prisma.$queryRaw`
-        SELECT * FROM "User" WHERE "username" COLLATE NOCASE = ${lowercaseUsername}
-      `;
+      const existingUser = await this.prisma.user.findFirst({
+        where: {
+          username: {
+            equals: username,
+            mode: "insensitive",
+          },
+        },
+      });
 
-      if (!Array.isArray(existingUser) || existingUser.length === 0) {
+      if (!existingUser) {
         isUnique = true;
       } else {
         username = `${baseUsername}${counter}`;
@@ -329,12 +337,16 @@ class AuthService {
   }
 
   async usernameExists(username: string): Promise<boolean> {
-    const lowercaseUsername = username.toLowerCase();
-    const existingUser = await this.prisma.$queryRaw`
-      SELECT * FROM "User" WHERE "username" COLLATE NOCASE = ${lowercaseUsername}
-    `;
+    const existingUser = await this.prisma.user.findFirst({
+      where: {
+        username: {
+          equals: username,
+          mode: "insensitive",
+        },
+      },
+    });
 
-    return Array.isArray(existingUser) && existingUser.length > 0;
+    return !!existingUser;
   }
 }
 
