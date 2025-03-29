@@ -45,4 +45,18 @@ export const authClient = {
       body: { token },
     });
   },
+
+  register: (userData: {
+    firstName: string;
+    lastName: string;
+    middleName?: string;
+    iin: string;
+    email: string;
+    password: string;
+  }) => {
+    return httpClient("/auth/register", {
+      method: "POST",
+      body: userData,
+    });
+  },
 };

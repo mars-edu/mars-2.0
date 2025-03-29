@@ -52,12 +52,12 @@
             </div>
 
             <div class="flex items-center justify-between py-2">
-              <f7-checkbox
+              <!-- <f7-checkbox
                 v-model:checked="rememberMe"
                 class="text-foreground hover:text-primary transition-colors duration-200 flex items-center"
               >
                 Запомнить меня
-              </f7-checkbox>
+              </f7-checkbox> -->
               <f7-link
                 href="/restore-password"
                 class="text-primary hover:text-primary/80 font-medium transition-colors duration-200 underline-offset-2 hover:underline whitespace-nowrap"
@@ -143,11 +143,11 @@
             </div>
 
             <div class="flex items-center justify-between space-x-4">
-              <f7-checkbox
+              <!-- <f7-checkbox
                 v-model:checked="rememberMe"
                 class="text-foreground flex items-center"
                 >Запомнить меня</f7-checkbox
-              >
+              > -->
               <f7-link
                 href="/restore-password"
                 class="text-primary hover:text-primary/80 font-medium whitespace-nowrap"
@@ -200,7 +200,7 @@ const userStore = useUserStore();
 
 const username = ref("");
 const password = ref("");
-const rememberMe = ref(false);
+const rememberMe = ref(true);
 const isLoading = ref(false);
 const errors = reactive({
   username: "",

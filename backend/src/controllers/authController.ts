@@ -6,6 +6,58 @@ import type { Env } from "../utils/env.js";
 
 const auth = new Hono<{ Bindings: Env }>();
 
+auth.post("/register", async (c: Context<{ Bindings: Env }>) => {
+  try {
+    const { firstName, lastName, middleName, iin, password, email } =
+      await c.req.json();
+
+    if (!firstName || !lastName || !password || !iin || !email) {
+      return c.json(
+        {
+          success: false,
+          message: "All required fields must be provided",
+        },
+        400
+      );
+    }
+
+    const authService = new AuthService(c);
+    const result = await authService.register({
+      firstName,
+      lastName,
+      middleName,
+      iin,
+      password,
+      email,
+    });
+
+    if (result.success && result.token) {
+      setCookie(c, "auth_token", result.token, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "Strict",
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        secure: process.env.NODE_ENV === "production",
+      });
+    }
+
+    if (result.success) {
+      return c.json(result);
+    } else {
+      return c.json(result, 400);
+    }
+  } catch (error) {
+    console.error("Registration error:", error);
+    return c.json(
+      {
+        success: false,
+        message: "An error occurred while processing your request",
+      },
+      500
+    );
+  }
+});
+
 auth.post("/login", async (c: Context<{ Bindings: Env }>) => {
   try {
     const { username, password, remember } = await c.req.json();

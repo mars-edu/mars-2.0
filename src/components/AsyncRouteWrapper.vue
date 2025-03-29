@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, onErrorCaptured, onMounted, onUnmounted } from "vue";
+import { onErrorCaptured, onMounted, onUnmounted } from "vue";
 import { ref } from "vue";
 import { f7Page } from "framework7-vue";
 import Loader from "./Loader.vue";
@@ -33,7 +33,7 @@ defineOptions({
   inheritAttrs: false,
 });
 
-const props = defineProps<{
+defineProps<{
   asyncComponent: (() => Promise<any>) | Object;
 }>();
 

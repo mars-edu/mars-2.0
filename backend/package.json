@@ -17,20 +17,20 @@
     "pre-commit": "lint-staged"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250321.0",
+    "@cloudflare/workers-types": "^4.20250327.0",
     "@types/bun": "latest",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.0",
-    "wrangler": "^4.4.0"
+    "wrangler": "^4.6.0"
   },
   "peerDependencies": {
     "typescript": "^5.8.2"
   },
   "dependencies": {
-    "@prisma/adapter-d1": "^5.10.2",
-    "@prisma/client": "^5.10.2",
+    "@prisma/adapter-d1": "^6.5.0",
+    "@prisma/client": "^6.5.0",
     "@types/jsonwebtoken": "^9.0.9",
-    "@types/node": "^22.13.11",
+    "@types/node": "^22.13.14",
     "bcryptjs": "^2.4.3",
     "hono": "^4.7.5",
     "hono-sessions": "^0.7.2",

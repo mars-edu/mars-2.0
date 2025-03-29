@@ -33,7 +33,6 @@
                 type="text"
                 v-model:value="formData.lastName"
                 placeholder="Введите фамилию"
-                :error-message="errors.lastName"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -47,7 +46,6 @@
                 type="text"
                 v-model:value="formData.firstName"
                 placeholder="Введите имя"
-                :error-message="errors.firstName"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -61,7 +59,6 @@
                 type="text"
                 v-model:value="formData.middleName"
                 placeholder="Введите отчество"
-                :error-message="errors.middleName"
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
             </div>
@@ -74,11 +71,23 @@
                 type="text"
                 v-model:value="formData.iin"
                 placeholder="Введите ИИН"
-                :error-message="errors.iin"
                 required
                 maxlength="12"
                 v-maska
                 data-maska="############"
+                class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
+              />
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-800 mb-2">
+                Email
+              </label>
+              <f7-input
+                type="email"
+                v-model:value="formData.email"
+                placeholder="Введите email"
+                required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
             </div>
@@ -91,7 +100,6 @@
                 type="password"
                 v-model:value="formData.password"
                 placeholder="Введите пароль"
-                :error-message="errors.password"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -105,7 +113,6 @@
                 type="password"
                 v-model:value="formData.confirmPassword"
                 placeholder="Повторите пароль"
-                :error-message="errors.confirmPassword"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -114,7 +121,6 @@
             <div class="flex items-center space-x-2 py-2">
               <f7-checkbox
                 v-model:checked="formData.acceptTerms"
-                :error-message="errors.acceptTerms"
                 class="text-gray-700"
               >
                 <span class="text-sm text-gray-600">
@@ -180,7 +186,6 @@
                 type="text"
                 v-model:value="formData.lastName"
                 placeholder="Введите фамилию"
-                :error-message="errors.lastName"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -194,7 +199,6 @@
                 type="text"
                 v-model:value="formData.firstName"
                 placeholder="Введите имя"
-                :error-message="errors.firstName"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -208,7 +212,6 @@
                 type="text"
                 v-model:value="formData.middleName"
                 placeholder="Введите отчество"
-                :error-message="errors.middleName"
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
             </div>
@@ -221,11 +224,23 @@
                 type="text"
                 v-model:value="formData.iin"
                 placeholder="Введите ИИН"
-                :error-message="errors.iin"
                 required
                 maxlength="12"
                 v-maska
                 data-maska="############"
+                class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+              <f7-input
+                type="email"
+                v-model:value="formData.email"
+                placeholder="Введите email"
+                required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
             </div>
@@ -238,7 +253,6 @@
                 type="password"
                 v-model:value="formData.password"
                 placeholder="Введите пароль"
-                :error-message="errors.password"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -252,7 +266,6 @@
                 type="password"
                 v-model:value="formData.confirmPassword"
                 placeholder="Повторите пароль"
-                :error-message="errors.confirmPassword"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -261,7 +274,6 @@
             <div class="flex items-center space-x-2">
               <f7-checkbox
                 v-model:checked="formData.acceptTerms"
-                :error-message="errors.acceptTerms"
                 class="text-gray-700 flex items-center text-sm text-gray-600 whitespace-normal"
               >
                 Я согласен на обработку персональных данных
@@ -295,6 +307,7 @@ import { ref, reactive } from "vue";
 import { f7 } from "framework7-vue";
 import Logo from "../components/Logo/Logo.vue";
 import { vMaska } from "maska/vue";
+import { authClient } from "../lib/http-client";
 
 const isLoading = ref(false);
 
@@ -306,16 +319,7 @@ const formData = reactive({
   password: "",
   confirmPassword: "",
   acceptTerms: false,
-});
-
-const errors = reactive({
-  lastName: "",
-  firstName: "",
-  middleName: "",
-  iin: "",
-  password: "",
-  confirmPassword: "",
-  acceptTerms: "",
+  email: "",
 });
 
 const validateIIN = (iin: string): boolean => {
@@ -323,78 +327,103 @@ const validateIIN = (iin: string): boolean => {
   return /^\d{12}$/.test(iin);
 };
 
-const validateForm = (): boolean => {
+const validateForm = (): { isValid: boolean; errorMessage: string } => {
   let isValid = true;
-
-  // Reset errors
-  Object.keys(errors).forEach((key) => {
-    errors[key as keyof typeof errors] = "";
-  });
+  const errorMessages: string[] = [];
 
   if (!formData.lastName) {
-    errors.lastName = "Фамилия обязательна";
+    errorMessages.push("Фамилия обязательна");
     isValid = false;
   }
 
   if (!formData.firstName) {
-    errors.firstName = "Имя обязательно";
+    errorMessages.push("Имя обязательно");
     isValid = false;
   }
 
   if (!formData.iin) {
-    errors.iin = "ИИН обязателен";
+    errorMessages.push("ИИН обязателен");
     isValid = false;
   } else if (!validateIIN(formData.iin)) {
-    errors.iin = "Неверный формат ИИН";
+    errorMessages.push("Неверный формат ИИН");
+    isValid = false;
+  }
+
+  if (!formData.email) {
+    errorMessages.push("Email обязателен");
+    isValid = false;
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    errorMessages.push("Неверный формат email");
     isValid = false;
   }
 
   if (!formData.password) {
-    errors.password = "Пароль обязателен";
+    errorMessages.push("Пароль обязателен");
     isValid = false;
   } else if (formData.password.length < 8) {
-    errors.password = "Пароль должен содержать минимум 8 символов";
+    errorMessages.push("Пароль должен содержать минимум 8 символов");
     isValid = false;
   }
 
   if (!formData.confirmPassword) {
-    errors.confirmPassword = "Подтвердите пароль";
+    errorMessages.push("Подтвердите пароль");
     isValid = false;
   } else if (formData.password !== formData.confirmPassword) {
-    errors.confirmPassword = "Пароли не совпадают";
+    errorMessages.push("Пароли не совпадают");
     isValid = false;
   }
 
   if (!formData.acceptTerms) {
-    errors.acceptTerms = "Необходимо согласие на обработку данных";
+    errorMessages.push("Необходимо согласие на обработку данных");
     isValid = false;
   }
 
-  return isValid;
+  return {
+    isValid,
+    errorMessage: errorMessages.join(". "),
+  };
 };
 
 const handleRegister = async (e: Event) => {
   e.preventDefault();
 
-  if (!validateForm()) {
+  const validation = validateForm();
+  if (!validation.isValid) {
+    f7.toast.show({
+      text: validation.errorMessage,
+      closeTimeout: 3000,
+      position: "center",
+    });
     return;
   }
 
   isLoading.value = true;
 
   try {
-    // TODO: Implement registration logic with AuthService
-    // const response = await AuthService.register(formData);
-
-    // Temporary toast for demonstration
-    f7.toast.show({
-      text: "Регистрация успешно завершена",
-      closeTimeout: 3000,
-      position: "center",
+    const data = await authClient.register({
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      middleName: formData.middleName || undefined,
+      iin: formData.iin,
+      email: formData.email,
+      password: formData.password,
     });
 
-    // Navigate to login page after successful registration
-    f7.views.main.router.navigate("/login");
+    if (data.success) {
+      f7.toast.show({
+        text: "Регистрация успешно завершена",
+        closeTimeout: 3000,
+        position: "center",
+      });
+
+      f7.views.main.router.navigate("/login");
+    } else {
+      f7.toast.show({
+        text: data.message || "Произошла ошибка при регистрации",
+        closeTimeout: 3000,
+        position: "center",
+      });
+    }
   } catch (error) {
     console.error("Registration error:", error);
     f7.toast.show({
