@@ -9,9 +9,9 @@
           @input="handleThemeChange"
           class="min-w-[120px]"
         >
-          <option value="light">☀️</option>
-          <option value="dark">🌙</option>
-          <option value="lavanda">💜</option>
+          <option value="light">☀️ светлая</option>
+          <option value="dark">🌙 темная</option>
+          <option value="lavanda">💜 лавандовая</option>
         </f7-input>
       </f7-list-item>
     </f7-list>

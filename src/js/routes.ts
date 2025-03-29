@@ -7,6 +7,7 @@ import PlanningPage from "../pages/suspense/PlanningPage.vue";
 import LoginPage from "../pages/suspense/LoginPage.vue";
 import RegisterPage from "../pages/suspense/RegisterPage.vue";
 import RestorePasswordPage from "../pages/suspense/RestorePasswordPage.vue";
+import RupPage from "../pages/suspense/RupPage.vue";
 
 type RouteConfig = Router.RouteParameters & {
   options?: {
@@ -43,13 +44,13 @@ const routes: RouteConfig[] = [
   //     roles: [Role.TEACHER],
   //   },
   // },
-  // {
-  //   path: "/rup/",
-  //   component: () => import("../pages/suspense/RupPage.vue"),
-  //   options: {
-  //     roles: [Role.TEACHER],
-  //   },
-  // },
+  {
+    path: "/rup/",
+    component: RupPage,
+    options: {
+      roles: [Role.ADMIN, Role.TEACHER],
+    },
+  },
   // {
   //   path: "/institution-info/",
   //   component: () => import("../pages/suspense/InstitutionInfoPage.vue"),
