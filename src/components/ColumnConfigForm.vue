@@ -2,13 +2,19 @@
   <div>
     <button
       id="column-config-button"
-      class="px-3 py-1 border rounded-md text-center flex items-center justify-center"
+      class="w-7 h-7 md:p-2 flex items-center justify-center text-green-500 md:text-primary hover:bg-primary/10 rounded-lg transition-colors"
       aria-label="Configure Columns"
       type="button"
-      @click="openColumnConfigPopover"
+      @click.stop="openColumnConfigPopover"
     >
-      <i class="f7-icons text-green-500">plus</i>
+      <f7-icon
+        ios="f7:gear"
+        md="material:settings"
+        size="16px"
+        class="md:text-blue-500"
+      ></f7-icon>
     </button>
+
     <f7-popover
       id="column-config-popover"
       style="width: 600px !important"
@@ -51,7 +57,11 @@
               <f7-input
                 type="text"
                 :value="column.name"
-                @input="(e: any) => (column.name = e.target.value)"
+                @input="(e: any) => {
+                  const newColumns = [...columnStore.columns];
+                  newColumns[index].name = e.target.value;
+                  columnStore.setColumns(newColumns);
+                }"
                 placeholder="Столбец"
               />
               <button
@@ -84,8 +94,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { f7, f7Popover } from "framework7-vue";
+import { ref, computed } from "vue";
+import { f7 } from "framework7-vue";
+import { useColumnConfigStore } from "@/stores/columnConfig";
 
 interface Column {
   name: string;
@@ -97,12 +108,12 @@ const emit = defineEmits<{
 }>();
 
 const formError = ref("");
+const columnStore = useColumnConfigStore();
 
-const columns = ref<Column[]>([
-  { name: "", width: 1 },
-  { name: "", width: 3 },
-  { name: "", width: 1 },
-]);
+const columns = computed({
+  get: () => columnStore.columns,
+  set: (value) => columnStore.setColumns(value),
+});
 
 const openColumnConfigPopover = () => {
   f7.popover.open("#column-config-popover", "#column-config-button");
@@ -114,16 +125,20 @@ const closeColumnConfigPopover = () => {
 };
 
 const addColumn = () => {
-  columns.value.push({ name: "", width: 1 });
+  columnStore.setColumns([...columns.value, { name: "", width: 1 }]);
 };
 
 const toggleWidth = (index: number) => {
-  columns.value[index].width = columns.value[index].width === 1 ? 3 : 1;
+  const newColumns = [...columns.value];
+  newColumns[index].width = newColumns[index].width === 1 ? 3 : 1;
+  columnStore.setColumns(newColumns);
 };
 
 const deleteColumn = (index: number) => {
   if (columns.value.length > 1) {
-    columns.value.splice(index, 1);
+    const newColumns = [...columns.value];
+    newColumns.splice(index, 1);
+    columnStore.setColumns(newColumns);
   }
 };
 
@@ -147,11 +162,7 @@ const handleSaveColumns = () => {
 };
 
 const resetForm = () => {
-  columns.value = [
-    { name: "", width: 1 },
-    { name: "", width: 3 },
-    { name: "", width: 1 },
-  ];
+  columnStore.resetColumns();
   formError.value = "";
 };
 </script>

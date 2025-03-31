@@ -5,7 +5,7 @@
       class="w-7 h-7 md:p-2 flex items-center justify-center text-green-500 md:text-primary hover:bg-primary/10 rounded-lg transition-colors"
       aria-label="Add Module Template"
       type="button"
-      @click="openAddModuleTemplatePopover"
+      @click.stop="openAddModuleTemplatePopover"
     >
       <f7-icon
         ios="f7:plus"
@@ -15,7 +15,6 @@
       ></f7-icon>
     </button>
 
-    <!-- Framework7 Popover -->
     <f7-popover
       id="add-module-template-popover"
       style="width: 600px !important"
@@ -23,7 +22,6 @@
       close-on-escape
     >
       <div class="module-template-popover bg-card text-card-foreground">
-        <!-- Header with buttons -->
         <div
           class="flex justify-between items-center px-4 py-3 border-b border-input"
         >
@@ -48,79 +46,23 @@
         </div>
 
         <div class="p-4 space-y-4">
-          <!-- Module name input -->
-          <div class="space-y-2">
-            <label class="text-sm text-foreground" for="module-name">
-              Наименование модуля/дисциплины
+          <div
+            v-for="(column, index) in columns"
+            :key="index"
+            class="space-y-2"
+          >
+            <label class="text-sm text-foreground" :for="'field-' + index">
+              {{ column.name || "Столбец " + (index + 1) }}
             </label>
             <f7-input
-              id="module-name"
+              :id="'field-' + index"
               type="text"
-              v-model="moduleName"
-              placeholder="Введите наименование модуля/дисциплины"
+              v-model="formData[index]"
+              clear-button
+              :placeholder="
+                'Введите ' + (column.name.toLowerCase() || 'значение')
+              "
             ></f7-input>
-          </div>
-
-          <!-- Module code input -->
-          <div class="space-y-2">
-            <label class="text-sm text-foreground" for="module-code">
-              Код модуля/дисциплины
-            </label>
-            <f7-input
-              id="module-code"
-              type="text"
-              v-model="moduleCode"
-              placeholder="Введите код модуля/дисциплины"
-            ></f7-input>
-          </div>
-
-          <!-- Credits input -->
-          <div class="space-y-2">
-            <label class="text-sm text-foreground" for="module-credits">
-              Количество кредитов
-            </label>
-            <f7-input
-              id="module-credits"
-              type="number"
-              v-model="moduleCredits"
-              placeholder="Введите количество кредитов"
-            ></f7-input>
-          </div>
-
-          <!-- Module type selection -->
-          <div class="space-y-2">
-            <label class="text-sm text-foreground" for="module-type">
-              Тип модуля/дисциплины
-            </label>
-            <f7-list no-hairlines-md>
-              <f7-list-item
-                smart-select
-                :smart-select-params="{
-                  openIn: 'popover',
-                  closeOnSelect: true,
-                  searchbar: false,
-                  title: 'Тип модуля/дисциплины',
-                }"
-              >
-                <template #title>
-                  <span>{{
-                    moduleType
-                      ? moduleType === "mandatory"
-                        ? "Обязательный"
-                        : moduleType === "optional"
-                        ? "По выбору"
-                        : "Дополнительный"
-                      : "Выберите тип"
-                  }}</span>
-                </template>
-                <select id="module-type" v-model="moduleType">
-                  <option value="">Выберите тип</option>
-                  <option value="mandatory">Обязательный</option>
-                  <option value="optional">По выбору</option>
-                  <option value="additional">Дополнительный</option>
-                </select>
-              </f7-list-item>
-            </f7-list>
           </div>
         </div>
       </div>
@@ -129,28 +71,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { f7, f7Popover, f7Input, f7List, f7ListItem } from "framework7-vue";
+import { ref, computed } from "vue";
+import { f7, f7Popover, f7Input } from "framework7-vue";
+import { useColumnConfigStore } from "@/stores/columnConfig";
+import { useModuleStore } from "@/stores/moduleStore";
 
-const emit = defineEmits<{
-  (e: "module-template-added", moduleTemplate: ModuleTemplateData): void;
-}>();
+const columnStore = useColumnConfigStore();
+const moduleStore = useModuleStore();
+const columns = computed(() => columnStore.columns);
 
-interface ModuleTemplateData {
-  name: string;
-  code: string;
-  credits: number;
-  type: string;
-}
-
-// Form state
-const moduleName = ref("");
-const moduleCode = ref("");
-const moduleCredits = ref<number | null>(null);
-const moduleType = ref("");
+const formData = ref<string[]>([]);
 const formError = ref("");
 
-// Popover controls
+computed(() => {
+  formData.value = new Array(columns.value.length).fill("");
+});
+
 const openAddModuleTemplatePopover = () => {
   f7.popover.open(
     "#add-module-template-popover",
@@ -163,25 +99,11 @@ const closeAddModuleTemplatePopover = () => {
   resetForm();
 };
 
-// Form validation
 const validateForm = () => {
-  if (!moduleName.value.trim()) {
-    formError.value = "Пожалуйста, введите наименование модуля/дисциплины";
-    return false;
-  }
+  const hasValue = formData.value.some((value) => value.trim() !== "");
 
-  if (!moduleCode.value.trim()) {
-    formError.value = "Пожалуйста, введите код модуля/дисциплины";
-    return false;
-  }
-
-  if (!moduleCredits.value || moduleCredits.value <= 0) {
-    formError.value = "Пожалуйста, введите корректное количество кредитов";
-    return false;
-  }
-
-  if (!moduleType.value) {
-    formError.value = "Пожалуйста, выберите тип модуля/дисциплины";
+  if (!hasValue) {
+    formError.value = "Пожалуйста, заполните хотя бы одно поле";
     return false;
   }
 
@@ -189,26 +111,20 @@ const validateForm = () => {
   return true;
 };
 
-// Save handler
 const handleSaveModuleTemplate = () => {
   if (!validateForm()) return;
 
-  emit("module-template-added", {
-    name: moduleName.value,
-    code: moduleCode.value,
-    credits: moduleCredits.value!,
-    type: moduleType.value,
+  const moduleData: Record<string, string> = {};
+  formData.value.forEach((value, index) => {
+    moduleData[`field${index}`] = value;
   });
 
+  moduleStore.addModule(moduleData);
   closeAddModuleTemplatePopover();
 };
 
-// Reset form
 const resetForm = () => {
-  moduleName.value = "";
-  moduleCode.value = "";
-  moduleCredits.value = null;
-  moduleType.value = "";
+  formData.value = new Array(columns.value.length).fill("");
   formError.value = "";
 };
 </script>

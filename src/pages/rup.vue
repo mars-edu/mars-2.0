@@ -217,15 +217,14 @@
                   >
                 </div>
                 <div class="flex items-center gap-1 md:gap-2">
+                  <ColumnConfigForm @columns-saved="handleColumnsSaved" />
                   <AddModuleTemplateButton
                     @module-template-added="handleModuleTemplateAdded"
                   />
                 </div>
               </div>
               <div class="p-3 md:p-5 bg-card" v-show="modulesExpanded">
-                <div class="flex items-center gap-2 md:gap-3 flex-wrap">
-                  <ColumnConfigForm @columns-saved="handleColumnsSaved" />
-                </div>
+                <ModuleTable />
               </div>
             </div>
           </div>
@@ -284,6 +283,7 @@ import AddSpecialtyButton from "@/components/AddSpecialtyButton.vue";
 import AddCourseButton from "@/components/AddCourseButton.vue";
 import AddModuleTemplateButton from "@/components/AddModuleTemplateButton.vue";
 import ColumnConfigForm from "@/components/ColumnConfigForm.vue";
+import ModuleTable from "@/components/ModuleTable.vue";
 import { useLanguage } from "@/composables/useLanguage";
 
 const searchbarEnabled = ref(false);
@@ -330,20 +330,13 @@ const handleCourseAdded = (course: {
 };
 
 // Handle module template added
-const handleModuleTemplateAdded = (moduleTemplate: {
-  name: string;
-  code: string;
-  credits: number;
-  type: string;
-}) => {
-  console.log("New module template added:", moduleTemplate);
+const handleModuleTemplateAdded = (moduleTemplate: Record<string, string>) => {
   // Here you would typically add the module template to your state or send to backend
 };
 
 // Handle column saved
 const handleColumnsSaved = (columns: Column[]) => {
-  console.log("Columns saved:", columns);
-  // Here you would process the column configuration
+  // Here you would process the column configuration if needed
 };
 
 // Language management
