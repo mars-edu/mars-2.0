@@ -9,7 +9,6 @@
         placeholder="Дата"
         v-model:value="dateValue"
         readonly
-        class="bg-gray-100 rounded-lg px-4 py-2"
         :calendar-params="{ closeOnSelect: true }"
         @input="emitChange"
       ></f7-input>
@@ -17,8 +16,6 @@
         type="timepicker"
         placeholder="Время"
         v-model:value="timeValue"
-        class="bg-gray-100 rounded-lg px-4 py-2"
-        :picker-params="{ closeOnSelect: true }"
         @input="emitChange"
       ></f7-input>
     </div>

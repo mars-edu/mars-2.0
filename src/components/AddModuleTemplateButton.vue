@@ -2,12 +2,17 @@
   <div>
     <button
       id="add-module-template-button"
-      class="px-3 py-1 border rounded-md text-center flex items-center justify-center"
+      class="w-7 h-7 md:p-2 flex items-center justify-center text-green-500 md:text-primary hover:bg-primary/10 rounded-lg transition-colors"
       aria-label="Add Module Template"
       type="button"
       @click="openAddModuleTemplatePopover"
     >
-      <i class="f7-icons text-green-500">plus</i>
+      <f7-icon
+        ios="f7:plus"
+        md="material:add"
+        size="16px"
+        class="md:text-primary"
+      ></f7-icon>
     </button>
 
     <!-- Framework7 Popover -->
@@ -28,9 +33,7 @@
           >
             Отменить
           </button>
-          <span class="text-foreground font-semibold"
-            >Создание шаблона модуля/дисциплины</span
-          >
+          <span class="text-foreground font-semibold">Создать</span>
           <button
             class="text-primary hover:text-primary/80 disabled:text-muted-foreground"
             :disabled="!!formError"
@@ -50,13 +53,12 @@
             <label class="text-sm text-foreground" for="module-name">
               Наименование модуля/дисциплины
             </label>
-            <input
+            <f7-input
               id="module-name"
               type="text"
               v-model="moduleName"
               placeholder="Введите наименование модуля/дисциплины"
-              class="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
-            />
+            ></f7-input>
           </div>
 
           <!-- Module code input -->
@@ -64,13 +66,12 @@
             <label class="text-sm text-foreground" for="module-code">
               Код модуля/дисциплины
             </label>
-            <input
+            <f7-input
               id="module-code"
               type="text"
               v-model="moduleCode"
               placeholder="Введите код модуля/дисциплины"
-              class="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
-            />
+            ></f7-input>
           </div>
 
           <!-- Credits input -->
@@ -78,13 +79,12 @@
             <label class="text-sm text-foreground" for="module-credits">
               Количество кредитов
             </label>
-            <input
+            <f7-input
               id="module-credits"
               type="number"
               v-model="moduleCredits"
               placeholder="Введите количество кредитов"
-              class="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
-            />
+            ></f7-input>
           </div>
 
           <!-- Module type selection -->
@@ -92,16 +92,35 @@
             <label class="text-sm text-foreground" for="module-type">
               Тип модуля/дисциплины
             </label>
-            <select
-              id="module-type"
-              v-model="moduleType"
-              class="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
-            >
-              <option value="">Выберите тип</option>
-              <option value="mandatory">Обязательный</option>
-              <option value="optional">По выбору</option>
-              <option value="additional">Дополнительный</option>
-            </select>
+            <f7-list no-hairlines-md>
+              <f7-list-item
+                smart-select
+                :smart-select-params="{
+                  openIn: 'popover',
+                  closeOnSelect: true,
+                  searchbar: false,
+                  title: 'Тип модуля/дисциплины',
+                }"
+              >
+                <template #title>
+                  <span>{{
+                    moduleType
+                      ? moduleType === "mandatory"
+                        ? "Обязательный"
+                        : moduleType === "optional"
+                        ? "По выбору"
+                        : "Дополнительный"
+                      : "Выберите тип"
+                  }}</span>
+                </template>
+                <select id="module-type" v-model="moduleType">
+                  <option value="">Выберите тип</option>
+                  <option value="mandatory">Обязательный</option>
+                  <option value="optional">По выбору</option>
+                  <option value="additional">Дополнительный</option>
+                </select>
+              </f7-list-item>
+            </f7-list>
           </div>
         </div>
       </div>
@@ -111,7 +130,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { f7, f7Popover } from "framework7-vue";
+import { f7, f7Popover, f7Input, f7List, f7ListItem } from "framework7-vue";
 
 const emit = defineEmits<{
   (e: "module-template-added", moduleTemplate: ModuleTemplateData): void;

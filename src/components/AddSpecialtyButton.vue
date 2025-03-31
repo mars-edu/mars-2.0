@@ -2,15 +2,19 @@
   <div>
     <button
       id="add-specialty-button"
-      class="px-3 py-1 border rounded-md text-center flex items-center justify-center"
+      class="w-7 h-7 md:p-2 flex items-center justify-center text-green-500 md:text-primary hover:bg-primary/10 rounded-lg transition-colors"
       aria-label="Add Specialty"
       type="button"
       @click="openAddSpecialtyPopover"
     >
-      <i class="f7-icons text-green-500">plus</i>
+      <f7-icon
+        ios="f7:plus"
+        md="material:add"
+        size="16px"
+        class="md:text-primary"
+      ></f7-icon>
     </button>
 
-    <!-- Framework7 Popover -->
     <f7-popover
       id="add-specialty-popover"
       style="width: 600px !important"
@@ -48,13 +52,12 @@
             <label class="text-sm text-foreground" for="specialty-name">
               Наименование специальности
             </label>
-            <input
+            <f7-input
               id="specialty-name"
               type="text"
               v-model="specialtyName"
               placeholder="Введите полное наименование специальности"
-              class="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
-            />
+            ></f7-input>
           </div>
 
           <!-- Code name input -->
@@ -62,13 +65,12 @@
             <label class="text-sm text-foreground" for="specialty-code-name">
               Кодовое наименование специальности
             </label>
-            <input
+            <f7-input
               id="specialty-code-name"
               type="text"
               v-model="specialtyCodeName"
               placeholder="Для удобного отображения можно обозначить кодом, буквой или цифрой"
-              class="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
-            />
+            ></f7-input>
           </div>
 
           <!-- Specialty code input -->
@@ -76,28 +78,21 @@
             <label class="text-sm text-foreground" for="specialty-code">
               Шифр специальности
             </label>
-            <input
+            <f7-input
               id="specialty-code"
               type="text"
               v-model="specialtyCode"
               placeholder="Внесите шифр специальности"
-              class="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
-            />
+            ></f7-input>
           </div>
 
           <!-- Module/discipline creation checkbox -->
           <div class="space-y-2">
             <div class="text-sm text-foreground">Создание модуля/дисциплин</div>
-            <label class="flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                v-model="createModule"
-                class="form-checkbox h-5 w-5 text-primary border-input rounded focus:ring-primary"
-              />
-              <span class="ml-2 text-sm text-muted-foreground"
-                >Поставьте галочку</span
-              >
-            </label>
+            <f7-checkbox
+              v-model="createModule"
+              label="Поставьте галочку"
+            ></f7-checkbox>
           </div>
         </div>
       </div>
@@ -107,7 +102,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { f7, f7Popover } from "framework7-vue";
+import { f7, f7Popover, f7Input, f7Checkbox } from "framework7-vue";
 
 const emit = defineEmits<{
   (e: "specialty-added", specialty: SpecialtyData): void;

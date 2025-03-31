@@ -2,12 +2,17 @@
   <div>
     <button
       id="add-course-button"
-      class="px-3 py-1 border rounded-md text-center flex items-center justify-center"
+      class="w-7 h-7 md:p-2 flex items-center justify-center text-green-500 md:text-primary hover:bg-primary/10 rounded-lg transition-colors"
       aria-label="Add Course"
       type="button"
       @click="openAddCoursePopover"
     >
-      <i class="f7-icons text-green-500">plus</i>
+      <f7-icon
+        ios="f7:plus"
+        md="material:add"
+        size="16px"
+        class="md:text-primary"
+      ></f7-icon>
     </button>
 
     <!-- Framework7 Popover -->
@@ -52,13 +57,12 @@
               Номер курса
               <span class="text-destructive ml-1">*</span>
             </label>
-            <input
+            <f7-input
               id="course-number"
               type="text"
               v-model="courseNumber"
               placeholder="Введите нумерацию курса"
-              class="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
-            />
+            ></f7-input>
           </div>
 
           <!-- Admission year dropdown -->
@@ -67,29 +71,33 @@
               Год поступления
             </label>
             <div class="relative">
-              <select
-                id="admission-year"
-                v-model="admissionYear"
-                class="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground appearance-none pr-8 focus:ring-2 focus:ring-primary focus:border-primary"
-              >
-                <option value="" disabled>Выберите год поступления</option>
-                <option
-                  v-for="year in availableYears"
-                  :key="year"
-                  :value="year"
+              <f7-list no-hairlines-md>
+                <f7-list-item
+                  smart-select
+                  :smart-select-params="{
+                    openIn: 'popover',
+                    closeOnSelect: true,
+                    searchbar: false,
+                    title: 'Год поступления',
+                  }"
                 >
-                  {{ year }}
-                </option>
-              </select>
-              <div
-                class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none"
-              >
-                <f7-icon
-                  ios="f7:chevron_down"
-                  md="material:arrow_drop_down"
-                  size="18px"
-                ></f7-icon>
-              </div>
+                  <template #title>
+                    <span>{{
+                      admissionYear || "Выберите год поступления"
+                    }}</span>
+                  </template>
+                  <select id="admission-year" v-model="admissionYear">
+                    <option value="" disabled>Выберите год поступления</option>
+                    <option
+                      v-for="year in availableYears"
+                      :key="year"
+                      :value="year"
+                    >
+                      {{ year }}
+                    </option>
+                  </select>
+                </f7-list-item>
+              </f7-list>
             </div>
           </div>
 
@@ -98,13 +106,12 @@
             <label class="text-sm text-foreground" for="specialty-code">
               Шифр специальности
             </label>
-            <input
+            <f7-input
               id="specialty-code"
               type="text"
               v-model="specialtyCode"
               placeholder="Для удобного отображения можно обозначить кодом, буквой или цифрой"
-              class="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
-            />
+            ></f7-input>
           </div>
         </div>
       </div>
@@ -114,7 +121,14 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { f7, f7Popover, f7Icon } from "framework7-vue";
+import {
+  f7,
+  f7Popover,
+  f7Icon,
+  f7Input,
+  f7List,
+  f7ListItem,
+} from "framework7-vue";
 
 const emit = defineEmits<{
   (e: "course-added", course: CourseData): void;

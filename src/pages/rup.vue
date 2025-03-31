@@ -10,38 +10,52 @@
       class="hidden md:block flex-shrink-0 border-b border-border"
     />
 
-    <!-- Desktop Layout -->
-    <div class="hidden md:flex overflow-hidden flex-1">
-      <!-- Left Sidebar - always visible on desktop -->
+    <div class="flex flex-1 overflow-hidden">
+      <!-- Sidebar - hidden on mobile, visible on desktop -->
       <Sidebar
         v-model:activeNavItem="activeNavItem"
-        class="h-[calc(100vh-64px)] flex-shrink-0 border-r border-border"
+        class="hidden md:block h-[calc(100vh-64px)] flex-shrink-0 border-r border-border"
       />
 
-      <!-- Main Content Area for Desktop -->
-      <div class="flex-1 overflow-y-auto p-6 bg-background">
-        <div class="bg-card text-card-foreground rounded-xl p-6 shadow-sm">
-          <div class="flex items-center gap-6 mb-8">
-            <div class="flex items-center gap-3 flex-1">
-              <span class="text-lg font-semibold">Учебная программа:</span>
+      <!-- Main Content Area - responsive for both desktop and mobile -->
+      <div
+        class="flex-1 overflow-y-auto p-4 md:p-6 bg-background pb-16 md:pb-6"
+      >
+        <div
+          class="bg-card text-card-foreground rounded-xl p-4 md:p-6 shadow-sm"
+        >
+          <!-- Program and Year Fields -->
+          <div
+            class="flex flex-col md:flex-row md:items-center md:gap-6 mb-4 md:mb-8"
+          >
+            <div
+              class="flex flex-col md:flex-row md:items-center md:gap-3 flex-1 mb-4 md:mb-0"
+            >
+              <span
+                class="text-base md:text-lg font-medium md:font-semibold mb-1 md:mb-0"
+                >Учебная программа:</span
+              >
               <input
                 type="text"
-                class="border border-input rounded-lg px-3 py-2 flex-1 focus:ring-2 focus:ring-ring focus:border-ring transition-all duration-200 bg-background"
+                class="border border-input rounded-lg px-2 md:px-3 py-1 md:py-2 flex-1 focus:ring-2 focus:ring-ring focus:border-ring transition-all duration-200 bg-background"
               />
             </div>
-            <div class="flex items-center gap-3">
-              <span class="text-lg font-semibold">Учебный год:</span>
+            <div class="flex flex-col md:flex-row md:items-center md:gap-3">
+              <span
+                class="text-base md:text-lg font-medium md:font-semibold mb-1 md:mb-0"
+                >Учебный год:</span
+              >
               <div
-                class="border border-input rounded-lg px-3 py-2 flex items-center bg-background"
+                class="border border-input rounded-lg px-2 md:px-3 py-1 md:py-2 flex items-center bg-background"
               >
                 <input
                   type="text"
                   value="2025-2026"
-                  class="w-28 text-center focus:outline-none bg-transparent"
+                  class="w-full md:w-28 text-center focus:outline-none bg-transparent"
                 />
-                <div class="flex ml-3 gap-2">
+                <div class="flex ml-2 md:ml-3 gap-1 md:gap-2">
                   <button
-                    class="p-1.5 hover:bg-muted rounded-md transition-colors"
+                    class="p-1 md:p-1.5 hover:bg-muted rounded-md transition-colors"
                   >
                     <f7-icon
                       ios="f7:doc"
@@ -51,7 +65,7 @@
                     ></f7-icon>
                   </button>
                   <button
-                    class="p-1.5 hover:bg-muted rounded-md transition-colors"
+                    class="p-1 md:p-1.5 hover:bg-muted rounded-md transition-colors"
                   >
                     <f7-icon
                       ios="f7:pencil"
@@ -61,7 +75,7 @@
                     ></f7-icon>
                   </button>
                   <button
-                    class="p-1.5 hover:bg-primary/10 rounded-md transition-colors"
+                    class="p-1 md:p-1.5 hover:bg-primary/10 rounded-md transition-colors"
                   >
                     <f7-icon
                       ios="f7:plus"
@@ -75,11 +89,13 @@
             </div>
           </div>
 
-          <div class="space-y-6">
+          <div class="space-y-4 md:space-y-6">
             <!-- Specialties Section -->
-            <div class="border border-border rounded-xl overflow-hidden">
+            <div
+              class="border border-border rounded-lg md:rounded-xl overflow-hidden"
+            >
               <div
-                class="px-5 py-4 bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
+                class="px-3 md:px-5 py-2 md:py-4 bg-muted bg-gray-50 md:bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
                 @click="toggleSection('specialties')"
               >
                 <div class="flex items-center">
@@ -94,51 +110,45 @@
                         ? 'material:expand_more'
                         : 'material:chevron_right'
                     "
-                    size="20px"
-                    class="mr-3 text-foreground/60"
+                    size="16px"
+                    class="mr-1 md:mr-3 text-foreground/60"
                   ></f7-icon>
-                  <span class="font-semibold">Специальности:</span>
+                  <span class="font-medium md:font-semibold"
+                    >Специальности:</span
+                  >
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1 md:gap-2">
                   <button
-                    class="p-2 hover:bg-background rounded-lg transition-colors"
+                    class="w-7 h-7 md:p-2 flex items-center justify-center text-gray-500 md:text-foreground/60 hover:bg-background rounded-lg transition-colors"
                     @click.stop
                   >
                     <f7-icon
                       ios="f7:pencil"
                       md="material:edit"
-                      size="18px"
-                      class="text-foreground/60"
+                      size="16px"
+                      class="md:text-foreground/60"
                     ></f7-icon>
                   </button>
-                  <button
-                    class="p-2 hover:bg-primary/10 rounded-lg transition-colors"
-                    @click.stop
-                  >
-                    <f7-icon
-                      ios="f7:plus"
-                      md="material:add"
-                      size="18px"
-                      class="text-primary"
-                    ></f7-icon>
-                  </button>
+
+                  <AddSpecialtyButton @specialty-added="handleSpecialtyAdded" />
                 </div>
               </div>
-              <div class="p-5 bg-card" v-show="specialtiesExpanded">
-                <div class="flex items-center gap-3">
+              <div class="p-3 md:p-5 bg-card" v-show="specialtiesExpanded">
+                <div class="flex items-center gap-2 md:gap-3">
                   <span
-                    class="px-4 py-2 border border-border rounded-lg text-center min-w-[60px] bg-muted"
+                    class="px-2 py-1 md:px-4 md:py-2 border border-border rounded-md md:rounded-lg text-center min-w-[40px] md:min-w-[60px] bg-muted"
                     >...</span
                   >
-                  <AddSpecialtyButton @specialty-added="handleSpecialtyAdded" />
                 </div>
               </div>
             </div>
 
             <!-- Courses Section -->
-            <div class="border border-border rounded-xl overflow-hidden">
+            <div
+              class="border border-border rounded-lg md:rounded-xl overflow-hidden"
+            >
               <div
-                class="px-5 py-4 bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
+                class="px-3 md:px-5 py-2 md:py-4 bg-muted bg-gray-50 md:bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
                 @click="toggleSection('courses')"
               >
                 <div class="flex items-center">
@@ -151,51 +161,42 @@
                         ? 'material:expand_more'
                         : 'material:chevron_right'
                     "
-                    size="20px"
-                    class="mr-3 text-foreground/60"
+                    size="16px"
+                    class="mr-1 md:mr-3 text-foreground/60"
                   ></f7-icon>
-                  <span class="font-semibold">Курсы:</span>
+                  <span class="font-medium md:font-semibold">Курсы:</span>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1 md:gap-2">
                   <button
-                    class="p-2 hover:bg-background rounded-lg transition-colors"
+                    class="w-7 h-7 md:p-2 flex items-center justify-center text-gray-500 md:text-foreground/60 hover:bg-background rounded-lg transition-colors"
                     @click.stop
                   >
                     <f7-icon
                       ios="f7:pencil"
                       md="material:edit"
-                      size="18px"
-                      class="text-foreground/60"
+                      size="16px"
+                      class="md:text-foreground/60"
                     ></f7-icon>
                   </button>
-                  <button
-                    class="p-2 hover:bg-primary/10 rounded-lg transition-colors"
-                    @click.stop
-                  >
-                    <f7-icon
-                      ios="f7:plus"
-                      md="material:add"
-                      size="18px"
-                      class="text-primary"
-                    ></f7-icon>
-                  </button>
+
+                  <AddCourseButton @course-added="handleCourseAdded" />
                 </div>
               </div>
-              <div class="p-5 bg-card" v-show="coursesExpanded">
-                <div class="flex items-center gap-3">
+              <div class="p-3 md:p-5 bg-card" v-show="coursesExpanded">
+                <div class="flex items-center gap-2 md:gap-3">
                   <span
-                    class="px-4 py-2 border border-border rounded-lg text-center min-w-[60px] bg-muted"
+                    class="px-2 py-1 md:px-4 md:py-2 border border-border rounded-md md:rounded-lg text-center min-w-[40px] md:min-w-[60px] bg-muted"
                     >1</span
                   >
-                  <AddCourseButton @course-added="handleCourseAdded" />
                 </div>
               </div>
             </div>
 
-            <!-- Modules Section -->
-            <div class="border border-border rounded-xl overflow-hidden">
+            <div
+              class="border border-border rounded-lg md:rounded-xl overflow-hidden"
+            >
               <div
-                class="px-5 py-4 bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
+                class="px-3 md:px-5 py-2 md:py-4 bg-muted bg-gray-50 md:bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
                 @click="toggleSection('modules')"
               >
                 <div class="flex items-center">
@@ -208,200 +209,24 @@
                         ? 'material:expand_more'
                         : 'material:chevron_right'
                     "
-                    size="20px"
-                    class="mr-3 text-foreground/60"
+                    size="16px"
+                    class="mr-1 md:mr-3 text-foreground/60"
                   ></f7-icon>
-                  <span class="font-semibold">Модуль/дисциплины:</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <button
-                    class="p-2 hover:bg-primary/10 rounded-lg transition-colors"
-                    @click.stop
+                  <span class="font-medium md:font-semibold"
+                    >Модуль/дисциплины:</span
                   >
-                    <f7-icon
-                      ios="f7:plus"
-                      md="material:add"
-                      size="18px"
-                      class="text-primary"
-                    ></f7-icon>
-                  </button>
                 </div>
-              </div>
-              <div class="p-5 bg-card" v-show="modulesExpanded">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1 md:gap-2">
                   <AddModuleTemplateButton
                     @module-template-added="handleModuleTemplateAdded"
                   />
+                </div>
+              </div>
+              <div class="p-3 md:p-5 bg-card" v-show="modulesExpanded">
+                <div class="flex items-center gap-2 md:gap-3 flex-wrap">
                   <ColumnConfigForm @columns-saved="handleColumnsSaved" />
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Mobile Layout -->
-    <div
-      class="md:hidden overflow-y-auto p-4 bg-background text-foreground pb-16"
-    >
-      <div class="bg-card text-card-foreground rounded-xl p-4 shadow-sm">
-        <div class="mb-4">
-          <div class="text-base font-medium mb-1">Учебная программа:</div>
-          <input type="text" class="border rounded px-2 py-1 w-full" />
-        </div>
-
-        <div class="mb-4">
-          <div class="text-base font-medium mb-1">Учебный год:</div>
-          <div class="border rounded px-2 py-1 flex items-center">
-            <input type="text" value="2025-2026" class="flex-1 text-center" />
-            <div class="flex ml-2">
-              <button class="px-1">
-                <f7-icon
-                  ios="f7:doc"
-                  md="material:file_copy"
-                  size="18px"
-                ></f7-icon>
-              </button>
-              <button class="px-1">
-                <f7-icon
-                  ios="f7:pencil"
-                  md="material:edit"
-                  size="18px"
-                ></f7-icon>
-              </button>
-              <button class="px-1 text-green-500">
-                <f7-icon ios="f7:plus" md="material:add" size="18px"></f7-icon>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="border rounded-lg mb-4">
-          <div
-            class="border-b px-3 py-2 bg-gray-50 rounded-t-lg flex items-center justify-between cursor-pointer"
-            @click="toggleSection('specialties')"
-          >
-            <div class="flex items-center">
-              <f7-icon
-                :ios="
-                  specialtiesExpanded ? 'f7:chevron_down' : 'f7:chevron_right'
-                "
-                :md="
-                  specialtiesExpanded
-                    ? 'material:expand_more'
-                    : 'material:chevron_right'
-                "
-                size="16px"
-                class="mr-1"
-              ></f7-icon>
-              <span class="font-medium">Специальности:</span>
-            </div>
-            <div class="flex items-center">
-              <button
-                class="w-7 h-7 flex items-center justify-center text-gray-500"
-                @click.stop
-              >
-                <f7-icon
-                  ios="f7:pencil"
-                  md="material:edit"
-                  size="16px"
-                ></f7-icon>
-              </button>
-              <button
-                class="w-7 h-7 flex items-center justify-center text-green-500"
-                @click.stop
-              >
-                <f7-icon ios="f7:plus" md="material:add" size="16px"></f7-icon>
-              </button>
-            </div>
-          </div>
-          <div class="p-3 flex flex-col gap-3" v-show="specialtiesExpanded">
-            <div class="flex items-center gap-2">
-              <span class="px-2 py-1 border rounded-md text-center">...</span>
-              <AddSpecialtyButton @specialty-added="handleSpecialtyAdded" />
-            </div>
-          </div>
-        </div>
-
-        <div class="border rounded-lg mb-4">
-          <div
-            class="border-b px-3 py-2 bg-gray-50 rounded-t-lg flex items-center justify-between cursor-pointer"
-            @click="toggleSection('courses')"
-          >
-            <div class="flex items-center">
-              <f7-icon
-                :ios="coursesExpanded ? 'f7:chevron_down' : 'f7:chevron_right'"
-                :md="
-                  coursesExpanded
-                    ? 'material:expand_more'
-                    : 'material:chevron_right'
-                "
-                size="16px"
-                class="mr-1"
-              ></f7-icon>
-              <span class="font-medium">Курсы:</span>
-            </div>
-            <div class="flex items-center">
-              <button
-                class="w-7 h-7 flex items-center justify-center text-gray-500"
-                @click.stop
-              >
-                <f7-icon
-                  ios="f7:pencil"
-                  md="material:edit"
-                  size="16px"
-                ></f7-icon>
-              </button>
-              <button
-                class="w-7 h-7 flex items-center justify-center text-green-500"
-                @click.stop
-              >
-                <f7-icon ios="f7:plus" md="material:add" size="16px"></f7-icon>
-              </button>
-            </div>
-          </div>
-          <div class="p-3 flex flex-col gap-3" v-show="coursesExpanded">
-            <div class="flex items-center gap-2">
-              <span class="px-2 py-1 border rounded-md text-center">1</span>
-              <AddCourseButton @course-added="handleCourseAdded" />
-            </div>
-          </div>
-        </div>
-
-        <div class="border rounded-lg">
-          <div
-            class="border-b px-3 py-2 bg-gray-50 rounded-t-lg flex items-center justify-between cursor-pointer"
-            @click="toggleSection('modules')"
-          >
-            <div class="flex items-center">
-              <f7-icon
-                :ios="modulesExpanded ? 'f7:chevron_down' : 'f7:chevron_right'"
-                :md="
-                  modulesExpanded
-                    ? 'material:expand_more'
-                    : 'material:chevron_right'
-                "
-                size="16px"
-                class="mr-1"
-              ></f7-icon>
-              <span class="font-medium">Модуль/дисциплины:</span>
-            </div>
-            <div class="flex items-center">
-              <button
-                class="w-7 h-7 flex items-center justify-center text-green-500"
-                @click.stop
-              >
-                <f7-icon ios="f7:plus" md="material:add" size="16px"></f7-icon>
-              </button>
-            </div>
-          </div>
-          <div class="p-3" v-show="modulesExpanded">
-            <div class="flex items-center gap-2">
-              <AddModuleTemplateButton
-                @module-template-added="handleModuleTemplateAdded"
-              />
-              <ColumnConfigForm @columns-saved="handleColumnsSaved" />
             </div>
           </div>
         </div>

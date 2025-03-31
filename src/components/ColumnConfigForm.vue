@@ -47,19 +47,25 @@
             </div>
           </div>
           <template v-for="(column, index) in columns" :key="index">
-            <div class="grid grid-cols-[1fr,auto] gap-4 items-center">
-              <input
+            <div class="grid grid-cols-[1fr,auto,auto] gap-4 items-center">
+              <f7-input
                 type="text"
-                v-model="column.name"
-                :placeholder="`Столбец ${index + 1}`"
-                class="h-10 !border !border-gray-300 !rounded-xl px-3 py-2 text-sm w-full transition-colors duration-200"
+                :value="column.name"
+                @input="(e: any) => (column.name = e.target.value)"
+                placeholder="Столбец"
               />
               <button
-                class="w-24 px-3 py-2 text-white rounded-lg font-medium text-sm"
-                :class="column.width === 1 ? 'bg-blue-500' : 'bg-red-500'"
+                class="w-24 px-3 py-2 bg-[#007aff] text-white rounded-[10px] font-medium text-[15px]"
                 @click="toggleWidth(index)"
               >
                 {{ column.width === 1 ? "Узкий" : "Широкий" }}
+              </button>
+              <button
+                class="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center"
+                @click="deleteColumn(index)"
+                :disabled="columns.length <= 1"
+              >
+                <i class="f7-icons text-xs">trash</i>
               </button>
             </div>
           </template>
@@ -96,10 +102,6 @@ const columns = ref<Column[]>([
   { name: "", width: 1 },
   { name: "", width: 3 },
   { name: "", width: 1 },
-  { name: "", width: 3 },
-  { name: "", width: 1 },
-  { name: "", width: 1 },
-  { name: "", width: 1 },
 ]);
 
 const openColumnConfigPopover = () => {
@@ -117,6 +119,12 @@ const addColumn = () => {
 
 const toggleWidth = (index: number) => {
   columns.value[index].width = columns.value[index].width === 1 ? 3 : 1;
+};
+
+const deleteColumn = (index: number) => {
+  if (columns.value.length > 1) {
+    columns.value.splice(index, 1);
+  }
 };
 
 const validateForm = () => {
@@ -142,10 +150,6 @@ const resetForm = () => {
   columns.value = [
     { name: "", width: 1 },
     { name: "", width: 3 },
-    { name: "", width: 1 },
-    { name: "", width: 3 },
-    { name: "", width: 1 },
-    { name: "", width: 1 },
     { name: "", width: 1 },
   ];
   formError.value = "";
