@@ -1,24 +1,10 @@
 <template>
   <div>
-    <button
-      id="column-config-button"
-      class="w-7 h-7 md:p-2 flex items-center justify-center text-green-500 md:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-      aria-label="Configure Columns"
-      type="button"
-      @click.stop="openColumnConfigPopover"
-    >
-      <f7-icon
-        ios="f7:gear"
-        md="material:settings"
-        size="16px"
-        class="md:text-blue-500"
-      ></f7-icon>
-    </button>
-
+    <slot name="trigger" :open="openColumnConfigPopover"></slot>
     <f7-popover
       id="column-config-popover"
       style="width: 600px !important"
-      target="#column-config-button"
+      :target="popoverTarget"
       close-on-escape
     >
       <div class="column-config-popover bg-card text-card-foreground">
@@ -27,7 +13,7 @@
         >
           <button
             class="text-muted-foreground hover:text-foreground"
-            @click="closeColumnConfigPopover"
+            @click="handleCancel"
           >
             Отменить
           </button>
@@ -56,12 +42,7 @@
             <div class="grid grid-cols-[1fr,auto,auto] gap-4 items-center">
               <f7-input
                 type="text"
-                :value="column.name"
-                @input="(e: any) => {
-                  const newColumns = [...columnStore.columns];
-                  newColumns[index].name = e.target.value;
-                  columnStore.setColumns(newColumns);
-                }"
+                v-model:value="columns[index].name"
                 placeholder="Столбец"
               />
               <button
@@ -94,9 +75,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { f7 } from "framework7-vue";
 import { useColumnConfigStore } from "@/stores/columnConfig";
+import { z } from "zod";
 
 interface Column {
   name: string;
@@ -107,21 +89,54 @@ const emit = defineEmits<{
   (e: "columns-saved", columns: Column[]): void;
 }>();
 
-const formError = ref("");
 const columnStore = useColumnConfigStore();
+
+const columnSchema = z.object({
+  columns: z
+    .array(
+      z.object({
+        name: z.string(),
+        width: z.number().min(1).max(3),
+      })
+    )
+    .refine(
+      (columns) => columns.some((col) => col.name.trim() !== ""),
+      "Пожалуйста, укажите название хотя бы для одного столбца"
+    ),
+});
 
 const columns = computed({
   get: () => columnStore.columns,
   set: (value) => columnStore.setColumns(value),
 });
 
-const openColumnConfigPopover = () => {
-  f7.popover.open("#column-config-popover", "#column-config-button");
+const formError = computed(() => {
+  const result = columnSchema.safeParse({ columns: columns.value });
+  if (!result.success) {
+    return result.error.issues[0].message;
+  }
+  return "";
+});
+
+const popoverTarget = ref<string | HTMLElement>("#column-config-button");
+
+const openColumnConfigPopover = (event?: Event) => {
+  if (event && event.currentTarget) {
+    popoverTarget.value = event.currentTarget as HTMLElement;
+    f7.popover.open("#column-config-popover", event.currentTarget);
+  } else {
+    popoverTarget.value = "#column-config-button";
+    f7.popover.open("#column-config-popover", "#column-config-button");
+  }
 };
 
 const closeColumnConfigPopover = () => {
   f7.popover.close("#column-config-popover");
+};
+
+const handleCancel = () => {
   resetForm();
+  closeColumnConfigPopover();
 };
 
 const addColumn = () => {
@@ -142,20 +157,9 @@ const deleteColumn = (index: number) => {
   }
 };
 
-const validateForm = () => {
-  const hasNamedColumn = columns.value.some((col) => col.name.trim() !== "");
-
-  if (!hasNamedColumn) {
-    formError.value = "Пожалуйста, укажите название хотя бы для одного столбца";
-    return false;
-  }
-
-  formError.value = "";
-  return true;
-};
-
 const handleSaveColumns = () => {
-  if (!validateForm()) return;
+  const validationResult = columnSchema.safeParse({ columns: columns.value });
+  if (!validationResult.success) return;
 
   emit("columns-saved", columns.value);
   closeColumnConfigPopover();
@@ -163,6 +167,5 @@ const handleSaveColumns = () => {
 
 const resetForm = () => {
   columnStore.resetColumns();
-  formError.value = "";
 };
 </script>

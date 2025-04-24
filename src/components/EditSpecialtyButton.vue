@@ -1,25 +1,10 @@
 <template>
   <div>
-    <button
-      id="add-specialty-button"
-      class="w-7 h-7 md:p-2 flex items-center justify-center text-green-500 md:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-      aria-label="Add Specialty"
-      type="button"
-      @click.stop="openAddSpecialtyPopover"
-    >
-      <f7-icon
-        ios="f7:plus"
-        md="material:add"
-        size="16px"
-        class="md:text-primary"
-      ></f7-icon>
-    </button>
-
     <f7-popover
-      id="add-specialty-popover"
+      :id="'edit-specialty-popover-' + specialty.id"
       style="width: 600px !important"
-      target="#add-specialty-button"
       close-on-escape
+      :target="`#specialty-item-${specialty.id}`"
     >
       <div class="specialty-popover bg-card text-card-foreground">
         <div
@@ -27,15 +12,15 @@
         >
           <button
             class="text-muted-foreground hover:text-foreground"
-            @click="closeAddSpecialtyPopover"
+            @click="closeEditSpecialtyPopover"
           >
             Отменить
           </button>
-          <span class="text-foreground font-semibold">Создать</span>
+          <span class="text-foreground font-semibold">Редактировать</span>
           <button
             class="text-primary hover:text-primary/80 disabled:text-muted-foreground"
             :disabled="!isFormValid"
-            @click="handleSaveSpecialty"
+            @click="handleUpdateSpecialty"
           >
             Сохранить
           </button>
@@ -96,17 +81,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { f7, f7Popover, f7Input, f7Checkbox } from "framework7-vue";
 import { z } from "zod";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 
+const props = defineProps<{
+  specialty: {
+    id: string;
+    name: string;
+    codeName?: string;
+    code: string;
+    hasModule: boolean;
+  };
+}>();
+
 const specialtyStore = useSpecialtyStore();
 
-const specialtyName = ref("");
-const specialtyCodeName = ref("");
-const specialtyCode = ref("");
-const createModule = ref(false);
+const specialtyName = ref(props.specialty.name);
+const specialtyCodeName = ref(props.specialty.codeName || "");
+const specialtyCode = ref(props.specialty.code);
+const createModule = ref(props.specialty.hasModule);
 
 const specialtySchema = z.object({
   name: z.string().min(1, "Пожалуйста, введите наименование специальности"),
@@ -133,37 +128,36 @@ const formError = computed(() => {
 
 const isFormValid = computed(() => validationResult.value.success);
 
-const openAddSpecialtyPopover = () => {
-  f7.popover.open("#add-specialty-popover", "#add-specialty-button");
-};
-
-const closeAddSpecialtyPopover = () => {
-  f7.popover.close("#add-specialty-popover");
+const closeEditSpecialtyPopover = () => {
+  f7.popover.close(`#edit-specialty-popover-${props.specialty.id}`);
   resetForm();
 };
 
-const handleSaveSpecialty = async () => {
+const handleUpdateSpecialty = async () => {
   if (!isFormValid.value) return;
 
   try {
-    await specialtyStore.addSpecialty({
+    await specialtyStore.updateSpecialty(props.specialty.id, {
       name: specialtyName.value,
       codeName: specialtyCodeName.value,
       code: specialtyCode.value,
       hasModule: createModule.value,
     });
-    closeAddSpecialtyPopover();
+    closeEditSpecialtyPopover();
   } catch (error) {
-    // Error is already handled in the store
-    console.error("Failed to add specialty:", error);
+    console.error("Failed to update specialty:", error);
   }
 };
 
 const resetForm = () => {
-  specialtyName.value = "";
-  specialtyCodeName.value = "";
-  specialtyCode.value = "";
-  createModule.value = false;
+  specialtyName.value = props.specialty.name;
+  specialtyCodeName.value = props.specialty.codeName || "";
+  specialtyCode.value = props.specialty.code;
+  createModule.value = props.specialty.hasModule;
   specialtyStore.clearError();
 };
+
+defineExpose({
+  closeEditSpecialtyPopover,
+});
 </script>

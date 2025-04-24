@@ -1,30 +1,42 @@
 import { defineStore } from "pinia";
+import { ref } from "vue";
 
 interface Column {
   name: string;
   width: number;
 }
 
-export const useColumnConfigStore = defineStore("columnConfig", {
-  state: () => ({
-    columns: [
-      { name: "", width: 1 },
-      { name: "", width: 3 },
-      { name: "", width: 1 },
-    ] as Column[],
-  }),
+const defaultColumns: Column[] = [
+  { name: "", width: 1 },
+  { name: "", width: 3 },
+  { name: "", width: 1 },
+];
 
-  actions: {
-    setColumns(newColumns: Column[]) {
-      this.columns = newColumns;
-    },
+export const useColumnConfigStore = defineStore(
+  "columnConfig",
+  () => {
+    const columns = ref<Column[]>(defaultColumns);
 
-    resetColumns() {
-      this.columns = [
-        { name: "", width: 1 },
-        { name: "", width: 3 },
-        { name: "", width: 1 },
-      ];
-    },
+    function setColumns(newColumns: Column[]) {
+      columns.value = newColumns;
+    }
+
+    function resetColumns() {
+      columns.value = [...defaultColumns];
+    }
+
+    function addColumn() {
+      columns.value.push({ name: "", width: 1 });
+    }
+
+    return {
+      columns,
+      setColumns,
+      resetColumns,
+      addColumn,
+    };
   },
-});
+  {
+    persist: true,
+  }
+);

@@ -1,43 +1,26 @@
 <template>
   <div>
-    <button
-      id="add-course-button"
-      class="w-7 h-7 md:p-2 flex items-center justify-center text-green-500 md:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-      aria-label="Add Course"
-      type="button"
-      @click.stop="openAddCoursePopover"
-    >
-      <f7-icon
-        ios="f7:plus"
-        md="material:add"
-        size="16px"
-        class="md:text-primary"
-      ></f7-icon>
-    </button>
-
-    <!-- Framework7 Popover -->
     <f7-popover
-      id="add-course-popover"
+      :id="'edit-course-popover-' + course.id"
       style="width: 600px !important"
-      target="#add-course-button"
       close-on-escape
+      :target="`#course-item-${course.id}`"
     >
       <div class="course-popover bg-card text-card-foreground">
-        <!-- Header with buttons -->
         <div
           class="flex justify-between items-center px-4 py-3 border-b border-input"
         >
           <button
             class="text-muted-foreground hover:text-foreground"
-            @click="closeAddCoursePopover"
+            @click="closeEditCoursePopover"
           >
             Отменить
           </button>
-          <span class="text-foreground font-semibold">Создать</span>
+          <span class="text-foreground font-semibold">Редактировать</span>
           <button
             class="text-primary hover:text-primary/80 disabled:text-muted-foreground"
             :disabled="!isFormValid"
-            @click="handleSaveCourse"
+            @click="handleUpdateCourse"
           >
             Сохранить
           </button>
@@ -48,12 +31,8 @@
         </div>
 
         <div class="p-4 space-y-4">
-          <!-- Course number input -->
           <div class="space-y-2">
-            <label
-              class="text-sm text-foreground flex items-center"
-              for="course-number"
-            >
+            <label class="text-sm text-foreground" for="course-number">
               Номер курса
               <span class="text-destructive ml-1">*</span>
             </label>
@@ -65,7 +44,6 @@
             ></f7-input>
           </div>
 
-          <!-- Admission year dropdown -->
           <div class="space-y-2">
             <label class="text-sm text-foreground" for="admission-year">
               Год поступления
@@ -98,7 +76,6 @@
             </div>
           </div>
 
-          <!-- Specialty code input -->
           <div class="space-y-2">
             <label class="text-sm text-foreground" for="specialty-code">
               Шифр специальности
@@ -118,22 +95,24 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import {
-  f7,
-  f7Popover,
-  f7Icon,
-  f7Input,
-  f7List,
-  f7ListItem,
-} from "framework7-vue";
+import { f7, f7Popover, f7Input, f7List, f7ListItem } from "framework7-vue";
 import { z } from "zod";
 import { useCourseStore } from "@/stores/courseStore";
 
+const props = defineProps<{
+  course: {
+    id: string;
+    number: string;
+    admissionYear: string;
+    specialtyCode: string;
+  };
+}>();
+
 const courseStore = useCourseStore();
 
-const courseNumber = ref("");
-const admissionYear = ref("");
-const specialtyCode = ref("");
+const courseNumber = ref(props.course.number);
+const admissionYear = ref(props.course.admissionYear);
+const specialtyCode = ref(props.course.specialtyCode);
 
 // Generate available years (current year and previous 5 years)
 const availableYears = computed(() => {
@@ -164,37 +143,34 @@ const formError = computed(() => {
 
 const isFormValid = computed(() => validationResult.value.success);
 
-// Popover controls
-const openAddCoursePopover = () => {
-  f7.popover.open("#add-course-popover", "#add-course-button");
-};
-
-const closeAddCoursePopover = () => {
-  f7.popover.close("#add-course-popover");
+const closeEditCoursePopover = () => {
+  f7.popover.close(`#edit-course-popover-${props.course.id}`);
   resetForm();
 };
 
-// Save handler
-const handleSaveCourse = async () => {
+const handleUpdateCourse = async () => {
   if (!isFormValid.value) return;
 
   try {
-    await courseStore.addCourse({
+    await courseStore.updateCourse(props.course.id, {
       number: courseNumber.value,
       admissionYear: admissionYear.value,
       specialtyCode: specialtyCode.value,
     });
-    closeAddCoursePopover();
+    closeEditCoursePopover();
   } catch (error) {
-    console.error("Failed to add course:", error);
+    console.error("Failed to update course:", error);
   }
 };
 
-// Reset form
 const resetForm = () => {
-  courseNumber.value = "";
-  admissionYear.value = "";
-  specialtyCode.value = "";
+  courseNumber.value = props.course.number;
+  admissionYear.value = props.course.admissionYear;
+  specialtyCode.value = props.course.specialtyCode;
   courseStore.clearError();
 };
+
+defineExpose({
+  closeEditCoursePopover,
+});
 </script>

@@ -1,24 +1,10 @@
 <template>
   <div>
-    <button
-      id="add-module-template-button"
-      class="w-7 h-7 md:p-2 flex items-center justify-center text-green-500 md:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-      aria-label="Add Module Template"
-      type="button"
-      @click.stop="openAddModuleTemplatePopover"
-    >
-      <f7-icon
-        ios="f7:plus"
-        md="material:add"
-        size="16px"
-        class="md:text-primary"
-      ></f7-icon>
-    </button>
-
+    <slot name="trigger" :open="openAddModuleTemplatePopover"></slot>
     <f7-popover
       id="add-module-template-popover"
       style="width: 600px !important"
-      target="#add-module-template-button"
+      :target="popoverTarget"
       close-on-escape
     >
       <div class="module-template-popover bg-card text-card-foreground">
@@ -34,7 +20,7 @@
           <span class="text-foreground font-semibold">Создать</span>
           <button
             class="text-primary hover:text-primary/80 disabled:text-muted-foreground"
-            :disabled="!!formError"
+            :disabled="!isFormValid"
             @click="handleSaveModuleTemplate"
           >
             Сохранить
@@ -57,7 +43,7 @@
             <f7-input
               :id="'field-' + index"
               type="text"
-              v-model="formData[index]"
+              v-model:value="formData[index]"
               clear-button
               :placeholder="
                 'Введите ' + (column.name.toLowerCase() || 'значение')
@@ -71,27 +57,61 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { f7, f7Popover, f7Input } from "framework7-vue";
 import { useColumnConfigStore } from "@/stores/columnConfig";
 import { useModuleStore } from "@/stores/moduleStore";
+import { z } from "zod";
 
 const columnStore = useColumnConfigStore();
 const moduleStore = useModuleStore();
 const columns = computed(() => columnStore.columns);
 
 const formData = ref<string[]>([]);
-const formError = ref("");
+
+const moduleTemplateSchema = computed(() => {
+  return z.object({
+    fields: z
+      .array(z.string())
+      .refine(
+        (fields) => fields.some((field) => field.trim() !== ""),
+        "Пожалуйста, заполните хотя бы одно поле"
+      ),
+  });
+});
+
+const validationResult = computed(() => {
+  return moduleTemplateSchema.value.safeParse({
+    fields: formData.value,
+  });
+});
+
+const formError = computed(() => {
+  if (validationResult.value.success) return "";
+  const issues = validationResult.value.error.issues;
+  if (issues.length > 0) return issues[0].message;
+  return "";
+});
+
+const isFormValid = computed(() => validationResult.value.success);
 
 computed(() => {
   formData.value = new Array(columns.value.length).fill("");
 });
 
-const openAddModuleTemplatePopover = () => {
-  f7.popover.open(
-    "#add-module-template-popover",
-    "#add-module-template-button"
-  );
+const popoverTarget = ref<string | HTMLElement>("#add-module-template-button");
+
+const openAddModuleTemplatePopover = (event?: Event) => {
+  if (event && event.currentTarget) {
+    popoverTarget.value = event.currentTarget as HTMLElement;
+    f7.popover.open("#add-module-template-popover", event.currentTarget);
+  } else {
+    popoverTarget.value = "#add-module-template-button";
+    f7.popover.open(
+      "#add-module-template-popover",
+      "#add-module-template-button"
+    );
+  }
 };
 
 const closeAddModuleTemplatePopover = () => {
@@ -99,20 +119,8 @@ const closeAddModuleTemplatePopover = () => {
   resetForm();
 };
 
-const validateForm = () => {
-  const hasValue = formData.value.some((value) => value.trim() !== "");
-
-  if (!hasValue) {
-    formError.value = "Пожалуйста, заполните хотя бы одно поле";
-    return false;
-  }
-
-  formError.value = "";
-  return true;
-};
-
 const handleSaveModuleTemplate = () => {
-  if (!validateForm()) return;
+  if (!isFormValid.value) return;
 
   const moduleData: Record<string, string> = {};
   formData.value.forEach((value, index) => {
@@ -125,6 +133,5 @@ const handleSaveModuleTemplate = () => {
 
 const resetForm = () => {
   formData.value = new Array(columns.value.length).fill("");
-  formError.value = "";
 };
 </script>

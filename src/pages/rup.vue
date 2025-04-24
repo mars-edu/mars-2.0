@@ -11,20 +11,17 @@
     />
 
     <div class="flex flex-1 overflow-hidden">
-      <!-- Sidebar - hidden on mobile, visible on desktop -->
       <Sidebar
         v-model:activeNavItem="activeNavItem"
         class="hidden md:block h-[calc(100vh-64px)] flex-shrink-0 border-r border-border"
       />
 
-      <!-- Main Content Area - responsive for both desktop and mobile -->
       <div
         class="flex-1 overflow-y-auto p-4 md:p-6 bg-background pb-16 md:pb-6"
       >
         <div
           class="bg-card text-card-foreground rounded-xl p-4 md:p-6 shadow-sm"
         >
-          <!-- Program and Year Fields -->
           <div
             class="flex flex-col md:flex-row md:items-center md:gap-6 mb-4 md:mb-8"
           >
@@ -90,7 +87,6 @@
           </div>
 
           <div class="space-y-4 md:space-y-6">
-            <!-- Specialties Section -->
             <div
               class="border border-border rounded-lg md:rounded-xl overflow-hidden"
             >
@@ -118,32 +114,80 @@
                   >
                 </div>
                 <div class="flex items-center gap-1 md:gap-2">
-                  <button
-                    class="w-7 h-7 md:p-2 flex items-center justify-center text-gray-500 md:text-foreground/60 hover:bg-background rounded-lg transition-colors"
-                    @click.stop
-                  >
-                    <f7-icon
-                      ios="f7:pencil"
-                      md="material:edit"
-                      size="16px"
-                      class="md:text-foreground/60"
-                    ></f7-icon>
-                  </button>
-
-                  <AddSpecialtyButton @specialty-added="handleSpecialtyAdded" />
+                  <AddSpecialtyButton />
                 </div>
               </div>
               <div class="p-3 md:p-5 bg-card" v-show="specialtiesExpanded">
-                <div class="flex items-center gap-2 md:gap-3">
-                  <span
-                    class="px-2 py-1 md:px-4 md:py-2 border border-border rounded-md md:rounded-lg text-center min-w-[40px] md:min-w-[60px] bg-muted"
-                    >...</span
+                <div class="flex flex-wrap items-center gap-2 md:gap-3">
+                  <template v-if="specialtyStore.isLoading">
+                    <div
+                      v-for="n in 3"
+                      :key="n"
+                      class="skeleton-text skeleton-effect-wave"
+                    >
+                      <div
+                        class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background"
+                      >
+                        <f7-skeleton-block style="width: 80px; height: 20px" />
+                        <f7-skeleton-block style="width: 120px; height: 16px" />
+                      </div>
+                    </div>
+                  </template>
+                  <div
+                    v-else-if="specialtyStore.getError"
+                    class="text-destructive"
                   >
+                    {{ specialtyStore.getError }}
+                  </div>
+                  <template v-else>
+                    <div
+                      v-for="specialty in specialtyStore.getAllSpecialties"
+                      :key="specialty.id"
+                      class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                      :id="`specialty-item-${specialty.id}`"
+                      :class="{
+                        'ring-2 ring-primary bg-primary/10':
+                          selectedSpecialtyId === specialty.id,
+                      }"
+                      @click="selectedSpecialtyId = specialty.id"
+                    >
+                      <span class="font-medium">
+                        {{ specialty.codeName || specialty.code }}
+                      </span>
+                      <span class="text-sm text-muted-foreground">{{
+                        specialty.name
+                      }}</span>
+                      <button
+                        class="ml-auto p-1 hover:bg-primary/10 rounded-md transition-colors"
+                        @click.stop="openEditSpecialty(specialty)"
+                        aria-label="Edit Specialty"
+                        type="button"
+                      >
+                        <f7-icon
+                          ios="f7:pencil"
+                          md="material:edit"
+                          size="18px"
+                          class="text-primary"
+                        ></f7-icon>
+                      </button>
+                    </div>
+                    <div
+                      v-if="specialtyStore.getAllSpecialties.length === 0"
+                      class="text-muted-foreground"
+                    >
+                      Нет специальностей
+                    </div>
+                    <EditSpecialtyButton
+                      v-for="specialty in specialtyStore.getAllSpecialties"
+                      :key="`edit-${specialty.id}`"
+                      :specialty="specialty"
+                      ref="editSpecialtyRefs[specialty.id]"
+                    />
+                  </template>
                 </div>
               </div>
             </div>
 
-            <!-- Courses Section -->
             <div
               class="border border-border rounded-lg md:rounded-xl overflow-hidden"
             >
@@ -167,27 +211,80 @@
                   <span class="font-medium md:font-semibold">Курсы:</span>
                 </div>
                 <div class="flex items-center gap-1 md:gap-2">
-                  <button
-                    class="w-7 h-7 md:p-2 flex items-center justify-center text-gray-500 md:text-foreground/60 hover:bg-background rounded-lg transition-colors"
-                    @click.stop
-                  >
-                    <f7-icon
-                      ios="f7:pencil"
-                      md="material:edit"
-                      size="16px"
-                      class="md:text-foreground/60"
-                    ></f7-icon>
-                  </button>
-
-                  <AddCourseButton @course-added="handleCourseAdded" />
+                  <AddCourseButton />
                 </div>
               </div>
               <div class="p-3 md:p-5 bg-card" v-show="coursesExpanded">
-                <div class="flex items-center gap-2 md:gap-3">
-                  <span
-                    class="px-2 py-1 md:px-4 md:py-2 border border-border rounded-md md:rounded-lg text-center min-w-[40px] md:min-w-[60px] bg-muted"
-                    >1</span
+                <div class="flex flex-wrap items-center gap-2 md:gap-3">
+                  <template v-if="courseStore.isLoading">
+                    <div
+                      v-for="n in 4"
+                      :key="n"
+                      class="skeleton-text skeleton-effect-wave"
+                    >
+                      <div
+                        class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background"
+                      >
+                        <f7-skeleton-block style="width: 40px; height: 20px" />
+                        <f7-skeleton-block style="width: 60px; height: 16px" />
+                        <f7-skeleton-block style="width: 100px; height: 16px" />
+                      </div>
+                    </div>
+                  </template>
+                  <div
+                    v-else-if="courseStore.getError"
+                    class="text-destructive"
                   >
+                    {{ courseStore.getError }}
+                  </div>
+                  <template v-else>
+                    <div
+                      v-for="course in courseStore.getAllCourses"
+                      :key="course.id"
+                      class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                      :id="`course-item-${course.id}`"
+                      :class="{
+                        'ring-2 ring-primary bg-primary/10':
+                          selectedCourseId === course.id,
+                      }"
+                      @click="selectedCourseId = course.id"
+                    >
+                      <span class="font-medium">
+                        {{ course.number }}
+                      </span>
+                      <span class="text-sm text-muted-foreground">{{
+                        course.admissionYear
+                      }}</span>
+                      <span class="text-sm text-muted-foreground">{{
+                        course.specialtyCode
+                      }}</span>
+                      <button
+                        class="ml-auto p-1 hover:bg-primary/10 rounded-md transition-colors"
+                        @click.stop="openEditCourse(course)"
+                        aria-label="Edit Course"
+                        type="button"
+                      >
+                        <f7-icon
+                          ios="f7:pencil"
+                          md="material:edit"
+                          size="18px"
+                          class="text-primary"
+                        ></f7-icon>
+                      </button>
+                    </div>
+                    <div
+                      v-if="courseStore.getAllCourses.length === 0"
+                      class="text-muted-foreground"
+                    >
+                      Нет курсов
+                    </div>
+                    <EditCourseButton
+                      v-for="course in courseStore.getAllCourses"
+                      :key="`edit-${course.id}`"
+                      :course="course"
+                      ref="editCourseRefs[course.id]"
+                    />
+                  </template>
                 </div>
               </div>
             </div>
@@ -196,8 +293,19 @@
               class="border border-border rounded-lg md:rounded-xl overflow-hidden"
             >
               <div
-                class="px-3 md:px-5 py-2 md:py-4 bg-muted bg-gray-50 md:bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
-                @click="toggleSection('modules')"
+                class="px-3 md:px-5 py-2 md:py-4 bg-muted bg-gray-50 md:bg-muted flex items-center justify-between transition-colors"
+                :class="{
+                  'cursor-pointer hover:bg-muted/80':
+                    selectedSpecialtyId && selectedCourseId,
+                  'opacity-50 cursor-not-allowed': !(
+                    selectedSpecialtyId && selectedCourseId
+                  ),
+                }"
+                @click="
+                  selectedSpecialtyId &&
+                    selectedCourseId &&
+                    toggleSection('modules')
+                "
               >
                 <div class="flex items-center">
                   <f7-icon
@@ -217,13 +325,52 @@
                   >
                 </div>
                 <div class="flex items-center gap-1 md:gap-2">
-                  <ColumnConfigForm @columns-saved="handleColumnsSaved" />
+                  <ColumnConfigForm @columns-saved="handleColumnsSaved">
+                    <template #trigger="{ open }">
+                      <button
+                        class="w-7 h-7 md:p-2 flex items-center justify-center text-green-500 md:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                        aria-label="Configure Columns"
+                        type="button"
+                        @click.stop="open"
+                        :disabled="!(selectedSpecialtyId && selectedCourseId)"
+                      >
+                        <f7-icon
+                          ios="f7:gear"
+                          md="material:settings"
+                          size="16px"
+                          class="md:text-blue-500"
+                        ></f7-icon>
+                      </button>
+                    </template>
+                  </ColumnConfigForm>
                   <AddModuleTemplateButton
                     @module-template-added="handleModuleTemplateAdded"
-                  />
+                  >
+                    <template #trigger="{ open }">
+                      <button
+                        class="w-7 h-7 md:p-2 flex items-center justify-center text-green-500 md:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                        aria-label="Add Module Template"
+                        type="button"
+                        @click.stop="open"
+                        :disabled="!(selectedSpecialtyId && selectedCourseId)"
+                      >
+                        <f7-icon
+                          ios="f7:plus"
+                          md="material:add"
+                          size="16px"
+                          class="md:text-primary"
+                        ></f7-icon>
+                      </button>
+                    </template>
+                  </AddModuleTemplateButton>
                 </div>
               </div>
-              <div class="p-3 md:p-5 bg-card" v-show="modulesExpanded">
+              <div
+                class="p-3 md:p-5 bg-card"
+                v-show="
+                  modulesExpanded && selectedSpecialtyId && selectedCourseId
+                "
+              >
                 <ModuleTable />
               </div>
             </div>
@@ -232,7 +379,6 @@
       </div>
     </div>
 
-    <!-- Floating Action Button -->
     <template #fixed>
       <f7-fab position="right-bottom" class="mb-6 mr-6">
         <f7-icon ios="f7:plus" md="material:add"></f7-icon>
@@ -269,32 +415,38 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import {
   f7Page,
   f7Fab,
   f7FabButtons,
   f7FabButton,
   f7Icon,
+  f7SkeletonBlock,
 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddSpecialtyButton from "@/components/AddSpecialtyButton.vue";
+import EditSpecialtyButton from "@/components/EditSpecialtyButton.vue";
 import AddCourseButton from "@/components/AddCourseButton.vue";
+import EditCourseButton from "@/components/EditCourseButton.vue";
 import AddModuleTemplateButton from "@/components/AddModuleTemplateButton.vue";
 import ColumnConfigForm from "@/components/ColumnConfigForm.vue";
 import ModuleTable from "@/components/ModuleTable.vue";
 import { useLanguage } from "@/composables/useLanguage";
+import { useSpecialtyStore } from "@/stores/specialtyStore";
+import { useCourseStore } from "@/stores/courseStore";
+import { f7 } from "framework7-vue";
 
 const searchbarEnabled = ref(false);
 const activeNavItem = ref("rup");
+const specialtyStore = useSpecialtyStore();
+const courseStore = useCourseStore();
 
-// Section toggle states
 const specialtiesExpanded = ref(true);
 const coursesExpanded = ref(true);
 const modulesExpanded = ref(true);
 
-// Toggle section visibility
 const toggleSection = (section: "specialties" | "courses" | "modules") => {
   if (section === "specialties")
     specialtiesExpanded.value = !specialtiesExpanded.value;
@@ -302,47 +454,19 @@ const toggleSection = (section: "specialties" | "courses" | "modules") => {
   if (section === "modules") modulesExpanded.value = !modulesExpanded.value;
 };
 
-// Add back the Column interface
 interface Column {
   name: string;
   width: number;
 }
 
-// Handle specialty added
-const handleSpecialtyAdded = (specialty: {
-  name: string;
-  codeName: string;
-  code: string;
-  createModule: boolean;
-}) => {
-  console.log("New specialty added:", specialty);
-  // Here you would typically add the specialty to your state or send to backend
-};
+const handleModuleTemplateAdded = (
+  moduleTemplate: Record<string, string>
+) => {};
 
-// Handle course added
-const handleCourseAdded = (course: {
-  number: string;
-  admissionYear: string;
-  specialtyCode: string;
-}) => {
-  console.log("New course added:", course);
-  // Here you would typically add the course to your state or send to backend
-};
+const handleColumnsSaved = (columns: Column[]) => {};
 
-// Handle module template added
-const handleModuleTemplateAdded = (moduleTemplate: Record<string, string>) => {
-  // Here you would typically add the module template to your state or send to backend
-};
-
-// Handle column saved
-const handleColumnsSaved = (columns: Column[]) => {
-  // Here you would process the column configuration if needed
-};
-
-// Language management
 const { activeLanguage, availableLanguages, setLanguage } = useLanguage();
 
-// Event handlers
 const handleSearchbarEnable = () => {
   searchbarEnabled.value = true;
 };
@@ -354,4 +478,29 @@ const handleSearchbarDisable = () => {
 const handleLanguageChange = (code: string) => {
   setLanguage(code);
 };
+
+onMounted(async () => {
+  await specialtyStore.fetchSpecialties();
+  await courseStore.fetchCourses();
+});
+
+const editSpecialtyRefs = ref<{ [key: string]: any }>({});
+const editCourseRefs = ref<{ [key: string]: any }>({});
+
+const openEditSpecialty = (specialty: any) => {
+  const targetEl = document.getElementById(`specialty-item-${specialty.id}`);
+  if (targetEl) {
+    f7.popover.open(`#edit-specialty-popover-${specialty.id}`, targetEl);
+  }
+};
+
+const openEditCourse = (course: any) => {
+  const targetEl = document.getElementById(`course-item-${course.id}`);
+  if (targetEl) {
+    f7.popover.open(`#edit-course-popover-${course.id}`, targetEl);
+  }
+};
+
+const selectedSpecialtyId = ref<string | null>(null);
+const selectedCourseId = ref<string | null>(null);
 </script>
