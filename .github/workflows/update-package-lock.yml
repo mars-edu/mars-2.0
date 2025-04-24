@@ -23,18 +23,24 @@ jobs:
 
       - name: Install dependencies and generate package-lock.json
         run: npm install
-        # run: npm install --package-lock-only
+
+      - name: Install backend dependencies and generate backend/package-lock.json
+        run: |
+          cd backend
+          npm install
+          cd ..
 
       - name: Check for changes
         id: git-check
         run: |
-          git diff --exit-code package-lock.json || echo "changes=true" >> $GITHUB_OUTPUT
+          git diff --exit-code package-lock.json || echo "changes_root=true" >> $GITHUB_OUTPUT
+          git diff --exit-code backend/package-lock.json || echo "changes_backend=true" >> $GITHUB_OUTPUT
 
-      - name: Commit and push if package-lock.json has changed
-        if: steps.git-check.outputs.changes == 'true'
+      - name: Commit and push if any package-lock.json has changed
+        if: steps.git-check.outputs.changes_root == 'true' || steps.git-check.outputs.changes_backend == 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add package-lock.json
+          git add package-lock.json backend/package-lock.json
           git commit -m "chore: update package-lock.json"
           git push
