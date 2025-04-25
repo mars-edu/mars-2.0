@@ -6,11 +6,7 @@ interface Column {
   width: number;
 }
 
-const defaultColumns: Column[] = [
-  { name: "", width: 1 },
-  { name: "", width: 3 },
-  { name: "", width: 1 },
-];
+const defaultColumns: Column[] = [];
 
 export const useColumnConfigStore = defineStore(
   "columnConfig",

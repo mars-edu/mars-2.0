@@ -13,7 +13,11 @@
         </button>
       </template>
     </ColumnConfigForm> -->
-    <table ref="tableRef" class="w-full border-collapse relative">
+    <table
+      v-if="columns.length > 0"
+      ref="tableRef"
+      class="w-full border-collapse relative"
+    >
       <thead>
         <tr>
           <th
