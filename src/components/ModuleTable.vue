@@ -1,6 +1,6 @@
 <!-- ModuleTable.vue -->
 <template>
-  <div class="relative overflow-visible z-50">
+  <div class="relative overflow-visible z-50" v-if="columns.length > 0">
     <!-- <ColumnConfigForm>
       <template #trigger="{ open }">
         <button
@@ -13,11 +13,7 @@
         </button>
       </template>
     </ColumnConfigForm> -->
-    <table
-      v-if="columns.length > 0"
-      ref="tableRef"
-      class="w-full border-collapse relative"
-    >
+    <table ref="tableRef" class="w-full border-collapse relative">
       <thead>
         <tr>
           <th
