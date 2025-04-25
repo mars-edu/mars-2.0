@@ -4,7 +4,7 @@
     <ColumnConfigForm>
       <template #trigger="{ open }">
         <button
-          class="w-8 h-8 flex items-center justify-center bg-primary text-primary-foreground rounded-full shadow-lg absolute z-50 hover:bg-primary/90 transition-colors"
+          class="w-8 h-8 flex items-center justify-center bg-green-500 text-white rounded-full shadow-lg absolute z-50 hover:bg-green-600 transition-colors"
           style="top: -18px; right: -18px"
           type="button"
           @click="open"
@@ -49,7 +49,7 @@
     <AddModuleTemplateButton>
       <template #trigger="{ open }">
         <button
-          class="w-8 h-8 flex items-center justify-center bg-primary text-primary-foreground rounded-full shadow-lg absolute z-50 hover:bg-primary/90 transition-colors"
+          class="w-8 h-8 flex items-center justify-center bg-green-500 text-white rounded-full shadow-lg absolute z-50 hover:bg-green-600 transition-colors"
           style="bottom: -18px; left: 50%; transform: translateX(-50%)"
           type="button"
           @click="open"

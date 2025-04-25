@@ -72,13 +72,13 @@
                     ></f7-icon>
                   </button>
                   <button
-                    class="p-1 md:p-1.5 hover:bg-primary/10 rounded-md transition-colors"
+                    class="p-1 md:p-1.5 hover:bg-green-500 rounded-full transition-colors"
                   >
                     <f7-icon
                       ios="f7:plus"
                       md="material:add"
                       size="18px"
-                      class="text-primary"
+                      class="text-green-500 hover:text-white"
                     ></f7-icon>
                   </button>
                 </div>
@@ -91,7 +91,7 @@
               class="border border-border rounded-lg md:rounded-xl overflow-hidden"
             >
               <div
-                class="px-3 md:px-5 py-2 md:py-4 bg-muted bg-gray-50 md:bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
+                class="px-3 md:px-4 py-1.5 md:py-2 bg-muted bg-gray-50 md:bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
                 @click="toggleSection('specialties')"
               >
                 <div class="flex items-center">
@@ -106,12 +106,18 @@
                         ? 'material:expand_more'
                         : 'material:chevron_right'
                     "
-                    size="16px"
-                    class="mr-1 md:mr-3 text-foreground/60"
+                    size="14px"
+                    class="mr-1 md:mr-2 text-foreground/60"
                   ></f7-icon>
-                  <span class="font-medium md:font-semibold"
+                  <span class="font-medium text-sm md:text-base"
                     >Специальности:</span
                   >
+                  <span
+                    v-if="!specialtiesExpanded && selectedSpecialty"
+                    class="ml-2 text-xs md:text-sm px-2 py-1 rounded-md ring-2 ring-primary bg-primary/10"
+                  >
+                    {{ selectedSpecialty.codeName || selectedSpecialty.name }}
+                  </span>
                 </div>
                 <div class="flex items-center gap-1 md:gap-2">
                   <AddSpecialtyButton />
@@ -152,11 +158,8 @@
                       @click="selectedSpecialtyId = specialty.id"
                     >
                       <span class="font-medium">
-                        {{ specialty.codeName || specialty.code }}
+                        {{ specialty.codeName || specialty.name }}
                       </span>
-                      <span class="text-sm text-muted-foreground">{{
-                        specialty.name
-                      }}</span>
                       <button
                         class="ml-auto p-1 hover:bg-primary/10 rounded-md transition-colors"
                         @click.stop="openEditSpecialty(specialty)"
@@ -192,7 +195,7 @@
               class="border border-border rounded-lg md:rounded-xl overflow-hidden"
             >
               <div
-                class="px-3 md:px-5 py-2 md:py-4 bg-muted bg-gray-50 md:bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
+                class="px-3 md:px-4 py-1.5 md:py-2 bg-muted bg-gray-50 md:bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
                 @click="toggleSection('courses')"
               >
                 <div class="flex items-center">
@@ -205,10 +208,16 @@
                         ? 'material:expand_more'
                         : 'material:chevron_right'
                     "
-                    size="16px"
-                    class="mr-1 md:mr-3 text-foreground/60"
+                    size="14px"
+                    class="mr-1 md:mr-2 text-foreground/60"
                   ></f7-icon>
-                  <span class="font-medium md:font-semibold">Курсы:</span>
+                  <span class="font-medium text-sm md:text-base">Курсы:</span>
+                  <span
+                    v-if="!coursesExpanded && selectedCourse"
+                    class="ml-2 text-xs md:text-sm px-2 py-1 rounded-md ring-2 ring-primary bg-primary/10"
+                  >
+                    {{ selectedCourse.number }}
+                  </span>
                 </div>
                 <div class="flex items-center gap-1 md:gap-2">
                   <AddCourseButton />
@@ -252,12 +261,6 @@
                       <span class="font-medium">
                         {{ course.number }}
                       </span>
-                      <span class="text-sm text-muted-foreground">{{
-                        course.admissionYear
-                      }}</span>
-                      <span class="text-sm text-muted-foreground">{{
-                        course.specialtyCode
-                      }}</span>
                       <button
                         class="ml-auto p-1 hover:bg-primary/10 rounded-md transition-colors"
                         @click.stop="openEditCourse(course)"
@@ -293,7 +296,7 @@
               class="border border-border rounded-lg md:rounded-xl overflow-hidden"
             >
               <div
-                class="px-3 md:px-5 py-2 md:py-4 bg-muted bg-gray-50 md:bg-muted flex items-center justify-between transition-colors"
+                class="px-3 md:px-4 py-1.5 md:py-2 bg-muted bg-gray-50 md:bg-muted flex items-center justify-between transition-colors"
                 :class="{
                   'cursor-pointer hover:bg-muted/80':
                     selectedSpecialtyId && selectedCourseId,
@@ -317,10 +320,10 @@
                         ? 'material:expand_more'
                         : 'material:chevron_right'
                     "
-                    size="16px"
-                    class="mr-1 md:mr-3 text-foreground/60"
+                    size="14px"
+                    class="mr-1 md:mr-2 text-foreground/60"
                   ></f7-icon>
-                  <span class="font-medium md:font-semibold"
+                  <span class="font-medium text-sm md:text-base"
                     >Модуль/дисциплины:</span
                   >
                 </div>
@@ -328,7 +331,7 @@
                   <ColumnConfigForm @columns-saved="handleColumnsSaved">
                     <template #trigger="{ open }">
                       <button
-                        class="w-7 h-7 md:p-2 flex items-center justify-center text-green-500 md:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                        class="w-7 h-7 md:p-2 flex items-center justify-center text-green-800 md:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                         aria-label="Configure Columns"
                         type="button"
                         @click.stop="open"
@@ -348,7 +351,7 @@
                   >
                     <template #trigger="{ open }">
                       <button
-                        class="w-7 h-7 md:p-2 flex items-center justify-center text-green-500 md:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                        class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-green-500 hover:bg-green-600 rounded-full transition-colors"
                         aria-label="Add Module Template"
                         type="button"
                         @click.stop="open"
@@ -358,7 +361,7 @@
                           ios="f7:plus"
                           md="material:add"
                           size="16px"
-                          class="md:text-primary"
+                          class="text-white"
                         ></f7-icon>
                       </button>
                     </template>
@@ -381,8 +384,12 @@
 
     <template #fixed>
       <f7-fab position="right-bottom" class="mb-6 mr-6">
-        <f7-icon ios="f7:plus" md="material:add"></f7-icon>
-        <f7-icon ios="f7:xmark" md="material:close"></f7-icon>
+        <f7-icon ios="f7:plus" md="material:add" class="text-white"></f7-icon>
+        <f7-icon
+          ios="f7:xmark"
+          md="material:close"
+          class="text-white"
+        ></f7-icon>
         <f7-fab-buttons position="top" class="mr-2">
           <f7-fab-button
             label="Загрузка документа"
@@ -415,7 +422,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import {
   f7Page,
   f7Fab,
@@ -503,4 +510,18 @@ const openEditCourse = (course: any) => {
 
 const selectedSpecialtyId = ref<string | null>(null);
 const selectedCourseId = ref<string | null>(null);
+
+const selectedSpecialty = computed(() => {
+  if (!selectedSpecialtyId.value) return null;
+  return specialtyStore.getAllSpecialties.find(
+    (specialty) => specialty.id === selectedSpecialtyId.value
+  );
+});
+
+const selectedCourse = computed(() => {
+  if (!selectedCourseId.value) return null;
+  return courseStore.getAllCourses.find(
+    (course) => course.id === selectedCourseId.value
+  );
+});
 </script>
