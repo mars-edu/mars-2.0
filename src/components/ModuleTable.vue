@@ -1,7 +1,7 @@
 <!-- ModuleTable.vue -->
 <template>
   <div class="relative overflow-visible z-50">
-    <ColumnConfigForm>
+    <!-- <ColumnConfigForm>
       <template #trigger="{ open }">
         <button
           class="w-8 h-8 flex items-center justify-center bg-green-500 text-white rounded-full shadow-lg absolute z-50 hover:bg-green-600 transition-colors"
@@ -12,7 +12,7 @@
           <f7-icon ios="f7:plus" md="material:add" size="18px" />
         </button>
       </template>
-    </ColumnConfigForm>
+    </ColumnConfigForm> -->
     <table ref="tableRef" class="w-full border-collapse relative">
       <thead>
         <tr>

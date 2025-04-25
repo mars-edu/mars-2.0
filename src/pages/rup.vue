@@ -331,22 +331,22 @@
                   <ColumnConfigForm @columns-saved="handleColumnsSaved">
                     <template #trigger="{ open }">
                       <button
-                        class="w-7 h-7 md:p-2 flex items-center justify-center text-green-800 md:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                        class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-green-500 hover:bg-green-600 rounded-full transition-colors"
                         aria-label="Configure Columns"
                         type="button"
                         @click.stop="open"
                         :disabled="!(selectedSpecialtyId && selectedCourseId)"
                       >
                         <f7-icon
-                          ios="f7:gear"
-                          md="material:settings"
+                          ios="f7:plus"
+                          md="material:add"
                           size="16px"
-                          class="md:text-blue-500"
+                          class="text-white"
                         ></f7-icon>
                       </button>
                     </template>
                   </ColumnConfigForm>
-                  <AddModuleTemplateButton
+                  <!-- <AddModuleTemplateButton
                     @module-template-added="handleModuleTemplateAdded"
                   >
                     <template #trigger="{ open }">
@@ -365,7 +365,7 @@
                         ></f7-icon>
                       </button>
                     </template>
-                  </AddModuleTemplateButton>
+                  </AddModuleTemplateButton> -->
                 </div>
               </div>
               <div
