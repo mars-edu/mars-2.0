@@ -358,11 +358,7 @@
                 </div>
               </div>
               <div class="p-3 md:p-5 bg-card" v-show="modulesExpanded">
-                <ModuleTable
-                  v-if="selectedSpecialtyId && selectedCourseId"
-                  :specialty-id="selectedSpecialtyId"
-                  :course-id="selectedCourseId"
-                />
+                <ModuleTable v-if="selectedSpecialtyId && selectedCourseId" />
 
                 <div
                   v-else-if="selectedSpecialtyId && !selectedCourseId"

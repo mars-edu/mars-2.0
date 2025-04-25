@@ -36,6 +36,19 @@ export const useModuleStore = defineStore(
       }
     }
 
+    function updateModuleField(
+      moduleId: string,
+      fieldName: string,
+      value: string
+    ) {
+      const moduleIndex = modules.value.findIndex(
+        (module) => module.id === moduleId
+      );
+      if (moduleIndex !== -1) {
+        modules.value[moduleIndex][fieldName] = value;
+      }
+    }
+
     function clearModules() {
       modules.value = [];
     }
@@ -55,6 +68,7 @@ export const useModuleStore = defineStore(
       getModulesBySpecialtyAndCourse,
       addModule,
       removeModule,
+      updateModuleField,
       clearModules,
       clearModulesBySpecialtyAndCourse,
     };
