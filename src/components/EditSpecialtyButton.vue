@@ -74,17 +74,62 @@
               label="Поставьте галочку"
             ></f7-checkbox>
           </div>
+
+          <div class="pt-4 border-t border-border">
+            <button
+              class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
+              @click="showDeleteConfirmation"
+            >
+              <f7-icon
+                ios="f7:trash"
+                md="material:delete"
+                size="18px"
+                class="mr-2"
+              ></f7-icon>
+              Удалить специальность
+            </button>
+          </div>
         </div>
       </div>
     </f7-popover>
+
+    <div id="specialty-delete-dialog" class="dialog" style="display: none">
+      <div class="dialog-inner">
+        <div class="dialog-title">Удаление специальности</div>
+        <div class="dialog-content">
+          <div class="p-4">
+            <p>
+              Вы уверены, что хотите удалить специальность "{{
+                specialty.name
+              }}"?
+            </p>
+            <p class="text-sm text-muted-foreground mt-2">
+              Это действие нельзя отменить.
+            </p>
+          </div>
+        </div>
+        <div class="dialog-buttons">
+          <button class="dialog-button" @click="cancelDelete">Отмена</button>
+          <button
+            class="dialog-button dialog-button-bold text-destructive"
+            :disabled="isDeleting"
+            @click="handleDeleteSpecialty"
+          >
+            {{ isDeleting ? "Удаление..." : "Удалить" }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { f7, f7Popover, f7Input, f7Checkbox } from "framework7-vue";
+import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
+import { useCourseStore } from "@/stores/courseStore";
+import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 
 const props = defineProps<{
   specialty: {
@@ -97,11 +142,14 @@ const props = defineProps<{
 }>();
 
 const specialtyStore = useSpecialtyStore();
+const courseStore = useCourseStore();
+const selectedItemsStore = useSelectedItemsStore();
 
 const specialtyName = ref(props.specialty.name);
 const specialtyCodeName = ref(props.specialty.codeName || "");
 const specialtyCode = ref(props.specialty.code);
 const createModule = ref(props.specialty.hasModule);
+const isDeleting = ref(false);
 
 const specialtySchema = z.object({
   name: z.string().min(1, "Пожалуйста, введите наименование специальности"),
@@ -146,6 +194,38 @@ const handleUpdateSpecialty = async () => {
     closeEditSpecialtyPopover();
   } catch (error) {
     console.error("Failed to update specialty:", error);
+  }
+};
+
+const showDeleteConfirmation = () => {
+  f7.dialog.open("#specialty-delete-dialog");
+};
+
+const cancelDelete = () => {
+  f7.dialog.close("#specialty-delete-dialog");
+};
+
+const handleDeleteSpecialty = async () => {
+  isDeleting.value = true;
+  try {
+    const associatedCourses = courseStore.getCoursesBySpecialtyId(
+      props.specialty.id
+    );
+
+    for (const course of associatedCourses) {
+      await courseStore.deleteCourse(course.id);
+    }
+
+    await specialtyStore.deleteSpecialty(props.specialty.id);
+
+    selectedItemsStore.clearSelection();
+
+    f7.dialog.close("#specialty-delete-dialog");
+    closeEditSpecialtyPopover();
+  } catch (error) {
+    console.error("Failed to delete specialty:", error);
+  } finally {
+    isDeleting.value = false;
   }
 };
 

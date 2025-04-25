@@ -5,7 +5,8 @@ export interface Course {
   id: string;
   number: string;
   admissionYear: string;
-  specialtyCode: string;
+  specialtyId: string;
+  specialtyCode?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,9 +22,9 @@ export const useCourseStore = defineStore(
       return (id: string) => courses.value.find((c) => c.id === id);
     });
 
-    const getCoursesBySpecialtyCode = computed(() => {
-      return (code: string) =>
-        courses.value.filter((c) => c.specialtyCode === code);
+    const getCoursesBySpecialtyId = computed(() => {
+      return (specialtyId: string) =>
+        courses.value.filter((c) => c.specialtyId === specialtyId);
     });
 
     const getAllCourses = computed(() => courses.value);
@@ -50,6 +51,7 @@ export const useCourseStore = defineStore(
       try {
         const newCourse: Course = {
           ...courseData,
+          specialtyCode: courseData.specialtyCode || "",
           id: crypto.randomUUID(),
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -118,7 +120,7 @@ export const useCourseStore = defineStore(
       loading,
       error,
       getCourseById,
-      getCoursesBySpecialtyCode,
+      getCoursesBySpecialtyId,
       getAllCourses,
       isLoading,
       getError,

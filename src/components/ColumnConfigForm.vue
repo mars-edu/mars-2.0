@@ -54,7 +54,6 @@
               <button
                 class="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center"
                 @click="deleteColumn(index)"
-                :disabled="columns.length <= 1"
               >
                 <i class="f7-icons text-xs">trash</i>
               </button>
@@ -75,9 +74,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, defineProps } from "vue";
 import { f7 } from "framework7-vue";
 import { useColumnConfigStore } from "@/stores/columnConfig";
+import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { z } from "zod";
 
 interface Column {
@@ -85,11 +85,15 @@ interface Column {
   width: number;
 }
 
-const emit = defineEmits<{
-  (e: "columns-saved", columns: Column[]): void;
-}>();
+const props = defineProps({
+  courseId: {
+    type: String,
+    default: "",
+  },
+});
 
 const columnStore = useColumnConfigStore();
+const selectedItemsStore = useSelectedItemsStore();
 
 const columnSchema = z.object({
   columns: z
@@ -105,9 +109,22 @@ const columnSchema = z.object({
     ),
 });
 
+const currentCourseId = computed(
+  () => props.courseId || selectedItemsStore.selectedCourseId
+);
+
 const columns = computed({
-  get: () => columnStore.columns,
-  set: (value) => columnStore.setColumns(value),
+  get: () => {
+    if (currentCourseId.value) {
+      return columnStore.getColumnsForCourse(currentCourseId.value);
+    }
+    return [];
+  },
+  set: (value) => {
+    if (currentCourseId.value) {
+      columnStore.setColumnsForCourse(currentCourseId.value, value);
+    }
+  },
 });
 
 const formError = computed(() => {
@@ -123,7 +140,10 @@ const popoverTarget = ref<string | HTMLElement>("#column-config-button");
 const openColumnConfigPopover = (event?: Event) => {
   if (event && event.currentTarget) {
     popoverTarget.value = event.currentTarget as HTMLElement;
-    f7.popover.open("#column-config-popover", event.currentTarget);
+    f7.popover.open(
+      "#column-config-popover",
+      event.currentTarget as HTMLElement
+    );
   } else {
     popoverTarget.value = "#column-config-button";
     f7.popover.open("#column-config-popover", "#column-config-button");
@@ -140,20 +160,31 @@ const handleCancel = () => {
 };
 
 const addColumn = () => {
-  columnStore.setColumns([...columns.value, { name: "", width: 1 }]);
+  const newColumns = [...columns.value, { name: "", width: 1 }];
+  if (currentCourseId.value) {
+    columnStore.setColumnsForCourse(currentCourseId.value, newColumns);
+  }
 };
 
 const toggleWidth = (index: number) => {
   const newColumns = [...columns.value];
   newColumns[index].width = newColumns[index].width === 1 ? 3 : 1;
-  columnStore.setColumns(newColumns);
+  if (currentCourseId.value) {
+    columnStore.setColumnsForCourse(currentCourseId.value, newColumns);
+  }
 };
 
 const deleteColumn = (index: number) => {
   if (columns.value.length > 1) {
     const newColumns = [...columns.value];
     newColumns.splice(index, 1);
-    columnStore.setColumns(newColumns);
+    if (currentCourseId.value) {
+      columnStore.setColumnsForCourse(currentCourseId.value, newColumns);
+    }
+  } else {
+    if (currentCourseId.value) {
+      columnStore.setColumnsForCourse(currentCourseId.value, []);
+    }
   }
 };
 
@@ -161,11 +192,12 @@ const handleSaveColumns = () => {
   const validationResult = columnSchema.safeParse({ columns: columns.value });
   if (!validationResult.success) return;
 
-  emit("columns-saved", columns.value);
   closeColumnConfigPopover();
 };
 
 const resetForm = () => {
-  columnStore.resetColumns();
+  if (currentCourseId.value) {
+    columnStore.resetColumnsForCourse(currentCourseId.value);
+  }
 };
 </script>

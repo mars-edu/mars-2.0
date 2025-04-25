@@ -1,35 +1,47 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 
 interface Column {
   name: string;
   width: number;
 }
 
-const defaultColumns: Column[] = [];
+interface CourseColumnConfig {
+  [courseId: string]: Column[];
+}
 
 export const useColumnConfigStore = defineStore(
   "columnConfig",
   () => {
-    const columns = ref<Column[]>(defaultColumns);
+    const columnsByCourse = ref<CourseColumnConfig>({});
 
-    function setColumns(newColumns: Column[]) {
-      columns.value = newColumns;
+    function setColumnsForCourse(courseId: string, newColumns: Column[]) {
+      columnsByCourse.value[courseId] = [...newColumns];
     }
 
-    function resetColumns() {
-      columns.value = [...defaultColumns];
+    function getColumnsForCourse(courseId: string) {
+      return columnsByCourse.value[courseId] || [];
     }
 
-    function addColumn() {
-      columns.value.push({ name: "", width: 1 });
+    function resetColumnsForCourse(courseId: string) {
+      if (columnsByCourse.value[courseId]) {
+        delete columnsByCourse.value[courseId];
+      }
+    }
+
+    function hasColumnsForCourse(courseId: string) {
+      return (
+        !!columnsByCourse.value[courseId] &&
+        columnsByCourse.value[courseId].length > 0
+      );
     }
 
     return {
-      columns,
-      setColumns,
-      resetColumns,
-      addColumn,
+      columnsByCourse,
+      setColumnsForCourse,
+      getColumnsForCourse,
+      resetColumnsForCourse,
+      hasColumnsForCourse,
     };
   },
   {

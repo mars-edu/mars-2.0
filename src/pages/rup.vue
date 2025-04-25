@@ -32,12 +32,8 @@
                 class="text-base md:text-lg font-medium md:font-semibold mb-1 md:mb-0"
                 >Учебная программа:</span
               >
-              <input
-                type="text"
-                class="border border-input rounded-lg px-2 md:px-3 py-1 md:py-2 flex-1 focus:ring-2 focus:ring-ring focus:border-ring transition-all duration-200 bg-background"
-              />
             </div>
-            <div class="flex flex-col md:flex-row md:items-center md:gap-3">
+            <!-- <div class="flex flex-col md:flex-row md:items-center md:gap-3">
               <span
                 class="text-base md:text-lg font-medium md:font-semibold mb-1 md:mb-0"
                 >Учебный год:</span
@@ -83,7 +79,7 @@
                   </button>
                 </div>
               </div>
-            </div>
+            </div> -->
           </div>
 
           <div class="space-y-4 md:space-y-6">
@@ -196,6 +192,7 @@
             >
               <div
                 class="px-3 md:px-4 py-1.5 md:py-2 bg-muted bg-gray-50 md:bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
+                :class="{ 'opacity-75': !selectedSpecialtyId }"
                 @click="toggleSection('courses')"
               >
                 <div class="flex items-center">
@@ -220,7 +217,9 @@
                   </span>
                 </div>
                 <div class="flex items-center gap-1 md:gap-2">
-                  <AddCourseButton />
+                  <AddCourseButton
+                    :selected-specialty-id="selectedSpecialtyId"
+                  />
                 </div>
               </div>
               <div class="p-3 md:p-5 bg-card" v-show="coursesExpanded">
@@ -248,7 +247,7 @@
                   </div>
                   <template v-else>
                     <div
-                      v-for="course in courseStore.getAllCourses"
+                      v-for="course in filteredCourses"
                       :key="course.id"
                       class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
                       :id="`course-item-${course.id}`"
@@ -276,15 +275,42 @@
                       </button>
                     </div>
                     <div
-                      v-if="courseStore.getAllCourses.length === 0"
-                      class="text-muted-foreground"
+                      v-if="filteredCourses.length === 0"
+                      class="w-full p-3 flex items-center justify-center"
                     >
-                      Нет курсов
+                      <div
+                        v-if="selectedSpecialtyId"
+                        class="text-muted-foreground flex items-center gap-2"
+                      >
+                        <f7-icon
+                          ios="f7:doc_text_search"
+                          md="material:search_off"
+                          size="18px"
+                        ></f7-icon>
+                        <span>Нет курсов</span>
+                      </div>
+                      <div
+                        v-else
+                        class="text-muted-foreground flex items-center gap-2"
+                      >
+                        <f7-icon
+                          ios="f7:arrow_up"
+                          md="material:keyboard_arrow_up"
+                          size="18px"
+                        ></f7-icon>
+                        <span>Сначала выберите специальность</span>
+                      </div>
                     </div>
                     <EditCourseButton
-                      v-for="course in courseStore.getAllCourses"
+                      v-for="course in filteredCourses"
                       :key="`edit-${course.id}`"
-                      :course="course"
+                      :course="{
+                        id: course.id,
+                        number: course.number,
+                        admissionYear: course.admissionYear,
+                        specialtyId: course.specialtyId,
+                        specialtyCode: course.specialtyCode || '',
+                      }"
                       ref="editCourseRefs[course.id]"
                     />
                   </template>
@@ -296,19 +322,8 @@
               class="border border-border rounded-lg md:rounded-xl overflow-hidden"
             >
               <div
-                class="px-3 md:px-4 py-1.5 md:py-2 bg-muted bg-gray-50 md:bg-muted flex items-center justify-between transition-colors"
-                :class="{
-                  'cursor-pointer hover:bg-muted/80':
-                    selectedSpecialtyId && selectedCourseId,
-                  'opacity-50 cursor-not-allowed': !(
-                    selectedSpecialtyId && selectedCourseId
-                  ),
-                }"
-                @click="
-                  selectedSpecialtyId &&
-                    selectedCourseId &&
-                    toggleSection('modules')
-                "
+                class="px-3 md:px-4 py-1.5 md:py-2 bg-muted bg-gray-50 md:bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
+                @click="toggleSection('modules')"
               >
                 <div class="flex items-center">
                   <f7-icon
@@ -328,7 +343,7 @@
                   >
                 </div>
                 <div class="flex items-center gap-1 md:gap-2">
-                  <ColumnConfigForm @columns-saved="handleColumnsSaved">
+                  <ColumnConfigForm>
                     <template #trigger="{ open }">
                       <button
                         class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-green-500 hover:bg-green-600 rounded-full transition-colors"
@@ -346,35 +361,42 @@
                       </button>
                     </template>
                   </ColumnConfigForm>
-                  <!-- <AddModuleTemplateButton
-                    @module-template-added="handleModuleTemplateAdded"
-                  >
-                    <template #trigger="{ open }">
-                      <button
-                        class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-green-500 hover:bg-green-600 rounded-full transition-colors"
-                        aria-label="Add Module Template"
-                        type="button"
-                        @click.stop="open"
-                        :disabled="!(selectedSpecialtyId && selectedCourseId)"
-                      >
-                        <f7-icon
-                          ios="f7:plus"
-                          md="material:add"
-                          size="16px"
-                          class="text-white"
-                        ></f7-icon>
-                      </button>
-                    </template>
-                  </AddModuleTemplateButton> -->
                 </div>
               </div>
-              <div
-                class="p-3 md:p-5 bg-card"
-                v-show="
-                  modulesExpanded && selectedSpecialtyId && selectedCourseId
-                "
-              >
-                <ModuleTable />
+              <div class="p-3 md:p-5 bg-card" v-show="modulesExpanded">
+                <ModuleTable
+                  v-if="selectedSpecialtyId && selectedCourseId"
+                  :specialty-id="selectedSpecialtyId"
+                  :course-id="selectedCourseId"
+                />
+
+                <div
+                  v-else-if="selectedSpecialtyId && !selectedCourseId"
+                  class="w-full p-3 flex items-center justify-center"
+                >
+                  <div class="text-muted-foreground flex items-center gap-2">
+                    <f7-icon
+                      ios="f7:arrow_up"
+                      md="material:keyboard_arrow_up"
+                      size="18px"
+                    ></f7-icon>
+                    <span>Сначала выберите курс</span>
+                  </div>
+                </div>
+
+                <div
+                  v-else-if="!selectedSpecialtyId"
+                  class="w-full p-3 flex items-center justify-center"
+                >
+                  <div class="text-muted-foreground flex items-center gap-2">
+                    <f7-icon
+                      ios="f7:arrow_up"
+                      md="material:keyboard_arrow_up"
+                      size="18px"
+                    ></f7-icon>
+                    <span>Сначала выберите специальность</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -422,7 +444,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import {
   f7Page,
   f7Fab,
@@ -437,18 +459,19 @@ import AddSpecialtyButton from "@/components/AddSpecialtyButton.vue";
 import EditSpecialtyButton from "@/components/EditSpecialtyButton.vue";
 import AddCourseButton from "@/components/AddCourseButton.vue";
 import EditCourseButton from "@/components/EditCourseButton.vue";
-import AddModuleTemplateButton from "@/components/AddModuleTemplateButton.vue";
 import ColumnConfigForm from "@/components/ColumnConfigForm.vue";
 import ModuleTable from "@/components/ModuleTable.vue";
 import { useLanguage } from "@/composables/useLanguage";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useCourseStore } from "@/stores/courseStore";
+import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { f7 } from "framework7-vue";
 
 const searchbarEnabled = ref(false);
 const activeNavItem = ref("rup");
 const specialtyStore = useSpecialtyStore();
 const courseStore = useCourseStore();
+const selectedItemsStore = useSelectedItemsStore();
 
 const specialtiesExpanded = ref(true);
 const coursesExpanded = ref(true);
@@ -469,8 +492,6 @@ interface Column {
 const handleModuleTemplateAdded = (
   moduleTemplate: Record<string, string>
 ) => {};
-
-const handleColumnsSaved = (columns: Column[]) => {};
 
 const { activeLanguage, availableLanguages, setLanguage } = useLanguage();
 
@@ -508,8 +529,15 @@ const openEditCourse = (course: any) => {
   }
 };
 
-const selectedSpecialtyId = ref<string | null>(null);
-const selectedCourseId = ref<string | null>(null);
+const selectedSpecialtyId = computed({
+  get: () => selectedItemsStore.selectedSpecialtyId,
+  set: (value) => selectedItemsStore.setSelectedSpecialty(value),
+});
+
+const selectedCourseId = computed({
+  get: () => selectedItemsStore.selectedCourseId,
+  set: (value) => selectedItemsStore.setSelectedCourse(value),
+});
 
 const selectedSpecialty = computed(() => {
   if (!selectedSpecialtyId.value) return null;
@@ -523,5 +551,15 @@ const selectedCourse = computed(() => {
   return courseStore.getAllCourses.find(
     (course) => course.id === selectedCourseId.value
   );
+});
+
+const filteredCourses = computed(() => {
+  if (!selectedSpecialtyId.value) return [];
+
+  return courseStore.getCoursesBySpecialtyId(selectedSpecialtyId.value);
+});
+
+watch(selectedSpecialtyId, () => {
+  selectedCourseId.value = null;
 });
 </script>

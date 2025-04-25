@@ -87,34 +87,87 @@
               placeholder="Для удобного отображения можно обозначить кодом, буквой или цифрой"
             ></f7-input>
           </div>
+
+          <div class="pt-4 border-t border-border">
+            <button
+              class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
+              @click="showDeleteConfirmation"
+            >
+              <f7-icon
+                ios="f7:trash"
+                md="material:delete"
+                size="18px"
+                class="mr-2"
+              ></f7-icon>
+              Удалить курс
+            </button>
+          </div>
         </div>
       </div>
     </f7-popover>
+
+    <div id="course-delete-dialog" class="dialog" style="display: none">
+      <div class="dialog-inner">
+        <div class="dialog-title">Удаление курса</div>
+        <div class="dialog-content">
+          <div class="p-4">
+            <p>Вы уверены, что хотите удалить курс "{{ course.number }}"?</p>
+            <p class="text-sm text-muted-foreground mt-2">
+              Это действие нельзя отменить.
+            </p>
+          </div>
+        </div>
+        <div class="dialog-buttons">
+          <button class="dialog-button" @click="cancelDelete">Отмена</button>
+          <button
+            class="dialog-button dialog-button-bold text-destructive"
+            :disabled="isDeleting"
+            @click="handleDeleteCourse"
+          >
+            {{ isDeleting ? "Удаление..." : "Удалить" }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { f7, f7Popover, f7Input, f7List, f7ListItem } from "framework7-vue";
+import {
+  f7,
+  f7Popover,
+  f7Input,
+  f7List,
+  f7ListItem,
+  f7Icon,
+} from "framework7-vue";
 import { z } from "zod";
 import { useCourseStore } from "@/stores/courseStore";
+import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
+import { useModuleStore } from "@/stores/moduleStore";
+import { useColumnConfigStore } from "@/stores/columnConfig";
 
 const props = defineProps<{
   course: {
     id: string;
     number: string;
     admissionYear: string;
-    specialtyCode: string;
+    specialtyId: string;
+    specialtyCode?: string;
   };
 }>();
 
 const courseStore = useCourseStore();
+const selectedItemsStore = useSelectedItemsStore();
+const moduleStore = useModuleStore();
+const columnConfigStore = useColumnConfigStore();
 
 const courseNumber = ref(props.course.number);
 const admissionYear = ref(props.course.admissionYear);
 const specialtyCode = ref(props.course.specialtyCode);
+const isDeleting = ref(false);
 
-// Generate available years (current year and previous 5 years)
 const availableYears = computed(() => {
   const currentYear = new Date().getFullYear();
   return Array.from({ length: 6 }, (_, i) => String(currentYear - i));
@@ -123,7 +176,7 @@ const availableYears = computed(() => {
 const courseSchema = z.object({
   number: z.string().min(1, "Пожалуйста, введите номер курса"),
   admissionYear: z.string(),
-  specialtyCode: z.string(),
+  specialtyCode: z.string().optional(),
 });
 
 const validationResult = computed(() => {
@@ -156,10 +209,45 @@ const handleUpdateCourse = async () => {
       number: courseNumber.value,
       admissionYear: admissionYear.value,
       specialtyCode: specialtyCode.value,
+      specialtyId: props.course.specialtyId,
     });
     closeEditCoursePopover();
   } catch (error) {
     console.error("Failed to update course:", error);
+  }
+};
+
+const showDeleteConfirmation = () => {
+  f7.dialog.open("#course-delete-dialog");
+};
+
+const cancelDelete = () => {
+  f7.dialog.close("#course-delete-dialog");
+};
+
+const handleDeleteCourse = async () => {
+  isDeleting.value = true;
+  try {
+    // Delete all associated modules first
+    moduleStore.clearModulesBySpecialtyAndCourse(
+      props.course.specialtyId,
+      props.course.id
+    );
+
+    // Delete only the course-specific column configuration
+    columnConfigStore.resetColumnsForCourse(props.course.id);
+
+    // Then delete the course
+    await courseStore.deleteCourse(props.course.id);
+
+    selectedItemsStore.setSelectedCourse(null);
+
+    f7.dialog.close("#course-delete-dialog");
+    closeEditCoursePopover();
+  } catch (error) {
+    console.error("Failed to delete course:", error);
+  } finally {
+    isDeleting.value = false;
   }
 };
 

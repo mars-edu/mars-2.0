@@ -57,17 +57,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { f7, f7Popover, f7Input } from "framework7-vue";
 import { useColumnConfigStore } from "@/stores/columnConfig";
 import { useModuleStore } from "@/stores/moduleStore";
 import { z } from "zod";
 
+const props = defineProps<{
+  specialtyId: string;
+  courseId: string;
+}>();
+
 const columnStore = useColumnConfigStore();
 const moduleStore = useModuleStore();
-const columns = computed(() => columnStore.columns);
+const columns = computed(() => columnStore.getColumnsForCourse(props.courseId));
 
 const formData = ref<string[]>([]);
+
+// Initialize form data when columns change
+watch(
+  columns,
+  () => {
+    formData.value = new Array(columns.value.length).fill("");
+  },
+  { immediate: true }
+);
 
 const moduleTemplateSchema = computed(() => {
   return z.object({
@@ -95,16 +109,15 @@ const formError = computed(() => {
 
 const isFormValid = computed(() => validationResult.value.success);
 
-computed(() => {
-  formData.value = new Array(columns.value.length).fill("");
-});
-
 const popoverTarget = ref<string | HTMLElement>("#add-module-template-button");
 
 const openAddModuleTemplatePopover = (event?: Event) => {
   if (event && event.currentTarget) {
     popoverTarget.value = event.currentTarget as HTMLElement;
-    f7.popover.open("#add-module-template-popover", event.currentTarget);
+    f7.popover.open(
+      "#add-module-template-popover",
+      event.currentTarget as HTMLElement
+    );
   } else {
     popoverTarget.value = "#add-module-template-button";
     f7.popover.open(
@@ -122,12 +135,17 @@ const closeAddModuleTemplatePopover = () => {
 const handleSaveModuleTemplate = () => {
   if (!isFormValid.value) return;
 
-  const moduleData: Record<string, string> = {};
+  const moduleData: Record<string, string> = {
+    id: crypto.randomUUID(),
+    specialtyId: props.specialtyId,
+    courseId: props.courseId,
+  };
+
   formData.value.forEach((value, index) => {
     moduleData[`field${index}`] = value;
   });
 
-  moduleStore.addModule(moduleData);
+  moduleStore.addModule(moduleData as any);
   closeAddModuleTemplatePopover();
 };
 

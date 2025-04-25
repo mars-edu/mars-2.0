@@ -27,7 +27,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-if="!modules.length">
+        <tr v-if="!filteredModules.length">
           <td
             :colspan="columns.length"
             class="border border-border px-4 py-2 text-center text-muted-foreground"
@@ -35,7 +35,7 @@
             Нет данных
           </td>
         </tr>
-        <tr v-for="(module, rowIndex) in modules" :key="rowIndex">
+        <tr v-for="(module, rowIndex) in filteredModules" :key="module.id">
           <td
             v-for="(column, colIndex) in columns"
             :key="colIndex"
@@ -46,7 +46,7 @@
         </tr>
       </tbody>
     </table>
-    <AddModuleTemplateButton>
+    <AddModuleTemplateButton :specialty-id="specialtyId" :course-id="courseId">
       <template #trigger="{ open }">
         <button
           class="w-8 h-8 flex items-center justify-center bg-green-500 text-white rounded-full shadow-lg absolute z-50 hover:bg-green-600 transition-colors"
@@ -59,6 +59,11 @@
       </template>
     </AddModuleTemplateButton>
   </div>
+  <div v-else>
+    <div class="text-muted-foreground flex items-center justify-center gap-2">
+      Нажмите на кнопку "+" чтобы настроить таблицу
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -69,9 +74,24 @@ import { f7Button, f7Icon } from "framework7-vue";
 import ColumnConfigForm from "@/components/ColumnConfigForm.vue";
 import AddModuleTemplateButton from "@/components/AddModuleTemplateButton.vue";
 
+const props = defineProps<{
+  specialtyId: string;
+  courseId: string;
+}>();
+
 const columnStore = useColumnConfigStore();
 const moduleStore = useModuleStore();
 
-const columns = computed(() => columnStore.columns);
-const modules = computed(() => moduleStore.modules);
+const columns = computed(() => {
+  // Try to get course-specific columns first
+  const courseColumns = columnStore.getColumnsForCourse(props.courseId);
+  if (courseColumns.length > 0) {
+    return courseColumns;
+  }
+  // Fall back to global columns for backward compatibility
+  return columnStore.columns;
+});
+const filteredModules = computed(() =>
+  moduleStore.getModulesBySpecialtyAndCourse(props.specialtyId, props.courseId)
+);
 </script>
