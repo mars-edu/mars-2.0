@@ -3,7 +3,6 @@
     <Header
       @searchbar-enable="handleSearchbarEnable"
       @searchbar-disable="handleSearchbarDisable"
-      @language-change="handleLanguageChange"
       class="hidden md:block flex-shrink-0"
     />
 
@@ -145,7 +144,6 @@ import CalendarCard from "@/components/Cards/CalendarCard.vue";
 import ScheduleCard from "@/components/Cards/ScheduleCard.vue";
 import AcademicWeekCard from "@/components/Cards/AcademicWeekCard.vue";
 import NavigationDemo from "@/components/Cards/NavigationDemo.vue";
-import { useLanguage } from "@/composables/useLanguage";
 
 const searchbarEnabled = ref(false);
 const activeNavItem = ref("home");
@@ -158,9 +156,6 @@ const navigationItems = [
   { id: "rup", label: "РУП", icon: "book_fill" },
 ];
 
-// Language management
-const { activeLanguage, availableLanguages, setLanguage } = useLanguage();
-
 // Event handlers
 const handleSearchbarEnable = () => {
   searchbarEnabled.value = true;
@@ -168,9 +163,5 @@ const handleSearchbarEnable = () => {
 
 const handleSearchbarDisable = () => {
   searchbarEnabled.value = false;
-};
-
-const handleLanguageChange = (code: string) => {
-  setLanguage(code);
 };
 </script>

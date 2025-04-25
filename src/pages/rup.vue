@@ -6,7 +6,6 @@
     <Header
       @searchbar-enable="handleSearchbarEnable"
       @searchbar-disable="handleSearchbarDisable"
-      @language-change="handleLanguageChange"
       class="hidden md:block flex-shrink-0 border-b border-border"
     />
 
@@ -180,7 +179,6 @@
                       v-for="specialty in specialtyStore.getAllSpecialties"
                       :key="`edit-${specialty.id}`"
                       :specialty="specialty"
-                      ref="editSpecialtyRefs[specialty.id]"
                     />
                   </template>
                 </div>
@@ -192,7 +190,6 @@
             >
               <div
                 class="px-3 md:px-4 py-1.5 md:py-2 bg-muted bg-gray-50 md:bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
-                :class="{ 'opacity-75': !selectedSpecialtyId }"
                 @click="toggleSection('courses')"
               >
                 <div class="flex items-center">
@@ -217,9 +214,7 @@
                   </span>
                 </div>
                 <div class="flex items-center gap-1 md:gap-2">
-                  <AddCourseButton
-                    :selected-specialty-id="selectedSpecialtyId"
-                  />
+                  <AddCourseButton />
                 </div>
               </div>
               <div class="p-3 md:p-5 bg-card" v-show="coursesExpanded">
@@ -311,7 +306,6 @@
                         specialtyId: course.specialtyId,
                         specialtyCode: course.specialtyCode || '',
                       }"
-                      ref="editCourseRefs[course.id]"
                     />
                   </template>
                 </div>
@@ -461,7 +455,6 @@ import AddCourseButton from "@/components/AddCourseButton.vue";
 import EditCourseButton from "@/components/EditCourseButton.vue";
 import ColumnConfigForm from "@/components/ColumnConfigForm.vue";
 import ModuleTable from "@/components/ModuleTable.vue";
-import { useLanguage } from "@/composables/useLanguage";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
@@ -480,20 +473,12 @@ const modulesExpanded = ref(true);
 const toggleSection = (section: "specialties" | "courses" | "modules") => {
   if (section === "specialties")
     specialtiesExpanded.value = !specialtiesExpanded.value;
-  if (section === "courses") coursesExpanded.value = !coursesExpanded.value;
-  if (section === "modules") modulesExpanded.value = !modulesExpanded.value;
+  else if (section === "courses") {
+    coursesExpanded.value = !coursesExpanded.value;
+  } else if (section === "modules") {
+    modulesExpanded.value = !modulesExpanded.value;
+  }
 };
-
-interface Column {
-  name: string;
-  width: number;
-}
-
-const handleModuleTemplateAdded = (
-  moduleTemplate: Record<string, string>
-) => {};
-
-const { activeLanguage, availableLanguages, setLanguage } = useLanguage();
 
 const handleSearchbarEnable = () => {
   searchbarEnabled.value = true;
@@ -503,17 +488,10 @@ const handleSearchbarDisable = () => {
   searchbarEnabled.value = false;
 };
 
-const handleLanguageChange = (code: string) => {
-  setLanguage(code);
-};
-
 onMounted(async () => {
   await specialtyStore.fetchSpecialties();
   await courseStore.fetchCourses();
 });
-
-const editSpecialtyRefs = ref<{ [key: string]: any }>({});
-const editCourseRefs = ref<{ [key: string]: any }>({});
 
 const openEditSpecialty = (specialty: any) => {
   const targetEl = document.getElementById(`specialty-item-${specialty.id}`);
@@ -539,27 +517,7 @@ const selectedCourseId = computed({
   set: (value) => selectedItemsStore.setSelectedCourse(value),
 });
 
-const selectedSpecialty = computed(() => {
-  if (!selectedSpecialtyId.value) return null;
-  return specialtyStore.getAllSpecialties.find(
-    (specialty) => specialty.id === selectedSpecialtyId.value
-  );
-});
-
-const selectedCourse = computed(() => {
-  if (!selectedCourseId.value) return null;
-  return courseStore.getAllCourses.find(
-    (course) => course.id === selectedCourseId.value
-  );
-});
-
-const filteredCourses = computed(() => {
-  if (!selectedSpecialtyId.value) return [];
-
-  return courseStore.getCoursesBySpecialtyId(selectedSpecialtyId.value);
-});
-
-watch(selectedSpecialtyId, () => {
-  selectedCourseId.value = null;
-});
+const selectedSpecialty = computed(() => selectedItemsStore.selectedSpecialty);
+const selectedCourse = computed(() => selectedItemsStore.selectedCourse);
+const filteredCourses = computed(() => selectedItemsStore.filteredCourses);
 </script>

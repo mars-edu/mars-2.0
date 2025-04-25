@@ -11,10 +11,7 @@
       <f7-link class="notification-icon" icon-f7="bell"></f7-link>
       <ThemeToggle class="theme-toggle" />
       <LanguageSelector
-        :languages="availableLanguages"
-        :active-language="activeLanguage"
         :theme="themeStore.currentTheme"
-        @change="handleLanguageChange"
         class="language-selector"
       />
       <div class="avatar-container">
@@ -35,7 +32,6 @@ import LanguageSelector from "../LanguageSelector.vue";
 import rasulZhangeldinovichProfile from "@/assets/rassul-zh-profile.jpg";
 import Logo from "../Logo/Logo.vue";
 import ThemeToggle from "../ThemeToggle.vue";
-import { useLanguage } from "@/composables/useLanguage.ts";
 import { useThemeStore } from "@/stores/themeStore";
 
 const themeStore = useThemeStore();
@@ -43,15 +39,7 @@ const themeStore = useThemeStore();
 const emit = defineEmits<{
   (e: "searchbar-enable"): void;
   (e: "searchbar-disable"): void;
-  (e: "language-change", lang: string): void;
 }>();
-
-const { activeLanguage, availableLanguages, setLanguage } = useLanguage();
-
-const handleLanguageChange = (code: string) => {
-  setLanguage(code);
-  emit("language-change", code);
-};
 </script>
 <style scoped>
 .desktop-header {

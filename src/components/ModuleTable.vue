@@ -83,13 +83,8 @@ const columnStore = useColumnConfigStore();
 const moduleStore = useModuleStore();
 
 const columns = computed(() => {
-  // Try to get course-specific columns first
   const courseColumns = columnStore.getColumnsForCourse(props.courseId);
-  if (courseColumns.length > 0) {
-    return courseColumns;
-  }
-  // Fall back to global columns for backward compatibility
-  return columnStore.columns;
+  return courseColumns;
 });
 const filteredModules = computed(() =>
   moduleStore.getModulesBySpecialtyAndCourse(props.specialtyId, props.courseId)

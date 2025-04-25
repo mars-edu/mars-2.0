@@ -105,30 +105,6 @@
         </div>
       </div>
     </f7-popover>
-
-    <div id="course-delete-dialog" class="dialog" style="display: none">
-      <div class="dialog-inner">
-        <div class="dialog-title">Удаление курса</div>
-        <div class="dialog-content">
-          <div class="p-4">
-            <p>Вы уверены, что хотите удалить курс "{{ course.number }}"?</p>
-            <p class="text-sm text-muted-foreground mt-2">
-              Это действие нельзя отменить.
-            </p>
-          </div>
-        </div>
-        <div class="dialog-buttons">
-          <button class="dialog-button" @click="cancelDelete">Отмена</button>
-          <button
-            class="dialog-button dialog-button-bold text-destructive"
-            :disabled="isDeleting"
-            @click="handleDeleteCourse"
-          >
-            {{ isDeleting ? "Удаление..." : "Удалить" }}
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -218,37 +194,37 @@ const handleUpdateCourse = async () => {
 };
 
 const showDeleteConfirmation = () => {
-  f7.dialog.open("#course-delete-dialog");
-};
+  f7.popover.close(`#edit-course-popover-${props.course.id}`);
 
-const cancelDelete = () => {
-  f7.dialog.close("#course-delete-dialog");
-};
+  f7.dialog.confirm(
+    `<p>Вы уверены, что хотите удалить курс "${props.course.number}"?</p>
+     <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
+    "Удаление курса",
+    async () => {
+      try {
+        isDeleting.value = true;
 
-const handleDeleteCourse = async () => {
-  isDeleting.value = true;
-  try {
-    // Delete all associated modules first
-    moduleStore.clearModulesBySpecialtyAndCourse(
-      props.course.specialtyId,
-      props.course.id
-    );
+        // Delete all associated modules first
+        moduleStore.clearModulesBySpecialtyAndCourse(
+          props.course.specialtyId,
+          props.course.id
+        );
 
-    // Delete only the course-specific column configuration
-    columnConfigStore.resetColumnsForCourse(props.course.id);
+        // Delete only the course-specific column configuration
+        columnConfigStore.resetColumnsForCourse(props.course.id);
 
-    // Then delete the course
-    await courseStore.deleteCourse(props.course.id);
+        // Then delete the course
+        await courseStore.deleteCourse(props.course.id);
 
-    selectedItemsStore.setSelectedCourse(null);
-
-    f7.dialog.close("#course-delete-dialog");
-    closeEditCoursePopover();
-  } catch (error) {
-    console.error("Failed to delete course:", error);
-  } finally {
-    isDeleting.value = false;
-  }
+        selectedItemsStore.setSelectedCourse(null);
+      } catch (error) {
+        console.error("Failed to delete course:", error);
+        f7.dialog.alert("Произошла ошибка при удалении курса.");
+      } finally {
+        isDeleting.value = false;
+      }
+    }
+  );
 };
 
 const resetForm = () => {
@@ -257,8 +233,4 @@ const resetForm = () => {
   specialtyCode.value = props.course.specialtyCode;
   courseStore.clearError();
 };
-
-defineExpose({
-  closeEditCoursePopover,
-});
 </script>

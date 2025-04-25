@@ -92,34 +92,6 @@
         </div>
       </div>
     </f7-popover>
-
-    <div id="specialty-delete-dialog" class="dialog" style="display: none">
-      <div class="dialog-inner">
-        <div class="dialog-title">Удаление специальности</div>
-        <div class="dialog-content">
-          <div class="p-4">
-            <p>
-              Вы уверены, что хотите удалить специальность "{{
-                specialty.name
-              }}"?
-            </p>
-            <p class="text-sm text-muted-foreground mt-2">
-              Это действие нельзя отменить.
-            </p>
-          </div>
-        </div>
-        <div class="dialog-buttons">
-          <button class="dialog-button" @click="cancelDelete">Отмена</button>
-          <button
-            class="dialog-button dialog-button-bold text-destructive"
-            :disabled="isDeleting"
-            @click="handleDeleteSpecialty"
-          >
-            {{ isDeleting ? "Удаление..." : "Удалить" }}
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -177,7 +149,6 @@ const formError = computed(() => {
 const isFormValid = computed(() => validationResult.value.success);
 
 const closeEditSpecialtyPopover = () => {
-  f7.popover.close(`#edit-specialty-popover-${props.specialty.id}`);
   resetForm();
 };
 
@@ -191,42 +162,40 @@ const handleUpdateSpecialty = async () => {
       code: specialtyCode.value,
       hasModule: createModule.value,
     });
-    closeEditSpecialtyPopover();
+    f7.popover.close(`#edit-specialty-popover-${props.specialty.id}`);
   } catch (error) {
     console.error("Failed to update specialty:", error);
   }
 };
 
 const showDeleteConfirmation = () => {
-  f7.dialog.open("#specialty-delete-dialog");
-};
+  f7.popover.close(`#edit-specialty-popover-${props.specialty.id}`);
 
-const cancelDelete = () => {
-  f7.dialog.close("#specialty-delete-dialog");
-};
+  f7.dialog.confirm(
+    `<p>Вы уверены, что хотите удалить специальность "${props.specialty.name}"?</p>
+     <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
+    "Удаление специальности",
+    async () => {
+      try {
+        isDeleting.value = true;
+        const associatedCourses = courseStore.getCoursesBySpecialtyId(
+          props.specialty.id
+        );
 
-const handleDeleteSpecialty = async () => {
-  isDeleting.value = true;
-  try {
-    const associatedCourses = courseStore.getCoursesBySpecialtyId(
-      props.specialty.id
-    );
+        for (const course of associatedCourses) {
+          await courseStore.deleteCourse(course.id);
+        }
 
-    for (const course of associatedCourses) {
-      await courseStore.deleteCourse(course.id);
+        await specialtyStore.deleteSpecialty(props.specialty.id);
+        selectedItemsStore.clearSelection();
+      } catch (error) {
+        console.error("Failed to delete specialty:", error);
+        f7.dialog.alert("Произошла ошибка при удалении специальности.");
+      } finally {
+        isDeleting.value = false;
+      }
     }
-
-    await specialtyStore.deleteSpecialty(props.specialty.id);
-
-    selectedItemsStore.clearSelection();
-
-    f7.dialog.close("#specialty-delete-dialog");
-    closeEditSpecialtyPopover();
-  } catch (error) {
-    console.error("Failed to delete specialty:", error);
-  } finally {
-    isDeleting.value = false;
-  }
+  );
 };
 
 const resetForm = () => {
@@ -236,8 +205,4 @@ const resetForm = () => {
   createModule.value = props.specialty.hasModule;
   specialtyStore.clearError();
 };
-
-defineExpose({
-  closeEditSpecialtyPopover,
-});
 </script>

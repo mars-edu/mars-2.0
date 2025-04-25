@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, defineProps } from "vue";
+import { ref, computed } from "vue";
 import { f7 } from "framework7-vue";
 import { useColumnConfigStore } from "@/stores/columnConfig";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";

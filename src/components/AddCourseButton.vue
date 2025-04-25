@@ -4,15 +4,14 @@
       id="add-course-button"
       class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-green-500 hover:bg-green-600 rounded-full transition-colors"
       :class="{
-        'opacity-50 cursor-not-allowed bg-green-400':
-          !props.selectedSpecialtyId,
+        'opacity-50 cursor-not-allowed bg-green-400': !selectedSpecialtyId,
       }"
       aria-label="Add Course"
       type="button"
-      @click.stop="props.selectedSpecialtyId && openAddCoursePopover()"
-      :disabled="!props.selectedSpecialtyId"
+      @click.stop="selectedSpecialtyId && openAddCoursePopover()"
+      :disabled="!selectedSpecialtyId"
       :title="
-        !props.selectedSpecialtyId
+        !selectedSpecialtyId
           ? 'Сначала выберите специальность'
           : 'Добавить курс'
       "
@@ -175,51 +174,33 @@ import {
 import { z } from "zod";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
-
-const props = defineProps<{
-  selectedSpecialtyId?: string | null;
-}>();
+import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 
 const courseStore = useCourseStore();
 const specialtyStore = useSpecialtyStore();
+const selectedItemsStore = useSelectedItemsStore();
 
 const courseNumber = ref("");
 const admissionYear = ref("");
 const specialtyCode = ref("");
-const selectedSpecialtyId = ref("");
+const internalSpecialtyId = ref("");
 
-// Watch for changes in the selected specialty from parent
-watch(
-  () => props.selectedSpecialtyId,
-  (newVal) => {
-    if (newVal) {
-      selectedSpecialtyId.value = newVal;
-      handleSpecialtyChange();
-    }
-  },
-  { immediate: true }
+const selectedSpecialtyId = computed(
+  () => selectedItemsStore.selectedSpecialtyId
 );
 
-// Generate available years (current year and previous 5 years)
 const availableYears = computed(() => {
   const currentYear = new Date().getFullYear();
   return Array.from({ length: 6 }, (_, i) => String(currentYear - i));
 });
 
-// Get all specialties from the store
 const specialties = computed(() => specialtyStore.getAllSpecialties);
 
-// Handle specialty change
 const handleSpecialtyChange = () => {
-  console.log("Specialty change detected:", selectedSpecialtyId.value);
-
-  // Specialty change now doesn't automatically set the specialty code
-  // The user can set a custom code if they want
   if (selectedSpecialtyId.value) {
     const selectedSpecialty = specialtyStore.getSpecialtyById(
       selectedSpecialtyId.value
     );
-    console.log("Selected specialty:", selectedSpecialty);
   }
 };
 
@@ -246,13 +227,11 @@ const formError = computed(() => {
 
 const isFormValid = computed(() => validationResult.value.success);
 
-// Popover controls
 const openAddCoursePopover = () => {
-  if (!props.selectedSpecialtyId) return;
+  if (!selectedSpecialtyId.value) return;
 
-  // Set the selected specialty immediately when opening the popover
-  if (props.selectedSpecialtyId) {
-    selectedSpecialtyId.value = props.selectedSpecialtyId;
+  if (selectedSpecialtyId.value) {
+    internalSpecialtyId.value = selectedSpecialtyId.value;
     handleSpecialtyChange();
   }
 
@@ -264,44 +243,47 @@ const closeAddCoursePopover = () => {
   resetForm();
 };
 
-// Save handler
 const handleSaveCourse = async () => {
   if (!isFormValid.value || !selectedSpecialtyId.value) return;
 
   try {
-    console.log("Adding course with specialty ID:", selectedSpecialtyId.value);
-
     const newCourse = await courseStore.addCourse({
       number: courseNumber.value,
       admissionYear: admissionYear.value,
-      specialtyCode: specialtyCode.value, // Optional custom code
-      specialtyId: selectedSpecialtyId.value, // Actual specialty relation
+      specialtyCode: specialtyCode.value,
+      specialtyId: selectedSpecialtyId.value,
     });
 
-    console.log("New course added:", newCourse);
-    console.log("All courses after add:", courseStore.getAllCourses);
-
-    closeAddCoursePopover();
+    setTimeout(() => {
+      closeAddCoursePopover();
+    }, 100);
   } catch (error) {
     console.error("Failed to add course:", error);
   }
 };
 
-// Reset form - keep the specialty selected if provided from parent
 const resetForm = () => {
   courseNumber.value = "";
   admissionYear.value = "";
+  specialtyCode.value = "";
 
-  // Only reset specialty if it wasn't provided by parent
-  if (!props.selectedSpecialtyId) {
-    selectedSpecialtyId.value = "";
-    specialtyCode.value = "";
-  } else {
-    // Re-apply the parent's specialty selection
-    selectedSpecialtyId.value = props.selectedSpecialtyId;
+  if (selectedSpecialtyId.value) {
+    internalSpecialtyId.value = selectedSpecialtyId.value;
     handleSpecialtyChange();
   }
 
   courseStore.clearError();
 };
+
+watch(
+  selectedSpecialtyId,
+  (newVal) => {
+    if (newVal) {
+      console.log("Selected specialty ID changed in AddCourseButton:", newVal);
+      internalSpecialtyId.value = newVal;
+      handleSpecialtyChange();
+    }
+  },
+  { immediate: true }
+);
 </script>

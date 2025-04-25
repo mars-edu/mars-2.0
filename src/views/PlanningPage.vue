@@ -9,7 +9,6 @@
       <Header
         @searchbar-enable="handleSearchbarEnable"
         @searchbar-disable="handleSearchbarDisable"
-        @language-change="handleLanguageChange"
       />
     </div>
 
@@ -154,7 +153,6 @@ import { onMounted, ref, watch } from "vue";
 import { Teleport } from "vue";
 import { f7, f7ready, f7Page, f7PageContent } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
-import { useLanguage } from "@/composables/useLanguage";
 import { useCalendar } from "@/composables/useCalendar";
 import CalendarToolbar from "@/components/Calendar/CalendarToolbar.vue";
 import CalendarNavigation from "@/components/Calendar/CalendarNavigation.vue";
@@ -215,10 +213,6 @@ const handleMouseMove = (event: MouseEvent) => {
   }
 };
 
-// Language management
-const { activeLanguage, availableLanguages, setLanguage } = useLanguage();
-
-// Calendar management
 const {
   year,
   monthIndex,
@@ -267,10 +261,8 @@ const navigationTabs = [
   { value: "year", label: "Год" },
 ];
 
-// Weekdays
 const weekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
-// F7 Page lifecycle handlers
 const onPageInit = () => {
   console.log("Planning page initialized");
 };
@@ -279,7 +271,6 @@ const onPageMounted = () => {
   console.log("Planning page mounted");
 };
 
-// Get route params when component is mounted
 onMounted(() => {
   f7ready(() => {
     const currentRoute = f7.views.main.router.currentRoute;
@@ -297,10 +288,6 @@ const handleSearchbarEnable = () => {
 
 const handleSearchbarDisable = () => {
   searchbarEnabled.value = false;
-};
-
-const handleLanguageChange = (code: string) => {
-  setLanguage(code);
 };
 
 // Event handlers for toolbar

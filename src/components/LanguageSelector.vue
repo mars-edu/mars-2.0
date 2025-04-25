@@ -4,14 +4,14 @@
     :class="[themeClasses.background, themeClasses.border]"
   >
     <button
-      v-for="lang in languages"
+      v-for="lang in availableLanguages"
       :key="lang.code"
       class="px-3 py-1.5 text-sm font-medium transition-colors"
       :class="{
         'bg-red-500 text-white': lang.code === activeLanguage,
         [themeClasses.hoverBackground]: lang.code !== activeLanguage,
       }"
-      @click="$emit('change', lang.code)"
+      @click="setLanguage(lang.code)"
     >
       {{ lang.code }}
     </button>
@@ -19,12 +19,11 @@
 </template>
 
 <script setup lang="ts">
-import type { Language } from "@/composables/useLanguage";
+import { useLanguage } from "@/composables/useLanguage";
+import { useThemeStore } from "@/stores/themeStore";
 import { computed } from "vue";
 
 interface Props {
-  languages: Language[];
-  activeLanguage: string;
   theme?: "light" | "dark" | "lavanda";
 }
 
@@ -32,12 +31,13 @@ const props = withDefaults(defineProps<Props>(), {
   theme: "light",
 });
 
-defineEmits<{
-  (e: "change", code: string): void;
-}>();
+const { activeLanguage, availableLanguages, setLanguage } = useLanguage();
+const themeStore = useThemeStore();
 
 const themeClasses = computed(() => {
-  switch (props.theme) {
+  const currentTheme = props.theme || themeStore.currentTheme;
+
+  switch (currentTheme) {
     case "dark":
       return {
         background: "bg-gray-700",
