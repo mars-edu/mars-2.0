@@ -1,5 +1,4 @@
 import { ofetch } from "ofetch";
-import type { FetchOptions } from "ofetch";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
@@ -12,6 +11,7 @@ export const httpClient = ofetch.create({
   headers: {
     "Content-Type": "application/json",
   },
+  timeout: 45 * 1000,
   credentials: "include",
   onRequest({ options }) {
     const token = localStorage.getItem("auth_token");
@@ -68,10 +68,17 @@ export const authClient = {
   },
 };
 
+interface ColumnNode {
+  id: string;
+  name: string;
+  children_of: string | null;
+}
+
 export interface FileClient {
-  parseExcelColumns: (
-    formData: FormData
-  ) => Promise<{ success: boolean; columns: string[] }>;
+  parseExcelColumns: (formData: FormData) => Promise<{
+    success: boolean;
+    columns: ColumnNode[];
+  }>;
   listExcelSheets: (
     formData: FormData
   ) => Promise<{ success: boolean; sheets: string[] }>;

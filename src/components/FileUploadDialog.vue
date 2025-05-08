@@ -116,22 +116,15 @@
               class="max-h-[calc(90vh-250px)] min-h-[100px] overflow-y-auto mb-1 border border-border rounded-md p-1"
             >
               <div class="space-y-1">
-                <label
-                  v-for="col in availableColumns"
-                  :key="col"
-                  class="flex items-center gap-3 p-2.5 hover:bg-muted/50 rounded-lg cursor-pointer transition-colors"
-                  :class="{
-                    'bg-primary/10 text-primary': selectedColumns.includes(col),
-                  }"
-                >
-                  <input
-                    type="checkbox"
-                    v-model="selectedColumns"
-                    :value="col"
-                    class="form-checkbox h-5 w-5 text-primary rounded border-primary/50 focus:ring-primary/50"
-                  />
-                  <span class="font-medium">{{ col }}</span>
-                </label>
+                <ColumnTreeNode
+                  v-for="column in columnHierarchy.topLevelColumns"
+                  :key="column.id"
+                  :column="column"
+                  :children="columnHierarchy.childrenMap[column.id] || []"
+                  :selected-columns="selectedColumns"
+                  :all-children="columnHierarchy.childrenMap"
+                  @update:selected="updateSelectedColumns"
+                />
                 <div
                   v-if="availableColumns.length === 0"
                   class="text-center text-muted-foreground p-4"
@@ -239,10 +232,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { f7Icon } from "framework7-vue";
 import { f7 } from "framework7-vue";
 import { fileClient } from "../lib/http-client";
+import ColumnTreeNode from "./ColumnTreeNode.vue";
+import type { ColumnNode, ColumnHierarchy } from "../types/column";
 
 const props = defineProps<{
   opened: boolean;
@@ -260,10 +255,36 @@ const selectedSheet = ref<string>("");
 const fileInput = ref<HTMLInputElement | null>(null);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
-const availableColumns = ref<string[]>([]);
+const availableColumns = ref<ColumnNode[]>([]);
 const availableSheets = ref<string[]>([]);
 const isLoadingStage2 = ref(false);
 const isLoadingStage3 = ref(false);
+
+// Group columns by parent-child relationship
+const columnHierarchy = computed<ColumnHierarchy>(() => {
+  const topLevelColumns: ColumnNode[] = [];
+  const childrenMap: Record<string, ColumnNode[]> = {};
+
+  // First pass: organize columns into parent-child groups
+  availableColumns.value.forEach((column) => {
+    if (column.children_of === null || column.children_of === "") {
+      topLevelColumns.push(column);
+    } else {
+      if (!childrenMap[column.children_of]) {
+        childrenMap[column.children_of] = [];
+      }
+      childrenMap[column.children_of].push(column);
+    }
+  });
+
+  // Sort columns by name within their respective levels
+  topLevelColumns.sort((a, b) => a.name.localeCompare(b.name));
+  Object.keys(childrenMap).forEach((key) => {
+    childrenMap[key].sort((a, b) => a.name.localeCompare(b.name));
+  });
+
+  return { topLevelColumns, childrenMap };
+});
 
 const closeDialog = () => {
   emit("update:opened", false);
@@ -376,4 +397,62 @@ const confirmColumnSelection = async () => {
 const triggerFileInput = () => {
   fileInput.value?.click();
 };
+
+const updateSelectedColumns = (columnId: string) => {
+  const index = selectedColumns.value.indexOf(columnId);
+  if (index === -1) {
+    selectedColumns.value.push(columnId);
+  } else {
+    selectedColumns.value.splice(index, 1);
+  }
+};
 </script>
+
+<style scoped>
+.column-tree {
+  position: relative;
+}
+
+.column-tree::before {
+  content: "";
+  position: absolute;
+  left: 1.25rem;
+  top: 2.5rem;
+  bottom: 0.5rem;
+  width: 1px;
+  background-color: var(--border-color);
+  opacity: 0.5;
+}
+
+.column-tree:last-child::before {
+  display: none;
+}
+
+/* Add styles for different levels */
+.level-0 > .ml-6 {
+  margin-left: 1.5rem;
+}
+.level-1 > .ml-7 {
+  margin-left: 1.75rem;
+}
+.level-2 > .ml-8 {
+  margin-left: 2rem;
+}
+.level-3 > .ml-9 {
+  margin-left: 2.25rem;
+}
+.level-4 > .ml-10 {
+  margin-left: 2.5rem;
+}
+.level-5 > .ml-11 {
+  margin-left: 2.75rem;
+}
+.level-6 > .ml-12 {
+  margin-left: 3rem;
+}
+
+/* Enhanced visual hierarchy */
+.column-tree .column-tree::before {
+  opacity: calc(0.5 - var(--level, 0) * 0.1);
+}
+</style>
