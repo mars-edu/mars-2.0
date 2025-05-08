@@ -4,7 +4,7 @@ import type { FetchOptions } from "ofetch";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 interface RequestOptions {
-  headers?: Record<string, string>;
+  headers?: HeadersInit;
 }
 
 export const httpClient = ofetch.create({
@@ -16,8 +16,15 @@ export const httpClient = ofetch.create({
   onRequest({ options }) {
     const token = localStorage.getItem("auth_token");
     if (token) {
-      options.headers = options.headers || {};
-      (options.headers as any).Authorization = `Bearer ${token}`;
+      const headers = new Headers(options.headers);
+      headers.set("Authorization", `Bearer ${token}`);
+      options.headers = headers;
+    }
+
+    if (options.body && options.body instanceof FormData) {
+      const headers = new Headers(options.headers);
+      headers.delete("Content-Type");
+      options.headers = headers;
     }
   },
   onResponseError({ response }) {
@@ -57,6 +64,30 @@ export const authClient = {
     return httpClient("/auth/register", {
       method: "POST",
       body: userData,
+    });
+  },
+};
+
+export interface FileClient {
+  parseExcelColumns: (
+    formData: FormData
+  ) => Promise<{ success: boolean; columns: string[] }>;
+  listExcelSheets: (
+    formData: FormData
+  ) => Promise<{ success: boolean; sheets: string[] }>;
+}
+
+export const fileClient: FileClient = {
+  parseExcelColumns: async (formData: FormData) => {
+    return httpClient("/parse-excel-columns", {
+      method: "POST",
+      body: formData,
+    });
+  },
+  listExcelSheets: async (formData: FormData) => {
+    return httpClient("/list-excel-sheets", {
+      method: "POST",
+      body: formData,
     });
   },
 };

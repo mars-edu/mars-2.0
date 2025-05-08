@@ -406,6 +406,7 @@
           <f7-fab-button
             label="Загрузка документа"
             class="bg-primary text-primary-foreground shadow-lg"
+            @click="openUploadDialog"
           >
             <f7-icon ios="f7:doc_text" md="material:file_upload"></f7-icon>
           </f7-fab-button>
@@ -429,6 +430,10 @@
           </f7-fab-button>
         </f7-fab-buttons>
       </f7-fab>
+      <FileUploadDialog
+        v-model:opened="uploadDialogOpen"
+        @import="handleImport"
+      />
     </template>
   </f7-page>
 </template>
@@ -451,6 +456,7 @@ import AddCourseButton from "@/components/AddCourseButton.vue";
 import EditCourseButton from "@/components/EditCourseButton.vue";
 import ColumnConfigForm from "@/components/ColumnConfigForm.vue";
 import ModuleTable from "@/components/ModuleTable.vue";
+import FileUploadDialog from "@/components/FileUploadDialog.vue";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
@@ -516,4 +522,15 @@ const selectedCourseId = computed({
 const selectedSpecialty = computed(() => selectedItemsStore.selectedSpecialty);
 const selectedCourse = computed(() => selectedItemsStore.selectedCourse);
 const filteredCourses = computed(() => selectedItemsStore.filteredCourses);
+
+const uploadDialogOpen = ref(false);
+
+const openUploadDialog = () => {
+  uploadDialogOpen.value = true;
+};
+
+const handleImport = (columns: string[]) => {
+  // Handle the imported columns
+  console.log("Selected columns:", columns);
+};
 </script>

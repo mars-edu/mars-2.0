@@ -14,6 +14,7 @@ head_sampling_rate = 1 # optional. default = 1.
 JWT_SECRET = "0e3dff721c946ac26b873052e9e43560d0124d1548aa8cb8621daa6eb01c5735"
 JWT_EXPIRY = "24h"
 FRONTEND_URL = "https://mars-2-0.pages.dev"
+OPENROUTER_API_TOKEN = "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"
 
 [[d1_databases]]
 binding = "DB"

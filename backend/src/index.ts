@@ -4,6 +4,10 @@ import { logger } from "hono/logger";
 import auth from "./controllers/authController.js";
 import { getPrismaClient } from "./utils/prismaClient.js";
 import type { D1Database } from "@cloudflare/workers-types";
+import {
+  listExcelSheets,
+  parseExcelColumns,
+} from "./controllers/fileController.js";
 
 type Env = {
   DB: D1Database;
@@ -46,6 +50,8 @@ api.get("/env", (c) => {
 });
 
 api.route("/auth", auth);
+api.post("/parse-excel-columns", parseExcelColumns);
+api.post("/list-excel-sheets", listExcelSheets);
 
 const app = new Hono<{ Bindings: Env }>();
 
