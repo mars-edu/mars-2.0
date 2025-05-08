@@ -3,7 +3,6 @@ import * as XLSX from "xlsx";
 import OpenAI from "openai";
 import { z } from "zod";
 import { zodTextFormat } from "openai/helpers/zod";
-import "dotenv/config";
 
 const ColumnListSchema = z.object({ columns: z.array(z.string()) });
 
