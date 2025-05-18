@@ -27,12 +27,12 @@
           <form @submit.prevent="handleLogin" class="space-y-8">
             <div class="space-y-2">
               <label class="block text-sm font-semibold mb-2">
-                Имя пользователя
+                ФИО
               </label>
               <f7-input
                 type="text"
                 v-model:value="username"
-                placeholder="Введите имя пользователя"
+                placeholder="Введите ФИО"
                 :error-message="errors.username"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
@@ -118,12 +118,12 @@
           <form @submit.prevent="handleLogin" class="space-y-6 mt-8">
             <div>
               <label class="block text-sm font-medium mb-2">
-                Имя пользователя
+                ФИО
               </label>
               <f7-input
                 type="text"
                 v-model:value="username"
-                placeholder="Введите имя пользователя"
+                placeholder="Введите ФИО"
                 :error-message="errors.username"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
@@ -213,7 +213,7 @@ const validateForm = () => {
   errors.password = "";
 
   if (!username.value) {
-    errors.username = "Имя пользователя обязательно";
+    errors.username = "ФИО обязательно";
     isValid = false;
   }
 
