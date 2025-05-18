@@ -317,49 +317,75 @@
             >
               <div
                 class="px-3 md:px-4 py-1.5 md:py-2 bg-muted bg-gray-50 md:bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
-                @click="toggleSection('modules')"
+                @click="toggleSection('workingPlans')"
               >
                 <div class="flex items-center">
                   <f7-icon
                     :ios="
-                      modulesExpanded ? 'f7:chevron_down' : 'f7:chevron_right'
+                      workingPlansExpanded ? 'f7:chevron_down' : 'f7:chevron_right'
                     "
                     :md="
-                      modulesExpanded
+                      workingPlansExpanded
                         ? 'material:expand_more'
                         : 'material:chevron_right'
                     "
                     size="14px"
                     class="mr-1 md:mr-2 text-foreground/60"
                   ></f7-icon>
-                  <span class="font-medium text-sm md:text-base"
-                    >Модуль/дисциплины:</span
-                  >
+                  <span class="font-medium text-sm md:text-base">Рабочий учебный план:</span>
                 </div>
                 <div class="flex items-center gap-1 md:gap-2">
-                  <ColumnConfigForm>
-                    <template #trigger="{ open }">
-                      <button
-                        class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-green-500 hover:bg-green-600 rounded-full transition-colors"
-                        aria-label="Configure Columns"
-                        type="button"
-                        @click.stop="open"
-                        :disabled="!(selectedSpecialtyId && selectedCourseId)"
-                      >
-                        <f7-icon
-                          ios="f7:plus"
-                          md="material:add"
-                          size="16px"
-                          class="text-white"
-                        ></f7-icon>
-                      </button>
-                    </template>
-                  </ColumnConfigForm>
+                  <AddWorkingPlanDialog
+                    v-model:opened="showAddWorkingPlanDialog"
+                    @submit="handleWorkingPlanSubmit"
+                    :disabled="!(selectedSpecialtyId && selectedCourseId)"
+                  />
                 </div>
               </div>
-              <div class="p-3 md:p-5 bg-card" v-show="modulesExpanded">
-                <ModuleTable v-if="selectedSpecialtyId && selectedCourseId" />
-
+              <div class="p-3 md:p-5 bg-card" v-show="workingPlansExpanded">
+                <div
+                  v-if="selectedSpecialtyId && selectedCourseId"
+                  class="space-y-3"
+                >
+                  <div v-if="workingPlans.length === 0" class="text-center text-muted-foreground">
+                    Нет рабочих учебных планов
+                  </div>
+                  <div
+                    v-else
+                    v-for="plan in workingPlans"
+                    :key="plan.id"
+                    class="flex items-center justify-between p-3 border border-border rounded-lg bg-background"
+                  >
+                    <div>
+                      <h3 class="font-medium">{{ plan.name }}</h3>
+                      <p class="text-sm text-muted-foreground">{{ plan.year }}</p>
+                    </div>
+                    <div class="flex gap-2">
+                      <button
+                        class="p-2 hover:bg-primary/10 rounded-md transition-colors"
+                        @click="editWorkingPlan(plan)"
+                      >
+                        <f7-icon
+                          ios="f7:pencil"
+                          md="material:edit"
+                          size="18px"
+                          class="text-primary"
+                        ></f7-icon>
+                      </button>
+                      <button
+                        class="p-2 hover:bg-destructive/10 rounded-md transition-colors"
+                        @click="deleteWorkingPlan(plan.id)"
+                      >
+                        <f7-icon
+                          ios="f7:trash"
+                          md="material:delete"
+                          size="18px"
+                          class="text-destructive"
+                        ></f7-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
                 <div
                   v-else-if="selectedSpecialtyId && !selectedCourseId"
                   class="w-full p-3 flex items-center justify-center"
@@ -373,9 +399,8 @@
                     <span>Сначала выберите курс</span>
                   </div>
                 </div>
-
                 <div
-                  v-else-if="!selectedSpecialtyId"
+                  v-else
                   class="w-full p-3 flex items-center justify-center"
                 >
                   <div class="text-muted-foreground flex items-center gap-2">
@@ -428,6 +453,7 @@ import {
   f7FabButton,
   f7Icon,
   f7SkeletonBlock,
+  f7,
 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -435,8 +461,7 @@ import AddSpecialtyButton from "@/components/AddSpecialtyButton.vue";
 import EditSpecialtyButton from "@/components/EditSpecialtyButton.vue";
 import AddCourseButton from "@/components/AddCourseButton.vue";
 import EditCourseButton from "@/components/EditCourseButton.vue";
-import ColumnConfigForm from "@/components/ColumnConfigForm.vue";
-import ModuleTable from "@/components/ModuleTable.vue";
+import AddWorkingPlanDialog from "@/components/AddWorkingPlanDialog.vue";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
@@ -449,15 +474,17 @@ const selectedItemsStore = useSelectedItemsStore();
 
 const specialtiesExpanded = ref(true);
 const coursesExpanded = ref(true);
-const modulesExpanded = ref(true);
+const workingPlansExpanded = ref(true);
+const showAddWorkingPlanDialog = ref(false);
+const workingPlans = ref<Array<{id: number, name: string, year: number, description?: string}>>([]);
 
-const toggleSection = (section: "specialties" | "courses" | "modules") => {
+const toggleSection = (section: "specialties" | "courses" | "workingPlans") => {
   if (section === "specialties")
     specialtiesExpanded.value = !specialtiesExpanded.value;
   else if (section === "courses") {
     coursesExpanded.value = !coursesExpanded.value;
-  } else if (section === "modules") {
-    modulesExpanded.value = !modulesExpanded.value;
+  } else if (section === "workingPlans") {
+    workingPlansExpanded.value = !workingPlansExpanded.value;
   }
 };
 
@@ -486,6 +513,24 @@ const openEditCourse = (course: any) => {
   if (targetEl) {
     f7.popover.open(`#edit-course-popover-${course.id}`, targetEl);
   }
+};
+
+const handleWorkingPlanSubmit = (data: { baseClass: number }) => {
+  const newPlan = {
+    id: Date.now(),
+    name: `План ${data.baseClass} класс`,
+    year: new Date().getFullYear(),
+    baseClass: data.baseClass
+  };
+  workingPlans.value.push(newPlan);
+};
+
+const editWorkingPlan = (plan: any) => {
+  console.log('Edit plan:', plan);
+};
+
+const deleteWorkingPlan = (id: number) => {
+  workingPlans.value = workingPlans.value.filter(plan => plan.id !== id);
 };
 
 const selectedSpecialtyId = computed({

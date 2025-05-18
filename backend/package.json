@@ -12,34 +12,33 @@
     "prisma:migrate": "wrangler d1 migrations apply mars-db --local",
     "prisma:migrate:remote": "wrangler d1 migrations apply mars-db --remote",
     "prisma:studio": "prisma studio",
-    "seed": "wrangler d1 execute mars-db --local --file=./prisma/seed.sql",
+    "seed": "wrangler d1 execute mars-db --local --file=./prisma/migrations/seed.sql",
     "prepare": "husky",
     "pre-commit": "lint-staged",
     "prisma:create-migration": "bash ./scripts/create-sql-migration.sh"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250508.0",
+    "@cloudflare/workers-types": "^4.20250517.0",
     "@types/bun": "latest",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.2",
-    "wrangler": "^4.14.4"
+    "wrangler": "^4.15.2"
   },
   "peerDependencies": {
     "typescript": "^5.8.2"
   },
   "dependencies": {
-    "@prisma/adapter-d1": "^6.7.0",
-    "@prisma/client": "^6.7.0",
+    "@prisma/adapter-d1": "^6.8.2",
+    "@prisma/client": "^6.8.2",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/multer": "^1.4.12",
-    "@types/node": "^22.15.17",
+    "@types/node": "^22.15.18",
     "bcryptjs": "^2.4.3",
-    "hono": "^4.7.8",
+    "hono": "^4.7.10",
     "hono-sessions": "^0.7.2",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.2",
-    "openai": "^4.97.0",
-    "prisma": "^6.7.0",
+    "prisma": "^6.8.2",
     "ts-node": "^10.9.2",
     "xlsx": "^0.18.5",
     "zod": "^3.24.4"

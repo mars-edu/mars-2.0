@@ -16,11 +16,14 @@ async function main() {
   try {
     const admin = await prisma.user.upsert({
       where: { email: "admin@example.com" },
-      update: {},
+      update: {
+        username: "admin"
+      },
       create: {
         firstName: "Admin",
         lastName: "User",
         email: "admin@example.com",
+        username: "admin",
         password: hashSync("password", SALT_ROUNDS),
       },
     });
@@ -41,11 +44,14 @@ async function main() {
 
     const teacher = await prisma.user.upsert({
       where: { email: "teacher@example.com" },
-      update: {},
+      update: {
+        username: "teacher"
+      },
       create: {
         firstName: "Teacher",
         lastName: "User",
         email: "teacher@example.com",
+        username: "teacher",
         password: hashSync("password", SALT_ROUNDS),
       },
     });

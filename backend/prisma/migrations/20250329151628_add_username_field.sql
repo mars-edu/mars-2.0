@@ -17,7 +17,17 @@ CREATE TABLE "new_User" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-INSERT INTO "new_User" ("createdAt", "email", "firstName", "id", "lastName", "password", "updatedAt") SELECT "createdAt", "email", "firstName", "id", "lastName", "password", "updatedAt" FROM "User";
+INSERT INTO "new_User" ("createdAt", "email", "firstName", "id", "lastName", "password", "updatedAt", "username") 
+SELECT 
+    "createdAt", 
+    "email", 
+    "firstName", 
+    "id", 
+    "lastName", 
+    "password", 
+    "updatedAt",
+    LOWER(REPLACE(firstName || lastName, ' ', '')) || id
+FROM "User";
 DROP TABLE "User";
 ALTER TABLE "new_User" RENAME TO "User";
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");

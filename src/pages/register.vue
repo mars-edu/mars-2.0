@@ -16,7 +16,7 @@
       </div>
 
       <div
-        class="w-1/2 flex items-center justify-center p-8 bg-gray-50 relative"
+        class="w-1/2 flex items-center justify-center p-8 bg-gray-50 relative overflow-y-auto"
       >
         <Logo
           class="absolute top-8 right-8 text-red-600 transform hover:scale-105 transition-transform duration-300"
@@ -121,12 +121,11 @@
             <div class="flex items-center space-x-2 py-2">
               <f7-checkbox
                 v-model:checked="formData.acceptTerms"
-                class="text-gray-700"
-              >
-                <span class="text-sm text-gray-600">
-                  Я согласен на обработку персональных данных
-                </span>
-              </f7-checkbox>
+                class="!flex-shrink-0"
+              />
+              <span class="text-sm text-gray-600 whitespace-nowrap">
+                Я согласен на обработку персональных данных
+              </span>
             </div>
 
             <f7-button
@@ -274,10 +273,11 @@
             <div class="flex items-center space-x-2">
               <f7-checkbox
                 v-model:checked="formData.acceptTerms"
-                class="text-gray-700 flex items-center text-sm text-gray-600 whitespace-normal"
-              >
+                class="!flex-shrink-0"
+              />
+              <span class="text-sm text-gray-600 whitespace-nowrap">
                 Я согласен на обработку персональных данных
-              </f7-checkbox>
+              </span>
             </div>
 
             <f7-button
