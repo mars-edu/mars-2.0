@@ -1,5 +1,5 @@
 <template>
-  <div class="flex justify-between items-center mb-2">
+  <div class="flex justify-between items-center mb-2" :class="class">
     <!-- Icon navigation buttons -->
     <div class="flex items-center space-x-2 justify-center">
       <sidebar-button @click="$emit('icon-click', 'sidebar')" />
@@ -31,6 +31,7 @@ import { useEventService } from "./EventService";
 import type { EventData } from "./EventService";
 
 const props = defineProps<{
+  class?: string;
   searchPlaceholder: string;
 }>();
 

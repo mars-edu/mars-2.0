@@ -11,11 +11,10 @@
       <!-- Left Sidebar - always visible on desktop -->
       <Sidebar
         v-model:activeNavItem="activeNavItem"
-        class="h-[calc(100vh-64px)] flex-shrink-0"
       />
 
       <!-- Main Content Area for Desktop -->
-      <div class="flex-1 overflow-y-auto p-4 bg-background text-foreground">
+      <div class="flex-1 overflow-y-auto p-4 bg-background text-foreground ml-52">
         <div class="flex flex-row gap-4">
           <div class="flex-1 space-y-4 min-w-[60%]">
             <Doodle size="large">
@@ -148,7 +147,6 @@ import NavigationDemo from "@/components/Cards/NavigationDemo.vue";
 const searchbarEnabled = ref(false);
 const activeNavItem = ref("home");
 
-// Default navigation items for mobile tabbar
 const navigationItems = [
   { id: "home", label: "Главная", icon: "house_fill" },
   { id: "schedule", label: "Расписание", icon: "calendar" },

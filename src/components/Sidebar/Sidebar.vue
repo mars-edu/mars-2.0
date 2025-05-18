@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="w-52 border-r flex flex-col"
+    class="fixed top-[64px] left-0 w-52 border-r flex flex-col h-[calc(100vh-64px)] z-40"
     :class="[themeClasses.background, themeClasses.border]"
   >
     <div class="flex-1 overflow-y-auto">
@@ -129,8 +129,8 @@ const handleNavItemClick = (itemId: string): void => {
 
 const handleProfileItemClick = async (itemId: string): Promise<void> => {
   if (itemId === "logout") {
-    await userStore.logout();
-    f7.views.main.router.navigate("/login/");
+    userStore.logout();
+    f7.views.main.router.navigate("/login");
     return;
   }
   const route = getRouteForItem(itemId);

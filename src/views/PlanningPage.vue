@@ -20,11 +20,6 @@
           v-model:activeNavItem="activeNavItem"
           @mouseenter="handleSidebarMouseEnter"
           @mouseleave="handleSidebarMouseLeave"
-          class="h-[calc(100vh-64px)] flex-shrink-0"
-          :class="{
-            'sidebar-absolute':
-              (isMouseInLeftCorner || isSidebarHovered) && !isSidebarVisible,
-          }"
         />
       </transition>
 
@@ -32,13 +27,10 @@
       <Teleport to="body">
         <transition name="fade">
           <Sidebar
-            v-if="
-              (isMouseInLeftCorner || isSidebarHovered) && !isSidebarVisible
-            "
+            v-if="(isMouseInLeftCorner || isSidebarHovered) && !isSidebarVisible"
             v-model:activeNavItem="activeNavItem"
             @mouseenter="handleSidebarMouseEnter"
             @mouseleave="handleSidebarMouseLeave"
-            class="sidebar-popover h-[calc(100vh-64px)]"
           />
         </transition>
       </Teleport>
@@ -50,7 +42,11 @@
         @mouseleave="isHoveringLeftCorner = false"
       ></div>
 
-      <div ref="calendarContainer" class="calendar-container">
+      <div
+        ref="calendarContainer"
+        class="calendar-container p-2"
+        :class="{ 'pl-56': isSidebarVisible }"
+      >
         <!-- Calendar toolbar with navigation -->
         <CalendarToolbar
           :search-placeholder="'Найти'"
@@ -327,7 +323,6 @@ const addEvent = () => {
 .calendar-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 1rem;
   background-color: hsl(var(--card));
   color: hsl(var(--card-foreground));
   border-radius: 0.5rem;

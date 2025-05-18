@@ -14,6 +14,7 @@
   /* Default 300ms */
   --f7-view-transition-duration: 300ms;
   /* Add view transition duration */
+  --sidebar-width: 13rem;
 }
 
 body {
@@ -96,4 +97,40 @@ body {
   .input-with-value {
     @apply !bg-transparent;
   }
+}
+
+/* Sidebar transitions */
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.3s ease;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  transform: translateX(-100%);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Left corner detector */
+.left-corner-detector {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  width: 20px;
+  height: calc(100vh - 64px);
+  z-index: 10;
+}
+
+/* Main content margin */
+.content-with-sidebar {
+  margin-left: var(--sidebar-width);
 }

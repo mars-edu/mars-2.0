@@ -1,4 +1,6 @@
 import { defineStore } from "pinia";
+import AuthService from "../services/auth";
+
 
 export interface User {
   id: string;
@@ -86,10 +88,6 @@ export const useUserStore = defineStore("user", {
         this.token = token;
 
         try {
-          // Import the auth service dynamically to avoid circular dependencies
-          const { default: AuthService } = await import("../services/auth");
-
-          // Validate the token with the auth service
           const response = await AuthService.validateToken(token);
 
           if (response.success && response.user) {

@@ -1,6 +1,7 @@
 <template>
   <f7-popover
     id="class9-popover"
+    :arrow="false"
     style="width: calc(100vw - 100px) !important"
     close-on-escape
   >
@@ -390,10 +391,6 @@ const submit = () => {
   /* position: absolute; */
   left: 50%;
   transform: translateX(-50%);
-}
-
-#class9-popover .popover-arrow {
-  display: none !important;
 }
 </style>
 

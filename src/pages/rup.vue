@@ -12,11 +12,11 @@
     <div class="flex flex-1 overflow-hidden">
       <Sidebar
         v-model:activeNavItem="activeNavItem"
-        class="hidden md:block h-[calc(100vh-64px)] flex-shrink-0 border-r border-border"
+        class="hidden md:block"
       />
 
       <div
-        class="flex-1 overflow-y-auto p-4 md:p-6 bg-background pb-16 md:pb-6"
+        class="flex-1 overflow-y-auto p-4 md:p-6 bg-background pb-16 md:pb-6 md:ml-52"
       >
         <div
           class="bg-card text-card-foreground rounded-xl p-4 md:p-6 shadow-sm"
