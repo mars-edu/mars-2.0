@@ -1,6 +1,7 @@
 import path from "node:path";
 import vue from "@vitejs/plugin-vue";
 import webfontDownload from "vite-plugin-webfont-dl";
+import { visualizer } from "rollup-plugin-visualizer"
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 
 const SRC_DIR = path.resolve(__dirname, "./src");
@@ -21,6 +22,7 @@ export default async () => {
         "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
       ]),
       ViteImageOptimizer({}),
+      visualizer(),
     ],
     root: SRC_DIR,
     base: "",

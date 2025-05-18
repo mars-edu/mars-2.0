@@ -58,53 +58,6 @@
           </template>
         </CalendarToolbar>
 
-        <!-- Add Event Popover -->
-        <Popover v-model:open="isAddPopoverOpen">
-          <PopoverContent class="w-80">
-            <div class="grid gap-4">
-              <div class="space-y-2">
-                <h4 class="font-medium leading-none">Добавить событие</h4>
-                <p class="text-sm text-muted-foreground">
-                  Заполните детали нового события
-                </p>
-              </div>
-              <div class="grid gap-2">
-                <div class="grid grid-cols-3 items-center gap-4">
-                  <label for="title">Название</label>
-                  <input
-                    id="title"
-                    type="text"
-                    placeholder="Название события"
-                    class="col-span-2 h-8"
-                  />
-                </div>
-                <div class="grid grid-cols-3 items-center gap-4">
-                  <label for="date">Дата</label>
-                  <input id="date" type="date" class="col-span-2 h-8" />
-                </div>
-                <div class="grid grid-cols-3 items-center gap-4">
-                  <label for="time">Время</label>
-                  <input id="time" type="time" class="col-span-2 h-8" />
-                </div>
-                <div class="flex justify-end gap-2 mt-2">
-                  <button
-                    class="px-3 py-1 border border-input rounded-md bg-background text-foreground"
-                    @click="isAddPopoverOpen = false"
-                  >
-                    Отмена
-                  </button>
-                  <button
-                    class="px-3 py-1 bg-primary text-primary-foreground rounded-md"
-                    @click="addEvent"
-                  >
-                    Добавить
-                  </button>
-                </div>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-
         <!-- Calendar header -->
         <CalendarHeader
           :month-name="monthName"
@@ -146,7 +99,6 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
-import { Teleport } from "vue";
 import { f7, f7ready, f7Page, f7PageContent } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import { useCalendar } from "@/composables/useCalendar";
@@ -155,13 +107,7 @@ import CalendarNavigation from "@/components/Calendar/CalendarNavigation.vue";
 import CalendarHeader from "@/components/Calendar/CalendarHeader.vue";
 import CalendarGrid from "@/components/Calendar/CalendarGrid.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 
-// Search state
 const searchbarEnabled = ref(false);
 const calendarContainer = ref<HTMLElement | null>(null);
 const isAddPopoverOpen = ref(false);

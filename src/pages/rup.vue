@@ -339,6 +339,8 @@
                     v-model:opened="showAddWorkingPlanDialog"
                     @submit="handleWorkingPlanSubmit"
                     :disabled="!(selectedSpecialtyId && selectedCourseId)"
+                    :specialty-id="selectedSpecialtyId || ''"
+                    :course-id="selectedCourseId || ''"
                   />
                 </div>
               </div>
@@ -347,43 +349,34 @@
                   v-if="selectedSpecialtyId && selectedCourseId"
                   class="space-y-3"
                 >
-                  <div v-if="workingPlans.length === 0" class="text-center text-muted-foreground">
-                    Нет рабочих учебных планов
-                  </div>
-                  <div
-                    v-else
-                    v-for="plan in workingPlans"
-                    :key="plan.id"
-                    class="flex items-center justify-between p-3 border border-border rounded-lg bg-background"
-                  >
-                    <div>
-                      <h3 class="font-medium">{{ plan.name }}</h3>
-                      <p class="text-sm text-muted-foreground">{{ plan.year }}</p>
-                    </div>
-                    <div class="flex gap-2">
-                      <button
-                        class="p-2 hover:bg-primary/10 rounded-md transition-colors"
-                        @click="editWorkingPlan(plan)"
-                      >
-                        <f7-icon
-                          ios="f7:pencil"
-                          md="material:edit"
-                          size="18px"
-                          class="text-primary"
-                        ></f7-icon>
-                      </button>
-                      <button
-                        class="p-2 hover:bg-destructive/10 rounded-md transition-colors"
-                        @click="deleteWorkingPlan(plan.id)"
-                      >
-                        <f7-icon
-                          ios="f7:trash"
-                          md="material:delete"
-                          size="18px"
-                          class="text-destructive"
-                        ></f7-icon>
-                      </button>
-                    </div>
+                  <f7-segmented strong>
+                    <f7-button 
+                      :active="selectedClassLevel === 9"
+                      @click="selectedClassLevel = 9"
+                    >
+                      9 класс
+                    </f7-button>
+                    <f7-button 
+                      :active="selectedClassLevel === 11"
+                      @click="selectedClassLevel = 11"
+                    >
+                      11 класс
+                    </f7-button>
+                  </f7-segmented>
+
+                  <div class="mt-4">
+                    <template v-if="selectedClassLevel === 9">
+                      <Class9Table
+                        :specialty-id="selectedSpecialtyId"
+                        :course-id="selectedCourseId"
+                      />
+                    </template>
+                    <template v-else>
+                      <Class11Table
+                        :specialty-id="selectedSpecialtyId"
+                        :course-id="selectedCourseId"
+                      />
+                    </template>
                   </div>
                 </div>
                 <div
@@ -454,6 +447,8 @@ import {
   f7Icon,
   f7SkeletonBlock,
   f7,
+  f7Segmented,
+  f7Button,
 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -462,6 +457,8 @@ import EditSpecialtyButton from "@/components/EditSpecialtyButton.vue";
 import AddCourseButton from "@/components/AddCourseButton.vue";
 import EditCourseButton from "@/components/EditCourseButton.vue";
 import AddWorkingPlanDialog from "@/components/AddWorkingPlanDialog.vue";
+import Class9Table from '@/components/Class9Table.vue';
+import Class11Table from '@/components/Class11Table.vue';
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
@@ -477,6 +474,7 @@ const coursesExpanded = ref(true);
 const workingPlansExpanded = ref(true);
 const showAddWorkingPlanDialog = ref(false);
 const workingPlans = ref<Array<{id: number, name: string, year: number, description?: string}>>([]);
+const selectedClassLevel = ref<9 | 11>(9);
 
 const toggleSection = (section: "specialties" | "courses" | "workingPlans") => {
   if (section === "specialties")

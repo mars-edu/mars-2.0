@@ -10,7 +10,6 @@
       class="text-sm mb-2"
       :class="{
         'text-foreground': !day.isCurrentMonth,
-        'text-foreground': day.isCurrentMonth,
         'text-white': day.isToday,
       }"
     >

@@ -1,43 +1,45 @@
 <!-- ThemeToggle.vue -->
 <template>
-  <!-- Desktop view (hidden on small screens) -->
-  <div
-    class="hidden sm:flex overflow-hidden rounded-lg border transition-colors"
-    :class="[themeClasses.background, themeClasses.border]"
-  >
-    <button
-      v-for="theme in availableThemes"
-      :key="theme.value"
-      class="px-3 py-1.5 text-sm font-medium transition-colors whitespace-nowrap"
-      :class="{
-        'bg-red-500 text-white': theme.value === themeStore.currentTheme,
-        [themeClasses.hoverBackground]: theme.value !== themeStore.currentTheme,
-      }"
-      @click="handleThemeChange(theme.value)"
+  <div>
+    <!-- Desktop view (hidden on small screens) -->
+    <div
+      class="hidden sm:flex overflow-hidden rounded-lg border transition-colors"
+      :class="[themeClasses.background, themeClasses.border]"
     >
-      {{ theme.label }}
-    </button>
-  </div>
-
-  <!-- Mobile view (visible only on small screens) -->
-  <div
-    class="sm:hidden"
-    :class="[themeClasses.background, themeClasses.border]"
-  >
-    <select
-      :value="themeStore.currentTheme"
-      @change="(e) => handleThemeChange((e.target as HTMLSelectElement).value as ThemeOption)"
-      class="w-full px-3 py-1.5 text-sm font-medium rounded-lg border appearance-none cursor-pointer bg-transparent focus:outline-none focus:ring-2 focus:ring-red-500"
-      :class="[themeClasses.border]"
-    >
-      <option
+      <button
         v-for="theme in availableThemes"
         :key="theme.value"
-        :value="theme.value"
+        class="px-3 py-1.5 text-sm font-medium transition-colors whitespace-nowrap"
+        :class="{
+          'bg-red-500 text-white': theme.value === themeStore.currentTheme,
+          [themeClasses.hoverBackground]: theme.value !== themeStore.currentTheme,
+        }"
+        @click="handleThemeChange(theme.value)"
       >
         {{ theme.label }}
-      </option>
-    </select>
+      </button>
+    </div>
+
+    <!-- Mobile view (visible only on small screens) -->
+    <div
+      class="sm:hidden"
+      :class="[themeClasses.background, themeClasses.border]"
+    >
+      <select
+        :value="themeStore.currentTheme"
+        @change="(e) => handleThemeChange((e.target as HTMLSelectElement).value as ThemeOption)"
+        class="w-full px-3 py-1.5 text-sm font-medium rounded-lg border appearance-none cursor-pointer bg-transparent focus:outline-none focus:ring-2 focus:ring-red-500"
+        :class="[themeClasses.border]"
+      >
+        <option
+          v-for="theme in availableThemes"
+          :key="theme.value"
+          :value="theme.value"
+        >
+          {{ theme.label }}
+        </option>
+      </select>
+    </div>
   </div>
 </template>
 

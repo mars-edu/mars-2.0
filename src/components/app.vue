@@ -115,9 +115,8 @@ onMounted(() => {
     console.log("[F7] Framework7 ready");
     console.log("[F7] Detailed initialization process starting");
 
-    // Initialize custom navigation after F7 is ready
-    customNavigation.value = setupCustomNavigation();
-    customNavigation.value.initialize();
+    // customNavigation.value = setupCustomNavigation();
+    // customNavigation.value.initialize();
 
     console.log("[UserStore] Initializing user store");
     console.log("[UserStore] Attempting to load user authentication state");

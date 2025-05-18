@@ -6,7 +6,7 @@
       :class="{
         'opacity-50 cursor-not-allowed': disabled
       }"
-      @click="openWorkingPlanPopover"
+      @click.stop="openWorkingPlanPopover"
       :disabled="disabled"
       :title="
         disabled
@@ -50,7 +50,7 @@
         <div class="p-4 flex flex-col gap-4">
           <button
             class="w-full py-3 rounded-lg text-white"
-            :class="baseClass === 9 ? 'bg-primary hover:bg-primary/80' : 'bg-gray-500 hover:bg-gray-600'"
+            :class="baseClass === 9 ? 'bg-primary hover:bg-primary hover:opacity-80' : 'bg-gray-500 hover:bg-gray-600'"
             @click="baseClass = 9; openClass9Popup()"
           >
             На базе 9 класса
@@ -58,7 +58,7 @@
 
           <button
             class="w-full py-3 rounded-lg text-white"
-            :class="baseClass === 11 ? 'bg-primary hover:bg-primary/80' : 'bg-gray-500 hover:bg-gray-600'"
+            :class="baseClass === 11 ? 'bg-primary hover:bg-primary hover:opacity-80' : 'bg-gray-500 hover:bg-gray-600'"
             @click="baseClass = 11"
           >
             На базе 11 класса
@@ -69,6 +69,8 @@
 
     <Class9Popup
       target="#add-working-plan-button"
+      :specialty-id="specialtyId"
+      :course-id="courseId"
       @submit="handleClass9Submit"
       @close="closeClass9Popup"
     />
@@ -85,7 +87,9 @@ import Class9Popup from './Class9Popup.vue';
 
 const props = defineProps<{
   opened: boolean,
-  disabled?: boolean
+  disabled?: boolean,
+  specialtyId: string,
+  courseId: string
 }>();
 
 const emit = defineEmits<{
