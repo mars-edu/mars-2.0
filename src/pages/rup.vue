@@ -10,26 +10,23 @@
     />
 
     <div class="flex flex-1 overflow-hidden">
-      <Sidebar
-        v-model:activeNavItem="activeNavItem"
-        class="hidden md:block"
-      />
+      <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <div
-        class="flex-1 overflow-y-auto p-4 md:p-6 bg-background pb-16 md:pb-6 md:ml-52"
+        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-52"
       >
         <div
-          class="bg-card text-card-foreground rounded-xl p-4 md:p-6 shadow-sm"
+          class="bg-card text-card-foreground rounded-xl p-4 md:p-4 shadow-sm"
         >
           <div
-            class="flex flex-col md:flex-row md:items-center md:gap-6 mb-4 md:mb-8"
+            class="flex flex-col md:flex-row md:items-center md:gap-3 mb-4 md:mb-4"
           >
             <div
               class="flex flex-col md:flex-row md:items-center md:gap-3 flex-1 mb-4 md:mb-0"
             >
               <span
                 class="text-base md:text-lg font-medium md:font-semibold mb-1 md:mb-0"
-                >Учебная программа:</span
+                >Рабочие учебные планы:</span
               >
             </div>
             <!-- <div class="flex flex-col md:flex-row md:items-center md:gap-3">
@@ -81,7 +78,7 @@
             </div> -->
           </div>
 
-          <div class="space-y-4 md:space-y-6">
+          <div class="space-y-2 md:space-y-3">
             <div
               class="border border-border rounded-lg md:rounded-xl overflow-hidden"
             >
@@ -322,7 +319,9 @@
                 <div class="flex items-center">
                   <f7-icon
                     :ios="
-                      workingPlansExpanded ? 'f7:chevron_down' : 'f7:chevron_right'
+                      workingPlansExpanded
+                        ? 'f7:chevron_down'
+                        : 'f7:chevron_right'
                     "
                     :md="
                       workingPlansExpanded
@@ -332,7 +331,9 @@
                     size="14px"
                     class="mr-1 md:mr-2 text-foreground/60"
                   ></f7-icon>
-                  <span class="font-medium text-sm md:text-base">Рабочий учебный план:</span>
+                  <span class="font-medium text-sm md:text-base"
+                    >Рабочий учебный план:</span
+                  >
                 </div>
                 <div class="flex items-center gap-1 md:gap-2">
                   <AddWorkingPlanDialog
@@ -349,7 +350,7 @@
                   v-if="selectedSpecialtyId && selectedCourseId"
                   class="space-y-3"
                 >
-                  <f7-segmented strong>
+                  <!-- <f7-segmented strong>
                     <f7-button 
                       :active="selectedClassLevel === 9"
                       @click="selectedClassLevel = 9"
@@ -362,7 +363,7 @@
                     >
                       11 класс
                     </f7-button>
-                  </f7-segmented>
+                  </f7-segmented> -->
 
                   <div class="mt-4">
                     <template v-if="selectedClassLevel === 9">
@@ -392,10 +393,7 @@
                     <span>Сначала выберите курс</span>
                   </div>
                 </div>
-                <div
-                  v-else
-                  class="w-full p-3 flex items-center justify-center"
-                >
+                <div v-else class="w-full p-3 flex items-center justify-center">
                   <div class="text-muted-foreground flex items-center gap-2">
                     <f7-icon
                       ios="f7:arrow_up"
@@ -421,7 +419,6 @@
           class="text-white"
         ></f7-icon>
         <f7-fab-buttons position="top" class="mr-2">
-
           <f7-fab-button
             label="Перевод курсов"
             class="bg-primary text-primary-foreground shadow-lg"
@@ -457,8 +454,8 @@ import EditSpecialtyButton from "@/components/EditSpecialtyButton.vue";
 import AddCourseButton from "@/components/AddCourseButton.vue";
 import EditCourseButton from "@/components/EditCourseButton.vue";
 import AddWorkingPlanDialog from "@/components/AddWorkingPlanDialog.vue";
-import Class9Table from '@/components/Class9Table.vue';
-import Class11Table from '@/components/Class11Table.vue';
+import Class9Table from "@/components/Class9Table.vue";
+import Class11Table from "@/components/Class11Table.vue";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
@@ -473,7 +470,9 @@ const specialtiesExpanded = ref(true);
 const coursesExpanded = ref(true);
 const workingPlansExpanded = ref(true);
 const showAddWorkingPlanDialog = ref(false);
-const workingPlans = ref<Array<{id: number, name: string, year: number, description?: string}>>([]);
+const workingPlans = ref<
+  Array<{ id: number; name: string; year: number; description?: string }>
+>([]);
 const selectedClassLevel = ref<9 | 11>(9);
 
 const toggleSection = (section: "specialties" | "courses" | "workingPlans") => {
@@ -518,17 +517,17 @@ const handleWorkingPlanSubmit = (data: { baseClass: number }) => {
     id: Date.now(),
     name: `План ${data.baseClass} класс`,
     year: new Date().getFullYear(),
-    baseClass: data.baseClass
+    baseClass: data.baseClass,
   };
   workingPlans.value.push(newPlan);
 };
 
 const editWorkingPlan = (plan: any) => {
-  console.log('Edit plan:', plan);
+  console.log("Edit plan:", plan);
 };
 
 const deleteWorkingPlan = (id: number) => {
-  workingPlans.value = workingPlans.value.filter(plan => plan.id !== id);
+  workingPlans.value = workingPlans.value.filter((plan) => plan.id !== id);
 };
 
 const selectedSpecialtyId = computed({

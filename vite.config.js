@@ -1,7 +1,7 @@
 import path from "node:path";
 import vue from "@vitejs/plugin-vue";
 import webfontDownload from "vite-plugin-webfont-dl";
-import { visualizer } from "rollup-plugin-visualizer"
+import { visualizer } from "rollup-plugin-visualizer";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 
 const SRC_DIR = path.resolve(__dirname, "./src");
@@ -53,6 +53,9 @@ export default async () => {
       watch: {
         usePolling: true,
         interval: 1000,
+      },
+      proxy: {
+        "/api": "http://localhost:3001",
       },
     },
   };

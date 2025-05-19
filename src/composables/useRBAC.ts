@@ -71,6 +71,19 @@ export function useRBAC() {
         roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
       },
       {
+        id: "specialty-catalog",
+        label: "Каталог специальностей",
+        icon: "book_fill",
+        roles: [Role.ADMIN, Role.TEACHER],
+      },
+      {
+        id: "discipline-catalog",
+        label: "Каталог дисциплин",
+        icon: "book_fill",
+        roles: [Role.ADMIN, Role.TEACHER],
+      },
+
+      {
         id: "schedule",
         label: "Расписание",
         icon: "calendar_fill",
@@ -122,6 +135,19 @@ export function useRBAC() {
         id: "education-schedule",
         label: "График образовательного процесса",
         icon: "calendar_fill",
+        roles: [Role.ADMIN, Role.TEACHER],
+      },
+
+      {
+        id: "student-card",
+        label: "Картотека обучающихся",
+        icon: "book_fill",
+        roles: [Role.ADMIN, Role.TEACHER],
+      },
+      {
+        id: "student-card",
+        label: "Картотека преподавателей",
+        icon: "book_fill",
         roles: [Role.ADMIN, Role.TEACHER],
       },
       {

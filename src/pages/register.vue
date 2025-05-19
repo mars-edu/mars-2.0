@@ -6,9 +6,9 @@
       >
         <div class="absolute inset-0 opacity-10"></div>
 
-        <div class="max-w-md w-full">
-          <h1 class="text-3xl font-bold text-white mb-4">Регистрация</h1>
-          <p class="text-white text-opacity-90">
+        <div class="text-white max-w-md w-full">
+          <h1 class="text-3xl font-bold mb-4">Регистрация</h1>
+          <p class="text-opacity-90">
             Создайте учетную запись, чтобы начать свое образовательное
             путешествие.
           </p>
@@ -18,12 +18,12 @@
       <div
         class="w-1/2 flex items-center justify-center p-8 bg-gray-50 relative overflow-y-auto"
       >
-        <Logo
-          class="absolute top-8 right-8 text-red-600 transform hover:scale-105 transition-transform duration-300"
-        />
         <div
           class="bg-white rounded-3xl p-12 shadow-xl max-w-md w-full transform hover:shadow-2xl transition-all duration-300"
         >
+          <div class="flex justify-center mb-8">
+            <Logo class="h-16 w-auto" />
+          </div>
           <form @submit.prevent="handleRegister" class="space-y-6">
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-gray-800 mb-2">
@@ -169,6 +169,9 @@
         <div
           class="bg-white rounded-3xl p-8 shadow-xl mb-4 -mt-12 transform hover:shadow-2xl transition-all duration-300"
         >
+          <div class="flex justify-center mb-6">
+            <Logo class="h-14 w-auto" />
+          </div>
           <h2 class="text-2xl font-bold text-gray-900 mb-2">Регистрация</h2>
           <p class="text-gray-600">
             Создайте учетную запись, чтобы начать свое образовательное

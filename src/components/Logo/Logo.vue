@@ -4,32 +4,15 @@
     class="flex items-center gap-3 w-fit"
     @click="navigateToHome"
   >
-    <div
-      :class="[
-        'w-12 h-12 rounded-full flex items-center justify-center font-bold text-2xl',
-        variant === 'light'
-          ? 'bg-white/20 text-white shadow-white/30'
-          : 'bg-[#e53935] text-white shadow-[rgba(229,57,53,0.3)]',
-      ]"
-      class="shadow-md"
-    >
-      <span>M</span>
-    </div>
-    <span
-      :class="[
-        'text-2xl font-bold tracking-[-0.5px]',
-        variant === 'light' ? 'text-white' : 'text-[#333]',
-      ]"
-      >Mars</span
-    >
+    <img :src="logoSrc" alt="Mars Logo" class="h-12" />
   </button>
 </template>
 
 <script setup lang="ts">
 import { f7 } from "framework7-vue";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 
-defineProps({
+const props = defineProps({
   variant: {
     type: String,
     default: "default",
@@ -37,8 +20,12 @@ defineProps({
   },
 });
 
-const isProduction = ref(import.meta.env.MODE !== "development");
-// const isProduction = true;
+// const isProduction = ref(import.meta.env.MODE !== "development");
+const isProduction = true;
+
+const logoSrc = computed(() => {
+  return new URL("/assets/LOGO.png", import.meta.url).href;
+});
 
 const navigateToHome = () => {
   f7.views.main.router.navigate("/");

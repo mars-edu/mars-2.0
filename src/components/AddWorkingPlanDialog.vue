@@ -4,7 +4,7 @@
       id="add-working-plan-button"
       class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-green-500 hover:bg-green-600 rounded-full transition-colors"
       :class="{
-        'opacity-50 cursor-not-allowed': disabled
+        'opacity-50 cursor-not-allowed': disabled,
       }"
       @click.stop="openWorkingPlanPopover"
       :disabled="disabled"
@@ -30,7 +30,9 @@
     >
       <div class="working-plan-popover bg-card text-card-foreground">
         <!-- Header with buttons -->
-        <div class="flex justify-between items-center px-4 py-3 border-b border-input">
+        <div
+          class="flex justify-between items-center px-4 py-3 border-b border-input"
+        >
           <button
             class="text-muted-foreground hover:text-foreground"
             @click="handleClose"
@@ -49,17 +51,15 @@
 
         <div class="p-4 flex flex-col gap-4">
           <button
-            class="w-full py-3 rounded-lg text-white"
-            :class="baseClass === 9 ? 'bg-primary hover:bg-primary hover:opacity-80' : 'bg-gray-500 hover:bg-gray-600'"
-            @click="baseClass = 9; openClass9Popup()"
+            class="w-full py-3 rounded-lg text-white bg-gray-500 hover:bg-primary"
+            @click="openClass9Popup()"
           >
             На базе 9 класса
           </button>
 
           <button
-            class="w-full py-3 rounded-lg text-white"
-            :class="baseClass === 11 ? 'bg-primary hover:bg-primary hover:opacity-80' : 'bg-gray-500 hover:bg-gray-600'"
-            @click="baseClass = 11"
+            class="w-full py-3 rounded-lg text-white bg-gray-500 hover:bg-primary"
+            @click="handleSubmit"
           >
             На базе 11 класса
           </button>
@@ -78,57 +78,49 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import {
-  f7,
-  f7Popover,
-} from 'framework7-vue';
-import Class9Popup from './Class9Popup.vue';
+import { computed } from "vue";
+import { f7, f7Popover } from "framework7-vue";
+import Class9Popup from "./Class9Popup.vue";
 
 const props = defineProps<{
-  opened: boolean,
-  disabled?: boolean,
-  specialtyId: string,
-  courseId: string
+  opened: boolean;
+  disabled?: boolean;
+  specialtyId: string;
+  courseId: string;
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:opened', value: boolean): void
-  (e: 'submit', data: { baseClass: number }): void
+  (e: "update:opened", value: boolean): void;
+  (e: "submit", data: { baseClass: number }): void;
 }>();
 
-const baseClass = ref<9 | 11 | null>(null);
-
 const isValid = computed(() => {
-  return baseClass.value !== null;
+  return true;
 });
 
 const openWorkingPlanPopover = () => {
-  f7.popover.open('#add-working-plan-popover', '#add-working-plan-button');
+  f7.popover.open("#add-working-plan-popover", "#add-working-plan-button");
 };
 
 const handleClose = () => {
-  f7.popover.close('#add-working-plan-popover');
-  emit('update:opened', false);
-  baseClass.value = null;
+  f7.popover.close("#add-working-plan-popover");
+  emit("update:opened", false);
 };
 
 const handleSubmit = () => {
-  if (isValid.value && baseClass.value) {
-    emit('submit', { baseClass: baseClass.value });
-    handleClose();
-  }
+  emit("submit", { baseClass: 11 });
+  handleClose();
 };
 
 const openClass9Popup = () => {
-  f7.popover.close('#add-working-plan-popover');
+  f7.popover.close("#add-working-plan-popover");
   setTimeout(() => {
-    f7.popover.open('#class9-popover');
+    f7.popover.open("#class9-popover");
   }, 100);
 };
 
 const closeClass9Popup = () => {
-  f7.popover.close('#class9-popover');
+  f7.popover.close("#class9-popover");
 };
 
 const handleClass9Submit = () => {
@@ -142,4 +134,4 @@ const handleClass9Submit = () => {
   max-height: 90vh;
   overflow-y: auto;
 }
-</style> 
+</style>

@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="fixed top-[64px] left-0 w-52 border-r flex flex-col h-[calc(100vh-64px)] z-40"
+    class="fixed top-[64px] left-0 w-52 border-r flex flex-col h-[calc(100vh-64px)] z-40 overflow-y-auto"
     :class="[themeClasses.background, themeClasses.border]"
   >
     <div class="flex-1 overflow-y-auto">
@@ -79,7 +79,7 @@ const themeClasses = computed(() => {
         border: "border-gray-700",
         text: "text-gray-200",
         textHover: "text-white",
-        icon: "text-gray-400",
+        icon: "text-foreground",
         hoverBackground: "hover:bg-gray-700",
         activeBackground: "bg-gray-700/50",
       };
@@ -89,7 +89,7 @@ const themeClasses = computed(() => {
         border: "border-purple-100",
         text: "text-purple-900",
         textHover: "text-purple-700",
-        icon: "text-purple-500",
+        icon: "text-foreground",
         hoverBackground: "hover:bg-purple-100",
         activeBackground: "bg-purple-100/50",
       };
@@ -99,7 +99,7 @@ const themeClasses = computed(() => {
         border: "border-border",
         text: "text-foreground",
         textHover: "text-foreground",
-        icon: "text-primary",
+        icon: "text-foreground",
         hoverBackground: "hover:bg-secondary",
         activeBackground: "bg-primary/10",
       };

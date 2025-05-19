@@ -6,11 +6,11 @@
       >
         <div class="absolute inset-0 opacity-10"></div>
 
-        <div class="max-w-md w-full">
-          <h1 class="text-3xl font-bold text-white mb-4">С возвращением!</h1>
-          <p class="text-white text-opacity-90">
-            Войдите в свою учетную запись, чтобы продолжить образовательное
-            путешествие.
+        <div class="text-white max-w-md w-full">
+          <h1 class="text-3xl font-bold mb-4">Приветствуем!</h1>
+          <p class="text-opacity-90">
+            Мы создаём условия, в которых каждый может легко и удобно
+            организовать образовательный процесс
           </p>
         </div>
       </div>
@@ -18,17 +18,15 @@
       <div
         class="w-1/2 flex items-center justify-center p-8 bg-background relative"
       >
-        <Logo
-          class="absolute top-8 right-8 text-red-600 transform hover:scale-105 transition-transform duration-300"
-        />
         <div
           class="bg-card text-card-foreground rounded-3xl p-12 shadow-xl max-w-md w-full transform hover:shadow-2xl transition-all duration-300"
         >
+          <div class="flex justify-center mb-8">
+            <Logo class="h-16 w-auto" />
+          </div>
           <form @submit.prevent="handleLogin" class="space-y-8">
             <div class="space-y-2">
-              <label class="block text-sm font-semibold mb-2">
-                ФИО
-              </label>
+              <label class="block text-sm font-semibold mb-2"> ФИО </label>
               <f7-input
                 type="text"
                 v-model:value="username"
@@ -109,6 +107,9 @@
         <div
           class="bg-card text-card-foreground rounded-3xl p-8 shadow-xl mb-4 -mt-12 transform hover:shadow-2xl transition-all duration-300"
         >
+          <div class="flex justify-center mb-6">
+            <Logo class="h-14 w-auto" />
+          </div>
           <h2 class="text-2xl font-bold mb-2">С возвращением!</h2>
           <p class="text-muted-foreground">
             Войдите в свою учетную запись, чтобы продолжить образовательное
@@ -117,9 +118,7 @@
 
           <form @submit.prevent="handleLogin" class="space-y-6 mt-8">
             <div>
-              <label class="block text-sm font-medium mb-2">
-                ФИО
-              </label>
+              <label class="block text-sm font-medium mb-2"> ФИО </label>
               <f7-input
                 type="text"
                 v-model:value="username"

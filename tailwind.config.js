@@ -5,6 +5,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        sun: "#f3a334",
         "mars-red": "#e53935",
         "mars-red-dark": "#d32f2f",
         "mars-red-light": "#ef5350",
