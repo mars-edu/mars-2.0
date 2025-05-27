@@ -36,12 +36,32 @@
               Номер курса
               <span class="text-destructive ml-1">*</span>
             </label>
-            <f7-input
-              id="course-number"
-              type="text"
-              v-model:value="courseNumber"
-              placeholder="Введите нумерацию курса"
-            ></f7-input>
+            <div class="relative">
+              <select
+                id="course-number"
+                v-model="courseNumber"
+                class="w-full h-12 px-4 rounded-lg border border-input bg-background text-sm text-foreground focus:border-primary outline-none appearance-none cursor-pointer"
+              >
+                <option value="" disabled>Выберите номер курса</option>
+                <option
+                  v-for="course in settingsCourseStore.getVisibleCourses"
+                  :key="course.id"
+                  :value="course.name"
+                >
+                  {{ course.name }}
+                </option>
+              </select>
+              <div
+                class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
+              >
+                <f7-icon
+                  ios="f7:chevron_down"
+                  md="material:keyboard_arrow_down"
+                  size="16px"
+                  class="text-muted-foreground"
+                ></f7-icon>
+              </div>
+            </div>
           </div>
 
           <div class="space-y-2">
@@ -109,7 +129,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import {
   f7,
   f7Popover,
@@ -123,6 +143,7 @@ import { useCourseStore } from "@/stores/courseStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { useModuleStore } from "@/stores/moduleStore";
 import { useColumnConfigStore } from "@/stores/columnConfig";
+import { useSettingsCourseStore } from "@/stores/settingsCourseStore";
 
 const props = defineProps<{
   course: {
@@ -138,6 +159,7 @@ const courseStore = useCourseStore();
 const selectedItemsStore = useSelectedItemsStore();
 const moduleStore = useModuleStore();
 const columnConfigStore = useColumnConfigStore();
+const settingsCourseStore = useSettingsCourseStore();
 
 const courseNumber = ref(props.course.number);
 const admissionYear = ref(props.course.admissionYear);
@@ -150,7 +172,7 @@ const availableYears = computed(() => {
 });
 
 const courseSchema = z.object({
-  number: z.string().min(1, "Пожалуйста, введите номер курса"),
+  number: z.string().min(1, "Пожалуйста, выберите номер курса"),
   admissionYear: z.string(),
   specialtyCode: z.string().optional(),
 });
@@ -233,4 +255,9 @@ const resetForm = () => {
   specialtyCode.value = props.course.specialtyCode;
   courseStore.clearError();
 };
+
+onMounted(async () => {
+  // Load settings courses
+  await settingsCourseStore.fetchCourses();
+});
 </script>

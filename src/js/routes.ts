@@ -8,6 +8,7 @@ import LoginPage from "../pages/suspense/LoginPage.vue";
 import RegisterPage from "../pages/suspense/RegisterPage.vue";
 import RestorePasswordPage from "../pages/suspense/RestorePasswordPage.vue";
 import RupPage from "../pages/suspense/RupPage.vue";
+import SettingsPage from "../pages/suspense/SettingsPage.vue";
 
 type RouteConfig = Router.RouteParameters & {
   options?: {
@@ -30,20 +31,6 @@ const routes: RouteConfig[] = [
       roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
     },
   },
-  // {
-  //   path: "/create-course/",
-  //   component: () => import("../pages/suspense/CreateCoursePage.vue"),
-  //   options: {
-  //     roles: [Role.TEACHER],
-  //   },
-  // },
-  // {
-  //   path: "/room-booking/",
-  //   component: () => import("../pages/suspense/RoomBookingPage.vue"),
-  //   options: {
-  //     roles: [Role.TEACHER],
-  //   },
-  // },
   {
     path: "/rup/",
     component: RupPage,
@@ -51,83 +38,13 @@ const routes: RouteConfig[] = [
       roles: [Role.ADMIN, Role.TEACHER],
     },
   },
-  // {
-  //   path: "/institution-info/",
-  //   component: () => import("../pages/suspense/InstitutionInfoPage.vue"),
-  //   options: {
-  //     roles: [Role.TEACHER],
-  //   },
-  // },
-  // {
-  //   path: "/testing/",
-  //   component: () => import("../pages/suspense/TestingPage.vue"),
-  //   options: {
-  //     roles: [Role.TEACHER],
-  //   },
-  // },
-  // {
-  //   path: "/library/",
-  //   component: () => import("../pages/suspense/LibraryPage.vue"),
-  //   options: {
-  //     roles: [Role.TEACHER],
-  //   },
-  // },
-  // {
-  //   path: "/education-schedule/",
-  //   component: () => import("../pages/suspense/EducationSchedulePage.vue"),
-  //   options: {
-  //     roles: [Role.TEACHER],
-  //   },
-  // },
-  // {
-  //   path: "/report-editor/",
-  //   component: () => import("../pages/suspense/ReportEditorPage.vue"),
-  //   options: {
-  //     roles: [Role.TEACHER],
-  //   },
-  // },
-  // {
-  //   path: "/communication/",
-  //   component: () => import("../pages/suspense/CommunicationPage.vue"),
-  //   options: {
-  //     roles: [Role.TEACHER],
-  //   },
-  // },
-  // {
-  //   path: "/students/",
-  //   component: () => import("../pages/suspense/StudentsPage.vue"),
-  //   options: {
-  //     roles: [Role.ADMIN],
-  //   },
-  // },
-  // {
-  //   path: "/teachers/",
-  //   component: () => import("../pages/suspense/TeachersPage.vue"),
-  //   options: {
-  //     roles: [Role.ADMIN],
-  //   },
-  // },
-  // {
-  //   path: "/parents/",
-  //   component: () => import("../pages/suspense/ParentsPage.vue"),
-  //   options: {
-  //     roles: [Role.ADMIN],
-  //   },
-  // },
-  // {
-  //   path: "/settings/",
-  //   component: () => import("../pages/suspense/SettingsPage.vue"),
-  //   options: {
-  //     roles: [Role.ADMIN],
-  //   },
-  // },
-  // {
-  //   path: "/profile/",
-  //   component: () => import("../pages/suspense/ProfilePage.vue"),
-  //   options: {
-  //     roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
-  //   },
-  // },
+  {
+    path: "/settings/",
+    component: SettingsPage,
+    options: {
+      roles: [Role.ADMIN, Role.TEACHER],
+    },
+  },
   {
     path: "/login",
     component: LoginPage,

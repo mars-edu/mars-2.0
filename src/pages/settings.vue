@@ -1,140 +1,242 @@
 <template>
-  <f7-page name="settings" class="bg-background text-foreground">
-    <f7-navbar title="Settings"></f7-navbar>
+  <f7-page
+    name="settings"
+    class="flex flex-col h-screen bg-background text-foreground"
+  >
+    <Header
+      @searchbar-enable="handleSearchbarEnable"
+      @searchbar-disable="handleSearchbarDisable"
+      class="hidden md:block flex-shrink-0 border-b border-border"
+    />
 
-    <f7-block-title class="text-foreground">Form Example</f7-block-title>
-    <f7-list strong-ios dividers-ios outline-ios>
-      <f7-list-input
-        label="Name"
-        type="text"
-        placeholder="Your name"
-      ></f7-list-input>
+    <div class="flex flex-1 overflow-hidden">
+      <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
-      <f7-list-input
-        label="E-mail"
-        type="email"
-        placeholder="E-mail"
-      ></f7-list-input>
+      <div
+        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-52"
+      >
+        <div
+          class="bg-card text-card-foreground rounded-xl p-4 md:p-4 shadow-sm"
+        >
+          <div
+            class="flex flex-col md:flex-row md:items-center md:gap-3 mb-4 md:mb-4"
+          >
+            <div
+              class="flex flex-col md:flex-row md:items-center md:gap-3 flex-1 mb-4 md:mb-0"
+            >
+              <span
+                class="text-base md:text-lg font-medium md:font-semibold mb-1 md:mb-0"
+                >Настройки:</span
+              >
+            </div>
+          </div>
 
-      <f7-list-input label="URL" type="url" placeholder="URL"></f7-list-input>
+          <Accordion>
+            <AccordionItem id="languages" :default-expanded="true">
+              <template #title>Языки:</template>
+              <template #actions>
+                <AddLanguageButton />
+              </template>
+              <div
+                v-if="languageStore.isLoading"
+                class="p-4 flex justify-center"
+              >
+                <f7-preloader></f7-preloader>
+              </div>
+              <div
+                v-else-if="languageStore.getError"
+                class="p-4 text-destructive"
+              >
+                {{ languageStore.getError }}
+              </div>
+              <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
+                <div
+                  v-for="language in languageStore.getAllLanguages"
+                  :key="language.id"
+                  class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                  :id="`language-item-${language.id}`"
+                  :class="{
+                    'ring-2 ring-primary bg-primary/10': language.isDefault,
+                  }"
+                >
+                  <span class="font-medium">
+                    {{ language.name }}
+                  </span>
+                  <span class="text-xs px-2 py-0.5 bg-muted rounded-full">
+                    {{ language.code }}
+                  </span>
+                  <button
+                    v-if="!language.isDefault"
+                    class="ml-auto p-1 hover:bg-primary/10 rounded-md transition-colors"
+                    @click="handleSetDefaultLanguage(language.id)"
+                    aria-label="Set as Default"
+                    type="button"
+                  >
+                    <f7-icon
+                      ios="f7:checkmark_circle"
+                      md="material:check_circle"
+                      size="18px"
+                      class="text-primary"
+                    ></f7-icon>
+                  </button>
+                  <button
+                    class="p-1 hover:bg-primary/10 rounded-md transition-colors"
+                    @click.stop="openEditLanguage(language)"
+                    aria-label="Edit Language"
+                    type="button"
+                  >
+                    <f7-icon
+                      ios="f7:pencil"
+                      md="material:edit"
+                      size="18px"
+                      class="text-primary"
+                    ></f7-icon>
+                  </button>
+                  <span
+                    v-if="language.isDefault"
+                    class="ml-auto text-xs text-primary"
+                  >
+                    По умолчанию
+                  </span>
+                </div>
+                <EditLanguageButton
+                  v-for="language in languageStore.getAllLanguages"
+                  :key="`edit-${language.id}`"
+                  :language="language"
+                />
+              </div>
+            </AccordionItem>
 
-      <f7-list-input
-        label="Password"
-        type="password"
-        placeholder="Password"
-      ></f7-list-input>
-
-      <f7-list-input
-        label="Phone"
-        type="tel"
-        placeholder="Phone"
-      ></f7-list-input>
-
-      <f7-list-input label="Gender" type="select">
-        <option>Male</option>
-        <option>Female</option>
-      </f7-list-input>
-
-      <f7-list-input
-        label="Birth date"
-        type="date"
-        placeholder="Birth day"
-        defaultValue="2014-04-30"
-      ></f7-list-input>
-
-      <f7-list-item title="Toggle">
-        <template #after>
-          <f7-toggle />
-        </template>
-      </f7-list-item>
-
-      <f7-list-input label="Range" :input="false">
-        <template #input>
-          <f7-range :value="50" :min="0" :max="100" :step="1" />
-        </template>
-      </f7-list-input>
-
-      <f7-list-input
-        type="textarea"
-        label="Textarea"
-        placeholder="Bio"
-      ></f7-list-input>
-      <f7-list-input
-        type="textarea"
-        label="Resizable"
-        placeholder="Bio"
-        resizable
-      ></f7-list-input>
-    </f7-list>
-
-    <f7-block-title class="text-foreground">Buttons</f7-block-title>
-    <f7-block
-      strong-ios
-      outline-ios
-      class="grid grid-cols-2 grid-gap bg-card text-card-foreground"
-    >
-      <f7-button>Button</f7-button>
-      <f7-button fill>Fill</f7-button>
-
-      <f7-button raised>Raised</f7-button>
-      <f7-button raised fill>Raised Fill</f7-button>
-
-      <f7-button round>Round</f7-button>
-      <f7-button round fill>Round Fill</f7-button>
-
-      <f7-button outline>Outline</f7-button>
-      <f7-button round outline>Outline Round</f7-button>
-
-      <f7-button small outline>Small</f7-button>
-      <f7-button small round outline>Small Round</f7-button>
-
-      <f7-button small fill>Small</f7-button>
-      <f7-button small round fill>Small Round</f7-button>
-
-      <f7-button large raised>Large</f7-button>
-      <f7-button large fill raised>Large Fill</f7-button>
-
-      <f7-button large fill raised color="red">Large Red</f7-button>
-      <f7-button large fill raised color="green">Large Green</f7-button>
-    </f7-block>
-
-    <f7-block-title class="text-foreground">Checkbox group</f7-block-title>
-    <f7-list strong-ios outline-ios dividers-ios>
-      <f7-list-item
-        checkbox
-        name="my-checkbox"
-        value="Books"
-        title="Books"
-      ></f7-list-item>
-      <f7-list-item
-        checkbox
-        name="my-checkbox"
-        value="Movies"
-        title="Movies"
-      ></f7-list-item>
-      <f7-list-item
-        checkbox
-        name="my-checkbox"
-        value="Food"
-        title="Food"
-      ></f7-list-item>
-    </f7-list>
-
-    <f7-block-title class="text-foreground">Radio buttons group</f7-block-title>
-    <f7-list strong-ios outline-ios dividers-ios>
-      <f7-list-item
-        radio
-        name="radio"
-        value="Books"
-        title="Books"
-      ></f7-list-item>
-      <f7-list-item
-        radio
-        name="radio"
-        value="Movies"
-        title="Movies"
-      ></f7-list-item>
-      <f7-list-item radio name="radio" value="Food" title="Food"></f7-list-item>
-    </f7-list>
+            <AccordionItem id="courses" :default-expanded="true">
+              <template #title>Курсы:</template>
+              <template #actions>
+                <AddSettingsCourseButton />
+              </template>
+              <div v-if="courseStore.isLoading" class="p-4 flex justify-center">
+                <f7-preloader></f7-preloader>
+              </div>
+              <div
+                v-else-if="courseStore.getError"
+                class="p-4 text-destructive"
+              >
+                {{ courseStore.getError }}
+              </div>
+              <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
+                <div
+                  v-for="course in courseStore.getAllCourses"
+                  :key="course.id"
+                  class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                  :id="`course-item-${course.id}`"
+                >
+                  <span class="font-medium">
+                    {{ course.name }}
+                  </span>
+                  <button
+                    class="ml-auto p-1 hover:bg-primary/10 rounded-md transition-colors"
+                    @click="handleToggleCourseVisibility(course.id)"
+                    aria-label="Toggle Visibility"
+                    type="button"
+                  >
+                    <f7-icon
+                      :ios="course.isVisible ? 'f7:eye' : 'f7:eye_slash'"
+                      :md="
+                        course.isVisible
+                          ? 'material:visibility'
+                          : 'material:visibility_off'
+                      "
+                      size="18px"
+                      class="text-primary"
+                    ></f7-icon>
+                  </button>
+                  <button
+                    class="p-1 hover:bg-primary/10 rounded-md transition-colors"
+                    @click.stop="openEditCourse(course)"
+                    aria-label="Edit Course"
+                    type="button"
+                  >
+                    <f7-icon
+                      ios="f7:pencil"
+                      md="material:edit"
+                      size="18px"
+                      class="text-primary"
+                    ></f7-icon>
+                  </button>
+                </div>
+                <EditSettingsCourseButton
+                  v-for="course in courseStore.getAllCourses"
+                  :key="`edit-${course.id}`"
+                  :course="course"
+                />
+              </div>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      </div>
+    </div>
   </f7-page>
 </template>
+
+<script setup lang="ts">
+import { ref, onMounted } from "vue";
+import { f7Page, f7Icon, f7, f7Preloader } from "framework7-vue";
+import Header from "@/components/Header/Header.vue";
+import Sidebar from "@/components/Sidebar/Sidebar.vue";
+import Accordion from "@/components/ui/Accordion.vue";
+import AccordionItem from "@/components/ui/AccordionItem.vue";
+import AddLanguageButton from "@/components/AddLanguageButton.vue";
+import EditLanguageButton from "@/components/EditLanguageButton.vue";
+import AddSettingsCourseButton from "@/components/AddSettingsCourseButton.vue";
+import EditSettingsCourseButton from "@/components/EditSettingsCourseButton.vue";
+import { useLanguageStore } from "@/stores/languageStore";
+import { useSettingsCourseStore } from "@/stores/settingsCourseStore";
+
+const searchbarEnabled = ref(false);
+const activeNavItem = ref("settings");
+const languageStore = useLanguageStore();
+const courseStore = useSettingsCourseStore();
+
+const handleSearchbarEnable = () => {
+  searchbarEnabled.value = true;
+};
+
+const handleSearchbarDisable = () => {
+  searchbarEnabled.value = false;
+};
+
+const handleSetDefaultLanguage = async (id: string) => {
+  try {
+    await languageStore.setDefaultLanguage(id);
+  } catch (error) {
+    console.error("Failed to set default language:", error);
+    f7.dialog.alert("Произошла ошибка при установке языка по умолчанию.");
+  }
+};
+
+const handleToggleCourseVisibility = async (id: string) => {
+  try {
+    await courseStore.toggleCourseVisibility(id);
+  } catch (error) {
+    console.error("Failed to toggle course visibility:", error);
+    f7.dialog.alert("Произошла ошибка при изменении видимости курса.");
+  }
+};
+
+const openEditLanguage = (language: any) => {
+  const targetEl = document.getElementById(`language-item-${language.id}`);
+  if (targetEl) {
+    f7.popover.open(`#edit-language-popover-${language.id}`, targetEl);
+  }
+};
+
+const openEditCourse = (course: any) => {
+  const targetEl = document.getElementById(`course-item-${course.id}`);
+  if (targetEl) {
+    f7.popover.open(`#edit-settings-course-popover-${course.id}`, targetEl);
+  }
+};
+
+onMounted(async () => {
+  await languageStore.fetchLanguages();
+  await courseStore.fetchCourses();
+});
+</script>

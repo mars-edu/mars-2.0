@@ -57,7 +57,7 @@
         </div>
 
         <div class="p-4 space-y-4">
-          <!-- Course number input -->
+          <!-- Course number select -->
           <div class="space-y-2">
             <label
               class="text-sm text-foreground flex items-center"
@@ -66,12 +66,32 @@
               Номер курса
               <span class="text-destructive ml-1">*</span>
             </label>
-            <f7-input
-              id="course-number"
-              type="text"
-              v-model:value="courseNumber"
-              placeholder="Введите нумерацию курса"
-            ></f7-input>
+            <div class="relative">
+              <select
+                id="course-number"
+                v-model="courseNumber"
+                class="w-full h-12 px-4 rounded-lg border border-input bg-background text-sm text-foreground focus:border-primary outline-none appearance-none cursor-pointer"
+              >
+                <option value="" disabled>Выберите номер курса</option>
+                <option
+                  v-for="course in settingsCourseStore.getVisibleCourses"
+                  :key="course.id"
+                  :value="course.name"
+                >
+                  {{ course.name }}
+                </option>
+              </select>
+              <div
+                class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
+              >
+                <f7-icon
+                  ios="f7:chevron_down"
+                  md="material:keyboard_arrow_down"
+                  size="16px"
+                  class="text-muted-foreground"
+                ></f7-icon>
+              </div>
+            </div>
           </div>
 
           <!-- Admission year dropdown -->
@@ -107,40 +127,6 @@
             </div>
           </div>
 
-          <!-- <div class="space-y-2">
-            <label class="text-sm text-foreground" for="specialty-selector">
-              Специальность
-              <span class="text-destructive ml-1">*</span>
-            </label>
-            <div class="relative">
-              <select
-                id="specialty-selector"
-                v-model="selectedSpecialtyId"
-                class="w-full h-12 px-4 rounded-lg border border-input bg-background text-sm text-foreground focus:border-primary outline-none appearance-none cursor-pointer"
-                @change="handleSpecialtyChange"
-              >
-                <option value="" disabled>Выберите специальность</option>
-                <option
-                  v-for="specialty in specialties"
-                  :key="specialty.id"
-                  :value="specialty.id"
-                >
-                  {{ specialty.codeName || specialty.name }}
-                </option>
-              </select>
-              <div
-                class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
-              >
-                <f7-icon
-                  ios="f7:chevron_down"
-                  md="material:keyboard_arrow_down"
-                  size="16px"
-                  class="text-muted-foreground"
-                ></f7-icon>
-              </div>
-            </div>
-          </div> -->
-
           <!-- Specialty code input (optional custom label) -->
           <div class="space-y-2">
             <label class="text-sm text-foreground" for="specialty-code">
@@ -175,10 +161,12 @@ import { z } from "zod";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
+import { useSettingsCourseStore } from "@/stores/settingsCourseStore";
 
 const courseStore = useCourseStore();
 const specialtyStore = useSpecialtyStore();
 const selectedItemsStore = useSelectedItemsStore();
+const settingsCourseStore = useSettingsCourseStore();
 
 const courseNumber = ref("");
 const admissionYear = ref("");
@@ -205,7 +193,7 @@ const handleSpecialtyChange = () => {
 };
 
 const courseSchema = z.object({
-  number: z.string().min(1, "Пожалуйста, введите номер курса"),
+  number: z.string().min(1, "Пожалуйста, выберите номер курса"),
   admissionYear: z.string(),
   specialtyCode: z.string().optional(),
 });
@@ -227,13 +215,16 @@ const formError = computed(() => {
 
 const isFormValid = computed(() => validationResult.value.success);
 
-const openAddCoursePopover = () => {
+const openAddCoursePopover = async () => {
   if (!selectedSpecialtyId.value) return;
 
   if (selectedSpecialtyId.value) {
     internalSpecialtyId.value = selectedSpecialtyId.value;
     handleSpecialtyChange();
   }
+
+  // Ensure settings courses are loaded
+  await settingsCourseStore.fetchCourses();
 
   f7.popover.open("#add-course-popover", "#add-course-button");
 };
@@ -286,4 +277,9 @@ watch(
   },
   { immediate: true }
 );
+
+onMounted(async () => {
+  // Load settings courses
+  await settingsCourseStore.fetchCourses();
+});
 </script>
