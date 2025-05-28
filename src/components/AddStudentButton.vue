@@ -167,7 +167,7 @@ onMounted(() => {
 const academicYearOptions = computed(() =>
   academicYears.value.map((year) => ({
     value: year.id,
-    text: year.name,
+    text: year.startYear,
   }))
 );
 
