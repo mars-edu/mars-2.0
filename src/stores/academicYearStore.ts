@@ -1,0 +1,201 @@
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+
+export interface AcademicYear {
+  id: string;
+  name: string;
+  startYear: number;
+  endYear: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export const useAcademicYearStore = defineStore(
+  "academicYear",
+  () => {
+    const academicYears = ref<AcademicYear[]>([
+      {
+        id: "1",
+        name: "2023-2024",
+        startYear: 2023,
+        endYear: 2024,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: "2",
+        name: "2024-2025",
+        startYear: 2024,
+        endYear: 2025,
+        isActive: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
+    const loading = ref(false);
+    const error = ref<string | null>(null);
+
+    const getAcademicYearById = computed(() => {
+      return (id: string) => academicYears.value.find((ay) => ay.id === id);
+    });
+
+    const getActiveAcademicYear = computed(() => {
+      return academicYears.value.find((ay) => ay.isActive) || null;
+    });
+
+    const isLoading = computed(() => loading.value);
+    const getError = computed(() => error.value);
+
+    async function fetchAcademicYears() {
+      loading.value = true;
+      try {
+        // Data will be automatically loaded by Pinia persistence
+        error.value = null;
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to load academic years";
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    async function addAcademicYear(
+      academicYearData: Omit<AcademicYear, "id" | "createdAt" | "updatedAt">
+    ) {
+      loading.value = true;
+      try {
+        const newAcademicYear: AcademicYear = {
+          ...academicYearData,
+          id: crypto.randomUUID(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        // If the new academic year is active, deactivate all others
+        if (newAcademicYear.isActive) {
+          academicYears.value.forEach((year) => {
+            if (year.id !== newAcademicYear.id) {
+              year.isActive = false;
+              year.updatedAt = new Date();
+            }
+          });
+        }
+
+        academicYears.value.push(newAcademicYear);
+        error.value = null;
+        return newAcademicYear;
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to add academic year";
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    async function updateAcademicYear(
+      id: string,
+      academicYearData: Partial<
+        Omit<AcademicYear, "id" | "createdAt" | "updatedAt">
+      >
+    ) {
+      loading.value = true;
+      try {
+        const index = academicYears.value.findIndex((ay) => ay.id === id);
+        if (index === -1) {
+          throw new Error("Academic year not found");
+        }
+
+        const updatedAcademicYear = {
+          ...academicYears.value[index],
+          ...academicYearData,
+          updatedAt: new Date(),
+        };
+
+        // If this academic year is being set to active, deactivate all others
+        if (academicYearData.isActive) {
+          academicYears.value.forEach((year) => {
+            if (year.id !== id) {
+              year.isActive = false;
+              year.updatedAt = new Date();
+            }
+          });
+        }
+
+        academicYears.value[index] = updatedAcademicYear;
+        error.value = null;
+        return updatedAcademicYear;
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to update academic year";
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    async function deleteAcademicYear(id: string) {
+      loading.value = true;
+      try {
+        const yearToDelete = academicYears.value.find((year) => year.id === id);
+        if (yearToDelete?.isActive) {
+          throw new Error("Cannot delete active academic year");
+        }
+
+        academicYears.value = academicYears.value.filter((ay) => ay.id !== id);
+        error.value = null;
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to delete academic year";
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    async function setActiveAcademicYear(id: string) {
+      loading.value = true;
+      try {
+        academicYears.value = academicYears.value.map((year) => ({
+          ...year,
+          isActive: year.id === id,
+          updatedAt: new Date(),
+        }));
+        error.value = null;
+      } catch (err) {
+        error.value =
+          err instanceof Error
+            ? err.message
+            : "Failed to set active academic year";
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    function clearError() {
+      error.value = null;
+    }
+
+    return {
+      academicYears,
+      loading,
+      error,
+      getAcademicYearById,
+      getActiveAcademicYear,
+      isLoading,
+      getError,
+      fetchAcademicYears,
+      addAcademicYear,
+      updateAcademicYear,
+      deleteAcademicYear,
+      setActiveAcademicYear,
+      clearError,
+    };
+  },
+  {
+    persist: true,
+  }
+);

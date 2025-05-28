@@ -142,7 +142,85 @@
                 <EditSettingsCourseButton
                   v-for="course in courses"
                   :key="`edit-${course.id}`"
-                  :course="course"
+                  :course="{
+                    id: course.id,
+                    name: course.name || '',
+                    isVisible: course.isVisible || false,
+                    number: course.number,
+                    admissionYear: course.admissionYear,
+                    specialtyId: course.specialtyId,
+                  }"
+                />
+              </div>
+            </AccordionItem>
+
+            <AccordionItem id="academic-years" :default-expanded="true">
+              <template #title>Учебный год:</template>
+              <template #actions>
+                <AddAcademicYearButton />
+              </template>
+              <div
+                v-if="academicYearStore.isLoading"
+                class="p-4 flex justify-center"
+              >
+                <f7-preloader></f7-preloader>
+              </div>
+              <div
+                v-else-if="academicYearStore.getError"
+                class="p-4 text-destructive"
+              >
+                {{ academicYearStore.getError }}
+              </div>
+              <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
+                <div
+                  v-for="academicYear in academicYears"
+                  :key="academicYear.id"
+                  @click.stop="handleSetActiveAcademicYear(academicYear.id)"
+                  class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                  :id="`academic-year-item-${academicYear.id}`"
+                  :class="{ 'border-primary': academicYear.isActive }"
+                >
+                  <span class="font-medium">
+                    {{ academicYear.name }}
+                  </span>
+                  <span
+                    v-if="academicYear.isActive"
+                    class="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full"
+                  >
+                    Активный
+                  </span>
+                  <button
+                    v-if="!academicYear.isActive"
+                    class="ml-auto p-1 hover:bg-primary/10 rounded-md transition-colors"
+                    @click.stop="handleSetActiveAcademicYear(academicYear.id)"
+                    aria-label="Set Active"
+                    type="button"
+                  >
+                    <f7-icon
+                      ios="f7:checkmark_circle"
+                      md="material:check_circle"
+                      size="18px"
+                      class="text-primary"
+                    ></f7-icon>
+                  </button>
+                  <button
+                    class="p-1 hover:bg-primary/10 rounded-md transition-colors"
+                    @click.stop="openEditAcademicYear(academicYear)"
+                    aria-label="Edit Academic Year"
+                    type="button"
+                  >
+                    <f7-icon
+                      ios="f7:pencil"
+                      md="material:edit"
+                      size="18px"
+                      class="text-primary"
+                    ></f7-icon>
+                  </button>
+                </div>
+                <EditAcademicYearButton
+                  v-for="academicYear in academicYears"
+                  :key="`edit-${academicYear.id}`"
+                  :academic-year="academicYear"
                 />
               </div>
             </AccordionItem>
@@ -164,16 +242,21 @@ import AddLanguageButton from "@/components/AddLanguageButton.vue";
 import EditLanguageButton from "@/components/EditLanguageButton.vue";
 import AddSettingsCourseButton from "@/components/AddSettingsCourseButton.vue";
 import EditSettingsCourseButton from "@/components/EditSettingsCourseButton.vue";
+import AddAcademicYearButton from "@/components/AddAcademicYearButton.vue";
+import EditAcademicYearButton from "@/components/EditAcademicYearButton.vue";
 import { useLanguageStore } from "@/stores/languageStore";
 import { useCourseStore } from "@/stores/courseStore";
+import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
 
 const searchbarEnabled = ref(false);
 const activeNavItem = ref("settings");
 const languageStore = useLanguageStore();
 const courseStore = useCourseStore();
+const academicYearStore = useAcademicYearStore();
 const { courses } = storeToRefs(courseStore);
 const { languages } = storeToRefs(languageStore);
+const { academicYears } = storeToRefs(academicYearStore);
 
 const handleSearchbarEnable = () => {
   searchbarEnabled.value = true;
@@ -192,6 +275,15 @@ const handleToggleCourseVisibility = async (id: string) => {
   }
 };
 
+const handleSetActiveAcademicYear = async (id: string) => {
+  try {
+    await academicYearStore.setActiveAcademicYear(id);
+  } catch (error) {
+    console.error("Failed to set active academic year:", error);
+    f7.dialog.alert("Произошла ошибка при установке активного учебного года.");
+  }
+};
+
 const openEditLanguage = (language: any) => {
   const targetEl = document.getElementById(`language-item-${language.id}`);
   if (targetEl) {
@@ -206,8 +298,20 @@ const openEditCourse = (course: any) => {
   }
 };
 
+const openEditAcademicYear = (academicYear: any) => {
+  console.log("Opening edit academic year popover for:", academicYear.id);
+  const targetEl = document.getElementById(
+    `academic-year-item-${academicYear.id}`
+  );
+  console.log("Target element:", targetEl);
+  if (targetEl) {
+    f7.popover.open(`#edit-academic-year-popover-${academicYear.id}`, targetEl);
+  }
+};
+
 onMounted(async () => {
   await languageStore.fetchLanguages();
   await courseStore.fetchCourses();
+  await academicYearStore.fetchAcademicYears();
 });
 </script>
