@@ -51,9 +51,9 @@
           </div>
 
           <SmartSelect
-            label="Учебный год"
+            label="Год поступления"
             name="academic-year"
-            placeholder="Выберите учебный год"
+            placeholder="Выберите год поступления"
             v-model="academicYear"
             :options="academicYearOptions"
             id="student-academic-year-add"
@@ -167,7 +167,7 @@ onMounted(() => {
 const academicYearOptions = computed(() =>
   academicYears.value.map((year) => ({
     value: year.id,
-    text: year.startYear,
+    text: year.startYear.toString(),
   }))
 );
 
@@ -199,7 +199,7 @@ const baseOptions = ref([
 
 const studentSchema = z.object({
   name: z.string().min(1, "Пожалуйста, введите ФИО студента"),
-  academicYear: z.string().min(1, "Пожалуйста, выберите учебный год"),
+  academicYear: z.string().min(1, "Пожалуйста, выберите год поступления"),
   course: z.string().min(1, "Пожалуйста, введите курс"),
   specialty: z.string().min(1, "Пожалуйста, выберите специальность"),
   language: z.string().min(1, "Пожалуйста, выберите язык обучения"),
