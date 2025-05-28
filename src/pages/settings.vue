@@ -55,9 +55,6 @@
                   :key="language.id"
                   class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
                   :id="`language-item-${language.id}`"
-                  :class="{
-                    'ring-2 ring-primary bg-primary/10': language.isDefault,
-                  }"
                 >
                   <span class="font-medium">
                     {{ language.name }}
@@ -65,20 +62,6 @@
                   <span class="text-xs px-2 py-0.5 bg-muted rounded-full">
                     {{ language.code }}
                   </span>
-                  <button
-                    v-if="!language.isDefault"
-                    class="ml-auto p-1 hover:bg-primary/10 rounded-md transition-colors"
-                    @click="handleSetDefaultLanguage(language.id)"
-                    aria-label="Set as Default"
-                    type="button"
-                  >
-                    <f7-icon
-                      ios="f7:checkmark_circle"
-                      md="material:check_circle"
-                      size="18px"
-                      class="text-primary"
-                    ></f7-icon>
-                  </button>
                   <button
                     class="p-1 hover:bg-primary/10 rounded-md transition-colors"
                     @click.stop="openEditLanguage(language)"
@@ -92,12 +75,6 @@
                       class="text-primary"
                     ></f7-icon>
                   </button>
-                  <span
-                    v-if="language.isDefault"
-                    class="ml-auto text-xs text-primary"
-                  >
-                    По умолчанию
-                  </span>
                 </div>
                 <EditLanguageButton
                   v-for="language in languages"
@@ -204,15 +181,6 @@ const handleSearchbarEnable = () => {
 
 const handleSearchbarDisable = () => {
   searchbarEnabled.value = false;
-};
-
-const handleSetDefaultLanguage = async (id: string) => {
-  try {
-    await languageStore.setDefaultLanguage(id);
-  } catch (error) {
-    console.error("Failed to set default language:", error);
-    f7.dialog.alert("Произошла ошибка при установке языка по умолчанию.");
-  }
 };
 
 const handleToggleCourseVisibility = async (id: string) => {

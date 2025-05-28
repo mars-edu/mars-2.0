@@ -5,7 +5,6 @@ export interface Language {
   id: string;
   name: string;
   code: string;
-  isDefault: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -18,7 +17,6 @@ export const useLanguageStore = defineStore(
         id: "1",
         name: "Русский",
         code: "ru",
-        isDefault: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -26,7 +24,6 @@ export const useLanguageStore = defineStore(
         id: "2",
         name: "English",
         code: "en",
-        isDefault: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -34,7 +31,6 @@ export const useLanguageStore = defineStore(
         id: "3",
         name: "Қазақша",
         code: "kk",
-        isDefault: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -44,10 +40,6 @@ export const useLanguageStore = defineStore(
 
     const getLanguageById = computed(() => {
       return (id: string) => languages.value.find((l) => l.id === id);
-    });
-
-    const getDefaultLanguage = computed(() => {
-      return languages.value.find((l) => l.isDefault) || languages.value[0];
     });
 
     const isLoading = computed(() => loading.value);
@@ -71,14 +63,6 @@ export const useLanguageStore = defineStore(
     ) {
       loading.value = true;
       try {
-        // If the new language is default, update all others
-        if (languageData.isDefault) {
-          languages.value = languages.value.map((lang) => ({
-            ...lang,
-            isDefault: false,
-          }));
-        }
-
         const newLanguage: Language = {
           ...languageData,
           id: crypto.randomUUID(),
@@ -108,14 +92,6 @@ export const useLanguageStore = defineStore(
           throw new Error("Language not found");
         }
 
-        // If updating to make this language default
-        if (languageData.isDefault) {
-          languages.value = languages.value.map((lang) => ({
-            ...lang,
-            isDefault: lang.id === id,
-          }));
-        }
-
         const updatedLanguage = {
           ...languages.value[index],
           ...languageData,
@@ -137,33 +113,11 @@ export const useLanguageStore = defineStore(
     async function deleteLanguage(id: string) {
       loading.value = true;
       try {
-        const languageToDelete = languages.value.find((l) => l.id === id);
-        if (languageToDelete?.isDefault) {
-          throw new Error("Cannot delete default language");
-        }
         languages.value = languages.value.filter((l) => l.id !== id);
         error.value = null;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to delete language";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
-    }
-
-    async function setDefaultLanguage(id: string) {
-      loading.value = true;
-      try {
-        languages.value = languages.value.map((lang) => ({
-          ...lang,
-          isDefault: lang.id === id,
-          updatedAt: lang.id === id ? new Date() : lang.updatedAt,
-        }));
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to set default language";
         throw err;
       } finally {
         loading.value = false;
@@ -179,14 +133,12 @@ export const useLanguageStore = defineStore(
       loading,
       error,
       getLanguageById,
-      getDefaultLanguage,
       isLoading,
       getError,
       fetchLanguages,
       addLanguage,
       updateLanguage,
       deleteLanguage,
-      setDefaultLanguage,
       clearError,
     };
   },

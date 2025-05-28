@@ -82,7 +82,6 @@ const listTitle = computed(() => props.placeholder || " ");
 }
 
 .smart-select-list-container {
-  border: 1px solid hsl(var(--border));
   border-radius: 0.5rem;
   background-color: hsl(var(--background));
   --f7-list-item-padding-horizontal: 0px;

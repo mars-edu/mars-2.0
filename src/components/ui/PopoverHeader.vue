@@ -8,7 +8,10 @@
     >
       {{ cancelText }}
     </button>
-    <span class="text-foreground font-semibold">{{ title }}</span>
+    <span class="text-foreground font-semibold">
+      <slot name="title" v-if="$slots.title"></slot>
+      <template v-else>{{ title }}</template>
+    </span>
     <button
       class="!text-green-500 hover:!bg-green-500/30 hover:!text-green-600 disabled:text-muted-foreground border-green-500 border-solid border-2 w-fit px-5 rounded-md transition-colors"
       :disabled="disabled || isLoading"
@@ -25,7 +28,8 @@ import type { PropType } from "vue";
 defineProps({
   title: {
     type: String,
-    required: true,
+    required: false,
+    default: "",
   },
   cancelText: {
     type: String,

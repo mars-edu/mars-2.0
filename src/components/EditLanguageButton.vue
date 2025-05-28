@@ -7,24 +7,13 @@
       :target="`#language-item-${language.id}`"
     >
       <div class="language-popover bg-card text-card-foreground">
-        <div
-          class="flex justify-between items-center px-4 py-3 border-b border-input"
-        >
-          <button
-            class="text-muted-foreground hover:text-foreground"
-            @click="closeEditLanguagePopover"
-          >
-            Отменить
-          </button>
-          <span class="text-foreground font-semibold">Редактировать</span>
-          <button
-            class="text-primary hover:text-primary/80 disabled:text-muted-foreground"
-            :disabled="!isFormValid || languageStore.isLoading"
-            @click="handleUpdateLanguage"
-          >
-            Сохранить
-          </button>
-        </div>
+        <PopoverHeader
+          title="Редактировать"
+          :disabled="!isFormValid || languageStore.isLoading"
+          :is-loading="languageStore.isLoading"
+          :on-cancel="closeEditLanguagePopover"
+          :on-save="handleUpdateLanguage"
+        />
 
         <div
           v-if="formError || languageStore.getError"
@@ -58,21 +47,11 @@
             ></f7-input>
           </div>
 
-          <div class="space-y-2" v-if="!language.isDefault">
-            <div class="text-sm text-foreground">
-              Сделать языком по умолчанию
-            </div>
-            <f7-checkbox
-              v-model:value="isDefault"
-              label="Поставьте галочку"
-            ></f7-checkbox>
-          </div>
-
           <div class="pt-4 border-t border-border">
             <button
               class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
               @click="showDeleteConfirmation"
-              :disabled="language.isDefault || languageStore.isLoading"
+              :disabled="languageStore.isLoading"
             >
               <f7-icon
                 ios="f7:trash"
@@ -94,13 +73,13 @@ import { ref, computed } from "vue";
 import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useLanguageStore } from "@/stores/languageStore";
+import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
   language: {
     id: string;
     name: string;
     code: string;
-    isDefault: boolean;
   };
 }>();
 
@@ -108,20 +87,17 @@ const languageStore = useLanguageStore();
 
 const languageName = ref(props.language.name);
 const languageCode = ref(props.language.code);
-const isDefault = ref(props.language.isDefault);
 const formError = ref("");
 
 const languageSchema = z.object({
   name: z.string().min(1, "Пожалуйста, введите название языка"),
   code: z.string().min(1, "Пожалуйста, введите код языка"),
-  isDefault: z.boolean(),
 });
 
 const validationResult = computed(() => {
   return languageSchema.safeParse({
     name: languageName.value,
     code: languageCode.value,
-    isDefault: isDefault.value,
   });
 });
 
@@ -147,7 +123,6 @@ const handleUpdateLanguage = async () => {
     await languageStore.updateLanguage(props.language.id, {
       name: languageName.value,
       code: languageCode.value,
-      isDefault: isDefault.value,
     });
     closeEditLanguagePopover();
   } catch (error) {
@@ -156,10 +131,6 @@ const handleUpdateLanguage = async () => {
 };
 
 const showDeleteConfirmation = () => {
-  if (props.language.isDefault) {
-    return;
-  }
-
   f7.popover.close(`#edit-language-popover-${props.language.id}`);
 
   f7.dialog.confirm(
@@ -180,7 +151,6 @@ const showDeleteConfirmation = () => {
 const resetForm = () => {
   languageName.value = props.language.name;
   languageCode.value = props.language.code;
-  isDefault.value = props.language.isDefault;
   formError.value = "";
   languageStore.clearError();
 };

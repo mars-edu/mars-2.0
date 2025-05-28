@@ -6,56 +6,48 @@
     close-on-escape
   >
     <div class="course-popover bg-card text-card-foreground">
-      <div
-        class="flex justify-between items-center px-3 py-3 border-b border-input"
+      <PopoverHeader
+        title="Создать"
+        :disabled="!isFormValid"
+        :on-cancel="close"
+        :on-save="submit"
       >
-        <button
-          class="text-muted-foreground hover:text-foreground"
-          @click="close"
-        >
-          Отменить
-        </button>
-        <div class="flex items-center space-x-4">
-          <button @click="removeStep(currentStep)" v-if="steps.length > 1">
-            <f7-icon f7="trash" class="text-red-500"></f7-icon>
-          </button>
-          <div
-            class="text-foreground font-semibold flex items-center space-x-4"
-          >
-            <f7-button
-              small
-              outline
-              @click.stop="onBack"
-              :disabled="currentStep === 1"
+        <template #title>
+          <div class="flex items-center space-x-4">
+            <button @click="removeStep(currentStep)" v-if="steps.length > 1">
+              <f7-icon f7="trash" class="text-red-500"></f7-icon>
+            </button>
+            <div
+              class="text-foreground font-semibold flex items-center space-x-4"
             >
-              Назад
-            </f7-button>
-            <div class="flex items-center space-x-2">
-              <div
-                v-for="step in steps.length"
-                :key="step"
-                class="w-2 h-2 rounded-full transition-colors duration-200"
-                :class="[
-                  step === currentStep ? 'bg-primary' : 'bg-gray-300',
-                  step < currentStep ? 'bg-gray-300' : '',
-                ]"
-              ></div>
-            </div>
-            <div class="flex items-center space-x-2">
-              <f7-button small outline @click.stop="onNext">
-                {{ currentStep === steps.length ? "Добавить" : "Далее" }}
+              <f7-button
+                small
+                outline
+                @click.stop="onBack"
+                :disabled="currentStep === 1"
+              >
+                Назад
               </f7-button>
+              <div class="flex items-center space-x-2">
+                <div
+                  v-for="step in steps.length"
+                  :key="step"
+                  class="w-2 h-2 rounded-full transition-colors duration-200"
+                  :class="[
+                    step === currentStep ? 'bg-primary' : 'bg-gray-300',
+                    step < currentStep ? 'bg-gray-300' : '',
+                  ]"
+                ></div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <f7-button small outline @click.stop="onNext">
+                  {{ currentStep === steps.length ? "Добавить" : "Далее" }}
+                </f7-button>
+              </div>
             </div>
           </div>
-        </div>
-        <button
-          class="text-primary hover:text-primary/80 disabled:text-muted-foreground"
-          @click="submit"
-          :disabled="!isFormValid"
-        >
-          Сохранить
-        </button>
-      </div>
+        </template>
+      </PopoverHeader>
 
       <div v-if="formError" class="px-4 pt-2 text-destructive text-sm">
         {{ formError }}
@@ -436,6 +428,7 @@ import {
 } from "framework7-vue";
 import { useClass9Store, type StepData } from "@/stores/class9Store";
 import { z } from "zod";
+import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const emit = defineEmits<{
   (e: "submit"): void;

@@ -22,24 +22,13 @@
       close-on-escape
     >
       <div class="course-popover bg-card text-card-foreground">
-        <div
-          class="flex justify-between items-center px-4 py-3 border-b border-input"
-        >
-          <button
-            class="text-muted-foreground hover:text-foreground"
-            @click="closeAddCoursePopover"
-          >
-            Отменить
-          </button>
-          <span class="text-foreground font-semibold">Создать</span>
-          <button
-            class="text-primary hover:text-primary/80 disabled:text-muted-foreground"
-            :disabled="!isFormValid || courseStore.isLoading"
-            @click="handleSaveCourse"
-          >
-            Сохранить
-          </button>
-        </div>
+        <PopoverHeader
+          title="Создать"
+          :disabled="!isFormValid || courseStore.isLoading"
+          :is-loading="courseStore.isLoading"
+          :on-cancel="closeAddCoursePopover"
+          :on-save="handleSaveCourse"
+        />
 
         <div
           v-if="formError || courseStore.getError"
@@ -80,6 +69,7 @@ import { ref, computed } from "vue";
 import { f7, f7Popover, f7Icon, f7Input, f7Checkbox } from "framework7-vue";
 import { z } from "zod";
 import { useCourseStore } from "@/stores/courseStore";
+import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const courseStore = useCourseStore();
 

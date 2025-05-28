@@ -7,24 +7,13 @@
       :target="`#student-item-${student.id}`"
     >
       <div class="student-popover bg-card text-card-foreground">
-        <div
-          class="flex justify-between items-center px-4 py-3 border-b border-input"
-        >
-          <button
-            class="text-muted-foreground hover:text-foreground"
-            @click="closeEditStudentPopover"
-          >
-            Отменить
-          </button>
-          <span class="text-foreground font-semibold">Редактировать</span>
-          <button
-            class="text-primary hover:text-primary/80 disabled:text-muted-foreground"
-            :disabled="!isFormValid || studentStore.isLoading"
-            @click="handleUpdateStudent"
-          >
-            Сохранить
-          </button>
-        </div>
+        <PopoverHeader
+          title="Редактировать"
+          :disabled="!isFormValid || studentStore.isLoading"
+          :is-loading="studentStore.isLoading"
+          :on-cancel="closeEditStudentPopover"
+          :on-save="handleUpdateStudent"
+        />
 
         <div
           v-if="formError || studentStore.getError"
@@ -133,6 +122,7 @@ import { useLanguageStore } from "@/stores/languageStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { storeToRefs } from "pinia";
 import SmartSelect from "@/components/ui/SmartSelect.vue";
+import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
   student: {

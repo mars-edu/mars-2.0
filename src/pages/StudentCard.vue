@@ -28,7 +28,9 @@
             </div>
           </div>
 
-          <div class="flex flex-wrap gap-x-4 gap-y-2 items-center">
+          <div
+            class="flex flex-wrap gap-x-4 gap-y-2 items-center student-card-filters"
+          >
             <SmartSelect
               v-model="selectedCourse"
               :options="courseOptions"
@@ -70,11 +72,9 @@
             />
           </div>
 
-          <div
-            class="bg-card text-card-foreground rounded-xl p-4 md:p-4 shadow-sm"
-          >
+          <div class="bg-card text-card-foreground rounded-xl p-3 shadow-sm">
             <div class="overflow-x-auto">
-              <table class="w-full border-collapse">
+              <table class="w-full border-collapse rounded-lg">
                 <thead>
                   <tr class="bg-gray-500 text-white">
                     <th class="px-4 py-2 text-left">№</th>
@@ -223,7 +223,7 @@ const handleSearchbarDisable = () => {
 </script>
 
 <style lang="postcss">
-.smart-select-list-container {
+.student-card-filters .smart-select-list-container {
   @apply !bg-white;
 }
 </style>

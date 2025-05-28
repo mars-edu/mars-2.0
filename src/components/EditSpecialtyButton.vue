@@ -7,24 +7,13 @@
       :target="`#specialty-item-${specialty.id}`"
     >
       <div class="specialty-popover bg-card text-card-foreground">
-        <div
-          class="flex justify-between items-center px-4 py-3 border-b border-input"
-        >
-          <button
-            class="text-muted-foreground hover:text-foreground"
-            @click="closeEditSpecialtyPopover"
-          >
-            Отменить
-          </button>
-          <span class="text-foreground font-semibold">Редактировать</span>
-          <button
-            class="text-primary hover:text-primary/80 disabled:text-muted-foreground"
-            :disabled="!isFormValid || specialtyStore.isLoading"
-            @click="handleUpdateSpecialty"
-          >
-            Сохранить
-          </button>
-        </div>
+        <PopoverHeader
+          title="Редактировать"
+          :disabled="!isFormValid || specialtyStore.isLoading"
+          :is-loading="specialtyStore.isLoading"
+          :on-cancel="closeEditSpecialtyPopover"
+          :on-save="handleUpdateSpecialty"
+        />
 
         <div
           v-if="formError || specialtyStore.getError"
@@ -122,6 +111,7 @@ import { ref, computed } from "vue";
 import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
+import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
   specialty: {

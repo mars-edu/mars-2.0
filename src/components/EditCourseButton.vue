@@ -7,24 +7,13 @@
       :target="`#course-item-${course.id}`"
     >
       <div class="course-popover bg-card text-card-foreground">
-        <div
-          class="flex justify-between items-center px-4 py-3 border-b border-input"
-        >
-          <button
-            class="text-muted-foreground hover:text-foreground"
-            @click="closeEditCoursePopover"
-          >
-            Отменить
-          </button>
-          <span class="text-foreground font-semibold">Редактировать</span>
-          <button
-            class="text-primary hover:text-primary/80 disabled:text-muted-foreground"
-            :disabled="!isFormValid"
-            @click="handleUpdateCourse"
-          >
-            Сохранить
-          </button>
-        </div>
+        <PopoverHeader
+          title="Редактировать"
+          :disabled="!isFormValid"
+          :is-loading="courseStore.isLoading"
+          :on-cancel="closeEditCoursePopover"
+          :on-save="handleUpdateCourse"
+        />
 
         <div v-if="formError" class="px-4 pt-2 text-destructive text-sm">
           {{ formError }}
@@ -143,6 +132,7 @@ import { useCourseStore } from "@/stores/courseStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { useModuleStore } from "@/stores/moduleStore";
 import { useColumnConfigStore } from "@/stores/columnConfig";
+import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
   course: {

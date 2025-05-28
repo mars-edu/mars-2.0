@@ -22,24 +22,13 @@
       close-on-escape
     >
       <div class="language-popover bg-card text-card-foreground">
-        <div
-          class="flex justify-between items-center px-4 py-3 border-b border-input"
-        >
-          <button
-            class="text-muted-foreground hover:text-foreground"
-            @click="closeAddLanguagePopover"
-          >
-            Отменить
-          </button>
-          <span class="text-foreground font-semibold">Создать</span>
-          <button
-            class="text-primary hover:text-primary/80 disabled:text-muted-foreground"
-            :disabled="!isFormValid || languageStore.isLoading"
-            @click="handleSaveLanguage"
-          >
-            Сохранить
-          </button>
-        </div>
+        <PopoverHeader
+          title="Создать"
+          :disabled="!isFormValid || languageStore.isLoading"
+          :is-loading="languageStore.isLoading"
+          :on-cancel="closeAddLanguagePopover"
+          :on-save="handleSaveLanguage"
+        />
 
         <div
           v-if="formError || languageStore.getError"
@@ -72,16 +61,6 @@
               placeholder="Введите код языка (например, ru, en, kk)"
             ></f7-input>
           </div>
-
-          <div class="space-y-2">
-            <div class="text-sm text-foreground">
-              Сделать языком по умолчанию
-            </div>
-            <f7-checkbox
-              v-model:value="isDefault"
-              label="Поставьте галочку"
-            ></f7-checkbox>
-          </div>
         </div>
       </div>
     </f7-popover>
@@ -90,28 +69,26 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
+import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useLanguageStore } from "@/stores/languageStore";
+import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const languageStore = useLanguageStore();
 
 const languageName = ref("");
 const languageCode = ref("");
-const isDefault = ref(false);
 const formError = ref("");
 
 const languageSchema = z.object({
   name: z.string().min(1, "Пожалуйста, введите название языка"),
   code: z.string().min(1, "Пожалуйста, введите код языка"),
-  isDefault: z.boolean(),
 });
 
 const validationResult = computed(() => {
   return languageSchema.safeParse({
     name: languageName.value,
     code: languageCode.value,
-    isDefault: isDefault.value,
   });
 });
 
@@ -141,7 +118,6 @@ const handleSaveLanguage = async () => {
     await languageStore.addLanguage({
       name: languageName.value,
       code: languageCode.value,
-      isDefault: isDefault.value,
     });
     closeAddLanguagePopover();
   } catch (error) {
@@ -152,7 +128,6 @@ const handleSaveLanguage = async () => {
 const resetForm = () => {
   languageName.value = "";
   languageCode.value = "";
-  isDefault.value = false;
   formError.value = "";
   languageStore.clearError();
 };

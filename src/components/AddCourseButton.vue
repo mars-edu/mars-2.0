@@ -32,25 +32,13 @@
       close-on-escape
     >
       <div class="course-popover bg-card text-card-foreground">
-        <!-- Header with buttons -->
-        <div
-          class="flex justify-between items-center px-4 py-3 border-b border-input"
-        >
-          <button
-            class="text-muted-foreground hover:text-foreground"
-            @click="closeAddCoursePopover"
-          >
-            Отменить
-          </button>
-          <span class="text-foreground font-semibold">Создать</span>
-          <button
-            class="text-primary hover:text-primary/80 disabled:text-muted-foreground"
-            :disabled="!isFormValid"
-            @click="handleSaveCourse"
-          >
-            Сохранить
-          </button>
-        </div>
+        <PopoverHeader
+          title="Создать"
+          :disabled="!isFormValid"
+          :is-loading="courseStore.isLoading"
+          :on-cancel="closeAddCoursePopover"
+          :on-save="handleSaveCourse"
+        />
 
         <div v-if="formError" class="px-4 pt-2 text-destructive text-sm">
           {{ formError }}
@@ -162,6 +150,7 @@ import { useCourseStore } from "@/stores/courseStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { storeToRefs } from "pinia";
+import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const courseStore = useCourseStore();
 const specialtyStore = useSpecialtyStore();

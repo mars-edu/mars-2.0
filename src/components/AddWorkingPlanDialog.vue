@@ -29,25 +29,12 @@
       close-on-escape
     >
       <div class="working-plan-popover bg-card text-card-foreground">
-        <!-- Header with buttons -->
-        <div
-          class="flex justify-between items-center px-4 py-3 border-b border-input"
-        >
-          <button
-            class="text-muted-foreground hover:text-foreground"
-            @click="handleClose"
-          >
-            Отменить
-          </button>
-          <span class="text-foreground font-semibold">Создать план</span>
-          <button
-            class="text-primary hover:text-primary/80 disabled:text-muted-foreground"
-            :disabled="!isValid"
-            @click="handleSubmit"
-          >
-            Создать
-          </button>
-        </div>
+        <PopoverHeader
+          title="Создать"
+          :disabled="!isValid"
+          :on-cancel="handleClose"
+          :on-save="handleSubmit"
+        />
 
         <div class="p-4 flex flex-col gap-4">
           <button
@@ -81,6 +68,7 @@
 import { computed } from "vue";
 import { f7, f7Popover } from "framework7-vue";
 import Class9Popup from "./Class9Popup.vue";
+import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
   opened: boolean;
