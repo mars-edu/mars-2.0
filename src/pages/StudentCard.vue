@@ -18,7 +18,15 @@
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
             <h1 class="text-xl font-semibold">Картотека обучающихся</h1>
-            <div class="student-card-filters">
+            <div class="student-card-filters flex items-center gap-2">
+              <f7-input
+                type="text"
+                placeholder="Поиск по ФИО..."
+                v-model:value="searchTerm"
+                @input="handleSearchInput"
+                class="w-[250px] !bg-white h-full !py-2"
+                clear-button
+              />
               <SmartSelect
                 v-model="selectedAcademicYear"
                 :options="academicYearOptions"
@@ -98,7 +106,10 @@
                     }"
                   >
                     <td class="px-4 py-3">{{ index + 1 }}</td>
-                    <td class="px-4 py-3">{{ student.name }}</td>
+                    <td class="px-4 py-3">
+                      {{ student.surname }} {{ student.firstName }}
+                      {{ student.patronymic }}
+                    </td>
                     <td class="px-4 py-3">{{ student.course }}</td>
                     <td class="px-4 py-3">{{ student.specialty }}</td>
                     <td class="px-4 py-3">{{ student.language }}</td>
@@ -125,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { f7Page } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -137,6 +148,7 @@ import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
+import { useBaseStore } from "@/stores/baseStore";
 import { storeToRefs } from "pinia";
 
 const searchbarEnabled = ref(false);
@@ -146,11 +158,14 @@ const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
 const courseStore = useCourseStore();
 const academicYearStore = useAcademicYearStore();
+const baseStore = useBaseStore();
 
 const { courses } = storeToRefs(courseStore);
 const { specialties } = storeToRefs(specialtyStore);
 const { languages } = storeToRefs(languageStore);
 const { academicYears } = storeToRefs(academicYearStore);
+const { filteredStudents } = storeToRefs(studentStore);
+const { bases } = storeToRefs(baseStore);
 
 const selectedCourse = ref("");
 const selectedSpecialty = ref("");
@@ -158,6 +173,7 @@ const selectedLanguage = ref("");
 const selectedGender = ref("");
 const selectedBase = ref("");
 const selectedAcademicYear = ref("");
+const searchTerm = ref("");
 
 // Convert store data to options format for SmartSelect
 const courseOptions = computed(() => {
@@ -195,8 +211,10 @@ const genderOptions = computed(() => [
 
 const baseOptions = computed(() => [
   { value: "", text: "Все" },
-  { value: "9", text: "9" },
-  { value: "11", text: "11" },
+  ...bases.value.map((base) => ({
+    value: base.value,
+    text: base.text,
+  })),
 ]);
 
 const academicYearOptions = computed(() => {
@@ -206,28 +224,41 @@ const academicYearOptions = computed(() => {
   }));
 });
 
-// Set initial active academic year
 selectedAcademicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
 
-const filteredStudents = computed(() => {
-  return studentStore.getAllStudents.filter((student) => {
-    const courseMatch =
-      !selectedCourse.value ||
-      student.course.toString() === selectedCourse.value;
-    const specialtyMatch =
-      !selectedSpecialty.value || student.specialty === selectedSpecialty.value;
-    const languageMatch =
-      !selectedLanguage.value || student.language === selectedLanguage.value;
-    const genderMatch =
-      !selectedGender.value || student.gender === selectedGender.value;
-    const baseMatch =
-      !selectedBase.value || student.base.toString() === selectedBase.value;
-
-    return (
-      courseMatch && specialtyMatch && languageMatch && genderMatch && baseMatch
-    );
-  });
+watch(selectedCourse, (newValue) => {
+  studentStore.setFilter("course", newValue);
 });
+
+watch(selectedSpecialty, (newValue) => {
+  studentStore.setFilter("specialty", newValue);
+});
+
+watch(selectedLanguage, (newValue) => {
+  studentStore.setFilter("language", newValue);
+});
+
+watch(selectedGender, (newValue) => {
+  studentStore.setFilter("gender", newValue);
+});
+
+watch(selectedBase, (newValue) => {
+  studentStore.setFilter("base", newValue);
+});
+
+watch(selectedAcademicYear, (newValue) => {
+  studentStore.setFilter("academicYearId", newValue);
+});
+
+// Watch for changes in searchTerm and update the store filter
+watch(searchTerm, (newValue) => {
+  studentStore.setFilter("searchTerm", newValue);
+});
+
+const handleSearchInput = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  searchTerm.value = target.value;
+};
 
 const handleSearchbarEnable = () => {
   searchbarEnabled.value = true;

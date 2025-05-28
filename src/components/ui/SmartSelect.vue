@@ -107,7 +107,6 @@ const listTitle = computed(() => props.placeholder || " ");
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: inherit;
   border-bottom: none;
 }
 
@@ -117,8 +116,6 @@ const listTitle = computed(() => props.placeholder || " ");
   .item-content
   .item-inner
   .item-title {
-  font-size: 0.875rem;
-  line-height: 1.25rem;
   white-space: nowrap;
   opacity: 1;
   flex-shrink: 0;
@@ -133,8 +130,6 @@ const listTitle = computed(() => props.placeholder || " ");
   .item-inner
   .item-after {
   color: hsl(var(--foreground));
-  font-size: 0.875rem;
-  line-height: 1.25rem;
   flex-grow: 1;
   flex-shrink: 1;
   text-align: right;

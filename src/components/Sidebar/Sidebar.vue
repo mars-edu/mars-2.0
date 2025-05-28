@@ -13,8 +13,8 @@
             themeClasses.hoverBackground,
             {
               [themeClasses.activeBackground]: item.id === activeNavItem,
-              'border-l-4 border-primary': item.id === activeNavItem,
-              'border-l-4 border-transparent': item.id !== activeNavItem,
+              'border-l-8 border-primary': item.id === activeNavItem,
+              'border-l-8 border-transparent': item.id !== activeNavItem,
             },
           ]"
           @click="handleNavItemClick(item.id)"
@@ -80,8 +80,8 @@ const themeClasses = computed(() => {
         text: "text-gray-200",
         textHover: "text-white",
         icon: "text-foreground",
-        hoverBackground: "hover:bg-gray-700",
-        activeBackground: "bg-gray-700/50",
+        hoverBackground: "hover:bg-sun/80",
+        activeBackground: "bg-sun",
       };
     case "lavanda":
       return {
@@ -90,8 +90,8 @@ const themeClasses = computed(() => {
         text: "text-purple-900",
         textHover: "text-purple-700",
         icon: "text-foreground",
-        hoverBackground: "hover:bg-purple-100",
-        activeBackground: "bg-purple-100/50",
+        hoverBackground: "hover:bg-sun/80",
+        activeBackground: "bg-sun",
       };
     default:
       return {
@@ -100,8 +100,8 @@ const themeClasses = computed(() => {
         text: "text-foreground",
         textHover: "text-foreground",
         icon: "text-foreground",
-        hoverBackground: "hover:bg-secondary",
-        activeBackground: "bg-primary/10",
+        hoverBackground: "hover:bg-sun/80",
+        activeBackground: "bg-sun",
       };
   }
 });

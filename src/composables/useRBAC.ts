@@ -121,7 +121,7 @@ export function useRBAC() {
         route: "/student-card/",
       },
       {
-        id: "student-card",
+        id: "teacher-card",
         label: "Картотека преподавателей",
         icon: "book_fill",
         roles: [Role.ADMIN, Role.TEACHER],

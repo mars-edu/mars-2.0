@@ -37,16 +37,40 @@
           {{ formError || studentStore.getError }}
         </div>
 
-        <div class="p-4 space-y-4">
+        <div class="p-4 space-y-2">
           <div class="space-y-2">
-            <label class="text-sm text-foreground" for="student-name">
-              ФИО
+            <label class="text-sm text-foreground" for="student-surname">
+              Фамилия
             </label>
             <f7-input
-              id="student-name"
+              id="student-surname"
               type="text"
-              v-model:value="studentName"
-              placeholder="Введите ФИО студента"
+              v-model:value="surname"
+              placeholder="Введите фамилию студента"
+            ></f7-input>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm text-foreground" for="student-firstname">
+              Имя
+            </label>
+            <f7-input
+              id="student-firstname"
+              type="text"
+              v-model:value="firstName"
+              placeholder="Введите имя студента"
+            ></f7-input>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm text-foreground" for="student-patronymic">
+              Отчество
+            </label>
+            <f7-input
+              id="student-patronymic"
+              type="text"
+              v-model:value="patronymic"
+              placeholder="Введите отчество студента"
             ></f7-input>
           </div>
 
@@ -135,6 +159,7 @@ import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
+import { useBaseStore } from "@/stores/baseStore";
 import { storeToRefs } from "pinia";
 import SmartSelect from "@/components/ui/SmartSelect.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
@@ -144,12 +169,16 @@ const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
 const courseStore = useCourseStore();
 const academicYearStore = useAcademicYearStore();
+const baseStore = useBaseStore();
 const { courses } = storeToRefs(courseStore);
 const { specialties } = storeToRefs(specialtyStore);
 const { languages } = storeToRefs(languageStore);
 const { academicYears } = storeToRefs(academicYearStore);
+const { bases } = storeToRefs(baseStore);
 
-const studentName = ref("");
+const surname = ref("");
+const firstName = ref("");
+const patronymic = ref("");
 const academicYear = ref("");
 const course = ref("");
 const specialty = ref("");
@@ -192,13 +221,17 @@ const languageOptions = computed(() =>
   }))
 );
 
-const baseOptions = ref([
-  { value: "9", text: "9" },
-  { value: "11", text: "11" },
-]);
+const baseOptions = computed(() =>
+  bases.value.map((base) => ({
+    value: base.value,
+    text: base.text,
+  }))
+);
 
 const studentSchema = z.object({
-  name: z.string().min(1, "Пожалуйста, введите ФИО студента"),
+  surname: z.string().min(1, "Пожалуйста, введите фамилию студента"),
+  firstName: z.string().min(1, "Пожалуйста, введите имя студента"),
+  patronymic: z.string().min(1, "Пожалуйста, введите отчество студента"),
   academicYear: z.string().min(1, "Пожалуйста, выберите год поступления"),
   course: z.string().min(1, "Пожалуйста, введите курс"),
   specialty: z.string().min(1, "Пожалуйста, выберите специальность"),
@@ -211,7 +244,9 @@ const studentSchema = z.object({
 
 const validationResult = computed(() => {
   return studentSchema.safeParse({
-    name: studentName.value,
+    surname: surname.value,
+    firstName: firstName.value,
+    patronymic: patronymic.value,
     academicYear: academicYear.value,
     course: course.value,
     specialty: specialty.value,
@@ -245,7 +280,9 @@ const handleSaveStudent = async () => {
 
   try {
     await studentStore.addStudent({
-      name: studentName.value,
+      surname: surname.value,
+      firstName: firstName.value,
+      patronymic: patronymic.value,
       academicYearId: academicYear.value,
       course: parseInt(course.value),
       specialty: specialty.value,
@@ -264,7 +301,9 @@ const handleSaveStudent = async () => {
 };
 
 const resetForm = () => {
-  studentName.value = "";
+  surname.value = "";
+  firstName.value = "";
+  patronymic.value = "";
   academicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
   course.value = "";
   specialty.value = "";

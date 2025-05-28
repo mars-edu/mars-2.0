@@ -7,7 +7,6 @@ export interface Course {
   name?: string;
   admissionYear: string;
   specialtyId: string;
-  specialtyCode?: string;
   isVisible?: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -102,7 +101,6 @@ export const useCourseStore = defineStore(
       try {
         const newCourse: Course = {
           ...courseData,
-          specialtyCode: courseData.specialtyCode || "",
           isVisible: courseData.isVisible !== false,
           id: crypto.randomUUID(),
           createdAt: new Date(),

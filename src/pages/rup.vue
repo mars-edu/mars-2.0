@@ -77,7 +77,6 @@
                     v-for="specialty in specialties"
                     :key="specialty.id"
                     class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
-                    :id="`specialty-item-${specialty.id}`"
                     :class="{
                       'ring-2 ring-primary bg-primary/10':
                         selectedSpecialtyId === specialty.id,
@@ -87,19 +86,6 @@
                     <span class="font-medium">
                       {{ specialty.codeName || specialty.name }}
                     </span>
-                    <button
-                      class="ml-auto p-1 hover:bg-primary/10 rounded-md transition-colors"
-                      @click.stop="openEditSpecialty(specialty)"
-                      aria-label="Edit Specialty"
-                      type="button"
-                    >
-                      <f7-icon
-                        ios="f7:pencil"
-                        md="material:edit"
-                        size="18px"
-                        class="text-primary"
-                      ></f7-icon>
-                    </button>
                   </div>
                   <div
                     v-if="specialties.length === 0"
@@ -107,11 +93,6 @@
                   >
                     Нет специальностей
                   </div>
-                  <EditSpecialtyButton
-                    v-for="specialty in specialties"
-                    :key="`edit-${specialty.id}`"
-                    :specialty="specialty"
-                  />
                 </template>
               </div>
             </AccordionItem>
@@ -126,9 +107,6 @@
                   {{ selectedCourse.number }}
                 </span>
               </template>
-              <template #actions>
-                <AddCourseButton />
-              </template>
               <div class="flex flex-wrap items-center gap-2 md:gap-3">
                 <template v-if="courseStore.isLoading">
                   <div
@@ -141,7 +119,6 @@
                     >
                       <f7-skeleton-block style="width: 40px; height: 20px" />
                       <f7-skeleton-block style="width: 60px; height: 16px" />
-                      <f7-skeleton-block style="width: 100px; height: 16px" />
                     </div>
                   </div>
                 </template>
@@ -150,10 +127,9 @@
                 </div>
                 <template v-else>
                   <div
-                    v-for="course in filteredCourses"
+                    v-for="course in filteredVisibleCourses"
                     :key="course.id"
                     class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
-                    :id="`course-item-${course.id}`"
                     :class="{
                       'ring-2 ring-primary bg-primary/10':
                         selectedCourseId === course.id,
@@ -163,22 +139,9 @@
                     <span class="font-medium">
                       {{ course.number }}
                     </span>
-                    <button
-                      class="ml-auto p-1 hover:bg-primary/10 rounded-md transition-colors"
-                      @click.stop="openEditCourse(course)"
-                      aria-label="Edit Course"
-                      type="button"
-                    >
-                      <f7-icon
-                        ios="f7:pencil"
-                        md="material:edit"
-                        size="18px"
-                        class="text-primary"
-                      ></f7-icon>
-                    </button>
                   </div>
                   <div
-                    v-if="filteredCourses.length === 0"
+                    v-if="filteredVisibleCourses.length === 0"
                     class="w-full p-3 flex items-center justify-center"
                   >
                     <div
@@ -204,17 +167,6 @@
                       <span>Сначала выберите специальность</span>
                     </div>
                   </div>
-                  <EditCourseButton
-                    v-for="course in filteredCourses"
-                    :key="`edit-${course.id}`"
-                    :course="{
-                      id: course.id,
-                      number: course.number,
-                      admissionYear: course.admissionYear,
-                      specialtyId: course.specialtyId,
-                      specialtyCode: course.specialtyCode || '',
-                    }"
-                  />
                 </template>
               </div>
             </AccordionItem>
@@ -303,7 +255,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed } from "vue";
 import {
   f7Page,
   f7Fab,
@@ -312,15 +264,9 @@ import {
   f7Icon,
   f7SkeletonBlock,
   f7,
-  f7Segmented,
-  f7Button,
 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
-import AddSpecialtyButton from "@/components/AddSpecialtyButton.vue";
-import EditSpecialtyButton from "@/components/EditSpecialtyButton.vue";
-import AddCourseButton from "@/components/AddCourseButton.vue";
-import EditCourseButton from "@/components/EditCourseButton.vue";
 import AddWorkingPlanDialog from "@/components/AddWorkingPlanDialog.vue";
 import Class9Table from "@/components/Class9Table.vue";
 import Class11Table from "@/components/Class11Table.vue";
@@ -342,8 +288,7 @@ const academicYearStore = useAcademicYearStore();
 
 const { specialties } = storeToRefs(specialtyStore);
 const { academicYears } = storeToRefs(academicYearStore);
-const { selectedSpecialty, selectedCourse, filteredCourses } =
-  storeToRefs(selectedItemsStore);
+const { selectedSpecialty, selectedCourse } = storeToRefs(selectedItemsStore);
 
 const selectedAcademicYear = ref("");
 
@@ -370,25 +315,6 @@ const handleSearchbarDisable = () => {
   searchbarEnabled.value = false;
 };
 
-onMounted(async () => {
-  await specialtyStore.fetchSpecialties();
-  await courseStore.fetchCourses();
-});
-
-const openEditSpecialty = (specialty: any) => {
-  const targetEl = document.getElementById(`specialty-item-${specialty.id}`);
-  if (targetEl) {
-    f7.popover.open(`#edit-specialty-popover-${specialty.id}`, targetEl);
-  }
-};
-
-const openEditCourse = (course: any) => {
-  const targetEl = document.getElementById(`course-item-${course.id}`);
-  if (targetEl) {
-    f7.popover.open(`#edit-course-popover-${course.id}`, targetEl);
-  }
-};
-
 const handleWorkingPlanSubmit = (data: { baseClass: number }) => {
   const newPlan = {
     id: Date.now(),
@@ -407,5 +333,15 @@ const selectedSpecialtyId = computed({
 const selectedCourseId = computed({
   get: () => selectedItemsStore.selectedCourseId,
   set: (value) => selectedItemsStore.setSelectedCourse(value),
+});
+
+const filteredVisibleCourses = computed(() => {
+  if (!selectedSpecialtyId.value) return [];
+  return courseStore.courses.filter((course) => course.isVisible !== false);
+});
+
+onMounted(async () => {
+  await specialtyStore.fetchSpecialties();
+  await courseStore.fetchCourses();
 });
 </script>

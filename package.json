@@ -27,6 +27,7 @@
     "framework7": "^8.3.4",
     "framework7-icons": "^5.0.5",
     "framework7-vue": "^8.3.4",
+    "fuse.js": "^7.1.0",
     "lucide-vue-next": "^0.482.0",
     "maska": "^3.1.1",
     "material-icons": "^1.13.14",

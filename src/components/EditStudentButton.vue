@@ -22,16 +22,43 @@
           {{ formError || studentStore.getError }}
         </div>
 
-        <div class="p-4 space-y-4">
+        <div class="p-4 space-y-2">
           <div class="space-y-2">
-            <label class="text-sm text-foreground" for="student-name-edit">
-              ФИО
+            <label class="text-sm text-foreground" for="student-surname-edit">
+              Фамилия
             </label>
             <f7-input
-              :id="`student-name-edit-${student.id}`"
+              :id="`student-surname-edit-${student.id}`"
               type="text"
-              v-model:value="studentName"
-              placeholder="Введите ФИО студента"
+              v-model:value="surname"
+              placeholder="Введите фамилию студента"
+            ></f7-input>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm text-foreground" for="student-firstname-edit">
+              Имя
+            </label>
+            <f7-input
+              :id="`student-firstname-edit-${student.id}`"
+              type="text"
+              v-model:value="firstName"
+              placeholder="Введите имя студента"
+            ></f7-input>
+          </div>
+
+          <div class="space-y-2">
+            <label
+              class="text-sm text-foreground"
+              for="student-patronymic-edit"
+            >
+              Отчество
+            </label>
+            <f7-input
+              :id="`student-patronymic-edit-${student.id}`"
+              type="text"
+              v-model:value="patronymic"
+              placeholder="Введите отчество студента"
             ></f7-input>
           </div>
 
@@ -120,6 +147,7 @@ import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
 import { useCourseStore } from "@/stores/courseStore";
+import { useBaseStore } from "@/stores/baseStore";
 import { storeToRefs } from "pinia";
 import SmartSelect from "@/components/ui/SmartSelect.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
@@ -127,7 +155,9 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 const props = defineProps<{
   student: {
     id: string;
-    name: string;
+    surname: string;
+    firstName: string;
+    patronymic: string;
     course: number;
     specialty: string;
     language: string;
@@ -140,11 +170,15 @@ const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
 const courseStore = useCourseStore();
+const baseStore = useBaseStore();
 const { courses } = storeToRefs(courseStore);
 const { specialties } = storeToRefs(specialtyStore);
 const { languages } = storeToRefs(languageStore);
+const { bases } = storeToRefs(baseStore);
 
-const studentName = ref(props.student.name);
+const surname = ref(props.student.surname);
+const firstName = ref(props.student.firstName);
+const patronymic = ref(props.student.patronymic);
 const course = ref(props.student.course.toString());
 const specialty = ref(props.student.specialty);
 const language = ref(props.student.language);
@@ -173,13 +207,17 @@ const languageOptions = computed(() =>
   }))
 );
 
-const baseOptions = ref([
-  { value: "9", text: "9" },
-  { value: "11", text: "11" },
-]);
+const baseOptions = computed(() =>
+  bases.value.map((base) => ({
+    value: base.value,
+    text: base.text,
+  }))
+);
 
 const studentSchema = z.object({
-  name: z.string().min(1, "Пожалуйста, введите ФИО студента"),
+  surname: z.string().min(1, "Пожалуйста, введите фамилию студента"),
+  firstName: z.string().min(1, "Пожалуйста, введите имя студента"),
+  patronymic: z.string().min(1, "Пожалуйста, введите отчество студента"),
   course: z.string().min(1, "Пожалуйста, введите курс"),
   specialty: z.string().min(1, "Пожалуйста, выберите специальность"),
   language: z.string().min(1, "Пожалуйста, выберите язык обучения"),
@@ -191,7 +229,9 @@ const studentSchema = z.object({
 
 const validationResult = computed(() => {
   return studentSchema.safeParse({
-    name: studentName.value,
+    surname: surname.value,
+    firstName: firstName.value,
+    patronymic: patronymic.value,
     course: course.value,
     specialty: specialty.value,
     language: language.value,
@@ -220,7 +260,9 @@ const handleUpdateStudent = async () => {
 
   try {
     await studentStore.updateStudent(props.student.id, {
-      name: studentName.value,
+      surname: surname.value,
+      firstName: firstName.value,
+      patronymic: patronymic.value,
       course: parseInt(course.value),
       specialty: specialty.value,
       language: language.value,
@@ -241,7 +283,7 @@ const showDeleteConfirmation = () => {
   f7.popover.close(`#edit-student-popover-${props.student.id}`);
 
   f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить студента \"${props.student.name}\"?</p>
+    `<p>Вы уверены, что хотите удалить студента \"${props.student.surname} ${props.student.firstName} ${props.student.patronymic}\"?</p>
      <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление студента",
     async () => {
@@ -255,7 +297,9 @@ const showDeleteConfirmation = () => {
 };
 
 const resetForm = () => {
-  studentName.value = props.student.name;
+  surname.value = props.student.surname;
+  firstName.value = props.student.firstName;
+  patronymic.value = props.student.patronymic;
   course.value = props.student.course.toString();
   specialty.value = props.student.specialty;
   language.value = props.student.language;

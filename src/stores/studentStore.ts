@@ -1,9 +1,12 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
+import Fuse from "fuse.js";
 
 export interface Student {
   id: string;
-  name: string;
+  surname: string;
+  firstName: string;
+  patronymic: string;
   course: number;
   specialty: string;
   language: string;
@@ -13,7 +16,9 @@ export interface Student {
 }
 
 export interface AddStudentPayload {
-  name: string;
+  surname: string;
+  firstName: string;
+  patronymic: string;
   course: number;
   specialty: string;
   language: string;
@@ -22,12 +27,90 @@ export interface AddStudentPayload {
   academicYearId?: string;
 }
 
+export interface StudentFilters {
+  course: string;
+  specialty: string;
+  language: string;
+  gender: string;
+  base: string;
+  academicYearId: string;
+  searchTerm: string;
+}
+
 export const useStudentStore = defineStore("student", () => {
   const students = ref<Student[]>([]);
   const isLoading = ref(false);
   const error = ref<string | null>(null);
+  const filters = ref<StudentFilters>({
+    course: "",
+    specialty: "",
+    language: "",
+    gender: "",
+    base: "",
+    academicYearId: "",
+    searchTerm: "",
+  });
 
   const getAllStudents = computed(() => students.value);
+
+  const filteredStudents = computed(() => {
+    let studentsToFilter = students.value;
+
+    // Apply standard filters first
+    studentsToFilter = studentsToFilter.filter((student) => {
+      const courseMatch =
+        !filters.value.course ||
+        student.course.toString() === filters.value.course;
+      const specialtyMatch =
+        !filters.value.specialty ||
+        student.specialty === filters.value.specialty;
+      const languageMatch =
+        !filters.value.language || student.language === filters.value.language;
+      const genderMatch =
+        !filters.value.gender || student.gender === filters.value.gender;
+      const baseMatch =
+        !filters.value.base || student.base.toString() === filters.value.base;
+      const academicYearMatch =
+        !filters.value.academicYearId ||
+        student.academicYearId === filters.value.academicYearId;
+
+      return (
+        courseMatch &&
+        specialtyMatch &&
+        languageMatch &&
+        genderMatch &&
+        baseMatch &&
+        academicYearMatch
+      );
+    });
+
+    // Apply Fuse.js fuzzy search if searchTerm is present
+    if (filters.value.searchTerm) {
+      const fuse = new Fuse(studentsToFilter, {
+        keys: ["surname", "firstName", "patronymic"],
+        threshold: 0.3,
+      });
+      return fuse.search(filters.value.searchTerm).map((result) => result.item);
+    }
+
+    return studentsToFilter;
+  });
+
+  const setFilter = (key: keyof StudentFilters, value: string) => {
+    filters.value[key] = value;
+  };
+
+  const clearFilters = () => {
+    filters.value = {
+      course: "",
+      specialty: "",
+      language: "",
+      gender: "",
+      base: "",
+      academicYearId: "",
+      searchTerm: "",
+    };
+  };
 
   const addStudent = async (payload: AddStudentPayload) => {
     try {
@@ -97,7 +180,11 @@ export const useStudentStore = defineStore("student", () => {
   return {
     students,
     isLoading,
+    filters,
     getAllStudents,
+    filteredStudents,
+    setFilter,
+    clearFilters,
     addStudent,
     updateStudent,
     deleteStudent,
