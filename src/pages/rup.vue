@@ -29,53 +29,15 @@
                 >Рабочие учебные планы:</span
               >
             </div>
-            <!-- <div class="flex flex-col md:flex-row md:items-center md:gap-3">
-              <span
-                class="text-base md:text-lg font-medium md:font-semibold mb-1 md:mb-0"
-                >Учебный год:</span
-              >
-              <div
-                class="border border-input rounded-lg px-2 md:px-3 py-1 md:py-2 flex items-center bg-background"
-              >
-                <input
-                  type="text"
-                  value="2025-2026"
-                  class="w-full md:w-28 text-center focus:outline-none bg-transparent"
-                />
-                <div class="flex ml-2 md:ml-3 gap-1 md:gap-2">
-                  <button
-                    class="p-1 md:p-1.5 hover:bg-muted rounded-md transition-colors"
-                  >
-                    <f7-icon
-                      ios="f7:doc"
-                      md="material:file_copy"
-                      size="18px"
-                      class="text-foreground/60"
-                    ></f7-icon>
-                  </button>
-                  <button
-                    class="p-1 md:p-1.5 hover:bg-muted rounded-md transition-colors"
-                  >
-                    <f7-icon
-                      ios="f7:pencil"
-                      md="material:edit"
-                      size="18px"
-                      class="text-foreground/60"
-                    ></f7-icon>
-                  </button>
-                  <button
-                    class="p-1 md:p-1.5 hover:bg-green-500 rounded-full transition-colors"
-                  >
-                    <f7-icon
-                      ios="f7:plus"
-                      md="material:add"
-                      size="18px"
-                      class="text-green-500 hover:text-white"
-                    ></f7-icon>
-                  </button>
-                </div>
-              </div>
-            </div> -->
+            <div class="flex flex-col md:flex-row md:items-center md:gap-3">
+              <SmartSelect
+                v-model="selectedAcademicYear"
+                :options="academicYearOptions"
+                placeholder="Учебный год:"
+                name="academic-year"
+                class="w-[250px]"
+              />
+            </div>
           </div>
 
           <Accordion>
@@ -368,8 +330,10 @@ import Class11Table from "@/components/Class11Table.vue";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
+import { useAcademicYearStore } from "@/stores/academicYearStore";
 import Accordion from "@/components/ui/accordion/Accordion.vue";
 import AccordionItem from "@/components/ui/accordion/AccordionItem.vue";
+import SmartSelect from "@/components/ui/SmartSelect.vue";
 import { storeToRefs } from "pinia";
 
 const searchbarEnabled = ref(false);
@@ -377,7 +341,23 @@ const activeNavItem = ref("rup");
 const specialtyStore = useSpecialtyStore();
 const courseStore = useCourseStore();
 const selectedItemsStore = useSelectedItemsStore();
+const academicYearStore = useAcademicYearStore();
+
 const { specialties } = storeToRefs(specialtyStore);
+const { academicYears } = storeToRefs(academicYearStore);
+const { selectedSpecialty, selectedCourse, filteredCourses } =
+  storeToRefs(selectedItemsStore);
+
+const selectedAcademicYear = ref("");
+
+const academicYearOptions = computed(() => {
+  return academicYears.value.map((year) => ({
+    value: year.id,
+    text: year.name,
+  }));
+});
+
+selectedAcademicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
 
 const showAddWorkingPlanDialog = ref(false);
 const workingPlans = ref<
@@ -431,8 +411,4 @@ const selectedCourseId = computed({
   get: () => selectedItemsStore.selectedCourseId,
   set: (value) => selectedItemsStore.setSelectedCourse(value),
 });
-
-const selectedSpecialty = computed(() => selectedItemsStore.selectedSpecialty);
-const selectedCourse = computed(() => selectedItemsStore.selectedCourse);
-const filteredCourses = computed(() => selectedItemsStore.filteredCourses);
 </script>
