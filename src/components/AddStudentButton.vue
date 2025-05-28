@@ -22,24 +22,13 @@
       close-on-escape
     >
       <div class="student-popover bg-card text-card-foreground">
-        <div
-          class="flex justify-between items-center px-4 py-3 border-b border-input"
-        >
-          <button
-            class="text-muted-foreground hover:text-foreground"
-            @click="closeAddStudentPopover"
-          >
-            Отменить
-          </button>
-          <span class="text-foreground font-semibold">Создать</span>
-          <button
-            class="text-primary hover:text-primary/80 disabled:text-muted-foreground"
-            :disabled="!isFormValid || studentStore.isLoading"
-            @click="handleSaveStudent"
-          >
-            Сохранить
-          </button>
-        </div>
+        <PopoverHeader
+          title="Создать"
+          :disabled="!isFormValid || studentStore.isLoading"
+          :is-loading="studentStore.isLoading"
+          :on-cancel="closeAddStudentPopover"
+          :on-save="handleSaveStudent"
+        />
 
         <div
           v-if="formError || studentStore.getError"
@@ -68,7 +57,6 @@
             v-model="course"
             :options="courseOptions"
             id="student-course-add"
-            showInternalPlaceholder
           />
 
           <SmartSelect
@@ -78,7 +66,6 @@
             v-model="specialty"
             :options="specialtyOptions"
             id="student-specialty-add"
-            showInternalPlaceholder
           />
 
           <SmartSelect
@@ -88,7 +75,6 @@
             v-model="language"
             :options="languageOptions"
             id="student-language-add"
-            showInternalPlaceholder
           />
 
           <SmartSelect
@@ -98,7 +84,6 @@
             v-model="base"
             :options="baseOptions"
             id="student-base-add"
-            showInternalPlaceholder
           />
 
           <div class="space-y-2">
@@ -109,13 +94,19 @@
               <f7-button
                 :fill="gender === 'male'"
                 @click="gender = 'male'"
-                class="flex-1"
+                class="flex-1 !border-solid !border-2"
+                :class="{
+                  '!border-gray-500 !text-gray-500': gender !== 'male',
+                }"
                 >Мужской</f7-button
               >
               <f7-button
                 :fill="gender === 'female'"
                 @click="gender = 'female'"
-                class="flex-1"
+                class="flex-1 !border-solid !border-2"
+                :class="{
+                  '!border-gray-500 !text-gray-500': gender !== 'female',
+                }"
                 >Женский</f7-button
               >
             </div>
@@ -136,6 +127,7 @@ import { useLanguageStore } from "@/stores/languageStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { storeToRefs } from "pinia";
 import SmartSelect from "@/components/ui/SmartSelect.vue";
+import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();

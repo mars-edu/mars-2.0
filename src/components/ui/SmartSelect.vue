@@ -1,10 +1,6 @@
 <template>
   <div class="smart-select-wrapper space-y-1">
-    <label
-      v-if="label"
-      :for="uniqueId"
-      class="text-sm font-medium text-foreground"
-    >
+    <label v-if="label" :for="uniqueId" class="text-sm font-medium">
       {{ label }}
     </label>
     <f7-list class="smart-select-list-container no-margin no-hairlines">
@@ -77,18 +73,22 @@ const handleChange = (event: Event) => {
 const listTitle = computed(() => props.placeholder || " ");
 </script>
 
-<style scoped>
-.smart-select-wrapper {
-  /* Wrapper for label and select */
+<style lang="postcss">
+.smart-select .item-content {
+  @apply !p-2;
+}
+.smart-select .item-content .item-inner .item-title {
+  @apply !text-muted-foreground !text-sm;
 }
 
 .smart-select-list-container {
-  border: 1px solid hsl(var(--input));
-  border-radius: 0.375rem; /* rounded-md */
-  background-color: hsl(var(--card));
-  --f7-list-item-padding-horizontal: 0px; /* Remove internal padding, control via item-inner */
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  background-color: hsl(var(--background));
+  --f7-list-item-padding-horizontal: 0px;
   --f7-list-item-padding-vertical: 0px;
-  --f7-list-item-min-height: auto; /* Let inner content dictate height */
+  --f7-list-item-min-height: auto;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* Override default F7 list item bg and ensure it fills container */
@@ -97,18 +97,19 @@ const listTitle = computed(() => props.placeholder || " ");
 }
 
 .smart-select-list-container .f7-list-item .item-content {
-  padding: 0; /* Remove padding from item-content if any */
-  min-height: 36px; /* Desired clickable height, e.g., input height */
+  padding: 0;
+  min-height: 40px;
 }
 
 .smart-select-list-container .f7-list-item .item-content .item-inner {
-  padding: 0.5rem 0.75rem; /* py-2 px-3 equivalent */
-  padding-right: 28px; /* Space for F7's dropdown arrow */
+  padding: 0.625rem 0.875rem;
+  padding-right: 32px;
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: inherit; /* Inherit from item-content */
+  min-height: inherit;
+  border-bottom: none;
 }
 
 /* This is the placeholder prop */
@@ -117,13 +118,13 @@ const listTitle = computed(() => props.placeholder || " ");
   .item-content
   .item-inner
   .item-title {
-  color: hsl(var(--foreground)); /* Default text color */
-  font-size: 0.875rem; /* text-sm */
-  line-height: 1.25rem; /* text-sm line height */
+  font-size: 0.875rem;
+  line-height: 1.25rem;
   white-space: nowrap;
   opacity: 1;
-  flex-shrink: 0; /* Title (placeholder) should not shrink */
-  margin-right: 0.5rem; /* Space between title and after */
+  flex-shrink: 0;
+  margin-right: 0.5rem;
+  color: hsl(var(--muted-foreground));
 }
 
 /* This is where F7 puts the selected value's text */
@@ -132,7 +133,7 @@ const listTitle = computed(() => props.placeholder || " ");
   .item-content
   .item-inner
   .item-after {
-  color: hsl(var(--foreground)); /* Value text color */
+  color: hsl(var(--foreground));
   font-size: 0.875rem;
   line-height: 1.25rem;
   flex-grow: 1;
@@ -147,10 +148,10 @@ const listTitle = computed(() => props.placeholder || " ");
 .smart-select-list-container
   .f7-list-item:not(.item-smart-select-value)
   .item-content
-  .item-inner
-  .item-title {
+  .item-inner {
   color: hsl(var(--muted-foreground));
 }
+
 /* If modelValue is empty, hide the item-after if it's empty or duplicative */
 .smart-select-list-container
   .f7-list-item:not(.item-smart-select-value)
@@ -158,5 +159,16 @@ const listTitle = computed(() => props.placeholder || " ");
   .item-inner
   .item-after {
   display: none;
+}
+
+/* Focus state */
+.smart-select-list-container:focus-within {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
+}
+
+/* Hover state */
+.smart-select-list-container:hover {
+  border-color: hsl(var(--border-hover, var(--border)));
 }
 </style>

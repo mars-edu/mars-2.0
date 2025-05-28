@@ -34,7 +34,6 @@ import type { Framework7Parameters, Router } from "framework7/types";
 import { useUserStore, Role } from "../stores/userStore";
 import { useThemeStore } from "../stores/themeStore";
 import { routeMiddleware } from "../middleware/routeMiddleware";
-// import { setupCustomNavigation } from "../js/navigation";
 
 import routes from "../js/routes";
 import store from "../js/store";
@@ -48,12 +47,6 @@ type CustomRoute = Router.Route & {
 const userStore = useUserStore();
 const themeStore = useThemeStore();
 console.log("[App] Component setup initiated");
-
-// Define type for navigation handler return
-// type NavigationHandler = ReturnType<typeof setupCustomNavigation>;
-
-// Create ref with proper typing
-// const customNavigation = ref<NavigationHandler | null>(null);
 
 const f7params: Framework7Parameters = {
   name: "Mars",
@@ -114,9 +107,6 @@ onMounted(() => {
   f7ready(async () => {
     console.log("[F7] Framework7 ready");
     console.log("[F7] Detailed initialization process starting");
-
-    // customNavigation.value = setupCustomNavigation();
-    // customNavigation.value.initialize();
 
     console.log("[UserStore] Initializing user store");
     console.log("[UserStore] Attempting to load user authentication state");
