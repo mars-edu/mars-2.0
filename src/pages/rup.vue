@@ -368,8 +368,8 @@ import Class11Table from "@/components/Class11Table.vue";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
-import Accordion from "@/components/ui/Accordion.vue";
-import AccordionItem from "@/components/ui/AccordionItem.vue";
+import Accordion from "@/components/ui/accordion/Accordion.vue";
+import AccordionItem from "@/components/ui/accordion/AccordionItem.vue";
 import { storeToRefs } from "pinia";
 
 const searchbarEnabled = ref(false);

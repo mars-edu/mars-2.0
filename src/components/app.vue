@@ -38,12 +38,6 @@ import { routeMiddleware } from "../middleware/routeMiddleware";
 import routes from "../js/routes";
 import store from "../js/store";
 
-type CustomRoute = Router.Route & {
-  options?: {
-    roles?: Role[];
-  };
-};
-
 const userStore = useUserStore();
 const themeStore = useThemeStore();
 console.log("[App] Component setup initiated");
@@ -53,6 +47,11 @@ const f7params: Framework7Parameters = {
   theme: "ios",
   store: store,
   routes: routes,
+
+  dialog: {
+    buttonOk: "Хорошо",
+    buttonCancel: "Отмена",
+  },
 
   view: {
     browserHistory: true,

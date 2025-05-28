@@ -18,13 +18,14 @@
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
             <h1 class="text-xl font-semibold">Картотека обучающихся</h1>
-            <div>
-              <f7-input
-                type="text"
-                placeholder="2024-2025"
-                class="border border-border rounded-lg w-32 text-center"
-                readonly
-              ></f7-input>
+            <div class="student-card-filters">
+              <SmartSelect
+                v-model="selectedAcademicYear"
+                :options="academicYearOptions"
+                placeholder="Учебный год:"
+                name="academic-year"
+                class="w-[250px]"
+              />
             </div>
           </div>
 
@@ -125,7 +126,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { f7Page, f7Input } from "framework7-vue";
+import { f7Page } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddStudentButton from "@/components/AddStudentButton.vue";
@@ -135,6 +136,7 @@ import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
 import { useCourseStore } from "@/stores/courseStore";
+import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
 
 const searchbarEnabled = ref(false);
@@ -143,15 +145,19 @@ const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
 const courseStore = useCourseStore();
+const academicYearStore = useAcademicYearStore();
+
 const { courses } = storeToRefs(courseStore);
 const { specialties } = storeToRefs(specialtyStore);
 const { languages } = storeToRefs(languageStore);
+const { academicYears } = storeToRefs(academicYearStore);
 
 const selectedCourse = ref("");
 const selectedSpecialty = ref("");
 const selectedLanguage = ref("");
 const selectedGender = ref("");
 const selectedBase = ref("");
+const selectedAcademicYear = ref("");
 
 // Convert store data to options format for SmartSelect
 const courseOptions = computed(() => {
@@ -192,6 +198,16 @@ const baseOptions = computed(() => [
   { value: "9", text: "9" },
   { value: "11", text: "11" },
 ]);
+
+const academicYearOptions = computed(() => {
+  return academicYears.value.map((year) => ({
+    value: year.id,
+    text: year.name,
+  }));
+});
+
+// Set initial active academic year
+selectedAcademicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
 
 const filteredStudents = computed(() => {
   return studentStore.getAllStudents.filter((student) => {
