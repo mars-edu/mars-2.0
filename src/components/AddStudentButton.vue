@@ -51,6 +51,15 @@
           </div>
 
           <SmartSelect
+            label="Учебный год"
+            name="academic-year"
+            placeholder="Выберите учебный год"
+            v-model="academicYear"
+            :options="academicYearOptions"
+            id="student-academic-year-add"
+          />
+
+          <SmartSelect
             label="Курс"
             name="course"
             placeholder="Выберите курс"
@@ -125,6 +134,7 @@ import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
 import { useCourseStore } from "@/stores/courseStore";
+import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
 import SmartSelect from "@/components/ui/SmartSelect.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
@@ -133,11 +143,14 @@ const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
 const courseStore = useCourseStore();
+const academicYearStore = useAcademicYearStore();
 const { courses } = storeToRefs(courseStore);
 const { specialties } = storeToRefs(specialtyStore);
 const { languages } = storeToRefs(languageStore);
+const { academicYears } = storeToRefs(academicYearStore);
 
 const studentName = ref("");
+const academicYear = ref("");
 const course = ref("");
 const specialty = ref("");
 const language = ref("");
@@ -147,7 +160,16 @@ const formError = ref("");
 
 import { onMounted } from "vue";
 
-onMounted(() => {});
+onMounted(() => {
+  academicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
+});
+
+const academicYearOptions = computed(() =>
+  academicYears.value.map((year) => ({
+    value: year.id,
+    text: year.name,
+  }))
+);
 
 const courseOptions = computed(() =>
   courses.value.map((c) => ({
@@ -177,6 +199,7 @@ const baseOptions = ref([
 
 const studentSchema = z.object({
   name: z.string().min(1, "Пожалуйста, введите ФИО студента"),
+  academicYear: z.string().min(1, "Пожалуйста, выберите учебный год"),
   course: z.string().min(1, "Пожалуйста, введите курс"),
   specialty: z.string().min(1, "Пожалуйста, выберите специальность"),
   language: z.string().min(1, "Пожалуйста, выберите язык обучения"),
@@ -189,6 +212,7 @@ const studentSchema = z.object({
 const validationResult = computed(() => {
   return studentSchema.safeParse({
     name: studentName.value,
+    academicYear: academicYear.value,
     course: course.value,
     specialty: specialty.value,
     language: language.value,
@@ -222,6 +246,7 @@ const handleSaveStudent = async () => {
   try {
     await studentStore.addStudent({
       name: studentName.value,
+      academicYearId: academicYear.value,
       course: parseInt(course.value),
       specialty: specialty.value,
       language: language.value,
@@ -240,6 +265,7 @@ const handleSaveStudent = async () => {
 
 const resetForm = () => {
   studentName.value = "";
+  academicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
   course.value = "";
   specialty.value = "";
   language.value = "";

@@ -9,6 +9,7 @@ export interface Student {
   language: string;
   base: number;
   gender: "male" | "female";
+  academicYearId?: string;
 }
 
 export interface AddStudentPayload {
@@ -18,6 +19,7 @@ export interface AddStudentPayload {
   language: string;
   base: number;
   gender: "male" | "female";
+  academicYearId?: string;
 }
 
 export const useStudentStore = defineStore("student", () => {

@@ -51,9 +51,6 @@
                   {{ selectedSpecialty.codeName || selectedSpecialty.name }}
                 </span>
               </template>
-              <template #actions>
-                <AddSpecialtyButton />
-              </template>
               <div class="flex flex-wrap items-center gap-2 md:gap-3">
                 <template v-if="specialtyStore.isLoading">
                   <div
