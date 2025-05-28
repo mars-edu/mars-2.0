@@ -9,6 +9,9 @@ import RegisterPage from "../pages/suspense/RegisterPage.vue";
 import RestorePasswordPage from "../pages/suspense/RestorePasswordPage.vue";
 import RupPage from "../pages/suspense/RupPage.vue";
 import SettingsPage from "../pages/suspense/SettingsPage.vue";
+import SpecialtyCatalogPage from "../pages/suspense/SpecialtyCatalogPage.vue";
+import StudentCardPage from "../pages/suspense/StudentCardPage.vue";
+import DisciplineCatalogPage from "../pages/suspense/DisciplineCatalogPage.vue";
 
 type RouteConfig = Router.RouteParameters & {
   options?: {
@@ -34,6 +37,27 @@ const routes: RouteConfig[] = [
   {
     path: "/rup/",
     component: RupPage,
+    options: {
+      roles: [Role.ADMIN, Role.TEACHER],
+    },
+  },
+  {
+    path: "/specialty-catalog/",
+    component: SpecialtyCatalogPage,
+    options: {
+      roles: [Role.ADMIN, Role.TEACHER],
+    },
+  },
+  {
+    path: "/student-card/",
+    component: StudentCardPage,
+    options: {
+      roles: [Role.ADMIN, Role.TEACHER],
+    },
+  },
+  {
+    path: "/discipline-catalog/",
+    component: DisciplineCatalogPage,
     options: {
       roles: [Role.ADMIN, Role.TEACHER],
     },

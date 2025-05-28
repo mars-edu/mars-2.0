@@ -19,18 +19,33 @@
           <span class="text-foreground font-semibold">Редактировать</span>
           <button
             class="text-primary hover:text-primary/80 disabled:text-muted-foreground"
-            :disabled="!isFormValid"
+            :disabled="!isFormValid || specialtyStore.isLoading"
             @click="handleUpdateSpecialty"
           >
             Сохранить
           </button>
         </div>
 
-        <div v-if="formError" class="px-4 pt-2 text-destructive text-sm">
-          {{ formError }}
+        <div
+          v-if="formError || specialtyStore.getError"
+          class="px-4 pt-2 text-destructive text-sm"
+        >
+          {{ formError || specialtyStore.getError }}
         </div>
 
         <div class="p-4 space-y-4">
+          <div class="space-y-2">
+            <label class="text-sm text-foreground" for="specialty-code">
+              Шифр специальности
+            </label>
+            <f7-input
+              id="specialty-code"
+              type="text"
+              v-model:value="specialtyCode"
+              placeholder="Введите шифр специальности"
+            ></f7-input>
+          </div>
+
           <div class="space-y-2">
             <label class="text-sm text-foreground" for="specialty-name">
               Наименование специальности
@@ -40,6 +55,18 @@
               type="text"
               v-model:value="specialtyName"
               placeholder="Введите полное наименование специальности"
+            ></f7-input>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm text-foreground" for="specialty-details">
+              Дополнительные сведения о специальности
+            </label>
+            <f7-input
+              id="specialty-details"
+              type="text"
+              v-model:value="specialtyDetails"
+              placeholder="Введите шифр специальности"
             ></f7-input>
           </div>
 
@@ -56,29 +83,24 @@
           </div>
 
           <div class="space-y-2">
-            <label class="text-sm text-foreground" for="specialty-code">
-              Шифр специальности
-            </label>
-            <f7-input
-              id="specialty-code"
-              type="text"
-              v-model:value="specialtyCode"
-              placeholder="Внесите шифр специальности"
-            ></f7-input>
-          </div>
-
-          <div class="space-y-2">
-            <div class="text-sm text-foreground">Создание модуля/дисциплин</div>
-            <f7-checkbox
-              v-model:value="createModule"
-              label="Поставьте галочку"
-            ></f7-checkbox>
+            <div class="flex items-center gap-2">
+              <f7-checkbox
+                v-model:value="linkWithStudentCard"
+                label="С картотекой обучающихся"
+              ></f7-checkbox>
+              <f7-checkbox
+                v-model:value="linkWithRup"
+                label="С РУП"
+              ></f7-checkbox>
+              <f7-checkbox v-model:value="linkWithT" label="Т"></f7-checkbox>
+            </div>
           </div>
 
           <div class="pt-4 border-t border-border">
             <button
               class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
               @click="showDeleteConfirmation"
+              :disabled="specialtyStore.isLoading"
             >
               <f7-icon
                 ios="f7:trash"
@@ -96,73 +118,86 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed } from "vue";
 import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
-import { useCourseStore } from "@/stores/courseStore";
-import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 
 const props = defineProps<{
   specialty: {
     id: string;
-    name: string;
-    codeName?: string;
     code: string;
-    hasModule: boolean;
+    name: string;
+    details: string;
+    codeName: string;
+    linkWithStudentCard: boolean;
+    linkWithRup: boolean;
+    linkWithT: boolean;
   };
 }>();
 
 const specialtyStore = useSpecialtyStore();
-const courseStore = useCourseStore();
-const selectedItemsStore = useSelectedItemsStore();
 
-const specialtyName = ref(props.specialty.name);
-const specialtyCodeName = ref(props.specialty.codeName || "");
 const specialtyCode = ref(props.specialty.code);
-const createModule = ref(props.specialty.hasModule);
-const isDeleting = ref(false);
+const specialtyName = ref(props.specialty.name);
+const specialtyDetails = ref(props.specialty.details);
+const specialtyCodeName = ref(props.specialty.codeName);
+const linkWithStudentCard = ref(props.specialty.linkWithStudentCard);
+const linkWithRup = ref(props.specialty.linkWithRup);
+const linkWithT = ref(props.specialty.linkWithT);
+const formError = ref("");
 
 const specialtySchema = z.object({
-  name: z.string().min(1, "Пожалуйста, введите наименование специальности"),
-  codeName: z.string().optional(),
   code: z.string().min(1, "Пожалуйста, введите шифр специальности"),
-  hasModule: z.boolean(),
+  name: z.string().min(1, "Пожалуйста, введите наименование специальности"),
+  details: z.string(),
+  codeName: z.string(),
+  linkWithStudentCard: z.boolean(),
+  linkWithRup: z.boolean(),
+  linkWithT: z.boolean(),
 });
 
 const validationResult = computed(() => {
   return specialtySchema.safeParse({
-    name: specialtyName.value,
-    codeName: specialtyCodeName.value,
     code: specialtyCode.value,
-    hasModule: createModule.value,
+    name: specialtyName.value,
+    details: specialtyDetails.value,
+    codeName: specialtyCodeName.value,
+    linkWithStudentCard: linkWithStudentCard.value,
+    linkWithRup: linkWithRup.value,
+    linkWithT: linkWithT.value,
   });
-});
-
-const formError = computed(() => {
-  if (validationResult.value.success) return "";
-  const issues = validationResult.value.error.issues;
-  if (issues.length > 0) return issues[0].message;
-  return specialtyStore.getError || "";
 });
 
 const isFormValid = computed(() => validationResult.value.success);
 
 const closeEditSpecialtyPopover = () => {
+  f7.popover.close(`#edit-specialty-popover-${props.specialty.id}`);
   resetForm();
 };
 
 const handleUpdateSpecialty = async () => {
-  if (!isFormValid.value) return;
+  if (!isFormValid.value) {
+    if (!validationResult.value.success) {
+      const issues = validationResult.value.error.issues;
+      if (issues.length > 0) {
+        formError.value = issues[0].message;
+      }
+    }
+    return;
+  }
 
   try {
     await specialtyStore.updateSpecialty(props.specialty.id, {
-      name: specialtyName.value,
-      codeName: specialtyCodeName.value,
       code: specialtyCode.value,
-      hasModule: createModule.value,
+      name: specialtyName.value,
+      details: specialtyDetails.value,
+      codeName: specialtyCodeName.value,
+      linkWithStudentCard: linkWithStudentCard.value,
+      linkWithRup: linkWithRup.value,
+      linkWithT: linkWithT.value,
     });
-    f7.popover.close(`#edit-specialty-popover-${props.specialty.id}`);
+    closeEditSpecialtyPopover();
   } catch (error) {
     console.error("Failed to update specialty:", error);
   }
@@ -177,32 +212,24 @@ const showDeleteConfirmation = () => {
     "Удаление специальности",
     async () => {
       try {
-        isDeleting.value = true;
-        const associatedCourses = courseStore.getCoursesBySpecialtyId(
-          props.specialty.id
-        );
-
-        for (const course of associatedCourses) {
-          await courseStore.deleteCourse(course.id);
-        }
-
         await specialtyStore.deleteSpecialty(props.specialty.id);
-        selectedItemsStore.clearSelection();
       } catch (error) {
         console.error("Failed to delete specialty:", error);
         f7.dialog.alert("Произошла ошибка при удалении специальности.");
-      } finally {
-        isDeleting.value = false;
       }
     }
   );
 };
 
 const resetForm = () => {
-  specialtyName.value = props.specialty.name;
-  specialtyCodeName.value = props.specialty.codeName || "";
   specialtyCode.value = props.specialty.code;
-  createModule.value = props.specialty.hasModule;
+  specialtyName.value = props.specialty.name;
+  specialtyDetails.value = props.specialty.details;
+  specialtyCodeName.value = props.specialty.codeName;
+  linkWithStudentCard.value = props.specialty.linkWithStudentCard;
+  linkWithRup.value = props.specialty.linkWithRup;
+  linkWithT.value = props.specialty.linkWithT;
+  formError.value = "";
   specialtyStore.clearError();
 };
 </script>

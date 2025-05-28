@@ -9,12 +9,12 @@
     <!-- Desktop Layout -->
     <div class="hidden md:flex overflow-hidden flex-1">
       <!-- Left Sidebar - always visible on desktop -->
-      <Sidebar
-        v-model:activeNavItem="activeNavItem"
-      />
+      <Sidebar v-model:activeNavItem="activeNavItem" />
 
       <!-- Main Content Area for Desktop -->
-      <div class="flex-1 overflow-y-auto p-4 bg-background text-foreground ml-52">
+      <div
+        class="flex-1 overflow-y-auto p-4 bg-background text-foreground ml-52"
+      >
         <div class="flex flex-row gap-4">
           <div class="flex-1 space-y-4 min-w-[60%]">
             <Doodle size="large">
@@ -24,7 +24,7 @@
             <ActivityCard />
             <AnnouncementsCard />
 
-            <NavigationDemo />
+            <!-- <NavigationDemo /> -->
           </div>
 
           <div class="flex-1 space-y-4">
@@ -142,7 +142,7 @@ import AnnouncementsCard from "@/components/Cards/AnnouncementsCard.vue";
 import CalendarCard from "@/components/Cards/CalendarCard.vue";
 import ScheduleCard from "@/components/Cards/ScheduleCard.vue";
 import AcademicWeekCard from "@/components/Cards/AcademicWeekCard.vue";
-import NavigationDemo from "@/components/Cards/NavigationDemo.vue";
+// import NavigationDemo from "@/components/Cards/NavigationDemo.vue";
 
 const searchbarEnabled = ref(false);
 const activeNavItem = ref("home");

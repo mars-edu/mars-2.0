@@ -11,7 +11,7 @@ export interface NavigationItem {
   label: string;
   icon: string;
   roles: Role[];
-  route?: string;
+  route: string;
 }
 
 export function useRBAC() {
@@ -23,144 +23,123 @@ export function useRBAC() {
     return userStore.hasAnyRole(requiredRoles);
   };
 
-  const getRouteForItem = (itemId: string): string => {
-    switch (itemId) {
-      case "home":
-        return "/";
-      case "journals":
-        return "/journals/";
-      case "rup":
-        return "/rup/";
-      case "testing":
-        return "/testing/";
-      case "create-course":
-        return "/create-course/";
-      case "report-editor":
-        return "/report-editor/";
-      case "room-booking":
-        return "/room-booking/";
-      case "communication":
-        return "/communication/";
-      case "education-schedule":
-        return "/education-schedule/";
-      case "library":
-        return "/library/";
-      case "institution-info":
-        return "/institution-info/";
-      case "profile":
-        return "/profile/";
-      case "settings":
-        return "/settings/";
-      case "schedule": {
-        const now = new Date();
-        return `/planning/${now.getFullYear()}/${now.getMonth() + 1}/`;
-      }
-      case "logout":
-        return "/login/";
-      default:
-        return "/";
-    }
-  };
-
   const getNavigationItems = computed(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
     const items: NavigationItem[] = [
       {
         id: "home",
         label: "Главная",
         icon: "house_fill",
         roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
+        route: "/",
       },
       {
         id: "specialty-catalog",
         label: "Каталог специальностей",
         icon: "book_fill",
         roles: [Role.ADMIN, Role.TEACHER],
+        route: "/specialty-catalog/",
       },
       {
         id: "discipline-catalog",
         label: "Каталог дисциплин",
         icon: "book_fill",
         roles: [Role.ADMIN, Role.TEACHER],
+        route: "/discipline-catalog/",
       },
-
       {
         id: "schedule",
         label: "Расписание",
         icon: "calendar_fill",
         roles: [Role.ADMIN, Role.TEACHER],
+        route: `/planning/${currentYear}/${currentMonth}/`,
       },
       {
         id: "journals",
         label: "Журналы",
         icon: "doc_text_fill",
         roles: [Role.ADMIN, Role.TEACHER],
+        route: "/journals/",
       },
       {
         id: "rup",
         label: "РУП",
         icon: "doc_fill",
         roles: [Role.ADMIN, Role.TEACHER],
+        route: "/rup/",
       },
       {
         id: "testing",
         label: "Тестирование",
         icon: "checkmark_circle_fill",
         roles: [Role.ADMIN, Role.TEACHER],
+        route: "/testing/",
       },
       {
         id: "create-course",
         label: "Создать курс",
         icon: "plus_circle_fill",
         roles: [Role.ADMIN, Role.TEACHER],
+        route: "/create-course/",
       },
       {
         id: "report-editor",
         label: "Редактор отчетов",
         icon: "doc_text_fill",
         roles: [Role.ADMIN, Role.TEACHER],
+        route: "/report-editor/",
       },
       {
         id: "room-booking",
         label: "Бронирование кабинета",
         icon: "building_2_fill",
         roles: [Role.ADMIN, Role.TEACHER],
+        route: "/room-booking/",
       },
       {
         id: "communication",
         label: "Общение",
         icon: "chat_bubble_fill",
         roles: [Role.ADMIN, Role.TEACHER],
+        route: "/communication/",
       },
       {
         id: "education-schedule",
         label: "График образовательного процесса",
         icon: "calendar_fill",
         roles: [Role.ADMIN, Role.TEACHER],
+        route: "/education-schedule/",
       },
-
       {
         id: "student-card",
         label: "Картотека обучающихся",
         icon: "book_fill",
         roles: [Role.ADMIN, Role.TEACHER],
+        route: "/student-card/",
       },
       {
         id: "student-card",
         label: "Картотека преподавателей",
         icon: "book_fill",
         roles: [Role.ADMIN, Role.TEACHER],
+        route: "/teacher-card/",
       },
       {
         id: "library",
         label: "Библиотека",
         icon: "book_fill",
         roles: [Role.ADMIN, Role.TEACHER],
+        route: "/library/",
       },
       {
         id: "institution-info",
         label: "Информация об учебном заведении",
         icon: "building_2_fill",
         roles: [Role.ADMIN, Role.TEACHER],
+        route: "/institution-info/",
       },
     ];
 
@@ -174,18 +153,21 @@ export function useRBAC() {
         label: "Профиль",
         icon: "person_fill",
         roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
+        route: "/profile/",
       },
       {
         id: "settings",
         label: "Настройки",
         icon: "gear_fill",
         roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
+        route: "/settings/",
       },
       {
         id: "logout",
         label: "Выйти",
         icon: "arrow_right_circle_fill",
         roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
+        route: "/login/",
       },
     ];
 
@@ -196,6 +178,5 @@ export function useRBAC() {
     checkAccess,
     getNavigationItems,
     getProfileMenuItems,
-    getRouteForItem,
   };
 }

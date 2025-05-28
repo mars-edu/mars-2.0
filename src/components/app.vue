@@ -34,7 +34,7 @@ import type { Framework7Parameters, Router } from "framework7/types";
 import { useUserStore, Role } from "../stores/userStore";
 import { useThemeStore } from "../stores/themeStore";
 import { routeMiddleware } from "../middleware/routeMiddleware";
-import { setupCustomNavigation } from "../js/navigation";
+// import { setupCustomNavigation } from "../js/navigation";
 
 import routes from "../js/routes";
 import store from "../js/store";
@@ -50,10 +50,10 @@ const themeStore = useThemeStore();
 console.log("[App] Component setup initiated");
 
 // Define type for navigation handler return
-type NavigationHandler = ReturnType<typeof setupCustomNavigation>;
+// type NavigationHandler = ReturnType<typeof setupCustomNavigation>;
 
 // Create ref with proper typing
-const customNavigation = ref<NavigationHandler | null>(null);
+// const customNavigation = ref<NavigationHandler | null>(null);
 
 const f7params: Framework7Parameters = {
   name: "Mars",
@@ -196,8 +196,8 @@ onMounted(() => {
 // Clean up event listeners when component is unmounted
 onBeforeUnmount(() => {
   // Destroy custom navigation handler if it exists
-  if (customNavigation.value) {
-    customNavigation.value.destroy();
-  }
+  // if (customNavigation.value) {
+  //   customNavigation.value.destroy();
+  // }
 });
 </script>

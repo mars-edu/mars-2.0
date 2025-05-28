@@ -65,7 +65,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { f7, f7ready } from "framework7-vue";
-import { setupCustomNavigation } from "../../js/navigation";
+// import { setupCustomNavigation } from "../../js/navigation";
 import Card from "@/components/ui/Card.vue";
 
 interface Props {
@@ -80,7 +80,7 @@ const props = withDefaults(defineProps<Props>(), {
 const currentUrl = ref(window.location.href);
 const historyStackSize = ref(1);
 const currentPosition = ref(0);
-const navigation = ref(setupCustomNavigation());
+// const navigation = ref(setupCustomNavigation());
 
 // Computed styles
 const textClass = computed(() => ({

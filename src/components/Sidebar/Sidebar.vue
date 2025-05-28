@@ -106,7 +106,7 @@ const themeClasses = computed(() => {
   }
 });
 
-const { getNavigationItems, getProfileMenuItems, getRouteForItem } = useRBAC();
+const { getNavigationItems, getProfileMenuItems } = useRBAC();
 const userStore = useUserStore();
 
 const navigationItems = computed(() => getNavigationItems.value);
@@ -123,8 +123,10 @@ const activeNavItem = computed({
 
 const handleNavItemClick = (itemId: string): void => {
   activeNavItem.value = itemId;
-  const route = getRouteForItem(itemId);
-  f7.views.main.router.navigate(route);
+  const item = navigationItems.value.find((item) => item.id === itemId);
+  if (item && item.route) {
+    f7.views.main.router.navigate(item.route);
+  }
 };
 
 const handleProfileItemClick = async (itemId: string): Promise<void> => {
@@ -133,7 +135,9 @@ const handleProfileItemClick = async (itemId: string): Promise<void> => {
     f7.views.main.router.navigate("/login");
     return;
   }
-  const route = getRouteForItem(itemId);
-  f7.views.main.router.navigate(route);
+  const item = profileMenuItems.value.find((item) => item.id === itemId);
+  if (item && item.route) {
+    f7.views.main.router.navigate(item.route);
+  }
 };
 </script>

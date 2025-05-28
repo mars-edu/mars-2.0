@@ -9,6 +9,21 @@ export interface Specialty {
   hasModule: boolean;
   createdAt: Date;
   updatedAt: Date;
+  details: string;
+  linkWithStudentCard: boolean;
+  linkWithRup: boolean;
+  linkWithT: boolean;
+  isHighlighted?: boolean;
+}
+
+export interface AddSpecialtyPayload {
+  code: string;
+  name: string;
+  details: string;
+  codeName: string;
+  linkWithStudentCard: boolean;
+  linkWithRup: boolean;
+  linkWithT: boolean;
 }
 
 export const useSpecialtyStore = defineStore(
@@ -43,75 +58,78 @@ export const useSpecialtyStore = defineStore(
       }
     }
 
-    async function addSpecialty(
-      specialtyData: Omit<Specialty, "id" | "createdAt" | "updatedAt">
-    ) {
-      loading.value = true;
+    const addSpecialty = async (payload: AddSpecialtyPayload) => {
       try {
+        loading.value = true;
+        error.value = null;
+
+        // TODO: Replace with actual API call
         const newSpecialty: Specialty = {
-          ...specialtyData,
           id: crypto.randomUUID(),
+          ...payload,
           createdAt: new Date(),
           updatedAt: new Date(),
+          hasModule: false,
         };
+
         specialties.value.push(newSpecialty);
-        error.value = null;
-        return newSpecialty;
-      } catch (err) {
+      } catch (e) {
         error.value =
-          err instanceof Error ? err.message : "Failed to add specialty";
-        throw err;
+          e instanceof Error ? e.message : "Failed to add specialty";
+        throw e;
       } finally {
         loading.value = false;
       }
-    }
+    };
 
-    async function updateSpecialty(
+    const updateSpecialty = async (
       id: string,
-      specialtyData: Partial<Omit<Specialty, "id" | "createdAt" | "updatedAt">>
-    ) {
-      loading.value = true;
+      payload: AddSpecialtyPayload
+    ) => {
       try {
-        const index = specialties.value.findIndex((s) => s.id === id);
-        if (index === -1) {
-          throw new Error("Specialty not found");
-        }
+        loading.value = true;
+        error.value = null;
 
-        const updatedSpecialty = {
+        // TODO: Replace with actual API call
+        const index = specialties.value.findIndex((s) => s.id === id);
+        if (index === -1) throw new Error("Specialty not found");
+
+        specialties.value[index] = {
           ...specialties.value[index],
-          ...specialtyData,
+          ...payload,
           updatedAt: new Date(),
         };
-
-        specialties.value[index] = updatedSpecialty;
-        error.value = null;
-        return updatedSpecialty;
-      } catch (err) {
+      } catch (e) {
         error.value =
-          err instanceof Error ? err.message : "Failed to update specialty";
-        throw err;
+          e instanceof Error ? e.message : "Failed to update specialty";
+        throw e;
       } finally {
         loading.value = false;
       }
-    }
+    };
 
-    async function deleteSpecialty(id: string) {
-      loading.value = true;
+    const deleteSpecialty = async (id: string) => {
       try {
-        specialties.value = specialties.value.filter((s) => s.id !== id);
+        loading.value = true;
         error.value = null;
-      } catch (err) {
+
+        // TODO: Replace with actual API call
+        const index = specialties.value.findIndex((s) => s.id === id);
+        if (index === -1) throw new Error("Specialty not found");
+
+        specialties.value.splice(index, 1);
+      } catch (e) {
         error.value =
-          err instanceof Error ? err.message : "Failed to delete specialty";
-        throw err;
+          e instanceof Error ? e.message : "Failed to delete specialty";
+        throw e;
       } finally {
         loading.value = false;
       }
-    }
+    };
 
-    function clearError() {
+    const clearError = () => {
       error.value = null;
-    }
+    };
 
     return {
       specialties,

@@ -1,5 +1,5 @@
 <template>
-  <Suspense>
+  <Suspense @pending="handlePending">
     <template #default>
       <component :is="asyncComponent" v-bind="$attrs" />
     </template>
@@ -10,9 +10,7 @@
           class="display-flex justify-content-center align-items-center"
           style="min-height: 200px"
         >
-          <div v-if="isError" class="text-color-red text-align-center">
-            <p>Произошла ошибка при загрузке компонента</p>
-          </div>
+          <ErrorDisplay v-if="isError" :message="errorMessage" />
           <Loader v-else />
         </div>
       </f7-page>
@@ -21,12 +19,13 @@
 </template>
 
 <script setup lang="ts">
-import { onErrorCaptured, onMounted, onUnmounted } from "vue";
-import { ref } from "vue";
+import { ref, onErrorCaptured } from "vue";
 import { f7Page } from "framework7-vue";
 import Loader from "./Loader.vue";
+import ErrorDisplay from "./ErrorDisplay.vue";
 
 const isError = ref(false);
+const errorMessage = ref("Произошла ошибка при загрузке компонента");
 
 defineOptions({
   name: "AsyncRouteWrapper",
@@ -37,17 +36,24 @@ defineProps<{
   asyncComponent: (() => Promise<any>) | Object;
 }>();
 
-onMounted(() => {
+const handlePending = () => {
+  // console.log("AsyncRouteWrapper: Suspense is pending, resetting isError."); // Optional: for debugging
   isError.value = false;
-});
+};
 
-onUnmounted(() => {
-  isError.value = false;
-});
-
-onErrorCaptured((error) => {
-  console.error("Error loading async component:", error);
+onErrorCaptured((error, instance, info) => {
+  // console.error("AsyncRouteWrapper: onErrorCaptured triggered.", { error, instance, info }); // Optional: for debugging
   isError.value = true;
-  return false;
+  // Return false to prevent the error from propagating further up the component tree
+  // and to indicate that the error has been handled locally. This allows Suspense
+  // to continue showing the fallback slot with our custom error message.
+  return true;
 });
 </script>
+
+<style scoped>
+.error-container {
+  width: 100%;
+  max-width: 320px;
+}
+</style>
