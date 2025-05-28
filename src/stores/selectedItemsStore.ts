@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useSpecialtyStore } from "./specialtyStore";
 import { useCourseStore } from "./courseStore";
+import { storeToRefs } from "pinia";
 
 export const useSelectedItemsStore = defineStore("selectedItems", () => {
   const selectedSpecialtyId = ref<string | null>(null);
@@ -25,18 +26,18 @@ export const useSelectedItemsStore = defineStore("selectedItems", () => {
 
   const selectedSpecialty = computed(() => {
     const specialtyStore = useSpecialtyStore();
+    const { specialties } = storeToRefs(specialtyStore);
     if (!selectedSpecialtyId.value) return null;
-    return specialtyStore.getAllSpecialties.find(
+    return specialties.value.find(
       (specialty) => specialty.id === selectedSpecialtyId.value
     );
   });
 
   const selectedCourse = computed(() => {
     const courseStore = useCourseStore();
+    const { courses } = storeToRefs(courseStore);
     if (!selectedCourseId.value) return null;
-    return courseStore.getAllCourses.find(
-      (course) => course.id === selectedCourseId.value
-    );
+    return courses.value.find((course) => course.id === selectedCourseId.value);
   });
 
   const filteredCourses = computed(() => {

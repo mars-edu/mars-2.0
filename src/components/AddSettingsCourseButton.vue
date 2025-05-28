@@ -79,9 +79,9 @@
 import { ref, computed } from "vue";
 import { f7, f7Popover, f7Icon, f7Input, f7Checkbox } from "framework7-vue";
 import { z } from "zod";
-import { useSettingsCourseStore } from "@/stores/settingsCourseStore";
+import { useCourseStore } from "@/stores/courseStore";
 
-const courseStore = useSettingsCourseStore();
+const courseStore = useCourseStore();
 
 const courseName = ref("");
 const isVisible = ref(true);
@@ -127,6 +127,9 @@ const handleSaveCourse = async () => {
   try {
     await courseStore.addCourse({
       name: courseName.value,
+      number: courseName.value,
+      admissionYear: new Date().getFullYear().toString(),
+      specialtyId: "",
       isVisible: isVisible.value,
     });
     closeAddCoursePopover();

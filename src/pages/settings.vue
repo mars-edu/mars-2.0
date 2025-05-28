@@ -51,7 +51,7 @@
               </div>
               <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
                 <div
-                  v-for="language in languageStore.getAllLanguages"
+                  v-for="language in languages"
                   :key="language.id"
                   class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
                   :id="`language-item-${language.id}`"
@@ -100,7 +100,7 @@
                   </span>
                 </div>
                 <EditLanguageButton
-                  v-for="language in languageStore.getAllLanguages"
+                  v-for="language in languages"
                   :key="`edit-${language.id}`"
                   :language="language"
                 />
@@ -123,7 +123,7 @@
               </div>
               <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
                 <div
-                  v-for="course in courseStore.getAllCourses"
+                  v-for="course in courses"
                   :key="course.id"
                   class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
                   :id="`course-item-${course.id}`"
@@ -163,7 +163,7 @@
                   </button>
                 </div>
                 <EditSettingsCourseButton
-                  v-for="course in courseStore.getAllCourses"
+                  v-for="course in courses"
                   :key="`edit-${course.id}`"
                   :course="course"
                 />
@@ -188,12 +188,15 @@ import EditLanguageButton from "@/components/EditLanguageButton.vue";
 import AddSettingsCourseButton from "@/components/AddSettingsCourseButton.vue";
 import EditSettingsCourseButton from "@/components/EditSettingsCourseButton.vue";
 import { useLanguageStore } from "@/stores/languageStore";
-import { useSettingsCourseStore } from "@/stores/settingsCourseStore";
+import { useCourseStore } from "@/stores/courseStore";
+import { storeToRefs } from "pinia";
 
 const searchbarEnabled = ref(false);
 const activeNavItem = ref("settings");
 const languageStore = useLanguageStore();
-const courseStore = useSettingsCourseStore();
+const courseStore = useCourseStore();
+const { courses } = storeToRefs(courseStore);
+const { languages } = storeToRefs(languageStore);
 
 const handleSearchbarEnable = () => {
   searchbarEnabled.value = true;

@@ -44,7 +44,7 @@
               >
                 <option value="" disabled>Выберите номер курса</option>
                 <option
-                  v-for="course in settingsCourseStore.getVisibleCourses"
+                  v-for="course in courseStore.getVisibleCourses"
                   :key="course.id"
                   :value="course.name"
                 >
@@ -143,7 +143,6 @@ import { useCourseStore } from "@/stores/courseStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { useModuleStore } from "@/stores/moduleStore";
 import { useColumnConfigStore } from "@/stores/columnConfig";
-import { useSettingsCourseStore } from "@/stores/settingsCourseStore";
 
 const props = defineProps<{
   course: {
@@ -159,7 +158,6 @@ const courseStore = useCourseStore();
 const selectedItemsStore = useSelectedItemsStore();
 const moduleStore = useModuleStore();
 const columnConfigStore = useColumnConfigStore();
-const settingsCourseStore = useSettingsCourseStore();
 
 const courseNumber = ref(props.course.number);
 const admissionYear = ref(props.course.admissionYear);
@@ -258,6 +256,6 @@ const resetForm = () => {
 
 onMounted(async () => {
   // Load settings courses
-  await settingsCourseStore.fetchCourses();
+  await courseStore.fetchCourses();
 });
 </script>

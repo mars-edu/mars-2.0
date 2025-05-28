@@ -42,7 +42,7 @@
                 <select name="course" v-model="selectedCourse">
                   <option value="">Все</option>
                   <option
-                    v-for="courseItem in courseStore.getAllCourses"
+                    v-for="courseItem in courses"
                     :key="courseItem.id"
                     :value="courseItem.number"
                   >
@@ -64,7 +64,7 @@
                 <select name="specialty" v-model="selectedSpecialty">
                   <option value="">Все</option>
                   <option
-                    v-for="specialtyItem in specialtyStore.getAllSpecialties"
+                    v-for="specialtyItem in specialties"
                     :key="specialtyItem.id"
                     :value="specialtyItem.code"
                   >
@@ -86,7 +86,7 @@
                 <select name="language" v-model="selectedLanguage">
                   <option value="">Все</option>
                   <option
-                    v-for="languageItem in languageStore.getAllLanguages"
+                    v-for="languageItem in languages"
                     :key="languageItem.id"
                     :value="languageItem.code"
                   >
@@ -195,6 +195,7 @@ import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
 import { useCourseStore } from "@/stores/courseStore";
+import { storeToRefs } from "pinia";
 
 const searchbarEnabled = ref(false);
 const activeNavItem = ref("student-card");
@@ -202,6 +203,9 @@ const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
 const courseStore = useCourseStore();
+const { courses } = storeToRefs(courseStore);
+const { specialties } = storeToRefs(specialtyStore);
+const { languages } = storeToRefs(languageStore);
 
 // Filter states
 const selectedCourse = ref("");

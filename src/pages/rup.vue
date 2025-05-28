@@ -115,7 +115,7 @@
                 </div>
                 <template v-else>
                   <div
-                    v-for="specialty in specialtyStore.getAllSpecialties"
+                    v-for="specialty in specialties"
                     :key="specialty.id"
                     class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
                     :id="`specialty-item-${specialty.id}`"
@@ -143,13 +143,13 @@
                     </button>
                   </div>
                   <div
-                    v-if="specialtyStore.getAllSpecialties.length === 0"
+                    v-if="specialties.length === 0"
                     class="text-muted-foreground"
                   >
                     Нет специальностей
                   </div>
                   <EditSpecialtyButton
-                    v-for="specialty in specialtyStore.getAllSpecialties"
+                    v-for="specialty in specialties"
                     :key="`edit-${specialty.id}`"
                     :specialty="specialty"
                   />
@@ -370,12 +370,14 @@ import { useCourseStore } from "@/stores/courseStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import Accordion from "@/components/ui/Accordion.vue";
 import AccordionItem from "@/components/ui/AccordionItem.vue";
+import { storeToRefs } from "pinia";
 
 const searchbarEnabled = ref(false);
 const activeNavItem = ref("rup");
 const specialtyStore = useSpecialtyStore();
 const courseStore = useCourseStore();
 const selectedItemsStore = useSelectedItemsStore();
+const { specialties } = storeToRefs(specialtyStore);
 
 const showAddWorkingPlanDialog = ref(false);
 const workingPlans = ref<

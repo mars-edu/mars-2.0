@@ -131,6 +131,7 @@ import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
 import { useCourseStore } from "@/stores/courseStore";
+import { storeToRefs } from "pinia";
 import SmartSelect from "@/components/ui/SmartSelect.vue";
 
 const props = defineProps<{
@@ -149,6 +150,9 @@ const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
 const courseStore = useCourseStore();
+const { courses } = storeToRefs(courseStore);
+const { specialties } = storeToRefs(specialtyStore);
+const { languages } = storeToRefs(languageStore);
 
 const studentName = ref(props.student.name);
 const course = ref(props.student.course.toString());
@@ -159,21 +163,21 @@ const gender = ref<"male" | "female">(props.student.gender);
 const formError = ref("");
 
 const courseOptions = computed(() =>
-  courseStore.getAllCourses.map((c) => ({
+  courses.value.map((c) => ({
     value: c.number.toString(),
     text: c.number.toString(),
   }))
 );
 
 const specialtyOptions = computed(() =>
-  specialtyStore.getAllSpecialties.map((s) => ({
+  specialties.value.map((s) => ({
     value: s.code,
     text: s.name,
   }))
 );
 
 const languageOptions = computed(() =>
-  languageStore.getAllLanguages.map((l) => ({
+  languages.value.map((l) => ({
     value: l.code,
     text: l.name,
   }))

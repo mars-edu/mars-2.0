@@ -41,7 +41,6 @@ export const useSpecialtyStore = defineStore(
       return (code: string) => specialties.value.find((s) => s.code === code);
     });
 
-    const getAllSpecialties = computed(() => specialties.value);
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
@@ -137,7 +136,6 @@ export const useSpecialtyStore = defineStore(
       error,
       getSpecialtyById,
       getSpecialtyByCode,
-      getAllSpecialties,
       isLoading,
       getError,
       fetchSpecialties,

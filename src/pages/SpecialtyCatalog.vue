@@ -49,9 +49,7 @@
                 </thead>
                 <tbody>
                   <tr
-                    v-for="(
-                      specialty, index
-                    ) in specialtyStore.getAllSpecialties"
+                    v-for="(specialty, index) in specialties"
                     :key="specialty.id"
                     :id="`specialty-item-${specialty.id}`"
                     class="border-b border-border hover:bg-muted/30"
@@ -96,10 +94,12 @@ import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddSpecialtyButton from "@/components/AddSpecialtyButton.vue";
 import EditSpecialtyButton from "@/components/EditSpecialtyButton.vue";
 import { useSpecialtyStore, type Specialty } from "@/stores/specialtyStore";
+import { storeToRefs } from "pinia";
 
 const searchbarEnabled = ref(false);
 const activeNavItem = ref("specialty-catalog");
 const specialtyStore = useSpecialtyStore();
+const { specialties } = storeToRefs(specialtyStore);
 const selectedSpecialty = ref<Specialty | null>(null);
 
 const handleSearchbarEnable = () => {

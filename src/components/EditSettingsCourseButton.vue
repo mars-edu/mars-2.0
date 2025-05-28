@@ -80,17 +80,20 @@
 import { ref, computed } from "vue";
 import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
 import { z } from "zod";
-import { useSettingsCourseStore } from "@/stores/settingsCourseStore";
+import { useCourseStore } from "@/stores/courseStore";
 
 const props = defineProps<{
   course: {
     id: string;
     name: string;
     isVisible: boolean;
+    number?: string;
+    admissionYear?: string;
+    specialtyId?: string;
   };
 }>();
 
-const courseStore = useSettingsCourseStore();
+const courseStore = useCourseStore();
 
 const courseName = ref(props.course.name);
 const isVisible = ref(props.course.isVisible);

@@ -74,11 +74,11 @@
               >
                 <option value="" disabled>Выберите номер курса</option>
                 <option
-                  v-for="course in settingsCourseStore.getVisibleCourses"
+                  v-for="course in courseStore.getVisibleCourses"
                   :key="course.id"
-                  :value="course.name"
+                  :value="course.name || course.number"
                 >
-                  {{ course.name }}
+                  {{ course.name || course.number }}
                 </option>
               </select>
               <div
@@ -161,12 +161,12 @@ import { z } from "zod";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
-import { useSettingsCourseStore } from "@/stores/settingsCourseStore";
+import { storeToRefs } from "pinia";
 
 const courseStore = useCourseStore();
 const specialtyStore = useSpecialtyStore();
 const selectedItemsStore = useSelectedItemsStore();
-const settingsCourseStore = useSettingsCourseStore();
+const { specialties } = storeToRefs(specialtyStore);
 
 const courseNumber = ref("");
 const admissionYear = ref("");
@@ -181,8 +181,6 @@ const availableYears = computed(() => {
   const currentYear = new Date().getFullYear();
   return Array.from({ length: 6 }, (_, i) => String(currentYear - i));
 });
-
-const specialties = computed(() => specialtyStore.getAllSpecialties);
 
 const handleSpecialtyChange = () => {
   if (selectedSpecialtyId.value) {
@@ -223,8 +221,8 @@ const openAddCoursePopover = async () => {
     handleSpecialtyChange();
   }
 
-  // Ensure settings courses are loaded
-  await settingsCourseStore.fetchCourses();
+  // Ensure courses are loaded
+  await courseStore.fetchCourses();
 
   f7.popover.open("#add-course-popover", "#add-course-button");
 };
@@ -279,7 +277,7 @@ watch(
 );
 
 onMounted(async () => {
-  // Load settings courses
-  await settingsCourseStore.fetchCourses();
+  // Load courses
+  await courseStore.fetchCourses();
 });
 </script>

@@ -50,7 +50,6 @@ export const useLanguageStore = defineStore(
       return languages.value.find((l) => l.isDefault) || languages.value[0];
     });
 
-    const getAllLanguages = computed(() => languages.value);
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
@@ -181,7 +180,6 @@ export const useLanguageStore = defineStore(
       error,
       getLanguageById,
       getDefaultLanguage,
-      getAllLanguages,
       isLoading,
       getError,
       fetchLanguages,
