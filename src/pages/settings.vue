@@ -173,7 +173,7 @@
               </div>
               <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
                 <div
-                  v-for="academicYear in academicYears"
+                  v-for="academicYear in academicYearStore.getSortedAcademicYears"
                   :key="academicYear.id"
                   @click.stop="handleSetActiveAcademicYear(academicYear.id)"
                   class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"

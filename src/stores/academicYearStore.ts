@@ -45,6 +45,10 @@ export const useAcademicYearStore = defineStore(
       return academicYears.value.find((ay) => ay.isActive) || null;
     });
 
+    const getSortedAcademicYears = computed(() => {
+      return [...academicYears.value].sort((a, b) => a.startYear - b.startYear);
+    });
+
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
@@ -185,6 +189,7 @@ export const useAcademicYearStore = defineStore(
       error,
       getAcademicYearById,
       getActiveAcademicYear,
+      getSortedAcademicYears,
       isLoading,
       getError,
       fetchAcademicYears,
