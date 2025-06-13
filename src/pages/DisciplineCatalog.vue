@@ -3,11 +3,7 @@
     name="discipline-catalog"
     class="flex flex-col h-screen bg-background text-foreground"
   >
-    <Header
-      @searchbar-enable="handleSearchbarEnable"
-      @searchbar-disable="handleSearchbarDisable"
-      class="hidden md:block flex-shrink-0 border-b border-border"
-    />
+    <Header class="hidden md:block flex-shrink-0 border-b border-border" />
 
     <div class="flex flex-1 overflow-hidden">
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
@@ -89,15 +85,6 @@ import AddDisciplineButton from "@/components/AddDisciplineButton.vue";
 import EditDisciplineButton from "@/components/EditDisciplineButton.vue";
 import { useDisciplineStore } from "@/stores/disciplineStore";
 
-const searchbarEnabled = ref(false);
 const activeNavItem = ref("discipline-catalog");
 const disciplineStore = useDisciplineStore();
-
-const handleSearchbarEnable = () => {
-  searchbarEnabled.value = true;
-};
-
-const handleSearchbarDisable = () => {
-  searchbarEnabled.value = false;
-};
 </script>

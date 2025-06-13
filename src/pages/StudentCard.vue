@@ -3,11 +3,7 @@
     name="student-card"
     class="flex flex-col h-screen bg-background text-foreground"
   >
-    <Header
-      @searchbar-enable="handleSearchbarEnable"
-      @searchbar-disable="handleSearchbarDisable"
-      class="hidden md:block flex-shrink-0 border-b border-border"
-    />
+    <Header class="hidden md:block flex-shrink-0 border-b border-border" />
 
     <div class="flex flex-1 overflow-hidden">
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
@@ -151,7 +147,6 @@ import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useBaseStore } from "@/stores/baseStore";
 import { storeToRefs } from "pinia";
 
-const searchbarEnabled = ref(false);
 const activeNavItem = ref("student-card");
 const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
@@ -258,14 +253,6 @@ watch(searchTerm, (newValue) => {
 const handleSearchInput = (event: Event) => {
   const target = event.target as HTMLInputElement;
   searchTerm.value = target.value;
-};
-
-const handleSearchbarEnable = () => {
-  searchbarEnabled.value = true;
-};
-
-const handleSearchbarDisable = () => {
-  searchbarEnabled.value = false;
 };
 </script>
 

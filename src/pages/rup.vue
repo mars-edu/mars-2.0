@@ -3,11 +3,7 @@
     name="rup"
     class="flex flex-col h-screen bg-background text-foreground"
   >
-    <Header
-      @searchbar-enable="handleSearchbarEnable"
-      @searchbar-disable="handleSearchbarDisable"
-      class="hidden md:block flex-shrink-0 border-b border-border"
-    />
+    <Header class="hidden md:block flex-shrink-0 border-b border-border" />
 
     <div class="flex flex-1 overflow-hidden">
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
@@ -15,6 +11,11 @@
       <div
         class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-52"
       >
+        <div
+  v-if="rupStore.showOverlay"
+  class="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center"
+  style="pointer-events: none"
+></div>
         <div
           class="bg-card text-card-foreground rounded-xl p-4 md:p-4 shadow-sm"
         >
@@ -178,7 +179,6 @@
                   :disabled="!(selectedSpecialtyId && selectedCourseId)"
                   :specialty-id="selectedSpecialtyId || ''"
                   :course-id="selectedCourseId || ''"
-                  @import="handleImportWorkingPlan"
                 />
 
                 <AddWorkingPlanDialog
@@ -279,24 +279,21 @@ import Class9Table from "@/components/Class9Table.vue";
 import Class11Table from "@/components/Class11Table.vue";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useCourseStore } from "@/stores/courseStore";
-import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import Accordion from "@/components/ui/accordion/Accordion.vue";
 import AccordionItem from "@/components/ui/accordion/AccordionItem.vue";
 import SmartSelect from "@/components/ui/SmartSelect.vue";
 import { storeToRefs } from "pinia";
 import ImportWorkingPlanDialog from "@/components/ImportWorkingPlanDialog.vue";
+import { useRupStore } from "@/stores/rupStore";
 
-const searchbarEnabled = ref(false);
 const activeNavItem = ref("rup");
 const specialtyStore = useSpecialtyStore();
 const courseStore = useCourseStore();
-const selectedItemsStore = useSelectedItemsStore();
 const academicYearStore = useAcademicYearStore();
 
 const { specialties } = storeToRefs(specialtyStore);
 const { academicYears } = storeToRefs(academicYearStore);
-const { selectedSpecialty, selectedCourse } = storeToRefs(selectedItemsStore);
 
 const selectedAcademicYear = ref("");
 
@@ -310,19 +307,12 @@ const academicYearOptions = computed(() => {
 selectedAcademicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
 
 const showAddWorkingPlanDialog = ref(false);
-const showImportWorkingPlanDialog = ref(false);
 const workingPlans = ref<
   Array<{ id: number; name: string; year: number; description?: string }>
 >([]);
 const selectedClassLevel = ref<9 | 11>(9);
 
-const handleSearchbarEnable = () => {
-  searchbarEnabled.value = true;
-};
-
-const handleSearchbarDisable = () => {
-  searchbarEnabled.value = false;
-};
+const rupStore = useRupStore();
 
 const handleWorkingPlanSubmit = (data: { baseClass: number }) => {
   const newPlan = {
@@ -334,24 +324,19 @@ const handleWorkingPlanSubmit = (data: { baseClass: number }) => {
   workingPlans.value.push(newPlan);
 };
 
-const handleImportWorkingPlan = () => {
-  // TODO: implement import logic
-};
-
 const selectedSpecialtyId = computed({
-  get: () => selectedItemsStore.selectedSpecialtyId,
-  set: (value) => selectedItemsStore.setSelectedSpecialty(value),
+  get: () => rupStore.selectedSpecialtyId,
+  set: (value) => rupStore.setSelectedSpecialty(value),
 });
 
 const selectedCourseId = computed({
-  get: () => selectedItemsStore.selectedCourseId,
-  set: (value) => selectedItemsStore.setSelectedCourse(value),
+  get: () => rupStore.selectedCourseId,
+  set: (value) => rupStore.setSelectedCourse(value),
 });
 
-const filteredVisibleCourses = computed(() => {
-  if (!selectedSpecialtyId.value) return [];
-  return courseStore.courses.filter((course) => course.isVisible !== false);
-});
+const selectedSpecialty = computed(() => rupStore.selectedSpecialty);
+const selectedCourse = computed(() => rupStore.selectedCourse);
+const filteredVisibleCourses = computed(() => rupStore.filteredCourses);
 
 onMounted(async () => {
   await specialtyStore.fetchSpecialties();

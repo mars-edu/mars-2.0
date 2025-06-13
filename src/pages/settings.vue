@@ -3,11 +3,7 @@
     name="settings"
     class="flex flex-col h-screen bg-background text-foreground"
   >
-    <Header
-      @searchbar-enable="handleSearchbarEnable"
-      @searchbar-disable="handleSearchbarDisable"
-      class="hidden md:block flex-shrink-0 border-b border-border"
-    />
+    <Header class="hidden md:block flex-shrink-0 border-b border-border" />
 
     <div class="flex flex-1 overflow-hidden">
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
@@ -249,7 +245,6 @@ import { useCourseStore } from "@/stores/courseStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
 
-const searchbarEnabled = ref(false);
 const activeNavItem = ref("settings");
 const languageStore = useLanguageStore();
 const courseStore = useCourseStore();
@@ -257,14 +252,6 @@ const academicYearStore = useAcademicYearStore();
 const { courses } = storeToRefs(courseStore);
 const { languages } = storeToRefs(languageStore);
 const { academicYears } = storeToRefs(academicYearStore);
-
-const handleSearchbarEnable = () => {
-  searchbarEnabled.value = true;
-};
-
-const handleSearchbarDisable = () => {
-  searchbarEnabled.value = false;
-};
 
 const handleToggleCourseVisibility = async (id: string) => {
   try {

@@ -2,10 +2,7 @@
   <div class="desktop-header desktop-only">
     <Logo class="header-left" />
     <div class="header-center">
-      <SearchBar
-        @enable="emit('searchbar-enable')"
-        @disable="emit('searchbar-disable')"
-      />
+      <SearchBar />
     </div>
     <div class="header-right">
       <f7-link class="notification-icon" icon-f7="bell"></f7-link>
@@ -35,11 +32,6 @@ import ThemeToggle from "../ThemeToggle.vue";
 import { useThemeStore } from "@/stores/themeStore";
 
 const themeStore = useThemeStore();
-
-const emit = defineEmits<{
-  (e: "searchbar-enable"): void;
-  (e: "searchbar-disable"): void;
-}>();
 </script>
 <style scoped>
 .desktop-header {

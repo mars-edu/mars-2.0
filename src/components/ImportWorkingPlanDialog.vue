@@ -25,16 +25,18 @@
 </template>
 
 <script setup lang="ts">
-import { f7 } from "framework7-vue";
+import { useRupStore } from "@/stores/rupStore";
 
 const props = defineProps<{
   disabled?: boolean;
-  specialtyId: string;
-  courseId: string;
+  specialtyId?: string;
+  courseId?: string;
 }>();
 
+const rupStore = useRupStore();
+
 const handleImport = () => {
-  f7.dialog.alert('Импортировать рабочий учебный план');
+  rupStore.toggle();
 };
 </script>
 

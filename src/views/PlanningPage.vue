@@ -6,10 +6,7 @@
     class="bg-background"
   >
     <div class="desktop-header-container">
-      <Header
-        @searchbar-enable="handleSearchbarEnable"
-        @searchbar-disable="handleSearchbarDisable"
-      />
+      <Header />
     </div>
 
     <f7-page-content @mousemove="handleMouseMove" class="planning-content">
@@ -108,7 +105,6 @@ import CalendarHeader from "@/components/Calendar/CalendarHeader.vue";
 import CalendarGrid from "@/components/Calendar/CalendarGrid.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 
-const searchbarEnabled = ref(false);
 const calendarContainer = ref<HTMLElement | null>(null);
 const isAddPopoverOpen = ref(false);
 const isSidebarVisible = ref(false);
@@ -223,14 +219,6 @@ onMounted(() => {
   });
 });
 
-// Event handlers for Header component
-const handleSearchbarEnable = () => {
-  searchbarEnabled.value = true;
-};
-
-const handleSearchbarDisable = () => {
-  searchbarEnabled.value = false;
-};
 
 // Event handlers for toolbar
 const handleIconClick = (value: string) => {

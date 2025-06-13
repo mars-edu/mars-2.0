@@ -3,11 +3,7 @@
     name="specialty-catalog"
     class="flex flex-col h-screen bg-background text-foreground"
   >
-    <Header
-      @searchbar-enable="handleSearchbarEnable"
-      @searchbar-disable="handleSearchbarDisable"
-      class="hidden md:block flex-shrink-0 border-b border-border"
-    />
+    <Header class="hidden md:block flex-shrink-0 border-b border-border" />
 
     <div class="flex flex-1 overflow-hidden">
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
@@ -96,19 +92,10 @@ import EditSpecialtyButton from "@/components/EditSpecialtyButton.vue";
 import { useSpecialtyStore, type Specialty } from "@/stores/specialtyStore";
 import { storeToRefs } from "pinia";
 
-const searchbarEnabled = ref(false);
 const activeNavItem = ref("specialty-catalog");
 const specialtyStore = useSpecialtyStore();
 const { specialties } = storeToRefs(specialtyStore);
 const selectedSpecialty = ref<Specialty | null>(null);
-
-const handleSearchbarEnable = () => {
-  searchbarEnabled.value = true;
-};
-
-const handleSearchbarDisable = () => {
-  searchbarEnabled.value = false;
-};
 
 const selectSpecialty = (specialty: Specialty) => {
   selectedSpecialty.value = specialty;

@@ -1,10 +1,6 @@
 <template>
   <f7-page name="home" class="flex flex-col h-screen">
-    <Header
-      @searchbar-enable="handleSearchbarEnable"
-      @searchbar-disable="handleSearchbarDisable"
-      class="hidden md:block flex-shrink-0"
-    />
+    <Header class="hidden md:block flex-shrink-0" />
 
     <!-- Desktop Layout -->
     <div class="hidden md:flex overflow-hidden flex-1">
@@ -141,7 +137,6 @@ import CalendarCard from "@/components/Cards/CalendarCard.vue";
 import ScheduleCard from "@/components/Cards/ScheduleCard.vue";
 import AcademicWeekCard from "@/components/Cards/AcademicWeekCard.vue";
 
-const searchbarEnabled = ref(false);
 const activeNavItem = ref("home");
 
 const navigationItems = [
@@ -150,12 +145,4 @@ const navigationItems = [
   { id: "journals", label: "Журналы", icon: "doc_text_fill" },
   { id: "rup", label: "РУП", icon: "book_fill" },
 ];
-
-const handleSearchbarEnable = () => {
-  searchbarEnabled.value = true;
-};
-
-const handleSearchbarDisable = () => {
-  searchbarEnabled.value = false;
-};
 </script>
