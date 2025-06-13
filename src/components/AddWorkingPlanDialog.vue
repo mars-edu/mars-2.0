@@ -35,13 +35,12 @@
         />
 
         <div class="p-4 flex flex-col gap-4">
-
-          <AddWorkingPlanDialogNew
-      :disabled="disabled"
-      :specialty-id="specialtyId"
-      :course-id="courseId"
-      @opened="closeAddWorkingPlanDialogNew"
-    />
+          <button
+            class="w-full py-3 rounded-lg text-white bg-gray-500 hover:bg-primary"
+            @click="openClass9Popup"
+          >
+            На базе 9 класса
+          </button>
 
           <button
             class="w-full py-3 rounded-lg text-white bg-gray-500 hover:bg-primary"
@@ -68,7 +67,6 @@
 import { computed, ref } from "vue";
 import { f7, f7Popover } from "framework7-vue";
 import Class9Popup from "./Class9Popup.vue";
-import AddWorkingPlanDialogNew from "./AddWorkingPlanDialogNew.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
@@ -91,6 +89,11 @@ const openWorkingPlanPopover = () => {
   f7.popover.open("#add-working-plan-popover", "#add-working-plan-button");
 };
 
+const openClass9Popup = () => {
+  f7.popover.close("#add-working-plan-popover");
+  f7.popover.open("#class9-popover");
+};
+
 const handleClose = () => {
   f7.popover.close("#add-working-plan-popover");
   emit("update:opened", false);
@@ -101,12 +104,10 @@ const handleSubmit = () => {
   handleClose();
 };
 
-const closeAddWorkingPlanDialogNew = () => {
-  f7.popover.close("#add-working-plan-popover");
-};
 
 const closeClass9Popup = () => {
-  
+  f7.popover.close("#class9-popover");
+
 };
 
 const handleClass9Submit = () => {

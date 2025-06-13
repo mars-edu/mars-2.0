@@ -1,7 +1,10 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 
-export interface StepData {
+export interface Class9Data {
+  id: string;
+  courseId: string;
+  specialtyId: string;
   moduleIndex: string;
   moduleName: string;
   learningOutcome: string;
@@ -22,13 +25,6 @@ export interface StepData {
   individualHours: string;
   distributionSemestersActive: boolean[];
   distributionSemesterHours: string[];
-}
-
-export interface Class9Data {
-  id: string;
-  courseId: string;
-  specialtyId: string;
-  steps: StepData[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,8 +49,11 @@ export const useClass9Store = defineStore(
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
-    function createEmptyStepData(): StepData {
+    function createEmptyClass9Data(courseId: string, specialtyId: string): Class9Data {
       return {
+        id: crypto.randomUUID(),
+        courseId,
+        specialtyId,
         moduleIndex: '',
         moduleName: '',
         learningOutcome: '',
@@ -75,20 +74,22 @@ export const useClass9Store = defineStore(
         individualHours: '',
         distributionSemestersActive: Array(8).fill(false),
         distributionSemesterHours: Array(8).fill(''),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
     }
 
-    async function addClass9(courseId: string, specialtyId: string, steps: StepData[] = [createEmptyStepData()]) {
+    async function addClass9(courseId: string, specialtyId: string, data?: Partial<Omit<Class9Data, 'id' | 'createdAt' | 'updatedAt' | 'courseId' | 'specialtyId'>> ) {
       loading.value = true;
       try {
         const newClass9: Class9Data = {
-          id: crypto.randomUUID(),
+          ...createEmptyClass9Data(courseId, specialtyId),
+          ...data,
+          // TODO: workaround 
           courseId,
           specialtyId,
-          steps,
-          createdAt: new Date(),
-          updatedAt: new Date(),
         };
+
         class9Items.value.push(newClass9);
         error.value = null;
         return newClass9;
@@ -100,7 +101,7 @@ export const useClass9Store = defineStore(
       }
     }
 
-    async function updateClass9(id: string, steps: StepData[]) {
+    async function updateClass9(id: string, data: Partial<Omit<Class9Data, 'id' | 'createdAt' | 'updatedAt'>>) {
       loading.value = true;
       try {
         const index = class9Items.value.findIndex((c) => c.id === id);
@@ -110,7 +111,7 @@ export const useClass9Store = defineStore(
 
         const updatedClass9 = {
           ...class9Items.value[index],
-          steps,
+          ...data,
           updatedAt: new Date(),
         };
 
@@ -151,7 +152,7 @@ export const useClass9Store = defineStore(
       getAllClass9Items,
       isLoading,
       getError,
-      createEmptyStepData,
+      createEmptyClass9Data,
       addClass9,
       updateClass9,
       deleteClass9,

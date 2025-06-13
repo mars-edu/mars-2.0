@@ -174,6 +174,13 @@
             <AccordionItem id="workingPlans" :default-expanded="true">
               <template #title>Рабочий учебный план:</template>
               <template #actions>
+                <ImportWorkingPlanDialog
+                  :disabled="!(selectedSpecialtyId && selectedCourseId)"
+                  :specialty-id="selectedSpecialtyId || ''"
+                  :course-id="selectedCourseId || ''"
+                  @import="handleImportWorkingPlan"
+                />
+
                 <AddWorkingPlanDialog
                   v-model:opened="showAddWorkingPlanDialog"
                   @submit="handleWorkingPlanSubmit"
@@ -278,6 +285,7 @@ import Accordion from "@/components/ui/accordion/Accordion.vue";
 import AccordionItem from "@/components/ui/accordion/AccordionItem.vue";
 import SmartSelect from "@/components/ui/SmartSelect.vue";
 import { storeToRefs } from "pinia";
+import ImportWorkingPlanDialog from "@/components/ImportWorkingPlanDialog.vue";
 
 const searchbarEnabled = ref(false);
 const activeNavItem = ref("rup");
@@ -302,6 +310,7 @@ const academicYearOptions = computed(() => {
 selectedAcademicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
 
 const showAddWorkingPlanDialog = ref(false);
+const showImportWorkingPlanDialog = ref(false);
 const workingPlans = ref<
   Array<{ id: number; name: string; year: number; description?: string }>
 >([]);
@@ -323,6 +332,10 @@ const handleWorkingPlanSubmit = (data: { baseClass: number }) => {
     baseClass: data.baseClass,
   };
   workingPlans.value.push(newPlan);
+};
+
+const handleImportWorkingPlan = () => {
+  // TODO: implement import logic
 };
 
 const selectedSpecialtyId = computed({

@@ -12,8 +12,8 @@
         :on-cancel="close"
         :on-save="submit"
       >
-        <template #title>
-          <div class="flex items-center space-x-4">
+        <template #title >
+          <div v-if="!editMode" class="flex items-center space-x-4">
             <button @click="removeStep(currentStep)" v-if="steps.length > 1">
               <f7-icon f7="trash" class="text-red-500"></f7-icon>
             </button>
@@ -44,7 +44,17 @@
                   {{ currentStep === steps.length ? "Добавить" : "Далее" }}
                 </f7-button>
               </div>
+              
             </div>
+          </div>
+          <div v-else class="border-t border-border">
+        <button
+          class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
+          @click="showDeleteConfirmation"
+        >
+          <f7-icon ios="f7:trash" md="material:delete" size="18px" class="mr-2" />
+          Удалить
+        </button>
           </div>
         </template>
       </PopoverHeader>
@@ -426,7 +436,7 @@ import {
   f7Button,
   f7,
 } from "framework7-vue";
-import { useClass9Store, type StepData } from "@/stores/class9Store";
+import { useClass9Store } from "@/stores/class9Store";
 import { z } from "zod";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
@@ -438,43 +448,36 @@ const emit = defineEmits<{
 const props = defineProps<{
   specialtyId: string;
   courseId: string;
-  initialStep?: number;
+  initialData?: any;
+  editMode?: boolean;
 }>();
 
 const class9Store = useClass9Store();
-const currentStep = ref(props.initialStep || 1);
-const steps = ref<StepData[]>([class9Store.createEmptyStepData()]);
-const class9Id = ref<string | null>(null);
+
+function createEmptyStep() {
+  return class9Store.createEmptyClass9Data(props.courseId, props.specialtyId);
+}
+
+const steps = ref([createEmptyStep()]);
+const currentStep = ref(1);
 
 watch(
-  () => props.initialStep,
-  (newValue) => {
-    if (newValue && newValue > 0 && newValue <= steps.value.length) {
-      currentStep.value = newValue;
+  () => [props.initialData, props.editMode],
+  ([val, edit]) => {
+    if (edit && val) {
+      steps.value = [{ ...val }];
+      currentStep.value = 1;
+    } else {
+      steps.value = [createEmptyStep()];
+      currentStep.value = 1;
     }
   },
   { immediate: true }
 );
 
 onMounted(async () => {
-  const existingClass9 = class9Store.getClass9ByCourseId(
-    props.courseId,
-    props.specialtyId
-  );
-  if (existingClass9) {
-    steps.value = existingClass9.steps;
-    class9Id.value = existingClass9.id;
-  }
-
-  if (
-    props.initialStep &&
-    props.initialStep > 0 &&
-    props.initialStep <= steps.value.length
-  ) {
-    currentStep.value = props.initialStep;
-  }
-
-  // Initialize tooltips after the component is mounted
+  steps.value = props.editMode && props.initialData ? [{ ...props.initialData }] : [createEmptyStep()];
+  currentStep.value = 1;
   nextTick(() => {
     f7.tooltip.create({
       targetEl: ".copy-button",
@@ -483,7 +486,7 @@ onMounted(async () => {
   });
 });
 
-const stepSchema = z.object({
+const class9Schema = z.object({
   moduleIndex: z.string().min(1, "Индекс модуля обязателен"),
   moduleName: z.string().min(1, "Наименование модуля обязательно"),
   learningOutcome: z.string().optional(),
@@ -537,139 +540,21 @@ const stepSchema = z.object({
     .optional(),
 });
 
-const toggleSemester = (
-  stepIndex: number,
-  type: "exam" | "credit" | "controlLesson",
-  semesterIndex: number,
-  event?: Event
-) => {
-  if (event) {
-    event.stopPropagation();
-  }
-
-  const stepData = steps.value[stepIndex];
-  if (!stepData) return;
-
-  switch (type) {
-    case "exam":
-      if (!stepData.examEnabled) {
-        stepData.examEnabled = true;
-      }
-      stepData.examSemesters[semesterIndex] =
-        !stepData.examSemesters[semesterIndex];
-      break;
-    case "credit":
-      if (!stepData.creditEnabled) {
-        stepData.creditEnabled = true;
-      }
-      stepData.creditSemesters[semesterIndex] =
-        !stepData.creditSemesters[semesterIndex];
-      break;
-    case "controlLesson":
-      if (!stepData.controlLessonEnabled) {
-        stepData.controlLessonEnabled = true;
-      }
-      stepData.controlLessonSemesters[semesterIndex] =
-        !stepData.controlLessonSemesters[semesterIndex];
-      break;
-  }
-};
-
-const toggleCheckbox = (
-  stepIndex: number,
-  type: "exam" | "credit" | "controlLesson"
-) => {
-  const stepData = steps.value[stepIndex];
-  if (!stepData) return;
-
-  switch (type) {
-    case "exam":
-      stepData.examEnabled = !stepData.examEnabled;
-      break;
-    case "credit":
-      stepData.creditEnabled = !stepData.creditEnabled;
-      break;
-    case "controlLesson":
-      stepData.controlLessonEnabled = !stepData.controlLessonEnabled;
-      break;
-  }
-};
-
-const onBack = () => {
-  if (currentStep.value > 1) {
-    currentStep.value--;
-  }
-};
-
-const onNext = () => {
-  if (currentStep.value === steps.value.length) {
-    steps.value.push(class9Store.createEmptyStepData());
-  }
-  currentStep.value++;
-};
-
-const removeStep = (stepNumber: number) => {
-  const index = stepNumber - 1;
-  if (steps.value.length > 1 && index >= 0 && index < steps.value.length) {
-    steps.value.splice(index, 1);
-    if (currentStep.value > steps.value.length) {
-      currentStep.value = steps.value.length;
-    }
-  }
-};
-
-const close = () => {
-  emit("close");
-};
-
-const submit = async () => {
-  if (!isFormValid.value) {
-    return;
-  }
-
-  try {
-    if (class9Id.value) {
-      await class9Store.updateClass9(class9Id.value, steps.value);
-    } else {
-      await class9Store.addClass9(
-        props.courseId,
-        props.specialtyId,
-        steps.value
-      );
-    }
-    emit("submit");
-  } catch (error) {
-    console.error("Failed to save class9 data:", error);
-  }
-};
-
-const copyFromPreviousStep = (index: number, field: keyof StepData) => {
-  if (index > 0) {
-    const previousStep = steps.value[index - 1];
-    const currentStep = steps.value[index];
-    if (previousStep && currentStep) {
-      (currentStep[field] as any) = previousStep[field];
-    }
-  }
-};
-
 const validationResult = computed(() => {
-  const currentStepData = steps.value[currentStep.value - 1];
-  if (!currentStepData)
-    return { success: false, error: { issues: [{ message: "Нет данных" }] } };
-
-  return stepSchema.safeParse({
-    moduleIndex: currentStepData.moduleIndex,
-    moduleName: currentStepData.moduleName,
-    learningOutcome: currentStepData.learningOutcome,
-    totalCredits: String(currentStepData.totalCredits),
-    totalHours: String(currentStepData.totalHours),
-    theoreticalHours: String(currentStepData.theoreticalHours),
-    labPracticalHours: String(currentStepData.labPracticalHours),
-    srspHours: String(currentStepData.srspHours),
-    srsHours: String(currentStepData.srsHours),
-    trainingPracticeHours: String(currentStepData.trainingPracticeHours),
-    individualHours: String(currentStepData.individualHours),
+  const step = steps.value[currentStep.value - 1];
+  if (!step) return { success: false, error: { issues: [{ message: "Нет данных" }] } };
+  return class9Schema.safeParse({
+    moduleIndex: step.moduleIndex,
+    moduleName: step.moduleName,
+    learningOutcome: step.learningOutcome,
+    totalCredits: String(step.totalCredits),
+    totalHours: String(step.totalHours),
+    theoreticalHours: String(step.theoreticalHours),
+    labPracticalHours: String(step.labPracticalHours),
+    srspHours: String(step.srspHours),
+    srsHours: String(step.srsHours),
+    trainingPracticeHours: String(step.trainingPracticeHours),
+    individualHours: String(step.individualHours),
   });
 });
 
@@ -681,6 +566,115 @@ const formError = computed(() => {
 });
 
 const isFormValid = computed(() => validationResult.value.success);
+
+function onBack() {
+  if (currentStep.value > 1) currentStep.value--;
+}
+
+function onNext() {
+  if (currentStep.value === steps.value.length) {
+    steps.value.push(createEmptyStep());
+  }
+  currentStep.value++;
+}
+
+function removeStep(stepNumber: number) {
+  const index = stepNumber - 1;
+  if (steps.value.length > 1 && index >= 0 && index < steps.value.length) {
+    steps.value.splice(index, 1);
+    if (currentStep.value > steps.value.length) {
+      currentStep.value = steps.value.length;
+    }
+  }
+}
+
+function copyFromPreviousStep(index: number, field: keyof typeof steps.value[0]) {
+  if (index > 0) {
+    const previousStep = steps.value[index - 1];
+    const currentStepObj = steps.value[index];
+    if (previousStep && currentStepObj) {
+      (currentStepObj[field] as any) = previousStep[field];
+    }
+  }
+}
+
+function close() {
+  steps.value = [createEmptyStep()];
+  currentStep.value = 1;
+  emit("close");
+}
+
+async function submit() {
+  if (!isFormValid.value) {
+    f7.dialog.alert("Schema validation error");
+    return;
+  }
+  try {
+    if (props.editMode && props.initialData && props.initialData.id) {
+      await class9Store.updateClass9(props.initialData.id, steps.value[0]);
+    } else {
+      for (const step of steps.value) {
+        await class9Store.addClass9(props.courseId, props.specialtyId, step);
+      }
+    }
+    emit("submit");
+  } catch (error) {
+    console.error("Failed to save class9 data:", error);
+  }
+}
+
+function toggleSemester(stepIndex: number, type: "exam" | "credit" | "controlLesson", semesterIndex: number, event?: Event) {
+  if (event) event.stopPropagation();
+  const stepData = steps.value[stepIndex];
+  if (!stepData) return;
+  switch (type) {
+    case "exam":
+      if (!stepData.examEnabled) stepData.examEnabled = true;
+      stepData.examSemesters[semesterIndex] = !stepData.examSemesters[semesterIndex];
+      break;
+    case "credit":
+      if (!stepData.creditEnabled) stepData.creditEnabled = true;
+      stepData.creditSemesters[semesterIndex] = !stepData.creditSemesters[semesterIndex];
+      break;
+    case "controlLesson":
+      if (!stepData.controlLessonEnabled) stepData.controlLessonEnabled = true;
+      stepData.controlLessonSemesters[semesterIndex] = !stepData.controlLessonSemesters[semesterIndex];
+      break;
+  }
+}
+
+function toggleCheckbox(stepIndex: number, type: "exam" | "credit" | "controlLesson") {
+  const stepData = steps.value[stepIndex];
+  if (!stepData) return;
+  switch (type) {
+    case "exam":
+      stepData.examEnabled = !stepData.examEnabled;
+      break;
+    case "credit":
+      stepData.creditEnabled = !stepData.creditEnabled;
+      break;
+    case "controlLesson":
+      stepData.controlLessonEnabled = !stepData.controlLessonEnabled;
+      break;
+  }
+}
+
+function showDeleteConfirmation() {
+  if (!props.initialData || !props.initialData.id) return;
+  f7.dialog.confirm(
+    `<p>Вы уверены, что хотите удалить запись "${props.initialData.moduleName}"?</p><p class='text-sm text-muted-foreground mt-2'>Это действие нельзя отменить.</p>`,
+    "Удаление записи",
+    async () => {
+      try {
+        await class9Store.deleteClass9(props.initialData.id);
+        close();
+    emit("submit");
+  } catch (error) {
+        f7.dialog.alert("Произошла ошибка при удалении.");
+      }
+    }
+  );
+}
 </script>
 
 <style>
@@ -787,3 +781,4 @@ const isFormValid = computed(() => validationResult.value.success);
   background-color: rgb(218, 220, 223) !important;
 }
 </style>
+
