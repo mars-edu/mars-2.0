@@ -30,19 +30,18 @@
     >
       <div class="working-plan-popover bg-card text-card-foreground">
         <PopoverHeader
-          title="Создать"
+          title="Выбрать"
           :disabled="!isValid"
-          :on-cancel="handleClose"
-          :on-save="handleSubmit"
         />
 
         <div class="p-4 flex flex-col gap-4">
-          <button
-            class="w-full py-3 rounded-lg text-white bg-gray-500 hover:bg-primary"
-            @click="openClass9Popup()"
-          >
-            На базе 9 класса
-          </button>
+
+          <AddWorkingPlanDialogNew
+      :disabled="disabled"
+      :specialty-id="specialtyId"
+      :course-id="courseId"
+      @opened="closeAddWorkingPlanDialogNew"
+    />
 
           <button
             class="w-full py-3 rounded-lg text-white bg-gray-500 hover:bg-primary"
@@ -53,6 +52,7 @@
         </div>
       </div>
     </f7-popover>
+
 
     <Class9Popup
       target="#add-working-plan-button"
@@ -65,9 +65,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { f7, f7Popover } from "framework7-vue";
 import Class9Popup from "./Class9Popup.vue";
+import AddWorkingPlanDialogNew from "./AddWorkingPlanDialogNew.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
@@ -100,19 +101,15 @@ const handleSubmit = () => {
   handleClose();
 };
 
-const openClass9Popup = () => {
+const closeAddWorkingPlanDialogNew = () => {
   f7.popover.close("#add-working-plan-popover");
-  setTimeout(() => {
-    f7.popover.open("#class9-popover");
-  }, 100);
 };
 
 const closeClass9Popup = () => {
-  f7.popover.close("#class9-popover");
+  
 };
 
 const handleClass9Submit = () => {
-  // Handle form submission here
   closeClass9Popup();
 };
 </script>
