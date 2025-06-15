@@ -2,7 +2,7 @@
   <transition name="fade">
     <div
       v-if="visible"
-      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[500] p-4"
+      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-4"
       @click.self="handleClose"
       @keydown.esc.prevent="handleClose"
       ref="focusContainer"
@@ -16,7 +16,10 @@
                 <th class="p-2 text-left w-12 rounded-tl-lg">№</th>
                 <th class="p-2 text-left">Обучающийся</th>
                 <th class="p-2 text-center w-24 rounded-tr-lg">
-                  {{ date }}
+                  <span
+                    v-if="columnHeader"
+                    v-html="columnHeader.label.replace('\\n', '<br/>')"
+                  ></span>
                 </th>
               </tr>
             </thead>
@@ -26,6 +29,9 @@
                 :key="student.id"
                 class="border-b border-border last:border-b-0 transition-all duration-300"
                 :class="{
+                  'bg-background scale-105 shadow-lg rounded-lg':
+                    highlightedStudentIndex === index &&
+                    editingCell?.studentIndex !== index,
                   'scale-110 z-10 transform bg-background shadow-xl rounded-lg':
                     editingCell?.studentIndex === index,
                 }"
@@ -33,7 +39,9 @@
                 <td
                   class="p-2 text-center rounded-l-lg"
                   :class="{
-                    'font-bold': editingCell?.studentIndex === index,
+                    'font-bold':
+                      highlightedStudentIndex === index ||
+                      editingCell?.studentIndex === index,
                   }"
                 >
                   {{ index + 1 }}
@@ -41,7 +49,9 @@
                 <td
                   class="p-2"
                   :class="{
-                    'font-bold': editingCell?.studentIndex === index,
+                    'font-bold':
+                      highlightedStudentIndex === index ||
+                      editingCell?.studentIndex === index,
                   }"
                 >
                   {{ student.name }}
@@ -66,7 +76,7 @@
                         class="cursor-pointer w-full"
                       >
                         <MarkCell
-                          :mark="student.marks[selectedDateIndex][0]"
+                          :mark="student.marks[selectedDateIndex].values[0]"
                         />
                       </div>
                     </div>
@@ -88,7 +98,7 @@
                         class="cursor-pointer w-full"
                       >
                         <MarkCell
-                          :mark="student.marks[selectedDateIndex][1]"
+                          :mark="student.marks[selectedDateIndex].values[1]"
                         />
                       </div>
                     </div>
@@ -117,14 +127,18 @@ const props = defineProps({
     type: Array as () => any[],
     required: true,
   },
-  date: {
-    type: String,
+  columnHeader: {
+    type: Object as () => { type: string; label: string } | null,
     required: true,
   },
   selectedDateIndex: {
     type: Number,
     required: true,
-  }
+  },
+  highlightedStudentIndex: {
+    type: Number,
+    default: -1,
+  },
 });
 
 const emit = defineEmits(["close", "update-students"]);
@@ -161,7 +175,7 @@ watch(
 
 const getMark = (studentIndex: number, markIndex: number) => {
   const mark =
-    localStudents.value[studentIndex].marks[props.selectedDateIndex][
+    localStudents.value[studentIndex].marks[props.selectedDateIndex].values[
       markIndex
     ];
   if (mark === null) return "";
@@ -170,7 +184,7 @@ const getMark = (studentIndex: number, markIndex: number) => {
 
 const setMark = (studentIndex: number, markIndex: number, value: string) => {
   const newValue = value === "+" || value === "" ? null : value;
-  localStudents.value[studentIndex].marks[props.selectedDateIndex][
+  localStudents.value[studentIndex].marks[props.selectedDateIndex].values[
     markIndex
   ] = newValue;
 };
@@ -207,7 +221,7 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
 
     switch (direction) {
       case "right":
-      case "down":
+      case "down": // Treat 'down' similar to 'right' for mark-level navigation
         if (startMarkIndex === 0) {
           nextMarkIndex = 1;
         } else {
@@ -216,7 +230,7 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
         }
         break;
       case "left":
-      case "up":
+      case "up": // Treat 'up' similar to 'left' for mark-level navigation
         if (startMarkIndex === 1) {
           nextMarkIndex = 0;
         } else {
@@ -229,6 +243,7 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
     if (nextStudentIndex < 0)
       nextStudentIndex = localStudents.value.length - 1;
     if (nextStudentIndex >= localStudents.value.length) nextStudentIndex = 0;
+    // No need to wrap marks, as they are handled by the inner logic
 
     editCell(nextStudentIndex, nextMarkIndex);
   });

@@ -3,13 +3,16 @@
     <div
       v-if="student"
       ref="floatingRowRef"
-      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[500] p-4"
+      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-4"
       tabindex="-1"
       @click.self="handleClose"
       @keydown.esc.prevent="handleClose"
     >
       <transition name="scale">
-        <div v-if="localStudent" class="bg-background rounded-xl shadow-lg w-full max-w-7xl">
+        <div
+          v-if="localStudent"
+          class="bg-background rounded-xl shadow-lg w-full max-w-7xl"
+        >
           <div class="overflow-x-auto p-2">
             <table class="w-full border-collapse">
               <thead>
@@ -19,46 +22,21 @@
                   >
                     №
                   </th>
-                  <th class="p-2 text-left w-64 border-r border-border align-top">
+                  <th
+                    class="p-2 text-left w-64 border-r border-border align-top"
+                  >
                     Обучающийся
                   </th>
                   <th
-                    v-for="(date, index) in dates"
-                    :key="`date-${index}`"
+                    v-for="(header, index) in tableHeaders"
+                    :key="index"
                     class="px-1 py-2 text-center text-xs border-r border-border w-16 transition-all duration-300"
                     :class="{
                       'scale-125 bg-green-100 text-green-600 font-bold':
                         editingCell?.col === index,
                     }"
                   >
-                    {{ date.split('\n')[0] }}<br />{{ date.split('\n')[1] }}
-                  </th>
-                  <th
-                    class="px-2 py-2 text-center text-xs border-r border-border w-16 align-top transition-all duration-300"
-                    :class="{
-                      'scale-125 bg-green-100 text-green-600 font-bold':
-                        editingCell?.col === 15,
-                    }"
-                  >
-                    РК
-                  </th>
-                  <th
-                    class="px-2 py-2 text-center text-xs border-r border-border w-16 align-top transition-all duration-300"
-                    :class="{
-                      'scale-125 bg-green-100 text-green-600 font-bold':
-                        editingCell?.col === 16,
-                    }"
-                  >
-                    Э
-                  </th>
-                  <th
-                    class="px-2 py-2 text-center text-xs w-16 align-top rounded-tr-lg transition-all duration-300"
-                    :class="{
-                      'scale-125 bg-green-100 text-green-600 font-bold':
-                        editingCell?.col === 17,
-                    }"
-                  >
-                    И
+                    <span v-html="header.label.replace('\\n', '<br/>')"></span>
                   </th>
                 </tr>
               </thead>
@@ -73,7 +51,7 @@
                     {{ localStudent.name }}
                   </td>
                   <td
-                    v-for="(markPair, colIndex) in allMarkColumns"
+                    v-for="(mark, colIndex) in localStudent.marks"
                     :key="colIndex"
                     class="px-1 py-2 text-center border-r border-border"
                   >
@@ -83,11 +61,15 @@
                         class="h-8 flex items-center justify-center transition-transform duration-300"
                         :class="{
                           'scale-175 z-10':
-                            editingCell?.row === 0 && editingCell?.col === colIndex,
+                            editingCell?.row === 0 &&
+                            editingCell?.col === colIndex,
                         }"
                       >
                         <EditableMarkCell
-                          v-if="editingCell?.row === 0 && editingCell?.col === colIndex"
+                          v-if="
+                            editingCell?.row === 0 &&
+                            editingCell?.col === colIndex
+                          "
                           v-model="editedValue"
                           @confirm="confirmEdit"
                           @cancel="cancelEdit"
@@ -99,7 +81,7 @@
                           @click="editCell(0, colIndex)"
                           class="cursor-pointer w-full"
                         >
-                          <MarkCell :mark="markPair[0]" />
+                          <MarkCell :mark="mark.values[0]" />
                         </div>
                       </div>
 
@@ -108,11 +90,15 @@
                         class="h-8 flex items-center justify-center transition-transform duration-300"
                         :class="{
                           'scale-175 z-10':
-                            editingCell?.row === 1 && editingCell?.col === colIndex,
+                            editingCell?.row === 1 &&
+                            editingCell?.col === colIndex,
                         }"
                       >
                         <EditableMarkCell
-                          v-if="editingCell?.row === 1 && editingCell?.col === colIndex"
+                          v-if="
+                            editingCell?.row === 1 &&
+                            editingCell?.col === colIndex
+                          "
                           v-model="editedValue"
                           @confirm="confirmEdit"
                           @cancel="cancelEdit"
@@ -124,7 +110,7 @@
                           @click="editCell(1, colIndex)"
                           class="cursor-pointer w-full"
                         >
-                          <MarkCell :mark="markPair[1]" />
+                          <MarkCell :mark="mark.values[1]" />
                         </div>
                       </div>
                     </div>
@@ -153,8 +139,8 @@ const props = defineProps({
     type: Number,
     required: true,
   },
-  dates: {
-    type: Array as () => string[],
+  tableHeaders: {
+    type: Array as () => { type: string; label: string }[],
     required: true,
   },
 });
@@ -182,33 +168,15 @@ watch(
   { immediate: true }
 );
 
-const allMarkColumns = computed(() => {
-  if (!localStudent.value) return [];
-  return [
-    ...localStudent.value.marks,
-    localStudent.value.pk_mark,
-    localStudent.value.e_mark,
-    localStudent.value.i_mark,
-  ];
-});
-
 const getMark = (row: number, col: number): string => {
-  const mark = allMarkColumns.value[col][row];
+  const mark = localStudent.value.marks[col].values[row];
   if (mark === null) return "";
   return String(mark ?? "");
 };
 
 const setMark = (row: number, col: number, value: string) => {
   const newValue = value === "+" || value === "" ? null : value;
-  if (col >= 0 && col < 15) {
-    localStudent.value.marks[col][row] = newValue;
-  } else if (col === 15) {
-    localStudent.value.pk_mark[row] = newValue;
-  } else if (col === 16) {
-    localStudent.value.e_mark[row] = newValue;
-  } else if (col === 17) {
-    localStudent.value.i_mark[row] = newValue;
-  }
+  localStudent.value.marks[col].values[row] = newValue;
 };
 
 const editCell = (row: number, col: number) => {
@@ -238,7 +206,7 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
   nextTick(() => {
     let nextRow = startRow;
     let nextCol = startCol;
-    const numCols = allMarkColumns.value.length;
+    const numCols = props.tableHeaders.length;
 
     switch (direction) {
       case "right":

@@ -4,7 +4,7 @@
     type="text"
     :value="modelValue"
     class="h-8 w-full rounded-md border-2 border-primary bg-background text-center font-semibold shadow-lg outline-none transition-all duration-300 text-sm"
-    :class="{ '!text-3xl': isZoomed }"
+    :class="{ '!text-2xl': isZoomed }"
     @input="onInput"
     @keydown.enter.prevent="$emit('navigate', 'right')"
     @keydown.esc.prevent="$emit('cancel')"

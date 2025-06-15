@@ -40,12 +40,14 @@
                     <th class="p-2 text-left w-12 border-r border-border align-top">№</th>
                     <th class="p-2 text-left w-64 border-r border-border align-top">Обучающийся</th>
                     <!-- Dynamic date columns -->
-                    <th v-for="(date, index) in dates" :key="date" class="px-1 py-2 text-center text-xs border-r border-border w-16 cursor-pointer hover:bg-muted" @click="openDateFocus(date, index)">
-                      {{ date.split('\n')[0] }}<br/>{{ date.split('\n')[1] }}
+                    <th
+                      v-for="(header, index) in tableHeaders"
+                      :key="index"
+                      class="px-1 py-2 text-center text-xs border-r border-border w-16 cursor-pointer hover:bg-muted"
+                      @click="openDateFocus(header, index)"
+                    >
+                      <span v-html="header.label.replace('\\n', '<br/>')"></span>
                     </th>
-                    <th class="px-2 py-2 text-center text-xs border-r border-border w-16 align-top">РК</th>
-                    <th class="px-2 py-2 text-center text-xs border-r border-border w-16 align-top">Э</th>
-                    <th class="px-2 py-2 text-center text-xs w-16 align-top">И</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -89,7 +91,7 @@
                             @click="editCell(studentIndex, colIndex, 0)"
                             class="cursor-pointer w-full"
                           >
-                            <MarkCell :mark="mark[0]" />
+                            <MarkCell :mark="mark.values[0]" />
                           </div>
                         </div>
                         <div
@@ -118,193 +120,7 @@
                             @click="editCell(studentIndex, colIndex, 1)"
                             class="cursor-pointer w-full"
                           >
-                            <MarkCell :mark="mark[1]" />
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="px-1 py-2 text-center border-r border-border">
-                      <div class="flex flex-col gap-1">
-                        <div
-                          class="h-8 flex items-center justify-center transition-transform duration-300"
-                          :class="{
-                            'scale-175 z-10':
-                              editingCell?.studentIndex === studentIndex &&
-                              editingCell?.colIndex === dates.length &&
-                              editingCell?.markIndex === 0,
-                          }"
-                        >
-                          <EditableMarkCell
-                            v-if="
-                              editingCell?.studentIndex === studentIndex &&
-                              editingCell?.colIndex === dates.length &&
-                              editingCell?.markIndex === 0
-                            "
-                            v-model="editedValue"
-                            @confirm="confirmEdit"
-                            @cancel="cancelEdit"
-                            @navigate="navigate"
-                            :is-zoomed="true"
-                          />
-                          <div
-                            v-else
-                            @click="editCell(studentIndex, dates.length, 0)"
-                            class="cursor-pointer w-full"
-                          >
-                            <MarkCell :mark="student.pk_mark[0]" />
-                          </div>
-                        </div>
-                        <div
-                          class="h-8 flex items-center justify-center transition-transform duration-300"
-                          :class="{
-                            'scale-175 z-10':
-                              editingCell?.studentIndex === studentIndex &&
-                              editingCell?.colIndex === dates.length &&
-                              editingCell?.markIndex === 1,
-                          }"
-                        >
-                          <EditableMarkCell
-                            v-if="
-                              editingCell?.studentIndex === studentIndex &&
-                              editingCell?.colIndex === dates.length &&
-                              editingCell?.markIndex === 1
-                            "
-                            v-model="editedValue"
-                            @confirm="confirmEdit"
-                            @cancel="cancelEdit"
-                            @navigate="navigate"
-                            :is-zoomed="true"
-                          />
-                          <div
-                            v-else
-                            @click="editCell(studentIndex, dates.length, 1)"
-                            class="cursor-pointer w-full"
-                          >
-                            <MarkCell :mark="student.pk_mark[1]" />
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="px-1 py-2 text-center border-r border-border">
-                      <div class="flex flex-col gap-1">
-                        <div
-                          class="h-8 flex items-center justify-center transition-transform duration-300"
-                          :class="{
-                            'scale-175 z-10':
-                              editingCell?.studentIndex === studentIndex &&
-                              editingCell?.colIndex === dates.length + 1 &&
-                              editingCell?.markIndex === 0,
-                          }"
-                        >
-                          <EditableMarkCell
-                            v-if="
-                              editingCell?.studentIndex === studentIndex &&
-                              editingCell?.colIndex === dates.length + 1 &&
-                              editingCell?.markIndex === 0
-                            "
-                            v-model="editedValue"
-                            @confirm="confirmEdit"
-                            @cancel="cancelEdit"
-                            @navigate="navigate"
-                            :is-zoomed="true"
-                          />
-                          <div
-                            v-else
-                            @click="editCell(studentIndex, dates.length + 1, 0)"
-                            class="cursor-pointer w-full"
-                          >
-                            <MarkCell :mark="student.e_mark[0]" />
-                          </div>
-                        </div>
-                        <div
-                          class="h-8 flex items-center justify-center transition-transform duration-300"
-                          :class="{
-                            'scale-175 z-10':
-                              editingCell?.studentIndex === studentIndex &&
-                              editingCell?.colIndex === dates.length + 1 &&
-                              editingCell?.markIndex === 1,
-                          }"
-                        >
-                          <EditableMarkCell
-                            v-if="
-                              editingCell?.studentIndex === studentIndex &&
-                              editingCell?.colIndex === dates.length + 1 &&
-                              editingCell?.markIndex === 1
-                            "
-                            v-model="editedValue"
-                            @confirm="confirmEdit"
-                            @cancel="cancelEdit"
-                            @navigate="navigate"
-                            :is-zoomed="true"
-                          />
-                          <div
-                            v-else
-                            @click="editCell(studentIndex, dates.length + 1, 1)"
-                            class="cursor-pointer w-full"
-                          >
-                            <MarkCell :mark="student.e_mark[1]" />
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="px-1 py-2 text-center">
-                      <div class="flex flex-col gap-1">
-                        <div
-                          class="h-8 flex items-center justify-center transition-transform duration-300"
-                          :class="{
-                            'scale-175 z-10':
-                              editingCell?.studentIndex === studentIndex &&
-                              editingCell?.colIndex === dates.length + 2 &&
-                              editingCell?.markIndex === 0,
-                          }"
-                        >
-                          <EditableMarkCell
-                            v-if="
-                              editingCell?.studentIndex === studentIndex &&
-                              editingCell?.colIndex === dates.length + 2 &&
-                              editingCell?.markIndex === 0
-                            "
-                            v-model="editedValue"
-                            @confirm="confirmEdit"
-                            @cancel="cancelEdit"
-                            @navigate="navigate"
-                            :is-zoomed="true"
-                          />
-                          <div
-                            v-else
-                            @click="editCell(studentIndex, dates.length + 2, 0)"
-                            class="cursor-pointer w-full"
-                          >
-                            <MarkCell :mark="student.i_mark[0]" />
-                          </div>
-                        </div>
-                        <div
-                          class="h-8 flex items-center justify-center transition-transform duration-300"
-                          :class="{
-                            'scale-175 z-10':
-                              editingCell?.studentIndex === studentIndex &&
-                              editingCell?.colIndex === dates.length + 2 &&
-                              editingCell?.markIndex === 1,
-                          }"
-                        >
-                          <EditableMarkCell
-                            v-if="
-                              editingCell?.studentIndex === studentIndex &&
-                              editingCell?.colIndex === dates.length + 2 &&
-                              editingCell?.markIndex === 1
-                            "
-                            v-model="editedValue"
-                            @confirm="confirmEdit"
-                            @cancel="cancelEdit"
-                            @navigate="navigate"
-                            :is-zoomed="true"
-                          />
-                          <div
-                            v-else
-                            @click="editCell(studentIndex, dates.length + 2, 1)"
-                            class="cursor-pointer w-full"
-                          >
-                            <MarkCell :mark="student.i_mark[1]" />
+                            <MarkCell :mark="mark.values[1]" />
                           </div>
                         </div>
                       </div>
@@ -320,15 +136,16 @@
     <FloatingJournalRow
       :student="selectedStudent"
       :student-index="selectedStudentIndex"
-      :dates="dates"
+      :table-headers="tableHeaders"
       @close="hideFloatingRow"
       @update-student="updateStudent"
     />
     <DateColumnFocus
       :visible="isDateFocusVisible"
       :students="students"
-      :date="focusedDate"
+      :column-header="focusedColumnHeader"
       :selected-date-index="focusedDateIndex"
+      :highlighted-student-index="selectedStudentIndex"
       @close="isDateFocusVisible = false"
       @update-students="updateStudents"
     />
@@ -365,7 +182,7 @@ const selectedStudent = ref<any>(null);
 const selectedStudentIndex = ref(0);
 
 const isDateFocusVisible = ref(false);
-const focusedDate = ref("");
+const focusedColumnHeader = ref<{ type: string; label: string } | null>(null);
 const focusedDateIndex = ref(0);
 
 const editingCell = ref<{
@@ -380,17 +197,7 @@ const getMark = (
   colIndex: number,
   markIndex: number
 ) => {
-  const student = students.value[studentIndex];
-  let mark;
-  if (colIndex < dates.value.length) {
-    mark = student.marks[colIndex][markIndex];
-  } else if (colIndex === dates.value.length) {
-    mark = student.pk_mark[markIndex];
-  } else if (colIndex === dates.value.length + 1) {
-    mark = student.e_mark[markIndex];
-  } else if (colIndex === dates.value.length + 2) {
-    mark = student.i_mark[markIndex];
-  }
+  const mark = students.value[studentIndex].marks[colIndex].values[markIndex];
   if (mark === null) return "";
   return String(mark ?? "");
 };
@@ -401,17 +208,8 @@ const setMark = (
   markIndex: number,
   value: string
 ) => {
-  const student = students.value[studentIndex];
   const newValue = value === "+" || value === "" ? null : value;
-  if (colIndex < dates.value.length) {
-    student.marks[colIndex][markIndex] = newValue;
-  } else if (colIndex === dates.value.length) {
-    student.pk_mark[markIndex] = newValue;
-  } else if (colIndex === dates.value.length + 1) {
-    student.e_mark[markIndex] = newValue;
-  } else if (colIndex === dates.value.length + 2) {
-    student.i_mark[markIndex] = newValue;
-  }
+  students.value[studentIndex].marks[colIndex].values[markIndex] = newValue;
 };
 
 const editCell = (
@@ -451,7 +249,7 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
     let nextMark = startMark;
 
     const numStudents = students.value.length;
-    const numCols = dates.value.length + 3;
+    const numCols = tableHeaders.value.length;
 
     switch (direction) {
       case "up":
@@ -487,8 +285,9 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
   });
 };
 
-const openDateFocus = (date: string, index: number) => {
-  focusedDate.value = date.split("\n")[0];
+const openDateFocus = (header: { type: string; label: string }, index: number) => {
+  if (header.type !== "date") return;
+  focusedColumnHeader.value = header;
   focusedDateIndex.value = index;
   isDateFocusVisible.value = true;
 };
@@ -536,69 +335,91 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   }
 };
 
-const dates = ref<string[]>(
-  Array.from({ length: 15 }, (_, i) => {
-    const day = (27 + i).toString().padStart(2, "0");
-    return `27.01\n2025`;
-  })
-);
+const tableHeaders = computed(() => {
+  if (students.value.length === 0) return [];
+  return students.value[0].marks.map((mark) => {
+    if (mark.type === "date") {
+      return { type: "date", label: mark.date! };
+    }
+    if (mark.type === "pk") {
+      return { type: "pk", label: "РК" };
+    }
+    if (mark.type === "e") {
+      return { type: "e", label: "Э" };
+    }
+    if (mark.type === "i") {
+      return { type: "i", label: "И" };
+    }
+    return { type: "unknown", label: "" };
+  });
+});
 
 const students = ref([
   {
     id: 1,
     name: "Салкимбаев Саке",
     marks: [
-      ["90", "90"],
-      ["90", "90"],
-      ["90", null],
-      ["90", null],
-      ["90", null],
-      [null, null],
-      ["90", null],
-      [null, null],
-      ["90", "90"],
-      [null, null],
-      [null, null],
-      [null, null],
-      [null, null],
-      [null, null],
-      [null, null],
+      { type: "date", date: "27.01\n2025", values: ["90", "90"] },
+      { type: "date", date: "28.01\n2025", values: ["90", "90"] },
+      { type: "date", date: "29.01\n2025", values: ["90", null] },
+      { type: "date", date: "30.01\n2025", values: ["90", null] },
+      { type: "date", date: "31.01\n2025", values: ["90", null] },
+      { type: "date", date: "01.02\n2025", values: [null, null] },
+      { type: "pk", values: ["90", null] },
+      { type: "date", date: "02.02\n2025", values: ["90", null] },
+      { type: "date", date: "03.02\n2025", values: [null, null] },
+      { type: "date", date: "04.02\n2025", values: ["90", "90"] },
+      { type: "date", date: "05.02\n2025", values: [null, null] },
+      { type: "date", date: "06.02\n2025", values: [null, null] },
+      { type: "date", date: "07.02\n2025", values: [null, null] },
+      { type: "date", date: "08.02\n2025", values: [null, null] },
+      { type: "date", date: "09.02\n2025", values: [null, null] },
+      { type: "pk", values: ["90", null] },
+      { type: "e", values: [null, null] },
+      { type: "i", values: [null, null] },
     ],
-    pk_mark: ["90", null],
-    e_mark: ["", ""],
-    i_mark: ["", ""],
   },
   {
     id: 2,
     name: "Салкимбаев Саке",
-    marks: Array.from({ length: 15 }, () => [null, null]),
-    pk_mark: [null, null],
-    e_mark: [null, null],
-    i_mark: [null, null],
+    marks: Array.from({ length: 17 }, () => ({
+      type: "date",
+      values: [null, null],
+    })),
   },
   {
     id: 3,
     name: "Салкимбаев Саке",
-    marks: Array.from({ length: 15 }, () => [null, null]),
-    pk_mark: [null, null],
-    e_mark: [null, null],
-    i_mark: [null, null],
+    marks: Array.from({ length: 17 }, () => ({
+      type: "date",
+      values: [null, null],
+    })),
   },
   {
     id: 4,
     name: "Салкимбаев Саке",
-    marks: Array.from({ length: 15 }, () => [null, null]),
-    pk_mark: [null, null],
-    e_mark: [null, null],
-    i_mark: [null, null],
+    marks: Array.from({ length: 17 }, () => ({
+      type: "date",
+      values: [null, null],
+    })),
   },
   {
     id: 5,
     name: "Салкимбаев Саке",
-    marks: Array.from({ length: 15 }, () => [null, null]),
-    pk_mark: [null, null],
-    e_mark: [null, null],
-    i_mark: [null, null],
+    marks: Array.from({ length: 17 }, () => ({
+      type: "date",
+      values: [null, null],
+    })),
   },
 ]);
-</script> 
+
+// This is a temporary fix to align the data for all students.
+// Ideally, the data should come from the backend in the correct shape.
+students.value.forEach((student, index) => {
+  if (index > 0) {
+    student.marks.forEach((mark, i) => {
+      mark.type = students.value[0].marks[i].type;
+    });
+  }
+});
+</script>
