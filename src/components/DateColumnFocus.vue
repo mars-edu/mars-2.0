@@ -2,7 +2,7 @@
   <transition name="fade">
     <div
       v-if="visible"
-      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-4"
+      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[500] p-4"
       @click.self="handleClose"
       @keydown.esc.prevent="handleClose"
       ref="focusContainer"
@@ -160,23 +160,22 @@ watch(
 );
 
 const getMark = (studentIndex: number, markIndex: number) => {
-  return (
+  const mark =
     localStudents.value[studentIndex].marks[props.selectedDateIndex][
       markIndex
-    ] || ""
-  );
+    ];
+  if (mark === null) return "";
+  return String(mark ?? "");
 };
 
 const setMark = (studentIndex: number, markIndex: number, value: string) => {
+  const newValue = value === "+" || value === "" ? null : value;
   localStudents.value[studentIndex].marks[props.selectedDateIndex][
     markIndex
-  ] = value;
+  ] = newValue;
 };
 
 const editCell = (studentIndex: number, markIndex: number) => {
-  if (editingCell.value) {
-    confirmEdit();
-  }
   editingCell.value = { studentIndex, markIndex };
   editedValue.value = getMark(studentIndex, markIndex);
 };
@@ -199,36 +198,40 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
     markIndex: startMarkIndex,
   } = editingCell.value;
 
-  confirmEdit();
+  setMark(startStudentIndex, startMarkIndex, editedValue.value);
+  editingCell.value = null;
 
-  let nextStudentIndex = startStudentIndex;
-  let nextMarkIndex = startMarkIndex;
+  nextTick(() => {
+    let nextStudentIndex = startStudentIndex;
+    let nextMarkIndex = startMarkIndex;
 
-  switch (direction) {
-    case "right":
-    case "down":
-      if (startMarkIndex === 0) {
-        nextMarkIndex = 1;
-      } else {
-        nextMarkIndex = 0;
-        nextStudentIndex += 1;
-      }
-      break;
-    case "left":
-    case "up":
-      if (startMarkIndex === 1) {
-        nextMarkIndex = 0;
-      } else {
-        nextMarkIndex = 1;
-        nextStudentIndex -= 1;
-      }
-      break;
-  }
+    switch (direction) {
+      case "right":
+      case "down":
+        if (startMarkIndex === 0) {
+          nextMarkIndex = 1;
+        } else {
+          nextMarkIndex = 0;
+          nextStudentIndex += 1;
+        }
+        break;
+      case "left":
+      case "up":
+        if (startMarkIndex === 1) {
+          nextMarkIndex = 0;
+        } else {
+          nextMarkIndex = 1;
+          nextStudentIndex -= 1;
+        }
+        break;
+    }
 
-  if (nextStudentIndex < 0) nextStudentIndex = localStudents.value.length - 1;
-  if (nextStudentIndex >= localStudents.value.length) nextStudentIndex = 0;
+    if (nextStudentIndex < 0)
+      nextStudentIndex = localStudents.value.length - 1;
+    if (nextStudentIndex >= localStudents.value.length) nextStudentIndex = 0;
 
-  editCell(nextStudentIndex, nextMarkIndex);
+    editCell(nextStudentIndex, nextMarkIndex);
+  });
 };
 
 const handleClose = () => {

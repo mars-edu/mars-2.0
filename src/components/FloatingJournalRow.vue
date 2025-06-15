@@ -3,7 +3,7 @@
     <div
       v-if="student"
       ref="floatingRowRef"
-      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-4"
+      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[500] p-4"
       tabindex="-1"
       @click.self="handleClose"
       @keydown.esc.prevent="handleClose"
@@ -193,25 +193,25 @@ const allMarkColumns = computed(() => {
 });
 
 const getMark = (row: number, col: number): string => {
-  return allMarkColumns.value[col][row] || "";
+  const mark = allMarkColumns.value[col][row];
+  if (mark === null) return "";
+  return String(mark ?? "");
 };
 
 const setMark = (row: number, col: number, value: string) => {
+  const newValue = value === "+" || value === "" ? null : value;
   if (col >= 0 && col < 15) {
-    localStudent.value.marks[col][row] = value;
+    localStudent.value.marks[col][row] = newValue;
   } else if (col === 15) {
-    localStudent.value.pk_mark[row] = value;
+    localStudent.value.pk_mark[row] = newValue;
   } else if (col === 16) {
-    localStudent.value.e_mark[row] = value;
+    localStudent.value.e_mark[row] = newValue;
   } else if (col === 17) {
-    localStudent.value.i_mark[row] = value;
+    localStudent.value.i_mark[row] = newValue;
   }
 };
 
 const editCell = (row: number, col: number) => {
-  if (editingCell.value) {
-    confirmEdit();
-  }
   editingCell.value = { row, col };
   editedValue.value = getMark(row, col);
 };
@@ -232,38 +232,41 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
 
   const { row: startRow, col: startCol } = editingCell.value;
 
-  confirmEdit();
+  setMark(startRow, startCol, editedValue.value);
+  editingCell.value = null;
 
-  let nextRow = startRow;
-  let nextCol = startCol;
-  const numCols = allMarkColumns.value.length;
-  const numRows = 2;
+  nextTick(() => {
+    let nextRow = startRow;
+    let nextCol = startCol;
+    const numCols = allMarkColumns.value.length;
 
-  switch (direction) {
-    case "right":
-    case "down":
-      if (startRow === 0) {
-        nextRow = 1;
-      } else {
-        nextRow = 0;
-        nextCol += 1;
-      }
-      break;
-    case "left":
-    case "up":
-      if (startRow === 1) {
-        nextRow = 0;
-      } else {
-        nextRow = 1;
-        nextCol -= 1;
-      }
-      break;
-  }
+    switch (direction) {
+      case "right":
+      case "down": // Treat 'down' similar to 'right' for mark-level navigation
+        if (startRow === 0) {
+          nextRow = 1;
+        } else {
+          nextRow = 0;
+          nextCol += 1;
+        }
+        break;
+      case "left":
+      case "up": // Treat 'up' similar to 'left' for mark-level navigation
+        if (startRow === 1) {
+          nextRow = 0;
+        } else {
+          nextRow = 1;
+          nextCol -= 1;
+        }
+        break;
+    }
 
-  if (nextCol < 0) nextCol = numCols - 1;
-  if (nextCol >= numCols) nextCol = 0;
+    if (nextCol < 0) nextCol = numCols - 1;
+    if (nextCol >= numCols) nextCol = 0;
+    // No need to wrap rows, as they are handled by the inner logic
 
-  editCell(nextRow, nextCol);
+    editCell(nextRow, nextCol);
+  });
 };
 
 const handleClose = () => {
