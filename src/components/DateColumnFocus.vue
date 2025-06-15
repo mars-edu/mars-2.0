@@ -26,9 +26,6 @@
                 :key="student.id"
                 class="border-b border-border last:border-b-0 transition-all duration-300"
                 :class="{
-                  'bg-background scale-105 shadow-lg rounded-lg':
-                    highlightedStudentIndex === index &&
-                    editingCell?.studentIndex !== index,
                   'scale-110 z-10 transform bg-background shadow-xl rounded-lg':
                     editingCell?.studentIndex === index,
                 }"
@@ -36,7 +33,7 @@
                 <td
                   class="p-2 text-center rounded-l-lg"
                   :class="{
-                    'font-bold': highlightedStudentIndex === index || editingCell?.studentIndex === index,
+                    'font-bold': editingCell?.studentIndex === index,
                   }"
                 >
                   {{ index + 1 }}
@@ -44,7 +41,7 @@
                 <td
                   class="p-2"
                   :class="{
-                    'font-bold': highlightedStudentIndex === index || editingCell?.studentIndex === index,
+                    'font-bold': editingCell?.studentIndex === index,
                   }"
                 >
                   {{ student.name }}
@@ -127,11 +124,7 @@ const props = defineProps({
   selectedDateIndex: {
     type: Number,
     required: true,
-  },
-  highlightedStudentIndex: {
-    type: Number,
-    default: -1,
-  },
+  }
 });
 
 const emit = defineEmits(["close", "update-students"]);
@@ -257,4 +250,3 @@ const handleClose = () => {
   opacity: 0;
 }
 </style>
- 
