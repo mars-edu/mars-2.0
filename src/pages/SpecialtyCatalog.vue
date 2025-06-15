@@ -38,7 +38,7 @@
                 <thead>
                   <tr class="bg-muted/50">
                     <th class="px-4 py-3 text-left">№</th>
-                    <th class="px-4 py-3 text-left">Ф</th>
+                    <th class="px-4 py-3 text-left">Кодовое наименование</th>
                     <th class="px-4 py-3 text-left">Код</th>
                     <th class="px-4 py-3 text-left">Наименование</th>
                   </tr>
@@ -83,8 +83,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { f7Page, f7Input } from "framework7-vue";
+import { ref, nextTick } from "vue";
+import { f7Page, f7Input, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddSpecialtyButton from "@/components/AddSpecialtyButton.vue";
@@ -97,7 +97,9 @@ const specialtyStore = useSpecialtyStore();
 const { specialties } = storeToRefs(specialtyStore);
 const selectedSpecialty = ref<Specialty | null>(null);
 
-const selectSpecialty = (specialty: Specialty) => {
+const selectSpecialty = async (specialty: Specialty) => {
   selectedSpecialty.value = specialty;
+  await nextTick();
+  f7.popover.open(`#edit-specialty-popover-${specialty.id}`, `#specialty-item-${specialty.id}`);
 };
 </script>

@@ -9,13 +9,13 @@
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-52"
+        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-52 relative"
       >
         <div
-  v-if="rupStore.showOverlay"
-  class="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center"
-  style="pointer-events: none"
-></div>
+          v-if="rupStore.showOverlay"
+          class="absolute inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center"
+          style="pointer-events: none"
+        ></div>
         <div
           class="bg-card text-card-foreground rounded-xl p-4 md:p-4 shadow-sm"
         >
@@ -179,6 +179,7 @@
                   :disabled="!(selectedSpecialtyId && selectedCourseId)"
                   :specialty-id="selectedSpecialtyId || ''"
                   :course-id="selectedCourseId || ''"
+                  @enable-select-mode="enableSelectMode"
                 />
 
                 <AddWorkingPlanDialog
@@ -187,6 +188,7 @@
                   :disabled="!(selectedSpecialtyId && selectedCourseId)"
                   :specialty-id="selectedSpecialtyId || ''"
                   :course-id="selectedCourseId || ''"
+                  @add-class-9="addClass9"
                 />
               </template>
               <div
@@ -196,8 +198,10 @@
                 <div class="mt-4">
                   <template v-if="selectedClassLevel === 9">
                     <Class9Table
+                      ref="class9TableRef"
                       :specialty-id="selectedSpecialtyId"
                       :course-id="selectedCourseId"
+                      :select-mode="isSelectMode"
                     />
                   </template>
                   <template v-else>
@@ -238,7 +242,26 @@
     </div>
 
     <template #fixed>
-      <f7-fab position="right-bottom" class="mb-6 mr-6">
+      <div
+        v-if="isSelectMode"
+        class="fixed right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-50"
+      >
+        <button
+          @click="handleFloatingImport"
+          class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg shadow-lg hover:bg-primary/90 transition-colors"
+        >
+          <f7-icon ios="f7:square_arrow_up" md="material:file_download" size="20px"></f7-icon>
+          <span>Импорт</span>
+        </button>
+        <button
+          @click="cancelSelectMode"
+          class="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg shadow-lg hover:bg-red-600 transition-colors"
+        >
+          <f7-icon ios="f7:xmark" md="material:close" size="20px"></f7-icon>
+          <span>Отмена</span>
+        </button>
+      </div>
+      <f7-fab v-else position="right-bottom" class="mb-6 mr-6">
         <f7-icon ios="f7:plus" md="material:add" class="text-white"></f7-icon>
         <f7-icon
           ios="f7:xmark"
@@ -286,11 +309,14 @@ import SmartSelect from "@/components/ui/SmartSelect.vue";
 import { storeToRefs } from "pinia";
 import ImportWorkingPlanDialog from "@/components/ImportWorkingPlanDialog.vue";
 import { useRupStore } from "@/stores/rupStore";
+import { useClass9Store } from "@/stores/class9Store";
 
 const activeNavItem = ref("rup");
 const specialtyStore = useSpecialtyStore();
 const courseStore = useCourseStore();
 const academicYearStore = useAcademicYearStore();
+
+const class9TableRef = ref<InstanceType<typeof Class9Table> | null>(null);
 
 const { specialties } = storeToRefs(specialtyStore);
 const { academicYears } = storeToRefs(academicYearStore);
@@ -313,6 +339,46 @@ const workingPlans = ref<
 const selectedClassLevel = ref<9 | 11>(9);
 
 const rupStore = useRupStore();
+const class9Store = useClass9Store();
+
+const isSelectMode = ref(false);
+
+const enableSelectMode = () => {
+  isSelectMode.value = true;
+  rupStore.toggle();
+};
+
+const cancelSelectMode = () => {
+  isSelectMode.value = false;
+  rupStore.clearClass9Selection();
+  rupStore.toggle();
+};
+
+const handleFloatingImport = () => {
+  const selectedIds = rupStore.selectedClass9ItemIds;
+  if (selectedIds.length === 0) {
+    f7.dialog.alert("Не выбраны элементы для импорта.", "Ничего не выбрано");
+    return;
+  }
+
+  const allItems = class9Store.getAllClass9Items;
+  const itemsToImport = allItems.filter(item => selectedIds.includes(item.id));
+
+  const newItems = itemsToImport.map(item => ({
+    ...item,
+    id: crypto.randomUUID(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }));
+
+  class9Store.addClass9Items(newItems);
+
+  f7.dialog.alert(
+    `Импортировано ${newItems.length} элементов.`,
+    "Импорт завершен"
+  );
+  cancelSelectMode();
+};
 
 const handleWorkingPlanSubmit = (data: { baseClass: number }) => {
   const newPlan = {
@@ -322,6 +388,12 @@ const handleWorkingPlanSubmit = (data: { baseClass: number }) => {
     baseClass: data.baseClass,
   };
   workingPlans.value.push(newPlan);
+};
+
+const addClass9 = () => {
+  if (class9TableRef.value) {
+    class9TableRef.value.openAddPopup();
+  }
 };
 
 const selectedSpecialtyId = computed({

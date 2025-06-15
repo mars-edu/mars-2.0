@@ -1,7 +1,7 @@
 <template>
   <div class="class9-table">
     <div v-if="class9List.length" class="space-y-0.5">
-      <div v-for="(item, idx) in class9List" :key="item.id" class="overflow-hidden bg-card border-b border-gray-200" @click="openEditPopup(item)">
+      <div v-for="(item, idx) in class9List" :key="item.id" class="overflow-hidden bg-card border-b border-gray-200" :class="{ 'is-selected': rupStore.isClass9ItemSelected(item.id) }" @click="handleRowClick(item)">
         <div class="flex items-stretch w-full">
           <div class="w-8 bg-muted flex items-center justify-center text-sm font-medium border-r border-border">
             {{ idx + 1 }}
@@ -72,13 +72,16 @@ import { computed, ref, nextTick } from "vue";
 import { useClass9Store, type Class9Data } from "@/stores/class9Store";
 import { f7 } from "framework7-vue";
 import Class9Popup from "@/components/Class9Popup.vue";
+import { useRupStore } from "@/stores/rupStore";
 
 const props = defineProps<{
   specialtyId: string;
   courseId: string;
+  selectMode?: boolean;
 }>();
 
 const class9Store = useClass9Store();
+const rupStore = useRupStore();
 
 const class9List = computed(() => {
   return class9Store.getAllClass9Items.filter(
@@ -89,6 +92,14 @@ const class9List = computed(() => {
 const popupOpen = ref(false);
 const editMode = ref(false);
 const initialData = ref<Class9Data | null>(null);
+
+function handleRowClick(item: Class9Data) {
+  if (props.selectMode) {
+    rupStore.toggleClass9ItemSelection(item.id);
+  } else {
+    openEditPopup(item);
+  }
+}
 
 function openEditPopup(item: Class9Data) {
   editMode.value = true;
@@ -118,6 +129,10 @@ function closePopup() {
 function handlePopupSubmit() {
   closePopup();
 }
+
+defineExpose({
+  openAddPopup,
+});
 </script>
 
 <style scoped>
@@ -130,5 +145,10 @@ function handlePopupSubmit() {
 .class9-table > div > div:hover {
   background-color: rgb(218, 220, 223) !important;
   cursor: pointer;
+}
+
+.is-selected {
+  background-color: rgb(201, 218, 248) !important;
+  border: 1px solid var(--f7-theme-color) !important;
 }
 </style>

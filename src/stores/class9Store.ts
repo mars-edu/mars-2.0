@@ -101,6 +101,19 @@ export const useClass9Store = defineStore(
       }
     }
 
+    async function addClass9Items(items: Class9Data[]) {
+      loading.value = true;
+      try {
+        class9Items.value.push(...items);
+        error.value = null;
+      } catch (err) {
+        error.value = err instanceof Error ? err.message : "Failed to add class9 items";
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    }
+
     async function updateClass9(id: string, data: Partial<Omit<Class9Data, 'id' | 'createdAt' | 'updatedAt'>>) {
       loading.value = true;
       try {
@@ -154,6 +167,7 @@ export const useClass9Store = defineStore(
       getError,
       createEmptyClass9Data,
       addClass9,
+      addClass9Items,
       updateClass9,
       deleteClass9,
       clearError,

@@ -9,11 +9,11 @@
       <div class="specialty-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать"
-          :disabled="!isFormValid || specialtyStore.isLoading"
           :is-loading="specialtyStore.isLoading"
           :on-cancel="closeEditSpecialtyPopover"
           :on-save="handleUpdateSpecialty"
-        />
+          />
+          <!-- :disabled="!isFormValid || specialtyStore.isLoading" -->
 
         <div
           v-if="formError || specialtyStore.getError"
@@ -72,16 +72,17 @@
           </div>
 
           <div class="space-y-2">
-            <div class="flex items-center gap-2">
-              <f7-checkbox
-                v-model:value="linkWithStudentCard"
-                label="С картотекой обучающихся"
-              ></f7-checkbox>
-              <f7-checkbox
-                v-model:value="linkWithRup"
-                label="С РУП"
-              ></f7-checkbox>
-              <f7-checkbox v-model:value="linkWithT" label="Т"></f7-checkbox>
+            <div class="flex items-center gap-3">
+              <f7-checkbox v-model:value="linkWithStudentCard"></f7-checkbox>
+              <span class="text-sm">С картотекой обучающихся</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <f7-checkbox v-model:value="linkWithRup"></f7-checkbox>
+              <span class="text-sm">С РУП</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <f7-checkbox v-model:value="linkWithT"></f7-checkbox>
+              <span class="text-sm">Т</span>
             </div>
           </div>
 
@@ -135,16 +136,15 @@ const specialtyCodeName = ref(props.specialty.codeName);
 const linkWithStudentCard = ref(props.specialty.linkWithStudentCard);
 const linkWithRup = ref(props.specialty.linkWithRup);
 const linkWithT = ref(props.specialty.linkWithT);
-const formError = ref("");
 
 const specialtySchema = z.object({
   code: z.string().min(1, "Пожалуйста, введите шифр специальности"),
   name: z.string().min(1, "Пожалуйста, введите наименование специальности"),
-  details: z.string(),
-  codeName: z.string(),
-  linkWithStudentCard: z.boolean(),
-  linkWithRup: z.boolean(),
-  linkWithT: z.boolean(),
+  details: z.string().optional().default(""),
+  codeName: z.string().optional().default(""),
+  linkWithStudentCard: z.boolean().optional().default(false),
+  linkWithRup: z.boolean().optional().default(false),
+  linkWithT: z.boolean().optional().default(false),
 });
 
 const validationResult = computed(() => {
@@ -159,6 +159,13 @@ const validationResult = computed(() => {
   });
 });
 
+const formError = computed(() => {
+  if (validationResult.value.success) return "";
+  const issues = validationResult.value.error.issues;
+  if (issues.length > 0) return issues[0].message;
+  return "";
+});
+
 const isFormValid = computed(() => validationResult.value.success);
 
 const closeEditSpecialtyPopover = () => {
@@ -168,15 +175,8 @@ const closeEditSpecialtyPopover = () => {
 
 const handleUpdateSpecialty = async () => {
   if (!isFormValid.value) {
-    if (!validationResult.value.success) {
-      const issues = validationResult.value.error.issues;
-      if (issues.length > 0) {
-        formError.value = issues[0].message;
-      }
-    }
     return;
   }
-
   try {
     await specialtyStore.updateSpecialty(props.specialty.id, {
       code: specialtyCode.value,
@@ -189,7 +189,7 @@ const handleUpdateSpecialty = async () => {
     });
     closeEditSpecialtyPopover();
   } catch (error) {
-    console.error("Failed to update specialty:", error);
+    f7.dialog.alert("Произошла ошибка при обновлении специальности.");
   }
 };
 
@@ -219,7 +219,9 @@ const resetForm = () => {
   linkWithStudentCard.value = props.specialty.linkWithStudentCard;
   linkWithRup.value = props.specialty.linkWithRup;
   linkWithT.value = props.specialty.linkWithT;
-  formError.value = "";
   specialtyStore.clearError();
 };
+
+// expose formError for template
+defineExpose({ formError });
 </script>

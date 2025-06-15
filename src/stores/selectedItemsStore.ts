@@ -43,7 +43,7 @@ export const useSelectedItemsStore = defineStore("selectedItems", () => {
   const filteredCourses = computed(() => {
     const courseStore = useCourseStore();
     if (!selectedSpecialtyId.value) return [];
-    return courseStore.getCoursesBySpecialtyId(selectedSpecialtyId.value);
+    return courseStore.getVisibleCourses;
   });
 
   return {

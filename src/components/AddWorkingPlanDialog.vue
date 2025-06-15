@@ -37,7 +37,7 @@
         <div class="p-4 flex flex-col gap-4">
           <button
             class="w-full py-3 rounded-lg text-white bg-gray-500 hover:bg-primary"
-            @click="openClass9Popup"
+            @click="addClass9"
           >
             На базе 9 класса
           </button>
@@ -51,22 +51,12 @@
         </div>
       </div>
     </f7-popover>
-
-
-    <Class9Popup
-      target="#add-working-plan-button"
-      :specialty-id="specialtyId"
-      :course-id="courseId"
-      @submit="handleClass9Submit"
-      @close="closeClass9Popup"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { f7, f7Popover } from "framework7-vue";
-import Class9Popup from "./Class9Popup.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
@@ -79,6 +69,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "update:opened", value: boolean): void;
   (e: "submit", data: { baseClass: number }): void;
+  (e: "add-class-9"): void;
 }>();
 
 const isValid = computed(() => {
@@ -89,9 +80,9 @@ const openWorkingPlanPopover = () => {
   f7.popover.open("#add-working-plan-popover", "#add-working-plan-button");
 };
 
-const openClass9Popup = () => {
+const addClass9 = () => {
   f7.popover.close("#add-working-plan-popover");
-  f7.popover.open("#class9-popover");
+  emit("add-class-9");
 };
 
 const handleClose = () => {
@@ -102,16 +93,6 @@ const handleClose = () => {
 const handleSubmit = () => {
   emit("submit", { baseClass: 11 });
   handleClose();
-};
-
-
-const closeClass9Popup = () => {
-  f7.popover.close("#class9-popover");
-
-};
-
-const handleClass9Submit = () => {
-  closeClass9Popup();
 };
 </script>
 

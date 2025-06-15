@@ -25,18 +25,18 @@
 </template>
 
 <script setup lang="ts">
-import { useRupStore } from "@/stores/rupStore";
-
 const props = defineProps<{
   disabled?: boolean;
   specialtyId?: string;
   courseId?: string;
 }>();
 
-const rupStore = useRupStore();
+const emit = defineEmits<{
+  (e: "enable-select-mode"): void;
+}>();
 
 const handleImport = () => {
-  rupStore.toggle();
+  emit("enable-select-mode");
 };
 </script>
 

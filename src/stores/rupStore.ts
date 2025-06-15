@@ -7,14 +7,12 @@ import { storeToRefs } from "pinia";
 export const useRupStore = defineStore(
   "rup",
   () => {
-    // Overlay logic
     const showOverlay = ref(false);
     const isOverlayVisible = computed(() => showOverlay.value);
     function show() { showOverlay.value = true; }
     function hide() { showOverlay.value = false; }
     function toggle() { showOverlay.value = !showOverlay.value; }
 
-    // Selected specialty and course logic
     const selectedSpecialtyId = ref<string | null>(null);
     const selectedCourseId = ref<string | null>(null);
     function setSelectedSpecialty(id: string | null) {
@@ -45,8 +43,27 @@ export const useRupStore = defineStore(
     const filteredCourses = computed(() => {
       const courseStore = useCourseStore();
       if (!selectedSpecialtyId.value) return [];
-      return courseStore.getCoursesBySpecialtyId(selectedSpecialtyId.value);
+      return courseStore.getVisibleCourses;
     });
+
+    const selectedClass9ItemIds = ref<string[]>([]);
+
+    const isClass9ItemSelected = computed(() => {
+      return (itemId: string) => selectedClass9ItemIds.value.includes(itemId);
+    });
+
+    function toggleClass9ItemSelection(itemId: string) {
+      const index = selectedClass9ItemIds.value.indexOf(itemId);
+      if (index > -1) {
+        selectedClass9ItemIds.value.splice(index, 1);
+      } else {
+        selectedClass9ItemIds.value.push(itemId);
+      }
+    }
+
+    function clearClass9Selection() {
+      selectedClass9ItemIds.value = [];
+    }
 
     return {
       showOverlay,
@@ -62,6 +79,10 @@ export const useRupStore = defineStore(
       selectedSpecialty,
       selectedCourse,
       filteredCourses,
+      selectedClass9ItemIds,
+      isClass9ItemSelected,
+      toggleClass9ItemSelection,
+      clearClass9Selection,
     };
   },
 );

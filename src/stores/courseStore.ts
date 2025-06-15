@@ -6,7 +6,6 @@ export interface Course {
   number: string;
   name?: string;
   admissionYear: string;
-  specialtyId: string;
   isVisible?: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -26,7 +25,6 @@ export const useCourseStore = defineStore(
           id: "1",
           number: "1",
           name: "1",
-          admissionYear: new Date().getFullYear().toString(),
           specialtyId: "",
           isVisible: true,
           createdAt: new Date(),
@@ -37,7 +35,6 @@ export const useCourseStore = defineStore(
           number: "2",
           name: "2",
           admissionYear: new Date().getFullYear().toString(),
-          specialtyId: "",
           isVisible: true,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -47,7 +44,6 @@ export const useCourseStore = defineStore(
           number: "3",
           name: "3",
           admissionYear: new Date().getFullYear().toString(),
-          specialtyId: "",
           isVisible: true,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -57,7 +53,6 @@ export const useCourseStore = defineStore(
           number: "4",
           name: "4",
           admissionYear: new Date().getFullYear().toString(),
-          specialtyId: "",
           isVisible: true,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -67,11 +62,6 @@ export const useCourseStore = defineStore(
 
     const getCourseById = computed(() => {
       return (id: string) => courses.value.find((c) => c.id === id);
-    });
-
-    const getCoursesBySpecialtyId = computed(() => {
-      return (specialtyId: string) =>
-        courses.value.filter((c) => c.specialtyId === specialtyId);
     });
 
     const getVisibleCourses = computed(() => {
@@ -198,7 +188,6 @@ export const useCourseStore = defineStore(
       loading,
       error,
       getCourseById,
-      getCoursesBySpecialtyId,
       getVisibleCourses,
       isLoading,
       getError,

@@ -24,11 +24,11 @@
       <div class="specialty-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать"
-          :disabled="!isFormValid || specialtyStore.isLoading"
           :is-loading="specialtyStore.isLoading"
           :on-cancel="closeAddSpecialtyPopover"
           :on-save="handleSaveSpecialty"
-        />
+          />
+          <!-- :disabled="!isFormValid || specialtyStore.isLoading" -->
 
         <div
           v-if="formError || specialtyStore.getError"
@@ -122,16 +122,15 @@ const specialtyCodeName = ref("");
 const linkWithStudentCard = ref(false);
 const linkWithRup = ref(false);
 const linkWithT = ref(false);
-const formError = ref("");
 
 const specialtySchema = z.object({
   code: z.string().min(1, "Пожалуйста, введите шифр специальности"),
   name: z.string().min(1, "Пожалуйста, введите наименование специальности"),
-  details: z.string(),
-  codeName: z.string(),
-  linkWithStudentCard: z.boolean(),
-  linkWithRup: z.boolean(),
-  linkWithT: z.boolean(),
+  details: z.string().optional().default(""),
+  codeName: z.string().optional().default(""),
+  linkWithStudentCard: z.boolean().optional().default(false),
+  linkWithRup: z.boolean().optional().default(false),
+  linkWithT: z.boolean().optional().default(false),
 });
 
 const validationResult = computed(() => {
@@ -146,28 +145,28 @@ const validationResult = computed(() => {
   });
 });
 
+const formError = computed(() => {
+  if (validationResult.value.success) return "";
+  const issues = validationResult.value.error.issues;
+  if (issues.length > 0) return issues[0].message;
+  return "";
+});
+
 const isFormValid = computed(() => validationResult.value.success);
 
 const openAddSpecialtyPopover = () => {
   f7.popover.open("#add-specialty-popover", "#add-specialty-button");
 };
 
-const closeAddSpecialtyPopover = () => {
+function closeAddSpecialtyPopover() {
   f7.popover.close("#add-specialty-popover");
   resetForm();
 };
 
-const handleSaveSpecialty = async () => {
+async function handleSaveSpecialty() {
   if (!isFormValid.value) {
-    if (!validationResult.value.success) {
-      const issues = validationResult.value.error.issues;
-      if (issues.length > 0) {
-        formError.value = issues[0].message;
-      }
-    }
     return;
   }
-
   try {
     await specialtyStore.addSpecialty({
       code: specialtyCode.value,
@@ -180,9 +179,9 @@ const handleSaveSpecialty = async () => {
     });
     closeAddSpecialtyPopover();
   } catch (error) {
-    console.error("Failed to add specialty:", error);
+    f7.dialog.alert("Произошла ошибка при добавлении специальности.");
   }
-};
+}
 
 const resetForm = () => {
   specialtyCode.value = "";
@@ -192,7 +191,8 @@ const resetForm = () => {
   linkWithStudentCard.value = false;
   linkWithRup.value = false;
   linkWithT.value = false;
-  formError.value = "";
   specialtyStore.clearError();
 };
+
+defineExpose({ formError });
 </script>

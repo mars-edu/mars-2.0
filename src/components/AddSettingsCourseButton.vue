@@ -54,7 +54,7 @@
           <div class="space-y-2">
             <div class="text-sm text-foreground">Видимость курса</div>
             <f7-checkbox
-              v-model:value="isVisible"
+              v-model:checked="isVisible"
               label="Курс видимый"
             ></f7-checkbox>
           </div>
