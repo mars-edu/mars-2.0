@@ -12,6 +12,8 @@ import SettingsPage from "../pages/suspense/SettingsPage.vue";
 import SpecialtyCatalogPage from "../pages/suspense/SpecialtyCatalogPage.vue";
 import StudentCardPage from "../pages/suspense/StudentCardPage.vue";
 import DisciplineCatalogPage from "../pages/suspense/DisciplineCatalogPage.vue";
+import JournalsPage from "../pages/suspense/JournalsPage.vue";
+import JournalDetailsPage from "../pages/suspense/JournalDetailsPage.vue";
 
 type RouteConfig = Router.RouteParameters & {
   options?: {
@@ -58,6 +60,20 @@ const routes: RouteConfig[] = [
   {
     path: "/discipline-catalog/",
     component: DisciplineCatalogPage,
+    options: {
+      roles: [Role.ADMIN, Role.TEACHER],
+    },
+  },
+  {
+    path: "/journals/",
+    component: JournalsPage,
+    options: {
+      roles: [Role.ADMIN, Role.TEACHER],
+    },
+  },
+  {
+    path: "/journals/:id",
+    component: JournalDetailsPage,
     options: {
       roles: [Role.ADMIN, Role.TEACHER],
     },
