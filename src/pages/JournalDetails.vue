@@ -145,7 +145,6 @@
       :students="students"
       :column-header="focusedColumnHeader"
       :selected-date-index="focusedDateIndex"
-      :highlighted-student-index="selectedStudentIndex"
       @close="isDateFocusVisible = false"
       @update-students="updateStudents"
     />

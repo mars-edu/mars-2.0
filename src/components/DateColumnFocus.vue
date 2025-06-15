@@ -29,9 +29,6 @@
                 :key="student.id"
                 class="border-b border-border last:border-b-0 transition-all duration-300"
                 :class="{
-                  'bg-background scale-105 shadow-lg rounded-lg':
-                    highlightedStudentIndex === index &&
-                    editingCell?.studentIndex !== index,
                   'scale-110 z-10 transform bg-background shadow-xl rounded-lg':
                     editingCell?.studentIndex === index,
                 }"
@@ -39,9 +36,7 @@
                 <td
                   class="p-2 text-center rounded-l-lg"
                   :class="{
-                    'font-bold':
-                      highlightedStudentIndex === index ||
-                      editingCell?.studentIndex === index,
+                    'font-bold': editingCell?.studentIndex === index,
                   }"
                 >
                   {{ index + 1 }}
@@ -49,9 +44,7 @@
                 <td
                   class="p-2"
                   :class="{
-                    'font-bold':
-                      highlightedStudentIndex === index ||
-                      editingCell?.studentIndex === index,
+                    'font-bold': editingCell?.studentIndex === index,
                   }"
                 >
                   {{ student.name }}
@@ -135,10 +128,6 @@ const props = defineProps({
     type: Number,
     required: true,
   },
-  highlightedStudentIndex: {
-    type: Number,
-    default: -1,
-  },
 });
 
 const emit = defineEmits(["close", "update-students"]);
@@ -221,7 +210,7 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
 
     switch (direction) {
       case "right":
-      case "down": // Treat 'down' similar to 'right' for mark-level navigation
+      case "down":
         if (startMarkIndex === 0) {
           nextMarkIndex = 1;
         } else {
@@ -230,7 +219,7 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
         }
         break;
       case "left":
-      case "up": // Treat 'up' similar to 'left' for mark-level navigation
+      case "up":
         if (startMarkIndex === 1) {
           nextMarkIndex = 0;
         } else {
@@ -243,7 +232,6 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
     if (nextStudentIndex < 0)
       nextStudentIndex = localStudents.value.length - 1;
     if (nextStudentIndex >= localStudents.value.length) nextStudentIndex = 0;
-    // No need to wrap marks, as they are handled by the inner logic
 
     editCell(nextStudentIndex, nextMarkIndex);
   });
