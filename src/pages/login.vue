@@ -7,10 +7,10 @@
         <div class="absolute inset-0 opacity-10"></div>
 
         <div class="text-white max-w-md w-full">
-          <h1 class="text-3xl font-bold mb-4">Приветствуем!</h1>
+          <h1 class="text-3xl font-bold mb-4">Лучшие выбирают лучших!</h1>
           <p class="text-opacity-90">
-            Мы создаём условия, в которых каждый может легко и удобно
-            организовать образовательный процесс
+            Пусть рутина уйдёт, а вдохновение останется — мы автоматизируем
+            образовательный процесс.
           </p>
         </div>
       </div>

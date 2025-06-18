@@ -38,7 +38,7 @@ const themeStore = useThemeStore();
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
+  padding: 14px 12px;
   height: 80px;
   border-bottom: 1px solid var(--border-color);
   background-color: hsl(var(--card));
@@ -69,7 +69,7 @@ const themeStore = useThemeStore();
 .header-right {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 24p;
 }
 
 .notification-icon {

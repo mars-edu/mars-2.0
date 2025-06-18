@@ -1,10 +1,10 @@
 <template>
   <button
     v-if="isProduction"
-    class="flex items-center gap-3 w-fit"
+    class="flex items-center w-fit"
     @click="navigateToHome"
   >
-    <img :src="logoSrc" alt="Mars Logo" class="h-12" />
+    <img :src="logoSrc" alt="Mars Logo" class="h-16" />
   </button>
 </template>
 
