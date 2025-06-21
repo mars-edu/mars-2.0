@@ -166,7 +166,7 @@ export function useRBAC() {
         id: "logout",
         label: "Выйти",
         icon: "arrow_right_circle_fill",
-        roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
+        roles: [],
         route: "/login/",
       },
     ];

@@ -73,17 +73,6 @@
               placeholder="Введите результат обучения или дисциплину"
             ></f7-input>
           </div>
-
-          <div class="space-y-2">
-            <div class="flex items-center gap-3">
-              <f7-checkbox v-model:value="linkWithRup"></f7-checkbox>
-              <span class="text-sm">С РУП</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <f7-checkbox v-model:value="linkWithT"></f7-checkbox>
-              <span class="text-sm">Т</span>
-            </div>
-          </div>
         </div>
       </div>
     </f7-popover>
@@ -102,8 +91,6 @@ const disciplineStore = useDisciplineStore();
 const moduleIndex = ref("");
 const moduleName = ref("");
 const learningOutcome = ref("");
-const linkWithRup = ref(false);
-const linkWithT = ref(false);
 const formError = ref("");
 
 const disciplineSchema = z.object({
@@ -112,8 +99,6 @@ const disciplineSchema = z.object({
   learningOutcome: z
     .string()
     .min(1, "Пожалуйста, введите результат обучения или дисциплину"),
-  linkWithRup: z.boolean(),
-  linkWithT: z.boolean(),
 });
 
 const validationResult = computed(() => {
@@ -121,8 +106,6 @@ const validationResult = computed(() => {
     moduleIndex: moduleIndex.value,
     moduleName: moduleName.value,
     learningOutcome: learningOutcome.value,
-    linkWithRup: linkWithRup.value,
-    linkWithT: linkWithT.value,
   });
 });
 
@@ -153,8 +136,6 @@ const handleSaveDiscipline = async () => {
       moduleIndex: moduleIndex.value,
       moduleName: moduleName.value,
       learningOutcome: learningOutcome.value,
-      linkWithRup: linkWithRup.value,
-      linkWithT: linkWithT.value,
     });
     closeAddDisciplinePopover();
   } catch (error) {
@@ -166,8 +147,6 @@ const resetForm = () => {
   moduleIndex.value = "";
   moduleName.value = "";
   learningOutcome.value = "";
-  linkWithRup.value = false;
-  linkWithT.value = false;
   formError.value = "";
   disciplineStore.clearError();
 };

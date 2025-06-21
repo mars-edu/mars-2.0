@@ -6,8 +6,6 @@ export interface Discipline {
   moduleIndex: string;
   moduleName: string;
   learningOutcome: string;
-  linkWithRup: boolean;
-  linkWithT: boolean;
   isHighlighted?: boolean;
 }
 
@@ -15,8 +13,6 @@ export interface AddDisciplinePayload {
   moduleIndex: string;
   moduleName: string;
   learningOutcome: string;
-  linkWithRup: boolean;
-  linkWithT: boolean;
 }
 
 export const useDisciplineStore = defineStore("discipline", () => {

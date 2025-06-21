@@ -9,7 +9,7 @@
     "deploy": "wrangler deploy src/index.ts",
     "prisma:generate": "prisma generate",
     "prisma:init-sql": "prisma migrate diff --from-empty --to-schema-datamodel ./prisma/schema.prisma --script --output ./prisma/migrations/init.sql",
-    "prisma:migrate": "wrangler d1 migrations apply mars-db --local",
+    "prisma:migrate": "rm -rf .wrangler && wrangler d1 migrations apply mars-db --local",
     "prisma:migrate:remote": "wrangler d1 migrations apply mars-db --remote",
     "prisma:studio": "prisma studio",
     "seed": "wrangler d1 execute mars-db --local --file=./prisma/migrations/seed.sql",
@@ -28,6 +28,7 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
+    "@hono/node-ws": "^1.1.7",
     "@prisma/adapter-d1": "^6.8.2",
     "@prisma/client": "^6.8.2",
     "@types/jsonwebtoken": "^9.0.9",
@@ -39,6 +40,7 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.2",
     "prisma": "^6.8.2",
+    "superjson": "^2.2.2",
     "ts-node": "^10.9.2",
     "xlsx": "^0.18.5",
     "zod": "^3.24.4"

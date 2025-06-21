@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import AuthService from "../services/auth";
 
-
 export interface User {
   id: string;
   firstName: string;
@@ -25,6 +24,9 @@ export interface UserState {
 }
 
 export const useUserStore = defineStore("user", {
+  serverSync: {
+    enabled: false,
+  },
   state: (): UserState => ({
     currentUser: null,
     isAuthenticated: false,

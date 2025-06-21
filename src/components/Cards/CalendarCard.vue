@@ -206,10 +206,14 @@ const isSelectedDate = (date: CalendarDate): boolean => {
   if (!date.isCurrentMonth) return false;
 
   const selectedDate = scheduleStore.selectedDate;
+  if (!selectedDate) return false;
+
+  const selectedAsDate = new Date(selectedDate);
+
   return (
-    date.date.getDate() === selectedDate.getDate() &&
-    date.date.getMonth() === selectedDate.getMonth() &&
-    date.date.getFullYear() === selectedDate.getFullYear()
+    date.date.getDate() === selectedAsDate.getDate() &&
+    date.date.getMonth() === selectedAsDate.getMonth() &&
+    date.date.getFullYear() === selectedAsDate.getFullYear()
   );
 };
 

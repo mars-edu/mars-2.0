@@ -10,9 +10,6 @@ export interface Specialty {
   createdAt: Date;
   updatedAt: Date;
   details: string;
-  linkWithStudentCard: boolean;
-  linkWithRup: boolean;
-  linkWithT: boolean;
   isHighlighted?: boolean;
 }
 
@@ -21,9 +18,6 @@ export interface AddSpecialtyPayload {
   name: string;
   details: string;
   codeName: string;
-  linkWithStudentCard: boolean;
-  linkWithRup: boolean;
-  linkWithT: boolean;
 }
 
 export const useSpecialtyStore = defineStore(

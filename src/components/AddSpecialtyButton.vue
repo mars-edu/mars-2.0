@@ -27,8 +27,8 @@
           :is-loading="specialtyStore.isLoading"
           :on-cancel="closeAddSpecialtyPopover"
           :on-save="handleSaveSpecialty"
-          />
-          <!-- :disabled="!isFormValid || specialtyStore.isLoading" -->
+        />
+        <!-- :disabled="!isFormValid || specialtyStore.isLoading" -->
 
         <div
           v-if="formError || specialtyStore.getError"
@@ -85,21 +85,6 @@
               placeholder="Для удобного отображения можно обозначить кодом, буквой или цифрой"
             ></f7-input>
           </div>
-
-          <div class="space-y-2">
-            <div class="flex items-center gap-3">
-              <f7-checkbox v-model:value="linkWithStudentCard"></f7-checkbox>
-              <span class="text-sm">С картотекой обучающихся</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <f7-checkbox v-model:value="linkWithRup"></f7-checkbox>
-              <span class="text-sm">С РУП</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <f7-checkbox v-model:value="linkWithT"></f7-checkbox>
-              <span class="text-sm">Т</span>
-            </div>
-          </div>
         </div>
       </div>
     </f7-popover>
@@ -119,18 +104,12 @@ const specialtyCode = ref("");
 const specialtyName = ref("");
 const specialtyDetails = ref("");
 const specialtyCodeName = ref("");
-const linkWithStudentCard = ref(false);
-const linkWithRup = ref(false);
-const linkWithT = ref(false);
 
 const specialtySchema = z.object({
   code: z.string().min(1, "Пожалуйста, введите шифр специальности"),
   name: z.string().min(1, "Пожалуйста, введите наименование специальности"),
   details: z.string().optional().default(""),
   codeName: z.string().optional().default(""),
-  linkWithStudentCard: z.boolean().optional().default(false),
-  linkWithRup: z.boolean().optional().default(false),
-  linkWithT: z.boolean().optional().default(false),
 });
 
 const validationResult = computed(() => {
@@ -139,9 +118,6 @@ const validationResult = computed(() => {
     name: specialtyName.value,
     details: specialtyDetails.value,
     codeName: specialtyCodeName.value,
-    linkWithStudentCard: linkWithStudentCard.value,
-    linkWithRup: linkWithRup.value,
-    linkWithT: linkWithT.value,
   });
 });
 
@@ -161,7 +137,7 @@ const openAddSpecialtyPopover = () => {
 function closeAddSpecialtyPopover() {
   f7.popover.close("#add-specialty-popover");
   resetForm();
-};
+}
 
 async function handleSaveSpecialty() {
   if (!isFormValid.value) {
@@ -173,9 +149,6 @@ async function handleSaveSpecialty() {
       name: specialtyName.value,
       details: specialtyDetails.value,
       codeName: specialtyCodeName.value,
-      linkWithStudentCard: linkWithStudentCard.value,
-      linkWithRup: linkWithRup.value,
-      linkWithT: linkWithT.value,
     });
     closeAddSpecialtyPopover();
   } catch (error) {
@@ -188,9 +161,6 @@ const resetForm = () => {
   specialtyName.value = "";
   specialtyDetails.value = "";
   specialtyCodeName.value = "";
-  linkWithStudentCard.value = false;
-  linkWithRup.value = false;
-  linkWithT.value = false;
   specialtyStore.clearError();
 };
 

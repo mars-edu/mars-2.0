@@ -59,16 +59,6 @@
             ></f7-input>
           </div>
 
-          <div class="space-y-2">
-            <div class="flex items-center gap-2">
-              <f7-checkbox
-                v-model:value="linkWithRup"
-                label="С РУП"
-              ></f7-checkbox>
-              <f7-checkbox v-model:value="linkWithT" label="Т"></f7-checkbox>
-            </div>
-          </div>
-
           <div class="pt-4 border-t border-border">
             <button
               class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
@@ -103,8 +93,6 @@ const props = defineProps<{
     moduleIndex: string;
     moduleName: string;
     learningOutcome: string;
-    linkWithRup: boolean;
-    linkWithT: boolean;
   };
 }>();
 
@@ -113,8 +101,6 @@ const disciplineStore = useDisciplineStore();
 const moduleIndex = ref(props.discipline.moduleIndex);
 const moduleName = ref(props.discipline.moduleName);
 const learningOutcome = ref(props.discipline.learningOutcome);
-const linkWithRup = ref(props.discipline.linkWithRup);
-const linkWithT = ref(props.discipline.linkWithT);
 const formError = ref("");
 
 const disciplineSchema = z.object({
@@ -123,8 +109,6 @@ const disciplineSchema = z.object({
   learningOutcome: z
     .string()
     .min(1, "Пожалуйста, введите результат обучения или дисциплину"),
-  linkWithRup: z.boolean(),
-  linkWithT: z.boolean(),
 });
 
 const validationResult = computed(() => {
@@ -132,8 +116,6 @@ const validationResult = computed(() => {
     moduleIndex: moduleIndex.value,
     moduleName: moduleName.value,
     learningOutcome: learningOutcome.value,
-    linkWithRup: linkWithRup.value,
-    linkWithT: linkWithT.value,
   });
 });
 
@@ -160,8 +142,6 @@ const handleUpdateDiscipline = async () => {
       moduleIndex: moduleIndex.value,
       moduleName: moduleName.value,
       learningOutcome: learningOutcome.value,
-      linkWithRup: linkWithRup.value,
-      linkWithT: linkWithT.value,
     });
     closeEditDisciplinePopover();
   } catch (error) {
@@ -191,8 +171,6 @@ const resetForm = () => {
   moduleIndex.value = props.discipline.moduleIndex;
   moduleName.value = props.discipline.moduleName;
   learningOutcome.value = props.discipline.learningOutcome;
-  linkWithRup.value = props.discipline.linkWithRup;
-  linkWithT.value = props.discipline.linkWithT;
   formError.value = "";
   disciplineStore.clearError();
 };

@@ -27,4 +27,10 @@ model UserRole {
   userId String
   
   @@unique([userId, role])
+}
+
+model PiniaState {
+  storeId   String   @id @unique
+  state     String
+  updatedAt DateTime @default(now()) @updatedAt
 } 

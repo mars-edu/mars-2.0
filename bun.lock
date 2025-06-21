@@ -13,6 +13,7 @@
         "framework7-icons": "^5.0.5",
         "framework7-vue": "^8.3.4",
         "fuse.js": "^7.1.0",
+        "hono": "^4.8.2",
         "lucide-vue-next": "^0.482.0",
         "maska": "^3.1.1",
         "material-icons": "^1.13.14",
@@ -21,6 +22,7 @@
         "pinia-plugin-persistedstate": "^4.3.0",
         "sharp": "^0.33.5",
         "skeleton-elements": "^4.0.1",
+        "superjson": "^2.2.2",
         "svgo": "^3.3.2",
         "swiper": "^11.2.6",
         "tailwind-merge": "^3.3.0",
@@ -578,6 +580,8 @@
     "has-tostringtag": ["has-tostringtag@1.0.2", "", { "dependencies": { "has-symbols": "^1.0.3" } }, "sha512-NqADB8VjPFLM2V0VvHUewwwsw0ZWBaIdgo+ieHtK3hasLz4qeCRjYcqfB6AQrBggRKppKF8L52/VqdVsO47Dlw=="],
 
     "hasown": ["hasown@2.0.2", "", { "dependencies": { "function-bind": "^1.1.2" } }, "sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ=="],
+
+    "hono": ["hono@4.8.2", "", {}, "sha512-hM+1RIn9PK1I6SiTNS6/y7O1mvg88awYLFEuEtoiMtRyT3SD2iu9pSFgbBXT3b1Ua4IwzvSTLvwO0SEhDxCi4w=="],
 
     "hookable": ["hookable@5.5.3", "", {}, "sha512-Yc+BQe8SvoXH1643Qez1zqLRmbA5rCL+sSmk6TVos0LWVfNIB7PGncdlId77WzLGSIB5KaWgTaNTs2lNVEI6VQ=="],
 

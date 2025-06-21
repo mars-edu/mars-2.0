@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import auth from "./controllers/authController.js";
+import ws from "./controllers/websocketController.js";
 import { getPrismaClient } from "./utils/prismaClient.js";
 import type { D1Database } from "@cloudflare/workers-types";
 
@@ -45,6 +46,7 @@ api.get("/env", (c) => {
 });
 
 api.route("/auth", auth);
+api.route("/ws", ws);
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -63,3 +65,4 @@ app.use(
 app.route("/api", api);
 
 export default app;
+export { WebSocketDurableObject } from "./durable-objects/WebSocketDurableObject.js";

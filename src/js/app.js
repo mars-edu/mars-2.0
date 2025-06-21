@@ -9,6 +9,7 @@ import vAuth from "../directives/auth";
 import "../css/app.css";
 import App from "../components/app.vue";
 import { PiniaSharedState } from "./plugin/pinia";
+import { PiniaServerSync } from "./plugin/pinia-server-sync";
 
 Framework7.use(Framework7Vue);
 
@@ -16,7 +17,8 @@ const app = createApp(App);
 
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
-pinia.use(PiniaSharedState);
+pinia.use(PiniaSharedState({ enable: true }));
+pinia.use(PiniaServerSync({ url: "http://localhost:5173/api/ws" }));
 
 app.use(pinia);
 

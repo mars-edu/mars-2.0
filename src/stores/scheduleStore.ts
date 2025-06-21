@@ -71,12 +71,11 @@ export const useScheduleStore = defineStore("schedule", {
 
     // Get schedule for the selected date
     selectedDateSchedule: (state): Lesson[] => {
-      const formattedDate = `${state.selectedDate.getFullYear()}-${String(
-        state.selectedDate.getMonth() + 1
-      ).padStart(2, "0")}-${String(state.selectedDate.getDate()).padStart(
-        2,
-        "0"
-      )}`;
+      if (!state.selectedDate) return [];
+      const date = new Date(state.selectedDate);
+      const formattedDate = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       return state.scheduleData[formattedDate] || [];
     },
   },

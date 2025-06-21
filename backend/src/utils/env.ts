@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Secret } from "jsonwebtoken";
 import type { D1Database } from "@cloudflare/workers-types";
+import type { DurableObjectNamespace } from "@cloudflare/workers-types";
 
 const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
@@ -19,6 +20,7 @@ const envSchema = z.object({
 // Cloudflare Workers env interface
 export interface Env {
   DB: D1Database;
+  WEBSOCKET_DO: DurableObjectNamespace;
   JWT_SECRET: string;
   JWT_EXPIRY: string;
   FRONTEND_URL: string;

@@ -123,9 +123,19 @@ const schedule = computed(() => {
 // Format the selected date for display
 const formattedDate = computed(() => {
   const date = scheduleStore.selectedDate;
-  const day = date.getDate();
-  const month = date.getMonth() + 1;
-  const year = date.getFullYear();
+  if (!date) {
+    const today = new Date();
+    return `${today.getDate()}.${
+      today.getMonth() + 1 < 10
+        ? "0" + (today.getMonth() + 1)
+        : today.getMonth() + 1
+    } (сегодня)`;
+  }
+
+  const d = new Date(date);
+  const day = d.getDate();
+  const month = d.getMonth() + 1;
+  const year = d.getFullYear();
 
   // Get day of week
   const days = [
@@ -137,14 +147,14 @@ const formattedDate = computed(() => {
     "Пятница",
     "Суббота",
   ];
-  const dayOfWeek = days[date.getDay()];
+  const dayOfWeek = days[d.getDay()];
 
   // Check if it's today
   const today = new Date();
   const isToday =
-    date.getDate() === today.getDate() &&
-    date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear();
+    d.getDate() === today.getDate() &&
+    d.getMonth() === today.getMonth() &&
+    d.getFullYear() === today.getFullYear();
 
   if (isToday) {
     return "сегодня";
@@ -154,9 +164,9 @@ const formattedDate = computed(() => {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const isTomorrow =
-    date.getDate() === tomorrow.getDate() &&
-    date.getMonth() === tomorrow.getMonth() &&
-    date.getFullYear() === tomorrow.getFullYear();
+    d.getDate() === tomorrow.getDate() &&
+    d.getMonth() === tomorrow.getMonth() &&
+    d.getFullYear() === tomorrow.getFullYear();
 
   if (isTomorrow) {
     return "завтра";
