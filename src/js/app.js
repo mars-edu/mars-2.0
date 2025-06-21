@@ -8,6 +8,7 @@ import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import vAuth from "../directives/auth";
 import "../css/app.css";
 import App from "../components/app.vue";
+import { PiniaSharedState } from "./plugin/pinia";
 
 Framework7.use(Framework7Vue);
 
@@ -15,6 +16,8 @@ const app = createApp(App);
 
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
+pinia.use(PiniaSharedState);
+
 app.use(pinia);
 
 app.directive("auth", vAuth);
