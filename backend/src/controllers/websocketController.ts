@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { getCookie } from "hono/cookie";
 import AuthService from "../services/authService.js";
 import type { Env } from "../utils/env.js";
 
@@ -9,11 +8,11 @@ const wsApp = new Hono<{ Bindings: Env }>();
 wsApp.get("/", async (c) => {
   const authService = new AuthService(c);
 
-  const cookieToken = getCookie(c, "auth_token");
-  if (!cookieToken) {
+  const token = c.req.query("token");
+  if (!token) {
     return new Response("Unauthorized", { status: 401 });
   }
-  const validationResult = await authService.validateToken(cookieToken);
+  const validationResult = await authService.validateToken(token);
   if (!validationResult.success) {
     return new Response("Unauthorized", { status: 401 });
   }

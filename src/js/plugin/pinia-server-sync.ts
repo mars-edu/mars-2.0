@@ -40,12 +40,17 @@ const connect = () => {
   if (ws || !pluginOptions) return;
 
   connectionPromise = new Promise((resolve, reject) => {
+    let url = pluginOptions!.url;
+    const token = localStorage.getItem("auth_token");
+    if (token) {
+      const separator = url.includes("?") ? "&" : "?";
+      url = `${url}${separator}token=${encodeURIComponent(token)}`;
+    }
+
     console.log(
-      `[PiniaServerSync] Creating shared WebSocket connection to ${
-        pluginOptions!.url
-      }`
+      `[PiniaServerSync] Creating shared WebSocket connection to ${url}`
     );
-    ws = new WebSocket(pluginOptions!.url);
+    ws = new WebSocket(url);
     const serializer = pluginOptions!.serializer ?? {
       serialize: superjson.stringify,
       deserialize: superjson.parse,
