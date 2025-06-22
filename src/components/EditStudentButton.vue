@@ -63,15 +63,6 @@
           </div>
 
           <SmartSelect
-            label="Курс"
-            :name="`course-edit-${student.id}`"
-            placeholder="Выберите курс"
-            v-model="course"
-            :options="courseOptions"
-            :id="`student-course-edit-${student.id}`"
-          />
-
-          <SmartSelect
             label="Специальность"
             :name="`specialty-edit-${student.id}`"
             placeholder="Выберите специальность"
@@ -146,7 +137,6 @@ import { z } from "zod";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
-import { useCourseStore } from "@/stores/courseStore";
 import { useBaseStore } from "@/stores/baseStore";
 import { storeToRefs } from "pinia";
 import SmartSelect from "@/components/ui/SmartSelect.vue";
@@ -158,7 +148,6 @@ const props = defineProps<{
     surname: string;
     firstName: string;
     patronymic: string;
-    course: number;
     specialty: string;
     language: string;
     base: number;
@@ -169,9 +158,7 @@ const props = defineProps<{
 const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
-const courseStore = useCourseStore();
 const baseStore = useBaseStore();
-const { courses } = storeToRefs(courseStore);
 const { specialties } = storeToRefs(specialtyStore);
 const { languages } = storeToRefs(languageStore);
 const { bases } = storeToRefs(baseStore);
@@ -179,19 +166,11 @@ const { bases } = storeToRefs(baseStore);
 const surname = ref(props.student.surname);
 const firstName = ref(props.student.firstName);
 const patronymic = ref(props.student.patronymic);
-const course = ref(props.student.course.toString());
 const specialty = ref(props.student.specialty);
 const language = ref(props.student.language);
 const base = ref(props.student.base.toString());
 const gender = ref<"male" | "female">(props.student.gender);
 const formError = ref("");
-
-const courseOptions = computed(() =>
-  courses.value.map((c) => ({
-    value: c.number.toString(),
-    text: c.number.toString(),
-  }))
-);
 
 const specialtyOptions = computed(() =>
   specialties.value.map((s) => ({
@@ -218,7 +197,6 @@ const studentSchema = z.object({
   surname: z.string().min(1, "Пожалуйста, введите фамилию студента"),
   firstName: z.string().min(1, "Пожалуйста, введите имя студента"),
   patronymic: z.string().min(1, "Пожалуйста, введите отчество студента"),
-  course: z.string().min(1, "Пожалуйста, введите курс"),
   specialty: z.string().min(1, "Пожалуйста, выберите специальность"),
   language: z.string().min(1, "Пожалуйста, выберите язык обучения"),
   base: z.string().min(1, "Пожалуйста, введите базу"),
@@ -232,7 +210,6 @@ const validationResult = computed(() => {
     surname: surname.value,
     firstName: firstName.value,
     patronymic: patronymic.value,
-    course: course.value,
     specialty: specialty.value,
     language: language.value,
     base: base.value,
@@ -263,7 +240,6 @@ const handleUpdateStudent = async () => {
       surname: surname.value,
       firstName: firstName.value,
       patronymic: patronymic.value,
-      course: parseInt(course.value),
       specialty: specialty.value,
       language: language.value,
       base: parseInt(base.value),
@@ -300,7 +276,6 @@ const resetForm = () => {
   surname.value = props.student.surname;
   firstName.value = props.student.firstName;
   patronymic.value = props.student.patronymic;
-  course.value = props.student.course.toString();
   specialty.value = props.student.specialty;
   language.value = props.student.language;
   base.value = props.student.base.toString();

@@ -83,7 +83,7 @@
             <AccordionItem id="courses" :default-expanded="true">
               <template #title>Курсы:</template>
               <template #actions>
-                <AddSettingsCourseButton />
+                <AddCourseButton />
               </template>
               <div v-if="courseStore.isLoading" class="p-4 flex justify-center">
                 <f7-preloader></f7-preloader>
@@ -135,7 +135,7 @@
                     ></f7-icon>
                   </button>
                 </div>
-                <EditSettingsCourseButton
+                <EditCourseButton
                   v-for="course in courses"
                   :key="`edit-${course.id}`"
                   :course="{
@@ -236,8 +236,8 @@ import Accordion from "@/components/ui/accordion/Accordion.vue";
 import AccordionItem from "@/components/ui/accordion/AccordionItem.vue";
 import AddLanguageButton from "@/components/AddLanguageButton.vue";
 import EditLanguageButton from "@/components/EditLanguageButton.vue";
-import AddSettingsCourseButton from "@/components/AddSettingsCourseButton.vue";
-import EditSettingsCourseButton from "@/components/EditSettingsCourseButton.vue";
+import AddCourseButton from "@/components/AddCourseButton.vue";
+import EditCourseButton from "@/components/EditCourseButton.vue";
 import AddAcademicYearButton from "@/components/AddAcademicYearButton.vue";
 import EditAcademicYearButton from "@/components/EditAcademicYearButton.vue";
 import { useLanguageStore } from "@/stores/languageStore";

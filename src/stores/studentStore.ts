@@ -7,7 +7,6 @@ export interface Student {
   surname: string;
   firstName: string;
   patronymic: string;
-  course: number;
   specialty: string;
   language: string;
   base: number;
@@ -19,7 +18,6 @@ export interface AddStudentPayload {
   surname: string;
   firstName: string;
   patronymic: string;
-  course: number;
   specialty: string;
   language: string;
   base: number;
@@ -28,7 +26,6 @@ export interface AddStudentPayload {
 }
 
 export interface StudentFilters {
-  course: string;
   specialty: string;
   language: string;
   gender: string;
@@ -42,7 +39,6 @@ export const useStudentStore = defineStore("student", () => {
   const isLoading = ref(false);
   const error = ref<string | null>(null);
   const filters = ref<StudentFilters>({
-    course: "",
     specialty: "",
     language: "",
     gender: "",
@@ -54,13 +50,10 @@ export const useStudentStore = defineStore("student", () => {
   const getAllStudents = computed(() => students.value);
 
   const filteredStudents = computed(() => {
-    let studentsToFilter = students.value;
+    let studentsToFilter = [...students.value];
 
     // Apply standard filters first
     studentsToFilter = studentsToFilter.filter((student) => {
-      const courseMatch =
-        !filters.value.course ||
-        student.course.toString() === filters.value.course;
       const specialtyMatch =
         !filters.value.specialty ||
         student.specialty === filters.value.specialty;
@@ -75,7 +68,6 @@ export const useStudentStore = defineStore("student", () => {
         student.academicYearId === filters.value.academicYearId;
 
       return (
-        courseMatch &&
         specialtyMatch &&
         languageMatch &&
         genderMatch &&
@@ -84,10 +76,14 @@ export const useStudentStore = defineStore("student", () => {
       );
     });
 
-    // Apply Fuse.js fuzzy search if searchTerm is present
     if (filters.value.searchTerm) {
-      const fuse = new Fuse(studentsToFilter, {
-        keys: ["surname", "firstName", "patronymic"],
+      const studentsWithFio = studentsToFilter.map((student) => ({
+        ...student,
+        fio: `${student.surname} ${student.firstName} ${student.patronymic}`,
+      }));
+
+      const fuse = new Fuse(studentsWithFio, {
+        keys: ["surname", "firstName", "patronymic", "fio"],
         threshold: 0.3,
       });
       return fuse.search(filters.value.searchTerm).map((result) => result.item);
@@ -102,7 +98,6 @@ export const useStudentStore = defineStore("student", () => {
 
   const clearFilters = () => {
     filters.value = {
-      course: "",
       specialty: "",
       language: "",
       gender: "",

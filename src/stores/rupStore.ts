@@ -9,9 +9,15 @@ export const useRupStore = defineStore(
   () => {
     const showOverlay = ref(false);
     const isOverlayVisible = computed(() => showOverlay.value);
-    function show() { showOverlay.value = true; }
-    function hide() { showOverlay.value = false; }
-    function toggle() { showOverlay.value = !showOverlay.value; }
+    function show() {
+      showOverlay.value = true;
+    }
+    function hide() {
+      showOverlay.value = false;
+    }
+    function toggle() {
+      showOverlay.value = !showOverlay.value;
+    }
 
     const selectedSpecialtyId = ref<string | null>(null);
     const selectedCourseId = ref<string | null>(null);
@@ -38,7 +44,9 @@ export const useRupStore = defineStore(
       const courseStore = useCourseStore();
       const { courses } = storeToRefs(courseStore);
       if (!selectedCourseId.value) return null;
-      return courses.value.find((course) => course.id === selectedCourseId.value);
+      return courses.value.find(
+        (course) => course.id === selectedCourseId.value
+      );
     });
     const filteredCourses = computed(() => {
       const courseStore = useCourseStore();
@@ -85,4 +93,9 @@ export const useRupStore = defineStore(
       clearClass9Selection,
     };
   },
+  {
+    serverSync: {
+      enabled: false,
+    },
+  }
 );

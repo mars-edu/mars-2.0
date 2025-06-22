@@ -42,50 +42,64 @@ export const useClass9Store = defineStore(
 
     const getClass9ByCourseId = computed(() => {
       return (courseId: string, specialtyId: string) =>
-        class9Items.value.find((c) => c.courseId === courseId && c.specialtyId === specialtyId);
+        class9Items.value.find(
+          (c) => c.courseId === courseId && c.specialtyId === specialtyId
+        );
     });
 
     const getAllClass9Items = computed(() => class9Items.value);
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
-    function createEmptyClass9Data(courseId: string, specialtyId: string): Class9Data {
+    function createEmptyClass9Data(
+      courseId: string,
+      specialtyId: string
+    ): Class9Data {
       return {
         id: crypto.randomUUID(),
         courseId,
         specialtyId,
-        moduleIndex: '',
-        moduleName: '',
-        learningOutcome: '',
+        moduleIndex: "",
+        moduleName: "",
+        learningOutcome: "",
         examEnabled: false,
         examSemesters: Array(8).fill(false),
         creditEnabled: false,
         creditSemesters: Array(8).fill(false),
         controlLessonEnabled: false,
         controlLessonSemesters: Array(8).fill(false),
-        totalCredits: '',
-        totalHours: '',
-        theoreticalHours: '',
-        labPracticalHours: '',
-        field3Value: '',
-        srspHours: '',
-        srsHours: '',
-        trainingPracticeHours: '',
-        individualHours: '',
+        totalCredits: "",
+        totalHours: "",
+        theoreticalHours: "",
+        labPracticalHours: "",
+        field3Value: "",
+        srspHours: "",
+        srsHours: "",
+        trainingPracticeHours: "",
+        individualHours: "",
         distributionSemestersActive: Array(8).fill(false),
-        distributionSemesterHours: Array(8).fill(''),
+        distributionSemesterHours: Array(8).fill(""),
         createdAt: new Date(),
         updatedAt: new Date(),
       };
     }
 
-    async function addClass9(courseId: string, specialtyId: string, data?: Partial<Omit<Class9Data, 'id' | 'createdAt' | 'updatedAt' | 'courseId' | 'specialtyId'>> ) {
+    async function addClass9(
+      courseId: string,
+      specialtyId: string,
+      data?: Partial<
+        Omit<
+          Class9Data,
+          "id" | "createdAt" | "updatedAt" | "courseId" | "specialtyId"
+        >
+      >
+    ) {
       loading.value = true;
       try {
         const newClass9: Class9Data = {
           ...createEmptyClass9Data(courseId, specialtyId),
           ...data,
-          // TODO: workaround 
+          // TODO: workaround
           courseId,
           specialtyId,
         };
@@ -94,7 +108,8 @@ export const useClass9Store = defineStore(
         error.value = null;
         return newClass9;
       } catch (err) {
-        error.value = err instanceof Error ? err.message : "Failed to add class9 data";
+        error.value =
+          err instanceof Error ? err.message : "Failed to add class9 data";
         throw err;
       } finally {
         loading.value = false;
@@ -107,14 +122,18 @@ export const useClass9Store = defineStore(
         class9Items.value.push(...items);
         error.value = null;
       } catch (err) {
-        error.value = err instanceof Error ? err.message : "Failed to add class9 items";
+        error.value =
+          err instanceof Error ? err.message : "Failed to add class9 items";
         throw err;
       } finally {
         loading.value = false;
       }
     }
 
-    async function updateClass9(id: string, data: Partial<Omit<Class9Data, 'id' | 'createdAt' | 'updatedAt'>>) {
+    async function updateClass9(
+      id: string,
+      data: Partial<Omit<Class9Data, "id" | "createdAt" | "updatedAt">>
+    ) {
       loading.value = true;
       try {
         const index = class9Items.value.findIndex((c) => c.id === id);
@@ -132,7 +151,8 @@ export const useClass9Store = defineStore(
         error.value = null;
         return updatedClass9;
       } catch (err) {
-        error.value = err instanceof Error ? err.message : "Failed to update class9 data";
+        error.value =
+          err instanceof Error ? err.message : "Failed to update class9 data";
         throw err;
       } finally {
         loading.value = false;
@@ -145,7 +165,8 @@ export const useClass9Store = defineStore(
         class9Items.value = class9Items.value.filter((c) => c.id !== id);
         error.value = null;
       } catch (err) {
-        error.value = err instanceof Error ? err.message : "Failed to delete class9 data";
+        error.value =
+          err instanceof Error ? err.message : "Failed to delete class9 data";
         throw err;
       } finally {
         loading.value = false;
@@ -176,4 +197,4 @@ export const useClass9Store = defineStore(
   {
     persist: true,
   }
-); 
+);
