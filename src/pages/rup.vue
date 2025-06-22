@@ -77,12 +77,20 @@
                   <div
                     v-for="specialty in specialties"
                     :key="specialty.id"
+                    :id="`specialty-item-${specialty.id}`"
                     class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
                     :class="{
                       'ring-2 ring-primary bg-primary/10':
                         selectedSpecialtyId === specialty.id,
                     }"
                     @click="selectedSpecialtyId = specialty.id"
+                    @mouseenter="
+                      handleSpecialtyMouseEnter(
+                        specialty,
+                        `#specialty-item-${specialty.id}`
+                      )
+                    "
+                    @mouseleave="handleGroupMouseLeave"
                   >
                     <span class="font-medium">
                       {{ specialty.codeName || specialty.name }}
@@ -270,6 +278,29 @@
           </f7-fab-button>
         </f7-fab-buttons>
       </f7-fab>
+      <f7-popover
+        class="specialty-info-popover w-64"
+        @mouseenter="handlePopoverMouseEnter"
+        @mouseleave="handleGroupMouseLeave"
+      >
+        <div
+          v-if="hoveredSpecialty"
+          class="p-3 bg-popover text-popover-foreground rounded-lg shadow-xl"
+        >
+          <div class="font-semibold text-base mb-1">
+            {{ hoveredSpecialty.name }}
+          </div>
+          <div class="text-sm text-muted-foreground mb-2">
+            {{ hoveredSpecialty.codeName }}
+          </div>
+          <p class="text-sm font-normal">
+            {{
+              hoveredSpecialty.details ||
+              "Дополнительная информация отсутствует."
+            }}
+          </p>
+        </div>
+      </f7-popover>
     </template>
   </f7-page>
 </template>
@@ -284,13 +315,14 @@ import {
   f7Icon,
   f7SkeletonBlock,
   f7,
+  f7Popover,
 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddWorkingPlanDialog from "@/components/AddWorkingPlanDialog.vue";
 import Class9Table from "@/components/Class9Table.vue";
 import Class11Table from "@/components/Class11Table.vue";
-import { useSpecialtyStore } from "@/stores/specialtyStore";
+import { useSpecialtyStore, type Specialty } from "@/stores/specialtyStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import Accordion from "@/components/ui/accordion/Accordion.vue";
@@ -332,6 +364,45 @@ const rupStore = useRupStore();
 const class9Store = useClass9Store();
 
 const isSelectMode = ref(false);
+
+const hoveredSpecialty = ref<Specialty | null>(null);
+const isMouseOverGroup = ref(false);
+let showTimeout: ReturnType<typeof setTimeout> | null = null;
+let hideTimeout: ReturnType<typeof setTimeout> | null = null;
+
+const handleSpecialtyMouseEnter = (specialty: Specialty, targetEl: string) => {
+  isMouseOverGroup.value = true;
+  if (hideTimeout) clearTimeout(hideTimeout);
+  if (showTimeout) clearTimeout(showTimeout);
+
+  showTimeout = setTimeout(() => {
+    const popover = f7.popover.get(".specialty-info-popover");
+    if (popover && popover.opened) return;
+    hoveredSpecialty.value = specialty;
+    f7.popover.open(".specialty-info-popover", targetEl);
+  }, 300);
+};
+
+const handlePopoverMouseEnter = () => {
+  isMouseOverGroup.value = true;
+  if (hideTimeout) clearTimeout(hideTimeout);
+};
+
+const handleGroupMouseLeave = () => {
+  isMouseOverGroup.value = false;
+  if (showTimeout) clearTimeout(showTimeout);
+  if (hideTimeout) clearTimeout(hideTimeout);
+
+  hideTimeout = setTimeout(() => {
+    if (!isMouseOverGroup.value) {
+      f7.popover.close(".specialty-info-popover");
+    }
+  }, 300);
+};
+
+const onPopoverClosed = () => {
+  hoveredSpecialty.value = null;
+};
 
 const enableSelectMode = () => {
   isSelectMode.value = true;
@@ -405,5 +476,16 @@ const filteredVisibleCourses = computed(() => rupStore.filteredCourses);
 onMounted(async () => {
   await specialtyStore.fetchSpecialties();
   await courseStore.fetchCourses();
+  f7.on("popoverClosed", (popover) => {
+    if (popover.el.classList.contains("specialty-info-popover")) {
+      onPopoverClosed();
+    }
+  });
 });
 </script>
+
+<style scoped>
+.specialty-info-popover.popover {
+  margin-top: -100px;
+}
+</style>
