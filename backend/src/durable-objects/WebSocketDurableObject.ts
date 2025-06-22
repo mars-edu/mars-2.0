@@ -2,16 +2,14 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaD1 } from "@prisma/adapter-d1";
 import superjson from "superjson";
 import type { Env } from "../utils/env.js";
+import { DurableObject } from "cloudflare:workers";
 
-export class WebSocketDurableObject {
-  state: DurableObjectState;
-  env: Env;
+export class WebSocketDurableObject extends DurableObject {
   prisma: PrismaClient;
   sockets: WebSocket[] = [];
 
   constructor(state: DurableObjectState, env: Env) {
-    this.state = state;
-    this.env = env;
+    super(state, env);
     const adapter = new PrismaD1(env.DB);
     this.prisma = new PrismaClient({ adapter });
   }

@@ -27,7 +27,7 @@ class_name = "WebSocketDurableObject"
 
 [[migrations]]
 tag = "v1"
-new_classes = ["WebSocketDurableObject"]
+new_sqlite_classes = ["WebSocketDurableObject"]
 
 [dev]
 port = 3001 
