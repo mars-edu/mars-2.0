@@ -11,7 +11,6 @@
         "@types/multer": "^1.4.12",
         "@types/node": "^22.15.19",
         "bcryptjs": "^2.4.3",
-        "bit-sync": "^0.0.0",
         "hono": "^4.7.10",
         "hono-sessions": "^0.7.2",
         "jsonwebtoken": "^9.0.2",
@@ -230,8 +229,6 @@
     "as-table": ["as-table@1.0.55", "", { "dependencies": { "printable-characters": "^1.0.42" } }, "sha512-xvsWESUJn0JN421Xb9MQw6AsMHRCUknCe0Wjlxvjud80mU4E6hQf1A6NzQKcYNmYw62MfzEtXc+badstZP3JpQ=="],
 
     "bcryptjs": ["bcryptjs@2.4.3", "", {}, "sha512-V/Hy/X9Vt7f3BbPJEi8BdVFMByHi+jNXrYkW3huaybV/kQ0KJg0Y6PkEMbn+zeT+i+SiKZ/HMqJGIIt4LZDqNQ=="],
-
-    "bit-sync": ["bit-sync@0.0.0", "", {}, "sha512-Jcq5J19gTsToc5F2zQ5QQziae/7uQqqYOFBL7s4/eb4r33z6cSwasqDFa9WGzulPCZz/qjTBEnHBungvEz1DDA=="],
 
     "blake3-wasm": ["blake3-wasm@2.1.5", "", {}, "sha512-F1+K8EbfOZE49dtoPtmxUQrpXaBIl3ICvasLh+nJta0xkz+9kF/7uet9fLnwKqhDrmj6g+6K3Tw9yQPUg2ka5g=="],
 
