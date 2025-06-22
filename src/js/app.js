@@ -18,7 +18,7 @@ const app = createApp(App);
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
 pinia.use(PiniaSharedState({ enable: true }));
-pinia.use(PiniaServerSync({ url: "http://localhost:5173/api/ws" }));
+pinia.use(PiniaServerSync({ url: "/api/ws" }));
 
 app.use(pinia);
 
