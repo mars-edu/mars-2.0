@@ -18,7 +18,7 @@ FRONTEND_URL = "https://mars-2-0.pages.dev"
 [[d1_databases]]
 binding = "DB"
 database_name = "mars-db"
-database_id = "6def8cfc-c69e-43f9-a16e-a38e370c52d7"
+database_id = "f1ed55ff-0477-49a2-b0f3-ecbed0f47c18"
 migrations_dir = "prisma/migrations"
 
 [[durable_objects.bindings]]
