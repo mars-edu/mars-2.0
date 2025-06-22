@@ -10,6 +10,7 @@ import "../css/app.css";
 import App from "../components/app.vue";
 import { PiniaSharedState } from "./plugin/pinia";
 import { PiniaServerSync } from "./plugin/pinia-server-sync";
+import { API_URL } from "../lib/http-client";
 
 Framework7.use(Framework7Vue);
 
@@ -18,7 +19,7 @@ const app = createApp(App);
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
 pinia.use(PiniaSharedState({ enable: true }));
-pinia.use(PiniaServerSync({ url: "/api/ws" }));
+pinia.use(PiniaServerSync({ url: `${API_URL}/ws` }));
 
 app.use(pinia);
 

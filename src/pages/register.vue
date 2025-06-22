@@ -123,7 +123,7 @@
                 v-model:checked="formData.acceptTerms"
                 class="!flex-shrink-0"
               />
-              <span class="text-sm text-gray-600 whitespace-nowrap">
+              <span class="text-sm text-gray-600">
                 Я согласен на обработку персональных данных
               </span>
             </div>
@@ -278,7 +278,7 @@
                 v-model:checked="formData.acceptTerms"
                 class="!flex-shrink-0"
               />
-              <span class="text-sm text-gray-600 whitespace-nowrap">
+              <span class="text-sm text-gray-600">
                 Я согласен на обработку персональных данных
               </span>
             </div>

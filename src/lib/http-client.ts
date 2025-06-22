@@ -1,10 +1,6 @@
 import { ofetch } from "ofetch";
 
-const API_URL = import.meta.env.VITE_API_URL || "/api";
-
-interface RequestOptions {
-  headers?: HeadersInit;
-}
+export const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 export const httpClient = ofetch.create({
   baseURL: API_URL,
