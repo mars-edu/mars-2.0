@@ -151,7 +151,7 @@
                 <div
                   v-for="academicYear in academicYearStore.getSortedAcademicYears"
                   :key="academicYear.id"
-                  @click.stop="handleSetActiveAcademicYear(academicYear.id)"
+                  @click.stop="handleSetActiveAcademicYear(academicYear)"
                   class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
                   :id="`academic-year-item-${academicYear.id}`"
                   :class="{ 'border-primary': academicYear.isActive }"
@@ -168,7 +168,7 @@
                   <button
                     v-if="!academicYear.isActive"
                     class="ml-auto p-1 hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="handleSetActiveAcademicYear(academicYear.id)"
+                    @click.stop="handleSetActiveAcademicYear(academicYear)"
                     aria-label="Set Active"
                     type="button"
                   >
@@ -233,13 +233,21 @@ const { courses } = storeToRefs(courseStore);
 const { languages } = storeToRefs(languageStore);
 const { academicYears } = storeToRefs(academicYearStore);
 
-const handleSetActiveAcademicYear = async (id: string) => {
-  try {
-    await academicYearStore.setActiveAcademicYear(id);
-  } catch (error) {
-    console.error("Failed to set active academic year:", error);
-    f7.dialog.alert("Произошла ошибка при установке активного учебного года.");
-  }
+const handleSetActiveAcademicYear = (academicYear: any) => {
+  f7.dialog.confirm(
+    `Вы уверены, что хотите сделать учебный год "${academicYear.name}" активным?`,
+    "Подтверждение",
+    async () => {
+      try {
+        await academicYearStore.setActiveAcademicYear(academicYear.id);
+      } catch (error) {
+        console.error("Failed to set active academic year:", error);
+        f7.dialog.alert(
+          "Произошла ошибка при установке активного учебного года."
+        );
+      }
+    }
+  );
 };
 
 const openEditLanguage = (language: any) => {
