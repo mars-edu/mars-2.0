@@ -25,6 +25,10 @@ type RouteConfig = Router.RouteParameters & {
 const routes: RouteConfig[] = [
   {
     path: "/",
+    redirect: "/home",
+  },
+  {
+    path: "/home",
     component: HomePage,
     options: {
       roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],

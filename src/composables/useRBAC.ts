@@ -33,8 +33,8 @@ export function useRBAC() {
         id: "home",
         label: "Главная",
         icon: "house_fill",
-        roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
-        route: "/",
+        roles: [],
+        route: "/home",
       },
       {
         id: "specialty-catalog",

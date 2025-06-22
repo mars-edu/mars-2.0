@@ -182,11 +182,10 @@
 <script setup lang="ts">
 import { ref, reactive } from "vue";
 import { f7 } from "framework7-vue";
-import { useUserStore } from "../stores/userStore";
 import AuthService from "../services/auth";
 import Logo from "../components/Logo/Logo.vue";
 
-const defaultRedirectTo = "/";
+const defaultRedirectTo = "/home";
 
 const props = defineProps({
   redirectTo: {
@@ -194,8 +193,6 @@ const props = defineProps({
     default: defaultRedirectTo,
   },
 });
-
-const userStore = useUserStore();
 
 const username = ref("");
 const password = ref("");
