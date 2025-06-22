@@ -11,6 +11,7 @@ import RupPage from "../pages/suspense/RupPage.vue";
 import SettingsPage from "../pages/suspense/SettingsPage.vue";
 import SpecialtyCatalogPage from "../pages/suspense/SpecialtyCatalogPage.vue";
 import StudentCardPage from "../pages/suspense/StudentCardPage.vue";
+import TeacherCardPage from "../pages/suspense/TeacherCardPage.vue";
 import DisciplineCatalogPage from "../pages/suspense/DisciplineCatalogPage.vue";
 import JournalsPage from "../pages/suspense/JournalsPage.vue";
 import JournalDetailsPage from "../pages/suspense/JournalDetailsPage.vue";
@@ -53,6 +54,13 @@ const routes: RouteConfig[] = [
   {
     path: "/student-card/",
     component: StudentCardPage,
+    options: {
+      roles: [Role.ADMIN, Role.TEACHER],
+    },
+  },
+  {
+    path: "/teacher-card/",
+    component: TeacherCardPage,
     options: {
       roles: [Role.ADMIN, Role.TEACHER],
     },

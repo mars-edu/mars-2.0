@@ -37,14 +37,6 @@
             class="flex flex-wrap gap-x-4 gap-y-2 items-center student-card-filters"
           >
             <SmartSelect
-              v-model="selectedCourse"
-              :options="courseOptions"
-              placeholder="Курс:"
-              name="course"
-              class="min-w-[150px]"
-            />
-
-            <SmartSelect
               v-model="selectedSpecialty"
               :options="specialtyOptions"
               placeholder="Специальность:"
@@ -84,7 +76,6 @@
                   <tr class="bg-gray-500 text-white">
                     <th class="px-4 py-2 text-left">№</th>
                     <th class="px-4 py-2 text-left">ФИО</th>
-                    <th class="px-4 py-2 text-left">Курс</th>
                     <th class="px-4 py-2 text-left">Специальность</th>
                     <th class="px-4 py-2 text-left">Язык</th>
                     <th class="px-4 py-2 text-left">База</th>
@@ -106,7 +97,6 @@
                       {{ student.surname }} {{ student.firstName }}
                       {{ student.patronymic }}
                     </td>
-                    <td class="px-4 py-3">{{ student.course }}</td>
                     <td class="px-4 py-3">{{ student.specialty }}</td>
                     <td class="px-4 py-3">{{ student.language }}</td>
                     <td class="px-4 py-3">{{ student.base }}</td>
@@ -132,7 +122,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { f7Page } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -142,7 +132,6 @@ import SmartSelect from "@/components/ui/SmartSelect.vue";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
-import { useCourseStore } from "@/stores/courseStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useBaseStore } from "@/stores/baseStore";
 import { storeToRefs } from "pinia";
@@ -151,18 +140,15 @@ const activeNavItem = ref("student-card");
 const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
-const courseStore = useCourseStore();
 const academicYearStore = useAcademicYearStore();
 const baseStore = useBaseStore();
 
-const { courses } = storeToRefs(courseStore);
 const { specialties } = storeToRefs(specialtyStore);
 const { languages } = storeToRefs(languageStore);
 const { academicYears } = storeToRefs(academicYearStore);
 const { filteredStudents } = storeToRefs(studentStore);
 const { bases } = storeToRefs(baseStore);
 
-const selectedCourse = ref("");
 const selectedSpecialty = ref("");
 const selectedLanguage = ref("");
 const selectedGender = ref("");
@@ -170,18 +156,17 @@ const selectedBase = ref("");
 const selectedAcademicYear = ref("");
 const searchTerm = ref("");
 
-// Convert store data to options format for SmartSelect
-const courseOptions = computed(() => {
-  const options = [{ value: "", text: "Все" }];
-  courses.value.forEach((course) => {
-    options.push({
-      value: course.number.toString(),
-      text: course.number.toString(),
-    });
-  });
-  return options;
+onMounted(() => {
+  studentStore.clearFilters();
+  selectedSpecialty.value = "";
+  selectedLanguage.value = "";
+  selectedGender.value = "";
+  selectedBase.value = "";
+  selectedAcademicYear.value = "";
+  searchTerm.value = "";
 });
 
+// Convert store data to options format for SmartSelect
 const specialtyOptions = computed(() => {
   const options = [{ value: "", text: "Все" }];
   specialties.value.forEach((specialty) => {
@@ -220,10 +205,6 @@ const academicYearOptions = computed(() => {
 });
 
 selectedAcademicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
-
-watch(selectedCourse, (newValue) => {
-  studentStore.setFilter("course", newValue);
-});
 
 watch(selectedSpecialty, (newValue) => {
   studentStore.setFilter("specialty", newValue);
