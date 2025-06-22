@@ -39,24 +39,16 @@
 
         <div class="p-4 space-y-4">
           <div class="space-y-2">
-            <label class="text-sm text-foreground" for="course-name">
-              Название курса
+            <label class="text-sm text-foreground" for="course-number">
+              Номер курса
               <span class="text-destructive ml-1">*</span>
             </label>
             <f7-input
-              id="course-name"
+              id="course-number"
               type="text"
-              v-model:value="courseName"
-              placeholder="Введите название курса"
+              v-model:value="courseNumber"
+              placeholder="Введите номер курса"
             ></f7-input>
-          </div>
-
-          <div class="space-y-2">
-            <div class="text-sm text-foreground">Видимость курса</div>
-            <f7-checkbox
-              v-model:checked="isVisible"
-              label="Курс видимый"
-            ></f7-checkbox>
           </div>
         </div>
       </div>
@@ -66,26 +58,23 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { f7, f7Popover, f7Icon, f7Input, f7Checkbox } from "framework7-vue";
+import { f7, f7Popover, f7Icon, f7Input } from "framework7-vue";
 import { z } from "zod";
 import { useCourseStore } from "@/stores/courseStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const courseStore = useCourseStore();
 
-const courseName = ref("");
-const isVisible = ref(true);
+const courseNumber = ref("");
 const formError = ref("");
 
 const courseSchema = z.object({
-  name: z.string().min(1, "Пожалуйста, введите название курса"),
-  isVisible: z.boolean(),
+  number: z.string().min(1, "Пожалуйста, введите номер курса"),
 });
 
 const validationResult = computed(() => {
   return courseSchema.safeParse({
-    name: courseName.value,
-    isVisible: isVisible.value,
+    number: courseNumber.value,
   });
 });
 
@@ -116,11 +105,8 @@ const handleSaveCourse = async () => {
 
   try {
     await courseStore.addCourse({
-      name: courseName.value,
-      number: courseName.value,
+      number: courseNumber.value,
       admissionYear: new Date().getFullYear().toString(),
-      specialtyId: "",
-      isVisible: isVisible.value,
     });
     closeAddCoursePopover();
   } catch (error) {
@@ -129,8 +115,7 @@ const handleSaveCourse = async () => {
 };
 
 const resetForm = () => {
-  courseName.value = "";
-  isVisible.value = true;
+  courseNumber.value = "";
   formError.value = "";
   courseStore.clearError();
 };

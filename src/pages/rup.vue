@@ -145,27 +145,13 @@
                     v-if="filteredVisibleCourses.length === 0"
                     class="w-full p-3 flex items-center justify-center"
                   >
-                    <div
-                      v-if="selectedSpecialtyId"
-                      class="text-muted-foreground flex items-center gap-2"
-                    >
+                    <div class="text-muted-foreground flex items-center gap-2">
                       <f7-icon
                         ios="f7:doc_text_search"
                         md="material:search_off"
                         size="18px"
                       ></f7-icon>
                       <span>Нет курсов</span>
-                    </div>
-                    <div
-                      v-else
-                      class="text-muted-foreground flex items-center gap-2"
-                    >
-                      <f7-icon
-                        ios="f7:arrow_up"
-                        md="material:keyboard_arrow_up"
-                        size="18px"
-                      ></f7-icon>
-                      <span>Сначала выберите специальность</span>
                     </div>
                   </div>
                 </template>
@@ -250,7 +236,11 @@
           @click="handleFloatingImport"
           class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg shadow-lg hover:bg-primary/90 transition-colors"
         >
-          <f7-icon ios="f7:square_arrow_up" md="material:file_download" size="20px"></f7-icon>
+          <f7-icon
+            ios="f7:square_arrow_up"
+            md="material:file_download"
+            size="20px"
+          ></f7-icon>
           <span>Импорт</span>
         </button>
         <button
@@ -362,9 +352,11 @@ const handleFloatingImport = () => {
   }
 
   const allItems = class9Store.getAllClass9Items;
-  const itemsToImport = allItems.filter(item => selectedIds.includes(item.id));
+  const itemsToImport = allItems.filter((item) =>
+    selectedIds.includes(item.id)
+  );
 
-  const newItems = itemsToImport.map(item => ({
+  const newItems = itemsToImport.map((item) => ({
     ...item,
     id: crypto.randomUUID(),
     createdAt: new Date(),

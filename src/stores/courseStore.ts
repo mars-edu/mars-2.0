@@ -4,9 +4,7 @@ import { ref, computed } from "vue";
 export interface Course {
   id: string;
   number: string;
-  name?: string;
   admissionYear: string;
-  isVisible?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -18,42 +16,33 @@ export const useCourseStore = defineStore(
     const loading = ref(false);
     const error = ref<string | null>(null);
 
-    // Initialize with default courses if empty
     if (courses.value.length === 0) {
       courses.value = [
         {
           id: "1",
           number: "1",
-          name: "1",
-          specialtyId: "",
-          isVisible: true,
+          admissionYear: new Date().getFullYear().toString(),
           createdAt: new Date(),
           updatedAt: new Date(),
         },
         {
           id: "2",
           number: "2",
-          name: "2",
           admissionYear: new Date().getFullYear().toString(),
-          isVisible: true,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
         {
           id: "3",
           number: "3",
-          name: "3",
           admissionYear: new Date().getFullYear().toString(),
-          isVisible: true,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
         {
           id: "4",
           number: "4",
-          name: "4",
           admissionYear: new Date().getFullYear().toString(),
-          isVisible: true,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -64,17 +53,12 @@ export const useCourseStore = defineStore(
       return (id: string) => courses.value.find((c) => c.id === id);
     });
 
-    const getVisibleCourses = computed(() => {
-      return courses.value.filter((c) => c.isVisible !== false);
-    });
-
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
     async function fetchCourses() {
       loading.value = true;
       try {
-        // Data will be automatically loaded by Pinia persistence
         error.value = null;
       } catch (err) {
         error.value =
@@ -91,7 +75,6 @@ export const useCourseStore = defineStore(
       try {
         const newCourse: Course = {
           ...courseData,
-          isVisible: courseData.isVisible !== false,
           id: crypto.randomUUID(),
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -151,34 +134,6 @@ export const useCourseStore = defineStore(
       }
     }
 
-    async function toggleCourseVisibility(id: string) {
-      loading.value = true;
-      try {
-        const index = courses.value.findIndex((c) => c.id === id);
-        if (index === -1) {
-          throw new Error("Course not found");
-        }
-
-        const updatedCourse = {
-          ...courses.value[index],
-          isVisible: !courses.value[index].isVisible,
-          updatedAt: new Date(),
-        };
-
-        courses.value[index] = updatedCourse;
-        error.value = null;
-        return updatedCourse;
-      } catch (err) {
-        error.value =
-          err instanceof Error
-            ? err.message
-            : "Failed to toggle course visibility";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
-    }
-
     function clearError() {
       error.value = null;
     }
@@ -188,14 +143,12 @@ export const useCourseStore = defineStore(
       loading,
       error,
       getCourseById,
-      getVisibleCourses,
       isLoading,
       getError,
       fetchCourses,
       addCourse,
       updateCourse,
       deleteCourse,
-      toggleCourseVisibility,
       clearError,
     };
   },

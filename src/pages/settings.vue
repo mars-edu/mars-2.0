@@ -102,25 +102,8 @@
                   :id="`course-item-${course.id}`"
                 >
                   <span class="font-medium">
-                    {{ course.name }}
+                    {{ course.number }}
                   </span>
-                  <button
-                    class="ml-auto p-1 hover:bg-primary/10 rounded-md transition-colors"
-                    @click="handleToggleCourseVisibility(course.id)"
-                    aria-label="Toggle Visibility"
-                    type="button"
-                  >
-                    <f7-icon
-                      :ios="course.isVisible ? 'f7:eye' : 'f7:eye_slash'"
-                      :md="
-                        course.isVisible
-                          ? 'material:visibility'
-                          : 'material:visibility_off'
-                      "
-                      size="18px"
-                      class="text-primary"
-                    ></f7-icon>
-                  </button>
                   <button
                     class="p-1 hover:bg-primary/10 rounded-md transition-colors"
                     @click.stop="openEditCourse(course)"
@@ -140,11 +123,8 @@
                   :key="`edit-${course.id}`"
                   :course="{
                     id: course.id,
-                    name: course.name || '',
-                    isVisible: course.isVisible || false,
                     number: course.number,
                     admissionYear: course.admissionYear,
-                    specialtyId: course.specialtyId,
                   }"
                 />
               </div>
@@ -252,15 +232,6 @@ const academicYearStore = useAcademicYearStore();
 const { courses } = storeToRefs(courseStore);
 const { languages } = storeToRefs(languageStore);
 const { academicYears } = storeToRefs(academicYearStore);
-
-const handleToggleCourseVisibility = async (id: string) => {
-  try {
-    await courseStore.toggleCourseVisibility(id);
-  } catch (error) {
-    console.error("Failed to toggle course visibility:", error);
-    f7.dialog.alert("Произошла ошибка при изменении видимости курса.");
-  }
-};
 
 const handleSetActiveAcademicYear = async (id: string) => {
   try {

@@ -50,8 +50,7 @@ export const useRupStore = defineStore(
     });
     const filteredCourses = computed(() => {
       const courseStore = useCourseStore();
-      if (!selectedSpecialtyId.value) return [];
-      return courseStore.getVisibleCourses;
+      return courseStore.courses;
     });
 
     const selectedClass9ItemIds = ref<string[]>([]);

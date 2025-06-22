@@ -24,24 +24,16 @@
 
         <div class="p-4 space-y-4">
           <div class="space-y-2">
-            <label class="text-sm text-foreground" for="course-name">
-              Название курса
+            <label class="text-sm text-foreground" for="course-number">
+              Номер курса
               <span class="text-destructive ml-1">*</span>
             </label>
             <f7-input
-              id="course-name"
+              id="course-number"
               type="text"
-              v-model:value="courseName"
-              placeholder="Введите название курса"
+              v-model:value="courseNumber"
+              placeholder="Введите номер курса"
             ></f7-input>
-          </div>
-
-          <div class="space-y-2">
-            <div class="text-sm text-foreground">Видимость курса</div>
-            <f7-checkbox
-              v-model:checked="isVisible"
-              label="Курс видимый"
-            ></f7-checkbox>
           </div>
 
           <div class="pt-4 border-t border-border">
@@ -67,7 +59,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
+import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useCourseStore } from "@/stores/courseStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
@@ -75,29 +67,23 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 const props = defineProps<{
   course: {
     id: string;
-    name: string;
-    isVisible: boolean;
-    number?: string;
-    admissionYear?: string;
-    specialtyId?: string;
+    number: string;
+    admissionYear: string;
   };
 }>();
 
 const courseStore = useCourseStore();
 
-const courseName = ref(props.course.name);
-const isVisible = ref(props.course.isVisible);
+const courseNumber = ref(props.course.number);
 const formError = ref("");
 
 const courseSchema = z.object({
-  name: z.string().min(1, "Пожалуйста, введите название курса"),
-  isVisible: z.boolean(),
+  number: z.string().min(1, "Пожалуйста, введите номер курса"),
 });
 
 const validationResult = computed(() => {
   return courseSchema.safeParse({
-    name: courseName.value,
-    isVisible: isVisible.value,
+    number: courseNumber.value,
   });
 });
 
@@ -121,8 +107,7 @@ const handleUpdateCourse = async () => {
 
   try {
     await courseStore.updateCourse(props.course.id, {
-      name: courseName.value,
-      isVisible: isVisible.value,
+      number: courseNumber.value,
     });
     closeEditCoursePopover();
   } catch (error) {
@@ -134,7 +119,7 @@ const showDeleteConfirmation = () => {
   f7.popover.close(`#edit-settings-course-popover-${props.course.id}`);
 
   f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить курс "${props.course.name}"?</p>
+    `<p>Вы уверены, что хотите удалить курс "${props.course.number}"?</p>
      <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление курса",
     async () => {
@@ -149,8 +134,7 @@ const showDeleteConfirmation = () => {
 };
 
 const resetForm = () => {
-  courseName.value = props.course.name;
-  isVisible.value = props.course.isVisible;
+  courseNumber.value = props.course.number;
   formError.value = "";
   courseStore.clearError();
 };
