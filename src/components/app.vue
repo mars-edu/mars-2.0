@@ -42,6 +42,14 @@ const userStore = useUserStore();
 const themeStore = useThemeStore();
 console.log("[App] Component setup initiated");
 
+interface CustomRouteOptions extends Router.RouteOptions {
+  roles?: Role[];
+}
+
+interface CustomRoute extends Router.Route {
+  options?: CustomRouteOptions;
+}
+
 const f7params: Framework7Parameters = {
   name: "Mars",
   theme: "ios",
@@ -55,8 +63,8 @@ const f7params: Framework7Parameters = {
 
   view: {
     browserHistory: true,
-    browserHistorySeparator: "#!",
-    browserHistoryRoot: "",
+    // browserHistorySeparator: "#!",
+    // browserHistoryRoot: "",
     preloadPreviousPage: false,
     reloadPages: true,
     removeElements: true,
@@ -113,7 +121,7 @@ onMounted(() => {
     console.log("[UserStore] User authenticated:", userStore.isAuthenticated);
     console.log("[UserStore] Detailed authentication state:", {
       isAuthenticated: userStore.isAuthenticated,
-      userRoles: userStore.roles,
+      userRoles: userStore.currentUser?.roles,
     });
 
     if (f7 && f7.views && f7.views.main) {
@@ -123,8 +131,20 @@ onMounted(() => {
         browserHistoryRoot: f7.views.main.params.browserHistoryRoot,
       });
 
+      const currentRoute = f7.views.main.router.currentRoute;
+      if (
+        currentRoute &&
+        currentRoute.url.startsWith("/login") &&
+        userStore.isAuthenticated
+      ) {
+        console.log(
+          "[Auth] User already authenticated, redirecting from login page to home"
+        );
+        f7.views.main.router.navigate("/");
+        return;
+      }
+
       if (!userStore.isAuthenticated) {
-        const currentRoute = f7.views.main.router.currentRoute;
         console.log(
           "[Auth] User not authenticated, performing comprehensive route requirement check"
         );
@@ -137,8 +157,8 @@ onMounted(() => {
         let requiresAuth = false;
 
         if (currentRoute) {
-          const routeMeta =
-            currentRoute.route?.meta || currentRoute.route?.options || {};
+          const routeMeta: CustomRouteOptions =
+            (currentRoute.route as CustomRoute)?.options || {};
           const roles = (routeMeta.roles as Role[]) ?? [];
           requiresAuth = roles.length > 0;
           console.log("[Auth] Detailed route authentication analysis:", {
@@ -164,7 +184,7 @@ onMounted(() => {
       } else {
         console.log("[Auth] Verbose authentication status:", {
           message: "User is authenticated, proceeding normally",
-          userRoles: userStore.roles,
+          userRoles: userStore.currentUser?.roles,
         });
       }
     } else {

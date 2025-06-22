@@ -1,4 +1,6 @@
 import superjson from "superjson";
+import { applyPatch, compare } from "fast-json-patch";
+import type { Operation } from "fast-json-patch";
 import type {
   PiniaPlugin,
   PiniaPluginContext,
@@ -14,9 +16,10 @@ declare module "pinia" {
 }
 
 interface WsMessage {
-  type: "STATE_UPDATE" | "SYNC_REQUEST";
+  type: "STATE_UPDATE" | "SYNC_REQUEST" | "STATE_PATCH";
   state?: string;
   storeId?: string;
+  patch?: Operation[];
   timestamp?: number;
 }
 
@@ -28,11 +31,11 @@ interface PluginOptions {
   };
 }
 
-const GRACE_PERIOD = 100;
-
 let ws: WebSocket | null = null;
 const stores = new Map<string, any>();
+const lastKnownState = new Map<string, any>();
 const lastServerUpdateTimestamps = new Map<string, number>();
+const patchingStores = new Set<string>();
 let pluginOptions: PluginOptions | null = null;
 let connectionPromise: Promise<void> | null = null;
 
@@ -88,17 +91,39 @@ const connect = () => {
           return;
         }
 
-        if (
-          message.type === "STATE_UPDATE" &&
-          message.state &&
-          message.timestamp
-        ) {
-          console.log(
-            `[PiniaServerSync] Applying full STATE_UPDATE for store ${store.$id}.`
-          );
-          lastServerUpdateTimestamps.set(store.$id, message.timestamp);
-          const data = serializer.deserialize(message.state);
-          store.$patch(data);
+        patchingStores.add(store.$id);
+        try {
+          if (
+            message.type === "STATE_UPDATE" &&
+            message.state &&
+            message.timestamp
+          ) {
+            console.log(
+              `[PiniaServerSync] Applying full STATE_UPDATE for store ${store.$id}.`
+            );
+            lastServerUpdateTimestamps.set(store.$id, message.timestamp);
+            const newState = serializer.deserialize(message.state);
+            store.$patch(newState);
+            lastKnownState.set(store.$id, newState);
+          } else if (
+            message.type === "STATE_PATCH" &&
+            message.patch &&
+            message.timestamp
+          ) {
+            const currentLocalState =
+              lastKnownState.get(store.$id) || store.$state;
+            const { newDocument } = applyPatch(
+              currentLocalState,
+              message.patch,
+              true,
+              false
+            );
+            store.$patch(newDocument);
+            lastKnownState.set(store.$id, newDocument);
+            lastServerUpdateTimestamps.set(store.$id, message.timestamp);
+          }
+        } finally {
+          patchingStores.delete(store.$id);
         }
       } catch (error) {
         console.error(
@@ -125,6 +150,7 @@ export function PiniaServerSync(options: PluginOptions): PiniaPlugin {
 
     console.log(`[PiniaServerSync] Registering store: ${store.$id}`);
     stores.set(store.$id, store);
+    lastKnownState.set(store.$id, { ...store.$state });
 
     connectionPromise?.then(() => {
       if (ws?.readyState === WebSocket.OPEN) {
@@ -139,30 +165,39 @@ export function PiniaServerSync(options: PluginOptions): PiniaPlugin {
       }
     });
 
-    store.$subscribe((_mutation, state) => {
-      const lastServerTimestamp =
-        lastServerUpdateTimestamps.get(store.$id) || 0;
-      const now = Date.now();
-      if (now - lastServerTimestamp < GRACE_PERIOD) {
-        return;
-      }
+    store.$subscribe(
+      (_mutation, state) => {
+        if (patchingStores.has(store.$id)) {
+          return;
+        }
 
-      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
-      const serializer = pluginOptions?.serializer ?? {
-        serialize: superjson.stringify,
-        deserialize: superjson.parse,
-      };
+        const serializer = pluginOptions?.serializer ?? {
+          serialize: superjson.stringify,
+          deserialize: superjson.parse,
+        };
 
-      console.log(
-        `[PiniaServerSync] Local change detected. Sending STATE_UPDATE for store ${store.$id}.`
-      );
-      const message: WsMessage = {
-        type: "STATE_UPDATE",
-        state: serializer.serialize(state),
-        storeId: store.$id,
-      };
-      ws.send(superjson.stringify(message));
-    });
+        const oldState = lastKnownState.get(store.$id) || {};
+        const patch = compare(oldState, state);
+        lastKnownState.set(store.$id, { ...state });
+
+        if (patch.length === 0) {
+          return;
+        }
+
+        console.log(
+          `[PiniaServerSync] Local change detected. Sending STATE_PATCH for store ${store.$id}.`
+        );
+        const message: WsMessage = {
+          type: "STATE_PATCH",
+          patch,
+          storeId: store.$id,
+          timestamp: lastServerUpdateTimestamps.get(store.$id) || 0,
+        };
+        ws.send(superjson.stringify(message));
+      },
+      { detached: true }
+    );
   };
 }
