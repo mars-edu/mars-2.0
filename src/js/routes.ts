@@ -23,10 +23,10 @@ type RouteConfig = Router.RouteParameters & {
 };
 
 const routes: RouteConfig[] = [
-  {
-    path: "/",
-    redirect: "/home",
-  },
+  // {
+  //   path: "/",
+  //   redirect: "/home",
+  // },
   {
     path: "/home",
     component: HomePage,
