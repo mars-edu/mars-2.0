@@ -9,7 +9,7 @@
     "deploy": "wrangler deploy src/index.ts",
     "prisma:generate": "prisma generate",
     "prisma:init-sql": "prisma migrate diff --from-empty --to-schema-datamodel ./prisma/schema.prisma --script --output ./prisma/migrations/init.sql",
-    "prisma:migrate": "rm -rf .wrangler && wrangler d1 migrations apply mars-db --local",
+    "prisma:migrate": "wrangler d1 migrations apply mars-db --local",
     "prisma:migrate:remote": "wrangler d1 migrations apply mars-db --remote",
     "prisma:studio": "prisma studio",
     "seed": "wrangler d1 execute mars-db --local --file=./prisma/migrations/seed.sql",
