@@ -134,6 +134,7 @@ onMounted(() => {
       const currentRoute = f7.views.main.router.currentRoute;
       if (
         currentRoute &&
+        currentRoute.url &&
         currentRoute.url.startsWith("/login") &&
         userStore.isAuthenticated
       ) {
@@ -151,7 +152,7 @@ onMounted(() => {
 
         console.log(
           "[Auth] Verbose current route object details:",
-          JSON.stringify(currentRoute, null, 2)
+          currentRoute ? JSON.stringify(currentRoute, null, 2) : "null"
         );
 
         let requiresAuth = false;
@@ -200,13 +201,5 @@ onMounted(() => {
 
     themeStore.initTheme();
   });
-});
-
-// Clean up event listeners when component is unmounted
-onBeforeUnmount(() => {
-  // Destroy custom navigation handler if it exists
-  // if (customNavigation.value) {
-  //   customNavigation.value.destroy();
-  // }
 });
 </script>
