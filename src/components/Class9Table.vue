@@ -58,6 +58,7 @@
       v-if="popupOpen"
       :specialty-id="specialtyId"
       :course-id="courseId"
+      :academic-year-id="academicYearId"
       :initial-data="initialData"
       :edit-mode="editMode"
       @close="closePopup"
@@ -77,6 +78,7 @@ import { useRupStore } from "@/stores/rupStore";
 const props = defineProps<{
   specialtyId: string;
   courseId: string;
+  academicYearId: string;
   selectMode?: boolean;
 }>();
 
@@ -84,8 +86,13 @@ const class9Store = useClass9Store();
 const rupStore = useRupStore();
 
 const class9List = computed(() => {
-  return class9Store.getAllClass9Items.filter(
-    (item) => item.courseId === props.courseId && item.specialtyId === props.specialtyId
+  if (!props.academicYearId || !props.specialtyId || !props.courseId) {
+    return [];
+  }
+  return class9Store.getClass9ItemsByContext(
+    props.academicYearId,
+    props.specialtyId,
+    props.courseId
   );
 });
 

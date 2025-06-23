@@ -448,6 +448,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   specialtyId: string;
   courseId: string;
+  academicYearId: string;
   initialData?: any;
   editMode?: boolean;
 }>();
@@ -455,7 +456,11 @@ const props = defineProps<{
 const class9Store = useClass9Store();
 
 function createEmptyStep() {
-  return class9Store.createEmptyClass9Data(props.courseId, props.specialtyId);
+  return class9Store.createEmptyClass9Data(
+    props.academicYearId,
+    props.specialtyId,
+    props.courseId
+  );
 }
 
 const steps = ref([createEmptyStep()]);
@@ -614,7 +619,12 @@ async function submit() {
       await class9Store.updateClass9(props.initialData.id, steps.value[0]);
     } else {
       for (const step of steps.value) {
-        await class9Store.addClass9(props.courseId, props.specialtyId, step);
+        await class9Store.addClass9(
+          props.academicYearId,
+          props.specialtyId,
+          props.courseId,
+          step
+        );
       }
     }
     emit("submit");

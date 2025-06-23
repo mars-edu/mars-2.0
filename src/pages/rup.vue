@@ -170,7 +170,13 @@
               <template #title>Рабочий учебный план:</template>
               <template #actions>
                 <ImportWorkingPlanDialog
-                  :disabled="!(selectedSpecialtyId && selectedCourseId)"
+                  :disabled="
+                    !(
+                      selectedAcademicYear &&
+                      selectedSpecialtyId &&
+                      selectedCourseId
+                    )
+                  "
                   :specialty-id="selectedSpecialtyId || ''"
                   :course-id="selectedCourseId || ''"
                   @enable-select-mode="enableSelectMode"
@@ -179,35 +185,46 @@
                 <AddWorkingPlanDialog
                   v-model:opened="showAddWorkingPlanDialog"
                   @submit="handleWorkingPlanSubmit"
-                  :disabled="!(selectedSpecialtyId && selectedCourseId)"
+                  :disabled="
+                    !(
+                      selectedAcademicYear &&
+                      selectedSpecialtyId &&
+                      selectedCourseId
+                    )
+                  "
                   :specialty-id="selectedSpecialtyId || ''"
                   :course-id="selectedCourseId || ''"
                   @add-class-9="addClass9"
                 />
               </template>
               <div
-                v-if="selectedSpecialtyId && selectedCourseId"
-                class="space-y-3"
+                v-if="!selectedAcademicYear"
+                class="w-full p-3 flex items-center justify-center"
               >
-                <div class="mt-4">
-                  <template v-if="selectedClassLevel === 9">
-                    <Class9Table
-                      ref="class9TableRef"
-                      :specialty-id="selectedSpecialtyId"
-                      :course-id="selectedCourseId"
-                      :select-mode="isSelectMode"
-                    />
-                  </template>
-                  <template v-else>
-                    <Class11Table
-                      :specialty-id="selectedSpecialtyId"
-                      :course-id="selectedCourseId"
-                    />
-                  </template>
+                <div class="text-muted-foreground flex items-center gap-2">
+                  <f7-icon
+                    ios="f7:arrow_up"
+                    md="material:keyboard_arrow_up"
+                    size="18px"
+                  ></f7-icon>
+                  <span>Сначала выберите учебный год</span>
                 </div>
               </div>
               <div
-                v-else-if="selectedSpecialtyId && !selectedCourseId"
+                v-else-if="!selectedSpecialtyId"
+                class="w-full p-3 flex items-center justify-center"
+              >
+                <div class="text-muted-foreground flex items-center gap-2">
+                  <f7-icon
+                    ios="f7:arrow_up"
+                    md="material:keyboard_arrow_up"
+                    size="18px"
+                  ></f7-icon>
+                  <span>Сначала выберите специальность</span>
+                </div>
+              </div>
+              <div
+                v-else-if="!selectedCourseId"
                 class="w-full p-3 flex items-center justify-center"
               >
                 <div class="text-muted-foreground flex items-center gap-2">
@@ -219,14 +236,23 @@
                   <span>Сначала выберите курс</span>
                 </div>
               </div>
-              <div v-else class="w-full p-3 flex items-center justify-center">
-                <div class="text-muted-foreground flex items-center gap-2">
-                  <f7-icon
-                    ios="f7:arrow_up"
-                    md="material:keyboard_arrow_up"
-                    size="18px"
-                  ></f7-icon>
-                  <span>Сначала выберите специальность</span>
+              <div v-else class="space-y-3">
+                <div class="mt-4">
+                  <template v-if="selectedClassLevel === 9">
+                    <Class9Table
+                      ref="class9TableRef"
+                      :specialty-id="selectedSpecialtyId"
+                      :course-id="selectedCourseId"
+                      :academic-year-id="selectedAcademicYear"
+                      :select-mode="isSelectMode"
+                    />
+                  </template>
+                  <template v-else>
+                    <Class11Table
+                      :specialty-id="selectedSpecialtyId"
+                      :course-id="selectedCourseId"
+                    />
+                  </template>
                 </div>
               </div>
             </AccordionItem>
@@ -343,7 +369,10 @@ const class9TableRef = ref<InstanceType<typeof Class9Table> | null>(null);
 const { specialties } = storeToRefs(specialtyStore);
 const { academicYears } = storeToRefs(academicYearStore);
 
-const selectedAcademicYear = ref("");
+const selectedAcademicYear = computed({
+  get: () => rupStore.selectedAcademicYearId || "",
+  set: (value) => rupStore.setSelectedAcademicYear(value || null),
+});
 
 const academicYearOptions = computed(() => {
   return academicYears.value.map((year) => ({
@@ -351,8 +380,6 @@ const academicYearOptions = computed(() => {
     text: year.name,
   }));
 });
-
-selectedAcademicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
 
 const showAddWorkingPlanDialog = ref(false);
 const workingPlans = ref<
@@ -476,6 +503,12 @@ const filteredVisibleCourses = computed(() => rupStore.filteredCourses);
 onMounted(async () => {
   await specialtyStore.fetchSpecialties();
   await courseStore.fetchCourses();
+  await academicYearStore.fetchAcademicYears();
+  if (!rupStore.selectedAcademicYearId) {
+    rupStore.setSelectedAcademicYear(
+      academicYearStore.getActiveAcademicYear?.id || null
+    );
+  }
   f7.on("popoverClosed", (popover) => {
     if (popover.el.classList.contains("specialty-info-popover")) {
       onPopoverClosed();

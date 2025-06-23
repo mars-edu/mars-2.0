@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useSpecialtyStore } from "./specialtyStore";
 import { useCourseStore } from "./courseStore";
+import { useAcademicYearStore } from "./academicYearStore";
 import { storeToRefs } from "pinia";
 
 export const useRupStore = defineStore(
@@ -19,8 +20,15 @@ export const useRupStore = defineStore(
       showOverlay.value = !showOverlay.value;
     }
 
+    const selectedAcademicYearId = ref<string | null>(null);
     const selectedSpecialtyId = ref<string | null>(null);
     const selectedCourseId = ref<string | null>(null);
+
+    function setSelectedAcademicYear(id: string | null) {
+      selectedAcademicYearId.value = id;
+      selectedSpecialtyId.value = null;
+      selectedCourseId.value = null;
+    }
     function setSelectedSpecialty(id: string | null) {
       selectedSpecialtyId.value = id;
       if (selectedCourseId.value) selectedCourseId.value = null;
@@ -29,9 +37,20 @@ export const useRupStore = defineStore(
       selectedCourseId.value = id;
     }
     function clearSelection() {
+      selectedAcademicYearId.value = null;
       selectedSpecialtyId.value = null;
       selectedCourseId.value = null;
     }
+
+    const selectedAcademicYear = computed(() => {
+      const academicYearStore = useAcademicYearStore();
+      const { academicYears } = storeToRefs(academicYearStore);
+      if (!selectedAcademicYearId.value) return null;
+      return academicYears.value.find(
+        (year) => year.id === selectedAcademicYearId.value
+      );
+    });
+
     const selectedSpecialty = computed(() => {
       const specialtyStore = useSpecialtyStore();
       const { specialties } = storeToRefs(specialtyStore);
@@ -78,11 +97,14 @@ export const useRupStore = defineStore(
       show,
       hide,
       toggle,
+      selectedAcademicYearId,
       selectedSpecialtyId,
       selectedCourseId,
+      setSelectedAcademicYear,
       setSelectedSpecialty,
       setSelectedCourse,
       clearSelection,
+      selectedAcademicYear,
       selectedSpecialty,
       selectedCourse,
       filteredCourses,

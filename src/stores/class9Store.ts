@@ -5,6 +5,7 @@ export interface Class9Data {
   id: string;
   courseId: string;
   specialtyId: string;
+  academicYearId: string;
   moduleIndex: string;
   moduleName: string;
   learningOutcome: string;
@@ -40,6 +41,16 @@ export const useClass9Store = defineStore(
       return (id: string) => class9Items.value.find((c) => c.id === id);
     });
 
+    const getClass9ItemsByContext = computed(() => {
+      return (academicYearId: string, specialtyId: string, courseId: string) =>
+        class9Items.value.filter(
+          (c) =>
+            c.academicYearId === academicYearId &&
+            c.specialtyId === specialtyId &&
+            c.courseId === courseId
+        );
+    });
+
     const getClass9ByCourseId = computed(() => {
       return (courseId: string, specialtyId: string) =>
         class9Items.value.find(
@@ -52,13 +63,15 @@ export const useClass9Store = defineStore(
     const getError = computed(() => error.value);
 
     function createEmptyClass9Data(
-      courseId: string,
-      specialtyId: string
+      academicYearId: string,
+      specialtyId: string,
+      courseId: string
     ): Class9Data {
       return {
         id: crypto.randomUUID(),
         courseId,
         specialtyId,
+        academicYearId,
         moduleIndex: "",
         moduleName: "",
         learningOutcome: "",
@@ -85,23 +98,30 @@ export const useClass9Store = defineStore(
     }
 
     async function addClass9(
-      courseId: string,
+      academicYearId: string,
       specialtyId: string,
+      courseId: string,
       data?: Partial<
         Omit<
           Class9Data,
-          "id" | "createdAt" | "updatedAt" | "courseId" | "specialtyId"
+          | "id"
+          | "createdAt"
+          | "updatedAt"
+          | "courseId"
+          | "specialtyId"
+          | "academicYearId"
         >
       >
     ) {
       loading.value = true;
       try {
         const newClass9: Class9Data = {
-          ...createEmptyClass9Data(courseId, specialtyId),
+          ...createEmptyClass9Data(academicYearId, specialtyId, courseId),
           ...data,
           // TODO: workaround
           courseId,
           specialtyId,
+          academicYearId,
         };
 
         class9Items.value.push(newClass9);
@@ -182,6 +202,7 @@ export const useClass9Store = defineStore(
       loading,
       error,
       getClass9ById,
+      getClass9ItemsByContext,
       getClass9ByCourseId,
       getAllClass9Items,
       isLoading,

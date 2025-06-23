@@ -6,14 +6,16 @@
     <f7-list class="smart-select-list-container no-margin no-hairlines">
       <f7-list-item
         :title="listTitle"
+        :after="selectedOptionText"
         smart-select
         :smart-select-params="{
           openIn: 'popover',
           closeOnSelect: true,
-          setValueText: true,
+          setValueText: false,
           virtualList: options.length > 20,
         }"
         :id="uniqueId"
+        :class="{ 'item-smart-select-value': !!modelValue }"
       >
         <select :name="name" :value="modelValue" @change="handleChange">
           <option
@@ -67,6 +69,13 @@ const handleChange = (event: Event) => {
   const target = event.target as HTMLSelectElement;
   emit("update:modelValue", target.value);
 };
+
+const selectedOptionText = computed(() => {
+  const selected = props.options.find(
+    (option) => option.value == props.modelValue
+  );
+  return selected ? selected.text : "";
+});
 
 // The title for the f7-list-item. This is what's always visible.
 // F7 will place the selected value in item-after.
