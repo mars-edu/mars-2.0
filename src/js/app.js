@@ -8,7 +8,7 @@ import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import vAuth from "../directives/auth";
 import "../css/app.css";
 import App from "../components/app.vue";
-import { PiniaSharedState } from "./plugin/pinia";
+// import { PiniaSharedState } from "./plugin/pinia";
 import { PiniaServerSync } from "./plugin/pinia-server-sync";
 import { API_URL } from "../lib/http-client";
 
@@ -18,7 +18,7 @@ const app = createApp(App);
 
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
-pinia.use(PiniaSharedState({ enable: true }));
+// pinia.use(PiniaSharedState({ enable: true }));
 pinia.use(PiniaServerSync({ url: `${API_URL}/ws` }));
 
 app.use(pinia);
