@@ -4,6 +4,7 @@ import webfontDownload from "vite-plugin-webfont-dl";
 import { visualizer } from "rollup-plugin-visualizer";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 import { VitePWA } from 'vite-plugin-pwa'
+import buildInfoPlugin from './vite-plugins/build-info.js'
 
 const SRC_DIR = path.resolve(__dirname, "./src");
 const PUBLIC_DIR = path.resolve(__dirname, "./public");
@@ -25,7 +26,13 @@ export default async () => {
       ]),
       ViteImageOptimizer({}),
       visualizer(),
+      buildInfoPlugin(),
     ],
+    define: {
+      __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+      __BUILD_ENV__: JSON.stringify(process.env.NODE_ENV || 'development'),
+      __APP_VERSION__: JSON.stringify(process.env.APP_VERSION || '1.0.0')
+    },
     root: SRC_DIR,
     base: "",
     publicDir: PUBLIC_DIR,
@@ -45,7 +52,7 @@ export default async () => {
     },
     server: {
       host: true,
-      allowedHosts: ["fitting-rooster-aware.ngrok-free.app"],
+      allowedHosts: ["*"],
       fs: {
         strict: false,
       },
@@ -54,7 +61,7 @@ export default async () => {
       },
       watch: {
         usePolling: true,
-        interval: 1000,
+        interval: 400,
       },
       proxy: {
         "/api": {
