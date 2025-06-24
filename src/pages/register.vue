@@ -24,7 +24,7 @@
           <div class="flex justify-center mb-8">
             <Logo class="h-16 w-auto" />
           </div>
-          <form @submit.prevent="handleRegister" class="space-y-6">
+          <form @submit.prevent="handleRegister" class="space-y-4">
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-gray-800 mb-2">
                 Фамилия
@@ -97,7 +97,7 @@
                 Пароль
               </label>
               <f7-input
-                type="password"
+                :type="showPassword ? 'text' : 'password'"
                 v-model:value="formData.password"
                 placeholder="Введите пароль"
                 required
@@ -110,12 +110,22 @@
                 Повторите пароль
               </label>
               <f7-input
-                type="password"
+                :type="showPassword ? 'text' : 'password'"
                 v-model:value="formData.confirmPassword"
                 placeholder="Повторите пароль"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
+            </div>
+
+            <div class="flex items-center space-x-2 py-2">
+              <f7-checkbox
+                v-model:checked="showPassword"
+                class="!flex-shrink-0"
+              />
+              <span class="text-sm text-gray-600">
+                Показать пароль
+              </span>
             </div>
 
             <div class="flex items-center space-x-2 py-2">
@@ -252,7 +262,7 @@
                 Пароль
               </label>
               <f7-input
-                type="password"
+                :type="showPassword ? 'text' : 'password'"
                 v-model:value="formData.password"
                 placeholder="Введите пароль"
                 required
@@ -260,17 +270,37 @@
               />
             </div>
 
+            <div class="flex items-center space-x-2 py-2">
+              <f7-checkbox
+                v-model:checked="showPassword"
+                class="!flex-shrink-0"
+              />
+              <span class="text-sm text-gray-600">
+                Показать пароль
+              </span>
+            </div>
+
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
                 Повторите пароль
               </label>
               <f7-input
-                type="password"
+                :type="showPassword ? 'text' : 'password'"
                 v-model:value="formData.confirmPassword"
                 placeholder="Повторите пароль"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
+            </div>
+
+            <div class="flex items-center space-x-2 py-2">
+              <f7-checkbox
+                v-model:checked="showPassword"
+                class="!flex-shrink-0"
+              />
+              <span class="text-sm text-gray-600">
+                Показать пароль
+              </span>
             </div>
 
             <div class="flex items-center space-x-2">
@@ -313,6 +343,7 @@ import { vMaska } from "maska/vue";
 import { authClient } from "../lib/http-client";
 
 const isLoading = ref(false);
+const showPassword = ref(false);
 
 const formData = reactive({
   lastName: "",

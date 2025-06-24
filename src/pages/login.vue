@@ -24,7 +24,7 @@
           <div class="flex justify-center mb-8">
             <Logo class="h-16 w-auto" />
           </div>
-          <form @submit.prevent="handleLogin" class="space-y-8">
+          <form @submit.prevent="handleLogin" class="space-y-4">
             <div class="space-y-2">
               <label class="block text-sm font-semibold mb-2"> ФИО </label>
               <f7-input
@@ -40,13 +40,23 @@
             <div class="space-y-2">
               <label class="block text-sm font-semibold mb-2"> Пароль </label>
               <f7-input
-                type="password"
+                :type="showPassword ? 'text' : 'password'"
                 v-model:value="password"
                 placeholder="Введите пароль"
                 :error-message="errors.password"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
+            </div>
+
+            <div class="flex items-center space-x-2 py-2">
+              <f7-checkbox
+                v-model:checked="showPassword"
+                class="!flex-shrink-0"
+              />
+              <span class="text-sm text-gray-600">
+                Показать пароль
+              </span>
             </div>
 
             <div class="flex items-center justify-between py-2">
@@ -132,13 +142,22 @@
             <div>
               <label class="block text-sm font-medium mb-2"> Пароль </label>
               <f7-input
-                type="password"
+                :type="showPassword ? 'text' : 'password'"
                 v-model:value="password"
                 placeholder="Введите пароль"
                 :error-message="errors.password"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <f7-checkbox
+                v-model:checked="showPassword"
+                class="text-foreground flex items-center"
+              >
+                Показать пароль
+              </f7-checkbox>
             </div>
 
             <div class="flex items-center justify-between space-x-4">
@@ -198,6 +217,7 @@ const username = ref("");
 const password = ref("");
 const rememberMe = ref(true);
 const isLoading = ref(false);
+const showPassword = ref(false);
 const errors = reactive({
   username: "",
   password: "",
