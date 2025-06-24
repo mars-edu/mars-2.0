@@ -9,6 +9,37 @@ export interface Course {
   updatedAt: Date;
 }
 
+const DEFAULT_COURSES = [
+  {
+    id: "1",
+    number: "1",
+    admissionYear: new Date().getFullYear().toString(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: "2",
+    number: "2",
+    admissionYear: new Date().getFullYear().toString(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: "3",
+    number: "3",
+    admissionYear: new Date().getFullYear().toString(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: "4",
+    number: "4",
+    admissionYear: new Date().getFullYear().toString(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];
+
 export const useCourseStore = defineStore(
   "course",
   () => {
@@ -16,38 +47,14 @@ export const useCourseStore = defineStore(
     const loading = ref(false);
     const error = ref<string | null>(null);
 
+    const sortCourses = () => {
+      courses.value.sort((a, b) => Number(a.number) - Number(b.number));
+    };
+
     if (courses.value.length === 0) {
-      courses.value = [
-        {
-          id: "1",
-          number: "1",
-          admissionYear: new Date().getFullYear().toString(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          id: "2",
-          number: "2",
-          admissionYear: new Date().getFullYear().toString(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          id: "3",
-          number: "3",
-          admissionYear: new Date().getFullYear().toString(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          id: "4",
-          number: "4",
-          admissionYear: new Date().getFullYear().toString(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ];
+      courses.value = DEFAULT_COURSES;
     }
+    sortCourses();
 
     const getCourseById = computed(() => {
       return (id: string) => courses.value.find((c) => c.id === id);
@@ -80,6 +87,7 @@ export const useCourseStore = defineStore(
           updatedAt: new Date(),
         };
         courses.value.push(newCourse);
+        sortCourses();
         error.value = null;
         return newCourse;
       } catch (err) {
@@ -109,6 +117,7 @@ export const useCourseStore = defineStore(
         };
 
         courses.value[index] = updatedCourse;
+        sortCourses();
         error.value = null;
         return updatedCourse;
       } catch (err) {
