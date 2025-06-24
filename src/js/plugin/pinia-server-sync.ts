@@ -73,7 +73,7 @@ const connect = () => {
 
     ws.onmessage = (event: MessageEvent) => {
       try {
-        const message: WsMessage = superjson.parse(event.data);
+        const message: WsMessage = pluginOptions!.serializer.deserialize(event.data);
         console.log(
           `[PiniaServerSync] Received message of type ${message.type} for store ${message.storeId}`
         );
@@ -157,7 +157,7 @@ export function PiniaServerSync(options: PluginOptions): PiniaPlugin {
           type: "SYNC_REQUEST",
           storeId: store.$id,
         };
-        ws.send(superjson.stringify(message));
+        ws.send(pluginOptions!.serializer.serialize(message));
       }
     });
 
@@ -179,29 +179,19 @@ export function PiniaServerSync(options: PluginOptions): PiniaPlugin {
           return;
         }
 
-        const oldState = lastKnownState.get(store.$id) || {};
-        console.log(`[PiniaServerSync] Store ${store.$id}: oldState =`, oldState);
-        console.log(`[PiniaServerSync] Store ${store.$id}: newState =`, state);
-        const patch = compare(oldState, state);
         lastKnownState.set(store.$id, { ...state });
 
-        if (patch.length === 0) {
-          console.log(`[PiniaServerSync] No differences detected for store ${store.$id}, skipping STATE_PATCH.`);
-          return;
-        }
-
         console.log(
-          `[PiniaServerSync] Local change detected. Sending STATE_PATCH for store ${store.$id}. Patch:`, patch
+          `[PiniaServerSync] Local change detected. Sending STATE_UPDATE for store ${store.$id}.`
         );
+
         const message: WsMessage = {
-          type: "STATE_PATCH",
-          patch,
+          type: "STATE_UPDATE",
+          state: pluginOptions!.serializer.serialize(state),
           storeId: store.$id,
           timestamp: lastServerUpdateTimestamps.get(store.$id) || 0,
         };
-        const serializedMessage = pluginOptions!.serializer.serialize(message);
-        console.log(`[PiniaServerSync] Sending serialized STATE_PATCH for store ${store.$id}:`, serializedMessage);
-        ws.send(serializedMessage);
+        ws.send(superjson.stringify(message));
       },
       { detached: true }
     );
