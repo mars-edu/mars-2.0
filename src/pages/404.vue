@@ -31,12 +31,12 @@
             <span class="font-medium">{{ path }}</span>
           </p>
           <f7-button
-            back
+            href="/home"
             fill
             large
             class="w-full bg-red-600 hover:bg-red-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 py-4"
           >
-            <span class="relative z-10">Вернуться назад</span>
+            <span class="relative z-10">Вернуться домой</span>
           </f7-button>
         </div>
       </div>
@@ -62,12 +62,12 @@
             <span class="font-medium">{{ path }}</span>
           </p>
           <f7-button
-            back
+            href="/home"
             fill
             large
             class="w-full bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition-colors duration-200"
           >
-            Вернуться назад
+            Вернуться домой
           </f7-button>
         </div>
       </div>
