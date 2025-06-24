@@ -1,5 +1,6 @@
 import type { D1Database } from "@cloudflare/workers-types";
-import { Env, getEnv } from "./env.js";
+import { getEnv } from "./env.js";
+import type { Env } from "../types/env.js";
 
 class DatabaseService {
   db: D1Database | null = null;

@@ -2,7 +2,7 @@ import { Context } from "hono";
 import { Hono } from "hono";
 import { setCookie, deleteCookie, getCookie } from "hono/cookie";
 import AuthService from "../services/authService.js";
-import type { Env } from "../utils/env.js";
+import type { Env } from "../types/env.js";
 
 const auth = new Hono<{ Bindings: Env }>();
 

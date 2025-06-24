@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import AuthService from "../services/authService.js";
-import type { Env } from "../utils/env.js";
+import type { Env } from "../types/env.js";
 
 const wsApp = new Hono<{ Bindings: Env }>();
 

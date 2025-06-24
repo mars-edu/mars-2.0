@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaD1 } from "@prisma/adapter-d1";
 import superjson from "superjson";
 import { applyPatch, compare } from "fast-json-patch";
-import type { Env } from "../utils/env.js";
+import type { Env } from "../types/env.js";
 import { DurableObject } from "cloudflare:workers";
 
 export class WebSocketDurableObject extends DurableObject {

@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { Secret } from "jsonwebtoken";
 import type { D1Database } from "@cloudflare/workers-types";
-import type { DurableObjectNamespace } from "@cloudflare/workers-types";
+import type { Env, ProcessEnv } from "../types/env.js";
 
 const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
@@ -17,17 +16,17 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().url().optional().default("http://localhost:5173"),
 });
 
-// Cloudflare Workers env interface
-export interface Env {
-  DB: D1Database;
-  WEBSOCKET_DO: DurableObjectNamespace;
-  JWT_SECRET: string;
-  JWT_EXPIRY: string;
-  FRONTEND_URL: string;
+export function getEnv(env: Env) {
+  return {
+    JWT_SECRET: env.JWT_SECRET,
+    JWT_EXPIRY: env.JWT_EXPIRY,
+    FRONTEND_URL: env.FRONTEND_URL,
+    NODE_ENV: process?.env?.NODE_ENV || "development",
+    DATABASE_URL: process?.env?.DATABASE_URL || "cloudflare_d1",
+  };
 }
 
-function validateEnv() {
-  // Check if we're in a Cloudflare Worker context
+function validateEnv(): ProcessEnv {
   const isWorkerContext =
     typeof process === "undefined" || process.env === undefined;
 
@@ -59,18 +58,7 @@ function validateEnv() {
 
   return {
     ...parsed.data,
-    JWT_SECRET: parsed.data.JWT_SECRET as Secret,
-  };
-}
-
-// For Workers environment, use this function to get environment variables
-export function getEnv(env: Env) {
-  return {
-    JWT_SECRET: env.JWT_SECRET as Secret,
-    JWT_EXPIRY: env.JWT_EXPIRY,
-    FRONTEND_URL: env.FRONTEND_URL,
-    NODE_ENV: process?.env?.NODE_ENV || "development",
-    DATABASE_URL: process?.env?.DATABASE_URL || "cloudflare_d1",
+    JWT_SECRET: parsed.data.JWT_SECRET,
   };
 }
 

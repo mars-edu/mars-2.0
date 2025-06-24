@@ -2,7 +2,7 @@ import { getPrismaClient } from "../utils/prismaClient.js";
 import { compareSync, hashSync } from "bcryptjs";
 import { sign, verify, SignOptions } from "jsonwebtoken";
 import type { Context } from "hono";
-import type { Env } from "../utils/env.js";
+import type { Env } from "../types/env.js";
 import type { User, UserRole } from "@prisma/client";
 
 const SALT_ROUNDS = 10;
@@ -105,7 +105,9 @@ class AuthService {
 
   async register(data: RegisterData) {
     try {
-      const username = `${data.lastName} ${data.firstName} ${data.middleName || ""}`;
+      const username = `${data.lastName} ${data.firstName} ${
+        data.middleName || ""
+      }`;
       // const baseUsername = this.generateBaseUsername(
       //   data.lastName,
       //   data.firstName

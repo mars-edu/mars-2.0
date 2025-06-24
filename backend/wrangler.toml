@@ -13,7 +13,8 @@ head_sampling_rate = 1 # optional. default = 1.
 [vars]
 JWT_SECRET = "0e3dff721c946ac26b873052e9e43560d0124d1548aa8cb8621daa6eb01c5735"
 JWT_EXPIRY = "24h"
-FRONTEND_URL = "https://mars-2-0.pages.dev"
+FRONTEND_URL_DEV = "https://mars-2-0.pages.dev"
+FRONTEND_URL = "https://iam-mars.kz"
 
 [[d1_databases]]
 binding = "DB"
