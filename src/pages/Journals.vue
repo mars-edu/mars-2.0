@@ -33,7 +33,7 @@
           <div
             class="bg-card text-card-foreground rounded-xl p-3 md:p-4 shadow-sm"
           >
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
               <div class="flex flex-col gap-2">
                 <SmartSelect
                   v-model="selectedLessonType"
@@ -41,16 +41,6 @@
                   placeholder="Тип занятия: все"
                   name="lesson-type"
                 />
-                <div
-                  v-for="journal in journalsByCategory[1]"
-                  :key="journal.id"
-                  class="bg-yellow-400 rounded-lg p-3 text-gray-800 shadow-md min-h-[80px] cursor-pointer"
-                  @click="goToJournalDetails(journal.id)"
-                >
-                  <p class="font-semibold text-sm leading-tight">
-                    {{ journal.title }}
-                  </p>
-                </div>
               </div>
               <div class="flex flex-col gap-2">
                 <SmartSelect
@@ -59,16 +49,6 @@
                   placeholder="Технология обучения: все"
                   name="technology"
                 />
-                <div
-                  v-for="journal in journalsByCategory[2]"
-                  :key="journal.id"
-                  class="bg-yellow-400 rounded-lg p-3 text-gray-800 shadow-md min-h-[80px] cursor-pointer"
-                  @click="goToJournalDetails(journal.id)"
-                >
-                  <p class="font-semibold text-sm leading-tight">
-                    {{ journal.title }}
-                  </p>
-                </div>
               </div>
               <div class="flex flex-col gap-2">
                 <div class="grid grid-cols-2 gap-2">
@@ -84,22 +64,6 @@
                     placeholder="Срок обучения: все"
                     name="term"
                   />
-                </div>
-                <div
-                  v-for="journal in journalsByCategory[3]"
-                  :key="journal.id"
-                  class="bg-yellow-400 rounded-lg p-3 text-gray-800 shadow-md flex flex-col justify-between min-h-[80px] cursor-pointer"
-                  @click="goToJournalDetails(journal.id)"
-                >
-                  <p class="font-semibold text-sm leading-tight">
-                    {{ journal.title }}
-                  </p>
-                  <div v-if="journal.status" class="flex justify-end mt-1">
-                    <span
-                      class="bg-green-500 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold"
-                      >{{ journal.status }}</span
-                    >
-                  </div>
                 </div>
               </div>
               <div class="flex flex-col gap-2">
@@ -123,15 +87,37 @@
                     name="role"
                   />
                 </div>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div
+                v-for="course in courses"
+                :key="course.id"
+                class="flex flex-col gap-2"
+              >
+                <h2 class="font-semibold text-sm text-center text-muted-foreground">
+                  {{ course.number }} курс
+                </h2>
                 <div
-                  v-for="journal in journalsByCategory[4]"
+                  v-for="journal in journalsByCourse[parseInt(course.number)]"
                   :key="journal.id"
-                  class="bg-yellow-400 rounded-lg p-3 text-gray-800 shadow-md min-h-[80px] cursor-pointer"
-                  @click="goToJournalDetails(journal.id)"
+                  class="rounded-lg p-3 text-gray-800 shadow-md min-h-[80px] flex flex-col justify-between transition-all duration-200"
+                  :class="{
+                    'bg-yellow-400 cursor-pointer hover:scale-102 hover:bg-yellow-500':
+                      !journal.isPlaceholder,
+                    'bg-yellow-200': journal.isPlaceholder,
+                  }"
+                  @click="!journal.isPlaceholder && goToJournalDetails(journal.id)"
                 >
                   <p class="font-semibold text-sm leading-tight">
                     {{ journal.title }}
                   </p>
+                  <div v-if="journal.status" class="flex justify-end mt-1">
+                    <span
+                      class="bg-green-500 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold"
+                      >{{ journal.status }}</span
+                    >
+                  </div>
                 </div>
               </div>
             </div>
@@ -150,6 +136,7 @@ import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import SmartSelect from "@/components/ui/SmartSelect.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useJournalStore } from "@/stores/journalStore";
+import { useCourseStore } from "@/stores/courseStore";
 import { storeToRefs } from "pinia";
 
 const activeNavItem = ref("journals");
@@ -158,7 +145,10 @@ const academicYearStore = useAcademicYearStore();
 const { academicYears } = storeToRefs(academicYearStore);
 
 const journalStore = useJournalStore();
-const { journalsByCategory } = storeToRefs(journalStore);
+const { journalsByCourse } = storeToRefs(journalStore);
+
+const courseStore = useCourseStore();
+const { courses } = storeToRefs(courseStore);
 
 const selectedAcademicYear = ref("");
 
@@ -172,6 +162,7 @@ const academicYearOptions = computed(() => {
 onMounted(async () => {
   await academicYearStore.fetchAcademicYears();
   selectedAcademicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
+  await courseStore.fetchCourses();
   await journalStore.fetchJournals();
 });
 
