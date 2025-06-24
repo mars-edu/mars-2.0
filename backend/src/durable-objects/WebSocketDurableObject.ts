@@ -135,18 +135,27 @@ export class WebSocketDurableObject extends DurableObject {
           };
           this.broadcast(superjson.stringify(broadcastMessage), socket);
         } else if (message.type === "SYNC_REQUEST" && message.storeId) {
-          const record = (await this.prisma.piniaState.findUnique({
+          let record = await this.prisma.piniaState.findUnique({
             where: { storeId: message.storeId },
-          })) as { state: string; storeId: string; updatedAt: Date } | null;
-          if (record) {
-            const response = {
-              type: "STATE_UPDATE",
-              state: record.state,
-              storeId: record.storeId,
-              timestamp: record.updatedAt.getTime(),
-            };
-            socket.send(superjson.stringify(response));
+          });
+
+          if (!record) {
+            const emptyState = superjson.stringify({});
+            record = await this.prisma.piniaState.create({
+              data: {
+                storeId: message.storeId,
+                state: emptyState,
+              },
+            });
           }
+
+          const response = {
+            type: "STATE_UPDATE",
+            state: record.state,
+            storeId: record.storeId,
+            timestamp: record.updatedAt.getTime(),
+          };
+          socket.send(superjson.stringify(response));
         }
       } catch (error) {
         console.error("[WS DO] Failed to process message", error);
