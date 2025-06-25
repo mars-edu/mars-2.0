@@ -59,11 +59,12 @@
 
           <SmartSelect
             label="Результат обучения/дисциплин"
-            placeholder="Сначала выберите модуль"
+            :placeholder="eventTitle ? 'Выберите результат обучения' : 'Сначала выберите модуль'"
             v-model="eventResult"
             :options="learningOutcomeOptions"
             name="event-learning-outcome"
             id="event-learning-outcome"
+            :disabled="!eventTitle"
           />
 
           <!-- Start date/time -->
@@ -202,8 +203,8 @@ const { eventService } = useEventService();
 const class9Store = useClass9Store();
 const rupStore = useRupStore();
 
-const eventTitle = ref("");
-const eventResult = ref("");
+const eventTitle = ref<string>("");
+const eventResult = ref<string>("");
 const rupFile = ref<File | null>(null);
 const startDate = ref(dayjs().format("DD MMMM YYYY"));
 const startTime = ref("09:00");
@@ -218,7 +219,13 @@ const moduleOptions = computed(() => {
 });
 
 const learningOutcomeOptions = computed(() => {
-    return class9Store.getAllModulesAndOutcomes.outcomes;
+    if (eventTitle.value) {
+        const outcomesByModule = class9Store.getAllModulesAndOutcomes.outcomesByModule;
+        const moduleKey = eventTitle.value;
+        return outcomesByModule[moduleKey] || [];
+    }
+    // If no module is selected, show empty list
+    return [];
 });
 
 const openAddEventPopover = () => {

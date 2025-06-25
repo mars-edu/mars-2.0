@@ -60,23 +60,52 @@ export const useClass9Store = defineStore(
     });
 
     const getAllModulesAndOutcomes = computed(() => {
-      const uniqueModules = Array.from(new Set(class9Items.value
+      // Group modules by their display text to avoid duplicates
+      const moduleMap = new Map();
+      class9Items.value
         .filter(item => item.learningOutcome && item.learningOutcome.trim() !== '')
-        .map(item => ({
-          value: item.id,
-          text: `${item.moduleIndex} ${item.moduleName}`
-        }))));
+        .forEach(item => {
+          const moduleText = `${item.moduleIndex} ${item.moduleName}`;
+          if (!moduleMap.has(moduleText)) {
+            moduleMap.set(moduleText, {
+              text: moduleText,
+              value: moduleText,
+              items: []
+            });
+          }
+          moduleMap.get(moduleText).items.push(item.id);
+        });
+      
+      const modules = Array.from(moduleMap.values());
 
-      const uniqueOutcomes = Array.from(new Set(class9Items.value
+      // Create a map of all outcomes by module for filtering
+      const outcomesByModule: Record<string, Array<{value: string, text: string}>> = {};
+      class9Items.value
+        .filter(item => item.learningOutcome && item.learningOutcome.trim() !== '')
+        .forEach(item => {
+          const moduleText = `${item.moduleIndex} ${item.moduleName}`;
+          if (!outcomesByModule[moduleText]) {
+            outcomesByModule[moduleText] = [];
+          }
+          outcomesByModule[moduleText].push({
+            value: item.id,
+            text: item.learningOutcome
+          });
+        });
+
+      // Get all outcomes (unfiltered list)
+      const allOutcomes = class9Items.value
         .filter(item => item.learningOutcome && item.learningOutcome.trim() !== '')
         .map(item => ({
           value: item.id,
-          text: item.learningOutcome
-        }))));
+          text: item.learningOutcome,
+          moduleId: `${item.moduleIndex} ${item.moduleName}`
+        }));
 
       return {
-        modules: uniqueModules,
-        outcomes: uniqueOutcomes
+        modules,
+        outcomes: allOutcomes,
+        outcomesByModule
       };
     });
 
