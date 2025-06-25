@@ -3,7 +3,10 @@
     <label v-if="label" :for="uniqueId" class="text-sm font-medium">
       {{ label }}
     </label>
-    <f7-list class="smart-select-list-container no-margin no-hairlines">
+    <f7-list
+      class="smart-select-list-container no-margin no-hairlines"
+      :class="{ 'opacity-50 pointer-events-none': disabled }"
+    >
       <f7-list-item
         :title="listTitle"
         :after="selectedOptionText"
@@ -17,7 +20,12 @@
         :id="uniqueId"
         :class="{ 'item-smart-select-value': !!modelValue }"
       >
-        <select :name="name" :value="modelValue" @change="handleChange">
+        <select
+          :name="name"
+          :value="modelValue"
+          @change="handleChange"
+          :disabled="disabled"
+        >
           <option
             v-if="showInternalPlaceholder"
             value=""
@@ -58,6 +66,7 @@ const props = defineProps<{
   // Determines if the <select> itself should have a disabled placeholder option
   // Useful if the list item's title is already serving as the main placeholder display
   showInternalPlaceholder?: boolean;
+  disabled?: boolean;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
