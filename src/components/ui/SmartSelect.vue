@@ -5,6 +5,7 @@
     </label>
     <f7-list
       class="smart-select-list-container no-margin no-hairlines"
+      v-if="smartSelectReady"
       :class="{
         'opacity-50': disabled,
         'pointer-events-none': disabled || !hasOptions,
@@ -13,31 +14,17 @@
       <f7-list-item
         :title="listTitle"
         :after="selectedOptionText"
-        :smart-select="hasOptions"
-        :smart-select-params="{
-          openIn: 'popover',
-          closeOnSelect: true,
-          setValueText: false,
-          virtualList: options.length > 20,
-        }"
+        smart-select
+        :smart-select-params="smartSelectParams"
         :id="uniqueId"
-        :class="{ 'item-smart-select-value': !!modelValue && hasOptions }"
+        :class="{ 'item-smart-select-value': !!modelValue }"
       >
         <select
-          v-if="hasOptions"
           :name="name"
           :value="modelValue"
           @change="handleChange"
           :disabled="disabled"
         >
-          <option
-            v-if="showInternalPlaceholder"
-            value=""
-            disabled
-            :selected="!modelValue"
-          >
-            {{ placeholder }}
-          </option>
           <option
             v-for="option in options"
             :key="option.value"
@@ -48,12 +35,20 @@
         </select>
       </f7-list-item>
     </f7-list>
+    <f7-input
+      v-else
+      type="text"
+      outline
+      disabled
+      :placeholder="!hasOptions ? 'Нет данных' : placeholder || ' '"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { f7List, f7ListItem } from "framework7-vue";
-import { computed, getCurrentInstance } from "vue";
+import { f7List, f7ListItem, f7Input } from "framework7-vue";
+import { f7, f7ready } from "framework7-vue";
+import { computed, getCurrentInstance, onMounted, ref } from "vue";
 
 interface SelectOption {
   value: string | number;
@@ -98,6 +93,26 @@ const selectedOptionText = computed(() => {
 const listTitle = computed(() => {
   if (!hasOptions.value) return " ";
   return props.modelValue ? "" : props.placeholder || " ";
+});
+
+const smartSelectView = ref<any>(null);
+
+onMounted(() => {
+  f7ready(() => {
+    smartSelectView.value = f7?.views?.main || undefined;
+  });
+});
+
+const smartSelectParams = computed(() => ({
+  openIn: 'popover',
+  closeOnSelect: true,
+  setValueText: false,
+  virtualList: props.options.length > 20,
+  view: smartSelectView.value,
+}));
+
+const smartSelectReady = computed(() => {
+  return hasOptions.value && smartSelectView.value;
 });
 </script>
 
