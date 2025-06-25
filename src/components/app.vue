@@ -5,7 +5,6 @@
     <f7-view
       class="safe-areas"
       :main="true"
-      :pushState="true"
       :browserHistory="true"
       browserHistorySeparator="#!"
       browserHistoryRoot=""
