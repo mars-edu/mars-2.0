@@ -97,7 +97,7 @@ const selectedOptionText = computed(() => {
 // F7 will place the selected value in item-after.
 const listTitle = computed(() => {
   if (!hasOptions.value) return " ";
-  return props.placeholder || " ";
+  return props.modelValue ? "" : props.placeholder || " ";
 });
 </script>
 
