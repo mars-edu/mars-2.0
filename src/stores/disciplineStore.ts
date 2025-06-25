@@ -27,7 +27,7 @@ export const useDisciplineStore = defineStore("discipline", () => {
       isLoading.value = true;
       error.value = null;
 
-      // TODO: Replace with actual API call
+
       const newDiscipline: Discipline = {
         id: crypto.randomUUID(),
         ...payload,
@@ -50,7 +50,7 @@ export const useDisciplineStore = defineStore("discipline", () => {
       isLoading.value = true;
       error.value = null;
 
-      // TODO: Replace with actual API call
+
       const index = disciplines.value.findIndex((d) => d.id === id);
       if (index === -1) throw new Error("Discipline not found");
 
@@ -72,7 +72,7 @@ export const useDisciplineStore = defineStore("discipline", () => {
       isLoading.value = true;
       error.value = null;
 
-      // TODO: Replace with actual API call
+
       const index = disciplines.value.findIndex((d) => d.id === id);
       if (index === -1) throw new Error("Discipline not found");
 

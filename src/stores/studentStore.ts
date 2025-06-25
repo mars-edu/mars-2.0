@@ -112,7 +112,7 @@ export const useStudentStore = defineStore("student", () => {
       isLoading.value = true;
       error.value = null;
 
-      // TODO: Replace with actual API call
+
       const newStudent: Student = {
         id: crypto.randomUUID(),
         ...payload,
@@ -132,7 +132,6 @@ export const useStudentStore = defineStore("student", () => {
       isLoading.value = true;
       error.value = null;
 
-      // TODO: Replace with actual API call
       const index = students.value.findIndex((s) => s.id === id);
       if (index === -1) throw new Error("Student not found");
 
@@ -153,7 +152,7 @@ export const useStudentStore = defineStore("student", () => {
       isLoading.value = true;
       error.value = null;
 
-      // TODO: Replace with actual API call
+
       const index = students.value.findIndex((s) => s.id === id);
       if (index === -1) throw new Error("Student not found");
 

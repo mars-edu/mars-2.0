@@ -91,7 +91,7 @@ export const useTeacherStore = defineStore("teacher", () => {
       isLoading.value = true;
       error.value = null;
 
-      // TODO: Replace with actual API call
+
       const newTeacher: Teacher = {
         id: crypto.randomUUID(),
         ...payload,
@@ -111,7 +111,7 @@ export const useTeacherStore = defineStore("teacher", () => {
       isLoading.value = true;
       error.value = null;
 
-      // TODO: Replace with actual API call
+
       const index = teachers.value.findIndex((s) => s.id === id);
       if (index === -1) throw new Error("Teacher not found");
 
@@ -132,7 +132,7 @@ export const useTeacherStore = defineStore("teacher", () => {
       isLoading.value = true;
       error.value = null;
 
-      // TODO: Replace with actual API call
+
       const index = teachers.value.findIndex((s) => s.id === id);
       if (index === -1) throw new Error("Teacher not found");
 

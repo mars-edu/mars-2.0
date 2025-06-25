@@ -56,7 +56,7 @@ export const useSpecialtyStore = defineStore(
         loading.value = true;
         error.value = null;
 
-        // TODO: Replace with actual API call
+
         const newSpecialty: Specialty = {
           id: crypto.randomUUID(),
           ...payload,
@@ -83,7 +83,7 @@ export const useSpecialtyStore = defineStore(
         loading.value = true;
         error.value = null;
 
-        // TODO: Replace with actual API call
+
         const index = specialties.value.findIndex((s) => s.id === id);
         if (index === -1) throw new Error("Specialty not found");
 
@@ -106,7 +106,7 @@ export const useSpecialtyStore = defineStore(
         loading.value = true;
         error.value = null;
 
-        // TODO: Replace with actual API call
+
         const index = specialties.value.findIndex((s) => s.id === id);
         if (index === -1) throw new Error("Specialty not found");
 
