@@ -50,7 +50,7 @@
         <div class="p-4 space-y-4">
           <SmartSelect
             label="Модуль"
-            placeholder="Сначала выберите РУП"
+            placeholder="Выберите модуль"
             v-model="eventTitle"
             :options="moduleOptions"
             name="event-module"
@@ -59,7 +59,7 @@
 
           <SmartSelect
             label="Результат обучения/дисциплин"
-            placeholder="Сначала выберите РУП"
+            placeholder="Сначала выберите модуль"
             v-model="eventResult"
             :options="learningOutcomeOptions"
             name="event-learning-outcome"
