@@ -48,20 +48,22 @@
         </div>
 
         <div class="p-4 space-y-4">
-          <!-- Title input -->
-          <select-input
-            placeholder="Модуль"
-            empty-option-text="Выберите модуль"
-            :options="moduleOptions"
+          <SmartSelect
+            label="Модуль"
+            placeholder="Сначала выберите РУП"
             v-model="eventTitle"
+            :options="moduleOptions"
+            name="event-module"
+            id="event-module"
           />
 
-          <!-- Result input -->
-          <select-input
-            placeholder="Результат обучения"
-            empty-option-text="Выберите результат обучения/дисциплину"
-            :options="learningOutcomeOptions"
+          <SmartSelect
+            label="Результат обучения/дисциплин"
+            placeholder="Сначала выберите РУП"
             v-model="eventResult"
+            :options="learningOutcomeOptions"
+            name="event-learning-outcome"
+            id="event-learning-outcome"
           />
 
           <!-- Start date/time -->
@@ -184,29 +186,21 @@
 import { ref, computed, onMounted } from "vue";
 import { f7, f7Popover } from "framework7-vue";
 import DateTimeSelector from "./DateTimeSelector.vue";
-import SelectInput from "./SelectInput.vue";
+import SmartSelect from "../ui/SmartSelect.vue";
 import type { EventData } from "./EventService";
 import { useEventService } from "./EventService";
+import { useClass9Store } from "@/stores/class9Store";
+import { useRupStore } from "@/stores/rupStore";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
-
-// Add default values:
-const props = withDefaults(
-  defineProps<{
-    moduleOptions: { value: string; text: string }[];
-    learningOutcomeOptions: { value: string; text: string }[];
-  }>(),
-  {
-    moduleOptions: () => [],
-    learningOutcomeOptions: () => [],
-  }
-);
 
 const emit = defineEmits<{
   (e: "event-added", event: EventData): void;
 }>();
 
 const { eventService } = useEventService();
+const class9Store = useClass9Store();
+const rupStore = useRupStore();
 
 const eventTitle = ref("");
 const eventResult = ref("");
@@ -218,6 +212,15 @@ const endTime = ref("10:00");
 const participants = ref<string[]>([]);
 const formError = ref("");
 const selectedWeekDays = ref<{ weekId: number; russianWeekDay: string }[]>([]);
+
+const moduleOptions = computed(() => {
+    return class9Store.getAllModulesAndOutcomes.modules;
+});
+
+const learningOutcomeOptions = computed(() => {
+    return class9Store.getAllModulesAndOutcomes.outcomes;
+});
+
 const openAddEventPopover = () => {
   f7.popover.open("#add-event-popover", "#add-button");
 };
@@ -320,7 +323,7 @@ const weekDays = computed(() => {
     return {
       date: currentDay,
       russianAbbreviation: currentDay.format("dd").slice(0, 2).toUpperCase(),
-      isStartDate: false, // currentDay.isSame(start, "day"),
+      isStartDate: false,
       isSelected: selectedWeekDays.value.some(
         (day) => day.weekId === (currentDay.day() + 6) % 7
       ),

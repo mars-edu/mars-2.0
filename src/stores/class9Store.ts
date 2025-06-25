@@ -59,6 +59,27 @@ export const useClass9Store = defineStore(
         );
     });
 
+    const getAllModulesAndOutcomes = computed(() => {
+      const uniqueModules = Array.from(new Set(class9Items.value
+        .filter(item => item.learningOutcome && item.learningOutcome.trim() !== '')
+        .map(item => ({
+          value: item.id,
+          text: `${item.moduleIndex} ${item.moduleName}`
+        }))));
+
+      const uniqueOutcomes = Array.from(new Set(class9Items.value
+        .filter(item => item.learningOutcome && item.learningOutcome.trim() !== '')
+        .map(item => ({
+          value: item.id,
+          text: item.learningOutcome
+        }))));
+
+      return {
+        modules: uniqueModules,
+        outcomes: uniqueOutcomes
+      };
+    });
+
     const getAllClass9Items = computed(() => class9Items.value);
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
@@ -234,6 +255,7 @@ export const useClass9Store = defineStore(
       getClass9ItemsByContext,
       getClass9ByCourseId,
       getAllClass9Items,
+      getAllModulesAndOutcomes,
       isLoading,
       getError,
       createEmptyClass9Data,

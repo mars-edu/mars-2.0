@@ -4,11 +4,7 @@
     <div class="flex items-center space-x-2 justify-center">
       <sidebar-button @click="$emit('icon-click', 'sidebar')" />
       <list-button @click="$emit('icon-click', 'list')" />
-      <add-event-button
-        @event-added="handleEventAdded"
-        :module-options="moduleOptions"
-        :learning-outcome-options="learningOutcomeOptions"
-      />
+      <AddEventButton @event-added="handleEventAdded" />
     </div>
 
     <slot name="navigation"></slot>
@@ -42,23 +38,6 @@ const emit = defineEmits<{
 }>();
 
 const { eventService } = useEventService();
-const moduleOptions = ref<{ value: string; text: string }[]>([]);
-const learningOutcomeOptions = ref<{ value: string; text: string }[]>([]);
-
-onMounted(async () => {
-  const moduleStrings = await eventService.value.getModuleOptions();
-  moduleOptions.value = moduleStrings.map((module) => ({
-    value: module,
-    text: module,
-  }));
-
-  const learningOutcomeStrings =
-    await eventService.value.getLearningOutcomeOptions();
-  learningOutcomeOptions.value = learningOutcomeStrings.map((outcome) => ({
-    value: outcome,
-    text: outcome,
-  }));
-});
 
 const handleEventAdded = async (eventData: EventData) => {
   await eventService.value.addEvent(eventData);
