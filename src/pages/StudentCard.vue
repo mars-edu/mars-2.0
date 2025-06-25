@@ -91,6 +91,7 @@
                       'bg-blue-100': student.gender === 'male',
                       'bg-pink-100': student.gender === 'female',
                     }"
+                    @click="selectStudent(student)"
                   >
                     <td class="px-4 py-3">{{ index + 1 }}</td>
                     <td class="px-4 py-3">
@@ -114,22 +115,22 @@
     </template>
 
     <EditStudentButton
-      v-for="student in filteredStudents"
-      :key="`edit-${student.id}`"
-      :student="student"
+      v-if="selectedStudent"
+      :key="`edit-${selectedStudent.id}`"
+      :student="selectedStudent"
     />
   </f7-page>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
-import { f7Page } from "framework7-vue";
+import { ref, computed, watch, onMounted, nextTick } from "vue";
+import { f7Page, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddStudentButton from "@/components/AddStudentButton.vue";
 import EditStudentButton from "@/components/EditStudentButton.vue";
 import SmartSelect from "@/components/ui/SmartSelect.vue";
-import { useStudentStore } from "@/stores/studentStore";
+import { useStudentStore, type Student } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
@@ -155,6 +156,7 @@ const selectedGender = ref("");
 const selectedBase = ref("");
 const selectedAcademicYear = ref("");
 const searchTerm = ref("");
+const selectedStudent = ref<Student | null>(null);
 
 onMounted(() => {
   studentStore.clearFilters();
@@ -164,6 +166,7 @@ onMounted(() => {
   selectedBase.value = "";
   selectedAcademicYear.value = "";
   searchTerm.value = "";
+  selectedStudent.value = null;
 });
 
 // Convert store data to options format for SmartSelect
@@ -230,6 +233,15 @@ watch(selectedAcademicYear, (newValue) => {
 watch(searchTerm, (newValue) => {
   studentStore.setFilter("searchTerm", newValue);
 });
+
+const selectStudent = async (student: Student) => {
+  selectedStudent.value = student;
+  await nextTick();
+  f7.popover.open(
+    `#edit-student-popover-${student.id}`,
+    `#student-item-${student.id}`,
+  );
+};
 
 const handleSearchInput = (event: Event) => {
   const target = event.target as HTMLInputElement;

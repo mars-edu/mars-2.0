@@ -38,8 +38,8 @@
                 <thead>
                   <tr class="bg-muted/50">
                     <th class="px-4 py-3 text-left">№</th>
-                    <th class="px-4 py-3 text-left">ЕМ4</th>
-                    <th class="px-4 py-3 text-left">Р.О.1</th>
+                    <th class="px-4 py-3 text-left">Модуль</th>
+                    <th class="px-4 py-3 text-left">Результат обучения</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -51,6 +51,7 @@
                     :id="`discipline-item-${discipline.id}`"
                     class="border-b border-border hover:bg-muted/30"
                     :class="{ 'bg-red-100': discipline.isHighlighted }"
+                    @click="selectDiscipline(discipline)"
                   >
                     <td class="px-4 py-3">{{ index + 1 }}</td>
                     <td class="px-4 py-3">{{ discipline.moduleName }}</td>
@@ -69,22 +70,32 @@
     </template>
 
     <EditDisciplineButton
-      v-for="discipline in disciplineStore.getAllDisciplines"
-      :key="`edit-${discipline.id}`"
-      :discipline="discipline"
+      v-if="selectedDiscipline"
+      :key="`edit-${selectedDiscipline.id}`"
+      :discipline="selectedDiscipline"
     />
   </f7-page>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { f7Page, f7Input } from "framework7-vue";
+import { ref, nextTick } from "vue";
+import { f7Page, f7Input, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddDisciplineButton from "@/components/AddDisciplineButton.vue";
 import EditDisciplineButton from "@/components/EditDisciplineButton.vue";
-import { useDisciplineStore } from "@/stores/disciplineStore";
+import { useDisciplineStore, type Discipline } from "@/stores/disciplineStore";
 
 const activeNavItem = ref("discipline-catalog");
 const disciplineStore = useDisciplineStore();
+const selectedDiscipline = ref<Discipline | null>(null);
+
+const selectDiscipline = async (discipline: Discipline) => {
+  selectedDiscipline.value = discipline;
+  await nextTick();
+  f7.popover.open(
+    `#edit-discipline-popover-${discipline.id}`,
+    `#discipline-item-${discipline.id}`,
+  );
+};
 </script>

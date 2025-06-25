@@ -63,6 +63,15 @@
           </div>
 
           <SmartSelect
+            label="Год поступления"
+            :name="`academic-year-edit-${student.id}`"
+            placeholder="Выберите год поступления"
+            v-model="academicYear"
+            :options="academicYearOptions"
+            :id="`student-academic-year-edit-${student.id}`"
+          />
+
+          <SmartSelect
             label="Специальность"
             :name="`specialty-edit-${student.id}`"
             placeholder="Выберите специальность"
@@ -97,13 +106,19 @@
               <f7-button
                 :fill="gender === 'male'"
                 @click="gender = 'male'"
-                class="flex-1"
+                class="flex-1 !border-solid !border-2"
+                :class="{
+                  '!border-gray-500 !text-gray-500': gender !== 'male',
+                }"
                 >Мужской</f7-button
               >
               <f7-button
                 :fill="gender === 'female'"
                 @click="gender = 'female'"
-                class="flex-1"
+                class="flex-1 !border-solid !border-2"
+                :class="{
+                  '!border-gray-500 !text-gray-500': gender !== 'female',
+                }"
                 >Женский</f7-button
               >
             </div>
@@ -138,6 +153,7 @@ import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
 import { useBaseStore } from "@/stores/baseStore";
+import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
 import SmartSelect from "@/components/ui/SmartSelect.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
@@ -152,6 +168,7 @@ const props = defineProps<{
     language: string;
     base: number;
     gender: "male" | "female";
+    academicYearId?: string;
   };
 }>();
 
@@ -159,9 +176,11 @@ const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
 const baseStore = useBaseStore();
+const academicYearStore = useAcademicYearStore();
 const { specialties } = storeToRefs(specialtyStore);
 const { languages } = storeToRefs(languageStore);
 const { bases } = storeToRefs(baseStore);
+const { academicYears } = storeToRefs(academicYearStore);
 
 const surname = ref(props.student.surname);
 const firstName = ref(props.student.firstName);
@@ -170,7 +189,15 @@ const specialty = ref(props.student.specialty);
 const language = ref(props.student.language);
 const base = ref(props.student.base.toString());
 const gender = ref<"male" | "female">(props.student.gender);
+const academicYear = ref(props.student.academicYearId);
 const formError = ref("");
+
+const academicYearOptions = computed(() =>
+  academicYears.value.map((year) => ({
+    value: year.id,
+    text: year.startYear.toString(),
+  }))
+);
 
 const specialtyOptions = computed(() =>
   specialties.value.map((s) => ({
@@ -197,6 +224,7 @@ const studentSchema = z.object({
   surname: z.string().min(1, "Пожалуйста, введите фамилию студента"),
   firstName: z.string().min(1, "Пожалуйста, введите имя студента"),
   patronymic: z.string().min(1, "Пожалуйста, введите отчество студента"),
+  academicYear: z.string().min(1, "Пожалуйста, выберите год поступления"),
   specialty: z.string().min(1, "Пожалуйста, выберите специальность"),
   language: z.string().min(1, "Пожалуйста, выберите язык обучения"),
   base: z.string().min(1, "Пожалуйста, введите базу"),
@@ -210,6 +238,7 @@ const validationResult = computed(() => {
     surname: surname.value,
     firstName: firstName.value,
     patronymic: patronymic.value,
+    academicYear: academicYear.value,
     specialty: specialty.value,
     language: language.value,
     base: base.value,
@@ -244,6 +273,7 @@ const handleUpdateStudent = async () => {
       language: language.value,
       base: parseInt(base.value),
       gender: gender.value!,
+      academicYearId: academicYear.value,
     });
     closeEditStudentPopover();
   } catch (error) {
@@ -280,6 +310,7 @@ const resetForm = () => {
   language.value = props.student.language;
   base.value = props.student.base.toString();
   gender.value = props.student.gender;
+  academicYear.value = props.student.academicYearId;
   formError.value = "";
   studentStore.clearError();
 };

@@ -127,7 +127,7 @@ export const useStudentStore = defineStore("student", () => {
     }
   };
 
-  const updateStudent = async (id: string, payload: AddStudentPayload) => {
+  const updateStudent = async (id: string, payload: Partial<Omit<Student, 'id'>>) => {
     try {
       isLoading.value = true;
       error.value = null;

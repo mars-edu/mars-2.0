@@ -74,6 +74,7 @@
                       'bg-blue-100': teacher.gender === 'male',
                       'bg-pink-100': teacher.gender === 'female',
                     }"
+                    @click="selectTeacher(teacher)"
                   >
                     <td class="px-4 py-3">{{ index + 1 }}</td>
                     <td class="px-4 py-3">
@@ -96,22 +97,22 @@
     </template>
 
     <EditTeacherButton
-      v-for="teacher in filteredTeachers"
-      :key="`edit-${teacher.id}`"
-      :teacher="teacher"
+      v-if="selectedTeacher"
+      :key="`edit-${selectedTeacher.id}`"
+      :teacher="selectedTeacher"
     />
   </f7-page>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
-import { f7Page, f7Input } from "framework7-vue";
+import { ref, computed, watch, onMounted, nextTick } from "vue";
+import { f7Page, f7Input, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddTeacherButton from "@/components/AddTeacherButton.vue";
 import EditTeacherButton from "@/components/EditTeacherButton.vue";
 import SmartSelect from "@/components/ui/SmartSelect.vue";
-import { useTeacherStore } from "@/stores/teacherStore";
+import { useTeacherStore, type Teacher } from "@/stores/teacherStore";
 import { usePositionStore } from "@/stores/positionStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
@@ -129,6 +130,7 @@ const selectedPosition = ref("");
 const selectedEmploymentYear = ref("");
 const selectedGender = ref("");
 const searchTerm = ref("");
+const selectedTeacher = ref<Teacher | null>(null);
 
 onMounted(() => {
   teacherStore.clearFilters();
@@ -136,6 +138,7 @@ onMounted(() => {
   selectedEmploymentYear.value = "";
   selectedGender.value = "";
   searchTerm.value = "";
+  selectedTeacher.value = null;
 });
 
 const positionOptions = computed(() => {
@@ -175,4 +178,13 @@ watch(selectedGender, (newValue) => {
 watch(searchTerm, (newValue) => {
   teacherStore.setFilter("searchTerm", newValue);
 });
+
+const selectTeacher = async (teacher: Teacher) => {
+  selectedTeacher.value = teacher;
+  await nextTick();
+  f7.popover.open(
+    `#edit-teacher-popover-${teacher.id}`,
+    `#teacher-item-${teacher.id}`,
+  );
+};
 </script>
