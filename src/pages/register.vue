@@ -1,6 +1,6 @@
 <template>
   <f7-page name="register" class="flex flex-col min-h-screen bg-gray-50">
-    <div class="hidden md:flex h-full">
+    <div class="hidden md:flex h-full min-h-screen">
       <div
         class="w-1/2 bg-gradient-to-br from-red-500 to-red-700 flex flex-col items-center justify-center p-12 relative overflow-hidden"
       >
@@ -16,10 +16,10 @@
       </div>
 
       <div
-        class="w-1/2 flex items-center justify-center p-8 bg-gray-50 relative overflow-y-auto"
+        class="w-1/2 flex items-start justify-center p-8 bg-gray-50 relative overflow-y-auto h-screen"
       >
         <div
-          class="bg-white rounded-3xl p-12 shadow-xl max-w-md w-full transform hover:shadow-2xl transition-all duration-300"
+          class="bg-white rounded-3xl p-12 shadow-xl max-w-md w-full transform hover:shadow-2xl transition-all duration-300 my-8"
         >
           <div class="flex justify-center mb-8">
             <Logo class="h-16 w-auto" />
