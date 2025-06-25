@@ -63,6 +63,10 @@ export const useModuleStore = defineStore(
       );
     }
 
+    function reset() {
+      modules.value = [];
+    }
+
     return {
       modules,
       getModulesBySpecialtyAndCourse,
@@ -71,6 +75,7 @@ export const useModuleStore = defineStore(
       updateModuleField,
       clearModules,
       clearModulesBySpecialtyAndCourse,
+      reset,
     };
   },
   {

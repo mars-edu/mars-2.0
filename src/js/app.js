@@ -3,7 +3,7 @@ import Framework7 from "framework7/lite-bundle";
 import Framework7Vue, { registerComponents } from "framework7-vue/bundle";
 import "framework7/css/bundle";
 import "../css/framework7-icons.css";
-import { createPinia } from "pinia";
+import { createPinia, getActivePinia } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import vAuth from "../directives/auth";
 import "../css/app.css";
@@ -28,5 +28,12 @@ app.use(pinia);
 app.directive("auth", vAuth);
 
 registerComponents(app);
+
+window.resetAllPiniaStores = () => {
+  const activePinia = getActivePinia();
+  if (activePinia) {
+    activePinia._s.forEach(store => store.reset());
+  }
+};
 
 app.mount("#app");

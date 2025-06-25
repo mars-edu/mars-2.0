@@ -91,6 +91,14 @@ export const useRupStore = defineStore(
       selectedClass9ItemIds.value = [];
     }
 
+    function reset() {
+      showOverlay.value = false;
+      selectedAcademicYearId.value = null;
+      selectedSpecialtyId.value = null;
+      selectedCourseId.value = null;
+      selectedClass9ItemIds.value = [];
+    }
+
     return {
       showOverlay,
       isOverlayVisible,
@@ -112,6 +120,7 @@ export const useRupStore = defineStore(
       isClass9ItemSelected,
       toggleClass9ItemSelection,
       clearClass9Selection,
+      reset,
     };
   },
   {

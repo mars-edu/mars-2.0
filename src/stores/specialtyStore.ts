@@ -124,6 +124,12 @@ export const useSpecialtyStore = defineStore(
       error.value = null;
     };
 
+    const reset = () => {
+      specialties.value = [];
+      loading.value = false;
+      error.value = null;
+    };
+
     return {
       specialties,
       loading,
@@ -137,6 +143,7 @@ export const useSpecialtyStore = defineStore(
       updateSpecialty,
       deleteSpecialty,
       clearError,
+      reset,
     };
   },
   {

@@ -70,11 +70,18 @@ export const useJournalStore = defineStore("journal", () => {
     return grouped;
   });
 
+  const reset = () => {
+    journals.value = [];
+    isLoading.value = false;
+    error.value = null;
+  };
+
   return {
     journals,
     isLoading,
     error,
     fetchJournals,
     journalsByCourse,
+    reset,
   };
 }); 

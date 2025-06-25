@@ -36,12 +36,17 @@ export const useColumnConfigStore = defineStore(
       );
     }
 
+    function reset() {
+      columnsByCourse.value = {};
+    }
+
     return {
       columnsByCourse,
       setColumnsForCourse,
       getColumnsForCourse,
       resetColumnsForCourse,
       hasColumnsForCourse,
+      reset,
     };
   },
   {

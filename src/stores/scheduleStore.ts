@@ -12,51 +12,53 @@ export interface ScheduleState {
   scheduleData: Record<string, Lesson[]>;
 }
 
+const DEFAULT_SCHEDULE_DATA = {
+  "2025-03-09": [
+    {
+      startTime: "8:00",
+      endTime: "9:35",
+      subject: "История Казахстана",
+      room: "305 каб.",
+    },
+    {
+      startTime: "9:45",
+      endTime: "11:20",
+      subject: "Всемирная история",
+      room: "205 каб.",
+    },
+    {
+      startTime: "11:30",
+      endTime: "13:05",
+      subject: "Всемирная история",
+      room: "404 каб.",
+    },
+    {
+      startTime: "13:15",
+      endTime: "14:50",
+      subject: "Всемирная история",
+      room: "404 каб.",
+    },
+  ],
+  "2025-03-10": [
+    {
+      startTime: "8:00",
+      endTime: "9:35",
+      subject: "Культорология",
+      room: "101 каб.",
+    },
+    {
+      startTime: "9:45",
+      endTime: "11:20",
+      subject: "История Казахстана",
+      room: "302 каб.",
+    },
+  ],
+};
+
 export const useScheduleStore = defineStore("schedule", {
   state: (): ScheduleState => ({
     selectedDate: new Date(),
-    scheduleData: {
-      "2025-03-09": [
-        {
-          startTime: "8:00",
-          endTime: "9:35",
-          subject: "История Казахстана",
-          room: "305 каб.",
-        },
-        {
-          startTime: "9:45",
-          endTime: "11:20",
-          subject: "Всемирная история",
-          room: "205 каб.",
-        },
-        {
-          startTime: "11:30",
-          endTime: "13:05",
-          subject: "Всемирная история",
-          room: "404 каб.",
-        },
-        {
-          startTime: "13:15",
-          endTime: "14:50",
-          subject: "Всемирная история",
-          room: "404 каб.",
-        },
-      ],
-      "2025-03-10": [
-        {
-          startTime: "8:00",
-          endTime: "9:35",
-          subject: "Культорология",
-          room: "101 каб.",
-        },
-        {
-          startTime: "9:45",
-          endTime: "11:20",
-          subject: "История Казахстана",
-          room: "302 каб.",
-        },
-      ],
-    },
+    scheduleData: { ...DEFAULT_SCHEDULE_DATA },
   }),
 
   getters: {
@@ -92,6 +94,12 @@ export const useScheduleStore = defineStore("schedule", {
         date.getMonth() + 1
       ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       this.scheduleData[formattedDate] = lessons;
+    },
+
+    // Reset the store to its initial state
+    reset() {
+      this.selectedDate = new Date();
+      this.scheduleData = { ...DEFAULT_SCHEDULE_DATA };
     },
   },
 });

@@ -24,6 +24,11 @@ export const useSelectedItemsStore = defineStore("selectedItems", () => {
     selectedCourseId.value = null;
   }
 
+  function reset() {
+    selectedSpecialtyId.value = null;
+    selectedCourseId.value = null;
+  }
+
   const selectedSpecialty = computed(() => {
     const specialtyStore = useSpecialtyStore();
     const { specialties } = storeToRefs(specialtyStore);
@@ -40,20 +45,14 @@ export const useSelectedItemsStore = defineStore("selectedItems", () => {
     return courses.value.find((course) => course.id === selectedCourseId.value);
   });
 
-  const filteredCourses = computed(() => {
-    const courseStore = useCourseStore();
-    if (!selectedSpecialtyId.value) return [];
-    return courseStore.getVisibleCourses;
-  });
-
   return {
     selectedSpecialtyId,
     selectedCourseId,
     selectedSpecialty,
     selectedCourse,
-    filteredCourses,
     setSelectedSpecialty,
     setSelectedCourse,
     clearSelection,
+    reset,
   };
 });

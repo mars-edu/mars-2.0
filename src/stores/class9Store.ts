@@ -247,6 +247,12 @@ export const useClass9Store = defineStore(
       error.value = null;
     }
 
+    function reset() {
+      class9Items.value = [];
+      loading.value = false;
+      error.value = null;
+    }
+
     return {
       class9Items,
       loading,
@@ -265,6 +271,7 @@ export const useClass9Store = defineStore(
       updateClass9Order,
       deleteClass9,
       clearError,
+      reset,
     };
   },
   {

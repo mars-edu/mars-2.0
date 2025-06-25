@@ -9,25 +9,27 @@ export interface Base {
   updatedAt: Date;
 }
 
+const DEFAULT_BASES: Base[] = [
+  {
+    id: "1",
+    value: "9",
+    text: "9",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: "2",
+    value: "11",
+    text: "11",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+]
+
 export const useBaseStore = defineStore(
   "base",
   () => {
-    const bases = ref<Base[]>([
-      {
-        id: "1",
-        value: "9",
-        text: "9",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: "2",
-        value: "11",
-        text: "11",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ]);
+    const bases = ref<Base[]>(DEFAULT_BASES);
     const loading = ref(false);
     const error = ref<string | null>(null);
 
@@ -119,6 +121,12 @@ export const useBaseStore = defineStore(
       error.value = null;
     }
 
+    function reset() {
+      bases.value = [...DEFAULT_BASES];
+      loading.value = false;
+      error.value = null;
+    }
+
     return {
       bases,
       loading,
@@ -131,6 +139,7 @@ export const useBaseStore = defineStore(
       updateBase,
       deleteBase,
       clearError,
+      reset,
     };
   },
   {

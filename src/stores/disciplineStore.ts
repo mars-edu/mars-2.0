@@ -90,6 +90,12 @@ export const useDisciplineStore = defineStore("discipline", () => {
     error.value = null;
   };
 
+  const reset = () => {
+    disciplines.value = [];
+    isLoading.value = false;
+    error.value = null;
+  };
+
   const getError = computed(() => error.value);
 
   return {
@@ -100,6 +106,7 @@ export const useDisciplineStore = defineStore("discipline", () => {
     updateDiscipline,
     deleteDiscipline,
     clearError,
+    reset,
     getError,
   };
 });

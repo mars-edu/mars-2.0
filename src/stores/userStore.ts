@@ -126,5 +126,12 @@ export const useUserStore = defineStore("user", {
         );
       }
     },
+
+    reset() {
+      this.currentUser = null;
+      this.isAuthenticated = false;
+      this.token = null;
+      localStorage.removeItem("auth_token");
+    },
   },
 });

@@ -26,10 +26,16 @@ export const useThemeStore = defineStore(
       setTheme(currentTheme.value);
     }
 
+    function reset() {
+      currentTheme.value = "light";
+      document.documentElement.classList.remove("dark", "lavanda");
+    }
+
     return {
       currentTheme,
       setTheme,
       initTheme,
+      reset,
     };
   },
   {

@@ -11,29 +11,31 @@ export interface AcademicYear {
   updatedAt: Date;
 }
 
+const DEFAULT_ACADEMIC_YEARS: AcademicYear[] = [
+  {
+    id: "1",
+    name: "2023-2024",
+    startYear: 2023,
+    endYear: 2024,
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: "2",
+    name: "2024-2025",
+    startYear: 2024,
+    endYear: 2025,
+    isActive: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];
+
 export const useAcademicYearStore = defineStore(
   "academicYear",
   () => {
-    const academicYears = ref<AcademicYear[]>([
-      {
-        id: "1",
-        name: "2023-2024",
-        startYear: 2023,
-        endYear: 2024,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: "2",
-        name: "2024-2025",
-        startYear: 2024,
-        endYear: 2025,
-        isActive: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ]);
+    const academicYears = ref<AcademicYear[]>([...DEFAULT_ACADEMIC_YEARS]);
     const loading = ref(false);
     const error = ref<string | null>(null);
 
@@ -192,6 +194,12 @@ export const useAcademicYearStore = defineStore(
       error.value = null;
     }
 
+    function reset() {
+      academicYears.value = [...DEFAULT_ACADEMIC_YEARS];
+      loading.value = false;
+      error.value = null;
+    }
+
     return {
       academicYears,
       loading,
@@ -208,6 +216,7 @@ export const useAcademicYearStore = defineStore(
       deleteAcademicYear,
       setActiveAcademicYear,
       clearError,
+      reset,
     };
   },
   {

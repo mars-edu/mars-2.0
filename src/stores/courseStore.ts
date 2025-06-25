@@ -147,6 +147,13 @@ export const useCourseStore = defineStore(
       error.value = null;
     }
 
+    function reset() {
+      courses.value = [...DEFAULT_COURSES];
+      loading.value = false;
+      error.value = null;
+      sortCourses();
+    }
+
     return {
       courses,
       loading,
@@ -159,6 +166,7 @@ export const useCourseStore = defineStore(
       updateCourse,
       deleteCourse,
       clearError,
+      reset,
     };
   },
   {

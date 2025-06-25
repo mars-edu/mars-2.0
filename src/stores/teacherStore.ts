@@ -149,6 +149,18 @@ export const useTeacherStore = defineStore("teacher", () => {
     error.value = null;
   };
 
+  const reset = () => {
+    teachers.value = [];
+    isLoading.value = false;
+    error.value = null;
+    filters.value = {
+      position: "",
+      employmentYear: "",
+      gender: "",
+      searchTerm: "",
+    };
+  };
+
   const getError = computed(() => error.value);
 
   return {
@@ -163,6 +175,7 @@ export const useTeacherStore = defineStore("teacher", () => {
     updateTeacher,
     deleteTeacher,
     clearError,
+    reset,
     getError,
   };
 });

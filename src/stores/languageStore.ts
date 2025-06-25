@@ -9,32 +9,34 @@ export interface Language {
   updatedAt: Date;
 }
 
+const DEFAULT_LANGUAGES: Language[] = [
+  {
+    id: "1",
+    name: "Русский",
+    code: "ru",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: "2",
+    name: "English",
+    code: "en",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: "3",
+    name: "Қазақша",
+    code: "kk",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];
+
 export const useLanguageStore = defineStore(
   "language",
   () => {
-    const languages = ref<Language[]>([
-      {
-        id: "1",
-        name: "Русский",
-        code: "ru",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: "2",
-        name: "English",
-        code: "en",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: "3",
-        name: "Қазақша",
-        code: "kk",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ]);
+    const languages = ref<Language[]>([...DEFAULT_LANGUAGES]);
     const loading = ref(false);
     const error = ref<string | null>(null);
 
@@ -128,6 +130,12 @@ export const useLanguageStore = defineStore(
       error.value = null;
     }
 
+    function reset() {
+      languages.value = [...DEFAULT_LANGUAGES];
+      loading.value = false;
+      error.value = null;
+    }
+
     return {
       languages,
       loading,
@@ -140,6 +148,7 @@ export const useLanguageStore = defineStore(
       updateLanguage,
       deleteLanguage,
       clearError,
+      reset,
     };
   },
   {

@@ -169,6 +169,20 @@ export const useStudentStore = defineStore("student", () => {
     error.value = null;
   };
 
+  const reset = () => {
+    students.value = [];
+    isLoading.value = false;
+    error.value = null;
+    filters.value = {
+      specialty: "",
+      language: "",
+      gender: "",
+      base: "",
+      academicYearId: "",
+      searchTerm: "",
+    };
+  };
+
   const getError = computed(() => error.value);
 
   return {
@@ -183,6 +197,7 @@ export const useStudentStore = defineStore("student", () => {
     updateStudent,
     deleteStudent,
     clearError,
+    reset,
     getError,
   };
 });
