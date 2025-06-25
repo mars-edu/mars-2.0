@@ -10,6 +10,7 @@ import "../css/app.css";
 import App from "../components/app.vue";
 import { PiniaServerSync } from "./plugin/pinia-server-sync";
 import { API_URL } from "../lib/http-client";
+import superjson from "superjson";
 
 Framework7.use(Framework7Vue);
 
@@ -17,7 +18,10 @@ const app = createApp(App);
 
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
-pinia.use(PiniaServerSync({ url: `${API_URL}/ws` }));
+pinia.use(PiniaServerSync({ url: `${API_URL}/ws`, serializer: {
+  serialize: superjson.stringify,
+  deserialize: superjson.parse,
+} }));
 
 app.use(pinia);
 
