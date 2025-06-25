@@ -133,6 +133,9 @@ export class WebSocketDurableObject extends DurableObject {
             state: updatedRecord.state,
             timestamp: updatedRecord.updatedAt.getTime(),
           };
+          if (socket.readyState === WebSocket.OPEN) {
+            socket.send(superjson.stringify(broadcastMessage));
+          }
           this.broadcast(superjson.stringify(broadcastMessage), socket);
         } else if (message.type === "SYNC_REQUEST" && message.storeId) {
           let record = await this.prisma.piniaState.findUnique({
