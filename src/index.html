@@ -16,6 +16,7 @@
 
   <script>
     function forceReload() {
+      return true;
       if (window.__BUILD_INFO__.environment == "production") {
         console.log("[forceReload] Production environment detected, reloading page");
         const form = document.createElement('form');
@@ -48,6 +49,7 @@
           forceReload();
         }
       }
+      forceReload()
     });
   </script>
 
