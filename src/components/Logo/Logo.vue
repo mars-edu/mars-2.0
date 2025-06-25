@@ -1,16 +1,15 @@
 <template>
-  <button
+  <a
     v-if="isProduction"
     class="flex items-center w-fit"
-    @click="navigateToHome"
+    href="/home"
   >
     <img :src="logoSrc" alt="Mars Logo" class="h-16" />
-  </button>
+  </a>
 </template>
 
 <script setup lang="ts">
-import { f7 } from "framework7-vue";
-import { ref, computed } from "vue";
+import { computed } from "vue";
 
 const props = defineProps({
   variant: {
@@ -27,7 +26,4 @@ const logoSrc = computed(() => {
   return new URL("/assets/LOGO.png", import.meta.url).href;
 });
 
-const navigateToHome = () => {
-  f7.views.main.router.navigate("/");
-};
 </script>
