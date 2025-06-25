@@ -26,6 +26,7 @@ export interface Class9Data {
   individualHours: string;
   distributionSemestersActive: boolean[];
   distributionSemesterHours: string[];
+  position: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -48,7 +49,7 @@ export const useClass9Store = defineStore(
             c.academicYearId === academicYearId &&
             c.specialtyId === specialtyId &&
             c.courseId === courseId
-        );
+        ).sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
     });
 
     const getClass9ByCourseId = computed(() => {
@@ -92,6 +93,7 @@ export const useClass9Store = defineStore(
         individualHours: "",
         distributionSemestersActive: Array(8).fill(false),
         distributionSemesterHours: Array(8).fill(""),
+        position: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -115,6 +117,7 @@ export const useClass9Store = defineStore(
     ) {
       loading.value = true;
       try {
+        const contextItems = getClass9ItemsByContext.value(academicYearId, specialtyId, courseId);
         const newClass9: Class9Data = {
           ...createEmptyClass9Data(academicYearId, specialtyId, courseId),
           ...data,
@@ -122,6 +125,8 @@ export const useClass9Store = defineStore(
           courseId,
           specialtyId,
           academicYearId,
+          position: contextItems.length,
+
         };
 
         class9Items.value.push(newClass9);
@@ -179,6 +184,30 @@ export const useClass9Store = defineStore(
       }
     }
 
+    function updateClass9Order(
+      academicYearId: string,
+      specialtyId: string,
+      courseId: string,
+      oldIndex: number,
+      newIndex: number
+    ) {
+      const contextItems = getClass9ItemsByContext.value(
+        academicYearId,
+        specialtyId,
+        courseId
+      );
+    
+      const [movedItem] = contextItems.splice(oldIndex, 1);
+      contextItems.splice(newIndex, 0, movedItem);
+    
+      contextItems.forEach((item, index) => {
+        const storeItem = class9Items.value.find(i => i.id === item.id);
+        if (storeItem) {
+          storeItem.position = index;
+        }
+      });
+    }
+
     async function deleteClass9(id: string) {
       loading.value = true;
       try {
@@ -211,6 +240,7 @@ export const useClass9Store = defineStore(
       addClass9,
       addClass9Items,
       updateClass9,
+      updateClass9Order,
       deleteClass9,
       clearError,
     };

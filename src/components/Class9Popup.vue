@@ -182,6 +182,7 @@
                 >
                   <div class="flex items-center gap-3">
                     <f7-checkbox
+                      @click.stop
                       v-model:checked="stepData.examEnabled"
                     ></f7-checkbox>
                     <span class="text-sm">Экзамен</span>
@@ -205,6 +206,7 @@
                 >
                   <div class="flex items-center gap-3">
                     <f7-checkbox
+                      @click.stop
                       v-model:checked="stepData.creditEnabled"
                     ></f7-checkbox>
                     <span class="text-sm">Зачет</span>
@@ -228,6 +230,7 @@
                 >
                   <div class="flex items-center gap-3">
                     <f7-checkbox
+                      @click.stop
                       v-model:checked="stepData.controlLessonEnabled"
                     ></f7-checkbox>
                     <span class="text-sm">Контрольный урок</span>

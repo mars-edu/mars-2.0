@@ -1,8 +1,11 @@
 <template>
   <div class="class9-table">
-    <div v-if="class9List.length" class="space-y-0.5">
+    <div v-if="class9List.length" ref="sortableList" class="space-y-0.5">
       <div v-for="(item, idx) in class9List" :key="item.id" class="overflow-hidden bg-card border-b border-gray-200" :class="{ 'is-selected': rupStore.isClass9ItemSelected(item.id) }" @click="handleRowClick(item)">
         <div class="flex items-stretch w-full">
+          <div class="w-8 bg-muted flex items-center justify-center text-sm font-medium border-r border-border drag-handle cursor-move">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-grip-vertical"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+          </div>
           <div class="w-8 bg-muted flex items-center justify-center text-sm font-medium border-r border-border">
             {{ idx + 1 }}
           </div>
@@ -69,11 +72,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, nextTick } from "vue";
+import { computed, ref, nextTick, onMounted, onBeforeUnmount } from "vue";
 import { useClass9Store, type Class9Data } from "@/stores/class9Store";
 import { f7 } from "framework7-vue";
 import Class9Popup from "@/components/Class9Popup.vue";
 import { useRupStore } from "@/stores/rupStore";
+import Sortable from 'sortablejs';
 
 const props = defineProps<{
   specialtyId: string;
@@ -84,6 +88,8 @@ const props = defineProps<{
 
 const class9Store = useClass9Store();
 const rupStore = useRupStore();
+const sortableList = ref<HTMLElement | null>(null);
+let sortableInstance: Sortable | null = null;
 
 const class9List = computed(() => {
   if (!props.academicYearId || !props.specialtyId || !props.courseId) {
@@ -94,6 +100,33 @@ const class9List = computed(() => {
     props.specialtyId,
     props.courseId
   );
+});
+
+onMounted(() => {
+  if (sortableList.value) {
+    sortableInstance = new Sortable(sortableList.value, {
+      handle: '.drag-handle',
+      animation: 150,
+      ghostClass: 'ghost',
+      onEnd: (evt) => {
+        if (evt.oldIndex !== undefined && evt.newIndex !== undefined) {
+          class9Store.updateClass9Order(
+            props.academicYearId,
+            props.specialtyId,
+            props.courseId,
+            evt.oldIndex,
+            evt.newIndex
+          );
+        }
+      },
+    });
+  }
+});
+
+onBeforeUnmount(() => {
+  if (sortableInstance) {
+    sortableInstance.destroy();
+  }
 });
 
 const popupOpen = ref(false);
@@ -147,6 +180,12 @@ defineExpose({
   border: 1px solid rgb(209 213 219);
   border-radius: 8px;
   overflow: hidden;
+}
+
+.ghost {
+  opacity: 0.5;
+  background: #c8ebfb !important;
+  border: 1px dashed var(--f7-theme-color) !important;
 }
 
 .class9-table > div > div:hover {

@@ -59,7 +59,7 @@
           <!-- Result input -->
           <select-input
             placeholder="Результат обучения"
-            empty-option-text="Выберите результат"
+            empty-option-text="Выберите результат обучения/дисциплину"
             :options="learningOutcomeOptions"
             v-model="eventResult"
           />
