@@ -5,12 +5,15 @@
     </label>
     <f7-list
       class="smart-select-list-container no-margin no-hairlines"
-      :class="{ 'opacity-50 pointer-events-none': disabled }"
+      :class="{
+        'opacity-50': disabled,
+        'pointer-events-none': disabled || !hasOptions,
+      }"
     >
       <f7-list-item
         :title="listTitle"
         :after="selectedOptionText"
-        smart-select
+        :smart-select="hasOptions"
         :smart-select-params="{
           openIn: 'popover',
           closeOnSelect: true,
@@ -18,9 +21,10 @@
           virtualList: options.length > 20,
         }"
         :id="uniqueId"
-        :class="{ 'item-smart-select-value': !!modelValue }"
+        :class="{ 'item-smart-select-value': !!modelValue && hasOptions }"
       >
         <select
+          v-if="hasOptions"
           :name="name"
           :value="modelValue"
           @change="handleChange"
@@ -71,6 +75,8 @@ const props = defineProps<{
 
 const emit = defineEmits(["update:modelValue"]);
 
+const hasOptions = computed(() => props.options && props.options.length > 0);
+
 const instance = getCurrentInstance();
 const uniqueId = computed(() => props.id || `smart-select-${instance?.uid}`);
 
@@ -80,6 +86,7 @@ const handleChange = (event: Event) => {
 };
 
 const selectedOptionText = computed(() => {
+  if (!hasOptions.value) return "Нет данных";
   const selected = props.options.find(
     (option) => option.value == props.modelValue
   );
@@ -88,7 +95,10 @@ const selectedOptionText = computed(() => {
 
 // The title for the f7-list-item. This is what's always visible.
 // F7 will place the selected value in item-after.
-const listTitle = computed(() => props.placeholder || " ");
+const listTitle = computed(() => {
+  if (!hasOptions.value) return " ";
+  return props.placeholder || " ";
+});
 </script>
 
 <style lang="postcss">
