@@ -74,7 +74,7 @@
             ></f7-input>
           </div>
 
-          <SmartSelect
+          <Select
             label="Год поступления на работу"
             :name="`employment-year-edit-${teacher.id}`"
             placeholder="Выберите год поступления"
@@ -131,7 +131,7 @@ import { z } from "zod";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
-import SmartSelect from "@/components/ui/SmartSelect.vue";
+import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import type { Teacher } from "@/stores/teacherStore";
 

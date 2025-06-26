@@ -60,10 +60,8 @@ const props = defineProps<{
   options: Array<SelectOption>;
   label?: string;
   name?: string;
-  placeholder?: string; // Text for the main display / f7-list-item title
+  placeholder?: string;
   id?: string;
-  // Determines if the <select> itself should have a disabled placeholder option
-  // Useful if the list item's title is already serving as the main placeholder display
   showInternalPlaceholder?: boolean;
   disabled?: boolean;
 }>();
@@ -88,8 +86,6 @@ const selectedOptionText = computed(() => {
   return selected ? selected.text : "";
 });
 
-// The title for the f7-list-item. This is what's always visible.
-// F7 will place the selected value in item-after.
 const listTitle = computed(() => {
   if (!hasOptions.value) return " ";
   return props.modelValue ? "" : props.placeholder || " ";
@@ -133,7 +129,6 @@ const smartSelectReady = computed(() => {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-/* Override default F7 list item bg and ensure it fills container */
 .smart-select-list-container .f7-list-item {
   background-color: transparent;
 }
@@ -153,7 +148,6 @@ const smartSelectReady = computed(() => {
   border-bottom: none;
 }
 
-/* This is the placeholder prop */
 .smart-select-list-container
   .f7-list-item
   .item-content
@@ -166,7 +160,6 @@ const smartSelectReady = computed(() => {
   color: hsl(var(--muted-foreground));
 }
 
-/* This is where F7 puts the selected value's text */
 .smart-select-list-container
   .f7-list-item
   .item-content
@@ -181,7 +174,6 @@ const smartSelectReady = computed(() => {
   white-space: nowrap;
 }
 
-/* If modelValue is empty, the title should be more muted (placeholder style) */
 .smart-select-list-container
   .f7-list-item:not(.item-smart-select-value)
   .item-content
@@ -189,7 +181,6 @@ const smartSelectReady = computed(() => {
   color: hsl(var(--muted-foreground));
 }
 
-/* If modelValue is empty, hide the item-after if it's empty or duplicative */
 .smart-select-list-container
   .f7-list-item:not(.item-smart-select-value)
   .item-content
@@ -198,13 +189,11 @@ const smartSelectReady = computed(() => {
   display: none;
 }
 
-/* Focus state */
 .smart-select-list-container:focus-within {
   border-color: hsl(var(--primary));
   box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
 }
 
-/* Hover state */
 .smart-select-list-container:hover {
   border-color: hsl(var(--border-hover, var(--border)));
 }

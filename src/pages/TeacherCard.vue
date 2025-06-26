@@ -28,7 +28,7 @@
           <div
             class="flex flex-wrap gap-x-4 gap-y-2 items-center teacher-card-filters"
           >
-            <SmartSelect
+            <Select
               v-model="selectedPosition"
               :options="positionOptions"
               placeholder="Должность:"
@@ -36,7 +36,7 @@
               class="min-w-[150px]"
             />
 
-            <SmartSelect
+            <Select
               v-model="selectedEmploymentYear"
               :options="employmentYearOptions"
               placeholder="Год поступления:"
@@ -44,7 +44,7 @@
               class="min-w-[150px]"
             />
 
-            <SmartSelect
+            <Select
               v-model="selectedGender"
               :options="genderOptions"
               placeholder="Пол:"
@@ -111,7 +111,7 @@ import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddTeacherButton from "@/components/AddTeacherButton.vue";
 import EditTeacherButton from "@/components/EditTeacherButton.vue";
-import SmartSelect from "@/components/ui/SmartSelect.vue";
+import Select from "@/components/ui/Select.vue";
 import { useTeacherStore, type Teacher } from "@/stores/teacherStore";
 import { usePositionStore } from "@/stores/positionStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";

@@ -15,7 +15,7 @@
           <div class="flex items-center justify-between">
             <h1 class="text-xl font-semibold">Журналы</h1>
             <div class="flex items-center gap-2">
-              <SmartSelect
+              <Select
                 v-model="selectedAcademicYear"
                 :options="academicYearOptions"
                 placeholder="Учебный год:"
@@ -35,7 +35,7 @@
           >
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
               <div class="flex flex-col gap-2">
-                <SmartSelect
+                <Select
                   v-model="selectedLessonType"
                   :options="lessonTypeOptions"
                   placeholder="Тип занятия: все"
@@ -43,7 +43,7 @@
                 />
               </div>
               <div class="flex flex-col gap-2">
-                <SmartSelect
+                <Select
                   v-model="selectedTechnology"
                   :options="technologyOptions"
                   placeholder="Технология обучения: все"
@@ -52,13 +52,13 @@
               </div>
               <div class="flex flex-col gap-2">
                 <div class="grid grid-cols-2 gap-2">
-                  <SmartSelect
+                  <Select
                     v-model="selectedDiscipline"
                     :options="disciplineOptions"
                     placeholder="Дисциплина: все"
                     name="discipline"
                   />
-                  <SmartSelect
+                  <Select
                     v-model="selectedTerm"
                     :options="termOptions"
                     placeholder="Срок обучения: все"
@@ -68,19 +68,19 @@
               </div>
               <div class="flex flex-col gap-2">
                 <div class="grid grid-cols-3 gap-2">
-                  <SmartSelect
+                  <Select
                     v-model="selectedStatus"
                     :options="statusOptions"
                     placeholder="Статус: все"
                     name="status"
                   />
-                  <SmartSelect
+                  <Select
                     v-model="selectedGroup"
                     :options="groupOptions"
                     placeholder="Группа: все"
                     name="group"
                   />
-                  <SmartSelect
+                  <Select
                     v-model="selectedRole"
                     :options="roleOptions"
                     placeholder="Роль: все"
@@ -133,7 +133,7 @@ import { ref, computed, onMounted } from "vue";
 import { f7Page, f7Input, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
-import SmartSelect from "@/components/ui/SmartSelect.vue";
+import Select from "@/components/ui/Select.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useJournalStore } from "@/stores/journalStore";
 import { useCourseStore } from "@/stores/courseStore";

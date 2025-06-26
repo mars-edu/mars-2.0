@@ -31,7 +31,7 @@
               >
             </div>
             <div class="flex flex-col md:flex-row md:items-center md:gap-3">
-              <SmartSelect
+              <Select
                 v-model="selectedAcademicYear"
                 :options="academicYearOptions"
                 placeholder="Учебный год:"
@@ -353,7 +353,7 @@ import { useCourseStore } from "@/stores/courseStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import Accordion from "@/components/ui/accordion/Accordion.vue";
 import AccordionItem from "@/components/ui/accordion/AccordionItem.vue";
-import SmartSelect from "@/components/ui/SmartSelect.vue";
+import Select from "@/components/ui/Select.vue";
 import { storeToRefs } from "pinia";
 import ImportWorkingPlanDialog from "@/components/ImportWorkingPlanDialog.vue";
 import { useRupStore } from "@/stores/rupStore";

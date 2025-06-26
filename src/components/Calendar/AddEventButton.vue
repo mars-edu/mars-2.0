@@ -48,7 +48,7 @@
         </div>
 
         <div class="p-4 space-y-4">
-          <SmartSelect
+          <Select
             label="Модуль"
             placeholder="Выберите модуль"
             v-model="eventTitle"
@@ -57,7 +57,7 @@
             id="event-module"
           />
 
-          <SmartSelect
+          <Select
             label="Результат обучения/дисциплин"
             :placeholder="eventTitle ? 'Выберите результат обучения' : 'Сначала выберите модуль'"
             v-model="eventResult"
@@ -187,7 +187,7 @@
 import { ref, computed, onMounted } from "vue";
 import { f7, f7Popover } from "framework7-vue";
 import DateTimeSelector from "./DateTimeSelector.vue";
-import SmartSelect from "../ui/SmartSelect.vue";
+import Select from "../ui/Select.vue";
 import type { EventData } from "./EventService";
 import { useEventService } from "./EventService";
 import { useClass9Store } from "@/stores/class9Store";

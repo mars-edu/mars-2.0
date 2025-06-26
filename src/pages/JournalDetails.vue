@@ -19,7 +19,7 @@
               <p>Учебная группа: <span class="text-green-600">1 курс ФКРХТ</span></p>
             </div>
             <div class="flex items-center gap-2">
-              <SmartSelect
+              <Select
                 v-model="selectedAcademicYear"
                 :options="academicYearOptions"
                 placeholder="Учебный год:"
@@ -157,7 +157,7 @@ import { f7Page } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
-import SmartSelect from "@/components/ui/SmartSelect.vue";
+import Select from "@/components/ui/Select.vue";
 import MarkCell from "@/components/ui/MarkCell.vue";
 import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
 import FloatingJournalRow from "@/components/FloatingJournalRow.vue";

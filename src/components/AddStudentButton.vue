@@ -74,7 +74,7 @@
             ></f7-input>
           </div>
 
-          <SmartSelect
+          <Select
             label="Год поступления"
             name="academic-year"
             placeholder="Выберите год поступления"
@@ -83,7 +83,7 @@
             id="student-academic-year-add"
           />
 
-          <SmartSelect
+          <Select
             label="Специальность"
             name="specialty"
             placeholder="Выберите специальность"
@@ -92,7 +92,7 @@
             id="student-specialty-add"
           />
 
-          <SmartSelect
+          <Select
             label="Язык обучения"
             name="language"
             placeholder="Выберите язык обучения"
@@ -101,7 +101,7 @@
             id="student-language-add"
           />
 
-          <SmartSelect
+          <Select
             label="База"
             name="base"
             placeholder="Выберите базу"
@@ -151,7 +151,7 @@ import { useLanguageStore } from "@/stores/languageStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useBaseStore } from "@/stores/baseStore";
 import { storeToRefs } from "pinia";
-import SmartSelect from "@/components/ui/SmartSelect.vue";
+import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const studentStore = useStudentStore();

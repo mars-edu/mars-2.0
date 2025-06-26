@@ -23,7 +23,7 @@
                 class="w-[250px] !bg-white h-full !py-2"
                 clear-button
               />
-              <SmartSelect
+              <Select
                 v-model="selectedAcademicYear"
                 :options="academicYearOptions"
                 placeholder="Учебный год:"
@@ -36,7 +36,7 @@
           <div
             class="flex flex-wrap gap-x-4 gap-y-2 items-center student-card-filters"
           >
-            <SmartSelect
+            <Select
               v-model="selectedSpecialty"
               :options="specialtyOptions"
               placeholder="Специальность:"
@@ -44,7 +44,7 @@
               class="min-w-[150px]"
             />
 
-            <SmartSelect
+            <Select
               v-model="selectedLanguage"
               :options="languageOptions"
               placeholder="Язык:"
@@ -52,7 +52,7 @@
               class="min-w-[150px]"
             />
 
-            <SmartSelect
+            <Select
               v-model="selectedGender"
               :options="genderOptions"
               placeholder="Пол:"
@@ -60,7 +60,7 @@
               class="min-w-[150px]"
             />
 
-            <SmartSelect
+            <Select
               v-model="selectedBase"
               :options="baseOptions"
               placeholder="База:"
@@ -129,7 +129,7 @@ import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddStudentButton from "@/components/AddStudentButton.vue";
 import EditStudentButton from "@/components/EditStudentButton.vue";
-import SmartSelect from "@/components/ui/SmartSelect.vue";
+import Select from "@/components/ui/Select.vue";
 import { useStudentStore, type Student } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
@@ -169,7 +169,7 @@ onMounted(() => {
   selectedStudent.value = null;
 });
 
-// Convert store data to options format for SmartSelect
+// Convert store data to options format for Select
 const specialtyOptions = computed(() => {
   const options = [{ value: "", text: "Все" }];
   specialties.value.forEach((specialty) => {
