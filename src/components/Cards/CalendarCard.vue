@@ -103,7 +103,7 @@ const weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const currentDate = ref(new Date());
 const scheduleStore = useScheduleStore();
 
-// Theme-based classes
+
 const textClass = computed(() => {
   switch (props.theme) {
     case "dark":
@@ -192,16 +192,16 @@ const controlIconClass = computed(() => {
   }
 });
 
-// Function to navigate to planning page
+
 const navigateToPlanning = () => {
   const year = currentDate.value.getFullYear();
-  const month = currentDate.value.getMonth() + 1; // JavaScript months are 0-indexed
+  const month = currentDate.value.getMonth() + 1; 
 
   f7.views.main.router.navigate(`/planning/${year}/${month}/`);
-  // window.location.href = `/planning/${year}/${month}/`;
+  
 };
 
-// Function to check if a date is selected
+
 const isSelectedDate = (date: CalendarDate): boolean => {
   if (!date.isCurrentMonth) return false;
 
@@ -217,25 +217,25 @@ const isSelectedDate = (date: CalendarDate): boolean => {
   );
 };
 
-// Function to select a date
+
 const selectDate = (date: CalendarDate) => {
   if (!date.isCurrentMonth) return;
   scheduleStore.setSelectedDate(date.date);
 };
 
-// Navigation functions
+
 const nextMonth = () => {
   const newDate = new Date(currentDate.value);
   newDate.setMonth(newDate.getMonth() + 1);
   currentDate.value = newDate;
 
-  // Update selected date to the same day in the new month, or last day if invalid
+  
   const selectedDate = new Date(scheduleStore.selectedDate);
   const newMonth = newDate.getMonth();
   const newYear = newDate.getFullYear();
   const lastDayOfNewMonth = new Date(newYear, newMonth + 1, 0).getDate();
 
-  // Ensure we don't exceed the last day of the month
+  
   const newDay = Math.min(selectedDate.getDate(), lastDayOfNewMonth);
   const newSelectedDate = new Date(newYear, newMonth, newDay);
 
@@ -247,13 +247,13 @@ const previousMonth = () => {
   newDate.setMonth(newDate.getMonth() - 1);
   currentDate.value = newDate;
 
-  // Update selected date to the same day in the new month, or last day if invalid
+  
   const selectedDate = new Date(scheduleStore.selectedDate);
   const newMonth = newDate.getMonth();
   const newYear = newDate.getFullYear();
   const lastDayOfNewMonth = new Date(newYear, newMonth + 1, 0).getDate();
 
-  // Ensure we don't exceed the last day of the month
+  
   const newDay = Math.min(selectedDate.getDate(), lastDayOfNewMonth);
   const newSelectedDate = new Date(newYear, newMonth, newDay);
 
@@ -280,7 +280,7 @@ const currentMonthYear = computed(() => {
   return `${month} ${year}`;
 });
 
-// Check if a date has schedule data
+
 const checkHasSchedule = (date: Date): boolean => {
   const formattedDate = `${date.getFullYear()}-${String(
     date.getMonth() + 1
@@ -296,12 +296,12 @@ const calendarDays = computed(() => {
   const month = currentDate.value.getMonth();
   const today = new Date();
 
-  // Get first day of month
+  
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
 
-  // Get days from previous month
-  const firstDayOfWeek = firstDay.getDay() || 7; // Monday is 1, Sunday is 0 (or 7)
+  
+  const firstDayOfWeek = firstDay.getDay() || 7; 
   const daysFromPrevMonth = firstDayOfWeek - 1;
 
   const prevMonthDays: CalendarDate[] = [];
@@ -330,7 +330,7 @@ const calendarDays = computed(() => {
     }
   }
 
-  // Get days from current month
+  
   const currentMonthDays = Array.from(
     { length: lastDay.getDate() },
     (_, i): CalendarDate => {
@@ -348,8 +348,8 @@ const calendarDays = computed(() => {
     }
   );
 
-  // Get days from next month
-  const totalDaysToShow = 42; // 6 rows of 7 days
+  
+  const totalDaysToShow = 42; 
   const remainingDays =
     totalDaysToShow - (prevMonthDays.length + currentMonthDays.length);
 
@@ -368,7 +368,7 @@ const calendarDays = computed(() => {
   return [...prevMonthDays, ...currentMonthDays, ...nextMonthDays];
 });
 
-// Initialize with today's date
+
 onMounted(() => {
   scheduleStore.setSelectedDate(new Date());
 });

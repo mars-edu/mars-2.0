@@ -37,16 +37,16 @@ defineProps<{
 }>();
 
 const handlePending = () => {
-  // console.log("AsyncRouteWrapper: Suspense is pending, resetting isError."); // Optional: for debugging
+  
   isError.value = false;
 };
 
 onErrorCaptured((error, instance, info) => {
-  // console.error("AsyncRouteWrapper: onErrorCaptured triggered.", { error, instance, info }); // Optional: for debugging
+  
   isError.value = true;
-  // Return false to prevent the error from propagating further up the component tree
-  // and to indicate that the error has been handled locally. This allows Suspense
-  // to continue showing the fallback slot with our custom error message.
+  
+  
+  
   return true;
 });
 </script>

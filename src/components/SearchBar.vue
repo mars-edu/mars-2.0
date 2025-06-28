@@ -101,7 +101,7 @@ const searchQuery = ref("");
 const isActive = ref(false);
 const selectedIndex = ref(0);
 
-// Mock search results - in real app, this would come from a store or API
+
 const searchResults = ref<SearchResult[]>([
   {
     id: "1",
@@ -142,7 +142,7 @@ const filteredResults = computed(() => {
   );
 });
 
-// Event handlers
+
 const handleFocus = () => {
   isActive.value = true;
   selectedIndex.value = 0;
@@ -150,7 +150,7 @@ const handleFocus = () => {
 };
 
 const handleBlur = () => {
-  // Delay to allow click events on results
+  
   setTimeout(() => {
     isActive.value = false;
     emit("disable");
@@ -194,7 +194,7 @@ const clearSearch = () => {
   emit("disable");
 };
 
-// Utility functions
+
 const getIconClass = (type: string) => {
   const icons = {
     subject: "f7:book_fill",
@@ -217,7 +217,7 @@ const getIconBackground = (type: string) => {
 </script>
 
 <style scoped>
-/* Hide the default search input clear button in webkit browsers */
+
 input[type="search"]::-webkit-search-decoration,
 input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-results-button,

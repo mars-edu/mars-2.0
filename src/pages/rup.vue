@@ -12,10 +12,45 @@
         class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-52 relative"
       >
         <div
-          v-if="rupStore.showOverlay"
-          class="absolute inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center"
-          style="pointer-events: none"
-        ></div>
+          v-if="isSelectMode"
+          class="bg-primary text-primary-foreground p-4 mb-4 rounded-lg flex items-center justify-between shadow-lg"
+          role="alert"
+        >
+          <div class="flex items-center">
+            <f7-icon
+              ios="f7:info_circle_fill"
+              md="material:info"
+              size="24px"
+              class="mr-3"
+            ></f7-icon>
+            <div>
+              <p class="font-bold">Режим импорта</p>
+              <p class="text-sm opacity-90">
+                Выберите элементы для импорта и нажмите кнопку 'Импорт'.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <button
+              @click="handleImport"
+              class="flex items-center gap-2 px-4 py-2 bg-primary-foreground text-primary rounded-lg shadow-lg hover:bg-primary-foreground/90 transition-colors"
+            >
+              <f7-icon
+                ios="f7:square_arrow_up"
+                md="material:file_download"
+                size="20px"
+              ></f7-icon>
+              <span>Импорт</span>
+            </button>
+            <button
+              @click="cancelSelectMode"
+              class="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg shadow-lg hover:bg-red-600 transition-colors"
+            >
+              <f7-icon ios="f7:xmark" md="material:close" size="20px"></f7-icon>
+              <span>Отмена</span>
+            </button>
+          </div>
+        </div>
         <div
           class="bg-card text-card-foreground rounded-xl p-4 md:p-4 shadow-sm"
         >
@@ -262,48 +297,10 @@
     </div>
 
     <template #fixed>
-      <div
-        v-if="isSelectMode"
-        class="fixed right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-50"
-      >
-        <button
-          @click="handleFloatingImport"
-          class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg shadow-lg hover:bg-primary/90 transition-colors"
-        >
-          <f7-icon
-            ios="f7:square_arrow_up"
-            md="material:file_download"
-            size="20px"
-          ></f7-icon>
-          <span>Импорт</span>
-        </button>
-        <button
-          @click="cancelSelectMode"
-          class="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg shadow-lg hover:bg-red-600 transition-colors"
-        >
-          <f7-icon ios="f7:xmark" md="material:close" size="20px"></f7-icon>
-          <span>Отмена</span>
-        </button>
-      </div>
-      <f7-fab v-else position="right-bottom" class="mb-6 mr-6">
-        <f7-icon ios="f7:plus" md="material:add" class="text-white"></f7-icon>
-        <f7-icon
-          ios="f7:xmark"
-          md="material:close"
-          class="text-white"
-        ></f7-icon>
-        <f7-fab-buttons position="top" class="mr-2">
-          <f7-fab-button
-            label="Перевод курсов"
-            class="bg-primary text-primary-foreground shadow-lg"
-          >
-            <f7-icon
-              ios="f7:arrow_2_squarepath"
-              md="material:language"
-            ></f7-icon>
-          </f7-fab-button>
-        </f7-fab-buttons>
-      </f7-fab>
+      <FabActions
+        v-if="!isSelectMode"
+        @transfer-courses="handleTransferCourses"
+      />
       <f7-popover
         class="specialty-info-popover w-64"
         @mouseenter="handlePopoverMouseEnter"
@@ -333,16 +330,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
-import {
-  f7Page,
-  f7Fab,
-  f7FabButtons,
-  f7FabButton,
-  f7Icon,
-  f7SkeletonBlock,
-  f7,
-  f7Popover,
-} from "framework7-vue";
+import { f7Page, f7Icon, f7SkeletonBlock, f7, f7Popover } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddWorkingPlanDialog from "@/components/AddWorkingPlanDialog.vue";
@@ -356,6 +344,7 @@ import AccordionItem from "@/components/ui/accordion/AccordionItem.vue";
 import Select from "@/components/ui/Select.vue";
 import { storeToRefs } from "pinia";
 import ImportWorkingPlanDialog from "@/components/ImportWorkingPlanDialog.vue";
+import FabActions from "@/components/FabActions.vue";
 import { useRupStore } from "@/stores/rupStore";
 import { useClass9Store } from "@/stores/class9Store";
 
@@ -432,24 +421,40 @@ const onPopoverClosed = () => {
 };
 
 const enableSelectMode = () => {
+  rupStore.setItemsForImport(class9Store.getAllClass9Items);
+  rupStore.setTargetContext(
+    rupStore.selectedSpecialtyId,
+    rupStore.selectedCourseId,
+    rupStore.selectedAcademicYearId
+  );
   isSelectMode.value = true;
-  rupStore.toggle();
+  rupStore.clearSelection();
 };
 
 const cancelSelectMode = () => {
   isSelectMode.value = false;
+  rupStore.clearTargetContext();
   rupStore.clearClass9Selection();
-  rupStore.toggle();
+  rupStore.clearItemsForImport();
 };
 
-const handleFloatingImport = () => {
+const handleImport = () => {
   const selectedIds = rupStore.selectedClass9ItemIds;
   if (selectedIds.length === 0) {
     f7.dialog.alert("Не выбраны элементы для импорта.", "Ничего не выбрано");
     return;
   }
 
-  const allItems = class9Store.getAllClass9Items;
+  const targetSpecialtyId = rupStore.targetSpecialtyId;
+  const targetCourseId = rupStore.targetCourseId;
+  const targetAcademicYearId = rupStore.targetAcademicYearId;
+
+  if (!targetSpecialtyId) {
+    f7.dialog.alert("Не выбрана специальность для импорта.", "Ошибка импорта");
+    return;
+  }
+
+  const allItems = rupStore.itemsForImport;
   const itemsToImport = allItems.filter((item) =>
     selectedIds.includes(item.id)
   );
@@ -457,17 +462,20 @@ const handleFloatingImport = () => {
   const newItems = itemsToImport.map((item) => ({
     ...item,
     id: crypto.randomUUID(),
+    specialtyId: targetSpecialtyId,
+    courseId: targetCourseId || item.courseId,
+    academicYearId: targetAcademicYearId || item.academicYearId,
     createdAt: new Date(),
     updatedAt: new Date(),
   }));
 
   class9Store.addClass9Items(newItems);
 
+  cancelSelectMode();
   f7.dialog.alert(
-    `Импортировано ${newItems.length} элементов.`,
+    `Импортировано ${newItems.length} элементов в выбранную специальность.`,
     "Импорт завершен"
   );
-  cancelSelectMode();
 };
 
 const handleWorkingPlanSubmit = (data: { baseClass: number }) => {
@@ -499,6 +507,13 @@ const selectedCourseId = computed({
 const selectedSpecialty = computed(() => rupStore.selectedSpecialty);
 const selectedCourse = computed(() => rupStore.selectedCourse);
 const filteredVisibleCourses = computed(() => rupStore.filteredCourses);
+
+const handleTransferCourses = () => {
+  f7.dialog.alert(
+    "Функция перевода курсов будет доступна в следующем обновлении.",
+    "В разработке"
+  );
+};
 
 onMounted(async () => {
   await specialtyStore.fetchSpecialties();

@@ -412,8 +412,8 @@ const students = ref([
   },
 ]);
 
-// This is a temporary fix to align the data for all students.
-// Ideally, the data should come from the backend in the correct shape.
+
+
 students.value.forEach((student, index) => {
   if (index > 0) {
     student.marks.forEach((mark, i) => {

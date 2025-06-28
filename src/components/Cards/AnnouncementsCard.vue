@@ -81,7 +81,7 @@ interface Announcement {
   icon: string;
 }
 
-// Theme-based classes
+
 const textClass = computed(() => {
   switch (props.theme) {
     case "dark":

@@ -207,7 +207,7 @@ const handleSaveTeacher = async () => {
     });
     closeAddTeacherPopover();
   } catch (error) {
-    // Error is already handled in the store
+    
   }
 };
 

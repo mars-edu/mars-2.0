@@ -109,7 +109,7 @@ const searchResults = ref<
 
 const emitSearch = () => {
   emit("search", searchQuery.value);
-  // Mock search results - in a real app, these would come from an API or store
+  
   if (searchQuery.value) {
     searchResults.value = [
       { title: "Всемирная история", category: "История", route: "/history/1" },
@@ -131,7 +131,7 @@ const emitSearch = () => {
 
 const openSearchPopover = () => {
   f7.popover.open("#search-popover", "#search-input");
-  // Focus the input field after popover is opened
+  
   setTimeout(() => {
     searchInputField.value?.focus();
   }, 300);

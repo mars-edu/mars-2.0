@@ -182,13 +182,13 @@ const filteredModules = computed(() => {
   );
 });
 
-// Edit mode
+
 const isEditMode = ref(false);
 
 const enterEditMode = () => {
   isEditMode.value = !isEditMode.value;
   if (!isEditMode.value) {
-    // If exiting edit mode, close any open editor
+    
     stopEditing(true);
   }
 
@@ -202,7 +202,7 @@ const enterEditMode = () => {
   });
 };
 
-// Edit functionality
+
 const editingCell = ref<{
   moduleId: string | null;
   columnIndex: number | null;
@@ -228,7 +228,7 @@ const startEditing = (moduleId: string, columnIndex: number) => {
     currentValue.value = module[`field${columnIndex}`] || "";
     editingCell.value = { moduleId, columnIndex };
 
-    // Focus the input element using DOM directly
+    
     nextTick(() => {
       const cellId = `cell-${moduleId}-${columnIndex}`;
       const inputElement = document.querySelector(`[data-cell-id="${cellId}"]`);

@@ -311,13 +311,13 @@ const selectWeekDay = (day: {
   );
 
   if (index === -1) {
-    // Add weekday if not already selected
+    
     selectedWeekDays.value.push({
       weekId: day.weekId,
-      russianWeekDay: dayObj.format("dddd"), // Full day name in Russian
+      russianWeekDay: dayObj.format("dddd"), 
     });
   } else {
-    // Remove weekday if already selected
+    
     selectedWeekDays.value.splice(index, 1);
   }
 };

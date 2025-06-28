@@ -90,7 +90,7 @@ const toggleSelection = () => {
   display: none;
 }
 
-/* Add styles for different levels */
+
 .level-0 > .ml-6 {
   margin-left: 1.5rem;
 }
@@ -113,7 +113,7 @@ const toggleSelection = () => {
   margin-left: 3rem;
 }
 
-/* Enhanced visual hierarchy */
+
 .column-tree .column-tree::before {
   opacity: calc(0.5 - var(--level, 0) * 0.1);
 }

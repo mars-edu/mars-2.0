@@ -169,7 +169,7 @@ onMounted(() => {
   selectedStudent.value = null;
 });
 
-// Convert store data to options format for Select
+
 const specialtyOptions = computed(() => {
   const options = [{ value: "", text: "Все" }];
   specialties.value.forEach((specialty) => {
@@ -229,7 +229,7 @@ watch(selectedAcademicYear, (newValue) => {
   studentStore.setFilter("academicYearId", newValue);
 });
 
-// Watch for changes in searchTerm and update the store filter
+
 watch(searchTerm, (newValue) => {
   studentStore.setFilter("searchTerm", newValue);
 });

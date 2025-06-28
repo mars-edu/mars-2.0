@@ -189,6 +189,6 @@ const resetForm = () => {
   specialtyStore.clearError();
 };
 
-// expose formError for template
+
 defineExpose({ formError });
 </script>

@@ -44,12 +44,14 @@ export const useClass9Store = defineStore(
 
     const getClass9ItemsByContext = computed(() => {
       return (academicYearId: string, specialtyId: string, courseId: string) =>
-        class9Items.value.filter(
-          (c) =>
-            c.academicYearId === academicYearId &&
-            c.specialtyId === specialtyId &&
-            c.courseId === courseId
-        ).sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+        class9Items.value
+          .filter(
+            (c) =>
+              c.academicYearId === academicYearId &&
+              c.specialtyId === specialtyId &&
+              c.courseId === courseId
+          )
+          .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
     });
 
     const getClass9ByCourseId = computed(() => {
@@ -63,49 +65,58 @@ export const useClass9Store = defineStore(
       // Group modules by their display text to avoid duplicates
       const moduleMap = new Map();
       class9Items.value
-        .filter(item => item.learningOutcome && item.learningOutcome.trim() !== '')
-        .forEach(item => {
+        .filter(
+          (item) => item.learningOutcome && item.learningOutcome.trim() !== ""
+        )
+        .forEach((item) => {
           const moduleText = `${item.moduleIndex} ${item.moduleName}`;
           if (!moduleMap.has(moduleText)) {
             moduleMap.set(moduleText, {
               text: moduleText,
               value: moduleText,
-              items: []
+              items: [],
             });
           }
           moduleMap.get(moduleText).items.push(item.id);
         });
-      
+
       const modules = Array.from(moduleMap.values());
 
       // Create a map of all outcomes by module for filtering
-      const outcomesByModule: Record<string, Array<{value: string, text: string}>> = {};
+      const outcomesByModule: Record<
+        string,
+        Array<{ value: string; text: string }>
+      > = {};
       class9Items.value
-        .filter(item => item.learningOutcome && item.learningOutcome.trim() !== '')
-        .forEach(item => {
+        .filter(
+          (item) => item.learningOutcome && item.learningOutcome.trim() !== ""
+        )
+        .forEach((item) => {
           const moduleText = `${item.moduleIndex} ${item.moduleName}`;
           if (!outcomesByModule[moduleText]) {
             outcomesByModule[moduleText] = [];
           }
           outcomesByModule[moduleText].push({
             value: item.id,
-            text: item.learningOutcome
+            text: item.learningOutcome,
           });
         });
 
       // Get all outcomes (unfiltered list)
       const allOutcomes = class9Items.value
-        .filter(item => item.learningOutcome && item.learningOutcome.trim() !== '')
-        .map(item => ({
+        .filter(
+          (item) => item.learningOutcome && item.learningOutcome.trim() !== ""
+        )
+        .map((item) => ({
           value: item.id,
           text: item.learningOutcome,
-          moduleId: `${item.moduleIndex} ${item.moduleName}`
+          moduleId: `${item.moduleIndex} ${item.moduleName}`,
         }));
 
       return {
         modules,
         outcomes: allOutcomes,
-        outcomesByModule
+        outcomesByModule,
       };
     });
 
@@ -167,7 +178,11 @@ export const useClass9Store = defineStore(
     ) {
       loading.value = true;
       try {
-        const contextItems = getClass9ItemsByContext.value(academicYearId, specialtyId, courseId);
+        const contextItems = getClass9ItemsByContext.value(
+          academicYearId,
+          specialtyId,
+          courseId
+        );
         const newClass9: Class9Data = {
           ...createEmptyClass9Data(academicYearId, specialtyId, courseId),
           ...data,
@@ -176,7 +191,6 @@ export const useClass9Store = defineStore(
           specialtyId,
           academicYearId,
           position: contextItems.length,
-
         };
 
         class9Items.value.push(newClass9);
@@ -246,12 +260,12 @@ export const useClass9Store = defineStore(
         specialtyId,
         courseId
       );
-    
+
       const [movedItem] = contextItems.splice(oldIndex, 1);
       contextItems.splice(newIndex, 0, movedItem);
-    
+
       contextItems.forEach((item, index) => {
-        const storeItem = class9Items.value.find(i => i.id === item.id);
+        const storeItem = class9Items.value.find((i) => i.id === item.id);
         if (storeItem) {
           storeItem.position = index;
         }

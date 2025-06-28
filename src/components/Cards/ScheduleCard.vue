@@ -70,7 +70,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const scheduleStore = useScheduleStore();
 
-// Theme-based classes
+
 const textClass = computed(() => {
   switch (props.theme) {
     case "dark":
@@ -115,12 +115,12 @@ const lessonBoxClass = computed(() => {
   }
 });
 
-// Get schedule for the selected date from the store
+
 const schedule = computed(() => {
   return scheduleStore.selectedDateSchedule;
 });
 
-// Format the selected date for display
+
 const formattedDate = computed(() => {
   const date = scheduleStore.selectedDate;
   if (!date) {
@@ -137,7 +137,7 @@ const formattedDate = computed(() => {
   const month = d.getMonth() + 1;
   const year = d.getFullYear();
 
-  // Get day of week
+  
   const days = [
     "Воскресенье",
     "Понедельник",
@@ -149,7 +149,7 @@ const formattedDate = computed(() => {
   ];
   const dayOfWeek = days[d.getDay()];
 
-  // Check if it's today
+  
   const today = new Date();
   const isToday =
     d.getDate() === today.getDate() &&
@@ -160,7 +160,7 @@ const formattedDate = computed(() => {
     return "сегодня";
   }
 
-  // Check if it's tomorrow
+  
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const isTomorrow =

@@ -74,7 +74,7 @@ const columns = computed(() => columnStore.getColumnsForCourse(props.courseId));
 
 const formData = ref<string[]>([]);
 
-// Initialize form data when columns change
+
 watch(
   columns,
   () => {

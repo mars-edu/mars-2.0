@@ -62,8 +62,8 @@ const f7params: Framework7Parameters = {
 
   view: {
     browserHistory: true,
-    // browserHistorySeparator: "#!",
-    // browserHistoryRoot: "",
+    
+    
     preloadPreviousPage: false,
     reloadPages: true,
     removeElements: true,
@@ -73,7 +73,7 @@ const f7params: Framework7Parameters = {
     routeChange(newRoute: any) {
       console.log("[Router] Route changed:", newRoute);
 
-      // Apply route middleware
+      
       routeMiddleware({
         router: {
           app: f7,

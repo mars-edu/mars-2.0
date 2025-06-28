@@ -79,7 +79,7 @@ const TOTAL_WEEKS = 15;
 const semesterStartDate = new Date(2025, 0, 15);
 const semesterEndDate = new Date(2025, 4, 31);
 
-// Theme-based classes
+
 const textClass = computed(() => {
   switch (props.theme) {
     case "dark":

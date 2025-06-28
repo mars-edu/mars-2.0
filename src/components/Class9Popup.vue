@@ -696,7 +696,7 @@ function showDeleteConfirmation() {
   transform: translateX(-50%);
 }
 
-/* Add tooltip styling */
+
 :deep(.tooltip) {
   background: rgba(0, 0, 0, 0.8);
   color: #fff;
@@ -706,7 +706,7 @@ function showDeleteConfirmation() {
   z-index: 20000;
 }
 
-/* Add tooltip arrow */
+
 :deep(.tooltip-arrow) {
   width: 0;
   height: 0;
@@ -716,7 +716,7 @@ function showDeleteConfirmation() {
   border-color: rgba(0, 0, 0, 0.8);
 }
 
-/* Position the tooltip arrow based on position */
+
 :deep(.tooltip-arrow-top) {
   border-width: 0 5px 5px 5px;
   border-left-color: transparent !important;

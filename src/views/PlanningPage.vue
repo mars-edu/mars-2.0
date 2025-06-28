@@ -110,12 +110,12 @@ const isAddPopoverOpen = ref(false);
 const isSidebarVisible = ref(false);
 const activeNavItem = ref("calendar");
 
-// Mouse position tracking
+
 const isMouseInLeftCorner = ref(false);
 const isHoveringLeftCorner = ref(false);
-const mouseTrackingThreshold = 25; // pixels from left edge
+const mouseTrackingThreshold = 25; 
 
-// Insert the following new reactive variable and handlers
+
 const isSidebarHovered = ref(false);
 const handleSidebarMouseEnter = () => {
   isSidebarHovered.value = true;
@@ -124,23 +124,23 @@ const handleSidebarMouseLeave = () => {
   isSidebarHovered.value = false;
 };
 
-// Watch for hovering in left corner
+
 watch(isHoveringLeftCorner, (newValue) => {
   if (newValue) {
     isMouseInLeftCorner.value = true;
   } else {
-    // Add small delay before hiding to prevent flicker
+    
     setTimeout(() => {
       isMouseInLeftCorner.value = false;
     }, 300);
   }
 });
 
-// Handle mouse movement detection
+
 const handleMouseMove = (event: MouseEvent) => {
-  // Only track when sidebar isn't already visible from button click
+  
   if (!isSidebarVisible.value) {
-    // Check if mouse is in the left corner
+    
     const isInLeftCorner = event.clientX < mouseTrackingThreshold;
     if (
       isInLeftCorner !== isMouseInLeftCorner.value &&
@@ -164,7 +164,7 @@ const {
   goToToday,
 } = useCalendar();
 
-// Add functions for month navigation
+
 const previousMonth = () => {
   let newMonth = monthIndex.value - 1;
   let newYear = parseInt(year.value);
@@ -191,7 +191,7 @@ const nextMonth = () => {
   setYear(newYear.toString());
 };
 
-// Navigation tabs
+
 const navigationTabs = [
   { value: "day", label: "День" },
   { value: "week", label: "Неделя" },
@@ -220,7 +220,7 @@ onMounted(() => {
 });
 
 
-// Event handlers for toolbar
+
 const handleIconClick = (value: string) => {
   console.log(`Icon clicked: ${value}`);
   if (value === "add") {
@@ -232,12 +232,12 @@ const handleIconClick = (value: string) => {
 
 const handleSearch = (query: string) => {
   console.log(`Search query: ${query}`);
-  // Implement search functionality
+  
 };
 
-// Add event handler
+
 const addEvent = () => {
-  // Implement event adding functionality
+  
   console.log("Adding new event");
   isAddPopoverOpen.value = false;
 };
@@ -276,7 +276,7 @@ const addEvent = () => {
   transform: translateX(-100%);
 }
 
-/* Fade transition for popover */
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
@@ -287,7 +287,7 @@ const addEvent = () => {
   opacity: 0;
 }
 
-/* Left corner detector styling */
+
 .left-corner-detector {
   position: fixed;
   top: 64px;
@@ -297,7 +297,7 @@ const addEvent = () => {
   z-index: 10;
 }
 
-/* Sidebar popover styling */
+
 .sidebar-popover {
   position: fixed;
   top: 64px;
@@ -309,7 +309,7 @@ const addEvent = () => {
   width: 13rem;
 }
 
-/* Absolute positioning for sidebar on hover */
+
 .sidebar-absolute {
   position: absolute;
   z-index: 100;

@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-// No imports needed
+
 </script>
 
 <style scoped>

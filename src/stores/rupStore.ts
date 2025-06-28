@@ -8,21 +8,13 @@ import { storeToRefs } from "pinia";
 export const useRupStore = defineStore(
   "rup",
   () => {
-    const showOverlay = ref(false);
-    const isOverlayVisible = computed(() => showOverlay.value);
-    function show() {
-      showOverlay.value = true;
-    }
-    function hide() {
-      showOverlay.value = false;
-    }
-    function toggle() {
-      showOverlay.value = !showOverlay.value;
-    }
-
     const selectedAcademicYearId = ref<string | null>(null);
     const selectedSpecialtyId = ref<string | null>(null);
     const selectedCourseId = ref<string | null>(null);
+
+    const targetSpecialtyId = ref<string | null>(null);
+    const targetCourseId = ref<string | null>(null);
+    const targetAcademicYearId = ref<string | null>(null);
 
     function setSelectedAcademicYear(id: string | null) {
       selectedAcademicYearId.value = id;
@@ -37,9 +29,25 @@ export const useRupStore = defineStore(
       selectedCourseId.value = id;
     }
     function clearSelection() {
-      selectedAcademicYearId.value = null;
+      // selectedAcademicYearId.value = null;
       selectedSpecialtyId.value = null;
       selectedCourseId.value = null;
+    }
+
+    function setTargetContext(
+      specialtyId: string | null,
+      courseId: string | null,
+      academicYearId: string | null
+    ) {
+      targetSpecialtyId.value = specialtyId;
+      targetCourseId.value = courseId;
+      targetAcademicYearId.value = academicYearId;
+    }
+
+    function clearTargetContext() {
+      targetSpecialtyId.value = null;
+      targetCourseId.value = null;
+      targetAcademicYearId.value = null;
     }
 
     const selectedAcademicYear = computed(() => {
@@ -72,6 +80,7 @@ export const useRupStore = defineStore(
       return courseStore.courses;
     });
 
+    const itemsForImport = ref<any[]>([]);
     const selectedClass9ItemIds = ref<string[]>([]);
 
     const isClass9ItemSelected = computed(() => {
@@ -91,26 +100,37 @@ export const useRupStore = defineStore(
       selectedClass9ItemIds.value = [];
     }
 
+    function setItemsForImport(items: any[]) {
+      itemsForImport.value = items;
+    }
+
+    function clearItemsForImport() {
+      itemsForImport.value = [];
+    }
+
     function reset() {
-      showOverlay.value = false;
       selectedAcademicYearId.value = null;
       selectedSpecialtyId.value = null;
       selectedCourseId.value = null;
+      targetSpecialtyId.value = null;
+      targetCourseId.value = null;
+      targetAcademicYearId.value = null;
       selectedClass9ItemIds.value = [];
+      itemsForImport.value = [];
     }
 
     return {
-      showOverlay,
-      isOverlayVisible,
-      show,
-      hide,
-      toggle,
       selectedAcademicYearId,
       selectedSpecialtyId,
       selectedCourseId,
+      targetSpecialtyId,
+      targetCourseId,
+      targetAcademicYearId,
       setSelectedAcademicYear,
       setSelectedSpecialty,
       setSelectedCourse,
+      setTargetContext,
+      clearTargetContext,
       clearSelection,
       selectedAcademicYear,
       selectedSpecialty,
@@ -120,6 +140,9 @@ export const useRupStore = defineStore(
       isClass9ItemSelected,
       toggleClass9ItemSelection,
       clearClass9Selection,
+      itemsForImport,
+      setItemsForImport,
+      clearItemsForImport,
       reset,
     };
   },

@@ -57,42 +57,42 @@ const emit = defineEmits<{
 const ifHoladay = ref(false);
 const monthNavArea = ref<HTMLElement | null>(null);
 
-// Add debounce to prevent multiple rapid scrolls
+
 let scrollTimeout: number | null = null;
-const scrollDelay = 200; // ms
+const scrollDelay = 200; 
 
 const handleWheel = (event: WheelEvent) => {
   event.preventDefault();
 
-  // If there's an active timeout, don't process this scroll event
+  
   if (scrollTimeout !== null) return;
 
-  // Set a timeout to prevent rapid scrolling
+  
   scrollTimeout = window.setTimeout(() => {
     scrollTimeout = null;
   }, scrollDelay);
 
-  // Determine scroll direction and emit appropriate event
+  
   if (event.deltaY > 0 || event.deltaX > 0) {
-    // Scrolling down or right
+    
     triggerEmit("next-month");
   } else if (event.deltaY < 0 || event.deltaX < 0) {
-    // Scrolling up or left
+    
     triggerEmit("previous-month");
   }
 };
 
-// Helper function to emit events
+
 const triggerEmit = (event: "previous-month" | "next-month" | "today") => {
   if (event === "previous-month") {
-    // Add visual feedback
+    
     const button = monthNavArea.value?.querySelector("button:first-of-type");
     if (button) {
       button.classList.add("bg-secondary");
       setTimeout(() => button.classList.remove("bg-secondary"), 150);
     }
   } else if (event === "next-month") {
-    // Add visual feedback
+    
     const button = monthNavArea.value?.querySelector("button:last-of-type");
     if (button) {
       button.classList.add("bg-secondary");
@@ -100,7 +100,7 @@ const triggerEmit = (event: "previous-month" | "next-month" | "today") => {
     }
   }
 
-  // Emit the event with type assertion
+  
   if (event === "today") {
     emit("today");
   } else if (event === "previous-month") {

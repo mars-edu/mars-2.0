@@ -210,7 +210,7 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
 
     switch (direction) {
       case "right":
-      case "down": // Treat 'down' similar to 'right' for mark-level navigation
+      case "down": 
         if (startRow === 0) {
           nextRow = 1;
         } else {
@@ -219,7 +219,7 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
         }
         break;
       case "left":
-      case "up": // Treat 'up' similar to 'left' for mark-level navigation
+      case "up": 
         if (startRow === 1) {
           nextRow = 0;
         } else {
@@ -231,7 +231,7 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
 
     if (nextCol < 0) nextCol = numCols - 1;
     if (nextCol >= numCols) nextCol = 0;
-    // No need to wrap rows, as they are handled by the inner logic
+    
 
     editCell(nextRow, nextCol);
   });
