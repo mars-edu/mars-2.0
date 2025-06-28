@@ -260,16 +260,50 @@ export const useClass9Store = defineStore(
         specialtyId,
         courseId
       );
-
       const [movedItem] = contextItems.splice(oldIndex, 1);
       contextItems.splice(newIndex, 0, movedItem);
-
       contextItems.forEach((item, index) => {
-        const storeItem = class9Items.value.find((i) => i.id === item.id);
-        if (storeItem) {
-          storeItem.position = index;
+        const originalItem = class9Items.value.find((i) => i.id === item.id);
+        if (originalItem) {
+          originalItem.position = index;
         }
       });
+    }
+
+    function duplicateClass9Item(itemToDuplicate: Class9Data) {
+      const duplicatedItem: Class9Data = JSON.parse(
+        JSON.stringify(itemToDuplicate)
+      );
+      duplicatedItem.id = crypto.randomUUID();
+      duplicatedItem.moduleName = itemToDuplicate.moduleName;
+      duplicatedItem.createdAt = new Date();
+      duplicatedItem.updatedAt = new Date();
+
+      const originalItem = class9Items.value.find(
+        (item) => item.id === itemToDuplicate.id
+      );
+      if (!originalItem) {
+        console.error("Original item not found for duplication");
+        return;
+      }
+
+      const insertionPosition = originalItem.position + 1;
+
+      const itemsInContext = class9Items.value.filter(
+        (c) =>
+          c.academicYearId === itemToDuplicate.academicYearId &&
+          c.specialtyId === itemToDuplicate.specialtyId &&
+          c.courseId === itemToDuplicate.courseId
+      );
+
+      itemsInContext.forEach((item) => {
+        if (item.position >= insertionPosition) {
+          item.position++;
+        }
+      });
+
+      duplicatedItem.position = insertionPosition;
+      class9Items.value.push(duplicatedItem);
     }
 
     async function deleteClass9(id: string) {
@@ -312,6 +346,7 @@ export const useClass9Store = defineStore(
       addClass9Items,
       updateClass9,
       updateClass9Order,
+      duplicateClass9Item,
       deleteClass9,
       clearError,
       reset,

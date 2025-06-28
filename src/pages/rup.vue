@@ -280,6 +280,7 @@
                       :course-id="selectedCourseId"
                       :academic-year-id="selectedAcademicYear"
                       :select-mode="isSelectMode"
+                      @duplicate-item="handleDuplicateClass9Item"
                     />
                   </template>
                   <template v-else>
@@ -346,7 +347,7 @@ import { storeToRefs } from "pinia";
 import ImportWorkingPlanDialog from "@/components/ImportWorkingPlanDialog.vue";
 import FabActions from "@/components/FabActions.vue";
 import { useRupStore } from "@/stores/rupStore";
-import { useClass9Store } from "@/stores/class9Store";
+import { useClass9Store, type Class9Data } from "@/stores/class9Store";
 
 const activeNavItem = ref("rup");
 const specialtyStore = useSpecialtyStore();
@@ -436,6 +437,18 @@ const cancelSelectMode = () => {
   rupStore.clearTargetContext();
   rupStore.clearClass9Selection();
   rupStore.clearItemsForImport();
+};
+
+const handleDuplicateClass9Item = (item: Class9Data) => {
+  class9Store.duplicateClass9Item(item);
+  f7.toast
+    .create({
+      text: "Модуль дублирован",
+      horizontalPosition: "center",
+      closeTimeout: 2000,
+      cssClass: "bg-primary",
+    })
+    .open();
 };
 
 const handleImport = () => {

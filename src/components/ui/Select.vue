@@ -18,6 +18,8 @@
         :smart-select-params="smartSelectParams"
         :id="uniqueId"
         :class="{ 'item-smart-select-value': !!modelValue }"
+        @smartselect:open="onSmartSelectOpen"
+        @smartselect:close="onSmartSelectClose"
       >
         <select
           :name="name"
@@ -25,6 +27,9 @@
           @change="handleChange"
           :disabled="disabled"
         >
+          <option value="" disabled :selected="!modelValue">
+            {{ placeholder || " " }}
+          </option>
           <option
             v-for="option in options"
             :key="option.value"
@@ -64,14 +69,29 @@ const props = defineProps<{
   id?: string;
   showInternalPlaceholder?: boolean;
   disabled?: boolean;
+  searchable?: boolean;
+  searchPlaceholder?: string;
+  searchCancelText?: string;
 }>();
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "before-open", "after-close"]);
 
 const hasOptions = computed(() => props.options && props.options.length > 0);
 
 const instance = getCurrentInstance();
 const uniqueId = computed(() => props.id || `smart-select-${instance?.uid}`);
+
+const onSmartSelectOpen = () => {
+  if (props.searchable) {
+    emit("before-open");
+  }
+};
+
+const onSmartSelectClose = () => {
+  if (props.searchable) {
+    emit("after-close");
+  }
+};
 
 const handleChange = (event: Event) => {
   const target = event.target as HTMLSelectElement;
@@ -100,11 +120,16 @@ onMounted(() => {
 });
 
 const smartSelectParams = computed(() => ({
-  openIn: 'popover',
+  openIn: props.searchable ? "popup" : "popover",
   closeOnSelect: true,
   setValueText: false,
   virtualList: props.options.length > 20,
   view: smartSelectView.value,
+  ...(props.searchable && {
+    searchbar: true,
+    searchbarPlaceholder: props.searchPlaceholder || "Поиск",
+    searchbarDisableButtonText: "Отмена",
+  }),
 }));
 
 const smartSelectReady = computed(() => {
@@ -113,6 +138,10 @@ const smartSelectReady = computed(() => {
 </script>
 
 <style lang="postcss">
+.popup.smart-select-popup {
+  z-index: 13000 !important;
+}
+
 .smart-select .item-content {
   @apply !p-2;
 }

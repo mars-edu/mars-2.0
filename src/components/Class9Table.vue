@@ -1,12 +1,40 @@
 <template>
   <div class="class9-table">
     <div v-if="class9List.length" ref="sortableList" class="space-y-0.5">
-      <div v-for="(item, idx) in class9List" :key="item.id" class="overflow-hidden bg-card border-b border-gray-200" :class="{ 'is-selected': rupStore.isClass9ItemSelected(item.id) }" @click="handleRowClick(item)">
+      <div
+        v-for="(item, idx) in class9List"
+        :key="item.id"
+        class="overflow-hidden bg-card border-b border-gray-200"
+        :class="{ 'is-selected': rupStore.isClass9ItemSelected(item.id) }"
+        @click="handleRowClick(item)"
+      >
         <div class="flex items-stretch w-full">
-          <div class="w-8 bg-muted flex items-center justify-center text-sm font-medium border-r border-border drag-handle cursor-move">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-grip-vertical"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+          <div
+            class="w-8 bg-muted flex items-center justify-center text-sm font-medium border-r border-border drag-handle cursor-move"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="lucide lucide-grip-vertical"
+            >
+              <circle cx="9" cy="12" r="1" />
+              <circle cx="9" cy="5" r="1" />
+              <circle cx="9" cy="19" r="1" />
+              <circle cx="15" cy="12" r="1" />
+              <circle cx="15" cy="5" r="1" />
+              <circle cx="15" cy="19" r="1" />
+            </svg>
           </div>
-          <div class="w-8 bg-muted flex items-center justify-center text-sm font-medium border-r border-border">
+          <div
+            class="w-8 bg-muted flex items-center justify-center text-sm font-medium border-r border-border"
+          >
             {{ idx + 1 }}
           </div>
           <div class="flex-1">
@@ -16,36 +44,107 @@
                   <div class="text-sm font-medium">{{ item.moduleIndex }}</div>
                   <div class="text-sm">{{ item.moduleName }}</div>
                 </div>
-                <div v-if="item.learningOutcome" class="text-xs text-muted-foreground mt-1">
+                <div
+                  v-if="item.learningOutcome"
+                  class="text-xs text-muted-foreground mt-1"
+                >
                   {{ item.learningOutcome }}
                 </div>
               </div>
-              <div v-if="item.examEnabled || item.creditEnabled || item.controlLessonEnabled" class="flex items-center gap-3 px-3 py-1.5 bg-orange-500 text-white rounded-lg">
+              <div class="flex items-center gap-2">
+                <button
+                  @click.stop="duplicateItem(item)"
+                  class="p-1 text-gray-500 hover:text-gray-700"
+                  aria-label="Дублировать"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-copy"
+                  >
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                    <path
+                      d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div
+                v-if="
+                  item.examEnabled ||
+                  item.creditEnabled ||
+                  item.controlLessonEnabled
+                "
+                class="flex items-center gap-3 px-3 py-1.5 bg-orange-500 text-white rounded-lg"
+              >
                 <div v-if="item.examEnabled" class="flex items-center gap-1.5">
                   <span class="text-xs font-medium">Экзамен</span>
                   <div class="flex gap-0.5">
-                    <span v-for="(enabled, i) in item.examSemesters" :key="'exam' + i" class="w-5 h-5 flex items-center justify-center text-xs rounded" :class="enabled ? 'bg-white text-orange-500' : 'bg-orange-400/50'">
+                    <span
+                      v-for="(enabled, i) in item.examSemesters"
+                      :key="'exam' + i"
+                      class="w-5 h-5 flex items-center justify-center text-xs rounded"
+                      :class="
+                        enabled
+                          ? 'bg-white text-orange-500'
+                          : 'bg-orange-400/50'
+                      "
+                    >
                       {{ i + 1 }}
                     </span>
                   </div>
                 </div>
-                <div v-if="item.creditEnabled" class="flex items-center gap-1.5">
+                <div
+                  v-if="item.creditEnabled"
+                  class="flex items-center gap-1.5"
+                >
                   <span class="text-xs font-medium">Зачет</span>
                   <div class="flex gap-0.5">
-                    <span v-for="(enabled, i) in item.creditSemesters" :key="'credit' + i" class="w-5 h-5 flex items-center justify-center text-xs rounded" :class="enabled ? 'bg-white text-orange-500' : 'bg-orange-400/50'">
+                    <span
+                      v-for="(enabled, i) in item.creditSemesters"
+                      :key="'credit' + i"
+                      class="w-5 h-5 flex items-center justify-center text-xs rounded"
+                      :class="
+                        enabled
+                          ? 'bg-white text-orange-500'
+                          : 'bg-orange-400/50'
+                      "
+                    >
                       {{ i + 1 }}
                     </span>
                   </div>
                 </div>
-                <div v-if="item.controlLessonEnabled" class="flex items-center gap-1.5">
+                <div
+                  v-if="item.controlLessonEnabled"
+                  class="flex items-center gap-1.5"
+                >
                   <span class="text-xs font-medium">Контр.</span>
                   <div class="flex gap-0.5">
-                    <span v-for="(enabled, i) in item.controlLessonSemesters" :key="'control' + i" class="w-5 h-5 flex items-center justify-center text-xs rounded" :class="enabled ? 'bg-white text-orange-500' : 'bg-orange-400/50'">
+                    <span
+                      v-for="(enabled, i) in item.controlLessonSemesters"
+                      :key="'control' + i"
+                      class="w-5 h-5 flex items-center justify-center text-xs rounded"
+                      :class="
+                        enabled
+                          ? 'bg-white text-orange-500'
+                          : 'bg-orange-400/50'
+                      "
+                    >
                       {{ i + 1 }}
                     </span>
                   </div>
                 </div>
-                <div v-if="item.totalHours" class="flex items-center gap-1 ml-2 pl-2 border-l border-orange-400">
+                <div
+                  v-if="item.totalHours"
+                  class="flex items-center gap-1 ml-2 pl-2 border-l border-orange-400"
+                >
                   <span class="text-xs">{{ item.totalHours }}</span>
                 </div>
               </div>
@@ -67,7 +166,7 @@
       @close="closePopup"
       @submit="handlePopupSubmit"
     />
-    <button style="display:none" ref="addBtn" @click="openAddPopup"></button>
+    <button style="display: none" ref="addBtn" @click="openAddPopup"></button>
   </div>
 </template>
 
@@ -77,13 +176,17 @@ import { useClass9Store, type Class9Data } from "@/stores/class9Store";
 import { f7 } from "framework7-vue";
 import Class9Popup from "@/components/Class9Popup.vue";
 import { useRupStore } from "@/stores/rupStore";
-import Sortable from 'sortablejs';
+import Sortable from "sortablejs";
 
 const props = defineProps<{
   specialtyId: string;
   courseId: string;
   academicYearId: string;
   selectMode?: boolean;
+}>();
+
+const emit = defineEmits<{
+  (e: "duplicate-item", item: Class9Data): void;
 }>();
 
 const class9Store = useClass9Store();
@@ -105,9 +208,9 @@ const class9List = computed(() => {
 onMounted(() => {
   if (sortableList.value) {
     sortableInstance = new Sortable(sortableList.value, {
-      handle: '.drag-handle',
+      handle: ".drag-handle",
       animation: 150,
-      ghostClass: 'ghost',
+      ghostClass: "ghost",
       onEnd: (evt) => {
         if (evt.oldIndex !== undefined && evt.newIndex !== undefined) {
           class9Store.updateClass9Order(
@@ -155,7 +258,7 @@ function openAddPopup() {
   initialData.value = null;
   popupOpen.value = true;
   nextTick(() => {
-  f7.popover.open("#class9-popover");
+    f7.popover.open("#class9-popover");
   });
 }
 
@@ -168,6 +271,10 @@ function closePopup() {
 
 function handlePopupSubmit() {
   closePopup();
+}
+
+function duplicateItem(item: Class9Data) {
+  emit("duplicate-item", item);
 }
 
 defineExpose({

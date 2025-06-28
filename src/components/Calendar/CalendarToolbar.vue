@@ -10,7 +10,7 @@
     <slot name="navigation"></slot>
 
     <!-- Search bar -->
-    <search-input
+    <SearchInput
       :placeholder="searchPlaceholder"
       @search="$emit('search', $event)"
     />
@@ -23,8 +23,7 @@ import SidebarButton from "./SidebarButton.vue";
 import ListButton from "./ListButton.vue";
 import AddEventButton from "./AddEventButton.vue";
 import SearchInput from "./SearchInput.vue";
-import { useEventService } from "./EventService";
-import type { EventData } from "./EventService";
+import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
 
 const props = defineProps<{
   class?: string;
@@ -34,13 +33,12 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "icon-click", value: string): void;
   (e: "search", query: string): void;
-  (e: "add-event", event: EventData): void;
 }>();
 
-const { eventService } = useEventService();
+const calendarStore = useCalendarStore();
 
-const handleEventAdded = async (eventData: EventData) => {
-  await eventService.value.addEvent(eventData);
-  emit("add-event", eventData);
+const handleEventAdded = (event: CalendarEvent) => {
+  // Event is already added to the store in AddEventButton
+  // This handler can be used for any additional logic in the toolbar if needed
 };
 </script>

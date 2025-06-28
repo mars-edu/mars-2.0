@@ -60,10 +60,13 @@ const f7params: Framework7Parameters = {
     buttonCancel: "Отмена",
   },
 
+  smartSelect: {
+    popupCloseLinkText: "Закрыть",
+  },
+
   view: {
     browserHistory: true,
-    
-    
+
     preloadPreviousPage: false,
     reloadPages: true,
     removeElements: true,
@@ -73,7 +76,6 @@ const f7params: Framework7Parameters = {
     routeChange(newRoute: any) {
       console.log("[Router] Route changed:", newRoute);
 
-      
       routeMiddleware({
         router: {
           app: f7,

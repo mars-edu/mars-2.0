@@ -55,6 +55,9 @@
             :options="moduleOptions"
             name="event-module"
             id="event-module"
+            searchable
+            @before-open="closeAddEventPopover"
+            @after-close="openAddEventPopover"
           />
 
           <Select
@@ -65,10 +68,13 @@
                 : 'Сначала выберите модуль'
             "
             v-model="eventResult"
-            :options="learningOutcomeOptions"
+            :options="filteredLearningOutcomes"
             name="event-learning-outcome"
             id="event-learning-outcome"
             :disabled="!eventTitle"
+            searchable
+            @before-open="closeAddEventPopover"
+            @after-close="openAddEventPopover"
           />
 
           <!-- Start date/time -->
@@ -174,7 +180,9 @@
           <div class="bg-secondary p-4 border-t border-input">
             <div class="flex justify-between mb-2">
               <span class="text-foreground">По плану:</span>
-              <span class="text-foreground font-medium">36 часов</span>
+              <span class="text-foreground font-medium"
+                >{{ plannedHours }} часов</span
+              >
             </div>
             <div class="flex justify-between">
               <span class="text-primary">Запланировано:</span>
@@ -190,110 +198,92 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
 import { f7, f7Popover } from "framework7-vue";
+import { storeToRefs } from "pinia";
 import DateTimeSelector from "./DateTimeSelector.vue";
 import Select from "../ui/Select.vue";
-import type { EventData } from "./EventService";
-import { useEventService } from "./EventService";
+import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
 import { useClass9Store } from "@/stores/class9Store";
 import { useRupStore } from "@/stores/rupStore";
+import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
 
 const emit = defineEmits<{
-  (e: "event-added", event: EventData): void;
+  (e: "event-added", event: CalendarEvent): void;
 }>();
 
-const { eventService } = useEventService();
+const calendarStore = useCalendarStore();
+const { moduleOptions, learningOutcomeOptions: allLearningOutcomeOptions } =
+  storeToRefs(calendarStore);
 const class9Store = useClass9Store();
-const rupStore = useRupStore();
+const selectedItemsStore = useSelectedItemsStore();
 
-const eventTitle = ref<string>("");
-const eventResult = ref<string>("");
+const { selectedClass9Item } = storeToRefs(selectedItemsStore);
+
+const eventTitle = ref("");
+const eventResult = ref("");
 const rupFile = ref<File | null>(null);
-const startDate = ref(dayjs().format("DD MMMM YYYY"));
-const startTime = ref("09:00");
-const endDate = ref(dayjs().add(1, "hour").format("DD MMMM YYYY"));
-const endTime = ref("10:00");
+const startDate = ref(dayjs().format("YYYY-MM-DD"));
+const startTime = ref(dayjs().format("HH:mm"));
+const endDate = ref(dayjs().format("YYYY-MM-DD"));
+const endTime = ref(dayjs().format("HH:mm"));
 const participants = ref<string[]>([]);
-const formError = ref("");
+const formError = ref<string | null>(null);
 const selectedWeekDays = ref<{ weekId: number; russianWeekDay: string }[]>([]);
 
-const moduleOptions = computed(() => {
-  return class9Store.getAllModulesAndOutcomes.modules;
-});
-
-const learningOutcomeOptions = computed(() => {
+const filteredLearningOutcomes = computed(() => {
   if (eventTitle.value) {
-    const outcomesByModule =
-      class9Store.getAllModulesAndOutcomes.outcomesByModule;
-    const moduleKey = eventTitle.value;
-    return outcomesByModule[moduleKey] || [];
+    return allLearningOutcomeOptions.value.filter(
+      (o) => o.moduleId === eventTitle.value
+    );
   }
   return [];
 });
 
-const openAddEventPopover = () => {
-  f7.popover.open("#add-event-popover", "#add-button");
-};
+const plannedHours = computed(() => {
+  return selectedClass9Item.value?.totalHours ?? "0";
+});
 
-const closeAddEventPopover = () => {
-  f7.popover.close("#add-event-popover");
-};
-
-const handleRupFileChange = (event: Event) => {
-  const input = event.target as HTMLInputElement;
-  if (input.files && input.files.length > 0) {
-    rupFile.value = input.files[0];
-  }
-};
-
-const validateForm = () => {
-  if (!eventTitle.value || !eventResult.value || !rupFile.value) {
-    formError.value = "Пожалуйста, заполните все обязательные поля";
-    return false;
+const handleAddEvent = async () => {
+  if (!eventTitle.value || !eventResult.value) {
+    formError.value = "Пожалуйста, заполните все поля.";
+    return;
   }
 
-  const start = dayjs(`${startDate.value} ${startTime.value}`);
-  const end = dayjs(`${endDate.value} ${endTime.value}`);
-
-  if (end.isBefore(start)) {
-    formError.value = "Время окончания не может быть раньше начала";
-    return false;
-  }
-
-  formError.value = "";
-  return true;
-};
-
-const handleAddEvent = () => {
-  if (!validateForm()) return;
-
-  emit("event-added", {
+  const eventData: Omit<CalendarEvent, "id" | "createdAt" | "updatedAt"> = {
     title: eventTitle.value,
     result: eventResult.value,
-    rup: "",
+    rup: rupFile.value?.name ?? "",
     file: rupFile.value,
     startDate: startDate.value,
     startTime: startTime.value,
     endDate: endDate.value,
     endTime: endTime.value,
-    participants: [...participants.value],
-  });
+    participants: participants.value,
+  };
 
-  resetForm();
+  try {
+    const newEvent = await calendarStore.addEvent(eventData);
+    emit("event-added", newEvent);
+    closeAddEventPopover();
+    resetForm();
+  } catch (error) {
+    formError.value = "Ошибка при добавлении события.";
+    console.error(error);
+  }
 };
 
 const resetForm = () => {
   eventTitle.value = "";
   eventResult.value = "";
   rupFile.value = null;
-  startDate.value = dayjs().format("DD MMMM YYYY");
-  startTime.value = "09:00";
-  endDate.value = dayjs().add(1, "hour").format("DD MMMM YYYY");
-  endTime.value = "10:00";
+  startDate.value = dayjs().format("YYYY-MM-DD");
+  startTime.value = dayjs().format("HH:mm");
+  endDate.value = dayjs().format("YYYY-MM-DD");
+  endTime.value = dayjs().format("HH:mm");
   participants.value = [];
   selectedWeekDays.value = [];
-  formError.value = "";
+  formError.value = null;
 };
 
 const selectWeekDay = (day: {
@@ -311,13 +301,11 @@ const selectWeekDay = (day: {
   );
 
   if (index === -1) {
-    
     selectedWeekDays.value.push({
       weekId: day.weekId,
-      russianWeekDay: dayObj.format("dddd"), 
+      russianWeekDay: dayObj.format("dddd"),
     });
   } else {
-    
     selectedWeekDays.value.splice(index, 1);
   }
 };
@@ -347,7 +335,28 @@ const openStreamSelection = () => {
   console.log("Stream selection opened");
 };
 
-watch(eventTitle, () => {
-  eventResult.value = "";
+watch(eventTitle, (newVal) => {
+  if (!newVal) {
+    eventResult.value = "";
+  }
 });
+
+watch(eventResult, (newId) => {
+  selectedItemsStore.setSelectedClass9ItemId(newId);
+});
+
+const openAddEventPopover = () => {
+  f7.popover.open("#add-event-popover", "#add-button");
+};
+
+const closeAddEventPopover = () => {
+  f7.popover.close("#add-event-popover");
+};
+
+const handleRupFileChange = (e: Event) => {
+  const input = e.target as HTMLInputElement;
+  if (input.files && input.files.length > 0) {
+    rupFile.value = input.files[0];
+  }
+};
 </script>
