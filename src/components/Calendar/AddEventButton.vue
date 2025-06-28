@@ -66,23 +66,121 @@
             @after-close="openAddEventPopover"
           />
 
-          <!-- Start date/time -->
-          <date-time-selector
-            label="Начало"
-            :initial-date="startDate"
-            :initial-time="startTime"
-            @update:date="startDate = $event"
-            @update:time="startTime = $event"
-          />
+          <!-- Start Date -->
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-foreground">Начало</span>
+            <div class="w-1/2">
+              <f7-input
+                class="text-right"
+                type="datepicker"
+                placeholder="Дата"
+                v-model:value="startDate"
+                readonly
+                :calendar-params="{
+                  closeOnSelect: true,
+                  dateFormat: 'dd/MM/yyyy',
+                  locale: 'ru',
+                  monthNames: [
+                    'Январь',
+                    'Февраль',
+                    'Март',
+                    'Апрель',
+                    'Май',
+                    'Июнь',
+                    'Июль',
+                    'Август',
+                    'Сентябрь',
+                    'Октябрь',
+                    'Ноябрь',
+                    'Декабрь',
+                  ],
+                  monthNamesShort: [
+                    'Янв',
+                    'Фев',
+                    'Мар',
+                    'Апр',
+                    'Май',
+                    'Июн',
+                    'Июл',
+                    'Авг',
+                    'Сен',
+                    'Окт',
+                    'Ноя',
+                    'Дек',
+                  ],
+                  dayNames: [
+                    'Воскресенье',
+                    'Понедельник',
+                    'Вторник',
+                    'Среда',
+                    'Четверг',
+                    'Пятница',
+                    'Суббота',
+                  ],
+                  dayNamesShort: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+                  firstDay: 1,
+                }"
+              ></f7-input>
+            </div>
+          </div>
 
-          <!-- End date/time -->
-          <date-time-selector
-            label="Конец"
-            :initial-date="endDate"
-            :initial-time="endTime"
-            @update:date="endDate = $event"
-            @update:time="endTime = $event"
-          />
+          <!-- End Date -->
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-foreground">Конец</span>
+            <div class="w-1/2">
+              <f7-input
+                class="text-right"
+                type="datepicker"
+                placeholder="Дата"
+                v-model:value="endDate"
+                readonly
+                :calendar-params="{
+                  closeOnSelect: true,
+                  dateFormat: 'dd/MM/yyyy',
+                  locale: 'ru',
+                  monthNames: [
+                    'Январь',
+                    'Февраль',
+                    'Март',
+                    'Апрель',
+                    'Май',
+                    'Июнь',
+                    'Июль',
+                    'Август',
+                    'Сентябрь',
+                    'Октябрь',
+                    'Ноябрь',
+                    'Декабрь',
+                  ],
+                  monthNamesShort: [
+                    'Янв',
+                    'Фев',
+                    'Мар',
+                    'Апр',
+                    'Май',
+                    'Июн',
+                    'Июл',
+                    'Авг',
+                    'Сен',
+                    'Окт',
+                    'Ноя',
+                    'Дек',
+                  ],
+                  dayNames: [
+                    'Воскресенье',
+                    'Понедельник',
+                    'Вторник',
+                    'Среда',
+                    'Четверг',
+                    'Пятница',
+                    'Суббота',
+                  ],
+                  dayNamesShort: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+                  firstDay: 1,
+                }"
+              ></f7-input>
+            </div>
+          </div>
 
           <!-- Participants -->
           <div
@@ -114,36 +212,31 @@
             </div>
           </div>
 
-          <template v-for="(day, index) in selectedWeekDays" :key="index">
+          <template v-for="day in selectedWeekDays" :key="day.weekId">
             <div class="text-foreground font-semibold mb-3">
               Время на {{ day.russianWeekDay.toLowerCase() }}
             </div>
             <div class="flex items-center gap-2 mb-2">
               <span class="text-muted-foreground text-sm">от</span>
-              <select
-                class="w-full bg-card border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
-              >
-                <option value="">...</option>
-                <option>08:00</option>
-                <option>08:45</option>
-                <option>08:50</option>
-                <option>09:35</option>
-                <option>09:45</option>
-              </select>
+              <Select
+                v-model="day.startTime"
+                :options="startTimeOptions"
+                placeholder="Выберите время"
+                class="w-full"
+              />
               <span class="text-muted-foreground text-sm">до</span>
-              <select
-                class="w-full bg-card border border-input rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
-              >
-                <option value="">...</option>
-                <option>08:45</option>
-                <option>09:35</option>
-              </select>
+              <Select
+                v-model="day.endTime"
+                :options="endTimeOptions"
+                placeholder="Выберите время"
+                class="w-full"
+              />
             </div>
           </template>
 
           <div class="border border-input rounded-lg p-3">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-foreground">РУП</span>
+              <span class="text-sm text-foreground">РУП/КТП</span>
               <span v-if="rupFile" class="text-sm text-muted-foreground">{{
                 rupFile.name
               }}</span>
@@ -186,15 +279,15 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
-import { f7, f7Popover } from "framework7-vue";
+import { f7, f7Popover, f7Input } from "framework7-vue";
 import { storeToRefs } from "pinia";
-import DateTimeSelector from "./DateTimeSelector.vue";
 import Select from "../ui/Select.vue";
 import PopoverHeader from "../ui/PopoverHeader.vue";
 import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
 import { useClass9Store } from "@/stores/class9Store";
 import { useRupStore } from "@/stores/rupStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
+import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
 
@@ -207,19 +300,26 @@ const { moduleOptions, learningOutcomeOptions: allLearningOutcomeOptions } =
   storeToRefs(calendarStore);
 const class9Store = useClass9Store();
 const selectedItemsStore = useSelectedItemsStore();
+const educationScheduleStore = useEducationScheduleStore();
+const { schedules } = storeToRefs(educationScheduleStore);
 
 const { selectedClass9Item } = storeToRefs(selectedItemsStore);
 
 const eventTitle = ref("");
 const eventResult = ref("");
 const rupFile = ref<File | null>(null);
-const startDate = ref(dayjs().format("YYYY-MM-DD"));
-const startTime = ref(dayjs().format("HH:mm"));
-const endDate = ref(dayjs().format("YYYY-MM-DD"));
-const endTime = ref(dayjs().format("HH:mm"));
+const startDate = ref(dayjs().locale("ru").format("DD/MM/YYYY"));
+const endDate = ref(dayjs().locale("ru").format("DD/MM/YYYY"));
 const participants = ref<string[]>([]);
 const formError = ref<string | null>(null);
-const selectedWeekDays = ref<{ weekId: number; russianWeekDay: string }[]>([]);
+const selectedWeekDays = ref<
+  {
+    weekId: number;
+    russianWeekDay: string;
+    startTime: string;
+    endTime: string;
+  }[]
+>([]);
 
 const isFormValid = computed(() => !!eventTitle.value && !!eventResult.value);
 
@@ -236,6 +336,20 @@ const plannedHours = computed(() => {
   return selectedClass9Item.value?.totalHours ?? "0";
 });
 
+const startTimeOptions = computed(() =>
+  schedules.value.map((schedule) => ({
+    value: schedule.startTime,
+    text: schedule.startTime,
+  }))
+);
+
+const endTimeOptions = computed(() =>
+  schedules.value.map((schedule) => ({
+    value: schedule.endTime,
+    text: schedule.endTime,
+  }))
+);
+
 const handleAddEvent = async () => {
   const eventData: Omit<CalendarEvent, "id" | "createdAt" | "updatedAt"> = {
     title: eventTitle.value,
@@ -243,9 +357,7 @@ const handleAddEvent = async () => {
     rup: rupFile.value?.name ?? "",
     file: rupFile.value,
     startDate: startDate.value,
-    startTime: startTime.value,
     endDate: endDate.value,
-    endTime: endTime.value,
     participants: participants.value,
   };
 
@@ -265,25 +377,20 @@ const resetForm = () => {
   eventTitle.value = "";
   eventResult.value = "";
   rupFile.value = null;
-  startDate.value = dayjs().format("YYYY-MM-DD");
-  startTime.value = dayjs().format("HH:mm");
-  endDate.value = dayjs().format("YYYY-MM-DD");
-  endTime.value = dayjs().format("HH:mm");
+  startDate.value = dayjs().locale("ru").format("DD/MM/YYYY");
+  endDate.value = dayjs().locale("ru").format("DD/MM/YYYY");
   participants.value = [];
   selectedWeekDays.value = [];
   formError.value = null;
 };
 
 const selectWeekDay = (day: {
-  date: dayjs.Dayjs;
+  weekId: number;
   russianAbbreviation: string;
   isStartDate: boolean;
   isSelected: boolean;
-  weekId: number;
+  name: string;
 }) => {
-  dayjs.locale("ru");
-  const dayObj = day.date;
-
   const index = selectedWeekDays.value.findIndex(
     (selectedDay) => selectedDay.weekId === day.weekId
   );
@@ -291,33 +398,32 @@ const selectWeekDay = (day: {
   if (index === -1) {
     selectedWeekDays.value.push({
       weekId: day.weekId,
-      russianWeekDay: dayObj.format("dddd"),
+      russianWeekDay: day.name,
+      startTime: "",
+      endTime: "",
     });
   } else {
     selectedWeekDays.value.splice(index, 1);
   }
 };
 
-const weekDays = computed(() => {
-  dayjs.locale("ru");
-  const start = dayjs(startDate.value, "DD MMMM YYYY");
-  const dayOfWeek = start.day();
-  const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  const monday = start.subtract(daysToSubtract, "day");
-
-  return Array.from({ length: 7 }, (_, i) => {
-    const currentDay = monday.add(i, "day");
-    return {
-      date: currentDay,
-      russianAbbreviation: currentDay.format("dd").slice(0, 2).toUpperCase(),
-      isStartDate: false,
-      isSelected: selectedWeekDays.value.some(
-        (day) => day.weekId === (currentDay.day() + 6) % 7
-      ),
-      weekId: (currentDay.day() + 6) % 7,
-    };
-  });
-});
+const weekDays = computed(() =>
+  [
+    { weekId: 0, russianAbbreviation: "ПН", name: "Понедельник" },
+    { weekId: 1, russianAbbreviation: "ВТ", name: "Вторник" },
+    { weekId: 2, russianAbbreviation: "СР", name: "Среда" },
+    { weekId: 3, russianAbbreviation: "ЧТ", name: "Четверг" },
+    { weekId: 4, russianAbbreviation: "ПТ", name: "Пятница" },
+    { weekId: 5, russianAbbreviation: "СБ", name: "Суббота" },
+    { weekId: 6, russianAbbreviation: "ВС", name: "Воскресенье" },
+  ].map((day) => ({
+    ...day,
+    isStartDate: false,
+    isSelected: selectedWeekDays.value.some(
+      (selected) => selected.weekId === day.weekId
+    ),
+  }))
+);
 
 const openStreamSelection = () => {
   console.log("Stream selection opened");

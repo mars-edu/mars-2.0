@@ -9,9 +9,9 @@ export interface CalendarEvent {
   rup: string;
   file: File | null;
   startDate: string;
-  startTime: string;
+  startTime?: string;
   endDate: string;
-  endTime: string;
+  endTime?: string;
   participants: string[];
   createdAt: Date;
   updatedAt: Date;
