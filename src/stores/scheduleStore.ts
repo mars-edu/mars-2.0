@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import { ref, computed } from "vue";
 
 export interface Lesson {
   startTime: string;
@@ -12,7 +13,7 @@ export interface ScheduleState {
   scheduleData: Record<string, Lesson[]>;
 }
 
-const DEFAULT_SCHEDULE_DATA = {
+const DEFAULT_SCHEDULE_DATA: Record<string, Lesson[]> = {
   "2025-03-09": [
     {
       startTime: "8:00",
@@ -55,51 +56,63 @@ const DEFAULT_SCHEDULE_DATA = {
   ],
 };
 
-export const useScheduleStore = defineStore("schedule", {
-  state: (): ScheduleState => ({
-    selectedDate: new Date(),
-    scheduleData: { ...DEFAULT_SCHEDULE_DATA },
-  }),
+export const useScheduleStore = defineStore(
+  "schedule",
+  () => {
+    const selectedDate = ref(new Date());
+    const scheduleData = ref<Record<string, Lesson[]>>({
+      ...DEFAULT_SCHEDULE_DATA,
+    });
 
-  getters: {
-    // Format date as YYYY-MM-DD for lookup
-    formattedSelectedDate: (state) => {
-      const date = state.selectedDate;
+    const formattedSelectedDate = computed(() => {
+      const date = selectedDate.value;
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
         2,
         "0"
       )}-${String(date.getDate()).padStart(2, "0")}`;
-    },
+    });
 
-    // Get schedule for the selected date
-    selectedDateSchedule: (state): Lesson[] => {
-      if (!state.selectedDate) return [];
-      const date = new Date(state.selectedDate);
+    const selectedDateSchedule = computed((): Lesson[] => {
+      if (!selectedDate.value) return [];
+      const date = new Date(selectedDate.value);
       const formattedDate = `${date.getFullYear()}-${String(
         date.getMonth() + 1
       ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      return state.scheduleData[formattedDate] || [];
-    },
-  },
+      return scheduleData.value[formattedDate] || [];
+    });
 
-  actions: {
-    // Set the selected date
-    setSelectedDate(date: Date) {
-      this.selectedDate = date;
-    },
+    function setSelectedDate(date: Date) {
+      selectedDate.value = date;
+    }
 
-    // Add or update schedule for a specific date
-    updateSchedule(date: Date, lessons: Lesson[]) {
+    function updateSchedule(date: Date, lessons: Lesson[]) {
       const formattedDate = `${date.getFullYear()}-${String(
         date.getMonth() + 1
       ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      this.scheduleData[formattedDate] = lessons;
-    },
+      scheduleData.value[formattedDate] = lessons;
+    }
 
-    // Reset the store to its initial state
-    reset() {
-      this.selectedDate = new Date();
-      this.scheduleData = { ...DEFAULT_SCHEDULE_DATA };
-    },
+    function reset() {
+      selectedDate.value = new Date();
+      scheduleData.value = { ...DEFAULT_SCHEDULE_DATA };
+    }
+
+    return {
+      selectedDate,
+      scheduleData,
+      formattedSelectedDate,
+      selectedDateSchedule,
+      setSelectedDate,
+      updateSchedule,
+      reset,
+    };
   },
-});
+  {
+    persist: {
+      paths: ["scheduleData"],
+    },
+    serverSync: {
+      enabled: false,
+    },
+  }
+);

@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import AuthService from "../services/auth";
+import { computed, ref } from "vue";
 
 export interface User {
   id: string;
@@ -23,115 +24,140 @@ export interface UserState {
   token: string | null;
 }
 
-export const useUserStore = defineStore("user", {
-  serverSync: {
-    enabled: false,
-  },
-  state: (): UserState => ({
-    currentUser: null,
-    isAuthenticated: false,
-    token: null,
-  }),
+export const useUserStore = defineStore(
+  "user",
+  () => {
+    // state
+    const currentUser = ref<User | null>(null);
+    const isAuthenticated = ref(false);
+    const token = ref<string | null>(null);
 
-  getters: {
-    hasRole: (state) => (role: Role) => {
-      return state.currentUser?.roles.includes(role) || false;
-    },
+    // getters
+    const hasRole = (role: Role) => {
+      return currentUser.value?.roles.includes(role) || false;
+    };
 
-    hasAnyRole: (state) => (roles: Role[]) => {
+    const hasAnyRole = (roles: Role[]) => {
       return (
-        state.currentUser?.roles.some((role) => roles.includes(role)) || false
+        currentUser.value?.roles.some((role) => roles.includes(role)) || false
       );
-    },
+    };
 
-    fullName: (state): string => {
-      if (!state.currentUser) return "";
-      return `${state.currentUser.firstName} ${state.currentUser.lastName}`;
-    },
+    const fullName = computed((): string => {
+      if (!currentUser.value) return "";
+      return `${currentUser.value.firstName} ${currentUser.value.lastName}`;
+    });
 
-    isAdmin: (state): boolean => {
-      return state.currentUser?.roles.includes(Role.ADMIN) || false;
-    },
+    const isAdmin = computed((): boolean => {
+      return currentUser.value?.roles.includes(Role.ADMIN) || false;
+    });
 
-    isTeacher: (state): boolean => {
-      return state.currentUser?.roles.includes(Role.TEACHER) || false;
-    },
+    const isTeacher = computed((): boolean => {
+      return currentUser.value?.roles.includes(Role.TEACHER) || false;
+    });
 
-    isStudent: (state): boolean => {
-      return state.currentUser?.roles.includes(Role.STUDENT) || false;
-    },
+    const isStudent = computed((): boolean => {
+      return currentUser.value?.roles.includes(Role.STUDENT) || false;
+    });
 
-    isParent: (state): boolean => {
-      return state.currentUser?.roles.includes(Role.PARENT) || false;
-    },
-  },
+    const isParent = computed((): boolean => {
+      return currentUser.value?.roles.includes(Role.PARENT) || false;
+    });
 
-  actions: {
-    setUser(user: User) {
-      this.currentUser = user;
-      this.isAuthenticated = true;
-    },
+    // actions
+    function setUser(user: User) {
+      currentUser.value = user;
+      isAuthenticated.value = true;
+    }
 
-    setToken(token: string) {
-      this.token = token;
-      localStorage.setItem("auth_token", token);
-    },
+    function setToken(tokenValue: string) {
+      token.value = tokenValue;
+      localStorage.setItem("auth_token", tokenValue);
+    }
 
-    logout() {
-      this.currentUser = null;
-      this.isAuthenticated = false;
-      this.token = null;
+    function logout() {
+      currentUser.value = null;
+      isAuthenticated.value = false;
+      token.value = null;
       localStorage.removeItem("auth_token");
-    },
+    }
 
-    async initialize() {
-      const token = localStorage.getItem("auth_token");
-      if (token) {
-        this.token = token;
+    async function initialize() {
+      const storedToken = localStorage.getItem("auth_token");
+      if (storedToken) {
+        token.value = storedToken;
 
         try {
-          const response = await AuthService.validateToken(token);
+          const response = await AuthService.validateToken(storedToken);
 
           if (response.success && response.user) {
-            this.setUser(response.user);
+            setUser(response.user);
           } else {
-            this.logout();
+            logout();
           }
         } catch (error) {
           console.error("Failed to initialize user session:", error);
-          this.logout();
+          logout();
         }
       }
-    },
+    }
 
-    // Example method to update user roles
-    updateRoles(roles: Role[]) {
-      if (this.currentUser) {
-        this.currentUser.roles = roles;
+    function updateRoles(roles: Role[]) {
+      if (currentUser.value) {
+        currentUser.value.roles = roles;
       }
-    },
+    }
 
-    // Add a single role to the user
-    addRole(role: Role) {
-      if (this.currentUser && !this.currentUser.roles.includes(role)) {
-        this.currentUser.roles.push(role);
+    function addRole(role: Role) {
+      if (currentUser.value && !currentUser.value.roles.includes(role)) {
+        currentUser.value.roles.push(role);
       }
-    },
+    }
 
-    // Remove a single role from the user
-    removeRole(role: Role) {
-      if (this.currentUser) {
-        this.currentUser.roles = this.currentUser.roles.filter(
+    function removeRole(role: Role) {
+      if (currentUser.value) {
+        currentUser.value.roles = currentUser.value.roles.filter(
           (r) => r !== role
         );
       }
-    },
+    }
 
-    reset() {
-      this.currentUser = null;
-      this.isAuthenticated = false;
-      this.token = null;
+    function reset() {
+      currentUser.value = null;
+      isAuthenticated.value = false;
+      token.value = null;
       localStorage.removeItem("auth_token");
-    },
+    }
+
+    return {
+      // state
+      currentUser,
+      isAuthenticated,
+      token,
+
+      // getters
+      hasRole,
+      hasAnyRole,
+      fullName,
+      isAdmin,
+      isTeacher,
+      isStudent,
+      isParent,
+
+      // actions
+      setUser,
+      setToken,
+      logout,
+      initialize,
+      updateRoles,
+      addRole,
+      removeRole,
+      reset,
+    };
   },
-});
+  {
+    serverSync: {
+      enabled: false,
+    },
+  }
+);
