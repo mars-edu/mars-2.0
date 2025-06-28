@@ -3,8 +3,8 @@ import vue from "@vitejs/plugin-vue";
 import webfontDownload from "vite-plugin-webfont-dl";
 import { visualizer } from "rollup-plugin-visualizer";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
-import { VitePWA } from 'vite-plugin-pwa'
-import buildInfoPlugin from './vite-plugins/build-info.js'
+import { VitePWA } from "vite-plugin-pwa";
+import buildInfoPlugin from "./vite-plugins/build-info.js";
 
 const SRC_DIR = path.resolve(__dirname, "./src");
 const PUBLIC_DIR = path.resolve(__dirname, "./public");
@@ -30,8 +30,8 @@ export default async () => {
     ],
     define: {
       __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
-      __BUILD_ENV__: JSON.stringify(process.env.NODE_ENV || 'development'),
-      __APP_VERSION__: JSON.stringify(process.env.APP_VERSION || '1.0.0')
+      __BUILD_ENV__: JSON.stringify(process.env.NODE_ENV || "development"),
+      __APP_VERSION__: JSON.stringify(process.env.APP_VERSION || "1.0.0"),
     },
     root: SRC_DIR,
     base: "",
@@ -42,6 +42,11 @@ export default async () => {
       emptyOutDir: true,
       rollupOptions: {
         treeshake: false,
+        output: {
+          manualChunks: {
+            framework7: ["framework7", "framework7-vue", "framework7-icons"],
+          },
+        },
       },
     },
     resolve: {
