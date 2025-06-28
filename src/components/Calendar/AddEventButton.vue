@@ -59,7 +59,11 @@
 
           <Select
             label="Результат обучения/дисциплин"
-            :placeholder="eventTitle ? 'Выберите результат обучения' : 'Сначала выберите модуль'"
+            :placeholder="
+              eventTitle
+                ? 'Выберите результат обучения'
+                : 'Сначала выберите модуль'
+            "
             v-model="eventResult"
             :options="learningOutcomeOptions"
             name="event-learning-outcome"
@@ -184,7 +188,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { f7, f7Popover } from "framework7-vue";
 import DateTimeSelector from "./DateTimeSelector.vue";
 import Select from "../ui/Select.vue";
@@ -215,17 +219,17 @@ const formError = ref("");
 const selectedWeekDays = ref<{ weekId: number; russianWeekDay: string }[]>([]);
 
 const moduleOptions = computed(() => {
-    return class9Store.getAllModulesAndOutcomes.modules;
+  return class9Store.getAllModulesAndOutcomes.modules;
 });
 
 const learningOutcomeOptions = computed(() => {
-    if (eventTitle.value) {
-        const outcomesByModule = class9Store.getAllModulesAndOutcomes.outcomesByModule;
-        const moduleKey = eventTitle.value;
-        return outcomesByModule[moduleKey] || [];
-    }
-    // If no module is selected, show empty list
-    return [];
+  if (eventTitle.value) {
+    const outcomesByModule =
+      class9Store.getAllModulesAndOutcomes.outcomesByModule;
+    const moduleKey = eventTitle.value;
+    return outcomesByModule[moduleKey] || [];
+  }
+  return [];
 });
 
 const openAddEventPopover = () => {
@@ -342,4 +346,8 @@ const weekDays = computed(() => {
 const openStreamSelection = () => {
   console.log("Stream selection opened");
 };
+
+watch(eventTitle, () => {
+  eventResult.value = "";
+});
 </script>

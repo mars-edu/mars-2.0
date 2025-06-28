@@ -407,7 +407,7 @@ const handleSpecialtyMouseEnter = (specialty: Specialty, targetEl: string) => {
     if (popover && popover.opened) return;
     hoveredSpecialty.value = specialty;
     f7.popover.open(".specialty-info-popover", targetEl);
-  }, 300);
+  }, 450);
 };
 
 const handlePopoverMouseEnter = () => {

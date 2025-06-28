@@ -29,10 +29,7 @@
       close-on-escape
     >
       <div class="working-plan-popover bg-card text-card-foreground">
-        <PopoverHeader
-          title="Выбрать"
-          :disabled="!isValid"
-        />
+        <PopoverHeader title="Выбрать" :disabled="!isValid" />
 
         <div class="p-4 flex flex-col gap-4">
           <button
@@ -91,8 +88,12 @@ const handleClose = () => {
 };
 
 const handleSubmit = () => {
-  emit("submit", { baseClass: 11 });
-  handleClose();
+  f7.popover.close("#add-working-plan-popover");
+
+  f7.dialog.alert(
+    "Функциональность для создания рабочего учебного плана на базе 11 класса пока не реализована.",
+    "В разработке"
+  );
 };
 </script>
 
