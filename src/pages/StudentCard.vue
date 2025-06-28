@@ -37,22 +37,6 @@
             class="flex flex-wrap gap-x-4 gap-y-2 items-center student-card-filters"
           >
             <Select
-              v-model="selectedSpecialty"
-              :options="specialtyOptions"
-              placeholder="Специальность:"
-              name="specialty"
-              class="min-w-[150px]"
-            />
-
-            <Select
-              v-model="selectedLanguage"
-              :options="languageOptions"
-              placeholder="Язык:"
-              name="language"
-              class="min-w-[150px]"
-            />
-
-            <Select
               v-model="selectedGender"
               :options="genderOptions"
               placeholder="Пол:"
@@ -78,7 +62,7 @@
                     <th class="px-4 py-2 text-left">ФИО</th>
                     <th class="px-4 py-2 text-left">Специальность</th>
                     <th class="px-4 py-2 text-left">Язык</th>
-                    <th class="px-4 py-2 text-left">База</th>
+                    <th class="px-4 py-2 text-left">Курс</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -100,7 +84,7 @@
                     </td>
                     <td class="px-4 py-3">{{ student.specialty }}</td>
                     <td class="px-4 py-3">{{ student.language }}</td>
-                    <td class="px-4 py-3">{{ student.base }}</td>
+                    <td class="px-4 py-3">{{ student.course }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -169,9 +153,8 @@ onMounted(() => {
   selectedStudent.value = null;
 });
 
-
 const specialtyOptions = computed(() => {
-  const options = [{ value: "", text: "Все" }];
+  const options = [{ value: "all", text: "Все" }];
   specialties.value.forEach((specialty) => {
     options.push({ value: specialty.code, text: specialty.name });
   });
@@ -179,7 +162,7 @@ const specialtyOptions = computed(() => {
 });
 
 const languageOptions = computed(() => {
-  const options = [{ value: "", text: "Все" }];
+  const options = [{ value: "all", text: "Все" }];
   languages.value.forEach((language) => {
     options.push({ value: language.code, text: language.name });
   });
@@ -209,14 +192,6 @@ const academicYearOptions = computed(() => {
 
 selectedAcademicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
 
-watch(selectedSpecialty, (newValue) => {
-  studentStore.setFilter("specialty", newValue);
-});
-
-watch(selectedLanguage, (newValue) => {
-  studentStore.setFilter("language", newValue);
-});
-
 watch(selectedGender, (newValue) => {
   studentStore.setFilter("gender", newValue);
 });
@@ -229,7 +204,6 @@ watch(selectedAcademicYear, (newValue) => {
   studentStore.setFilter("academicYearId", newValue);
 });
 
-
 watch(searchTerm, (newValue) => {
   studentStore.setFilter("searchTerm", newValue);
 });
@@ -239,7 +213,7 @@ const selectStudent = async (student: Student) => {
   await nextTick();
   f7.popover.open(
     `#edit-student-popover-${student.id}`,
-    `#student-item-${student.id}`,
+    `#student-item-${student.id}`
   );
 };
 

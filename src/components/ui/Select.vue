@@ -123,7 +123,7 @@ const smartSelectParams = computed(() => ({
   openIn: props.searchable ? "popup" : "popover",
   closeOnSelect: true,
   setValueText: false,
-  virtualList: props.options.length > 20,
+  virtualList: false,
   view: smartSelectView.value,
   ...(props.searchable && {
     searchbar: true,

@@ -185,6 +185,7 @@
           <!-- Participants -->
           <div
             class="flex justify-between items-center cursor-pointer"
+            id="add-event-participants"
             @click="openStreamSelection"
           >
             <span class="text-sm text-foreground">Обучающиеся</span>
@@ -274,6 +275,13 @@
         </div>
       </div>
     </f7-popover>
+
+    <StudentSelectionPopup
+      ref="studentPopup"
+      :selected-students="participants"
+      @save="handleStudentsSave"
+      @close="handleStudentPopupClose"
+    />
   </div>
 </template>
 
@@ -283,6 +291,7 @@ import { f7, f7Popover, f7Input } from "framework7-vue";
 import { storeToRefs } from "pinia";
 import Select from "../ui/Select.vue";
 import PopoverHeader from "../ui/PopoverHeader.vue";
+import StudentSelectionPopup from "./StudentSelectionPopup.vue";
 import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
 import { useClass9Store } from "@/stores/class9Store";
 import { useRupStore } from "@/stores/rupStore";
@@ -320,6 +329,7 @@ const selectedWeekDays = ref<
     endTime: string;
   }[]
 >([]);
+const studentPopup = ref<{ open: (p: string[]) => void } | null>(null);
 
 const isFormValid = computed(() => !!eventTitle.value && !!eventResult.value);
 
@@ -426,18 +436,17 @@ const weekDays = computed(() =>
 );
 
 const openStreamSelection = () => {
-  console.log("Stream selection opened");
+  closeAddEventPopover();
+  studentPopup.value?.open(participants.value);
 };
 
-watch(eventTitle, (newVal) => {
-  if (!newVal) {
-    eventResult.value = "";
-  }
-});
+const handleStudentsSave = (selectedIds: string[]) => {
+  participants.value = selectedIds;
+};
 
-watch(eventResult, (newId) => {
-  selectedItemsStore.setSelectedClass9ItemId(newId);
-});
+const handleStudentPopupClose = () => {
+  openAddEventPopover();
+};
 
 const openAddEventPopover = () => {
   f7.popover.open("#add-event-popover", "#add-button");
@@ -453,4 +462,14 @@ const handleRupFileChange = (e: Event) => {
     rupFile.value = input.files[0];
   }
 };
+
+watch(eventTitle, (newVal) => {
+  if (!newVal) {
+    eventResult.value = "";
+  }
+});
+
+watch(eventResult, (newId) => {
+  selectedItemsStore.setSelectedClass9ItemId(newId);
+});
 </script>

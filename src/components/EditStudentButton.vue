@@ -189,7 +189,7 @@ const specialty = ref(props.student.specialty);
 const language = ref(props.student.language);
 const base = ref(props.student.base.toString());
 const gender = ref<"male" | "female">(props.student.gender);
-const academicYear = ref(props.student.academicYearId);
+const academicYear = ref(props.student.academicYearId || "");
 const formError = ref("");
 
 const academicYearOptions = computed(() =>
@@ -310,7 +310,7 @@ const resetForm = () => {
   language.value = props.student.language;
   base.value = props.student.base.toString();
   gender.value = props.student.gender;
-  academicYear.value = props.student.academicYearId;
+  academicYear.value = props.student.academicYearId || "";
   formError.value = "";
   studentStore.clearError();
 };

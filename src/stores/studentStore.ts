@@ -1,6 +1,8 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import Fuse from "fuse.js";
+import { useAcademicYearStore } from "./academicYearStore";
+import { useCourseStore, type Course } from "./courseStore";
 
 export interface Student {
   id: string;
@@ -12,6 +14,10 @@ export interface Student {
   base: number;
   gender: "male" | "female";
   academicYearId?: string;
+}
+
+export interface StudentWithCourse extends Student {
+  course: number;
 }
 
 export interface AddStudentPayload {
@@ -32,6 +38,7 @@ export interface StudentFilters {
   base: string;
   academicYearId: string;
   searchTerm: string;
+  course: string;
 }
 
 export const useStudentStore = defineStore("student", () => {
@@ -45,12 +52,15 @@ export const useStudentStore = defineStore("student", () => {
     base: "",
     academicYearId: "",
     searchTerm: "",
+    course: "",
   });
+
+  const academicYearStore = useAcademicYearStore();
 
   const getAllStudents = computed(() => students.value);
 
-  const filteredStudents = computed(() => {
-    let studentsToFilter = [...students.value];
+  const filteredStudents = computed((): StudentWithCourse[] => {
+    let studentsToFilter: Student[] = [...students.value];
 
     // Apply standard filters first
     studentsToFilter = studentsToFilter.filter((student) => {
@@ -76,8 +86,32 @@ export const useStudentStore = defineStore("student", () => {
       );
     });
 
+    let studentsWithCourse = studentsToFilter.map((student) => {
+      const activeAcademicYear = academicYearStore.getActiveAcademicYear;
+      const studentAcademicYear = academicYearStore.getAcademicYearById(
+        student.academicYearId || ""
+      );
+
+      let course = 1;
+      if (activeAcademicYear && studentAcademicYear) {
+        course =
+          activeAcademicYear.startYear - studentAcademicYear.startYear + 1;
+      }
+
+      return {
+        ...student,
+        course: course,
+      };
+    });
+
+    if (filters.value.course) {
+      studentsWithCourse = studentsWithCourse.filter(
+        (student) => student.course.toString() === filters.value.course
+      );
+    }
+
     if (filters.value.searchTerm) {
-      const studentsWithFio = studentsToFilter.map((student) => ({
+      const studentsWithFio = studentsWithCourse.map((student) => ({
         ...student,
         fio: `${student.surname} ${student.firstName} ${student.patronymic}`,
       }));
@@ -89,7 +123,7 @@ export const useStudentStore = defineStore("student", () => {
       return fuse.search(filters.value.searchTerm).map((result) => result.item);
     }
 
-    return studentsToFilter;
+    return studentsWithCourse;
   });
 
   const setFilter = (key: keyof StudentFilters, value: string) => {
@@ -104,6 +138,7 @@ export const useStudentStore = defineStore("student", () => {
       base: "",
       academicYearId: "",
       searchTerm: "",
+      course: "",
     };
   };
 
@@ -111,7 +146,6 @@ export const useStudentStore = defineStore("student", () => {
     try {
       isLoading.value = true;
       error.value = null;
-
 
       const newStudent: Student = {
         id: crypto.randomUUID(),
@@ -127,7 +161,10 @@ export const useStudentStore = defineStore("student", () => {
     }
   };
 
-  const updateStudent = async (id: string, payload: Partial<Omit<Student, 'id'>>) => {
+  const updateStudent = async (
+    id: string,
+    payload: Partial<Omit<Student, "id">>
+  ) => {
     try {
       isLoading.value = true;
       error.value = null;
@@ -151,7 +188,6 @@ export const useStudentStore = defineStore("student", () => {
     try {
       isLoading.value = true;
       error.value = null;
-
 
       const index = students.value.findIndex((s) => s.id === id);
       if (index === -1) throw new Error("Student not found");
@@ -180,6 +216,7 @@ export const useStudentStore = defineStore("student", () => {
       base: "",
       academicYearId: "",
       searchTerm: "",
+      course: "",
     };
   };
 
