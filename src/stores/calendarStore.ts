@@ -13,6 +13,11 @@ export interface CalendarEvent {
   endDate: string;
   endTime?: string;
   participants: string[];
+  weeklySchedules?: {
+    weekId: number;
+    startTime: string;
+    endTime: string;
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }

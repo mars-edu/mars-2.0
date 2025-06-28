@@ -317,8 +317,8 @@ const { selectedClass9Item } = storeToRefs(selectedItemsStore);
 const eventTitle = ref("");
 const eventResult = ref("");
 const rupFile = ref<File | null>(null);
-const startDate = ref(dayjs().locale("ru").format("DD/MM/YYYY"));
-const endDate = ref(dayjs().locale("ru").format("DD/MM/YYYY"));
+const startDate = ref([dayjs().toDate()]);
+const endDate = ref([dayjs().toDate()]);
 const participants = ref<string[]>([]);
 const formError = ref<string | null>(null);
 const selectedWeekDays = ref<
@@ -366,9 +366,10 @@ const handleAddEvent = async () => {
     result: eventResult.value,
     rup: rupFile.value?.name ?? "",
     file: rupFile.value,
-    startDate: startDate.value,
-    endDate: endDate.value,
+    startDate: dayjs(startDate.value[0]).format("DD/MM/YYYY"),
+    endDate: dayjs(endDate.value[0]).format("DD/MM/YYYY"),
     participants: participants.value,
+    weeklySchedules: selectedWeekDays.value,
   };
 
   try {
@@ -387,8 +388,8 @@ const resetForm = () => {
   eventTitle.value = "";
   eventResult.value = "";
   rupFile.value = null;
-  startDate.value = dayjs().locale("ru").format("DD/MM/YYYY");
-  endDate.value = dayjs().locale("ru").format("DD/MM/YYYY");
+  startDate.value = [dayjs().toDate()];
+  endDate.value = [dayjs().toDate()];
   participants.value = [];
   selectedWeekDays.value = [];
   formError.value = null;

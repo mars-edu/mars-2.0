@@ -1,4 +1,9 @@
 import { computed, ref } from "vue";
+import { useCalendarStore } from "@/stores/calendarStore";
+import dayjs from "dayjs";
+import isBetween from "dayjs/plugin/isBetween";
+
+dayjs.extend(isBetween);
 
 export interface CalendarEvent {
   title: string;
@@ -19,6 +24,8 @@ export function useCalendar() {
   const monthIndex = ref(1); // February (0-indexed)
   const activeTab = ref("month");
   const todayDate = ref(new Date().getDate().toString());
+
+  const calendarStore = useCalendarStore();
 
   const setYear = (newYear: string) => {
     year.value = newYear;
@@ -97,51 +104,68 @@ export function useCalendar() {
         today.getMonth() === date.getMonth() &&
         today.getFullYear() === date.getFullYear();
 
-      // Sample events data - in a real app, this would come from an API or store
-      const events: CalendarEvent[] = [];
+      const currentDate = dayjs(
+        new Date(parseInt(year.value), monthIndex.value, i)
+      );
 
-      // New tasks for Mondays
-      if (
-        (i === 2 || i === 9 || i === 16 || i === 23) &&
-        monthIndex.value === 1
-      ) {
-        events.push({
-          title: "История Казахстана",
-          time: "09:00",
-          type: "task",
-        });
-      }
+      const parseToDayjs = (dateValue: any) => {
+        if (Array.isArray(dateValue) && dateValue.length > 0) {
+          return dayjs(dateValue[0]);
+        }
+        if (typeof dateValue === "string") {
+          return dayjs(dateValue, "DD/MM/YYYY");
+        }
+        return dayjs(dateValue);
+      };
 
-      // New language practice tasks
-      if (
-        (i === 4 || i === 11 || i === 18 || i === 25) &&
-        monthIndex.value === 1
-      ) {
-        events.push({
-          title: "Всемирная история",
-          time: "16:00",
-          type: "language",
-        });
-      }
+      const weekIdOfCurrent = (currentDate.day() + 6) % 7; // Convert Sunday=0 to Monday=0
 
-      // Additional history tasks
-      if (
-        (i === 5 || i === 12 || i === 19 || i === 26) &&
-        monthIndex.value === 1
-      ) {
-        events.push({
-          title: "Культорология",
-          time: "11:30",
-          type: "task",
+      const eventsForDay = calendarStore.events
+        .filter((event) => {
+          const eventStartDate = parseToDayjs(event.startDate);
+          const eventEndDate = parseToDayjs(event.endDate ?? event.startDate);
+
+          // Check if date range matches
+          const inRange = currentDate.isBetween(
+            eventStartDate,
+            eventEndDate,
+            "day",
+            "[]"
+          );
+
+          if (!inRange) return false;
+
+          // If weeklySchedules defined, ensure current weekday is selected
+          if (event.weeklySchedules && event.weeklySchedules.length > 0) {
+            return event.weeklySchedules.some(
+              (ws) => ws.weekId === weekIdOfCurrent
+            );
+          }
+
+          // Otherwise show for all days in range
+          return true;
+        })
+        .map((event) => {
+          let time = event.startTime || "All day";
+          if (event.weeklySchedules && event.weeklySchedules.length > 0) {
+            const ws = event.weeklySchedules.find(
+              (w) => w.weekId === weekIdOfCurrent
+            );
+            if (ws && ws.startTime) time = ws.startTime;
+          }
+          return {
+            title: event.title,
+            time,
+            type: "task", // Could derive from event data
+          };
         });
-      }
 
       days.push({
         date: `${date.getFullYear()}-${date.getMonth() + 1}-${i}`,
         dayNumber: i,
         isCurrentMonth: true,
         isToday,
-        events,
+        events: eventsForDay,
       });
     }
 

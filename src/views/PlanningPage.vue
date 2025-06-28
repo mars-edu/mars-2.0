@@ -24,7 +24,9 @@
       <Teleport to="body">
         <transition name="fade">
           <Sidebar
-            v-if="(isMouseInLeftCorner || isSidebarHovered) && !isSidebarVisible"
+            v-if="
+              (isMouseInLeftCorner || isSidebarHovered) && !isSidebarVisible
+            "
             v-model:activeNavItem="activeNavItem"
             @mouseenter="handleSidebarMouseEnter"
             @mouseleave="handleSidebarMouseLeave"
@@ -49,6 +51,7 @@
           :search-placeholder="'Найти'"
           @icon-click="handleIconClick"
           @search="handleSearch"
+          @event-added="addEvent"
         >
           <template #navigation>
             <CalendarNavigation v-model="activeTab" :tabs="navigationTabs" />
@@ -104,17 +107,16 @@ import CalendarNavigation from "@/components/Calendar/CalendarNavigation.vue";
 import CalendarHeader from "@/components/Calendar/CalendarHeader.vue";
 import CalendarGrid from "@/components/Calendar/CalendarGrid.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
+import { type CalendarEvent as PlanningCalendarEvent } from "@/stores/calendarStore";
 
 const calendarContainer = ref<HTMLElement | null>(null);
 const isAddPopoverOpen = ref(false);
 const isSidebarVisible = ref(false);
 const activeNavItem = ref("calendar");
 
-
 const isMouseInLeftCorner = ref(false);
 const isHoveringLeftCorner = ref(false);
-const mouseTrackingThreshold = 25; 
-
+const mouseTrackingThreshold = 25;
 
 const isSidebarHovered = ref(false);
 const handleSidebarMouseEnter = () => {
@@ -124,23 +126,18 @@ const handleSidebarMouseLeave = () => {
   isSidebarHovered.value = false;
 };
 
-
 watch(isHoveringLeftCorner, (newValue) => {
   if (newValue) {
     isMouseInLeftCorner.value = true;
   } else {
-    
     setTimeout(() => {
       isMouseInLeftCorner.value = false;
     }, 300);
   }
 });
 
-
 const handleMouseMove = (event: MouseEvent) => {
-  
   if (!isSidebarVisible.value) {
-    
     const isInLeftCorner = event.clientX < mouseTrackingThreshold;
     if (
       isInLeftCorner !== isMouseInLeftCorner.value &&
@@ -163,7 +160,6 @@ const {
   setActiveTab,
   goToToday,
 } = useCalendar();
-
 
 const previousMonth = () => {
   let newMonth = monthIndex.value - 1;
@@ -190,7 +186,6 @@ const nextMonth = () => {
   setMonth(newMonth);
   setYear(newYear.toString());
 };
-
 
 const navigationTabs = [
   { value: "day", label: "День" },
@@ -219,8 +214,6 @@ onMounted(() => {
   });
 });
 
-
-
 const handleIconClick = (value: string) => {
   console.log(`Icon clicked: ${value}`);
   if (value === "add") {
@@ -232,14 +225,11 @@ const handleIconClick = (value: string) => {
 
 const handleSearch = (query: string) => {
   console.log(`Search query: ${query}`);
-  
 };
 
-
-const addEvent = () => {
-  
-  console.log("Adding new event");
-  isAddPopoverOpen.value = false;
+const addEvent = (event: PlanningCalendarEvent) => {
+  // For now, simply log the event and ensure any needed UI refresh happens automatically via store reactivity
+  console.log("New event added", event);
 };
 </script>
 
@@ -276,7 +266,6 @@ const addEvent = () => {
   transform: translateX(-100%);
 }
 
-
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
@@ -287,7 +276,6 @@ const addEvent = () => {
   opacity: 0;
 }
 
-
 .left-corner-detector {
   position: fixed;
   top: 64px;
@@ -296,7 +284,6 @@ const addEvent = () => {
   height: calc(100vh - 64px);
   z-index: 10;
 }
-
 
 .sidebar-popover {
   position: fixed;
@@ -308,7 +295,6 @@ const addEvent = () => {
   border-right: 1px solid hsl(var(--border));
   width: 13rem;
 }
-
 
 .sidebar-absolute {
   position: absolute;

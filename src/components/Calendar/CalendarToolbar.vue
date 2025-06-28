@@ -33,12 +33,14 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "icon-click", value: string): void;
   (e: "search", query: string): void;
+  (e: "event-added", event: CalendarEvent): void;
 }>();
 
 const calendarStore = useCalendarStore();
 
 const handleEventAdded = (event: CalendarEvent) => {
   // Event is already added to the store in AddEventButton
-  // This handler can be used for any additional logic in the toolbar if needed
+  // Propagate event to parent components if they want to react further
+  emit("event-added", event);
 };
 </script>
