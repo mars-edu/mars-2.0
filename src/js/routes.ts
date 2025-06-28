@@ -15,6 +15,7 @@ import TeacherCardPage from "../pages/suspense/TeacherCardPage.vue";
 import DisciplineCatalogPage from "../pages/suspense/DisciplineCatalogPage.vue";
 import JournalsPage from "../pages/suspense/JournalsPage.vue";
 import JournalDetailsPage from "../pages/suspense/JournalDetailsPage.vue";
+import EducationSchedulePage from "../pages/suspense/EducationSchedulePage.vue";
 
 type RouteConfig = Router.RouteParameters & {
   options?: {
@@ -94,7 +95,14 @@ const routes: RouteConfig[] = [
     path: "/settings/",
     component: SettingsPage,
     options: {
-      roles: [Role.ADMIN, Role.TEACHER],
+      roles: [Role.ADMIN],
+    },
+  },
+  {
+    path: "/education-schedule/",
+    component: EducationSchedulePage,
+    options: {
+      roles: [Role.ADMIN],
     },
   },
   {

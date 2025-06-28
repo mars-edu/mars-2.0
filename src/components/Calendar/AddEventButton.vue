@@ -24,26 +24,15 @@
     >
       <div class="event-popover bg-card text-card-foreground">
         <!-- Header with buttons -->
-        <div
-          class="flex justify-between px-2 py-3 border-b border-input text-center"
-        >
-          <button
-            class="text-muted-foreground hover:text-foreground disabled:opacity-50"
-            @click="closeAddEventPopover"
-          >
-            Отменить
-          </button>
-          <span class="text-foreground font-semibold">Создать</span>
-          <button
-            class="text-primary hover:text-primary/80 disabled:text-muted-foreground"
-            :disabled="!!formError"
-            @click="handleAddEvent"
-          >
-            Добавить
-          </button>
-        </div>
+        <PopoverHeader
+          title="Создать"
+          save-text="Добавить"
+          :disabled="!isFormValid"
+          :on-cancel="closeAddEventPopover"
+          :on-save="handleAddEvent"
+        />
 
-        <div v-if="formError" class="px-4 text-destructive text-sm">
+        <div v-if="formError" class="px-4 pt-2 text-destructive text-sm">
           {{ formError }}
         </div>
 
@@ -201,6 +190,7 @@ import { f7, f7Popover } from "framework7-vue";
 import { storeToRefs } from "pinia";
 import DateTimeSelector from "./DateTimeSelector.vue";
 import Select from "../ui/Select.vue";
+import PopoverHeader from "../ui/PopoverHeader.vue";
 import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
 import { useClass9Store } from "@/stores/class9Store";
 import { useRupStore } from "@/stores/rupStore";
@@ -231,6 +221,8 @@ const participants = ref<string[]>([]);
 const formError = ref<string | null>(null);
 const selectedWeekDays = ref<{ weekId: number; russianWeekDay: string }[]>([]);
 
+const isFormValid = computed(() => !!eventTitle.value && !!eventResult.value);
+
 const filteredLearningOutcomes = computed(() => {
   if (eventTitle.value) {
     return allLearningOutcomeOptions.value.filter(
@@ -245,11 +237,6 @@ const plannedHours = computed(() => {
 });
 
 const handleAddEvent = async () => {
-  if (!eventTitle.value || !eventResult.value) {
-    formError.value = "Пожалуйста, заполните все поля.";
-    return;
-  }
-
   const eventData: Omit<CalendarEvent, "id" | "createdAt" | "updatedAt"> = {
     title: eventTitle.value,
     result: eventResult.value,
@@ -263,6 +250,7 @@ const handleAddEvent = async () => {
   };
 
   try {
+    formError.value = null;
     const newEvent = await calendarStore.addEvent(eventData);
     emit("event-added", newEvent);
     closeAddEventPopover();

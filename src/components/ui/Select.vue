@@ -127,8 +127,6 @@ const smartSelectParams = computed(() => ({
   view: smartSelectView.value,
   ...(props.searchable && {
     searchbar: true,
-    searchbarPlaceholder: props.searchPlaceholder || "Поиск",
-    searchbarDisableButtonText: "Отмена",
   }),
 }));
 

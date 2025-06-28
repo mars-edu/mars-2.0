@@ -60,8 +60,14 @@ const f7params: Framework7Parameters = {
     buttonCancel: "Отмена",
   },
 
+  picker: {
+    toolbarCloseText: "Готово",
+  },
+
   smartSelect: {
     popupCloseLinkText: "Закрыть",
+    searchbarPlaceholder: "Поиск",
+    searchbarDisableText: "Отмена",
   },
 
   view: {

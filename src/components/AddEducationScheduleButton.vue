@@ -1,0 +1,213 @@
+<template>
+  <div>
+    <button
+      id="add-education-schedule-button"
+      class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-green-500 hover:bg-green-600 rounded-full transition-colors"
+      aria-label="Добавить время"
+      type="button"
+      @click.stop="openAddSchedulePopover"
+    >
+      <f7-icon
+        ios="f7:plus"
+        md="material:add"
+        size="16px"
+        class="text-white"
+      ></f7-icon>
+    </button>
+
+    <f7-popover
+      id="add-education-schedule-popover"
+      style="width: 600px !important"
+      target="#add-education-schedule-button"
+      close-on-escape
+    >
+      <div class="education-schedule-popover bg-card text-card-foreground">
+        <PopoverHeader
+          title="Создать"
+          :disabled="!isFormValid || educationScheduleStore.isLoading"
+          :is-loading="educationScheduleStore.isLoading"
+          :on-cancel="closeAddSchedulePopover"
+          :on-save="handleSaveSchedule"
+        />
+
+        <div
+          v-if="formError || educationScheduleStore.getError"
+          class="px-4 pt-2 text-destructive text-sm"
+        >
+          {{ formError || educationScheduleStore.getError }}
+        </div>
+
+        <div class="p-4 space-y-4">
+          <div class="space-y-2">
+            <label class="text-sm text-foreground" for="schedule-lesson-number">
+              Номер урока
+              <span class="text-destructive ml-1">*</span>
+            </label>
+            <f7-input
+              id="schedule-lesson-number"
+              type="number"
+              v-model:value="lessonNumber"
+              placeholder="Введите номер урока"
+            ></f7-input>
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm text-foreground" for="schedule-start-time">
+              Время начала
+              <span class="text-destructive ml-1">*</span>
+            </label>
+            <f7-input
+              id="schedule-start-time"
+              type="text"
+              readonly
+              :value="startTime"
+              placeholder="Введите время начала"
+            ></f7-input>
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm text-foreground" for="schedule-end-time">
+              Время окончания
+              <span class="text-destructive ml-1">*</span>
+            </label>
+            <f7-input
+              id="schedule-end-time"
+              type="text"
+              readonly
+              :value="endTime"
+              placeholder="Введите время окончания"
+            ></f7-input>
+          </div>
+        </div>
+      </div>
+    </f7-popover>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { f7, f7Popover, f7Icon, f7Input } from "framework7-vue";
+import { z } from "zod";
+import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
+import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+
+const educationScheduleStore = useEducationScheduleStore();
+
+const lessonNumber = ref("");
+const startTime = ref("");
+const endTime = ref("");
+const formError = ref("");
+
+let startTimePicker: any = null;
+let endTimePicker: any = null;
+
+const timeRegex = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+
+const scheduleSchema = z.object({
+  lessonNumber: z.coerce.number().min(1, "Пожалуйста, введите номер урока"),
+  startTime: z.string().regex(timeRegex, "Неверный формат времени (HH:mm)"),
+  endTime: z.string().regex(timeRegex, "Неверный формат времени (HH:mm)"),
+});
+
+const validationResult = computed(() => {
+  return scheduleSchema.safeParse({
+    lessonNumber: lessonNumber.value,
+    startTime: startTime.value,
+    endTime: endTime.value,
+  });
+});
+
+const isFormValid = computed(() => validationResult.value.success);
+
+const createPicker = (inputEl: string, valueRef: any) => {
+  const hours = Array.from({ length: 24 }, (_, i) =>
+    i.toString().padStart(2, "0")
+  );
+  const minutes = Array.from({ length: 60 }, (_, i) =>
+    i.toString().padStart(2, "0")
+  );
+
+  const initialValue = valueRef.value
+    ? valueRef.value.split(":")
+    : ["08", "30"];
+
+  return f7.picker.create({
+    inputEl: inputEl,
+    rotateEffect: true,
+    value: initialValue,
+    formatValue(values: any[]) {
+      return `${values[0]}:${values[1]}`;
+    },
+    cols: [
+      {
+        textAlign: "center",
+        values: hours,
+      },
+      {
+        divider: true,
+        content: ":",
+      },
+      {
+        textAlign: "center",
+        values: minutes,
+      },
+    ],
+    on: {
+      change: (picker: any, value: any) => {
+        valueRef.value = `${value[0]}:${value[1]}`;
+      },
+    },
+  });
+};
+
+onMounted(() => {
+  startTimePicker = createPicker("#schedule-start-time", startTime);
+  endTimePicker = createPicker("#schedule-end-time", endTime);
+});
+
+onBeforeUnmount(() => {
+  startTimePicker?.destroy();
+  endTimePicker?.destroy();
+});
+
+const openAddSchedulePopover = () => {
+  f7.popover.open(
+    "#add-education-schedule-popover",
+    "#add-education-schedule-button"
+  );
+};
+
+const closeAddSchedulePopover = () => {
+  f7.popover.close("#add-education-schedule-popover");
+  resetForm();
+};
+
+const handleSaveSchedule = async () => {
+  if (!isFormValid.value) {
+    if (!validationResult.value.success) {
+      const issues = validationResult.value.error.issues;
+      if (issues.length > 0) {
+        formError.value = issues[0].message;
+      }
+    }
+    return;
+  }
+
+  try {
+    await educationScheduleStore.addSchedule({
+      lessonNumber: Number(lessonNumber.value),
+      startTime: startTime.value,
+      endTime: endTime.value,
+    });
+    closeAddSchedulePopover();
+  } catch (error) {
+    console.error("Failed to add schedule:", error);
+  }
+};
+
+const resetForm = () => {
+  lessonNumber.value = "";
+  startTime.value = "";
+  endTime.value = "";
+  formError.value = "";
+  educationScheduleStore.clearError();
+};
+</script>
