@@ -101,8 +101,21 @@
       :parent-id="selectedKtpParentId"
     />
 
+    <AddKtpItemForm
+      v-model:opened="isAddItemFormOpen"
+      :academic-year-id="selectedAcademicYear"
+      :specialty-id="selectedSpecialtyId"
+      :course-id="selectedCourseId"
+    />
+
     <template #fixed>
-      <f7-fab position="right-bottom" slot="fixed" @click="openAddDialog">
+      <f7-fab
+        position="right-bottom"
+        slot="fixed"
+        @click="openAddDialog"
+        id="ktp-page-add-button"
+        :disabled="isAddDisabled"
+      >
         <f7-icon ios="f7:plus" md="material:add"></f7-icon>
       </f7-fab>
     </template>
@@ -116,6 +129,7 @@ import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
+import AddKtpItemForm from "@/components/AddKtpItemForm.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useClass9Store, type Class9Data } from "@/stores/class9Store";
 import { useCourseStore } from "@/stores/courseStore";
@@ -134,6 +148,9 @@ const selectedAcademicYear = ref("");
 const selectedItemId = ref<string | null>(null);
 const isPopupOpened = ref(false);
 const selectedKtpParentId = ref<string | null>(null);
+const isAddItemFormOpen = ref(false);
+const selectedSpecialtyId = ref("");
+const selectedCourseId = ref("");
 
 const academicYearOptions = computed(() => {
   return academicYears.value.map((year) => ({
@@ -141,6 +158,13 @@ const academicYearOptions = computed(() => {
     text: year.name,
   }));
 });
+
+const isAddDisabled = computed(
+  () =>
+    !selectedAcademicYear.value ||
+    !selectedSpecialtyId.value ||
+    !selectedCourseId.value
+);
 
 const getCourseNumber = (courseId: string) => {
   const course = courseStore.getCourseById(courseId);
@@ -159,7 +183,7 @@ const selectItem = (item: Class9Data) => {
 };
 
 const openAddDialog = () => {
-  f7.dialog.alert("Функция будет добавлена в будущем.", "В разработке");
+  isAddItemFormOpen.value = true;
 };
 
 onMounted(async () => {

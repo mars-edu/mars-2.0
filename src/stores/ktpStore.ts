@@ -3,7 +3,7 @@ import { ref, computed } from "vue";
 
 export interface KtpDetail {
   id: string;
-  parentId: string; // Links to the Class9Data ID
+  parentId: string;
   position: number;
   theme: string;
   totalHours: number | null;
@@ -88,6 +88,19 @@ const mockData: KtpDetail[] = [
   })),
 ];
 
+function createEmptyKtpDetail(parentId: string, position: number): KtpDetail {
+  return {
+    id: crypto.randomUUID(),
+    parentId,
+    position,
+    theme: "",
+    totalHours: null,
+    srsp: null,
+    srs: null,
+    homework: "",
+  };
+}
+
 export const useKtpStore = defineStore(
   "ktp",
   () => {
@@ -97,15 +110,41 @@ export const useKtpStore = defineStore(
 
     function fetchDetailsForParent(parentId: string) {
       loading.value = true;
-      // Simulate API call
       setTimeout(() => {
-        // In a real app, you'd filter from a larger dataset or fetch from an API
-        // For now, we return the same mock data regardless of parentId
         ktpDetails.value = mockData
-          .filter((d) => d.parentId === "mock-class9-id-1") // Simulating fetch for a specific parent
+          .filter((d) => d.parentId === "mock-class9-id-1")
           .sort((a, b) => a.position - b.position);
         loading.value = false;
       }, 300);
+    }
+
+    function addKtpDetail(
+      parentId: string,
+      data: Partial<Omit<KtpDetail, "id" | "parentId" | "position">>
+    ) {
+      const newPosition = ktpDetails.value.length + 1;
+      const newItem = {
+        ...createEmptyKtpDetail(parentId, newPosition),
+        ...data,
+      };
+      ktpDetails.value.push(newItem);
+    }
+
+    function updateKtpDetail(
+      id: string,
+      data: Partial<Omit<KtpDetail, "id" | "parentId">>
+    ) {
+      const index = ktpDetails.value.findIndex((d) => d.id === id);
+      if (index !== -1) {
+        ktpDetails.value[index] = { ...ktpDetails.value[index], ...data };
+      }
+    }
+
+    function deleteKtpDetail(id: string) {
+      ktpDetails.value = ktpDetails.value.filter((d) => d.id !== id);
+      ktpDetails.value.forEach((item, index) => {
+        item.position = index + 1;
+      });
     }
 
     const getDetailsByParentId = computed(() => {
@@ -118,6 +157,9 @@ export const useKtpStore = defineStore(
       loading,
       error,
       fetchDetailsForParent,
+      addKtpDetail,
+      updateKtpDetail,
+      deleteKtpDetail,
       getDetailsByParentId,
     };
   },
