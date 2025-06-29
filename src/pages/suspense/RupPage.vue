@@ -1,10 +1,18 @@
 <template>
-  <AsyncRouteWrapper :async-component="RupView" />
+  <AsyncRouteWrapper :async-component="pageView" />
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent } from "vue";
+import { defineAsyncComponent, computed } from "vue";
 import AsyncRouteWrapper from "@/components/AsyncRouteWrapper.vue";
+import { useUserStore } from "@/stores/userStore";
 
-const RupView = defineAsyncComponent(() => import("../rup.vue"));
+const userStore = useUserStore();
+
+const pageView = computed(() => {
+  if (userStore.isTeacher) {
+    return defineAsyncComponent(() => import("../KtpPage.vue"));
+  }
+  return defineAsyncComponent(() => import("../rup.vue"));
+});
 </script>

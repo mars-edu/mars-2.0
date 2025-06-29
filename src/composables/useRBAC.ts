@@ -68,7 +68,7 @@ export function useRBAC() {
         id: "rup",
         label: "РУП",
         icon: "doc_fill",
-        roles: [Role.ADMIN],
+        roles: [Role.ADMIN, Role.TEACHER],
         route: "/rup/",
       },
       {
