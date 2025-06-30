@@ -32,6 +32,7 @@
     "fuse.js": "^7.1.0",
     "hono": "^4.8.2",
     "lucide-vue-next": "^0.482.0",
+    "mammoth": "^1.9.1",
     "maska": "^3.1.1",
     "material-icons": "^1.13.14",
     "ofetch": "^1.4.1",
