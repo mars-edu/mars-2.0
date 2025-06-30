@@ -1,8 +1,8 @@
 <template>
   <div class="nauryz-content">
     <div class="nauryz-text">
-      <div class="nauryz-title">Наурыз мейрамы<br />құтты болсын!</div>
-      <div class="nauryz-date">22 марта 2025</div>
+      <div class="nauryz-title">С днем солиста<br />поздравляем!</div>
+      <div class="nauryz-date">6 июля</div>
     </div>
     <div
       class="nauryz-background"
@@ -11,9 +11,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
-
-</script>
+<script setup lang="ts"></script>
 
 <style scoped>
 .nauryz-content {
