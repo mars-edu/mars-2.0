@@ -15,8 +15,18 @@
           <!-- Page Header -->
           <div class="flex items-center justify-between">
             <div class="text-xl font-semibold">
-              <p>Модуль/дисциплина: <span class="text-green-600">ОДД7 - История Казахстана</span></p>
-              <p>Учебная группа: <span class="text-green-600">1 курс ФКРХТ</span></p>
+              <p>
+                Модуль/дисциплина:
+                <span class="text-green-600">{{
+                  currentJournal?.title || "Загрузка..."
+                }}</span>
+              </p>
+              <p>
+                Учебная группа:
+                <span class="text-green-600">{{
+                  currentJournal?.groupId || "Загрузка..."
+                }}</span>
+              </p>
             </div>
             <div class="flex items-center gap-2">
               <Select
@@ -37,8 +47,16 @@
               <table class="w-full border-collapse">
                 <thead>
                   <tr class="bg-muted/50">
-                    <th class="p-2 text-left w-12 border-r border-border align-top">№</th>
-                    <th class="p-2 text-left w-64 border-r border-border align-top">Обучающийся</th>
+                    <th
+                      class="p-2 text-left w-12 border-r border-border align-top"
+                    >
+                      №
+                    </th>
+                    <th
+                      class="p-2 text-left w-64 border-r border-border align-top"
+                    >
+                      Обучающийся
+                    </th>
                     <!-- Dynamic date columns -->
                     <th
                       v-for="(header, index) in tableHeaders"
@@ -46,13 +64,23 @@
                       class="px-1 py-2 text-center text-xs border-r border-border w-16 cursor-pointer hover:bg-muted"
                       @click="openDateFocus(header, index)"
                     >
-                      <span v-html="header.label.replace('\\n', '<br/>')"></span>
+                      <span
+                        v-html="header.label.replace('\\n', '<br/>')"
+                      ></span>
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(student, studentIndex) in students" :key="student.id" class="border-b border-border">
-                    <td class="px-2 py-2 text-center border-r border-border text-sm align-top">{{ studentIndex + 1 }}</td>
+                  <tr
+                    v-for="(student, studentIndex) in students"
+                    :key="student.id"
+                    class="border-b border-border"
+                  >
+                    <td
+                      class="px-2 py-2 text-center border-r border-border text-sm align-top"
+                    >
+                      {{ studentIndex + 1 }}
+                    </td>
                     <td
                       class="px-2 py-2 border-r border-border text-sm align-top cursor-pointer hover:bg-muted/50 transition-colors"
                       @click="showFloatingRow(student, studentIndex)"
@@ -152,11 +180,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, nextTick, onUnmounted } from "vue";
+import { ref, onMounted, computed, nextTick, onUnmounted, watch } from "vue";
 import { f7Page } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
+import { useCalendarStore } from "@/stores/calendarStore";
+import { useJournalStore } from "@/stores/journalStore";
 import Select from "@/components/ui/Select.vue";
 import MarkCell from "@/components/ui/MarkCell.vue";
 import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
@@ -164,10 +194,37 @@ import FloatingJournalRow from "@/components/FloatingJournalRow.vue";
 import DateColumnFocus from "@/components/DateColumnFocus.vue";
 import { storeToRefs } from "pinia";
 
+type MarkType = "date" | "pk" | "e" | "i";
+
+interface Mark {
+  type: MarkType;
+  date?: string;
+  values: Array<string | null>;
+}
+
+interface Student {
+  id: number;
+  name: string;
+  marks: Mark[];
+}
+
+interface JournalDetailsProps {
+  f7route: any;
+}
+
+const props = defineProps<JournalDetailsProps>();
+
+const journalId = computed(() => props.f7route.params.id as string);
+
 const activeNavItem = ref("journal-details");
 
 const academicYearStore = useAcademicYearStore();
 const { academicYears } = storeToRefs(academicYearStore);
+
+const calendarStore = useCalendarStore();
+const journalStore = useJournalStore();
+const { getJournalById } = storeToRefs(journalStore);
+
 const selectedAcademicYear = ref("");
 
 const academicYearOptions = computed(() =>
@@ -176,6 +233,16 @@ const academicYearOptions = computed(() =>
     text: year.name,
   }))
 );
+
+const currentJournal = computed(() => {
+  if (!journalId.value) return null;
+  return journalStore.getJournalById(journalId.value);
+});
+
+const currentEvent = computed(() => {
+  if (!journalId.value) return null;
+  return calendarStore.getEventById(journalId.value);
+});
 
 const selectedStudent = ref<any>(null);
 const selectedStudentIndex = ref(0);
@@ -191,11 +258,49 @@ const editingCell = ref<{
 } | null>(null);
 const editedValue = ref("");
 
-const getMark = (
-  studentIndex: number,
-  colIndex: number,
-  markIndex: number
-) => {
+const generateDates = () => {
+  // If we have a current event, use its start and end dates
+  if (currentEvent.value) {
+    const startDate = new Date(currentEvent.value.startDate);
+    const endDate = new Date(currentEvent.value.endDate);
+
+    const dates: Mark[] = [];
+    const currentDate = new Date(startDate);
+
+    // Generate date columns
+    while (currentDate <= endDate) {
+      const dateStr = `${currentDate.getDate().toString().padStart(2, "0")}.${(
+        currentDate.getMonth() + 1
+      )
+        .toString()
+        .padStart(2, "0")}\n${currentDate.getFullYear()}`;
+      dates.push({
+        type: "date",
+        date: dateStr,
+        values: [null, null],
+      });
+
+      // Increment to next day
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // Add special columns (PK, E, I)
+    dates.push({ type: "pk", values: [null, null] });
+    dates.push({ type: "e", values: [null, null] });
+    dates.push({ type: "i", values: [null, null] });
+
+    return dates;
+  }
+
+  // Fallback if no journal data available
+  return Array.from({ length: 17 }, () => ({
+    type: "date" as const,
+    date: "",
+    values: [null, null],
+  }));
+};
+
+const getMark = (studentIndex: number, colIndex: number, markIndex: number) => {
   const mark = students.value[studentIndex].marks[colIndex].values[markIndex];
   if (mark === null) return "";
   return String(mark ?? "");
@@ -284,7 +389,10 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
   });
 };
 
-const openDateFocus = (header: { type: string; label: string }, index: number) => {
+const openDateFocus = (
+  header: { type: string; label: string },
+  index: number
+) => {
   if (header.type !== "date") return;
   focusedColumnHeader.value = header;
   focusedDateIndex.value = index;
@@ -320,7 +428,24 @@ onMounted(async () => {
   if (academicYearStore.academicYears.length === 0) {
     await academicYearStore.fetchAcademicYears();
   }
-  selectedAcademicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
+
+  selectedAcademicYear.value =
+    academicYearStore.getActiveAcademicYear?.id || "";
+
+  await calendarStore.fetchEvents();
+  await journalStore.fetchJournals();
+
+  // Generate student list based on participants from the journal
+  if (currentJournal.value?.students?.length) {
+    students.value = currentJournal.value.students.map(
+      (student: string, index: number) => ({
+        id: index + 1,
+        name: student,
+        marks: generateDates(),
+      })
+    );
+  }
+
   window.addEventListener("keydown", handleGlobalKeydown);
 });
 
@@ -338,7 +463,7 @@ const tableHeaders = computed(() => {
   if (students.value.length === 0) return [];
   return students.value[0].marks.map((mark) => {
     if (mark.type === "date") {
-      return { type: "date", label: mark.date! };
+      return { type: "date", label: mark.date || "" };
     }
     if (mark.type === "pk") {
       return { type: "pk", label: "РК" };
@@ -353,72 +478,27 @@ const tableHeaders = computed(() => {
   });
 });
 
-const students = ref([
+const students = ref<Student[]>([
   {
     id: 1,
     name: "Салкимбаев Саке",
-    marks: [
-      { type: "date", date: "27.01\n2025", values: ["90", "90"] },
-      { type: "date", date: "28.01\n2025", values: ["90", "90"] },
-      { type: "date", date: "29.01\n2025", values: ["90", null] },
-      { type: "date", date: "30.01\n2025", values: ["90", null] },
-      { type: "date", date: "31.01\n2025", values: ["90", null] },
-      { type: "date", date: "01.02\n2025", values: [null, null] },
-      { type: "pk", values: ["90", null] },
-      { type: "date", date: "02.02\n2025", values: ["90", null] },
-      { type: "date", date: "03.02\n2025", values: [null, null] },
-      { type: "date", date: "04.02\n2025", values: ["90", "90"] },
-      { type: "date", date: "05.02\n2025", values: [null, null] },
-      { type: "date", date: "06.02\n2025", values: [null, null] },
-      { type: "date", date: "07.02\n2025", values: [null, null] },
-      { type: "date", date: "08.02\n2025", values: [null, null] },
-      { type: "date", date: "09.02\n2025", values: [null, null] },
-      { type: "pk", values: ["90", null] },
-      { type: "e", values: [null, null] },
-      { type: "i", values: [null, null] },
-    ],
-  },
-  {
-    id: 2,
-    name: "Салкимбаев Саке",
-    marks: Array.from({ length: 17 }, () => ({
-      type: "date",
-      values: [null, null],
-    })),
-  },
-  {
-    id: 3,
-    name: "Салкимбаев Саке",
-    marks: Array.from({ length: 17 }, () => ({
-      type: "date",
-      values: [null, null],
-    })),
-  },
-  {
-    id: 4,
-    name: "Салкимбаев Саке",
-    marks: Array.from({ length: 17 }, () => ({
-      type: "date",
-      values: [null, null],
-    })),
-  },
-  {
-    id: 5,
-    name: "Салкимбаев Саке",
-    marks: Array.from({ length: 17 }, () => ({
-      type: "date",
-      values: [null, null],
-    })),
+    marks: generateDates(),
   },
 ]);
 
-
-
-students.value.forEach((student, index) => {
-  if (index > 0) {
-    student.marks.forEach((mark, i) => {
-      mark.type = students.value[0].marks[i].type;
-    });
-  }
-});
+watch(
+  () => currentJournal.value,
+  (newJournal) => {
+    if (newJournal?.students?.length) {
+      students.value = newJournal.students.map(
+        (student: string, index: number) => ({
+          id: index + 1,
+          name: student,
+          marks: generateDates(),
+        })
+      );
+    }
+  },
+  { immediate: true }
+);
 </script>

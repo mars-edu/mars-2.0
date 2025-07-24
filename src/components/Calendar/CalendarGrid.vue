@@ -1,6 +1,6 @@
 <template>
   <div
-    class="grid grid-cols-7 gap-px bg-border rounded-lg border border-border"
+    class="grid grid-cols-7 auto-rows-[minmax(8rem,auto)] gap-px bg-border rounded-lg border border-border"
   >
     <!-- Weekday headers -->
     <div

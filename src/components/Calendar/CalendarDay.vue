@@ -23,7 +23,7 @@
         {{ day.dayNumber }}
       </span>
     </div>
-    <div class="space-y-1 overflow-y-auto max-h-24 scrollbar-thin">
+    <div class="space-y-1 overflow-y-auto scrollbar-thin">
       <CalendarEvent
         v-for="(event, index) in day.events"
         :key="`${day.date}-${index}`"

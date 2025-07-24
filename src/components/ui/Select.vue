@@ -149,11 +149,13 @@ const smartSelectReady = computed(() => {
 
 .smart-select-list-container {
   border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border));
   background-color: hsl(var(--background));
   --f7-list-item-padding-horizontal: 0px;
   --f7-list-item-padding-vertical: 0px;
   --f7-list-item-min-height: auto;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
 }
 
 .smart-select-list-container .f7-list-item {
@@ -173,6 +175,21 @@ const smartSelectReady = computed(() => {
   justify-content: space-between;
   align-items: center;
   border-bottom: none;
+  position: relative;
+}
+
+.smart-select-list-container .f7-list-item .item-content .item-inner::after {
+  content: "";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.6;
 }
 
 .smart-select-list-container
@@ -185,6 +202,7 @@ const smartSelectReady = computed(() => {
   flex-shrink: 0;
   margin-right: 0.5rem;
   color: hsl(var(--muted-foreground));
+  font-weight: 500;
 }
 
 .smart-select-list-container
@@ -223,5 +241,39 @@ const smartSelectReady = computed(() => {
 
 .smart-select-list-container:hover {
   border-color: hsl(var(--border-hover, var(--border)));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.list .item-after {
+  margin-left: 0 !important;
+  @apply text-sm;
+  @apply py-[0.07rem];
+}
+
+.smart-select-popup .list ul {
+  background-color: hsl(var(--card)) !important;
+}
+
+.smart-select-popup .list li {
+  transition: background-color 0.15s ease;
+}
+
+.smart-select-popup .list li:hover {
+  background-color: hsl(var(--muted));
+}
+
+.smart-select-popup .navbar {
+  background-color: hsl(var(--card)) !important;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.smart-select-popup .searchbar {
+  background-color: hsl(var(--card)) !important;
+}
+
+.smart-select-popup .searchbar-input {
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.375rem;
 }
 </style>
