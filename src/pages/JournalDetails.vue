@@ -181,12 +181,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, nextTick, onUnmounted, watch } from "vue";
-import { f7Page } from "framework7-vue";
+import { f7Page, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useJournalStore } from "@/stores/journalStore";
+import { useStudentStore } from "@/stores/studentStore";
 import Select from "@/components/ui/Select.vue";
 import MarkCell from "@/components/ui/MarkCell.vue";
 import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
@@ -208,13 +209,9 @@ interface Student {
   marks: Mark[];
 }
 
-interface JournalDetailsProps {
-  f7route: any;
-}
-
-const props = defineProps<JournalDetailsProps>();
-
-const journalId = computed(() => props.f7route.params.id as string);
+const journalId = computed(() => {
+  return f7.views.main.router.currentRoute.params.id as string;
+});
 
 const activeNavItem = ref("journal-details");
 
@@ -224,6 +221,9 @@ const { academicYears } = storeToRefs(academicYearStore);
 const calendarStore = useCalendarStore();
 const journalStore = useJournalStore();
 const { getJournalById } = storeToRefs(journalStore);
+
+const studentStore = useStudentStore();
+const { getStudentFullName } = studentStore;
 
 const selectedAcademicYear = ref("");
 
@@ -425,10 +425,6 @@ const updateStudent = (updatedStudent: any) => {
 };
 
 onMounted(async () => {
-  if (academicYearStore.academicYears.length === 0) {
-    await academicYearStore.fetchAcademicYears();
-  }
-
   selectedAcademicYear.value =
     academicYearStore.getActiveAcademicYear?.id || "";
 
@@ -440,7 +436,7 @@ onMounted(async () => {
     students.value = currentJournal.value.students.map(
       (student: string, index: number) => ({
         id: index + 1,
-        name: student,
+        name: getStudentFullName(student),
         marks: generateDates(),
       })
     );
@@ -493,7 +489,7 @@ watch(
       students.value = newJournal.students.map(
         (student: string, index: number) => ({
           id: index + 1,
-          name: student,
+          name: getStudentFullName(student),
           marks: generateDates(),
         })
       );

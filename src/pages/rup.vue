@@ -530,8 +530,6 @@ const handleTransferCourses = () => {
 
 onMounted(async () => {
   await specialtyStore.fetchSpecialties();
-  await courseStore.fetchCourses();
-  await academicYearStore.fetchAcademicYears();
   if (!rupStore.selectedAcademicYearId) {
     rupStore.setSelectedAcademicYear(
       academicYearStore.getActiveAcademicYear?.id || null

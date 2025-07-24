@@ -28,6 +28,7 @@
         v-for="(event, index) in day.events"
         :key="`${day.date}-${index}`"
         :event="event"
+        @click="onEventClick"
       />
     </div>
   </div>
@@ -36,6 +37,21 @@
 <script setup lang="ts">
 import type { CalendarDay } from "@/composables/useCalendar";
 import CalendarEvent from "./CalendarEvent.vue";
+
+const emit = defineEmits<{
+  (
+    e: "event-click",
+    event: import("@/composables/useCalendar").CalendarEvent,
+    evt: MouseEvent
+  ): void;
+}>();
+
+const onEventClick = (
+  eventData: import("@/composables/useCalendar").CalendarEvent,
+  evt: MouseEvent
+) => {
+  emit("event-click", eventData, evt);
+};
 
 defineProps<{
   day: CalendarDay;

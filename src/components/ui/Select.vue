@@ -154,7 +154,6 @@ const smartSelectReady = computed(() => {
   --f7-list-item-padding-horizontal: 0px;
   --f7-list-item-padding-vertical: 0px;
   --f7-list-item-min-height: auto;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
 }
 
@@ -247,7 +246,7 @@ const smartSelectReady = computed(() => {
 .list .item-after {
   margin-left: 0 !important;
   @apply text-sm;
-  @apply py-[0.07rem];
+  @apply py-[0.1rem];
 }
 
 .smart-select-popup .list ul {

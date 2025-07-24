@@ -63,19 +63,6 @@ export const useAcademicYearStore = defineStore(
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
-    async function fetchAcademicYears() {
-      loading.value = true;
-      try {
-        // Data will be automatically loaded by Pinia persistence
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to load academic years";
-      } finally {
-        loading.value = false;
-      }
-    }
-
     async function addAcademicYear(
       academicYearData: Omit<AcademicYear, "id" | "createdAt" | "updatedAt">
     ) {
@@ -210,7 +197,6 @@ export const useAcademicYearStore = defineStore(
       academicYearsAsNumbers,
       isLoading,
       getError,
-      fetchAcademicYears,
       addAcademicYear,
       updateAcademicYear,
       deleteAcademicYear,

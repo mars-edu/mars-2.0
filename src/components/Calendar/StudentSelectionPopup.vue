@@ -18,25 +18,23 @@
             <Select
               label="Курс"
               placeholder="Выберите курс"
-              v-model="studentFilterCourse"
+              v-model="filters.course"
               :options="courseOptions"
               name="student-course"
               id="student-course"
-              searchable
             />
             <Select
               label="База"
               placeholder="Выберите базу"
-              v-model="studentFilterBase"
+              v-model="filters.base"
               :options="baseOptions"
               name="student-base"
               id="student-base"
-              searchable
             />
             <Select
               label="Специальность"
               placeholder="Выберите специальность"
-              v-model="studentFilterSpecialty"
+              v-model="filters.specialty"
               :options="specialtyOptions"
               name="student-specialty"
               id="student-specialty"
@@ -45,7 +43,7 @@
             <Select
               label="Язык обучения"
               placeholder="Выберите язык"
-              v-model="studentFilterLanguage"
+              v-model="filters.language"
               :options="languageOptions"
               name="student-language"
               id="student-language"
@@ -53,7 +51,7 @@
             <Select
               label="Пол"
               placeholder="Выберите пол"
-              v-model="studentFilterGender"
+              v-model="filters.gender"
               :options="genderOptions"
               name="student-gender"
               id="student-gender"
@@ -63,8 +61,7 @@
           <f7-input
             type="text"
             placeholder="Поиск по ФИО..."
-            v-model:value="studentSearchTerm"
-            class="!bg-white"
+            v-model:value="filters.searchTerm"
             clear-button
           />
 
@@ -96,13 +93,12 @@
                 >
                   <td class="p-2">
                     <f7-checkbox
-                      :checked="localSelectedStudents.includes(student.id)"
+                      :checked="localSelectedStudents.has(student.id)"
                       @change="toggleStudentSelection(student.id)"
                     />
                   </td>
                   <td class="p-2">
-                    {{ student.surname }} {{ student.firstName }}
-                    {{ student.patronymic }}
+                    {{ studentStore.getStudentFullName(student.id) }}
                   </td>
                   <td class="p-2 text-center">X</td>
                   <td class="p-2 text-center">{{ student.course }}</td>
@@ -133,9 +129,10 @@
 </style>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, reactive } from "vue";
 import { f7Input, f7Checkbox, f7Popup, f7Page } from "framework7-vue";
 import { storeToRefs } from "pinia";
+import { withAllOption, getGenderOptions } from "@/lib/utils";
 import Select from "../ui/Select.vue";
 import PopoverHeader from "../ui/PopoverHeader.vue";
 import { useStudentStore } from "@/stores/studentStore";
@@ -158,93 +155,102 @@ const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
 const baseStore = useBaseStore();
 const courseStore = useCourseStore();
-const { filteredStudents } = storeToRefs(studentStore);
+const { students } = storeToRefs(studentStore);
 const { specialties } = storeToRefs(specialtyStore);
 const { languages } = storeToRefs(languageStore);
 const { bases } = storeToRefs(baseStore);
 const { courses } = storeToRefs(courseStore);
 
 const isPopupOpen = ref(false);
-const localSelectedStudents = ref<string[]>([]);
-const studentSearchTerm = ref("");
-const studentFilterCourse = ref("all");
-const studentFilterBase = ref("all");
-const studentFilterSpecialty = ref("all");
-const studentFilterLanguage = ref("all");
-const studentFilterGender = ref("");
+const localSelectedStudents = reactive(new Set<string>());
+const filters = reactive({
+  searchTerm: "",
+  course: "all",
+  base: "all",
+  specialty: "all",
+  language: "all",
+  gender: "",
+});
+
+const filteredStudents = computed(() => {
+  const term = filters.searchTerm.trim().toLowerCase();
+
+  return students.value
+    .map((s) => ({
+      ...s,
+      course: studentStore.getCourseByStudentId(s.id) || 1,
+    }))
+    .filter(
+      (s) => filters.course === "all" || s.course.toString() === filters.course
+    )
+    .filter((s) => filters.base === "all" || s.base.toString() === filters.base)
+    .filter(
+      (s) => filters.specialty === "all" || s.specialty === filters.specialty
+    )
+    .filter(
+      (s) => filters.language === "all" || s.language === filters.language
+    )
+    .filter((s) => !filters.gender || s.gender === filters.gender)
+    .filter((s) =>
+      term
+        ? studentStore.getStudentFullName(s.id).toLowerCase().includes(term)
+        : true
+    );
+});
 
 const isAllStudentsSelected = computed(
   () =>
     filteredStudents.value.length > 0 &&
-    localSelectedStudents.value.length === filteredStudents.value.length
+    localSelectedStudents.size === filteredStudents.value.length
 );
 
-const courseOptions = computed(() => [
-  { value: "all", text: "Все" },
-  ...courses.value.map((course) => ({
-    value: course.number,
-    text: course.number,
-  })),
-]);
-
-const baseOptions = computed(() => [
-  { value: "all", text: "Все" },
-  ...bases.value.map((base) => ({
-    value: base.value,
-    text: base.text,
-  })),
-]);
-
-const specialtyOptions = computed(() => {
-  const options = [{ value: "all", text: "Все" }];
-  specialties.value.forEach((specialty) => {
-    options.push({ value: specialty.code, text: specialty.name });
-  });
-  return options;
-});
-
-const languageOptions = computed(() => {
-  const options = [{ value: "all", text: "Все" }];
-  languages.value.forEach((language) => {
-    options.push({ value: language.code, text: language.name });
-  });
-  return options;
-});
-
-const genderOptions = computed(() => [
-  { value: "", text: "Все" },
-  { value: "male", text: "Мужской" },
-  { value: "female", text: "Женский" },
-]);
-
-watch(
-  () => isPopupOpen.value,
-  (isOpen) => {
-    if (isOpen) {
-      resetFilters();
-    }
-  }
+const courseOptions = computed(() =>
+  withAllOption(
+    courses.value.map((course) => ({
+      value: course.number,
+      text: course.number,
+    })),
+    "Все",
+    "all"
+  )
 );
 
-watch(studentSearchTerm, (value) =>
-  studentStore.setFilter("searchTerm", value)
+const baseOptions = computed(() =>
+  withAllOption(
+    bases.value.map((base) => ({ value: base.value, text: base.text })),
+    "Все",
+    "all"
+  )
 );
-watch(studentFilterCourse, (value) =>
-  studentStore.setFilter("course", value === "all" ? "" : value)
+
+const specialtyOptions = computed(() =>
+  withAllOption(
+    specialties.value.map((specialty) => ({
+      value: specialty.code,
+      text: specialty.name,
+    })),
+    "Все",
+    "all"
+  )
 );
-watch(studentFilterBase, (value) =>
-  studentStore.setFilter("base", value === "all" ? "" : value)
+
+const languageOptions = computed(() =>
+  withAllOption(
+    languages.value.map((language) => ({
+      value: language.code,
+      text: language.name,
+    })),
+    "Все",
+    "all"
+  )
 );
-watch(studentFilterSpecialty, (value) =>
-  studentStore.setFilter("specialty", value === "all" ? "" : value)
-);
-watch(studentFilterLanguage, (value) =>
-  studentStore.setFilter("language", value === "all" ? "" : value)
-);
-watch(studentFilterGender, (value) => studentStore.setFilter("gender", value));
+
+const genderOptions = computed(() => getGenderOptions());
 
 const open = (currentSelection: string[]) => {
-  localSelectedStudents.value = [...currentSelection];
+  resetFilters();
+  localSelectedStudents.clear();
+  currentSelection.forEach((id) => localSelectedStudents.add(id));
   isPopupOpen.value = true;
 };
 
@@ -258,35 +264,36 @@ const onPopupClosed = () => {
 };
 
 const save = () => {
-  emit("save", localSelectedStudents.value);
+  emit("save", Array.from(localSelectedStudents));
   internalClose();
 };
 
 const resetFilters = () => {
-  studentSearchTerm.value = "";
-  studentFilterCourse.value = "all";
-  studentFilterBase.value = "all";
-  studentFilterSpecialty.value = "all";
-  studentFilterLanguage.value = "all";
-  studentFilterGender.value = "";
-  studentStore.clearFilters();
+  Object.assign(filters, {
+    searchTerm: "",
+    course: "all",
+    base: "all",
+    specialty: "all",
+    language: "all",
+    gender: "",
+  });
 };
 
 const toggleStudentSelection = (studentId: string) => {
-  const index = localSelectedStudents.value.indexOf(studentId);
-  if (index > -1) {
-    localSelectedStudents.value.splice(index, 1);
+  if (localSelectedStudents.has(studentId)) {
+    localSelectedStudents.delete(studentId);
   } else {
-    localSelectedStudents.value.push(studentId);
+    localSelectedStudents.add(studentId);
   }
 };
 
 const toggleSelectAllStudents = () => {
   if (isAllStudentsSelected.value) {
-    localSelectedStudents.value = [];
+    localSelectedStudents.clear();
   } else {
-    localSelectedStudents.value = filteredStudents.value.map(
-      (student) => student.id
+    localSelectedStudents.clear();
+    filteredStudents.value.forEach((student) =>
+      localSelectedStudents.add(student.id)
     );
   }
 };

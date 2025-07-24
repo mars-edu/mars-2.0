@@ -41,10 +41,20 @@ export const useTeacherStore = defineStore("teacher", () => {
 
   const getAllTeachers = computed(() => teachers.value);
 
+  const getTeacherFullName = (idOrTeacher: string | Teacher): string => {
+    let teacher: Teacher | undefined;
+    if (typeof idOrTeacher === "string") {
+      teacher = teachers.value.find((t) => t.id === idOrTeacher);
+    } else {
+      teacher = idOrTeacher;
+    }
+    if (!teacher) return typeof idOrTeacher === "string" ? idOrTeacher : "";
+    return `${teacher.surname} ${teacher.firstName} ${teacher.patronymic}`;
+  };
+
   const filteredTeachers = computed(() => {
     let teachersToFilter = [...teachers.value];
 
-    // Apply standard filters first
     teachersToFilter = teachersToFilter.filter((teacher) => {
       const positionMatch =
         !filters.value.position || teacher.position === filters.value.position;
@@ -60,7 +70,7 @@ export const useTeacherStore = defineStore("teacher", () => {
     if (filters.value.searchTerm) {
       const teachersWithFio = teachersToFilter.map((teacher) => ({
         ...teacher,
-        fio: `${teacher.surname} ${teacher.firstName} ${teacher.patronymic}`,
+        fio: getTeacherFullName(teacher).toLowerCase(),
       }));
 
       const fuse = new Fuse(teachersWithFio, {
@@ -91,7 +101,6 @@ export const useTeacherStore = defineStore("teacher", () => {
       isLoading.value = true;
       error.value = null;
 
-
       const newTeacher: Teacher = {
         id: crypto.randomUUID(),
         ...payload,
@@ -110,7 +119,6 @@ export const useTeacherStore = defineStore("teacher", () => {
     try {
       isLoading.value = true;
       error.value = null;
-
 
       const index = teachers.value.findIndex((s) => s.id === id);
       if (index === -1) throw new Error("Teacher not found");
@@ -131,7 +139,6 @@ export const useTeacherStore = defineStore("teacher", () => {
     try {
       isLoading.value = true;
       error.value = null;
-
 
       const index = teachers.value.findIndex((s) => s.id === id);
       if (index === -1) throw new Error("Teacher not found");
@@ -177,5 +184,6 @@ export const useTeacherStore = defineStore("teacher", () => {
     clearError,
     reset,
     getError,
+    getTeacherFullName,
   };
 });

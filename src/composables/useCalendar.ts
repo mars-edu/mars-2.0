@@ -6,6 +6,7 @@ import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
 
 export interface CalendarEvent {
+  id: string;
   title: string;
   time: string;
   type: string;
@@ -154,6 +155,7 @@ export function useCalendar() {
             if (ws && ws.startTime) time = ws.startTime;
           }
           return {
+            id: event.id,
             title: event.title,
             time,
             type: "task", // Could derive from event data

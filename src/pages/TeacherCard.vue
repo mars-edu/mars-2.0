@@ -78,8 +78,7 @@
                   >
                     <td class="px-4 py-3">{{ index + 1 }}</td>
                     <td class="px-4 py-3">
-                      {{ teacher.surname }} {{ teacher.firstName }}
-                      {{ teacher.patronymic }}
+                      {{ teacherStore.getTeacherFullName(teacher.id) }}
                     </td>
                     <td class="px-4 py-3">{{ teacher.position }}</td>
                     <td class="px-4 py-3">{{ teacher.employmentYear }}</td>
@@ -113,6 +112,7 @@ import AddTeacherButton from "@/components/AddTeacherButton.vue";
 import EditTeacherButton from "@/components/EditTeacherButton.vue";
 import Select from "@/components/ui/Select.vue";
 import { useTeacherStore, type Teacher } from "@/stores/teacherStore";
+import { withAllOption, getGenderOptions } from "@/lib/utils";
 import { usePositionStore } from "@/stores/positionStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
@@ -141,27 +141,25 @@ onMounted(() => {
   selectedTeacher.value = null;
 });
 
-const positionOptions = computed(() => {
-  const options = [{ value: "", text: "Все" }];
-  positions.value.forEach((position) => {
-    options.push({ value: position.name, text: position.name });
-  });
-  return options;
-});
+const positionOptions = computed(() =>
+  withAllOption(
+    positions.value.map((position) => ({
+      value: position.name,
+      text: position.name,
+    }))
+  )
+);
 
-const employmentYearOptions = computed(() => {
-  const options = [{ value: "", text: "Все" }];
-  academicYearsAsNumbers.value.forEach((year) => {
-    options.push({ value: year.toString(), text: year.toString() });
-  });
-  return options;
-});
+const employmentYearOptions = computed(() =>
+  withAllOption(
+    academicYearsAsNumbers.value.map((year) => ({
+      value: year.toString(),
+      text: year.toString(),
+    }))
+  )
+);
 
-const genderOptions = computed(() => [
-  { value: "", text: "Все" },
-  { value: "male", text: "Мужской" },
-  { value: "female", text: "Женский" },
-]);
+const genderOptions = computed(() => getGenderOptions());
 
 watch(selectedPosition, (newValue) => {
   teacherStore.setFilter("position", newValue);
@@ -184,7 +182,7 @@ const selectTeacher = async (teacher: Teacher) => {
   await nextTick();
   f7.popover.open(
     `#edit-teacher-popover-${teacher.id}`,
-    `#teacher-item-${teacher.id}`,
+    `#teacher-item-${teacher.id}`
   );
 };
 </script>

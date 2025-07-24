@@ -15,6 +15,10 @@ JWT_SECRET = "0e3dff721c946ac26b873052e9e43560d0124d1548aa8cb8621daa6eb01c5735"
 JWT_EXPIRY = "24h"
 FRONTEND_URL_DEV = "https://mars-2-0.pages.dev"
 FRONTEND_URL = "https://iam-mars.kz"
+R2_ENDPOINT = "https://1baf07e2bf54af133428fea840266f45.r2.cloudflarestorage.com"
+R2_BUCKET_NAME = "mars"
+R2_ACCESS_KEY_ID = "ebc5e573410f187ed09ecb1270496df8"
+R2_SECRET_ACCESS_KEY = "21b319ab9ded11101670a2c31687756d26269fb6fcaafbf4819c959fbc0f4ca5"
 
 [[d1_databases]]
 binding = "DB"

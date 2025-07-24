@@ -70,7 +70,11 @@
 
         <!-- Calendar views based on active tab -->
         <div v-if="activeTab === 'month'">
-          <CalendarGrid :days="calendarDays" :weekdays="weekdays" />
+          <CalendarGrid
+            :days="calendarDays"
+            :weekdays="weekdays"
+            @event-click="handleEventClick"
+          />
         </div>
 
         <div v-else-if="activeTab === 'week'">
@@ -95,10 +99,17 @@
       </div>
     </f7-page-content>
   </f7-page>
+
+  <EditEventPopover
+    v-if="selectedEvent"
+    :event="selectedEvent"
+    @updated="handleEventUpdated"
+    @cancel="selectedEvent = null"
+  />
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch, nextTick } from "vue";
 import { f7, f7ready, f7Page, f7PageContent } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import { useCalendar } from "@/composables/useCalendar";
@@ -106,13 +117,19 @@ import CalendarToolbar from "@/components/Calendar/CalendarToolbar.vue";
 import CalendarNavigation from "@/components/Calendar/CalendarNavigation.vue";
 import CalendarHeader from "@/components/Calendar/CalendarHeader.vue";
 import CalendarGrid from "@/components/Calendar/CalendarGrid.vue";
+import EditEventPopover from "@/components/Calendar/EditEventPopover.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
-import { type CalendarEvent as PlanningCalendarEvent } from "@/stores/calendarStore";
+import { type CalendarEvent as UseCalendarEvent } from "@/composables/useCalendar";
+import { type CalendarEvent as StoreCalendarEvent } from "@/stores/calendarStore";
+import { useCalendarStore } from "@/stores/calendarStore";
 
 const calendarContainer = ref<HTMLElement | null>(null);
 const isAddPopoverOpen = ref(false);
 const isSidebarVisible = ref(false);
 const activeNavItem = ref("calendar");
+
+const selectedEvent = ref<StoreCalendarEvent | null>(null);
+const calendarStore = useCalendarStore();
 
 const isMouseInLeftCorner = ref(false);
 const isHoveringLeftCorner = ref(false);
@@ -227,9 +244,28 @@ const handleSearch = (query: string) => {
   console.log(`Search query: ${query}`);
 };
 
-const addEvent = (event: PlanningCalendarEvent) => {
+const addEvent = (event: any) => {
   // For now, simply log the event and ensure any needed UI refresh happens automatically via store reactivity
   console.log("New event added", event);
+};
+
+const handleEventClick = async (
+  eventData: UseCalendarEvent,
+  evt: MouseEvent
+) => {
+  const fullEvent = calendarStore.getEventById(eventData.id);
+  if (fullEvent) {
+    selectedEvent.value = fullEvent;
+  } else {
+    // Fallback to minimal data if not found
+    selectedEvent.value = eventData as unknown as StoreCalendarEvent;
+  }
+  await nextTick();
+  f7.popover.open("#edit-event-popover", evt.target as HTMLElement);
+};
+
+const handleEventUpdated = async (updatedEvent: any) => {
+  selectedEvent.value = null;
 };
 </script>
 

@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import auth from "./controllers/authController.js";
 import ws from "./controllers/websocketController.js";
+import files from "./controllers/fileController.js";
 import { getPrismaClient } from "./utils/prismaClient.js";
 import type { Env } from "./types/env.js";
 
@@ -31,6 +32,7 @@ api.get("/", (c) => {
 
 api.route("/auth", auth);
 api.route("/ws", ws);
+api.route("/files", files);
 
 const app = new Hono<{ Bindings: Env }>();
 

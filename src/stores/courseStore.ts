@@ -63,18 +63,6 @@ export const useCourseStore = defineStore(
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
-    async function fetchCourses() {
-      loading.value = true;
-      try {
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to load courses";
-      } finally {
-        loading.value = false;
-      }
-    }
-
     async function addCourse(
       courseData: Omit<Course, "id" | "createdAt" | "updatedAt">
     ) {
@@ -161,7 +149,6 @@ export const useCourseStore = defineStore(
       getCourseById,
       isLoading,
       getError,
-      fetchCourses,
       addCourse,
       updateCourse,
       deleteCourse,

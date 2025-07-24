@@ -115,6 +115,7 @@ import AddStudentButton from "@/components/AddStudentButton.vue";
 import EditStudentButton from "@/components/EditStudentButton.vue";
 import Select from "@/components/ui/Select.vue";
 import { useStudentStore, type Student } from "@/stores/studentStore";
+import { withAllOption, getGenderOptions } from "@/lib/utils";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
@@ -153,35 +154,35 @@ onMounted(() => {
   selectedStudent.value = null;
 });
 
-const specialtyOptions = computed(() => {
-  const options = [{ value: "all", text: "Все" }];
-  specialties.value.forEach((specialty) => {
-    options.push({ value: specialty.code, text: specialty.name });
-  });
-  return options;
-});
+const specialtyOptions = computed(() =>
+  withAllOption(
+    specialties.value.map((specialty) => ({
+      value: specialty.code,
+      text: specialty.name,
+    })),
+    "Все",
+    "all"
+  )
+);
 
-const languageOptions = computed(() => {
-  const options = [{ value: "all", text: "Все" }];
-  languages.value.forEach((language) => {
-    options.push({ value: language.code, text: language.name });
-  });
-  return options;
-});
+const languageOptions = computed(() =>
+  withAllOption(
+    languages.value.map((language) => ({
+      value: language.code,
+      text: language.name,
+    })),
+    "Все",
+    "all"
+  )
+);
 
-const genderOptions = computed(() => [
-  { value: "", text: "Все" },
-  { value: "male", text: "Мужской" },
-  { value: "female", text: "Женский" },
-]);
+const genderOptions = computed(() => getGenderOptions());
 
-const baseOptions = computed(() => [
-  { value: "", text: "Все" },
-  ...bases.value.map((base) => ({
-    value: base.value,
-    text: base.text,
-  })),
-]);
+const baseOptions = computed(() =>
+  withAllOption(
+    bases.value.map((base) => ({ value: base.value, text: base.text }))
+  )
+);
 
 const academicYearOptions = computed(() => {
   return academicYears.value.map((year) => ({

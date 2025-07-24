@@ -12,13 +12,33 @@
     </div>
 
     <!-- Calendar days -->
-    <CalendarDay v-for="day in days" :key="day.date" :day="day" />
+    <CalendarDay
+      v-for="day in days"
+      :key="day.date"
+      :day="day"
+      @event-click="onEventClick"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { CalendarDay as CalendarDayType } from "@/composables/useCalendar";
 import CalendarDay from "./CalendarDay.vue";
+
+const emit = defineEmits<{
+  (
+    e: "event-click",
+    event: import("@/composables/useCalendar").CalendarEvent,
+    evt: MouseEvent
+  ): void;
+}>();
+
+const onEventClick = (
+  eventData: import("@/composables/useCalendar").CalendarEvent,
+  evt: MouseEvent
+) => {
+  emit("event-click", eventData, evt);
+};
 
 defineProps<{
   days: CalendarDayType[];

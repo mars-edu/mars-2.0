@@ -1,6 +1,7 @@
 <template>
   <div
-    class="text-xs p-2 rounded-md truncate border-l-2 transition-shadow duration-200 hover:shadow-md"
+    class="text-xs p-2 rounded-md truncate border-l-2 transition-shadow duration-200 hover:shadow-md cursor-pointer"
+    @click="handleClick"
     :class="{
       'bg-green-50 hover:bg-green-100 border-l-green-600 dark:bg-green-900/20 dark:hover:bg-green-900/30 dark:border-l-green-400 lavanda:bg-green-100/20 lavanda:hover:bg-green-100/30 lavanda:border-l-green-300':
         event.type === 'class',
@@ -19,8 +20,17 @@
 
 <script setup lang="ts">
 import type { CalendarEvent } from "@/composables/useCalendar";
+import { defineEmits } from "vue";
 
-defineProps<{
+const props = defineProps<{
   event: CalendarEvent;
 }>();
+
+const emit = defineEmits<{
+  (e: "click", event: CalendarEvent, evt: MouseEvent): void;
+}>();
+
+const handleClick = (evt: MouseEvent) => {
+  emit("click", props.event, evt);
+};
 </script>

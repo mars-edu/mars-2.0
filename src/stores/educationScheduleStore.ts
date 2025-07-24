@@ -85,18 +85,6 @@ export const useEducationScheduleStore = defineStore(
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
-    async function fetchSchedules() {
-      loading.value = true;
-      try {
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to load schedules";
-      } finally {
-        loading.value = false;
-      }
-    }
-
     async function addSchedule(
       scheduleData: Omit<EducationSchedule, "id" | "createdAt" | "updatedAt">
     ) {
@@ -186,7 +174,6 @@ export const useEducationScheduleStore = defineStore(
       getSchedules,
       isLoading,
       getError,
-      fetchSchedules,
       addSchedule,
       updateSchedule,
       deleteSchedule,

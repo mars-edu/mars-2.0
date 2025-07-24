@@ -7,7 +7,7 @@ import { createPinia, getActivePinia } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import vAuth from "../directives/auth";
 import "../css/app.css";
-import App from "../components/app.vue";
+import App from "../app.vue";
 import { PiniaServerSync } from "./plugin/pinia-server-sync";
 import { API_URL } from "../lib/http-client";
 import superjson from "superjson";
@@ -18,10 +18,15 @@ const app = createApp(App);
 
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
-pinia.use(PiniaServerSync({ url: `${API_URL}/ws`, serializer: {
-  serialize: superjson.stringify,
-  deserialize: superjson.parse,
-} }));
+pinia.use(
+  PiniaServerSync({
+    url: `${API_URL}/ws`,
+    serializer: {
+      serialize: superjson.stringify,
+      deserialize: superjson.parse,
+    },
+  })
+);
 
 app.use(pinia);
 
@@ -32,7 +37,7 @@ registerComponents(app);
 window.resetAllPiniaStores = () => {
   const activePinia = getActivePinia();
   if (activePinia) {
-    activePinia._s.forEach(store => store.reset());
+    activePinia._s.forEach((store) => store.reset());
   }
 };
 

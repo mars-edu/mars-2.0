@@ -34,3 +34,12 @@ model PiniaState {
   state     String
   updatedAt DateTime @default(now()) @updatedAt
 } 
+
+model File {
+  id           String   @id @default(uuid())
+  key          String   @unique
+  url          String
+  size         Int
+  contentType  String
+  createdAt    DateTime @default(now())
+} 

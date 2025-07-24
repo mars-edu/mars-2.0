@@ -217,7 +217,9 @@ const handleUpdateTeacher = async () => {
 
 const showDeleteConfirmation = () => {
   f7.dialog.confirm(
-    `Вы уверены, что хотите удалить преподавателя ${props.teacher.surname} ${props.teacher.firstName}?`,
+    `Вы уверены, что хотите удалить преподавателя ${teacherStore.getTeacherFullName(
+      props.teacher.id
+    )}?`,
     "Подтверждение",
     async () => {
       try {

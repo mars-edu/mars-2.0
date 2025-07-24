@@ -62,7 +62,6 @@ export const useStudentStore = defineStore("student", () => {
   const filteredStudents = computed((): StudentWithCourse[] => {
     let studentsToFilter: Student[] = [...students.value];
 
-    // Apply standard filters first
     studentsToFilter = studentsToFilter.filter((student) => {
       const specialtyMatch =
         !filters.value.specialty ||
@@ -222,6 +221,28 @@ export const useStudentStore = defineStore("student", () => {
 
   const getError = computed(() => error.value);
 
+  const getCourseByStudentId = (id: string): number | null => {
+    const student = students.value.find((s) => s.id === id);
+    if (!student) return null;
+
+    const activeAcademicYear = academicYearStore.getActiveAcademicYear;
+    const studentAcademicYear = academicYearStore.getAcademicYearById(
+      student.academicYearId || ""
+    );
+
+    if (activeAcademicYear && studentAcademicYear) {
+      return activeAcademicYear.startYear - studentAcademicYear.startYear + 1;
+    }
+
+    return null;
+  };
+
+  const getStudentFullName = (idOrName: string): string => {
+    const student = students.value.find((s) => s.id === idOrName);
+    if (!student) return idOrName;
+    return `${student.surname} ${student.firstName} ${student.patronymic}`;
+  };
+
   return {
     students,
     isLoading,
@@ -236,5 +257,7 @@ export const useStudentStore = defineStore("student", () => {
     clearError,
     reset,
     getError,
+    getCourseByStudentId,
+    getStudentFullName,
   };
 });

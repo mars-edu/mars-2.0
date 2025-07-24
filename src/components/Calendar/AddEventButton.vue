@@ -299,6 +299,7 @@ import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
+import { uploadFile } from "@/composables/useFileUpload";
 
 const emit = defineEmits<{
   (e: "event-added", event: CalendarEvent): void;
@@ -360,20 +361,34 @@ const endTimeOptions = computed(() =>
   }))
 );
 
-const handleAddEvent = async () => {
-  const eventData: Omit<CalendarEvent, "id" | "createdAt" | "updatedAt"> = {
-    title: eventTitle.value,
-    result: eventResult.value,
-    rup: rupFile.value?.name ?? "",
-    file: rupFile.value,
-    startDate: dayjs(startDate.value[0]).format("DD/MM/YYYY"),
-    endDate: dayjs(endDate.value[0]).format("DD/MM/YYYY"),
-    participants: participants.value,
-    weeklySchedules: selectedWeekDays.value,
-  };
+const WEEK_DAYS = [
+  { weekId: 0, russianAbbreviation: "ПН", name: "Понедельник" },
+  { weekId: 1, russianAbbreviation: "ВТ", name: "Вторник" },
+  { weekId: 2, russianAbbreviation: "СР", name: "Среда" },
+  { weekId: 3, russianAbbreviation: "ЧТ", name: "Четверг" },
+  { weekId: 4, russianAbbreviation: "ПТ", name: "Пятница" },
+  { weekId: 5, russianAbbreviation: "СБ", name: "Суббота" },
+  { weekId: 6, russianAbbreviation: "ВС", name: "Воскресенье" },
+];
 
+const handleAddEvent = async () => {
   try {
     formError.value = null;
+    const uploadedFileUrl = rupFile.value
+      ? await uploadFile(rupFile.value)
+      : "";
+
+    const eventData: Omit<CalendarEvent, "id" | "createdAt" | "updatedAt"> = {
+      title: eventTitle.value,
+      result: eventResult.value,
+      rup: uploadedFileUrl || (rupFile.value?.name ?? ""),
+      file: null,
+      startDate: dayjs(startDate.value[0]).format("DD/MM/YYYY"),
+      endDate: dayjs(endDate.value[0]).format("DD/MM/YYYY"),
+      participants: participants.value,
+      weeklySchedules: selectedWeekDays.value,
+    };
+
     const newEvent = await calendarStore.addEvent(eventData);
     emit("event-added", newEvent);
     closeAddEventPopover();
@@ -419,15 +434,7 @@ const selectWeekDay = (day: {
 };
 
 const weekDays = computed(() =>
-  [
-    { weekId: 0, russianAbbreviation: "ПН", name: "Понедельник" },
-    { weekId: 1, russianAbbreviation: "ВТ", name: "Вторник" },
-    { weekId: 2, russianAbbreviation: "СР", name: "Среда" },
-    { weekId: 3, russianAbbreviation: "ЧТ", name: "Четверг" },
-    { weekId: 4, russianAbbreviation: "ПТ", name: "Пятница" },
-    { weekId: 5, russianAbbreviation: "СБ", name: "Суббота" },
-    { weekId: 6, russianAbbreviation: "ВС", name: "Воскресенье" },
-  ].map((day) => ({
+  WEEK_DAYS.map((day) => ({
     ...day,
     isStartDate: false,
     isSelected: selectedWeekDays.value.some(

@@ -86,51 +86,80 @@
                 class="flex-1 min-w-[200px]"
               />
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-              <div
-                v-for="course in courses"
-                :key="course.id"
-                class="flex flex-col gap-3"
-              >
-                <h2
-                  class="font-semibold text-sm text-center py-1 bg-muted rounded-md text-muted-foreground"
-                >
-                  {{ course.number }} курс
-                </h2>
-                <div
-                  v-for="journal in journalEventsByCourse[
-                    parseInt(course.number)
-                  ]"
-                  :key="journal.id"
-                  class="rounded-lg p-4 text-gray-800 shadow-md min-h-[90px] flex flex-col justify-between transition-all duration-200"
-                  :class="{
-                    'bg-amber-400 cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:bg-amber-500':
-                      !journal.isPlaceholder,
-                    'bg-amber-100 border border-amber-200':
-                      journal.isPlaceholder,
-                  }"
-                  @click="
-                    !journal.isPlaceholder && goToJournalDetails(journal.id)
-                  "
-                >
-                  <p class="font-semibold text-sm leading-tight">
-                    {{ journal.title }}
-                  </p>
-                  <div v-if="journal.status" class="flex justify-end mt-2">
-                    <span
-                      class="bg-green-600 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold shadow-sm"
-                      >{{ journal.status }}</span
+            <div class="overflow-x-auto">
+              <div class="flex gap-5 min-w-max">
+                <template v-for="(course, idx) in courses" :key="course.id">
+                  <div class="flex flex-col gap-3 w-[250px]">
+                    <h2
+                      class="font-semibold text-sm text-center py-1 bg-muted rounded-md text-muted-foreground"
                     >
+                      {{ course.number }} курс
+                    </h2>
+                    <div
+                      v-for="journal in journalEventsByCourse[
+                        parseInt(course.number)
+                      ]"
+                      :key="journal.id"
+                      class="rounded-lg p-4 text-gray-800 shadow-md min-h-[90px] flex flex-col justify-between transition-all duration-200"
+                      :class="{
+                        'bg-amber-400 cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:bg-amber-500':
+                          !journal.isPlaceholder,
+                        'bg-amber-100 border border-amber-200':
+                          journal.isPlaceholder,
+                      }"
+                      @click="
+                        !journal.isPlaceholder && goToJournalDetails(journal.id)
+                      "
+                    >
+                      <p class="font-semibold text-sm leading-tight">
+                        {{ getJournalTitle(journal) }}
+                      </p>
+                      <div v-if="journal.status" class="flex justify-end mt-2">
+                        <span
+                          class="bg-green-600 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold shadow-sm"
+                          >{{ journal.status }}</span
+                        >
+                      </div>
+                    </div>
+                    <div
+                      v-if="
+                        journalEventsByCourse[parseInt(course.number)]
+                          .length === 0
+                      "
+                      class="rounded-lg p-4 text-gray-500 shadow-sm min-h-[90px] flex items-center justify-center bg-gray-50 border border-gray-100"
+                    >
+                      <p class="text-sm">Нет доступных журналов</p>
+                    </div>
                   </div>
-                </div>
-                <div
-                  v-if="
-                    journalEventsByCourse[parseInt(course.number)].length === 0
-                  "
-                  class="rounded-lg p-4 text-gray-500 shadow-sm min-h-[90px] flex items-center justify-center bg-gray-50 border border-gray-100"
-                >
-                  <p class="text-sm">Нет доступных журналов</p>
-                </div>
+                  <div v-if="idx === 3" class="flex flex-col gap-3 w-[250px]">
+                    <h2
+                      class="font-semibold text-sm text-center py-1 bg-muted rounded-md text-muted-foreground"
+                    >
+                      смешанные группы
+                    </h2>
+                    <div
+                      v-for="journal in mixedGroupJournals"
+                      :key="journal.id"
+                      class="rounded-lg p-4 text-gray-800 shadow-md min-h-[90px] flex flex-col justify-between transition-all duration-200 bg-blue-100 border border-blue-200"
+                    >
+                      <p class="font-semibold text-sm leading-tight">
+                        {{ getJournalTitle(journal) }}
+                      </p>
+                      <div v-if="journal.status" class="flex justify-end mt-2">
+                        <span
+                          class="bg-green-600 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold shadow-sm"
+                          >{{ journal.status === "active" ? "✓" : "" }}</span
+                        >
+                      </div>
+                    </div>
+                    <div
+                      v-if="mixedGroupJournals.length === 0"
+                      class="rounded-lg p-4 text-gray-500 shadow-sm min-h-[90px] flex items-center justify-center bg-gray-50 border border-gray-100"
+                    >
+                      <p class="text-sm">Нет доступных журналов</p>
+                    </div>
+                  </div>
+                </template>
               </div>
             </div>
           </div>
@@ -147,9 +176,9 @@ import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
-import { useJournalStore } from "@/stores/journalStore";
+import { useJournalStore, type Journal } from "@/stores/journalStore";
 import { useCourseStore } from "@/stores/courseStore";
-import { useCalendarStore } from "@/stores/calendarStore";
+import { withAllOption } from "@/lib/utils";
 import { storeToRefs } from "pinia";
 
 const activeNavItem = ref("journals");
@@ -158,13 +187,23 @@ const academicYearStore = useAcademicYearStore();
 const { academicYears } = storeToRefs(academicYearStore);
 
 const journalStore = useJournalStore();
-const { journalsByCourse } = storeToRefs(journalStore);
+const { journalsByCourse, mixedGroupJournals } = storeToRefs(journalStore);
 
 const courseStore = useCourseStore();
 const { courses } = storeToRefs(courseStore);
 
-const calendarStore = useCalendarStore();
-const { events } = storeToRefs(calendarStore);
+function getJournalTitle(journal: Journal) {
+  if (!journal.students || journal.students.length === 0) {
+    return journal.title;
+  }
+  return journalStore.generateJournalTitle(
+    journal.courseNumber,
+    journal.students || []
+  );
+}
+
+// Journals mapped by course coming directly from the journal store
+const journalEventsByCourse = journalsByCourse;
 
 const selectedAcademicYear = ref("");
 
@@ -175,52 +214,10 @@ const academicYearOptions = computed(() => {
   }));
 });
 
-// Convert calendar events to journal format
-const journalEventsByCourse = computed(() => {
-  const result: Record<number, any[]> = {};
-
-  // Initialize result with empty arrays for each course
-  courses.value.forEach((course) => {
-    result[parseInt(course.number)] = [];
-  });
-
-  // Filter calendar events that can be considered as journals
-  // and organize them by course
-  events.value.forEach((event) => {
-    // Extract course number from the event title or participants
-    // For this example, we'll assume the first participant's first character is the course number
-    if (event.participants && event.participants.length > 0) {
-      const courseNumber = parseInt(event.participants[0].charAt(0));
-
-      if (!isNaN(courseNumber) && result[courseNumber]) {
-        result[courseNumber].push({
-          id: event.id,
-          title: event.title,
-          isPlaceholder: false,
-          status: event.result ? "✓" : null,
-        });
-      }
-    }
-  });
-
-  // Fill with placeholder data if needed
-  courses.value.forEach((course) => {
-    const courseNumber = parseInt(course.number);
-    if (result[courseNumber].length === 0) {
-      result[courseNumber] = journalsByCourse.value[courseNumber] || [];
-    }
-  });
-
-  return result;
-});
-
 onMounted(async () => {
-  await academicYearStore.fetchAcademicYears();
   selectedAcademicYear.value =
     academicYearStore.getActiveAcademicYear?.id || "";
-  await courseStore.fetchCourses();
   await journalStore.fetchJournals();
-  await calendarStore.fetchEvents();
 });
 
 const goToJournalDetails = (id: number | string) => {
@@ -228,48 +225,53 @@ const goToJournalDetails = (id: number | string) => {
 };
 
 const selectedLessonType = ref("");
-const lessonTypeOptions = ref([
-  { value: "", text: "все" },
-  { value: "lecture", text: "Лекция" },
-  { value: "practice", text: "Практика" },
-]);
+const lessonTypeOptions = ref(
+  withAllOption(
+    [
+      { value: "lecture", text: "Лекция" },
+      { value: "practice", text: "Практика" },
+    ],
+    "все",
+    ""
+  )
+);
 
 const selectedTechnology = ref("");
-const technologyOptions = ref([
-  { value: "", text: "все" },
-  { value: "online", text: "Онлайн" },
-  { value: "offline", text: "Офлайн" },
-]);
+const technologyOptions = ref(
+  withAllOption(
+    [
+      { value: "online", text: "Онлайн" },
+      { value: "offline", text: "Офлайн" },
+    ],
+    "все",
+    ""
+  )
+);
 
 const selectedDiscipline = ref("");
-const disciplineOptions = ref([
-  { value: "", text: "все" },
-  { value: "philosophy", text: "Философия" },
-]);
+const disciplineOptions = ref(
+  withAllOption([{ value: "philosophy", text: "Философия" }], "все", "")
+);
 
 const selectedTerm = ref("");
-const termOptions = ref([
-  { value: "", text: "все" },
-  { value: "1y", text: "1 год" },
-]);
+const termOptions = ref(
+  withAllOption([{ value: "1y", text: "1 год" }], "все", "")
+);
 
 const selectedStatus = ref("");
-const statusOptions = ref([
-  { value: "", text: "все" },
-  { value: "active", text: "Активный" },
-]);
+const statusOptions = ref(
+  withAllOption([{ value: "active", text: "Активный" }], "все", "")
+);
 
 const selectedGroup = ref("");
-const groupOptions = ref([
-  { value: "", text: "все" },
-  { value: "pi-1-21", text: "ПИ-1-21" },
-]);
+const groupOptions = ref(
+  withAllOption([{ value: "pi-1-21", text: "ПИ-1-21" }], "все", "")
+);
 
 const selectedRole = ref("");
-const roleOptions = ref([
-  { value: "", text: "все" },
-  { value: "student", text: "Студент" },
-]);
+const roleOptions = ref(
+  withAllOption([{ value: "student", text: "Студент" }], "все", "")
+);
 </script>
 
 <style>

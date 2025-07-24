@@ -1,11 +1,9 @@
 <template>
   <f7-app v-bind="f7params">
-    <!-- <f7-view class="safe-areas" :main="true"></f7-view> -->
 
     <f7-view
       class="safe-areas"
       :main="true"
-      :browserHistory="true"
       browserHistorySeparator="#!"
       browserHistoryRoot=""
       :iosSwipeBack="true"
@@ -21,21 +19,29 @@
   </f7-app>
 </template>
 
-<!-- reloadAll: true,
-    reloadCurrent: true,
-    history: true,
-    ignoreCache: true, -->
-
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { f7, f7ready } from "framework7-vue";
 import type { Framework7Parameters, Router } from "framework7/types";
-import { useUserStore, Role } from "../stores/userStore";
-import { useThemeStore } from "../stores/themeStore";
-import { routeMiddleware } from "../middleware/routeMiddleware";
+import { useUserStore, Role } from "./stores/userStore";
+import { useThemeStore } from "./stores/themeStore";
+import { routeMiddleware } from "./middleware/routeMiddleware";
 
-import routes from "../js/routes";
-import store from "../js/store";
+import routes from "./js/routes";
+import store from "./js/store";
+import { useHashHistory } from "@/composables/hashHistoryWorkaround";
+
+const {
+  currentHash,
+  history,
+  historyIndex,
+  canGoBack,
+  canGoForward,
+  pushHash,
+  replaceHash,
+  goBack,
+  goForward,
+} = useHashHistory();
 
 const userStore = useUserStore();
 const themeStore = useThemeStore();
@@ -114,7 +120,7 @@ const f7params: Framework7Parameters = {
 
   view: {
     browserHistory: true,
-
+    browserHistoryTabs: "push",
     preloadPreviousPage: false,
     reloadPages: true,
     removeElements: true,

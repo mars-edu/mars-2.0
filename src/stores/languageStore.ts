@@ -47,19 +47,6 @@ export const useLanguageStore = defineStore(
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
-    async function fetchLanguages() {
-      loading.value = true;
-      try {
-        // Data will be automatically loaded by Pinia persistence
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to load languages";
-      } finally {
-        loading.value = false;
-      }
-    }
-
     async function addLanguage(
       languageData: Omit<Language, "id" | "createdAt" | "updatedAt">
     ) {
@@ -143,7 +130,6 @@ export const useLanguageStore = defineStore(
       getLanguageById,
       isLoading,
       getError,
-      fetchLanguages,
       addLanguage,
       updateLanguage,
       deleteLanguage,

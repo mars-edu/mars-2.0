@@ -37,16 +37,11 @@ defineProps<{
 }>();
 
 const handlePending = () => {
-  
   isError.value = false;
 };
 
 onErrorCaptured((error, instance, info) => {
-  
   isError.value = true;
-  
-  
-  
   return true;
 });
 </script>

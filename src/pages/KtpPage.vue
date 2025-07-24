@@ -187,8 +187,6 @@ const openAddDialog = () => {
 };
 
 onMounted(async () => {
-  await academicYearStore.fetchAcademicYears();
-  await courseStore.fetchCourses();
   const activeYear = academicYearStore.getActiveAcademicYear;
   if (activeYear) {
     selectedAcademicYear.value = activeYear.id;
