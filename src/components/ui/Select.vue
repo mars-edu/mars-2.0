@@ -124,10 +124,10 @@ const smartSelectParams = computed(() => ({
   closeOnSelect: true,
   setValueText: false,
   virtualList: false,
-  view: smartSelectView.value,
-  ...(props.searchable && {
-    searchbar: true,
-  }),
+  // view: smartSelectView.value,
+  // ...(props.searchable && {
+  //   searchbar: true,
+  // }),
 }));
 
 const smartSelectReady = computed(() => {

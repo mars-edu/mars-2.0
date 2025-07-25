@@ -1,6 +1,5 @@
 <template>
   <f7-app v-bind="f7params">
-
     <f7-view
       class="safe-areas"
       :main="true"
@@ -113,7 +112,7 @@ const f7params: Framework7Parameters = {
   },
 
   smartSelect: {
-    popupCloseLinkText: "Закрыть",
+    popupCloseLinkText: "Назад",
     searchbarPlaceholder: "Поиск",
     searchbarDisableText: "Отмена",
   },

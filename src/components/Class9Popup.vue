@@ -12,7 +12,7 @@
         :on-cancel="close"
         :on-save="submit"
       >
-        <template #title >
+        <template #title>
           <div v-if="!editMode" class="flex items-center space-x-4">
             <button @click="removeStep(currentStep)" v-if="steps.length > 1">
               <f7-icon f7="trash" class="text-red-500"></f7-icon>
@@ -44,17 +44,21 @@
                   {{ currentStep === steps.length ? "Добавить" : "Далее" }}
                 </f7-button>
               </div>
-              
             </div>
           </div>
           <div v-else class="border-t border-border">
-        <button
-          class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
-          @click="showDeleteConfirmation"
-        >
-          <f7-icon ios="f7:trash" md="material:delete" size="18px" class="mr-2" />
-          Удалить
-        </button>
+            <button
+              class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
+              @click="showDeleteConfirmation"
+            >
+              <f7-icon
+                ios="f7:trash"
+                md="material:delete"
+                size="18px"
+                class="mr-2"
+              />
+              Удалить
+            </button>
           </div>
         </template>
       </PopoverHeader>
@@ -107,7 +111,7 @@
 
             <div class="space-y-2">
               <label class="text-sm text-foreground" for="module-name">
-                Наименование модуля/дисциплины
+                Наименование модуля
               </label>
               <div class="flex gap-2 w-full">
                 <f7-input
@@ -140,7 +144,7 @@
 
             <div class="space-y-2">
               <label class="text-sm text-foreground" for="learning-outcome">
-                Наименование результата обучения
+                Наименование результата обучения/дисциплина
                 <span class="text-muted-foreground">(при наличии)</span>
               </label>
               <div class="flex gap-2 w-full">
@@ -484,7 +488,10 @@ watch(
 );
 
 onMounted(async () => {
-  steps.value = props.editMode && props.initialData ? [{ ...props.initialData }] : [createEmptyStep()];
+  steps.value =
+    props.editMode && props.initialData
+      ? [{ ...props.initialData }]
+      : [createEmptyStep()];
   currentStep.value = 1;
   nextTick(() => {
     f7.tooltip.create({
@@ -550,7 +557,8 @@ const class9Schema = z.object({
 
 const validationResult = computed(() => {
   const step = steps.value[currentStep.value - 1];
-  if (!step) return { success: false, error: { issues: [{ message: "Нет данных" }] } };
+  if (!step)
+    return { success: false, error: { issues: [{ message: "Нет данных" }] } };
   return class9Schema.safeParse({
     moduleIndex: step.moduleIndex,
     moduleName: step.moduleName,
@@ -596,7 +604,10 @@ function removeStep(stepNumber: number) {
   }
 }
 
-function copyFromPreviousStep(index: number, field: keyof typeof steps.value[0]) {
+function copyFromPreviousStep(
+  index: number,
+  field: keyof (typeof steps.value)[0]
+) {
   if (index > 0) {
     const previousStep = steps.value[index - 1];
     const currentStepObj = steps.value[index];
@@ -636,27 +647,38 @@ async function submit() {
   }
 }
 
-function toggleSemester(stepIndex: number, type: "exam" | "credit" | "controlLesson", semesterIndex: number, event?: Event) {
+function toggleSemester(
+  stepIndex: number,
+  type: "exam" | "credit" | "controlLesson",
+  semesterIndex: number,
+  event?: Event
+) {
   if (event) event.stopPropagation();
   const stepData = steps.value[stepIndex];
   if (!stepData) return;
   switch (type) {
     case "exam":
       if (!stepData.examEnabled) stepData.examEnabled = true;
-      stepData.examSemesters[semesterIndex] = !stepData.examSemesters[semesterIndex];
+      stepData.examSemesters[semesterIndex] =
+        !stepData.examSemesters[semesterIndex];
       break;
     case "credit":
       if (!stepData.creditEnabled) stepData.creditEnabled = true;
-      stepData.creditSemesters[semesterIndex] = !stepData.creditSemesters[semesterIndex];
+      stepData.creditSemesters[semesterIndex] =
+        !stepData.creditSemesters[semesterIndex];
       break;
     case "controlLesson":
       if (!stepData.controlLessonEnabled) stepData.controlLessonEnabled = true;
-      stepData.controlLessonSemesters[semesterIndex] = !stepData.controlLessonSemesters[semesterIndex];
+      stepData.controlLessonSemesters[semesterIndex] =
+        !stepData.controlLessonSemesters[semesterIndex];
       break;
   }
 }
 
-function toggleCheckbox(stepIndex: number, type: "exam" | "credit" | "controlLesson") {
+function toggleCheckbox(
+  stepIndex: number,
+  type: "exam" | "credit" | "controlLesson"
+) {
   const stepData = steps.value[stepIndex];
   if (!stepData) return;
   switch (type) {
@@ -681,8 +703,8 @@ function showDeleteConfirmation() {
       try {
         await class9Store.deleteClass9(props.initialData.id);
         close();
-    emit("submit");
-  } catch (error) {
+        emit("submit");
+      } catch (error) {
         f7.dialog.alert("Произошла ошибка при удалении.");
       }
     }
@@ -696,7 +718,6 @@ function showDeleteConfirmation() {
   transform: translateX(-50%);
 }
 
-
 :deep(.tooltip) {
   background: rgba(0, 0, 0, 0.8);
   color: #fff;
@@ -706,7 +727,6 @@ function showDeleteConfirmation() {
   z-index: 20000;
 }
 
-
 :deep(.tooltip-arrow) {
   width: 0;
   height: 0;
@@ -715,7 +735,6 @@ function showDeleteConfirmation() {
   margin: 2px;
   border-color: rgba(0, 0, 0, 0.8);
 }
-
 
 :deep(.tooltip-arrow-top) {
   border-width: 0 5px 5px 5px;
@@ -794,4 +813,3 @@ function showDeleteConfirmation() {
   background-color: rgb(218, 220, 223) !important;
 }
 </style>
-
