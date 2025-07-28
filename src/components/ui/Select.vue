@@ -1,11 +1,11 @@
 <template>
-  <div class="smart-select-wrapper space-y-1">
-    <label v-if="label" :for="uniqueId" class="text-sm font-medium">
+  <div class="smart-select-wrapper">
+    <label v-if="label" :for="uniqueId" class="text-sm font-normal">
       {{ label }}
     </label>
     <f7-list
       class="smart-select-list-container no-margin no-hairlines"
-      v-if="smartSelectReady"
+      v-if="showSmartSelect && smartSelectReady"
       :class="{
         'opacity-50': disabled,
         'pointer-events-none': disabled || !hasOptions,
@@ -26,8 +26,13 @@
           :value="modelValue"
           @change="handleChange"
           :disabled="disabled"
+          :multiple="props.multiple"
         >
-          <option value="" disabled :selected="!modelValue">
+          <option
+            value=""
+            disabled
+            :selected="!modelValue && !modelValueIsInOptions"
+          >
             {{ placeholder || " " }}
           </option>
           <option
@@ -40,6 +45,35 @@
         </select>
       </f7-list-item>
     </f7-list>
+    <f7-list
+      v-else-if="props.searchable && hasOptions"
+      class="smart-select-list-container no-margin no-hairlines"
+      :class="{
+        'opacity-50': disabled,
+        'pointer-events-none': disabled,
+      }"
+    >
+      <f7-list-item
+        :title="listTitle"
+        :after="selectedOptionText"
+        :id="uniqueId"
+        :class="{ 'item-smart-select-value': !!modelValue }"
+        @click="openSearchablePopup"
+      >
+        <template v-if="props.multiple && Array.isArray(modelValue)">
+          <input
+            v-for="val in modelValue"
+            :key="val"
+            type="hidden"
+            :name="name"
+            :value="val"
+          />
+        </template>
+        <template v-else>
+          <input type="hidden" :name="name" :value="modelValue" />
+        </template>
+      </f7-list-item>
+    </f7-list>
     <f7-input
       v-else
       type="text"
@@ -47,11 +81,22 @@
       disabled
       :placeholder="!hasOptions ? 'Нет данных' : placeholder || ' '"
     />
+    <SearchableSelectPopup
+      v-if="props.searchable"
+      ref="searchablePopupRef"
+      :options="options"
+      :title="label || placeholder || 'Выберите'"
+      :multiple="props.multiple"
+      :search-placeholder="searchPlaceholder"
+      @select="onSelectOption"
+      @close="onPopupClose"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { f7List, f7ListItem, f7Input } from "framework7-vue";
+import SearchableSelectPopup from "./SearchableSelectPopup.vue";
 import { f7, f7ready } from "framework7-vue";
 import { computed, getCurrentInstance, onMounted, ref } from "vue";
 
@@ -61,7 +106,7 @@ interface SelectOption {
 }
 
 const props = defineProps<{
-  modelValue: string | number;
+  modelValue: string | number | Array<string | number>;
   options: Array<SelectOption>;
   label?: string;
   name?: string;
@@ -72,7 +117,12 @@ const props = defineProps<{
   searchable?: boolean;
   searchPlaceholder?: string;
   searchCancelText?: string;
+  multiple?: boolean;
 }>();
+
+const showSmartSelect = computed(() => !props.searchable);
+
+const searchablePopupRef = ref<any>(null);
 
 const emit = defineEmits(["update:modelValue", "before-open", "after-close"]);
 
@@ -93,13 +143,30 @@ const onSmartSelectClose = () => {
   }
 };
 
+const modelValueIsInOptions = computed(() => {
+  return props.options.some((option) => option.value == props.modelValue);
+});
+
 const handleChange = (event: Event) => {
   const target = event.target as HTMLSelectElement;
-  emit("update:modelValue", target.value);
+  if (props.multiple) {
+    const values = Array.from(target.selectedOptions).map((o) => o.value);
+    emit("update:modelValue", values);
+  } else {
+    emit("update:modelValue", target.value);
+  }
 };
 
 const selectedOptionText = computed(() => {
   if (!hasOptions.value) return "Нет данных";
+  if (props.multiple && Array.isArray(props.modelValue)) {
+    const selectedTexts = props.options
+      .filter((o) =>
+        (props.modelValue as Array<string | number>).includes(o.value)
+      )
+      .map((o) => o.text);
+    return selectedTexts.join(", ");
+  }
   const selected = props.options.find(
     (option) => option.value == props.modelValue
   );
@@ -108,7 +175,15 @@ const selectedOptionText = computed(() => {
 
 const listTitle = computed(() => {
   if (!hasOptions.value) return " ";
-  return props.modelValue ? "" : props.placeholder || " ";
+  if (props.multiple && Array.isArray(props.modelValue)) {
+    return (props.modelValue as Array<string | number>).length
+      ? ""
+      : props.placeholder || " ";
+  }
+  const selected = props.options.find(
+    (option) => option.value == props.modelValue
+  );
+  return selected ? "" : props.placeholder || " ";
 });
 
 const smartSelectView = ref<any>(null);
@@ -124,32 +199,53 @@ const smartSelectParams = computed(() => ({
   closeOnSelect: true,
   setValueText: false,
   virtualList: false,
-  // view: smartSelectView.value,
-  // ...(props.searchable && {
-  //   searchbar: true,
-  // }),
+  view: smartSelectView.value,
+  ...(props.searchable && {
+    searchbar: true,
+  }),
 }));
 
 const smartSelectReady = computed(() => {
-  return hasOptions.value && smartSelectView.value;
+  return showSmartSelect.value && hasOptions.value && smartSelectView.value;
 });
+
+const openSearchablePopup = () => {
+  if (props.disabled || !hasOptions.value) return;
+  emit("before-open");
+  searchablePopupRef.value?.open(props.modelValue);
+};
+
+const onSelectOption = (value: string | number | Array<string | number>) => {
+  emit("update:modelValue", value);
+  emit("after-close");
+};
+
+const onPopupClose = () => {
+  emit("after-close");
+};
 </script>
 
 <style lang="postcss">
-.popup.smart-select-popup {
-  z-index: 13000 !important;
-}
-
-.smart-select .item-content {
+/* Remove mode-specific styles */
+/* .smart-select .item-content {
   @apply !p-2;
 }
 .smart-select .item-content .item-inner .item-title {
   @apply !text-muted-foreground !text-sm;
+} */
+
+/* Generalize styles */
+.smart-select-list-container .item-content {
+  @apply p-2;
+}
+
+.smart-select-list-container .item-content .item-inner .item-title {
+  @apply text-muted-foreground text-sm;
 }
 
 .smart-select-list-container {
   border-radius: 0.5rem;
-  border: 1px solid hsl(var(--border));
+  border: 1px solid transparent;
   background-color: hsl(var(--background));
   --f7-list-item-padding-horizontal: 0px;
   --f7-list-item-padding-vertical: 0px;
@@ -157,13 +253,18 @@ const smartSelectReady = computed(() => {
   transition: all 0.2s ease;
 }
 
+.smart-select-list-container:hover {
+  border: 1px solid hsl(var(--border));
+}
+
 .smart-select-list-container .f7-list-item {
   background-color: transparent;
 }
 
+/* Adjust min-height for consistency */
 .smart-select-list-container .f7-list-item .item-content {
-  padding: 0;
-  min-height: 40px;
+  /* padding: 0; */ /* Removed to allow generalized p-2 */
+  min-height: 44px;
 }
 
 .smart-select-list-container .f7-list-item .item-content .item-inner {
@@ -200,7 +301,6 @@ const smartSelectReady = computed(() => {
   opacity: 1;
   flex-shrink: 0;
   margin-right: 0.5rem;
-  color: hsl(var(--muted-foreground));
   font-weight: 500;
 }
 
@@ -209,20 +309,12 @@ const smartSelectReady = computed(() => {
   .item-content
   .item-inner
   .item-after {
-  color: hsl(var(--foreground));
   flex-grow: 1;
   flex-shrink: 1;
   text-align: right;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.smart-select-list-container
-  .f7-list-item:not(.item-smart-select-value)
-  .item-content
-  .item-inner {
-  color: hsl(var(--muted-foreground));
 }
 
 .smart-select-list-container
@@ -239,7 +331,6 @@ const smartSelectReady = computed(() => {
 }
 
 .smart-select-list-container:hover {
-  border-color: hsl(var(--border-hover, var(--border)));
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -249,30 +340,7 @@ const smartSelectReady = computed(() => {
   @apply py-[0.1rem];
 }
 
-.smart-select-popup .list ul {
-  background-color: hsl(var(--card)) !important;
-}
-
-.smart-select-popup .list li {
-  transition: background-color 0.15s ease;
-}
-
-.smart-select-popup .list li:hover {
-  background-color: hsl(var(--muted));
-}
-
-.smart-select-popup .navbar {
-  background-color: hsl(var(--card)) !important;
-  border-bottom: 1px solid hsl(var(--border));
-}
-
-.smart-select-popup .searchbar {
-  background-color: hsl(var(--card)) !important;
-}
-
-.smart-select-popup .searchbar-input {
-  background-color: hsl(var(--background)) !important;
-  border: 1px solid hsl(var(--border));
-  border-radius: 0.375rem;
+.list .item-after {
+  @apply text-foreground;
 }
 </style>

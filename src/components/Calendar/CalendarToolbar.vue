@@ -4,8 +4,11 @@
     <div class="flex items-center space-x-2 justify-center">
       <sidebar-button @click="$emit('icon-click', 'sidebar')" />
       <list-button @click="$emit('icon-click', 'list')" />
-      <AddEventButton @event-added="handleEventAdded" />
     </div>
+    <AddEventButton
+      class="fixed bottom-6 right-6 z-50"
+      @event-added="handleEventAdded"
+    />
 
     <slot name="navigation"></slot>
 

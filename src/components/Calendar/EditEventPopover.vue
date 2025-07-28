@@ -27,7 +27,6 @@
           :options="moduleOptions"
           name="event-module-edit"
           id="event-module-edit"
-          searchable
         />
 
         <!-- Learning outcome selection -->
@@ -43,7 +42,6 @@
           name="event-learning-outcome-edit"
           id="event-learning-outcome-edit"
           :disabled="!eventTitle"
-          searchable
         />
 
         <!-- Start Date -->

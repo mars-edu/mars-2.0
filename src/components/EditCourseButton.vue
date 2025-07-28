@@ -36,6 +36,14 @@
             ></f7-input>
           </div>
 
+          <Select
+            v-model="selectedSemesters"
+            :options="semesterOptions"
+            label="Семестры"
+            placeholder="Выберите семестры"
+            :multiple="true"
+          />
+
           <div class="pt-4 border-t border-border">
             <button
               class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
@@ -62,6 +70,8 @@ import { ref, computed } from "vue";
 import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useCourseStore } from "@/stores/courseStore";
+import { useSemesterStore } from "@/stores/semesterStore";
+import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
@@ -69,21 +79,32 @@ const props = defineProps<{
     id: string;
     number: string;
     admissionYear: string;
+    semesters?: string[];
   };
 }>();
 
 const courseStore = useCourseStore();
+const semesterStore = useSemesterStore();
+
+const semesterOptions = computed(() =>
+  semesterStore
+    .getPeriodsByType("semester")
+    .map((p) => ({ value: p.id, text: p.name }))
+);
 
 const courseNumber = ref(props.course.number);
+const selectedSemesters = ref<string[]>(props.course.semesters || []);
 const formError = ref("");
 
 const courseSchema = z.object({
   number: z.string().min(1, "Пожалуйста, введите номер курса"),
+  semesters: z.array(z.string()).optional(),
 });
 
 const validationResult = computed(() => {
   return courseSchema.safeParse({
     number: courseNumber.value,
+    semesters: selectedSemesters.value,
   });
 });
 
@@ -108,6 +129,7 @@ const handleUpdateCourse = async () => {
   try {
     await courseStore.updateCourse(props.course.id, {
       number: courseNumber.value,
+      semesters: selectedSemesters.value,
     });
     closeEditCoursePopover();
   } catch (error) {
@@ -135,6 +157,7 @@ const showDeleteConfirmation = () => {
 
 const resetForm = () => {
   courseNumber.value = props.course.number;
+  selectedSemesters.value = props.course.semesters || [];
   formError.value = "";
   courseStore.clearError();
 };

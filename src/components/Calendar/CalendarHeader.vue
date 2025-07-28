@@ -2,6 +2,9 @@
   <div class="flex justify-between items-center mb-3">
     <div class="flex items-center" @wheel="handleWheel" ref="monthNavArea">
       <h1 class="text-xl text-foreground">{{ monthName }} {{ year }}</h1>
+      <span v-if="currentSemester" class="text-sm text-muted-foreground ml-2">{{
+        currentSemester
+      }}</span>
       <div class="flex space-x-1 items-center ml-3">
         <button
           class="p-1 hover:bg-secondary rounded transition-colors"
@@ -40,7 +43,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
+import { useSemesterStore } from "@/stores/semesterStore";
+import type { AcademicPeriod } from "@/stores/semesterStore";
 
 defineProps<{
   monthName: string;
@@ -57,42 +62,45 @@ const emit = defineEmits<{
 const ifHoladay = ref(false);
 const monthNavArea = ref<HTMLElement | null>(null);
 
+const semesterStore = useSemesterStore();
+const currentSemester = computed(() => {
+  const todayStr = new Date().toISOString().split("T")[0];
+  const semesters: AcademicPeriod[] = semesterStore.periods.filter(
+    (p: AcademicPeriod) => p.type === "semester"
+  );
+  const period = semesters.find(
+    (p) => p.startDate <= todayStr && todayStr <= p.endDate
+  );
+  return period ? period.name : "";
+});
 
 let scrollTimeout: number | null = null;
-const scrollDelay = 200; 
+const scrollDelay = 200;
 
 const handleWheel = (event: WheelEvent) => {
   event.preventDefault();
 
-  
   if (scrollTimeout !== null) return;
 
-  
   scrollTimeout = window.setTimeout(() => {
     scrollTimeout = null;
   }, scrollDelay);
 
-  
   if (event.deltaY > 0 || event.deltaX > 0) {
-    
     triggerEmit("next-month");
   } else if (event.deltaY < 0 || event.deltaX < 0) {
-    
     triggerEmit("previous-month");
   }
 };
 
-
 const triggerEmit = (event: "previous-month" | "next-month" | "today") => {
   if (event === "previous-month") {
-    
     const button = monthNavArea.value?.querySelector("button:first-of-type");
     if (button) {
       button.classList.add("bg-secondary");
       setTimeout(() => button.classList.remove("bg-secondary"), 150);
     }
   } else if (event === "next-month") {
-    
     const button = monthNavArea.value?.querySelector("button:last-of-type");
     if (button) {
       button.classList.add("bg-secondary");
@@ -100,7 +108,6 @@ const triggerEmit = (event: "previous-month" | "next-month" | "today") => {
     }
   }
 
-  
   if (event === "today") {
     emit("today");
   } else if (event === "previous-month") {

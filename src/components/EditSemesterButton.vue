@@ -23,12 +23,12 @@
         </div>
 
         <div class="p-4 space-y-4">
-          <Select
+          <!-- <Select
             v-model="periodType"
             :options="typeOptions"
             label="Тип периода"
             placeholder="Выберите тип"
-          />
+          /> -->
 
           <div class="space-y-2">
             <label class="text-sm text-foreground" for="period-name-edit">
@@ -100,6 +100,7 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import { z } from "zod";
 import { useSemesterStore } from "@/stores/semesterStore";
 import type { AcademicPeriod, PeriodType } from "@/stores/semesterStore";
+import { typeOptions, calendarParams } from "@/constants/period";
 
 const props = defineProps<{ period: AcademicPeriod }>();
 
@@ -111,12 +112,6 @@ const startDate = ref<Date[]>([new Date(props.period.startDate)]);
 const endDate = ref<Date[]>([new Date(props.period.endDate)]);
 const formError = ref("");
 
-const typeOptions = [
-  { value: "semester", text: "Семестр" },
-  { value: "vacation", text: "Каникулы" },
-  { value: "session", text: "Сессия" },
-];
-
 const periodSchema = z
   .object({
     type: z.enum(["semester", "vacation", "session"]),
@@ -124,10 +119,16 @@ const periodSchema = z
     startDate: z.array(z.date()).min(1),
     endDate: z.array(z.date()).min(1),
   })
-  .refine((data) => data.endDate > data.startDate, {
-    message: "Дата окончания должна быть позже даты начала",
-    path: ["endDate"],
-  });
+  .refine(
+    (data) =>
+      data.startDate.length > 0 &&
+      data.endDate.length > 0 &&
+      data.endDate[0] > data.startDate[0],
+    {
+      message: "Дата окончания должна быть позже даты начала",
+      path: ["endDate"],
+    }
+  );
 
 const validationResult = computed(() => {
   return periodSchema.safeParse({
@@ -180,50 +181,5 @@ const confirmDelete = () => {
       }
     }
   );
-};
-
-const calendarParams = {
-  closeOnSelect: true,
-  dateFormat: "yyyy-MM-dd",
-  locale: "ru",
-  monthNames: [
-    "Январь",
-    "Февраль",
-    "Март",
-    "Апрель",
-    "Май",
-    "Июнь",
-    "Июль",
-    "Август",
-    "Сентябрь",
-    "Октябрь",
-    "Ноябрь",
-    "Декабрь",
-  ],
-  monthNamesShort: [
-    "Янв",
-    "Фев",
-    "Мар",
-    "Апр",
-    "Май",
-    "Июн",
-    "Июл",
-    "Авг",
-    "Сен",
-    "Окт",
-    "Ноя",
-    "Дек",
-  ],
-  dayNames: [
-    "Воскресенье",
-    "Понедельник",
-    "Вторник",
-    "Среда",
-    "Четверг",
-    "Пятница",
-    "Суббота",
-  ],
-  dayNamesShort: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
-  firstDay: 1,
 };
 </script>

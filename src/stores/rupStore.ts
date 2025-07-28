@@ -4,6 +4,7 @@ import { useSpecialtyStore } from "./specialtyStore";
 import { useCourseStore } from "./courseStore";
 import { useAcademicYearStore } from "./academicYearStore";
 import { storeToRefs } from "pinia";
+import { useClass9Store } from "./class9Store";
 
 export const useRupStore = defineStore(
   "rup",
@@ -11,6 +12,12 @@ export const useRupStore = defineStore(
     const selectedAcademicYearId = ref<string | null>(null);
     const selectedSpecialtyId = ref<string | null>(null);
     const selectedCourseId = ref<string | null>(null);
+
+    const selectedClass9ItemId = ref<string | null>(null);
+
+    function setSelectedClass9ItemId(id: string | null) {
+      selectedClass9ItemId.value = id;
+    }
 
     const targetSpecialtyId = ref<string | null>(null);
     const targetCourseId = ref<string | null>(null);
@@ -80,6 +87,26 @@ export const useRupStore = defineStore(
       return courseStore.courses;
     });
 
+    const selectedClass9Item = computed(() => {
+      const class9Store = useClass9Store();
+      if (!selectedClass9ItemId.value) return null;
+      return class9Store.class9Items.find(
+        (item) => item.id === selectedClass9ItemId.value
+      );
+    });
+
+    const selectedClass9TotalHours = computed(() => {
+      return selectedClass9Item.value?.totalHours ?? "0";
+    });
+
+    const selectedClass9SemesterHours = computed(() => {
+      if (!selectedClass9Item.value) return "0";
+      const sum = selectedClass9Item.value.distributionSemesterHours
+        .filter((h) => h && h.toString().trim() !== "")
+        .reduce((acc, h) => acc + Number(h), 0);
+      return sum.toString();
+    });
+
     const itemsForImport = ref<any[]>([]);
     const selectedClass9ItemIds = ref<string[]>([]);
 
@@ -115,6 +142,7 @@ export const useRupStore = defineStore(
       targetSpecialtyId.value = null;
       targetCourseId.value = null;
       targetAcademicYearId.value = null;
+      selectedClass9ItemId.value = null;
       selectedClass9ItemIds.value = [];
       itemsForImport.value = [];
     }
@@ -143,6 +171,12 @@ export const useRupStore = defineStore(
       itemsForImport,
       setItemsForImport,
       clearItemsForImport,
+
+      selectedClass9ItemId,
+      setSelectedClass9ItemId,
+      selectedClass9Item,
+      selectedClass9TotalHours,
+      selectedClass9SemesterHours,
       reset,
     };
   },

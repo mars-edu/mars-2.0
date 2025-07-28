@@ -5,10 +5,10 @@ export type PeriodType = "semester" | "vacation" | "session" | "academicYear";
 
 export interface AcademicPeriod {
   id: string;
-  type: PeriodType; 
-  name: string; 
-  startDate: string; 
-  endDate: string; 
+  type: PeriodType;
+  name: string;
+  startDate: string;
+  endDate: string;
   createdAt: Date;
   updatedAt: Date;
 }

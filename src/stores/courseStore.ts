@@ -5,6 +5,7 @@ export interface Course {
   id: string;
   number: string;
   admissionYear: string;
+  semesters: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -14,6 +15,7 @@ const DEFAULT_COURSES = [
     id: "1",
     number: "1",
     admissionYear: new Date().getFullYear().toString(),
+    semesters: [],
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -21,6 +23,7 @@ const DEFAULT_COURSES = [
     id: "2",
     number: "2",
     admissionYear: new Date().getFullYear().toString(),
+    semesters: [],
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -28,6 +31,7 @@ const DEFAULT_COURSES = [
     id: "3",
     number: "3",
     admissionYear: new Date().getFullYear().toString(),
+    semesters: [],
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -35,6 +39,7 @@ const DEFAULT_COURSES = [
     id: "4",
     number: "4",
     admissionYear: new Date().getFullYear().toString(),
+    semesters: [],
     createdAt: new Date(),
     updatedAt: new Date(),
   },

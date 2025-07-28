@@ -2,16 +2,12 @@
   <div>
     <button
       id="add-button"
-      class="w-10 h-10 bg-card border border-input rounded-full flex items-center justify-center"
+      class="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center shadow-lg"
       aria-label="Add"
       type="button"
       @click="openAddEventPopover"
     >
-      <i
-        class="f7-icons text-foreground text-lg flex items-center justify-center"
-      >
-        plus
-      </i>
+      <i class="f7-icons text-white text-2xl"> plus </i>
     </button>
 
     <!-- Framework7 Popover -->
@@ -44,7 +40,6 @@
             :options="moduleOptions"
             name="event-module"
             id="event-module"
-            searchable
             @before-open="closeAddEventPopover"
             @after-close="openAddEventPopover"
           />
@@ -61,7 +56,6 @@
             name="event-learning-outcome"
             id="event-learning-outcome"
             :disabled="!eventTitle"
-            searchable
             @before-open="closeAddEventPopover"
             @after-close="openAddEventPopover"
           />
@@ -242,34 +236,24 @@
                 rupFile.name
               }}</span>
             </div>
-            <label
-              class="flex items-center justify-center w-full h-20 border border-dashed border-input rounded-lg cursor-pointer hover:bg-secondary"
-            >
-              <input
-                type="file"
-                class="hidden"
-                @change="handleRupFileChange"
-                accept=".pdf,.doc,.docx,.xls,.xlsx"
-              />
-              <div class="text-center">
-                <i class="f7-icons text-muted-foreground text-2xl mb-1"
-                  >arrow_up_doc</i
-                >
-                <p class="text-sm text-muted-foreground">Загрузите файл РУП</p>
-              </div>
-            </label>
+            <AddKtpDialog
+              @import-existing="handleImportExisting"
+              @file-selected="handleRupFileChange"
+            />
           </div>
 
           <div class="bg-secondary p-4 border-t border-input">
             <div class="flex justify-between mb-2">
-              <span class="text-foreground">По плану:</span>
+              <span class="text-foreground">Запланировано на семестр:</span>
               <span class="text-foreground font-medium"
-                >{{ plannedHours }} часов</span
+                >{{ semesterPlannedHours }} часов</span
               >
             </div>
             <div class="flex justify-between">
-              <span class="text-primary">Запланировано:</span>
-              <span class="text-primary font-medium">38 часов</span>
+              <span class="text-primary">Запланировано на весь предмет:</span>
+              <span class="text-primary font-medium"
+                >{{ totalPlannedHours }} часов</span
+              >
             </div>
           </div>
         </div>
@@ -286,34 +270,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
-import { f7, f7Popover, f7Input } from "framework7-vue";
+import { ref, computed, watch } from "vue";
+import { f7 } from "framework7-vue";
 import { storeToRefs } from "pinia";
 import Select from "../ui/Select.vue";
 import PopoverHeader from "../ui/PopoverHeader.vue";
 import StudentSelectionPopup from "./StudentSelectionPopup.vue";
 import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
-import { useClass9Store } from "@/stores/class9Store";
 import { useRupStore } from "@/stores/rupStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
 import { uploadFile } from "@/composables/useFileUpload";
+import AddKtpDialog from "@/components/AddKtpDialog.vue";
 
 const emit = defineEmits<{
   (e: "event-added", event: CalendarEvent): void;
+  (e: "import-ktp-existing"): void;
 }>();
 
 const calendarStore = useCalendarStore();
 const { moduleOptions, learningOutcomeOptions: allLearningOutcomeOptions } =
   storeToRefs(calendarStore);
-const class9Store = useClass9Store();
 const selectedItemsStore = useSelectedItemsStore();
 const educationScheduleStore = useEducationScheduleStore();
 const { schedules } = storeToRefs(educationScheduleStore);
 
-const { selectedClass9Item } = storeToRefs(selectedItemsStore);
+const rupStore = useRupStore();
 
 const eventTitle = ref("");
 const eventResult = ref("");
@@ -343,8 +327,12 @@ const filteredLearningOutcomes = computed(() => {
   return [];
 });
 
-const plannedHours = computed(() => {
-  return selectedClass9Item.value?.totalHours ?? "0";
+const semesterPlannedHours = computed(() => {
+  return rupStore.selectedClass9SemesterHours;
+});
+
+const totalPlannedHours = computed(() => {
+  return rupStore.selectedClass9TotalHours;
 });
 
 const startTimeOptions = computed(() =>
@@ -464,11 +452,12 @@ const closeAddEventPopover = () => {
   f7.popover.close("#add-event-popover");
 };
 
-const handleRupFileChange = (e: Event) => {
-  const input = e.target as HTMLInputElement;
-  if (input.files && input.files.length > 0) {
-    rupFile.value = input.files[0];
-  }
+const handleRupFileChange = (file: File) => {
+  rupFile.value = file;
+};
+
+const handleImportExisting = () => {
+  emit("import-ktp-existing");
 };
 
 watch(eventTitle, (newVal) => {
@@ -479,5 +468,6 @@ watch(eventTitle, (newVal) => {
 
 watch(eventResult, (newId) => {
   selectedItemsStore.setSelectedClass9ItemId(newId);
+  rupStore.setSelectedClass9ItemId(newId);
 });
 </script>

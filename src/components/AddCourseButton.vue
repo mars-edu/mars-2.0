@@ -50,6 +50,14 @@
               placeholder="Введите номер курса"
             ></f7-input>
           </div>
+
+          <Select
+            v-model="selectedSemesters"
+            :options="semesterOptions"
+            label="Семестры"
+            placeholder="Выберите семестры"
+            :multiple="true"
+          />
         </div>
       </div>
     </f7-popover>
@@ -61,20 +69,32 @@ import { ref, computed } from "vue";
 import { f7, f7Popover, f7Icon, f7Input } from "framework7-vue";
 import { z } from "zod";
 import { useCourseStore } from "@/stores/courseStore";
+import { useSemesterStore } from "@/stores/semesterStore";
+import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const courseStore = useCourseStore();
+const semesterStore = useSemesterStore();
+
+const semesterOptions = computed(() =>
+  semesterStore
+    .getPeriodsByType("semester")
+    .map((p) => ({ value: p.id, text: p.name }))
+);
 
 const courseNumber = ref("");
+const selectedSemesters = ref<string[]>([]);
 const formError = ref("");
 
 const courseSchema = z.object({
   number: z.string().min(1, "Пожалуйста, введите номер курса"),
+  semesters: z.array(z.string()).optional(),
 });
 
 const validationResult = computed(() => {
   return courseSchema.safeParse({
     number: courseNumber.value,
+    semesters: selectedSemesters.value,
   });
 });
 
@@ -107,6 +127,7 @@ const handleSaveCourse = async () => {
     await courseStore.addCourse({
       number: courseNumber.value,
       admissionYear: new Date().getFullYear().toString(),
+      semesters: selectedSemesters.value,
     });
     closeAddCoursePopover();
   } catch (error) {
@@ -116,6 +137,7 @@ const handleSaveCourse = async () => {
 
 const resetForm = () => {
   courseNumber.value = "";
+  selectedSemesters.value = [];
   formError.value = "";
   courseStore.clearError();
 };

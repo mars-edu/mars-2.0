@@ -257,7 +257,6 @@
               </div>
             </AccordionItem>
 
-            <!-- Semesters Section -->
             <AccordionItem id="semesters" :default-expanded="false">
               <template #title>Семестры:</template>
               <template #actions>
@@ -301,15 +300,9 @@
                     />
                   </button>
                 </div>
-                <EditSemesterButton
-                  v-for="period in semesters"
-                  :key="`edit-${period.id}`"
-                  :period="period"
-                />
               </div>
             </AccordionItem>
 
-            <!-- Vacations Section -->
             <AccordionItem id="vacations" :default-expanded="false">
               <template #title>Каникулы:</template>
               <template #actions
@@ -353,15 +346,9 @@
                     />
                   </button>
                 </div>
-                <EditSemesterButton
-                  v-for="period in vacations"
-                  :key="`edit-${period.id}`"
-                  :period="period"
-                />
               </div>
             </AccordionItem>
 
-            <!-- Sessions Section -->
             <AccordionItem id="sessions" :default-expanded="false">
               <template #title>Сессии:</template>
               <template #actions
@@ -405,14 +392,10 @@
                     />
                   </button>
                 </div>
-                <EditSemesterButton
-                  v-for="period in sessions"
-                  :key="`edit-${period.id}`"
-                  :period="period"
-                />
               </div>
             </AccordionItem>
           </Accordion>
+          <EditSemesterButton v-if="selectedPeriod" :period="selectedPeriod" />
         </div>
       </div>
     </div>
@@ -420,7 +403,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, nextTick } from "vue";
 import { f7Page, f7Icon, f7, f7Preloader } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -462,6 +445,7 @@ const academicYearStore = useAcademicYearStore();
 const { academicYears } = storeToRefs(academicYearStore);
 
 const semesterStore = useSemesterStore();
+const selectedPeriod = ref<AcademicPeriod | null>(null);
 const semesters = computed(() => semesterStore.getPeriodsByType("semester"));
 const vacations = computed(() => semesterStore.getPeriodsByType("vacation"));
 const sessions = computed(() => semesterStore.getPeriodsByType("session"));
@@ -513,7 +497,9 @@ const formatPeriodType = (type: string) => {
   }
 };
 
-const openEditPeriod = (period: AcademicPeriod) => {
+const openEditPeriod = async (period: AcademicPeriod) => {
+  selectedPeriod.value = period;
+  await nextTick();
   const targetEl = document.getElementById(`period-item-${period.id}`);
   if (targetEl) {
     f7.popover.open(`#edit-period-popover-${period.id}`, targetEl);
