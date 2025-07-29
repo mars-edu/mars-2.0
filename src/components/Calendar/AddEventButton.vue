@@ -12,248 +12,251 @@
     <f7-popover
       id="add-event-popover"
       style="width: 500px !important"
-      target="#add-button"
+      :arrow="false"
       close-on-escape
-      vertical-position="right"
     >
       <div class="event-popover bg-card text-card-foreground">
         <!-- Header with buttons -->
-        <PopoverHeader
-          title="Создать"
-          save-text="Добавить"
-          :disabled="!isFormValid"
-          :on-cancel="closeAddEventPopover"
-          :on-save="handleAddEvent"
-        />
+        <div class="fixed-header">
+          <PopoverHeader
+            title="Создать"
+            save-text="Добавить"
+            :disabled="!isFormValid"
+            :on-cancel="closeAddEventPopover"
+            :on-save="handleAddEvent"
+          />
 
-        <div v-if="formError" class="px-4 pt-2 text-destructive text-sm">
-          {{ formError }}
+          <div v-if="formError" class="px-4 pb-2 text-destructive text-sm">
+            {{ formError }}
+          </div>
         </div>
 
-        <div class="p-4 space-y-4">
-          <Select
-            label="Модуль"
-            placeholder="Выберите модуль"
-            v-model="eventTitle"
-            :options="moduleOptions"
-            name="event-module"
-            id="event-module"
-            searchable
-            @before-open="closeAddEventPopover"
-            @after-close="openAddEventPopover"
-          />
-
-          <Select
-            label="Результат обучения/дисциплин"
-            :placeholder="
-              eventTitle
-                ? 'Выберите результат обучения'
-                : 'Сначала выберите модуль'
-            "
-            v-model="eventResult"
-            :options="filteredLearningOutcomes"
-            name="event-learning-outcome"
-            id="event-learning-outcome"
-            :disabled="!eventTitle"
-            searchable
-            @before-open="closeAddEventPopover"
-            @after-close="openAddEventPopover"
-          />
-
-          <!-- Start Date -->
-          <div class="flex justify-between items-center">
-            <span class="text-sm text-foreground">Начало</span>
-            <div class="w-1/2">
-              <f7-input
-                class="text-right"
-                type="datepicker"
-                placeholder="Дата"
-                v-model:value="startDate"
-                readonly
-                :calendar-params="{
-                  closeOnSelect: true,
-                  dateFormat: 'dd/MM/yyyy',
-                  locale: 'ru',
-                  monthNames: [
-                    'Январь',
-                    'Февраль',
-                    'Март',
-                    'Апрель',
-                    'Май',
-                    'Июнь',
-                    'Июль',
-                    'Август',
-                    'Сентябрь',
-                    'Октябрь',
-                    'Ноябрь',
-                    'Декабрь',
-                  ],
-                  monthNamesShort: [
-                    'Янв',
-                    'Фев',
-                    'Мар',
-                    'Апр',
-                    'Май',
-                    'Июн',
-                    'Июл',
-                    'Авг',
-                    'Сен',
-                    'Окт',
-                    'Ноя',
-                    'Дек',
-                  ],
-                  dayNames: [
-                    'Воскресенье',
-                    'Понедельник',
-                    'Вторник',
-                    'Среда',
-                    'Четверг',
-                    'Пятница',
-                    'Суббота',
-                  ],
-                  dayNamesShort: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
-                  firstDay: 1,
-                }"
-              ></f7-input>
-            </div>
-          </div>
-
-          <!-- End Date -->
-          <div class="flex justify-between items-center">
-            <span class="text-sm text-foreground">Конец</span>
-            <div class="w-1/2">
-              <f7-input
-                class="text-right"
-                type="datepicker"
-                placeholder="Дата"
-                v-model:value="endDate"
-                readonly
-                :calendar-params="{
-                  closeOnSelect: true,
-                  dateFormat: 'dd/MM/yyyy',
-                  locale: 'ru',
-                  monthNames: [
-                    'Январь',
-                    'Февраль',
-                    'Март',
-                    'Апрель',
-                    'Май',
-                    'Июнь',
-                    'Июль',
-                    'Август',
-                    'Сентябрь',
-                    'Октябрь',
-                    'Ноябрь',
-                    'Декабрь',
-                  ],
-                  monthNamesShort: [
-                    'Янв',
-                    'Фев',
-                    'Мар',
-                    'Апр',
-                    'Май',
-                    'Июн',
-                    'Июл',
-                    'Авг',
-                    'Сен',
-                    'Окт',
-                    'Ноя',
-                    'Дек',
-                  ],
-                  dayNames: [
-                    'Воскресенье',
-                    'Понедельник',
-                    'Вторник',
-                    'Среда',
-                    'Четверг',
-                    'Пятница',
-                    'Суббота',
-                  ],
-                  dayNamesShort: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
-                  firstDay: 1,
-                }"
-              ></f7-input>
-            </div>
-          </div>
-
-          <!-- Participants -->
-          <div
-            class="flex justify-between items-center cursor-pointer"
-            id="add-event-participants"
-            @click="openStreamSelection"
-          >
-            <span class="text-sm text-foreground">Обучающиеся</span>
-            <span class="text-muted-foreground flex items-center">
-              {{ participants.length || "Не выбрано" }}
-              <i class="f7-icons text-muted-foreground ml-1">chevron_right</i>
-            </span>
-          </div>
-
-          <div class="text-foreground font-semibold mb-3">Недели</div>
-          <div class="flex justify-between gap-1">
-            <div
-              v-for="(day, index) in weekDays"
-              :key="index"
-              class="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors"
-              :class="{
-                'bg-primary text-primary-foreground':
-                  day.isSelected && !day.isStartDate,
-                'bg-secondary text-secondary-foreground hover:bg-secondary/80':
-                  !day.isStartDate && !day.isSelected,
-              }"
-              @click="selectWeekDay(day)"
-            >
-              {{ day.russianAbbreviation }}
-            </div>
-          </div>
-
-          <template v-for="day in selectedWeekDays" :key="day.weekId">
-            <div class="text-foreground font-semibold mb-3">
-              Время на {{ day.russianWeekDay.toLowerCase() }}
-            </div>
-            <div class="flex items-center gap-2 mb-2">
-              <span class="text-muted-foreground text-sm">от</span>
-              <Select
-                v-model="day.startTime"
-                :options="startTimeOptions"
-                placeholder="Выберите время"
-                class="w-full"
-              />
-              <span class="text-muted-foreground text-sm">до</span>
-              <Select
-                v-model="day.endTime"
-                :options="endTimeOptions"
-                placeholder="Выберите время"
-                class="w-full"
-              />
-            </div>
-          </template>
-
-          <div class="border border-input rounded-lg p-3">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-foreground">РУП/КТП</span>
-              <span v-if="rupFile" class="text-sm text-muted-foreground">{{
-                rupFile.name
-              }}</span>
-            </div>
-            <AddKtpDialog
-              @import-existing="handleImportExisting"
-              @file-selected="handleRupFileChange"
+        <div class="scrollable-content">
+          <div class="p-4 space-y-4">
+            <Select
+              label="Модуль"
+              placeholder="Выберите модуль"
+              v-model="eventTitle"
+              :options="moduleOptions"
+              name="event-module"
+              id="event-module"
+              searchable
+              @before-open="closeAddEventPopover"
+              @after-close="openAddEventPopover"
             />
-          </div>
 
-          <div class="bg-secondary p-4 border-t border-input">
-            <div class="flex justify-between mb-2">
-              <span class="text-foreground">Запланировано на семестр:</span>
-              <span class="text-foreground font-medium"
-                >{{ semesterPlannedHours }} часов</span
-              >
+            <Select
+              label="Результат обучения/дисциплин"
+              :placeholder="
+                eventTitle
+                  ? 'Выберите результат обучения'
+                  : 'Сначала выберите модуль'
+              "
+              v-model="eventResult"
+              :options="filteredLearningOutcomes"
+              name="event-learning-outcome"
+              id="event-learning-outcome"
+              :disabled="!eventTitle"
+              searchable
+              @before-open="closeAddEventPopover"
+              @after-close="openAddEventPopover"
+            />
+
+            <!-- Start Date -->
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-foreground">Начало</span>
+              <div class="w-1/2">
+                <f7-input
+                  class="text-right"
+                  type="datepicker"
+                  placeholder="Дата"
+                  v-model:value="startDate"
+                  readonly
+                  :calendar-params="{
+                    closeOnSelect: true,
+                    dateFormat: 'dd/MM/yyyy',
+                    locale: 'ru',
+                    monthNames: [
+                      'Январь',
+                      'Февраль',
+                      'Март',
+                      'Апрель',
+                      'Май',
+                      'Июнь',
+                      'Июль',
+                      'Август',
+                      'Сентябрь',
+                      'Октябрь',
+                      'Ноябрь',
+                      'Декабрь',
+                    ],
+                    monthNamesShort: [
+                      'Янв',
+                      'Фев',
+                      'Мар',
+                      'Апр',
+                      'Май',
+                      'Июн',
+                      'Июл',
+                      'Авг',
+                      'Сен',
+                      'Окт',
+                      'Ноя',
+                      'Дек',
+                    ],
+                    dayNames: [
+                      'Воскресенье',
+                      'Понедельник',
+                      'Вторник',
+                      'Среда',
+                      'Четверг',
+                      'Пятница',
+                      'Суббота',
+                    ],
+                    dayNamesShort: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+                    firstDay: 1,
+                  }"
+                ></f7-input>
+              </div>
             </div>
-            <div class="flex justify-between">
-              <span class="text-primary">Запланировано на весь предмет:</span>
-              <span class="text-primary font-medium"
-                >{{ totalPlannedHours }} часов</span
+
+            <!-- End Date -->
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-foreground">Конец</span>
+              <div class="w-1/2">
+                <f7-input
+                  class="text-right"
+                  type="datepicker"
+                  placeholder="Дата"
+                  v-model:value="endDate"
+                  readonly
+                  :calendar-params="{
+                    closeOnSelect: true,
+                    dateFormat: 'dd/MM/yyyy',
+                    locale: 'ru',
+                    monthNames: [
+                      'Январь',
+                      'Февраль',
+                      'Март',
+                      'Апрель',
+                      'Май',
+                      'Июнь',
+                      'Июль',
+                      'Август',
+                      'Сентябрь',
+                      'Октябрь',
+                      'Ноябрь',
+                      'Декабрь',
+                    ],
+                    monthNamesShort: [
+                      'Янв',
+                      'Фев',
+                      'Мар',
+                      'Апр',
+                      'Май',
+                      'Июн',
+                      'Июл',
+                      'Авг',
+                      'Сен',
+                      'Окт',
+                      'Ноя',
+                      'Дек',
+                    ],
+                    dayNames: [
+                      'Воскресенье',
+                      'Понедельник',
+                      'Вторник',
+                      'Среда',
+                      'Четверг',
+                      'Пятница',
+                      'Суббота',
+                    ],
+                    dayNamesShort: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+                    firstDay: 1,
+                  }"
+                ></f7-input>
+              </div>
+            </div>
+
+            <!-- Participants -->
+            <div
+              class="flex justify-between items-center cursor-pointer"
+              id="add-event-participants"
+              @click="openStreamSelection"
+            >
+              <span class="text-sm text-foreground">Обучающиеся</span>
+              <span class="text-muted-foreground flex items-center">
+                {{ participants.length || "Не выбрано" }}
+                <i class="f7-icons text-muted-foreground ml-1">chevron_right</i>
+              </span>
+            </div>
+
+            <div class="text-foreground font-semibold mb-3">Недели</div>
+            <div class="flex justify-between gap-1">
+              <div
+                v-for="(day, index) in weekDays"
+                :key="index"
+                class="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors"
+                :class="{
+                  'bg-primary text-primary-foreground':
+                    day.isSelected && !day.isStartDate,
+                  'bg-secondary text-secondary-foreground hover:bg-secondary/80':
+                    !day.isStartDate && !day.isSelected,
+                }"
+                @click="selectWeekDay(day)"
               >
+                {{ day.russianAbbreviation }}
+              </div>
+            </div>
+
+            <template v-for="day in selectedWeekDays" :key="day.weekId">
+              <div class="text-foreground font-semibold mb-3">
+                Время на {{ day.russianWeekDay.toLowerCase() }}
+              </div>
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-muted-foreground text-sm">от</span>
+                <Select
+                  v-model="day.startTime"
+                  :options="startTimeOptions"
+                  placeholder="Выберите время"
+                  class="w-full"
+                />
+                <span class="text-muted-foreground text-sm">до</span>
+                <Select
+                  v-model="day.endTime"
+                  :options="endTimeOptions"
+                  placeholder="Выберите время"
+                  class="w-full"
+                />
+              </div>
+            </template>
+
+            <div class="border border-input rounded-lg p-3">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-foreground">РУП/КТП</span>
+                <span v-if="rupFile" class="text-sm text-muted-foreground">{{
+                  rupFile.name
+                }}</span>
+              </div>
+              <AddKtpDialog
+                @import-existing="handleImportExisting"
+                @file-selected="handleRupFileChange"
+              />
+            </div>
+
+            <div class="bg-secondary p-4 border-t border-input">
+              <div class="flex justify-between mb-2">
+                <span class="text-foreground">Запланировано на семестр:</span>
+                <span class="text-foreground font-medium"
+                  >{{ semesterPlannedHours }} часов</span
+                >
+              </div>
+              <div class="flex justify-between">
+                <span class="text-primary">Запланировано на весь предмет:</span>
+                <span class="text-primary font-medium"
+                  >{{ totalPlannedHours }} часов</span
+                >
+              </div>
             </div>
           </div>
         </div>
@@ -445,7 +448,7 @@ const handleStudentPopupClose = () => {
 };
 
 const openAddEventPopover = () => {
-  f7.popover.open("#add-event-popover", "#add-button");
+  f7.popover.open("#add-event-popover");
 };
 
 const closeAddEventPopover = () => {
@@ -471,3 +474,30 @@ watch(eventResult, (newId) => {
   rupStore.setSelectedClass9ItemId(newId);
 });
 </script>
+
+<style scoped>
+.event-popover {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  max-height: 100dvh;
+}
+
+.fixed-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--f7-popover-bg-color);
+  border-bottom: 1px solid var(--f7-border-color);
+}
+
+.scrollable-content {
+  flex: 1;
+  overflow-y: auto;
+  height: calc(100dvh - 120px); /* Adjust height as needed */
+}
+#add-event-popover {
+  left: 50%;
+  transform: translateX(-50%);
+}
+</style>
