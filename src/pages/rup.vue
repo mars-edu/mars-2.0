@@ -309,7 +309,7 @@
       >
         <div
           v-if="hoveredSpecialty"
-          class="p-3 bg-popover text-popover-foreground rounded-lg shadow-xl"
+          class="p-3 bg-primary text-popover-foreground rounded-lg shadow-xl"
         >
           <div class="font-semibold text-base mb-1">
             {{ hoveredSpecialty.name }}

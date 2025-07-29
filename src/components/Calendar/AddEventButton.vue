@@ -1,14 +1,12 @@
 <template>
   <div>
-    <button
+    <f7-fab
       id="add-button"
-      class="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center shadow-lg"
-      aria-label="Add"
-      type="button"
+      position="right-bottom"
       @click="openAddEventPopover"
     >
-      <i class="f7-icons text-white text-2xl"> plus </i>
-    </button>
+      <f7-icon ios="f7:plus" md="material:add" size="16px"></f7-icon>
+    </f7-fab>
 
     <!-- Framework7 Popover -->
     <f7-popover
@@ -40,6 +38,7 @@
             :options="moduleOptions"
             name="event-module"
             id="event-module"
+            searchable
             @before-open="closeAddEventPopover"
             @after-close="openAddEventPopover"
           />
@@ -56,6 +55,7 @@
             name="event-learning-outcome"
             id="event-learning-outcome"
             :disabled="!eventTitle"
+            searchable
             @before-open="closeAddEventPopover"
             @after-close="openAddEventPopover"
           />

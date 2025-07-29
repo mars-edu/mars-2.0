@@ -15,6 +15,9 @@
   --f7-view-transition-duration: 300ms;
   /* Add view transition duration */
   --sidebar-width: 13rem;
+
+  --f7-fab-bg-color: theme("colors.green.500");
+  --f7-fab-text-color: theme("colors.white");
 }
 
 body {

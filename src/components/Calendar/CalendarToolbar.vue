@@ -5,10 +5,7 @@
       <sidebar-button @click="$emit('icon-click', 'sidebar')" />
       <list-button @click="$emit('icon-click', 'list')" />
     </div>
-    <AddEventButton
-      class="fixed bottom-6 right-6 z-50"
-      @event-added="handleEventAdded"
-    />
+    <AddEventButton @event-added="handleEventAdded" />
 
     <slot name="navigation"></slot>
 

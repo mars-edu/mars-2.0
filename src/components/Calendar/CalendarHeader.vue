@@ -1,10 +1,17 @@
 <template>
   <div class="flex justify-between items-center mb-3">
     <div class="flex items-center" @wheel="handleWheel" ref="monthNavArea">
-      <h1 class="text-xl text-foreground">{{ monthName }} {{ year }}</h1>
-      <span v-if="currentSemester" class="text-sm text-muted-foreground ml-2">{{
-        currentSemester
-      }}</span>
+      <div class="flex items-center">
+        <h1 class="text-xl text-foreground">{{ monthName }} {{ year }}</h1>
+        <div
+          v-if="currentSemester"
+          class="ml-3 px-3 py-1 bg-secondary rounded-full"
+        >
+          <span class="text-sm font-medium text-secondary-foreground"
+            >{{ currentSemester }} семестр</span
+          >
+        </div>
+      </div>
       <div class="flex space-x-1 items-center ml-3">
         <button
           class="p-1 hover:bg-secondary rounded transition-colors"

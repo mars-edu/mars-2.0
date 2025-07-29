@@ -137,7 +137,7 @@ const semesters = computed(() => semesterStore.getPeriodsByType("semester"));
 const getSemestersByCourse = (course: Course) => {
   if (course.semesters && course.semesters.length) {
     return semesters.value.filter((p: AcademicPeriod) =>
-      course.semesters!.includes(p.id)
+      course.semesters.includes(p.id)
     );
   }
   const regex = new RegExp(`^${course.number}\\b`);
@@ -149,7 +149,7 @@ const selectedCourse = ref<{
   id: string;
   number: string;
   admissionYear: string;
-  semesters?: string[];
+  semesters: string[];
 } | null>(null);
 
 const openEditPeriod = async (period: AcademicPeriod) => {
@@ -166,7 +166,7 @@ const openEditCourse = async (course: Course) => {
     id: course.id,
     number: course.number,
     admissionYear: course.admissionYear,
-    semesters: course.semesters,
+    semesters: course.semesters || [],
   };
   await nextTick();
   const targetEl = document.getElementById(`course-item-${course.id}`);

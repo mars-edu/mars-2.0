@@ -304,7 +304,7 @@
                   class="text-sm text-foreground"
                   for="lab-practical-hours"
                 >
-                  Лобараторно-практических
+                  Лабараторно-практических
                 </label>
                 <f7-input
                   :id="'lab-practical-hours-' + index"

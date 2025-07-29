@@ -79,7 +79,7 @@ const props = defineProps<{
     id: string;
     number: string;
     admissionYear: string;
-    semesters?: string[];
+    semesters: string[];
   };
 }>();
 
@@ -93,7 +93,7 @@ const semesterOptions = computed(() =>
 );
 
 const courseNumber = ref(props.course.number);
-const selectedSemesters = ref<string[]>(props.course.semesters || []);
+const selectedSemesters = ref<string[]>(props.course.semesters);
 const formError = ref("");
 
 const courseSchema = z.object({
