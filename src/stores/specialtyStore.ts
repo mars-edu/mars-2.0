@@ -35,6 +35,13 @@ export const useSpecialtyStore = defineStore(
       return (code: string) => specialties.value.find((s) => s.code === code);
     });
 
+    const specialtyOptions = computed(() =>
+      specialties.value.map((s) => ({
+        value: s.code,
+        text: `${s.name} - ${s.details}`,
+      }))
+    );
+
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
@@ -55,7 +62,6 @@ export const useSpecialtyStore = defineStore(
       try {
         loading.value = true;
         error.value = null;
-
 
         const newSpecialty: Specialty = {
           id: crypto.randomUUID(),
@@ -83,7 +89,6 @@ export const useSpecialtyStore = defineStore(
         loading.value = true;
         error.value = null;
 
-
         const index = specialties.value.findIndex((s) => s.id === id);
         if (index === -1) throw new Error("Specialty not found");
 
@@ -105,7 +110,6 @@ export const useSpecialtyStore = defineStore(
       try {
         loading.value = true;
         error.value = null;
-
 
         const index = specialties.value.findIndex((s) => s.id === id);
         if (index === -1) throw new Error("Specialty not found");
@@ -136,6 +140,7 @@ export const useSpecialtyStore = defineStore(
       error,
       getSpecialtyById,
       getSpecialtyByCode,
+      specialtyOptions,
       isLoading,
       getError,
       fetchSpecialties,

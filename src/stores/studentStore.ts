@@ -11,7 +11,7 @@ export interface Student {
   patronymic: string;
   specialty: string;
   language: string;
-  base: number;
+  base?: number;
   gender: "male" | "female";
   academicYearId?: string;
 }
@@ -26,7 +26,7 @@ export interface AddStudentPayload {
   patronymic: string;
   specialty: string;
   language: string;
-  base: number;
+  base?: number;
   gender: "male" | "female";
   academicYearId?: string;
 }
@@ -71,7 +71,8 @@ export const useStudentStore = defineStore("student", () => {
       const genderMatch =
         !filters.value.gender || student.gender === filters.value.gender;
       const baseMatch =
-        !filters.value.base || student.base.toString() === filters.value.base;
+        !filters.value.base ||
+        (student.base ?? 9).toString() === filters.value.base;
       const academicYearMatch =
         !filters.value.academicYearId ||
         student.academicYearId === filters.value.academicYearId;

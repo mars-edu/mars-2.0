@@ -336,6 +336,7 @@ const onPopupClose = () => {
 
 .list .item-after {
   margin-left: 0 !important;
+  max-width: none;
   @apply text-sm;
   @apply py-[0.1rem];
 }

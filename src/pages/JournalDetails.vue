@@ -17,15 +17,11 @@
             <div class="text-xl font-semibold">
               <p>
                 Модуль/дисциплина:
-                <span class="text-green-600">{{
-                  currentJournal?.title || "Загрузка..."
-                }}</span>
+                <span class="text-green-600">{{ currentJournal?.title }}</span>
               </p>
               <p>
                 Учебная группа:
-                <span class="text-green-600">{{
-                  currentJournal?.groupId || "Загрузка..."
-                }}</span>
+                <span class="text-green-600">{{ currentJournal?.group }}</span>
               </p>
             </div>
             <div class="flex items-center gap-2">

@@ -44,6 +44,13 @@ export const useLanguageStore = defineStore(
       return (id: string) => languages.value.find((l) => l.id === id);
     });
 
+    const languageOptions = computed(() =>
+      languages.value.map((l) => ({
+        value: l.code,
+        text: l.name,
+      }))
+    );
+
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
@@ -128,6 +135,7 @@ export const useLanguageStore = defineStore(
       loading,
       error,
       getLanguageById,
+      languageOptions,
       isLoading,
       getError,
       addLanguage,

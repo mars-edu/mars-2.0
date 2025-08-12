@@ -159,10 +159,10 @@ const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
 const academicYearStore = useAcademicYearStore();
 const baseStore = useBaseStore();
-const { specialties } = storeToRefs(specialtyStore);
-const { languages } = storeToRefs(languageStore);
-const { academicYears } = storeToRefs(academicYearStore);
-const { bases } = storeToRefs(baseStore);
+const { specialtyOptions } = storeToRefs(specialtyStore);
+const { languageOptions } = storeToRefs(languageStore);
+const { academicYearOptions } = storeToRefs(academicYearStore);
+const { baseOptions } = storeToRefs(baseStore);
 
 const surname = ref("");
 const firstName = ref("");
@@ -179,34 +179,6 @@ import { onMounted } from "vue";
 onMounted(() => {
   academicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
 });
-
-const academicYearOptions = computed(() =>
-  academicYears.value.map((year) => ({
-    value: year.id,
-    text: year.startYear.toString(),
-  }))
-);
-
-const specialtyOptions = computed(() =>
-  specialties.value.map((s) => ({
-    value: s.code,
-    text: s.name,
-  }))
-);
-
-const languageOptions = computed(() =>
-  languages.value.map((l) => ({
-    value: l.code,
-    text: l.name,
-  }))
-);
-
-const baseOptions = computed(() =>
-  bases.value.map((base) => ({
-    value: base.value,
-    text: base.text,
-  }))
-);
 
 const studentSchema = z.object({
   surname: z.string().min(1, "Пожалуйста, введите фамилию студента"),

@@ -166,7 +166,7 @@ const props = defineProps<{
     patronymic: string;
     specialty: string;
     language: string;
-    base: number;
+    base?: number;
     gender: "male" | "female";
     academicYearId?: string;
   };
@@ -177,48 +177,20 @@ const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
 const baseStore = useBaseStore();
 const academicYearStore = useAcademicYearStore();
-const { specialties } = storeToRefs(specialtyStore);
-const { languages } = storeToRefs(languageStore);
-const { bases } = storeToRefs(baseStore);
-const { academicYears } = storeToRefs(academicYearStore);
+const { specialtyOptions } = storeToRefs(specialtyStore);
+const { languageOptions } = storeToRefs(languageStore);
+const { baseOptions } = storeToRefs(baseStore);
+const { academicYearOptions } = storeToRefs(academicYearStore);
 
 const surname = ref(props.student.surname);
 const firstName = ref(props.student.firstName);
 const patronymic = ref(props.student.patronymic);
 const specialty = ref(props.student.specialty);
 const language = ref(props.student.language);
-const base = ref(props.student.base.toString());
+const base = ref((props.student.base ?? 9).toString());
 const gender = ref<"male" | "female">(props.student.gender);
 const academicYear = ref(props.student.academicYearId || "");
 const formError = ref("");
-
-const academicYearOptions = computed(() =>
-  academicYears.value.map((year) => ({
-    value: year.id,
-    text: year.startYear.toString(),
-  }))
-);
-
-const specialtyOptions = computed(() =>
-  specialties.value.map((s) => ({
-    value: s.code,
-    text: s.name,
-  }))
-);
-
-const languageOptions = computed(() =>
-  languages.value.map((l) => ({
-    value: l.code,
-    text: l.name,
-  }))
-);
-
-const baseOptions = computed(() =>
-  bases.value.map((base) => ({
-    value: base.value,
-    text: base.text,
-  }))
-);
 
 const studentSchema = z.object({
   surname: z.string().min(1, "Пожалуйста, введите фамилию студента"),
@@ -308,7 +280,7 @@ const resetForm = () => {
   patronymic.value = props.student.patronymic;
   specialty.value = props.student.specialty;
   language.value = props.student.language;
-  base.value = props.student.base.toString();
+  base.value = (props.student.base ?? 9).toString();
   gender.value = props.student.gender;
   academicYear.value = props.student.academicYearId || "";
   formError.value = "";

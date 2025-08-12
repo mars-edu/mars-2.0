@@ -60,6 +60,13 @@ export const useAcademicYearStore = defineStore(
       return Array.from(years).sort((a, b) => b - a);
     });
 
+    const academicYearOptions = computed(() =>
+      academicYears.value.map((year) => ({
+        value: year.id,
+        text: year.startYear.toString(),
+      }))
+    );
+
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
@@ -195,6 +202,7 @@ export const useAcademicYearStore = defineStore(
       getActiveAcademicYear,
       getSortedAcademicYears,
       academicYearsAsNumbers,
+      academicYearOptions,
       isLoading,
       getError,
       addAcademicYear,

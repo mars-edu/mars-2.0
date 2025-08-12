@@ -10,7 +10,7 @@ export interface Journal {
   title: string;
   courseNumber: number;
   disciplineId: string;
-  groupId: string;
+  group: string;
   students: string[];
   isMixedGroup?: boolean;
 }
@@ -42,6 +42,23 @@ export const useJournalStore = defineStore(
       });
       const joinedCodes = Array.from(codes).join("");
       return `${courseNumber} ${joinedCodes}`.trim();
+    }
+
+    function generateGroupFromStudents(studentIds: string[]) {
+      const codes = new Set<string>();
+      studentIds.forEach((id) => {
+        const student = studentStore.students.find((s) => s.id === id);
+        if (!student) return;
+
+        const specialty = specialtyStore.getSpecialtyByCode(student.specialty);
+
+        if (specialty) {
+          codes.add(specialty.codeName);
+        } else {
+          codes.add(student.specialty);
+        }
+      });
+      return Array.from(codes).join("");
     }
 
     const journalsByCourse = computed(() => {
@@ -86,7 +103,7 @@ export const useJournalStore = defineStore(
               title: generateJournalTitle(courseNumber, studentsInCourse),
               courseNumber: courseNumber,
               disciplineId: actualEvent.class9Id,
-              groupId: studentsInCourse.join(", "),
+              group: generateGroupFromStudents(studentsInCourse),
               students: studentsInCourse,
               isMixedGroup: isMixed,
             };
@@ -123,7 +140,7 @@ export const useJournalStore = defineStore(
             ),
             courseNumber: primaryCourse,
             disciplineId: actualEvent.class9Id,
-            groupId: actualEvent.participants.join(", "),
+            group: generateGroupFromStudents(actualEvent.participants),
             students: actualEvent.participants,
             isMixedGroup: true,
           };
@@ -175,7 +192,7 @@ export const useJournalStore = defineStore(
             ),
             courseNumber: courseNumber,
             disciplineId: actualEvent.class9Id,
-            groupId: actualEvent.participants?.join(", ") || "",
+            group: generateGroupFromStudents(actualEvent.participants || []),
             students: actualEvent.participants || [],
           };
         }
@@ -260,6 +277,7 @@ export const useJournalStore = defineStore(
       journalsByCourse,
       mixedGroupJournals,
       generateJournalTitle,
+      generateGroupFromStudents,
       getJournalById,
       addJournal,
       updateJournal,

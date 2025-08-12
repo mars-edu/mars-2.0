@@ -24,7 +24,7 @@ const DEFAULT_BASES: Base[] = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-]
+];
 
 export const useBaseStore = defineStore(
   "base",
@@ -36,6 +36,13 @@ export const useBaseStore = defineStore(
     const getBaseById = computed(() => {
       return (id: string) => bases.value.find((b) => b.id === id);
     });
+
+    const baseOptions = computed(() =>
+      bases.value.map((base) => ({
+        value: base.value,
+        text: base.text,
+      }))
+    );
 
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
@@ -132,6 +139,7 @@ export const useBaseStore = defineStore(
       loading,
       error,
       getBaseById,
+      baseOptions,
       isLoading,
       getError,
       fetchBases,

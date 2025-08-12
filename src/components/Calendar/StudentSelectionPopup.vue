@@ -156,9 +156,9 @@ const languageStore = useLanguageStore();
 const baseStore = useBaseStore();
 const courseStore = useCourseStore();
 const { students } = storeToRefs(studentStore);
-const { specialties } = storeToRefs(specialtyStore);
-const { languages } = storeToRefs(languageStore);
-const { bases } = storeToRefs(baseStore);
+const { specialtyOptions: storeSpecialtyOptions } = storeToRefs(specialtyStore);
+const { languageOptions: storeLanguageOptions } = storeToRefs(languageStore);
+const { baseOptions: storeBaseOptions } = storeToRefs(baseStore);
 const { courses } = storeToRefs(courseStore);
 
 const isPopupOpen = ref(false);
@@ -216,18 +216,14 @@ const courseOptions = computed(() =>
 );
 
 const baseOptions = computed(() =>
-  withAllOption(
-    bases.value.map((base) => ({ value: base.value, text: base.text })),
-    "Все",
-    "all"
-  )
+  withAllOption(storeBaseOptions.value, "Все", "all")
 );
 
 const specialtyOptions = computed(() =>
   withAllOption(
-    specialties.value.map((specialty) => ({
-      value: specialty.code,
-      text: specialty.name,
+    storeSpecialtyOptions.value.map((specialty) => ({
+      value: specialty.value,
+      text: specialty.text.split(" - ")[0], // Use just the name part for filtering
     })),
     "Все",
     "all"
@@ -235,14 +231,7 @@ const specialtyOptions = computed(() =>
 );
 
 const languageOptions = computed(() =>
-  withAllOption(
-    languages.value.map((language) => ({
-      value: language.code,
-      text: language.name,
-    })),
-    "Все",
-    "all"
-  )
+  withAllOption(storeLanguageOptions.value, "Все", "all")
 );
 
 const genderOptions = computed(() => getGenderOptions());

@@ -82,7 +82,12 @@
                       {{ student.surname }} {{ student.firstName }}
                       {{ student.patronymic }}
                     </td>
-                    <td class="px-4 py-3">{{ student.specialty }}</td>
+                    <td class="px-4 py-3">
+                      {{
+                        specialtyStore.getSpecialtyByCode(student.specialty)
+                          ?.details
+                      }}
+                    </td>
                     <td class="px-4 py-3">{{ student.language }}</td>
                     <td class="px-4 py-3">{{ student.course }}</td>
                   </tr>
@@ -129,11 +134,11 @@ const languageStore = useLanguageStore();
 const academicYearStore = useAcademicYearStore();
 const baseStore = useBaseStore();
 
-const { specialties } = storeToRefs(specialtyStore);
-const { languages } = storeToRefs(languageStore);
-const { academicYears } = storeToRefs(academicYearStore);
+const { specialtyOptions: storeSpecialtyOptions } = storeToRefs(specialtyStore);
+const { languageOptions: storeLanguageOptions } = storeToRefs(languageStore);
+const { academicYearOptions } = storeToRefs(academicYearStore);
 const { filteredStudents } = storeToRefs(studentStore);
-const { bases } = storeToRefs(baseStore);
+const { baseOptions: storeBaseOptions } = storeToRefs(baseStore);
 
 const selectedSpecialty = ref("");
 const selectedLanguage = ref("");
@@ -156,9 +161,9 @@ onMounted(() => {
 
 const specialtyOptions = computed(() =>
   withAllOption(
-    specialties.value.map((specialty) => ({
-      value: specialty.code,
-      text: specialty.name,
+    storeSpecialtyOptions.value.map((specialty) => ({
+      value: specialty.value,
+      text: specialty.text.split(" - ")[0], // Use just the name part for filtering
     })),
     "Все",
     "all"
@@ -166,30 +171,12 @@ const specialtyOptions = computed(() =>
 );
 
 const languageOptions = computed(() =>
-  withAllOption(
-    languages.value.map((language) => ({
-      value: language.code,
-      text: language.name,
-    })),
-    "Все",
-    "all"
-  )
+  withAllOption(storeLanguageOptions.value, "Все", "all")
 );
 
 const genderOptions = computed(() => getGenderOptions());
 
-const baseOptions = computed(() =>
-  withAllOption(
-    bases.value.map((base) => ({ value: base.value, text: base.text }))
-  )
-);
-
-const academicYearOptions = computed(() => {
-  return academicYears.value.map((year) => ({
-    value: year.id,
-    text: year.name,
-  }));
-});
+const baseOptions = computed(() => withAllOption(storeBaseOptions.value));
 
 selectedAcademicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
 
