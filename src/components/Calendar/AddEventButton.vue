@@ -34,29 +34,12 @@
         <div class="scrollable-content">
           <div class="p-4 space-y-4">
             <Select
-              label="Модуль"
-              placeholder="Выберите модуль"
-              v-model="eventTitle"
-              :options="moduleOptions"
-              name="event-module"
-              id="event-module"
-              searchable
-              @before-open="closeAddEventPopover"
-              @after-close="openAddEventPopover"
-            />
-
-            <Select
-              label="Результат обучения/дисциплин"
-              :placeholder="
-                eventTitle
-                  ? 'Выберите результат обучения'
-                  : 'Сначала выберите модуль'
-              "
-              v-model="eventResult"
-              :options="filteredLearningOutcomes"
-              name="event-learning-outcome"
-              id="event-learning-outcome"
-              :disabled="!eventTitle"
+              label="Результат обучения/дисциплина"
+              placeholder="Выберите результат обучения/дисциплину"
+              v-model="class9Id"
+              :options="class9Options"
+              name="event-class9"
+              id="event-class9"
               searchable
               @before-open="closeAddEventPopover"
               @after-close="openAddEventPopover"
@@ -73,48 +56,8 @@
                   v-model:value="startDate"
                   readonly
                   :calendar-params="{
-                    closeOnSelect: true,
-                    dateFormat: 'dd/MM/yyyy',
-                    locale: 'ru',
-                    monthNames: [
-                      'Январь',
-                      'Февраль',
-                      'Март',
-                      'Апрель',
-                      'Май',
-                      'Июнь',
-                      'Июль',
-                      'Август',
-                      'Сентябрь',
-                      'Октябрь',
-                      'Ноябрь',
-                      'Декабрь',
-                    ],
-                    monthNamesShort: [
-                      'Янв',
-                      'Фев',
-                      'Мар',
-                      'Апр',
-                      'Май',
-                      'Июн',
-                      'Июл',
-                      'Авг',
-                      'Сен',
-                      'Окт',
-                      'Ноя',
-                      'Дек',
-                    ],
-                    dayNames: [
-                      'Воскресенье',
-                      'Понедельник',
-                      'Вторник',
-                      'Среда',
-                      'Четверг',
-                      'Пятница',
-                      'Суббота',
-                    ],
-                    dayNamesShort: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
-                    firstDay: 1,
+                    ...DATE_PICKER_PARAMS,
+                    valueDateFormat: 'dd/MM/yyyy',
                   }"
                 ></f7-input>
               </div>
@@ -131,51 +74,16 @@
                   v-model:value="endDate"
                   readonly
                   :calendar-params="{
-                    closeOnSelect: true,
-                    dateFormat: 'dd/MM/yyyy',
-                    locale: 'ru',
-                    monthNames: [
-                      'Январь',
-                      'Февраль',
-                      'Март',
-                      'Апрель',
-                      'Май',
-                      'Июнь',
-                      'Июль',
-                      'Август',
-                      'Сентябрь',
-                      'Октябрь',
-                      'Ноябрь',
-                      'Декабрь',
-                    ],
-                    monthNamesShort: [
-                      'Янв',
-                      'Фев',
-                      'Мар',
-                      'Апр',
-                      'Май',
-                      'Июн',
-                      'Июл',
-                      'Авг',
-                      'Сен',
-                      'Окт',
-                      'Ноя',
-                      'Дек',
-                    ],
-                    dayNames: [
-                      'Воскресенье',
-                      'Понедельник',
-                      'Вторник',
-                      'Среда',
-                      'Четверг',
-                      'Пятница',
-                      'Суббота',
-                    ],
-                    dayNamesShort: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
-                    firstDay: 1,
+                    ...DATE_PICKER_PARAMS,
+                    valueDateFormat: 'dd/MM/yyyy',
                   }"
                 ></f7-input>
               </div>
+            </div>
+
+            <!-- Date validation error -->
+            <div v-if="dateValidationError" class="text-destructive text-sm">
+              {{ dateValidationError }}
             </div>
 
             <!-- Participants -->
@@ -287,6 +195,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/ru";
 import { uploadFile } from "@/composables/useFileUpload";
 import AddKtpDialog from "@/components/AddKtpDialog.vue";
+import { WEEK_DAYS, DATE_PICKER_PARAMS } from "@/constants/calendar";
 
 const emit = defineEmits<{
   (e: "event-added", event: CalendarEvent): void;
@@ -294,21 +203,27 @@ const emit = defineEmits<{
 }>();
 
 const calendarStore = useCalendarStore();
-const { moduleOptions, learningOutcomeOptions: allLearningOutcomeOptions } =
-  storeToRefs(calendarStore);
+const { class9Options } = storeToRefs(calendarStore);
 const selectedItemsStore = useSelectedItemsStore();
 const educationScheduleStore = useEducationScheduleStore();
 const { schedules } = storeToRefs(educationScheduleStore);
 
 const rupStore = useRupStore();
 
-const eventTitle = ref("");
-const eventResult = ref("");
+const class9Id = ref("");
 const rupFile = ref<File | null>(null);
-const startDate = ref([dayjs().toDate()]);
-const endDate = ref([dayjs().toDate()]);
+const startDate = ref([dayjs().format("DD/MM/YYYY")]);
+const endDate = ref([dayjs().format("DD/MM/YYYY")]);
 const participants = ref<string[]>([]);
 const formError = ref<string | null>(null);
+
+// Verbose logging for debugging
+console.log("🔍 [AddEventButton] Initial startDate:", startDate.value);
+console.log("🔍 [AddEventButton] Initial endDate:", endDate.value);
+console.log(
+  "🔍 [AddEventButton] dayjs().format('DD/MM/YYYY'):",
+  dayjs().format("DD/MM/YYYY")
+);
 const selectedWeekDays = ref<
   {
     weekId: number;
@@ -319,15 +234,17 @@ const selectedWeekDays = ref<
 >([]);
 const studentPopup = ref<{ open: (p: string[]) => void } | null>(null);
 
-const isFormValid = computed(() => !!eventTitle.value && !!eventResult.value);
-
-const filteredLearningOutcomes = computed(() => {
-  if (eventTitle.value) {
-    return allLearningOutcomeOptions.value.filter(
-      (o) => o.moduleId === eventTitle.value
+const isFormValid = computed(() => {
+  const hasRequiredFields = !!class9Id.value;
+  const hasValidDateRange =
+    startDate.value[0] &&
+    endDate.value[0] &&
+    dayjs(endDate.value[0], "DD/MM/YYYY").isAfter(
+      dayjs(startDate.value[0], "DD/MM/YYYY"),
+      "day"
     );
-  }
-  return [];
+
+  return hasRequiredFields && hasValidDateRange;
 });
 
 const semesterPlannedHours = computed(() => {
@@ -336,6 +253,19 @@ const semesterPlannedHours = computed(() => {
 
 const totalPlannedHours = computed(() => {
   return rupStore.selectedClass9TotalHours;
+});
+
+const dateValidationError = computed(() => {
+  if (!startDate.value[0] || !endDate.value[0]) return null;
+
+  const start = dayjs(startDate.value[0], "DD/MM/YYYY");
+  const end = dayjs(endDate.value[0], "DD/MM/YYYY");
+
+  if (!end.isAfter(start, "day")) {
+    return "Дата окончания должна быть как минимум на один день позже даты начала";
+  }
+
+  return null;
 });
 
 const startTimeOptions = computed(() =>
@@ -352,35 +282,65 @@ const endTimeOptions = computed(() =>
   }))
 );
 
-const WEEK_DAYS = [
-  { weekId: 0, russianAbbreviation: "ПН", name: "Понедельник" },
-  { weekId: 1, russianAbbreviation: "ВТ", name: "Вторник" },
-  { weekId: 2, russianAbbreviation: "СР", name: "Среда" },
-  { weekId: 3, russianAbbreviation: "ЧТ", name: "Четверг" },
-  { weekId: 4, russianAbbreviation: "ПТ", name: "Пятница" },
-  { weekId: 5, russianAbbreviation: "СБ", name: "Суббота" },
-  { weekId: 6, russianAbbreviation: "ВС", name: "Воскресенье" },
-];
-
 const handleAddEvent = async () => {
   try {
     formError.value = null;
+
+    console.log("🚀 [AddEventButton] handleAddEvent called");
+    console.log(
+      "🚀 [AddEventButton] Current startDate.value:",
+      startDate.value
+    );
+    console.log("🚀 [AddEventButton] Current endDate.value:", endDate.value);
+    console.log("🚀 [AddEventButton] startDate.value[0]:", startDate.value[0]);
+    console.log("🚀 [AddEventButton] endDate.value[0]:", endDate.value[0]);
+
+    // Validate date range
+    if (!startDate.value[0] || !endDate.value[0]) {
+      formError.value = "Пожалуйста, выберите дату начала и окончания.";
+      return;
+    }
+
+    const startParsed = dayjs(startDate.value[0], "DD/MM/YYYY");
+    const endParsed = dayjs(endDate.value[0], "DD/MM/YYYY");
+
+    console.log("🚀 [AddEventButton] startParsed:", startParsed.format());
+    console.log("🚀 [AddEventButton] endParsed:", endParsed.format());
+    console.log(
+      "🚀 [AddEventButton] startParsed.isValid():",
+      startParsed.isValid()
+    );
+    console.log(
+      "🚀 [AddEventButton] endParsed.isValid():",
+      endParsed.isValid()
+    );
+
+    if (!endParsed.isAfter(startParsed, "day")) {
+      formError.value =
+        "Дата окончания должна быть как минимум на один день позже даты начала.";
+      return;
+    }
+
     const uploadedFileUrl = rupFile.value
       ? await uploadFile(rupFile.value)
       : "";
 
     const eventData: Omit<CalendarEvent, "id" | "createdAt" | "updatedAt"> = {
-      title: eventTitle.value,
-      result: eventResult.value,
+      class9Id: class9Id.value,
       rup: uploadedFileUrl || (rupFile.value?.name ?? ""),
       file: null,
-      startDate: dayjs(startDate.value[0]).format("DD/MM/YYYY"),
-      endDate: dayjs(endDate.value[0]).format("DD/MM/YYYY"),
+      startDate: startDate.value[0],
+      endDate: endDate.value[0],
       participants: participants.value,
       weeklySchedules: selectedWeekDays.value,
     };
 
+    console.log("🚀 [AddEventButton] eventData:", eventData);
+
     const newEvent = await calendarStore.addEvent(eventData);
+
+    console.log("🚀 [AddEventButton] newEvent from store:", newEvent);
+
     emit("event-added", newEvent);
     closeAddEventPopover();
     resetForm();
@@ -391,14 +351,19 @@ const handleAddEvent = async () => {
 };
 
 const resetForm = () => {
-  eventTitle.value = "";
-  eventResult.value = "";
+  console.log("🔄 [AddEventButton] resetForm called");
+  class9Id.value = "";
   rupFile.value = null;
-  startDate.value = [dayjs().toDate()];
-  endDate.value = [dayjs().toDate()];
+  startDate.value = [dayjs().format("DD/MM/YYYY")];
+  endDate.value = [dayjs().format("DD/MM/YYYY")];
   participants.value = [];
   selectedWeekDays.value = [];
   formError.value = null;
+  console.log(
+    "🔄 [AddEventButton] resetForm - new startDate:",
+    startDate.value
+  );
+  console.log("🔄 [AddEventButton] resetForm - new endDate:", endDate.value);
 };
 
 const selectWeekDay = (day: {
@@ -463,16 +428,37 @@ const handleImportExisting = () => {
   emit("import-ktp-existing");
 };
 
-watch(eventTitle, (newVal) => {
-  if (!newVal) {
-    eventResult.value = "";
-  }
-});
-
-watch(eventResult, (newId) => {
+watch(class9Id, (newId) => {
   selectedItemsStore.setSelectedClass9ItemId(newId);
   rupStore.setSelectedClass9ItemId(newId);
 });
+
+// Watch for changes in startDate and endDate
+watch(
+  startDate,
+  (newValue, oldValue) => {
+    console.log(
+      "👀 [AddEventButton] startDate changed from:",
+      oldValue,
+      "to:",
+      newValue
+    );
+  },
+  { deep: true }
+);
+
+watch(
+  endDate,
+  (newValue, oldValue) => {
+    console.log(
+      "👀 [AddEventButton] endDate changed from:",
+      oldValue,
+      "to:",
+      newValue
+    );
+  },
+  { deep: true }
+);
 </script>
 
 <style scoped>

@@ -428,10 +428,6 @@ onMounted(async () => {
   selectedAcademicYear.value =
     academicYearStore.getActiveAcademicYear?.id || "";
 
-  await calendarStore.fetchEvents();
-  await journalStore.fetchJournals();
-
-  // Generate student list based on participants from the journal
   if (currentJournal.value?.students?.length) {
     students.value = currentJournal.value.students.map(
       (student: string, index: number) => ({

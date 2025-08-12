@@ -148,7 +148,6 @@
               <div class="space-y-2">
                 <label class="text-sm text-foreground" for="learning-outcome">
                   Наименование результата обучения/дисциплина
-                  <span class="text-muted-foreground">(при наличии)</span>
                 </label>
                 <div class="flex gap-2 w-full">
                   <f7-input
@@ -513,7 +512,9 @@ onMounted(async () => {
 const class9Schema = z.object({
   moduleIndex: z.string().min(1, "Индекс модуля обязателен"),
   moduleName: z.string().min(1, "Наименование модуля обязательно"),
-  learningOutcome: z.string().optional(),
+  learningOutcome: z
+    .string()
+    .min(1, "Наименование результата обучения/дисциплина обязательно"),
   totalCredits: z
     .string()
     .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {

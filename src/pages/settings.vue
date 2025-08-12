@@ -27,7 +27,7 @@
             </div>
           </div>
 
-          <Accordion>
+          <!-- <Accordion>
             <AccordionItem id="courses" :default-expanded="true">
               <template #title>Курсы и семестры:</template>
               <template #actions>
@@ -100,7 +100,7 @@
                 </div>
               </div>
             </AccordionItem>
-          </Accordion>
+          </Accordion> -->
         </div>
       </div>
     </div>

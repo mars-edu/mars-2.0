@@ -4,10 +4,11 @@ import Framework7Vue, { registerComponents } from "framework7-vue/bundle";
 import "framework7/css/bundle";
 import "../css/framework7-icons.css";
 import { createPinia, getActivePinia } from "pinia";
-import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
+import { createPersistedState } from "pinia-plugin-persistedstate";
 import vAuth from "../directives/auth";
 import "../css/app.css";
 import App from "../app.vue";
+import localforage from "localforage";
 import { PiniaServerSync } from "./plugin/pinia-server-sync";
 import { API_URL } from "../lib/http-client";
 import superjson from "superjson";
@@ -17,7 +18,20 @@ Framework7.use(Framework7Vue);
 const app = createApp(App);
 
 const pinia = createPinia();
-pinia.use(piniaPluginPersistedstate);
+
+const piniaStorage = localforage.createInstance({
+  name: "pinia",
+});
+
+pinia.use(
+  createPersistedState({
+    storage: piniaStorage,
+    serializer: {
+      serialize: superjson.stringify,
+      deserialize: superjson.parse,
+    },
+  })
+);
 pinia.use(
   PiniaServerSync({
     url: `${API_URL}/ws`,

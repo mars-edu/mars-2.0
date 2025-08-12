@@ -37,20 +37,6 @@
           >
             <div class="flex flex-wrap gap-4 mb-6">
               <Select
-                v-model="selectedLessonType"
-                :options="lessonTypeOptions"
-                placeholder="Тип занятия"
-                name="lesson-type"
-                class="flex-1 min-w-[200px]"
-              />
-              <Select
-                v-model="selectedTechnology"
-                :options="technologyOptions"
-                placeholder="Технология обучения"
-                name="technology"
-                class="flex-1 min-w-[200px]"
-              />
-              <Select
                 v-model="selectedDiscipline"
                 :options="disciplineOptions"
                 placeholder="Дисциплина"
@@ -106,12 +92,6 @@
                       <p class="font-semibold text-sm leading-tight">
                         {{ getJournalTitle(journal) }}
                       </p>
-                      <div v-if="journal.status" class="flex justify-end mt-2">
-                        <span
-                          class="bg-green-600 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold shadow-sm"
-                          >{{ journal.status }}</span
-                        >
-                      </div>
                     </div>
                     <div
                       v-if="
@@ -137,12 +117,6 @@
                       <p class="font-semibold text-sm leading-tight">
                         {{ getJournalTitle(journal) }}
                       </p>
-                      <div v-if="journal.status" class="flex justify-end mt-2">
-                        <span
-                          class="bg-green-600 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold shadow-sm"
-                          >{{ journal.status === "active" ? "✓" : "" }}</span
-                        >
-                      </div>
                     </div>
                     <div
                       v-if="mixedGroupJournals.length === 0"
@@ -209,36 +183,11 @@ const academicYearOptions = computed(() => {
 onMounted(async () => {
   selectedAcademicYear.value =
     academicYearStore.getActiveAcademicYear?.id || "";
-  await journalStore.fetchJournals();
 });
 
 const goToJournalDetails = (id: number | string) => {
   f7.views.main.router.navigate(`/journals/${id}`);
 };
-
-const selectedLessonType = ref("");
-const lessonTypeOptions = ref(
-  withAllOption(
-    [
-      { value: "lecture", text: "Лекция" },
-      { value: "practice", text: "Практика" },
-    ],
-    "все",
-    ""
-  )
-);
-
-const selectedTechnology = ref("");
-const technologyOptions = ref(
-  withAllOption(
-    [
-      { value: "online", text: "Онлайн" },
-      { value: "offline", text: "Офлайн" },
-    ],
-    "все",
-    ""
-  )
-);
 
 const selectedDiscipline = ref("");
 const disciplineOptions = ref(

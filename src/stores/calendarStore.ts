@@ -4,8 +4,7 @@ import { useClass9Store } from "./class9Store";
 
 export interface CalendarEvent {
   id: string;
-  title: string;
-  result: string;
+  class9Id: string;
   rup: string;
   file: File | null;
   startDate: string;
@@ -38,28 +37,28 @@ export const useCalendarStore = defineStore(
 
     const class9Store = useClass9Store();
 
-    const moduleOptions = computed(() => {
-      return class9Store.getAllModulesAndOutcomes.modules;
+    const class9Options = computed(() => {
+      return class9Store.getAllClass9Items
+        .filter(
+          (item: any) =>
+            item.learningOutcome && item.learningOutcome.trim() !== ""
+        )
+        .map((item: any) => ({
+          value: item.id,
+          text: `${item.moduleIndex} ${item.moduleName} - ${item.learningOutcome}`,
+          moduleIndex: item.moduleIndex,
+          moduleName: item.moduleName,
+          learningOutcome: item.learningOutcome,
+        }));
     });
 
-    const learningOutcomeOptions = computed(() => {
-      return class9Store.getAllModulesAndOutcomes.outcomes;
-    });
+    const getEventTitle = (event: CalendarEvent) => {
+      const class9Item = class9Store.getClass9ById(event.class9Id);
 
-    async function fetchEvents() {
-      loading.value = true;
-      try {
-        // Mock async operation
-        await new Promise((res) => setTimeout(res, 500));
-        // In a real app, you'd fetch from an API
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to load events";
-      } finally {
-        loading.value = false;
-      }
-    }
+      if (!class9Item || !class9Item.learningOutcome) return "";
+
+      return `${class9Item.moduleIndex} ${class9Item.learningOutcome}`;
+    };
 
     async function addEvent(
       eventData: Omit<CalendarEvent, "id" | "createdAt" | "updatedAt">
@@ -144,9 +143,8 @@ export const useCalendarStore = defineStore(
       getEventById,
       isLoading,
       getError,
-      moduleOptions,
-      learningOutcomeOptions,
-      fetchEvents,
+      class9Options,
+      getEventTitle,
       addEvent,
       updateEvent,
       deleteEvent,

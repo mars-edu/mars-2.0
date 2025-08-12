@@ -21,6 +21,7 @@
   "dependencies": {
     "@types/sortablejs": "^1.15.8",
     "@vueuse/core": "^13.5.0",
+    "caniuse-lite": "^1.0.30001734",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
@@ -31,6 +32,7 @@
     "framework7-vue": "^8.3.4",
     "fuse.js": "^7.1.0",
     "hono": "^4.8.5",
+    "localforage": "^1.10.0",
     "lucide-vue-next": "^0.482.0",
     "mammoth": "^1.9.1",
     "maska": "^3.2.0",

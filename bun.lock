@@ -5,7 +5,8 @@
       "name": "mars",
       "dependencies": {
         "@types/sortablejs": "^1.15.8",
-        "@vueuse/core": "^13.2.0",
+        "@vueuse/core": "^13.5.0",
+        "caniuse-lite": "^1.0.30001734",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "dayjs": "^1.11.13",
@@ -15,43 +16,44 @@
         "framework7-icons": "^5.0.5",
         "framework7-vue": "^8.3.4",
         "fuse.js": "^7.1.0",
-        "hono": "^4.8.2",
+        "hono": "^4.8.5",
+        "localforage": "^1.10.0",
         "lucide-vue-next": "^0.482.0",
         "mammoth": "^1.9.1",
-        "maska": "^3.1.1",
+        "maska": "^3.2.0",
         "material-icons": "^1.13.14",
         "ofetch": "^1.4.1",
-        "pinia": "^3.0.2",
-        "pinia-plugin-persistedstate": "^4.3.0",
+        "pinia": "^3.0.3",
+        "pinia-plugin-persistedstate": "^4.4.1",
         "sharp": "^0.33.5",
         "skeleton-elements": "^4.0.1",
         "sortablejs": "^1.15.6",
         "superjson": "^2.2.2",
         "svgo": "^3.3.2",
-        "swiper": "^11.2.6",
-        "tailwind-merge": "^3.3.0",
+        "swiper": "^11.2.10",
+        "tailwind-merge": "^3.3.1",
         "tailwindcss-animate": "^1.0.7",
         "typescript": "^5.8.3",
-        "vite-plugin-image-optimizer": "^1.1.8",
-        "vue": "^3.5.14",
-        "zod": "^3.24.4",
+        "vite-plugin-image-optimizer": "^1.1.9",
+        "vue": "^3.5.18",
+        "zod": "^3.25.76",
       },
       "devDependencies": {
         "@iconify/vue": "^4.3.0",
-        "@types/node": "^22.15.19",
+        "@types/node": "^22.16.5",
         "@vitejs/plugin-vue": "^5.2.4",
-        "@vue/compiler-sfc": "^3.5.14",
+        "@vue/compiler-sfc": "^3.5.18",
         "autoprefixer": "^10.4.21",
         "cpy-cli": "^5.0.0",
         "cross-env": "^7.0.3",
-        "postcss": "^8.5.3",
-        "postcss-preset-env": "^10.1.6",
+        "postcss": "^8.5.6",
+        "postcss-preset-env": "^10.2.4",
         "rollup-plugin-visualizer": "^5.14.0",
-        "sass-embedded": "^1.89.0",
+        "sass-embedded": "^1.89.2",
         "tailwindcss": "^3.4.17",
         "vite": "^6.3.5",
-        "vite-plugin-pwa": "^1.0.0",
-        "vite-plugin-webfont-dl": "^3.10.4",
+        "vite-plugin-pwa": "^1.0.1",
+        "vite-plugin-webfont-dl": "^3.11.1",
       },
     },
   },
@@ -622,7 +624,7 @@
 
     "camelcase-css": ["camelcase-css@2.0.1", "", {}, "sha512-QOSvevhslijgYwRx6Rv7zKdMF8lbRmx+uQGx2+vDc+KI/eBnsy9kit5aj23AgGu3pa4t9AgwbnXWqS+iOY+2aA=="],
 
-    "caniuse-lite": ["caniuse-lite@1.0.30001702", "", {}, "sha512-LoPe/D7zioC0REI5W73PeR1e1MLCipRGq/VkovJnd6Df+QVqT+vT33OXCp8QUd7kA7RZrHWxb1B36OQKI/0gOA=="],
+    "caniuse-lite": ["caniuse-lite@1.0.30001734", "", {}, "sha512-uhE1Ye5vgqju6OI71HTQqcBCZrvHugk0MjLak7Q+HfoBgoq5Bi+5YnwjP4fjDgrtYr/l8MVRBvzz9dPD4KyK0A=="],
 
     "chalk": ["chalk@4.1.2", "", { "dependencies": { "ansi-styles": "^4.1.0", "supports-color": "^7.1.0" } }, "sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA=="],
 
@@ -998,11 +1000,13 @@
 
     "leven": ["leven@3.1.0", "", {}, "sha512-qsda+H8jTaUaN/x5vzW2rzc+8Rw4TAQ/4KjB46IwK5VH+IlVeeeje/EoZRpiXvIqjFgK84QffqPztGI3VBLG1A=="],
 
-    "lie": ["lie@3.3.0", "", { "dependencies": { "immediate": "~3.0.5" } }, "sha512-UaiMJzeWRlEujzAuw5LokY1L5ecNQYZKfmyZ9L7wDHb/p5etKaxXhohBcrw0EYby+G/NA52vRSN4N39dxHAIwQ=="],
+    "lie": ["lie@3.1.1", "", { "dependencies": { "immediate": "~3.0.5" } }, "sha512-RiNhHysUjhrDQntfYSfY4MU24coXXdEOgw9WGcKHNeEwffDYbF//u87M1EWaMGzuFoSbqW0C9C6lEEhDOAswfw=="],
 
     "lilconfig": ["lilconfig@3.1.3", "", {}, "sha512-/vlFKAoH5Cgt3Ie+JLhRbwOsCQePABiU3tJ1egGvyQ+33R/vcwM2Zl2QR/LzjsBeItPt3oSVXapn+m4nQDvpzw=="],
 
     "lines-and-columns": ["lines-and-columns@1.2.4", "", {}, "sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg=="],
+
+    "localforage": ["localforage@1.10.0", "", { "dependencies": { "lie": "3.1.1" } }, "sha512-14/H1aX7hzBBmmh7sGPd+AOMkkIrHM3Z1PAyGgZigA1H1p5O5ANnMyWzvpAETtG68/dC4pC0ncy3+PPGzXZHPg=="],
 
     "lodash": ["lodash@4.17.21", "", {}, "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg=="],
 
@@ -1596,7 +1600,11 @@
 
     "anymatch/picomatch": ["picomatch@2.3.1", "", {}, "sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA=="],
 
+    "autoprefixer/caniuse-lite": ["caniuse-lite@1.0.30001702", "", {}, "sha512-LoPe/D7zioC0REI5W73PeR1e1MLCipRGq/VkovJnd6Df+QVqT+vT33OXCp8QUd7kA7RZrHWxb1B36OQKI/0gOA=="],
+
     "babel-plugin-polyfill-corejs2/semver": ["semver@6.3.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA=="],
+
+    "browserslist/caniuse-lite": ["caniuse-lite@1.0.30001702", "", {}, "sha512-LoPe/D7zioC0REI5W73PeR1e1MLCipRGq/VkovJnd6Df+QVqT+vT33OXCp8QUd7kA7RZrHWxb1B36OQKI/0gOA=="],
 
     "chalk/supports-color": ["supports-color@7.2.0", "", { "dependencies": { "has-flag": "^4.0.0" } }, "sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw=="],
 
@@ -1619,6 +1627,8 @@
     "framework7/swiper": ["swiper@10.3.1", "", {}, "sha512-24Wk3YUdZHxjc9faID97GTu6xnLNia+adMt6qMTZG/HgdSUt4fS0REsGUXJOgpTED0Amh/j+gRGQxsLayJUlBQ=="],
 
     "jake/minimatch": ["minimatch@3.1.2", "", { "dependencies": { "brace-expansion": "^1.1.7" } }, "sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw=="],
+
+    "jszip/lie": ["lie@3.3.0", "", { "dependencies": { "immediate": "~3.0.5" } }, "sha512-UaiMJzeWRlEujzAuw5LokY1L5ecNQYZKfmyZ9L7wDHb/p5etKaxXhohBcrw0EYby+G/NA52vRSN4N39dxHAIwQ=="],
 
     "micromatch/picomatch": ["picomatch@2.3.1", "", {}, "sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA=="],
 

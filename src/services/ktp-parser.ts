@@ -6,7 +6,6 @@ interface LessonPlan {
   date?: string;
   topic?: string;
   hours?: number;
-  lessonType?: string;
   homework?: string;
   notes?: string;
 }
@@ -75,7 +74,7 @@ class KTPParser {
       patterns: ["тақырып атауы", "наименование", "тема", "topic"],
     },
     { key: "hours", patterns: ["сағаттар саны", "количество часов", "hours"] },
-    { key: "lessonType", patterns: ["сабақ типі", "тип занятий", "type"] },
+
     {
       key: "homework",
       patterns: ["үй тапсырмасы", "домашнее задание", "homework"],
@@ -269,9 +268,7 @@ class KTPParser {
             case "hours":
               lesson.hours = this.extractNumber(cellText);
               break;
-            case "lessonType":
-              lesson.lessonType = cellText;
-              break;
+
             case "homework":
               lesson.homework = cellText;
               break;

@@ -19,29 +19,15 @@
       </div>
 
       <div class="p-4 space-y-4">
-        <!-- Module selection -->
+        <!-- Class9 selection -->
         <Select
-          label="Модуль"
-          placeholder="Выберите модуль"
-          v-model="eventTitle"
-          :options="moduleOptions"
-          name="event-module-edit"
-          id="event-module-edit"
-        />
-
-        <!-- Learning outcome selection -->
-        <Select
-          label="Результат обучения/дисциплин"
-          :placeholder="
-            eventTitle
-              ? 'Выберите результат обучения'
-              : 'Сначала выберите модуль'
-          "
-          v-model="eventResult"
-          :options="filteredLearningOutcomes"
-          name="event-learning-outcome-edit"
-          id="event-learning-outcome-edit"
-          :disabled="!eventTitle"
+          label="Результат обучения"
+          placeholder="Выберите результат обучения"
+          v-model="class9Id"
+          :options="class9Options"
+          name="event-class9-edit"
+          id="event-class9-edit"
+          searchable
         />
 
         <!-- Start Date -->
@@ -54,7 +40,10 @@
               placeholder="Дата"
               v-model:value="startDate"
               readonly
-              :calendar-params="datePickerParams"
+              :calendar-params="{
+                ...DATE_PICKER_PARAMS,
+                valueDateFormat: 'dd/MM/yyyy',
+              }"
             />
           </div>
         </div>
@@ -69,9 +58,17 @@
               placeholder="Дата"
               v-model:value="endDate"
               readonly
-              :calendar-params="datePickerParams"
+              :calendar-params="{
+                ...DATE_PICKER_PARAMS,
+                valueDateFormat: 'dd/MM/yyyy',
+              }"
             />
           </div>
+        </div>
+
+        <!-- Date validation error -->
+        <div v-if="dateValidationError" class="text-destructive text-sm">
+          {{ dateValidationError }}
         </div>
 
         <!-- Participants -->
@@ -202,7 +199,7 @@
               size="18px"
               class="mr-2"
             />
-            Удалить событие
+            Удалить
           </button>
         </div>
 
@@ -231,18 +228,7 @@ import { storeToRefs } from "pinia";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
 import { uploadFile } from "@/composables/useFileUpload";
-
-/* Helper to safely convert stored date string to JS Date */
-function parseDate(dateStr: string): Date {
-  // Try explicit DD/MM/YYYY first (strict parsing)
-  const custom = dayjs(dateStr, "DD/MM/YYYY", true);
-  if (custom.isValid()) return custom.toDate();
-  // Fallback to ISO or native recognisable formats
-  const iso = dayjs(dateStr);
-  if (iso.isValid()) return iso.toDate();
-  // Fallback to today to avoid invalid date
-  return new Date();
-}
+import { WEEK_DAYS, DATE_PICKER_PARAMS } from "@/constants/calendar";
 
 const props = defineProps<{ event: CalendarEvent }>();
 
@@ -257,19 +243,24 @@ const class9Store = useClass9Store();
 const selectedItemsStore = useSelectedItemsStore();
 const educationScheduleStore = useEducationScheduleStore();
 
-const { moduleOptions, learningOutcomeOptions: allLearningOutcomeOptions } =
-  storeToRefs(calendarStore);
+const { class9Options } = storeToRefs(calendarStore);
 const { schedules } = storeToRefs(educationScheduleStore);
 const { selectedClass9Item } = storeToRefs(selectedItemsStore);
 
 /* --- REACTIVE STATE --- */
-const eventTitle = ref(props.event.title);
-const eventResult = ref(props.event.result);
+const class9Id = ref(props.event.class9Id);
 const rupFile = ref<File | null>(null);
 const rupFileName = ref(props.event.rup);
-const startDate = ref([parseDate(props.event.startDate)]);
-const endDate = ref([parseDate(props.event.endDate)]);
+const startDate = ref([props.event.startDate]);
+const endDate = ref([props.event.endDate]);
 const participants = ref<string[]>([...props.event.participants]);
+
+// Verbose logging for debugging
+console.log("🔍 [EditEventPopover] Initial props.event:", props.event);
+console.log("🔍 [EditEventPopover] Initial startDate:", props.event.startDate);
+console.log("🔍 [EditEventPopover] Initial endDate:", props.event.endDate);
+console.log("🔍 [EditEventPopover] startDate ref value:", startDate.value);
+console.log("🔍 [EditEventPopover] endDate ref value:", endDate.value);
 const formError = ref<string | null>(null);
 const selectedWeekDays = ref<
   {
@@ -290,19 +281,34 @@ const selectedWeekDays = ref<
 const studentPopup = ref<{ open: (p: string[]) => void } | null>(null);
 
 /* --- COMPUTED --- */
-const isFormValid = computed(() => !!eventTitle.value && !!eventResult.value);
-
-const filteredLearningOutcomes = computed(() => {
-  if (eventTitle.value) {
-    return allLearningOutcomeOptions.value.filter(
-      (o) => o.moduleId === eventTitle.value
+const isFormValid = computed(() => {
+  const hasRequiredFields = !!class9Id.value;
+  const hasValidDateRange =
+    startDate.value[0] &&
+    endDate.value[0] &&
+    dayjs(endDate.value[0], "DD/MM/YYYY").isAfter(
+      dayjs(startDate.value[0], "DD/MM/YYYY"),
+      "day"
     );
-  }
-  return [];
+
+  return hasRequiredFields && hasValidDateRange;
 });
 
 const plannedHours = computed(() => {
   return selectedClass9Item.value?.totalHours ?? "0";
+});
+
+const dateValidationError = computed(() => {
+  if (!startDate.value[0] || !endDate.value[0]) return null;
+
+  const start = dayjs(startDate.value[0], "DD/MM/YYYY");
+  const end = dayjs(endDate.value[0], "DD/MM/YYYY");
+
+  if (!end.isAfter(start, "day")) {
+    return "Дата окончания должна быть как минимум на один день позже даты начала";
+  }
+
+  return null;
 });
 
 const startTimeOptions = computed(() =>
@@ -318,62 +324,6 @@ const endTimeOptions = computed(() =>
     text: schedule.endTime,
   }))
 );
-
-const WEEK_DAYS = [
-  { weekId: 0, russianAbbreviation: "ПН", name: "Понедельник" },
-  { weekId: 1, russianAbbreviation: "ВТ", name: "Вторник" },
-  { weekId: 2, russianAbbreviation: "СР", name: "Среда" },
-  { weekId: 3, russianAbbreviation: "ЧТ", name: "Четверг" },
-  { weekId: 4, russianAbbreviation: "ПТ", name: "Пятница" },
-  { weekId: 5, russianAbbreviation: "СБ", name: "Суббота" },
-  { weekId: 6, russianAbbreviation: "ВС", name: "Воскресенье" },
-];
-
-/* --- DATEPICKER LOCALE PARAMS --- */
-const datePickerParams = {
-  closeOnSelect: true,
-  dateFormat: "dd/MM/yyyy",
-  locale: "ru",
-  monthNames: [
-    "Январь",
-    "Февраль",
-    "Март",
-    "Апрель",
-    "Май",
-    "Июнь",
-    "Июль",
-    "Август",
-    "Сентябрь",
-    "Октябрь",
-    "Ноябрь",
-    "Декабрь",
-  ],
-  monthNamesShort: [
-    "Янв",
-    "Фев",
-    "Мар",
-    "Апр",
-    "Май",
-    "Июн",
-    "Июл",
-    "Авг",
-    "Сен",
-    "Окт",
-    "Ноя",
-    "Дек",
-  ],
-  dayNames: [
-    "Воскресенье",
-    "Понедельник",
-    "Вторник",
-    "Среда",
-    "Четверг",
-    "Пятница",
-    "Суббота",
-  ],
-  dayNamesShort: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
-  firstDay: 1,
-};
 
 /* --- METHODS --- */
 const selectWeekDay = (day: {
@@ -450,36 +400,79 @@ const rupFileDownloadUrl = computed(() => {
   }
   return "#";
 });
-
 const handleUpdateEvent = async () => {
   try {
     formError.value = null;
+
+    console.log("🚀 [EditEventPopover] handleUpdateEvent called");
+    console.log(
+      "🚀 [EditEventPopover] Current startDate.value:",
+      startDate.value
+    );
+    console.log("🚀 [EditEventPopover] Current endDate.value:", endDate.value);
+    console.log(
+      "🚀 [EditEventPopover] startDate.value[0]:",
+      startDate.value[0]
+    );
+    console.log("🚀 [EditEventPopover] endDate.value[0]:", endDate.value[0]);
+
+    // Validate date range
+    if (!startDate.value[0] || !endDate.value[0]) {
+      formError.value = "Пожалуйста, выберите дату начала и окончания.";
+      return;
+    }
+
+    const startParsed = dayjs(startDate.value[0], "DD/MM/YYYY");
+    const endParsed = dayjs(endDate.value[0], "DD/MM/YYYY");
+
+    console.log("🚀 [EditEventPopover] startParsed:", startParsed.format());
+    console.log("🚀 [EditEventPopover] endParsed:", endParsed.format());
+    console.log(
+      "🚀 [EditEventPopover] startParsed.isValid():",
+      startParsed.isValid()
+    );
+    console.log(
+      "🚀 [EditEventPopover] endParsed.isValid():",
+      endParsed.isValid()
+    );
+
+    if (!endParsed.isAfter(startParsed, "day")) {
+      formError.value =
+        "Дата окончания должна быть как минимум на один день позже даты начала.";
+      return;
+    }
 
     let uploadedFileUrl = rupFileName.value;
     if (rupFile.value) {
       uploadedFileUrl = await uploadFile(rupFile.value);
     }
 
-    await calendarStore.updateEvent(props.event.id, {
-      title: eventTitle.value,
-      result: eventResult.value,
+    const updateData = {
+      class9Id: class9Id.value,
       rup: uploadedFileUrl,
-      startDate: dayjs(startDate.value[0]).format("DD/MM/YYYY"),
-      endDate: dayjs(endDate.value[0]).format("DD/MM/YYYY"),
+      startDate: startDate.value[0],
+      endDate: endDate.value[0],
       participants: participants.value,
       weeklySchedules: selectedWeekDays.value,
-    });
+    };
 
-    emit("updated", {
+    console.log("🚀 [EditEventPopover] updateData:", updateData);
+
+    await calendarStore.updateEvent(props.event.id, updateData);
+
+    const emitData = {
       ...props.event,
-      title: eventTitle.value,
-      result: eventResult.value,
+      class9Id: class9Id.value,
       rup: uploadedFileUrl,
-      startDate: dayjs(startDate.value[0]).format("DD/MM/YYYY"),
-      endDate: dayjs(endDate.value[0]).format("DD/MM/YYYY"),
+      startDate: startDate.value[0],
+      endDate: endDate.value[0],
       participants: participants.value,
       weeklySchedules: selectedWeekDays.value,
-    });
+    };
+
+    console.log("🚀 [EditEventPopover] emitData:", emitData);
+
+    emit("updated", emitData);
 
     closeEditEventPopover();
   } catch (err) {
@@ -490,17 +483,27 @@ const handleUpdateEvent = async () => {
 
 const showDeleteConfirmation = () => {
   f7.popover.close("#edit-event-popover");
+  const eventTitle = calendarStore.getEventTitle(props.event);
   f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить событие \"${props.event.title}\"?</p>
+    `<p>Вы уверены, что хотите удалить событие \"${eventTitle}\"?</p>
      <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление события",
     async () => {
       try {
         await calendarStore.deleteEvent(props.event.id);
-        emit("updated", props.event); // Let parent refresh
+        emit("updated", props.event);
       } catch (error) {
-        f7.dialog.alert("Произошла ошибка при удалении события.");
+        f7.dialog.alert(
+          "Произошла ошибка при удалении события.",
+          "Ошибка",
+          () => {
+            f7.popover.open("#edit-event-popover");
+          }
+        );
       }
+    },
+    () => {
+      f7.popover.open("#edit-event-popover");
     }
   );
 };
@@ -511,13 +514,34 @@ const closeEditEventPopover = () => {
 };
 
 /* --- WATCHERS --- */
-watch(eventTitle, (newVal) => {
-  if (!newVal) {
-    eventResult.value = "";
-  }
-});
-
-watch(eventResult, (newId) => {
+watch(class9Id, (newId) => {
   selectedItemsStore.setSelectedClass9ItemId(newId);
 });
+
+// Watch for changes in startDate and endDate
+watch(
+  startDate,
+  (newValue, oldValue) => {
+    console.log(
+      "👀 [EditEventPopover] startDate changed from:",
+      oldValue,
+      "to:",
+      newValue
+    );
+  },
+  { deep: true }
+);
+
+watch(
+  endDate,
+  (newValue, oldValue) => {
+    console.log(
+      "👀 [EditEventPopover] endDate changed from:",
+      oldValue,
+      "to:",
+      newValue
+    );
+  },
+  { deep: true }
+);
 </script>

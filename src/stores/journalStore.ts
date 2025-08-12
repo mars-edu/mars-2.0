@@ -11,9 +11,6 @@ export interface Journal {
   courseNumber: number;
   disciplineId: string;
   groupId: string;
-  lessonType: string;
-  technology: string;
-  status: string;
   students: string[];
   isMixedGroup?: boolean;
 }
@@ -88,15 +85,8 @@ export const useJournalStore = defineStore(
               id: `${actualEvent.id}-${courseNumber}`,
               title: generateJournalTitle(courseNumber, studentsInCourse),
               courseNumber: courseNumber,
-              disciplineId: actualEvent.rup,
+              disciplineId: actualEvent.class9Id,
               groupId: studentsInCourse.join(", "),
-              lessonType: actualEvent.title.toLowerCase().includes("лекция")
-                ? "lecture"
-                : "practice",
-              technology: actualEvent.title.toLowerCase().includes("онлайн")
-                ? "online"
-                : "offline",
-              status: actualEvent.result ? "active" : "pending",
               students: studentsInCourse,
               isMixedGroup: isMixed,
             };
@@ -132,15 +122,8 @@ export const useJournalStore = defineStore(
               actualEvent.participants
             ),
             courseNumber: primaryCourse,
-            disciplineId: actualEvent.rup,
+            disciplineId: actualEvent.class9Id,
             groupId: actualEvent.participants.join(", "),
-            lessonType: actualEvent.title.toLowerCase().includes("лекция")
-              ? "lecture"
-              : "practice",
-            technology: actualEvent.title.toLowerCase().includes("онлайн")
-              ? "online"
-              : "offline",
-            status: actualEvent.result ? "active" : "pending",
             students: actualEvent.participants,
             isMixedGroup: true,
           };
@@ -191,15 +174,8 @@ export const useJournalStore = defineStore(
               actualEvent.participants || []
             ),
             courseNumber: courseNumber,
-            disciplineId: actualEvent.rup,
+            disciplineId: actualEvent.class9Id,
             groupId: actualEvent.participants?.join(", ") || "",
-            lessonType: actualEvent.title.toLowerCase().includes("лекция")
-              ? "lecture"
-              : "practice",
-            technology: actualEvent.title.toLowerCase().includes("онлайн")
-              ? "online"
-              : "offline",
-            status: actualEvent.result ? "active" : "pending",
             students: actualEvent.participants || [],
           };
         }
@@ -208,26 +184,12 @@ export const useJournalStore = defineStore(
       };
     });
 
-    async function fetchJournals() {
-      loading.value = true;
-      try {
-        await calendarStore.fetchEvents();
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to load journals";
-      } finally {
-        loading.value = false;
-      }
-    }
-
     async function addJournal(journalData: Omit<Journal, "id">) {
       loading.value = true;
       try {
         const eventData = {
-          title: journalData.title,
-          result: journalData.status === "active" ? "Активен" : "",
-          rup: journalData.disciplineId,
+          class9Id: journalData.disciplineId, // Using disciplineId as temporary class9Id mapping
+          rup: "",
           file: null,
           startDate: new Date().toISOString().split("T")[0],
           endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
@@ -256,10 +218,8 @@ export const useJournalStore = defineStore(
       try {
         const eventData: any = {};
 
-        if (journalData.title) eventData.title = journalData.title;
-        if (journalData.status)
-          eventData.result = journalData.status === "active" ? "Активен" : "";
-        if (journalData.disciplineId) eventData.rup = journalData.disciplineId;
+        if (journalData.disciplineId)
+          eventData.class9Id = journalData.disciplineId;
         if (journalData.students) eventData.participants = journalData.students;
 
         await calendarStore.updateEvent(id, eventData);
@@ -301,7 +261,6 @@ export const useJournalStore = defineStore(
       mixedGroupJournals,
       generateJournalTitle,
       getJournalById,
-      fetchJournals,
       addJournal,
       updateJournal,
       deleteJournal,

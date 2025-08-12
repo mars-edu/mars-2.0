@@ -9,7 +9,6 @@ export interface CalendarEvent {
   id: string;
   title: string;
   time: string;
-  type: string;
 }
 
 export interface CalendarDay {
@@ -65,6 +64,61 @@ export function useCalendar() {
     return months[monthIndex.value];
   });
 
+  // Helper function to get events for a specific date
+  const getEventsForDate = (targetDate: dayjs.Dayjs) => {
+    const parseToDayjs = (dateValue: any) => {
+      if (Array.isArray(dateValue) && dateValue.length > 0) {
+        return dayjs(dateValue[0]);
+      }
+      if (typeof dateValue === "string") {
+        return dayjs(dateValue, "DD/MM/YYYY");
+      }
+      return dayjs(dateValue);
+    };
+
+    const weekIdOfCurrent = (targetDate.day() + 6) % 7; // Convert Sunday=0 to Monday=0
+
+    return calendarStore.events
+      .filter((event) => {
+        const eventStartDate = parseToDayjs(event.startDate);
+        const eventEndDate = parseToDayjs(event.endDate ?? event.startDate);
+
+        // Check if date range matches
+        const inRange = targetDate.isBetween(
+          eventStartDate,
+          eventEndDate,
+          "day",
+          "[]"
+        );
+
+        if (!inRange) return false;
+
+        // If weeklySchedules defined, ensure current weekday is selected
+        if (event.weeklySchedules && event.weeklySchedules.length > 0) {
+          return event.weeklySchedules.some(
+            (ws) => ws.weekId === weekIdOfCurrent
+          );
+        }
+
+        // Otherwise show for all days in range
+        return true;
+      })
+      .map((event) => {
+        let time = event.startTime || "All day";
+        if (event.weeklySchedules && event.weeklySchedules.length > 0) {
+          const ws = event.weeklySchedules.find(
+            (w) => w.weekId === weekIdOfCurrent
+          );
+          if (ws && ws.startTime) time = ws.startTime;
+        }
+        return {
+          id: event.id,
+          title: calendarStore.getEventTitle(event),
+          time,
+        };
+      });
+  };
+
   // Generate calendar days for the month
   const calendarDays = computed<CalendarDay[]>(() => {
     const days: CalendarDay[] = [];
@@ -89,12 +143,16 @@ export function useCalendar() {
     ).getDate();
     for (let i = firstDayOfWeek - 1; i >= 0; i--) {
       const dayNumber = prevMonthLastDay - i;
+      const prevMonthDate = dayjs(
+        new Date(date.getFullYear(), date.getMonth() - 1, dayNumber)
+      );
+
       days.push({
         date: `${date.getFullYear()}-${date.getMonth()}-${dayNumber}`,
         dayNumber,
         isCurrentMonth: false,
         isToday: false,
-        events: [],
+        events: getEventsForDate(prevMonthDate),
       });
     }
 
@@ -109,77 +167,28 @@ export function useCalendar() {
         new Date(parseInt(year.value), monthIndex.value, i)
       );
 
-      const parseToDayjs = (dateValue: any) => {
-        if (Array.isArray(dateValue) && dateValue.length > 0) {
-          return dayjs(dateValue[0]);
-        }
-        if (typeof dateValue === "string") {
-          return dayjs(dateValue, "DD/MM/YYYY");
-        }
-        return dayjs(dateValue);
-      };
-
-      const weekIdOfCurrent = (currentDate.day() + 6) % 7; // Convert Sunday=0 to Monday=0
-
-      const eventsForDay = calendarStore.events
-        .filter((event) => {
-          const eventStartDate = parseToDayjs(event.startDate);
-          const eventEndDate = parseToDayjs(event.endDate ?? event.startDate);
-
-          // Check if date range matches
-          const inRange = currentDate.isBetween(
-            eventStartDate,
-            eventEndDate,
-            "day",
-            "[]"
-          );
-
-          if (!inRange) return false;
-
-          // If weeklySchedules defined, ensure current weekday is selected
-          if (event.weeklySchedules && event.weeklySchedules.length > 0) {
-            return event.weeklySchedules.some(
-              (ws) => ws.weekId === weekIdOfCurrent
-            );
-          }
-
-          // Otherwise show for all days in range
-          return true;
-        })
-        .map((event) => {
-          let time = event.startTime || "All day";
-          if (event.weeklySchedules && event.weeklySchedules.length > 0) {
-            const ws = event.weeklySchedules.find(
-              (w) => w.weekId === weekIdOfCurrent
-            );
-            if (ws && ws.startTime) time = ws.startTime;
-          }
-          return {
-            id: event.id,
-            title: event.title,
-            time,
-            type: "task", // Could derive from event data
-          };
-        });
-
       days.push({
         date: `${date.getFullYear()}-${date.getMonth() + 1}-${i}`,
         dayNumber: i,
         isCurrentMonth: true,
         isToday,
-        events: eventsForDay,
+        events: getEventsForDate(currentDate),
       });
     }
 
     // Add days from next month to complete the grid (6 rows x 7 columns = 42 cells)
     const remainingDays = 42 - days.length;
     for (let i = 1; i <= remainingDays; i++) {
+      const nextMonthDate = dayjs(
+        new Date(date.getFullYear(), date.getMonth() + 1, i)
+      );
+
       days.push({
         date: `${date.getFullYear()}-${date.getMonth() + 2}-${i}`,
         dayNumber: i,
         isCurrentMonth: false,
         isToday: false,
-        events: [],
+        events: getEventsForDate(nextMonthDate),
       });
     }
 

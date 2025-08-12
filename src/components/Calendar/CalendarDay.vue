@@ -2,7 +2,7 @@
   <div
     class="bg-card min-h-32 p-2 relative group"
     :class="{
-      'bg-secondary': [5, 6].includes(new Date(day.date).getDay()),
+      'bg-secondary': [6, 0].includes(new Date(day.date).getDay()),
       'hover:bg-secondary/70': !day.isToday,
     }"
   >
