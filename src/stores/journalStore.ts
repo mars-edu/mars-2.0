@@ -15,7 +15,6 @@ export interface Journal {
   technology: string;
   status: string;
   students: string[];
-  isPlaceholder?: boolean;
   isMixedGroup?: boolean;
 }
 
@@ -58,36 +57,15 @@ export const useJournalStore = defineStore(
       calendarStore.events.forEach((event: any) => {
         const actualEvent = event._custom?.value || event;
 
-        // 1. Events WITHOUT participants → placeholder journals for UI
+        // Only process events WITH participants
         if (
           !actualEvent.participants ||
           actualEvent.participants.length === 0
         ) {
-          // Place the placeholder into the FIRST course (№1)
-          const defaultCourseNumber = 1;
-
-          const placeholderJournal: Journal = {
-            id: `${actualEvent.id}-${defaultCourseNumber}`,
-            title: actualEvent.title || "Журнал",
-            courseNumber: defaultCourseNumber,
-            disciplineId: actualEvent.rup,
-            groupId: "",
-            lessonType: actualEvent.title?.toLowerCase().includes("лекция")
-              ? "lecture"
-              : "practice",
-            technology: actualEvent.title?.toLowerCase().includes("онлайн")
-              ? "online"
-              : "offline",
-            status: actualEvent.result ? "active" : "pending",
-            students: [],
-            isPlaceholder: true,
-          };
-
-          result[defaultCourseNumber].push(placeholderJournal);
-          return; // Skip further processing for this event
+          return; // Skip events without participants
         }
 
-        // 2. Events WITH participants → split by course
+        // Events WITH participants → split by course
         const courseParticipantsMap: Record<number, string[]> = {};
         actualEvent.participants.forEach((studentId: string) => {
           const courseNumber =

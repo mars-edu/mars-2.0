@@ -100,16 +100,8 @@
                         parseInt(course.number)
                       ]"
                       :key="journal.id"
-                      class="rounded-lg p-4 text-gray-800 shadow-md min-h-[90px] flex flex-col justify-between transition-all duration-200"
-                      :class="{
-                        'bg-amber-400 cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:bg-amber-500':
-                          !journal.isPlaceholder,
-                        'bg-amber-100 border border-amber-200':
-                          journal.isPlaceholder,
-                      }"
-                      @click="
-                        !journal.isPlaceholder && goToJournalDetails(journal.id)
-                      "
+                      class="rounded-lg p-4 text-gray-800 shadow-md min-h-[90px] flex flex-col justify-between transition-all duration-200 bg-amber-400 cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:bg-amber-500"
+                      @click="goToJournalDetails(journal.id)"
                     >
                       <p class="font-semibold text-sm leading-tight">
                         {{ getJournalTitle(journal) }}
