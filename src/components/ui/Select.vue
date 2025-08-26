@@ -3,14 +3,7 @@
     <label v-if="label" :for="uniqueId" class="text-sm font-normal">
       {{ label }}
     </label>
-    <f7-list
-      class="smart-select-list-container no-margin no-hairlines"
-      v-if="showSmartSelect && smartSelectReady"
-      :class="{
-        'opacity-50': disabled,
-        'pointer-events-none': disabled || !hasOptions,
-      }"
-    >
+    <f7-list v-if="showSmartSelect && smartSelectReady" :class="f7ListClasses">
       <f7-list-item
         :title="listTitle"
         :after="selectedOptionText"
@@ -47,11 +40,7 @@
     </f7-list>
     <f7-list
       v-else-if="props.searchable && hasOptions"
-      class="smart-select-list-container no-margin no-hairlines"
-      :class="{
-        'opacity-50': disabled,
-        'pointer-events-none': disabled,
-      }"
+      :class="f7ListSearchableClasses"
     >
       <f7-list-item
         :title="listTitle"
@@ -98,7 +87,13 @@
 import { f7List, f7ListItem, f7Input } from "framework7-vue";
 import SearchableSelectPopup from "./SearchableSelectPopup.vue";
 import { f7, f7ready } from "framework7-vue";
-import { computed, getCurrentInstance, onMounted, ref } from "vue";
+import { computed, getCurrentInstance, onMounted, ref, useAttrs } from "vue";
+
+defineOptions({
+  inheritAttrs: false,
+});
+
+const attrs = useAttrs();
 
 interface SelectOption {
   value: string | number;
@@ -119,6 +114,28 @@ const props = defineProps<{
   searchCancelText?: string;
   multiple?: boolean;
 }>();
+
+const f7ListClasses = computed(() => [
+  "smart-select-list-container",
+  "no-margin",
+  "no-hairlines",
+  {
+    "opacity-50": props.disabled,
+    "pointer-events-none": props.disabled || !hasOptions.value,
+  },
+  attrs.class,
+]);
+
+const f7ListSearchableClasses = computed(() => [
+  "smart-select-list-container",
+  "no-margin",
+  "no-hairlines",
+  {
+    "opacity-50": props.disabled,
+    "pointer-events-none": props.disabled,
+  },
+  attrs.class,
+]);
 
 const showSmartSelect = computed(() => !props.searchable);
 

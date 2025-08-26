@@ -73,6 +73,7 @@
           <CalendarGrid
             :days="calendarDays"
             :weekdays="weekdays"
+            :selected-event-id="selectedEvent?.id ?? null"
             @event-click="handleEventClick"
           />
         </div>
@@ -106,6 +107,14 @@
     @updated="handleEventUpdated"
     @cancel="selectedEvent = null"
   />
+
+  <JournalPreviewPopover
+    v-if="selectedEvent"
+    :event="selectedEvent"
+    @go-to="goToJournalDetails"
+    @edit="openEditPopoverFromPreview"
+    @cancel="selectedEvent = null"
+  />
 </template>
 
 <script setup lang="ts">
@@ -118,6 +127,7 @@ import CalendarNavigation from "@/components/Calendar/CalendarNavigation.vue";
 import CalendarHeader from "@/components/Calendar/CalendarHeader.vue";
 import CalendarGrid from "@/components/Calendar/CalendarGrid.vue";
 import EditEventPopover from "@/components/Calendar/EditEventPopover.vue";
+import JournalPreviewPopover from "@/components/Calendar/JournalPreviewPopover.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import { type CalendarEvent as UseCalendarEvent } from "@/composables/useCalendar";
 import { type CalendarEvent as StoreCalendarEvent } from "@/stores/calendarStore";
@@ -260,12 +270,27 @@ const handleEventClick = async (
     // Fallback to minimal data if not found
     selectedEvent.value = eventData as unknown as StoreCalendarEvent;
   }
+
   await nextTick();
-  f7.popover.open("#edit-event-popover", evt.target as HTMLElement);
+
+  const targetEl =
+    (evt.currentTarget as HTMLElement) || (evt.target as HTMLElement);
+  f7.popover.open("#journal-preview-popover", targetEl);
 };
 
 const handleEventUpdated = async (updatedEvent: any) => {
   selectedEvent.value = null;
+};
+
+const goToJournalDetails = (id: number | string) => {
+  f7.views.main.router.navigate(`/journals/${id}`);
+};
+
+const openEditPopoverFromPreview = async () => {
+  await nextTick();
+  if (selectedEvent.value) {
+    f7.popover.open("#edit-event-popover");
+  }
 };
 </script>
 

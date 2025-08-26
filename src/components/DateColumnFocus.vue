@@ -122,7 +122,8 @@ const props = defineProps({
   },
   columnHeader: {
     type: Object as () => { type: string; label: string } | null,
-    required: true,
+    required: false,
+    default: null,
   },
   selectedDateIndex: {
     type: Number,
@@ -196,10 +197,8 @@ const cancelEdit = () => {
 
 const navigate = (direction: "up" | "down" | "left" | "right") => {
   if (!editingCell.value) return;
-  const {
-    studentIndex: startStudentIndex,
-    markIndex: startMarkIndex,
-  } = editingCell.value;
+  const { studentIndex: startStudentIndex, markIndex: startMarkIndex } =
+    editingCell.value;
 
   setMark(startStudentIndex, startMarkIndex, editedValue.value);
   editingCell.value = null;
@@ -229,8 +228,7 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
         break;
     }
 
-    if (nextStudentIndex < 0)
-      nextStudentIndex = localStudents.value.length - 1;
+    if (nextStudentIndex < 0) nextStudentIndex = localStudents.value.length - 1;
     if (nextStudentIndex >= localStudents.value.length) nextStudentIndex = 0;
 
     editCell(nextStudentIndex, nextMarkIndex);

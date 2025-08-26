@@ -1,12 +1,12 @@
 <template>
   <div
-    class="grid grid-cols-7 auto-rows-[minmax(8rem,auto)] gap-px bg-border rounded-lg border border-border"
+    class="grid grid-cols-7 auto-rows-[minmax(8rem,auto)] gap-0 bg-white rounded-lg border border-gray-200 overflow-hidden"
   >
     <!-- Weekday headers -->
     <div
       v-for="day in weekdays"
       :key="day"
-      class="bg-secondary p-3 text-center text-sm font-semibold text-muted-foreground"
+      class="bg-gray-50 p-3 text-center text-sm font-semibold text-gray-700 border-b border-gray-200"
     >
       {{ day }}
     </div>
@@ -16,7 +16,9 @@
       v-for="day in days"
       :key="day.date"
       :day="day"
+      :selected-event-id="selectedEventId"
       @event-click="onEventClick"
+      class="border-r border-b border-gray-200 last:border-r-0"
     />
   </div>
 </template>
@@ -43,5 +45,6 @@ const onEventClick = (
 defineProps<{
   days: CalendarDayType[];
   weekdays: string[];
+  selectedEventId?: number | string | null;
 }>();
 </script>

@@ -9,6 +9,7 @@ export interface CalendarEvent {
   id: string;
   title: string;
   time: string;
+  color?: string; // hex color code for the event
 }
 
 export interface CalendarDay {
@@ -115,6 +116,7 @@ export function useCalendar() {
           id: event.id,
           title: calendarStore.getEventTitle(event),
           time,
+          color: event.color, // pass through the color from store event
         };
       });
   };

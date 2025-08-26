@@ -49,6 +49,8 @@ const themeStore = useThemeStore();
   z-index: 100;
   transition: all 0.3s ease;
   width: 100%;
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
 }
 
 .header-left {
@@ -69,7 +71,7 @@ const themeStore = useThemeStore();
 .header-right {
   display: flex;
   align-items: center;
-  gap: 24p;
+  gap: 24px;
 }
 
 .notification-icon {

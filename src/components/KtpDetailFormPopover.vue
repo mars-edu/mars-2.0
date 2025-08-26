@@ -5,6 +5,7 @@
     class="popover-center-page"
     style="width: 600px !important"
     close-on-escape
+    :target-el="target"
   >
     <div class="bg-card text-card-foreground">
       <PopoverHeader

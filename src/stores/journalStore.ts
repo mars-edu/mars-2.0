@@ -99,7 +99,7 @@ export const useJournalStore = defineStore(
             if (!result[courseNumber]) result[courseNumber] = [];
 
             const journal: Journal = {
-              id: `${actualEvent.id}-${courseNumber}`,
+              id: actualEvent.id,
               title: generateJournalTitle(courseNumber, studentsInCourse),
               courseNumber: courseNumber,
               disciplineId: actualEvent.class9Id,

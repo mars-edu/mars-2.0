@@ -1,25 +1,28 @@
 <template>
   <div
-    class="bg-card min-h-32 p-2 relative group"
+    class="bg-white min-h-32 p-3 relative group"
     :class="{
-      'bg-secondary': [6, 0].includes(new Date(day.date).getDay()),
-      'hover:bg-secondary/70': !day.isToday,
+      'bg-gray-50': [6, 0].includes(new Date(day.date).getDay()),
+      'hover:bg-gray-50':
+        !day.isToday && ![6, 0].includes(new Date(day.date).getDay()),
+      'bg-red-50 border-red-200': day.isToday,
     }"
   >
     <div
       class="text-sm mb-2"
       :class="{
-        'text-foreground': !day.isCurrentMonth,
+        'text-gray-400': !day.isCurrentMonth,
         'text-white': day.isToday,
+        'text-gray-900': day.isCurrentMonth && !day.isToday,
       }"
     >
       <span
         v-if="day.isToday"
-        class="w-7 h-7 bg-primary rounded-full inline-flex items-center justify-center"
+        class="w-7 h-7 bg-red-500 rounded-full inline-flex items-center justify-center font-semibold"
       >
         {{ day.dayNumber }}
       </span>
-      <span v-else>
+      <span v-else class="font-medium">
         {{ day.dayNumber }}
       </span>
     </div>
@@ -28,6 +31,7 @@
         v-for="(event, index) in day.events"
         :key="`${day.date}-${index}`"
         :event="event"
+        :is-selected="selectedEventId != null && event.id === selectedEventId"
         @click="onEventClick"
       />
     </div>
@@ -55,6 +59,7 @@ const onEventClick = (
 
 defineProps<{
   day: CalendarDay;
+  selectedEventId?: number | string | null;
 }>();
 </script>
 

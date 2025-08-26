@@ -12,6 +12,7 @@ export interface CalendarEvent {
   endDate: string;
   endTime?: string;
   participants: string[];
+  color?: string; // hex color code for the event
   weeklySchedules?: {
     weekId: number;
     startTime: string;

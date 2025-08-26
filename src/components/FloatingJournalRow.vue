@@ -47,7 +47,9 @@
                   >
                     {{ studentIndex + 1 }}
                   </td>
-                  <td class="px-2 py-2 border-r border-border text-sm align-top">
+                  <td
+                    class="px-2 py-2 border-r border-border text-sm align-top"
+                  >
                     {{ localStudent.name }}
                   </td>
                   <td
@@ -210,7 +212,7 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
 
     switch (direction) {
       case "right":
-      case "down": 
+      case "down":
         if (startRow === 0) {
           nextRow = 1;
         } else {
@@ -219,7 +221,7 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
         }
         break;
       case "left":
-      case "up": 
+      case "up":
         if (startRow === 1) {
           nextRow = 0;
         } else {
@@ -231,7 +233,6 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
 
     if (nextCol < 0) nextCol = numCols - 1;
     if (nextCol >= numCols) nextCol = 0;
-    
 
     editCell(nextRow, nextCol);
   });
@@ -264,4 +265,4 @@ const handleClose = () => {
 .scale-leave-to {
   transform: scale(0.95);
 }
-</style> 
+</style>

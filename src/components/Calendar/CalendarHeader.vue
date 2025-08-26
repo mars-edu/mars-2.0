@@ -27,7 +27,6 @@
         </button>
       </div>
     </div>
-    <div class="text-xl font-bold uppercase text-foreground">ПЛАНИРОВАНИЕ</div>
     <div class="w-52 flex justify-end">
       <button
         @click="$emit('today')"

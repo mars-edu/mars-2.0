@@ -1,109 +1,65 @@
 <template>
   <aside
-    class="fixed top-[64px] left-0 w-52 border-r flex flex-col h-[calc(100vh-64px)] z-40 overflow-y-auto"
-    :class="[themeClasses.background, themeClasses.border]"
+    class="fixed top-[64px] left-0 w-52 bg-card border-r border-border flex flex-col h-[calc(100vh-64px)] z-40 overflow-y-auto shadow-sm"
   >
     <div class="flex-1 overflow-y-auto">
-      <nav class="py-4">
-        <div
-          v-for="item in navigationItems"
-          :key="item.id"
-          class="py-2.5 px-4 cursor-pointer flex items-center gap-3 transition-colors"
-          :class="[
-            themeClasses.hoverBackground,
-            {
-              [themeClasses.activeBackground]: item.id === activeNavItem,
-              'border-l-8 border-primary': item.id === activeNavItem,
-              'border-l-8 border-transparent': item.id !== activeNavItem,
-            },
-          ]"
-          @click="handleNavItemClick(item.id)"
-        >
-          <i
-            v-if="item.icon"
-            class="f7-icons text-[16px]"
-            :class="themeClasses.icon"
-            >{{ item.icon }}</i
+      <nav class="p-3">
+        <div class="space-y-1 mt-2">
+          <div
+            v-for="item in navigationItems"
+            :key="item.id"
+            class="group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium cursor-pointer transition-all duration-200"
+            :class="[
+              item.id === activeNavItem
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+            ]"
+            @click="handleNavItemClick(item.id)"
           >
-          <span class="text-sm font-medium" :class="themeClasses.text">{{
-            item.label
-          }}</span>
+            <i v-if="item.icon" class="f7-icons text-[16px] flex-shrink-0">{{
+              item.icon
+            }}</i>
+            <span class="truncate">{{ item.label }}</span>
+            <div
+              v-if="item.id === activeNavItem"
+              class="absolute left-0 top-0 h-full w-1.5 bg-amber-400 rounded-l-full"
+            ></div>
+          </div>
         </div>
       </nav>
     </div>
 
-    <div
-      class="border-t py-4 shrink-0"
-      :class="[themeClasses.background, themeClasses.border]"
-    >
-      <div
-        v-for="item in profileMenuItems"
-        :key="item.id"
-        class="py-2.5 px-4 cursor-pointer flex items-center gap-3 transition-colors group"
-        :class="themeClasses.hoverBackground"
-        @click="handleProfileItemClick(item.id)"
-      >
-        <i
-          v-if="item.icon"
-          class="f7-icons text-[16px]"
-          :class="[themeClasses.icon, 'group-hover:' + themeClasses.textHover]"
-          >{{ item.icon }}</i
+    <div class="border-t border-border bg-card p-3 shrink-0">
+      <div class="space-y-1">
+        <div
+          v-for="item in profileMenuItems"
+          :key="item.id"
+          class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm cursor-pointer transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-muted"
+          @click="handleProfileItemClick(item.id)"
         >
-        <span class="text-sm" :class="themeClasses.text">{{ item.label }}</span>
+          <i v-if="item.icon" class="f7-icons text-[16px] flex-shrink-0">{{
+            item.icon
+          }}</i>
+          <span class="truncate">{{ item.label }}</span>
+        </div>
       </div>
     </div>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted, onUnmounted } from "vue";
 import { useRBAC } from "@/composables/useRBAC";
 import { f7 } from "framework7-vue";
 import { useUserStore } from "@/stores/userStore";
+import type { NavigationItem } from "@/composables/useRBAC";
 
 interface Props {
   activeNavItem?: string;
-  theme?: "white" | "dark" | "lavanda";
 }
 
 const props = withDefaults(defineProps<Props>(), {
   activeNavItem: "home",
-  theme: "white",
-});
-
-const themeClasses = computed(() => {
-  switch (props.theme) {
-    case "dark":
-      return {
-        background: "bg-gray-800",
-        border: "border-gray-700",
-        text: "text-gray-200",
-        textHover: "text-white",
-        icon: "text-foreground",
-        hoverBackground: "hover:bg-sun/80",
-        activeBackground: "bg-sun",
-      };
-    case "lavanda":
-      return {
-        background: "bg-purple-50",
-        border: "border-purple-100",
-        text: "text-purple-900",
-        textHover: "text-purple-700",
-        icon: "text-foreground",
-        hoverBackground: "hover:bg-sun/80",
-        activeBackground: "bg-sun",
-      };
-    default:
-      return {
-        background: "bg-card",
-        border: "border-border",
-        text: "text-foreground",
-        textHover: "text-foreground",
-        icon: "text-foreground",
-        hoverBackground: "hover:bg-sun/80",
-        activeBackground: "bg-sun",
-      };
-  }
 });
 
 const { getNavigationItems, getProfileMenuItems } = useRBAC();
@@ -140,4 +96,30 @@ const handleProfileItemClick = async (itemId: string): Promise<void> => {
     f7.views.main.router.navigate(item.route);
   }
 };
+
+const updateActiveItem = () => {
+  const currentPath = f7.views.main.router.currentRoute.path;
+  const matchingItem = navigationItems.value.reduce((best, item) => {
+    if (
+      item.route &&
+      currentPath.startsWith(item.route) &&
+      item.route.length > (best?.route?.length || 0)
+    ) {
+      return item;
+    }
+    return best;
+  }, null as NavigationItem | null);
+  if (matchingItem) {
+    activeNavItem.value = matchingItem.id;
+  }
+};
+
+onMounted(() => {
+  updateActiveItem();
+  f7.views.main.router.on("routeChanged", updateActiveItem);
+});
+
+onUnmounted(() => {
+  f7.views.main.router.off("routeChanged", updateActiveItem);
+});
 </script>
