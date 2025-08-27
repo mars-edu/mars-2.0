@@ -306,7 +306,6 @@ const openEditPopoverFromPreview = async () => {
 }
 
 .calendar-container {
-  max-width: 1400px;
   margin: 0 auto;
   background-color: hsl(var(--card));
   color: hsl(var(--card-foreground));

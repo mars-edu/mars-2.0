@@ -16,7 +16,7 @@
             <th
               v-for="(header, index) in visibleHeaders"
               :key="header.index"
-              class="px-1 py-2 text-center text-xs border-r border-border w-16 cursor-pointer hover:bg-muted"
+              class="px-1 py-2 text-center text-xs border-r border-border w-16 min-w-[56px] cursor-pointer hover:bg-muted"
               @click="openDateFocus(header, header.index)"
             >
               <div class="flex flex-col items-center">
@@ -60,7 +60,7 @@
             <td
               v-for="(header, vColIdx) in visibleHeaders"
               :key="header.index"
-              class="px-1 py-2 text-center border-r border-border"
+              class="px-1 py-2 text-center border-r border-border min-w-[56px]"
             >
               <div class="flex flex-col gap-1">
                 <div
@@ -146,13 +146,18 @@ import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
 import KtpDetailFormPopover from "@/components/KtpDetailFormPopover.vue";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useStudentStore } from "@/stores/studentStore";
+import { useSessionStore } from "@/stores/sessionStore";
 
-type MarkType = "date" | "pk" | "e" | "i";
+type MarkType = "date" | "pk" | "e" | "i" | "session";
 
 interface Mark {
   type: MarkType;
   date?: string;
   values: Array<string | null>;
+  label?: string;
+  sessionId?: string;
+  sessionDateIndices?: number[];
+  isoDate?: string;
 }
 
 interface Student {
@@ -164,6 +169,10 @@ interface Student {
 interface Props {
   journalId: string;
   currentJournal: any;
+  journalSettings?: {
+    calculationType: "calculated" | "manual";
+    calculationMethod: "only-assigned" | "all-days";
+  };
 }
 
 const props = defineProps<Props>();
@@ -178,6 +187,7 @@ const emit = defineEmits<{
 const calendarStore = useCalendarStore();
 const studentStore = useStudentStore();
 const { getStudentFullName } = studentStore;
+const sessionStore = useSessionStore();
 
 const editingCell = ref<{
   studentIndex: number;
@@ -196,7 +206,7 @@ const generateDates = () => {
     const startDate = new Date(currentEvent.value.startDate);
     const endDate = new Date(currentEvent.value.endDate);
 
-    const dates: Mark[] = [];
+    const dateMarks: Mark[] = [];
     const currentDate = new Date(startDate);
 
     // Get selected weekdays from weeklySchedules if available
@@ -213,27 +223,80 @@ const generateDates = () => {
         selectedWeekdays.length === 0 || selectedWeekdays.includes(weekId);
 
       if (shouldIncludeDate) {
-        const dateStr = `${currentDate
-          .getDate()
-          .toString()
-          .padStart(2, "0")}.${(currentDate.getMonth() + 1)
-          .toString()
-          .padStart(2, "0")}\n${currentDate.getFullYear()}`;
-        dates.push({
+        const day = currentDate.getDate().toString().padStart(2, "0");
+        const month = (currentDate.getMonth() + 1).toString().padStart(2, "0");
+        const year = currentDate.getFullYear();
+        const dateStr = `${day}.${month}\n${year}`;
+        const isoDate = `${year}-${month}-${day}`;
+        dateMarks.push({
           type: "date",
           date: dateStr,
           values: [null, null],
+          label: dateStr,
+          isoDate,
         });
       }
 
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    dates.push({ type: "pk", values: [null, null] });
-    dates.push({ type: "e", values: [null, null] });
-    dates.push({ type: "i", values: [null, null] });
+    // Inject session columns after session end dates if overlapping with journal days
+    const sessionStore = useSessionStore();
+    let marksWithSessions: Mark[] = [...dateMarks];
 
-    return dates;
+    const sessions = sessionStore.sortedSessions as unknown as Array<{
+      id: string;
+      shortName: string;
+      startDate: string; // YYYY-MM-DD
+      endDate: string; // YYYY-MM-DD
+    }>;
+
+    // Build insertion plan
+    const insertionPlan: Array<{
+      insertAfter: number;
+      session: any;
+      indices: number[];
+    }> = [];
+    dateMarks.forEach((_m, idx) => {});
+
+    sessions.forEach((session) => {
+      const indices: number[] = [];
+      dateMarks.forEach((m, i) => {
+        const iso = m.isoDate;
+        if (!iso) return;
+        if (iso >= session.startDate && iso <= session.endDate) {
+          indices.push(i);
+        }
+      });
+      if (indices.length > 0) {
+        insertionPlan.push({
+          insertAfter: indices[indices.length - 1],
+          session,
+          indices,
+        });
+      }
+    });
+
+    // Sort by insert position and insert
+    insertionPlan
+      .sort((a, b) => a.insertAfter - b.insertAfter)
+      .forEach((plan, offset) => {
+        const insertIndex = plan.insertAfter + 1 + offset;
+        marksWithSessions.splice(insertIndex, 0, {
+          type: "session",
+          values: [null, null],
+          label: plan.session.shortName,
+          sessionId: plan.session.id,
+          sessionDateIndices: plan.indices,
+        } as Mark);
+      });
+
+    // Append summary columns
+    marksWithSessions.push({ type: "pk", values: [null, null] });
+    marksWithSessions.push({ type: "e", values: [null, null] });
+    marksWithSessions.push({ type: "i", values: [null, null] });
+
+    return marksWithSessions;
   }
 
   return Array.from({ length: 17 }, () => ({
@@ -242,6 +305,14 @@ const generateDates = () => {
     values: [null, null],
   }));
 };
+
+const students = ref<Student[]>([
+  {
+    id: 1,
+    name: "Салкимбаев Саке",
+    marks: generateDates(),
+  },
+]);
 
 const getMark = (studentIndex: number, colIndex: number, markIndex: number) => {
   const mark = students.value[studentIndex].marks[colIndex].values[markIndex];
@@ -265,6 +336,13 @@ const editCell = (
   colIndex: number,
   markIndex: number
 ) => {
+  const markType = students.value[studentIndex].marks[colIndex].type;
+  if (
+    markType === "session" &&
+    props.journalSettings?.calculationType === "calculated"
+  ) {
+    return;
+  }
   editingCell.value = { studentIndex, colIndex, markIndex };
   editedValue.value = getMark(studentIndex, colIndex, markIndex);
 };
@@ -362,6 +440,82 @@ const onPaperclipClick = (
   ktpPopoverOpened.value = true;
 };
 
+const computeDayAverage = (
+  student: Student,
+  dayIndex: number
+): number | null => {
+  if (
+    !student ||
+    !student.marks ||
+    dayIndex < 0 ||
+    dayIndex >= student.marks.length
+  )
+    return null;
+  const values = student.marks[dayIndex]?.values || [];
+  const nums = values
+    .map((v) =>
+      v !== null && v !== "" && !isNaN(Number(v)) ? Number(v) : null
+    )
+    .filter((v): v is number => v !== null);
+  if (nums.length === 0) return null;
+  const avg = nums.reduce((s, v) => s + v, 0) / nums.length;
+  return avg;
+};
+
+const computeSessionGradeForStudent = (
+  student: Student,
+  sessionDateIndices: number[],
+  method: "only-assigned" | "all-days"
+): string | null => {
+  if (sessionDateIndices.length === 0) return null;
+
+  if (method === "all-days") {
+    const totalDays = sessionDateIndices.length;
+    if (totalDays === 0) return null;
+    let sum = 0;
+    sessionDateIndices.forEach((idx) => {
+      const dayAvg = computeDayAverage(student, idx);
+      sum += dayAvg ?? 0;
+    });
+    const grade = sum / totalDays;
+    return grade.toFixed(1);
+  }
+
+  // only-assigned
+  let sum = 0;
+  let count = 0;
+  sessionDateIndices.forEach((idx) => {
+    const dayAvg = computeDayAverage(student, idx);
+    if (dayAvg !== null) {
+      sum += dayAvg;
+      count += 1;
+    }
+  });
+  if (count === 0) return null;
+  const grade = sum / count;
+  return grade.toFixed(1);
+};
+
+const computeAllSessionGrades = () => {
+  if (props.journalSettings?.calculationType !== "calculated") return;
+  const method = props.journalSettings?.calculationMethod || "only-assigned";
+
+  students.value.forEach((student, sIdx) => {
+    student.marks.forEach((mark, mIdx) => {
+      if (mark.type === "session") {
+        const indices = (mark as any).sessionDateIndices as
+          | number[]
+          | undefined;
+        if (!indices || indices.length === 0) return;
+        const grade = computeSessionGradeForStudent(student, indices, method);
+        // Put into first slot; keep second empty
+        students.value[sIdx].marks[mIdx].values[0] = grade;
+        students.value[sIdx].marks[mIdx].values[1] = null;
+      }
+    });
+  });
+};
+
 const getStudentAverageScore = (student: Student): string => {
   const allMarks: (string | null)[] = [];
 
@@ -412,6 +566,9 @@ const tableHeaders = computed(() => {
     if (mark.type === "date") {
       return { type: "date", label: mark.date || "" };
     }
+    if (mark.type === "session") {
+      return { type: "session", label: (mark as any).label || "Сессия" };
+    }
     if (mark.type === "pk") {
       return { type: "pk", label: "РК" };
     }
@@ -437,13 +594,35 @@ const visibleColumnIndices = computed(() => {
   return visibleHeaders.value.map((h) => h.index);
 });
 
-const students = ref<Student[]>([
-  {
-    id: 1,
-    name: "Салкимбаев Саке",
-    marks: generateDates(),
+watch(
+  () => props.journalSettings,
+  () => {
+    computeAllSessionGrades();
   },
-]);
+  { deep: true }
+);
+
+watch(
+  () => students.value,
+  () => {
+    computeAllSessionGrades();
+  },
+  { deep: true }
+);
+
+// Rebuild marks when sessions list changes (ensures session columns appear on load)
+watch(
+  () => sessionStore.sortedSessions,
+  () => {
+    // Recreate marks with session columns
+    students.value = students.value.map((s) => ({
+      ...s,
+      marks: generateDates(),
+    }));
+    computeAllSessionGrades();
+  },
+  { deep: true, immediate: true }
+);
 
 const updateStudent = (updatedStudent: any) => {
   if (!updatedStudent) return;
@@ -481,6 +660,7 @@ onMounted(() => {
     );
   }
 
+  computeAllSessionGrades();
   window.addEventListener("keydown", handleGlobalKeydown);
 });
 

@@ -25,6 +25,20 @@
               </p>
             </div>
             <div class="flex items-center gap-2">
+              <!-- Journal Settings Gear Button -->
+              <button
+                id="journal-settings-button"
+                class="flex items-center justify-center w-10 h-10 bg-muted hover:bg-muted/80 rounded-lg transition-colors"
+                @click="openJournalSettings"
+              >
+                <f7-icon
+                  ios="f7:gear"
+                  md="material:settings"
+                  size="18px"
+                  class="text-muted-foreground"
+                />
+              </button>
+
               <!-- <input
                 type="range"
                 min="0"
@@ -128,6 +142,7 @@
                   ref="journalTabRef"
                   :journal-id="journalId"
                   :current-journal="currentJournal"
+                  :journal-settings="journalSettings"
                   @show-floating-row="showFloatingRow"
                   @open-date-focus="openDateFocus"
                   @update-students="updateStudents"
@@ -277,6 +292,93 @@
       v-model:opened="isKtpPopupOpened"
       :parent-id="ktpParentId"
     />
+
+    <!-- Journal Settings Popup -->
+    <f7-popover
+      id="journal-settings-popover"
+      style="width: 500px !important"
+      close-on-escape
+      target="#journal-settings-button"
+    >
+      <div class="journal-settings-popover bg-card text-card-foreground">
+        <PopoverHeader
+          title="Настройки журнала"
+          :disabled="false"
+          :is-loading="false"
+          :on-cancel="closeJournalSettings"
+          :on-save="saveJournalSettings"
+        />
+
+        <div class="p-4 space-y-6">
+          <!-- Calculation Type Section -->
+          <div class="space-y-3">
+            <h3 class="text-sm font-medium text-foreground">
+              Тип расчета сессии
+            </h3>
+
+            <div class="space-y-3">
+              <!-- Calculated Option -->
+              <div class="space-y-2">
+                <label class="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="calculation-type"
+                    value="calculated"
+                    v-model="journalSettings.calculationType"
+                    class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary"
+                  />
+                  <span class="text-sm text-foreground">Расчитываемая</span>
+                </label>
+
+                <!-- Sub-options for Calculated -->
+                <div
+                  v-if="journalSettings.calculationType === 'calculated'"
+                  class="ml-7 space-y-2"
+                >
+                  <label class="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="calculation-method"
+                      value="only-assigned"
+                      v-model="journalSettings.calculationMethod"
+                      class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary"
+                    />
+                    <span class="text-sm text-muted-foreground"
+                      >Только выставленных дней</span
+                    >
+                  </label>
+
+                  <label class="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="calculation-method"
+                      value="all-days"
+                      v-model="journalSettings.calculationMethod"
+                      class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary"
+                    />
+                    <span class="text-sm text-muted-foreground">Всех дней</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Manual Option -->
+              <div>
+                <label class="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="calculation-type"
+                    value="manual"
+                    v-model="journalSettings.calculationType"
+                    class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary"
+                  />
+                  <span class="text-sm text-foreground">Выставляемая</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </f7-popover>
   </f7-page>
 </template>
 
@@ -290,6 +392,8 @@ import {
   f7Tabs,
   f7Tab,
   f7Input,
+  f7Icon,
+  f7Popover,
 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -300,6 +404,7 @@ import JournalTab from "@/components/JournalTab.vue";
 import FloatingJournalRow from "@/components/FloatingJournalRow.vue";
 import DateColumnFocus from "@/components/DateColumnFocus.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
+import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import { storeToRefs } from "pinia";
 
 const journalId = computed(() => {
@@ -339,6 +444,12 @@ const isKtpPopupOpened = ref(false);
 const ktpParentId = ref<string | null>(null);
 
 const journalTabRef = ref<InstanceType<typeof JournalTab> | null>(null);
+
+// Journal settings state
+const journalSettings = ref({
+  calculationType: "calculated" as "calculated" | "manual",
+  calculationMethod: "only-assigned" as "only-assigned" | "all-days",
+});
 
 const openDateFocus = (
   header: { type: string; label: string },
@@ -385,6 +496,21 @@ const onOpenKtpDetails = (
     ktpParentId.value = currentJournal.value.disciplineId;
   }
   isKtpPopupOpened.value = true;
+};
+
+// Journal settings functions
+const openJournalSettings = () => {
+  f7.popover.open("#journal-settings-popover", "#journal-settings-button");
+};
+
+const closeJournalSettings = () => {
+  f7.popover.close("#journal-settings-popover");
+};
+
+const saveJournalSettings = () => {
+  // TODO: Implement saving journal settings to backend/store
+  console.log("Saving journal settings:", journalSettings.value);
+  closeJournalSettings();
 };
 
 // Get computed properties from JournalTab component

@@ -51,7 +51,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useSemesterStore } from "@/stores/semesterStore";
-import type { AcademicPeriod } from "@/stores/semesterStore";
+import type { Semester } from "@/stores/semesterStore";
 
 defineProps<{
   monthName: string;
@@ -71,13 +71,10 @@ const monthNavArea = ref<HTMLElement | null>(null);
 const semesterStore = useSemesterStore();
 const currentSemester = computed(() => {
   const todayStr = new Date().toISOString().split("T")[0];
-  const semesters: AcademicPeriod[] = semesterStore.periods.filter(
-    (p: AcademicPeriod) => p.type === "semester"
-  );
-  const period = semesters.find(
+  const period = semesterStore.semesters.find(
     (p) => p.startDate <= todayStr && todayStr <= p.endDate
   );
-  return period ? period.name : "";
+  return period ? period.shortName : "";
 });
 
 let scrollTimeout: number | null = null;

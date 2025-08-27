@@ -513,19 +513,6 @@ const openEditAcademicYear = (academicYear: AcademicYear) => {
   }
 };
 
-const formatPeriodType = (type: string) => {
-  switch (type) {
-    case "semester":
-      return "Семестр";
-    case "vacation":
-      return "Каникулы";
-    case "session":
-      return "Сессия";
-    default:
-      return type;
-  }
-};
-
 const openEditSemester = async (semester: Semester) => {
   selectedSemester.value = semester;
   await nextTick();
