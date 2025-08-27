@@ -1,51 +1,48 @@
 <template>
   <div>
     <f7-popover
-      :id="'edit-semester-popover-' + semester.id"
+      :id="'edit-session-popover-' + session.id"
       style="width: 600px !important"
       close-on-escape
-      :target="`#semester-item-${semester.id}`"
+      :target="`#session-item-${session.id}`"
     >
-      <div class="semester-popover bg-card text-card-foreground">
+      <div class="session-popover bg-card text-card-foreground">
         <PopoverHeader
-          title="Редактировать семестр"
-          :disabled="!isFormValid || semesterStore.isLoading"
-          :is-loading="semesterStore.isLoading"
+          title="Редактировать сессию"
+          :disabled="!isFormValid || sessionStore.isLoading"
+          :is-loading="sessionStore.isLoading"
           :on-cancel="closePopover"
-          :on-save="handleUpdateSemester"
+          :on-save="handleUpdateSession"
         />
 
         <div
-          v-if="formError || semesterStore.getError"
+          v-if="formError || sessionStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
         >
-          {{ formError || semesterStore.getError }}
+          {{ formError || sessionStore.getError }}
         </div>
 
         <div class="p-4 space-y-4">
           <div class="space-y-2">
             <label
               class="text-sm text-foreground"
-              for="semester-short-name-edit"
+              for="session-short-name-edit"
             >
               Краткое название <span class="text-destructive ml-1">*</span>
             </label>
             <f7-input
-              id="semester-short-name-edit"
+              id="session-short-name-edit"
               type="text"
               v-model:value="shortName"
             />
           </div>
 
           <div class="space-y-2">
-            <label
-              class="text-sm text-foreground"
-              for="semester-full-name-edit"
-            >
+            <label class="text-sm text-foreground" for="session-full-name-edit">
               Полное название <span class="text-destructive ml-1">*</span>
             </label>
             <f7-input
-              id="semester-full-name-edit"
+              id="session-full-name-edit"
               type="text"
               v-model:value="fullName"
             />
@@ -55,12 +52,12 @@
             <div class="space-y-2">
               <label
                 class="text-sm text-foreground"
-                for="semester-start-date-edit"
+                for="session-start-date-edit"
               >
                 Дата начала <span class="text-destructive ml-1">*</span>
               </label>
               <f7-input
-                id="semester-start-date-edit"
+                id="session-start-date-edit"
                 type="datepicker"
                 placeholder="Дата"
                 readonly
@@ -71,12 +68,12 @@
             <div class="space-y-2">
               <label
                 class="text-sm text-foreground"
-                for="semester-end-date-edit"
+                for="session-end-date-edit"
               >
                 Дата окончания <span class="text-destructive ml-1">*</span>
               </label>
               <f7-input
-                id="semester-end-date-edit"
+                id="session-end-date-edit"
                 type="datepicker"
                 placeholder="Дата"
                 readonly
@@ -90,7 +87,7 @@
             <button
               class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
               @click="confirmDelete"
-              :disabled="semesterStore.isLoading"
+              :disabled="sessionStore.isLoading"
             >
               <f7-icon
                 ios="f7:trash"
@@ -98,7 +95,7 @@
                 size="18px"
                 class="mr-2"
               />
-              Удалить семестр
+              Удалить сессию
             </button>
           </div>
         </div>
@@ -113,21 +110,21 @@ import dayjs from "dayjs";
 import { f7, f7Input, f7Icon, f7Popover } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import { z } from "zod";
-import { useSemesterStore } from "@/stores/semesterStore";
-import type { Semester } from "@/stores/semesterStore";
+import { useSessionStore } from "@/stores/sessionStore";
+import type { Session } from "@/stores/sessionStore";
 import { calendarParams } from "@/constants/period";
 
-const props = defineProps<{ semester: Semester }>();
+const props = defineProps<{ session: Session }>();
 
-const semesterStore = useSemesterStore();
+const sessionStore = useSessionStore();
 
-const shortName = ref(props.semester.shortName);
-const fullName = ref(props.semester.fullName);
-const startDate = ref<Date[]>([new Date(props.semester.startDate)]);
-const endDate = ref<Date[]>([new Date(props.semester.endDate)]);
+const shortName = ref(props.session.shortName);
+const fullName = ref(props.session.fullName);
+const startDate = ref<Date[]>([new Date(props.session.startDate)]);
+const endDate = ref<Date[]>([new Date(props.session.endDate)]);
 const formError = ref("");
 
-const semesterSchema = z
+const sessionSchema = z
   .object({
     shortName: z.string().min(1),
     fullName: z.string().min(1),
@@ -146,7 +143,7 @@ const semesterSchema = z
   );
 
 const validationResult = computed(() => {
-  return semesterSchema.safeParse({
+  return sessionSchema.safeParse({
     shortName: shortName.value,
     fullName: fullName.value,
     startDate: startDate.value,
@@ -157,11 +154,11 @@ const validationResult = computed(() => {
 const isFormValid = computed(() => validationResult.value.success);
 
 const closePopover = () => {
-  f7.popover.close(`#edit-semester-popover-${props.semester.id}`);
-  semesterStore.clearError();
+  f7.popover.close(`#edit-session-popover-${props.session.id}`);
+  sessionStore.clearError();
 };
 
-const handleUpdateSemester = async () => {
+const handleUpdateSession = async () => {
   if (!isFormValid.value) {
     if (!validationResult.value.success) {
       formError.value = validationResult.value.error.issues[0].message;
@@ -170,7 +167,7 @@ const handleUpdateSemester = async () => {
   }
 
   try {
-    await semesterStore.updateSemester(props.semester.id, {
+    await sessionStore.updateSession(props.session.id, {
       shortName: shortName.value,
       fullName: fullName.value,
       startDate: dayjs(startDate.value[0]).format("YYYY-MM-DD"),
@@ -178,21 +175,21 @@ const handleUpdateSemester = async () => {
     });
     closePopover();
   } catch (error) {
-    console.error("Failed to update semester:", error);
+    console.error("Failed to update session:", error);
   }
 };
 
 const confirmDelete = () => {
-  f7.popover.close(`#edit-semester-popover-${props.semester.id}`);
+  f7.popover.close(`#edit-session-popover-${props.session.id}`);
   f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить семестр "${props.semester.shortName}"?</p><p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
-    "Удаление семестра",
+    `<p>Вы уверены, что хотите удалить сессию "${props.session.shortName}"?</p><p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
+    "Удаление сессии",
     async () => {
       try {
-        await semesterStore.deleteSemester(props.semester.id);
+        await sessionStore.deleteSession(props.session.id);
       } catch (error) {
-        console.error("Failed to delete semester:", error);
-        f7.dialog.alert("Произошла ошибка при удалении семестра.");
+        console.error("Failed to delete session:", error);
+        f7.dialog.alert("Произошла ошибка при удалении сессии.");
       }
     }
   );

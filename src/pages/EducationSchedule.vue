@@ -180,6 +180,7 @@
                     id: course.id,
                     number: course.number,
                     admissionYear: course.admissionYear,
+                    semesters: course.semesters,
                   }"
                 />
               </div>
@@ -260,7 +261,7 @@
             <AccordionItem id="semesters" :default-expanded="false">
               <template #title>Семестры:</template>
               <template #actions>
-                <AddSemesterButton prefix="semester" default-type="semester" />
+                <AddSemesterButton />
               </template>
               <div
                 v-if="semesterStore.isLoading"
@@ -276,19 +277,19 @@
               </div>
               <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
                 <div
-                  v-for="period in semesters"
-                  :key="period.id"
+                  v-for="semester in semesters"
+                  :key="semester.id"
                   class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
-                  :id="`period-item-${period.id}`"
-                  @click.stop="openEditPeriod(period)"
+                  :id="`semester-item-${semester.id}`"
+                  @click.stop="openEditSemester(semester)"
                 >
-                  <span class="font-medium">{{ period.name }}</span>
+                  <span class="font-medium">{{ semester.shortName }}</span>
                   <span class="text-xs px-2 py-0.5 bg-muted rounded-full"
-                    >{{ period.startDate }} - {{ period.endDate }}</span
+                    >{{ semester.startDate }} - {{ semester.endDate }}</span
                   >
                   <button
                     class="p-1 hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="openEditPeriod(period)"
+                    @click.stop="openEditSemester(semester)"
                     aria-label="Edit Semester"
                     type="button"
                   >
@@ -300,41 +301,46 @@
                     />
                   </button>
                 </div>
+                <EditSemesterButton
+                  v-for="semester in semesters"
+                  :key="`edit-${semester.id}`"
+                  :semester="semester"
+                />
               </div>
             </AccordionItem>
 
             <AccordionItem id="vacations" :default-expanded="false">
               <template #title>Каникулы:</template>
-              <template #actions
-                ><AddSemesterButton prefix="vacation" default-type="vacation"
-              /></template>
+              <template #actions>
+                <AddVacationButton />
+              </template>
               <div
-                v-if="semesterStore.isLoading"
+                v-if="vacationStore.isLoading"
                 class="p-4 flex justify-center"
               >
                 <f7-preloader />
               </div>
               <div
-                v-else-if="semesterStore.getError"
+                v-else-if="vacationStore.getError"
                 class="p-4 text-destructive"
               >
-                {{ semesterStore.getError }}
+                {{ vacationStore.getError }}
               </div>
               <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
                 <div
-                  v-for="period in vacations"
-                  :key="period.id"
+                  v-for="vacation in vacations"
+                  :key="vacation.id"
                   class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
-                  :id="`period-item-${period.id}`"
-                  @click.stop="openEditPeriod(period)"
+                  :id="`vacation-item-${vacation.id}`"
+                  @click.stop="openEditVacation(vacation)"
                 >
-                  <span class="font-medium">{{ period.name }}</span>
+                  <span class="font-medium">{{ vacation.shortName }}</span>
                   <span class="text-xs px-2 py-0.5 bg-muted rounded-full"
-                    >{{ period.startDate }} - {{ period.endDate }}</span
+                    >{{ vacation.startDate }} - {{ vacation.endDate }}</span
                   >
                   <button
                     class="p-1 hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="openEditPeriod(period)"
+                    @click.stop="openEditVacation(vacation)"
                     aria-label="Edit Vacation"
                     type="button"
                   >
@@ -346,41 +352,46 @@
                     />
                   </button>
                 </div>
+                <EditVacationButton
+                  v-for="vacation in vacations"
+                  :key="`edit-${vacation.id}`"
+                  :vacation="vacation"
+                />
               </div>
             </AccordionItem>
 
             <AccordionItem id="sessions" :default-expanded="false">
               <template #title>Сессии:</template>
-              <template #actions
-                ><AddSemesterButton prefix="session" default-type="session"
-              /></template>
+              <template #actions>
+                <AddSessionButton />
+              </template>
               <div
-                v-if="semesterStore.isLoading"
+                v-if="sessionStore.isLoading"
                 class="p-4 flex justify-center"
               >
                 <f7-preloader />
               </div>
               <div
-                v-else-if="semesterStore.getError"
+                v-else-if="sessionStore.getError"
                 class="p-4 text-destructive"
               >
-                {{ semesterStore.getError }}
+                {{ sessionStore.getError }}
               </div>
               <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
                 <div
-                  v-for="period in sessions"
-                  :key="period.id"
+                  v-for="session in sessions"
+                  :key="session.id"
                   class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
-                  :id="`period-item-${period.id}`"
-                  @click.stop="openEditPeriod(period)"
+                  :id="`session-item-${session.id}`"
+                  @click.stop="openEditSession(session)"
                 >
-                  <span class="font-medium">{{ period.name }}</span>
+                  <span class="font-medium">{{ session.shortName }}</span>
                   <span class="text-xs px-2 py-0.5 bg-muted rounded-full"
-                    >{{ period.startDate }} - {{ period.endDate }}</span
+                    >{{ session.startDate }} - {{ session.endDate }}</span
                   >
                   <button
                     class="p-1 hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="openEditPeriod(period)"
+                    @click.stop="openEditSession(session)"
                     aria-label="Edit Session"
                     type="button"
                   >
@@ -392,10 +403,14 @@
                     />
                   </button>
                 </div>
+                <EditSessionButton
+                  v-for="session in sessions"
+                  :key="`edit-${session.id}`"
+                  :session="session"
+                />
               </div>
             </AccordionItem>
           </Accordion>
-          <EditSemesterButton v-if="selectedPeriod" :period="selectedPeriod" />
         </div>
       </div>
     </div>
@@ -428,8 +443,16 @@ import { useAcademicYearStore } from "@/stores/academicYearStore";
 import type { AcademicYear } from "@/stores/academicYearStore";
 import AddSemesterButton from "@/components/AddSemesterButton.vue";
 import EditSemesterButton from "@/components/EditSemesterButton.vue";
+import AddVacationButton from "@/components/AddVacationButton.vue";
+import EditVacationButton from "@/components/EditVacationButton.vue";
+import AddSessionButton from "@/components/AddSessionButton.vue";
+import EditSessionButton from "@/components/EditSessionButton.vue";
 import { useSemesterStore } from "@/stores/semesterStore";
-import type { AcademicPeriod } from "@/stores/semesterStore";
+import { useVacationStore } from "@/stores/vacationStore";
+import { useSessionStore } from "@/stores/sessionStore";
+import type { Semester } from "@/stores/semesterStore";
+import type { Vacation } from "@/stores/vacationStore";
+import type { Session } from "@/stores/sessionStore";
 
 const activeNavItem = ref("education-schedule");
 const educationScheduleStore = useEducationScheduleStore();
@@ -445,10 +468,16 @@ const academicYearStore = useAcademicYearStore();
 const { academicYears } = storeToRefs(academicYearStore);
 
 const semesterStore = useSemesterStore();
-const selectedPeriod = ref<AcademicPeriod | null>(null);
-const semesters = computed(() => semesterStore.getPeriodsByType("semester"));
-const vacations = computed(() => semesterStore.getPeriodsByType("vacation"));
-const sessions = computed(() => semesterStore.getPeriodsByType("session"));
+const vacationStore = useVacationStore();
+const sessionStore = useSessionStore();
+
+const selectedSemester = ref<Semester | null>(null);
+const selectedVacation = ref<Vacation | null>(null);
+const selectedSession = ref<Session | null>(null);
+
+const semesters = computed(() => semesterStore.sortedSemesters);
+const vacations = computed(() => vacationStore.sortedVacations);
+const sessions = computed(() => sessionStore.sortedSessions);
 
 const openEditSchedule = (schedule: EducationSchedule) => {
   const targetEl = document.getElementById(`schedule-item-${schedule.id}`);
@@ -497,14 +526,54 @@ const formatPeriodType = (type: string) => {
   }
 };
 
-const openEditPeriod = async (period: AcademicPeriod) => {
-  selectedPeriod.value = period;
+const openEditSemester = async (semester: Semester) => {
+  selectedSemester.value = semester;
   await nextTick();
-  const targetEl = document.getElementById(`period-item-${period.id}`);
+  const targetEl = document.getElementById(`semester-item-${semester.id}`);
   if (targetEl) {
-    f7.popover.open(`#edit-period-popover-${period.id}`, targetEl);
+    f7.popover.open(`#edit-semester-popover-${semester.id}`, targetEl);
   }
 };
 
-onMounted(async () => {});
+const openEditVacation = async (vacation: Vacation) => {
+  selectedVacation.value = vacation;
+  await nextTick();
+  const targetEl = document.getElementById(`vacation-item-${vacation.id}`);
+  if (targetEl) {
+    f7.popover.open(`#edit-vacation-popover-${vacation.id}`, targetEl);
+  }
+};
+
+const openEditSession = async (session: Session) => {
+  selectedSession.value = session;
+  await nextTick();
+  const targetEl = document.getElementById(`session-item-${session.id}`);
+  if (targetEl) {
+    f7.popover.open(`#edit-session-popover-${session.id}`, targetEl);
+  }
+};
+
+onMounted(async () => {
+  // Comprehensive migration from old unified store to new separate stores
+  console.log("Starting data migration process...");
+
+  // Step 1: Migrate legacy period data from unified store
+  const legacyData = semesterStore.migrateLegacyPeriodData();
+
+  // Step 2: Move vacations and sessions to their respective stores
+  if (legacyData.vacations.length > 0) {
+    vacationStore.handleLegacyVacationData(legacyData.vacations);
+  }
+
+  if (legacyData.sessions.length > 0) {
+    sessionStore.handleLegacySessionData(legacyData.sessions);
+  }
+
+  // Step 3: Handle any remaining name field migrations in each store
+  semesterStore.migrateOldSemesterData();
+  vacationStore.migrateOldVacationData();
+  sessionStore.migrateOldSessionData();
+
+  console.log("Data migration process completed");
+});
 </script>

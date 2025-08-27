@@ -3,9 +3,9 @@
     <button
       :id="buttonId"
       class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-green-500 hover:bg-green-600 rounded-full transition-colors"
-      aria-label="Добавить семестр"
+      aria-label="Добавить каникулы"
       type="button"
-      @click.stop="openAddSemesterPopover"
+      @click.stop="openAddVacationPopover"
     >
       <f7-icon ios="f7:plus" md="material:add" size="16px" class="text-white" />
     </button>
@@ -16,61 +16,54 @@
       :target="`#${buttonId}`"
       close-on-escape
     >
-      <div class="period-popover bg-card text-card-foreground">
+      <div class="vacation-popover bg-card text-card-foreground">
         <PopoverHeader
-          title="Создать семестр"
-          :disabled="!isFormValid || semesterStore.isLoading"
-          :is-loading="semesterStore.isLoading"
-          :on-cancel="closeAddSemesterPopover"
-          :on-save="handleSaveSemester"
+          title="Создать каникулы"
+          :disabled="!isFormValid || vacationStore.isLoading"
+          :is-loading="vacationStore.isLoading"
+          :on-cancel="closeAddVacationPopover"
+          :on-save="handleSaveVacation"
         />
 
         <div
-          v-if="formError || semesterStore.getError"
+          v-if="formError || vacationStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
         >
-          {{ formError || semesterStore.getError }}
+          {{ formError || vacationStore.getError }}
         </div>
 
         <div class="p-4 space-y-4">
-          <!-- <Select
-            v-model="periodType"
-            :options="typeOptions"
-            label="Тип периода"
-            placeholder="Выберите тип"
-          /> -->
-
           <div class="space-y-2">
-            <label class="text-sm text-foreground" for="period-short-name">
+            <label class="text-sm text-foreground" for="vacation-short-name">
               Краткое название <span class="text-destructive ml-1">*</span>
             </label>
             <f7-input
-              id="period-short-name"
+              id="vacation-short-name"
               type="text"
               v-model:value="shortName"
-              placeholder="Например: Осень 2024"
+              placeholder="Например: Зимние каникулы"
             />
           </div>
 
           <div class="space-y-2">
-            <label class="text-sm text-foreground" for="period-full-name">
+            <label class="text-sm text-foreground" for="vacation-full-name">
               Полное название <span class="text-destructive ml-1">*</span>
             </label>
             <f7-input
-              id="period-full-name"
+              id="vacation-full-name"
               type="text"
               v-model:value="fullName"
-              placeholder="Например: Осенний семестр 2024-2025 учебного года"
+              placeholder="Например: Зимние каникулы 2024-2025 учебного года"
             />
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
-              <label class="text-sm text-foreground" for="start-date">
+              <label class="text-sm text-foreground" for="vacation-start-date">
                 Дата начала <span class="text-destructive ml-1">*</span>
               </label>
               <f7-input
-                id="start-date"
+                id="vacation-start-date"
                 type="datepicker"
                 placeholder="Дата"
                 readonly
@@ -79,11 +72,11 @@
               />
             </div>
             <div class="space-y-2">
-              <label class="text-sm text-foreground" for="end-date">
+              <label class="text-sm text-foreground" for="vacation-end-date">
                 Дата окончания <span class="text-destructive ml-1">*</span>
               </label>
               <f7-input
-                id="end-date"
+                id="vacation-end-date"
                 type="datepicker"
                 placeholder="Дата"
                 readonly
@@ -103,17 +96,17 @@ import { ref, computed } from "vue";
 import dayjs from "dayjs";
 import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
-import { useSemesterStore } from "@/stores/semesterStore";
+import { useVacationStore } from "@/stores/vacationStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import { calendarParams } from "@/constants/period";
 
 const props = defineProps<{ prefix?: string }>();
 
-const computedPrefix = computed(() => props.prefix || "semester");
+const computedPrefix = computed(() => props.prefix || "vacation");
 const buttonId = computed(() => `add-${computedPrefix.value}-button`);
 const popoverId = computed(() => `add-${computedPrefix.value}-popover`);
 
-const semesterStore = useSemesterStore();
+const vacationStore = useVacationStore();
 
 const shortName = ref("");
 const fullName = ref("");
@@ -121,12 +114,12 @@ const startDate = ref<Date[]>([]);
 const endDate = ref<Date[]>([]);
 const formError = ref("");
 
-const semesterSchema = z
+const vacationSchema = z
   .object({
     shortName: z
       .string()
-      .min(1, "Пожалуйста, введите краткое название семестра"),
-    fullName: z.string().min(1, "Пожалуйста, введите полное название семестра"),
+      .min(1, "Пожалуйста, введите краткое название каникул"),
+    fullName: z.string().min(1, "Пожалуйста, введите полное название каникул"),
     startDate: z.array(z.date()).min(1, "Пожалуйста, укажите дату начала"),
     endDate: z.array(z.date()).min(1, "Пожалуйста, укажите дату окончания"),
   })
@@ -142,7 +135,7 @@ const semesterSchema = z
   );
 
 const validationResult = computed(() => {
-  return semesterSchema.safeParse({
+  return vacationSchema.safeParse({
     shortName: shortName.value,
     fullName: fullName.value,
     startDate: startDate.value,
@@ -152,16 +145,16 @@ const validationResult = computed(() => {
 
 const isFormValid = computed(() => validationResult.value.success);
 
-const openAddSemesterPopover = () => {
+const openAddVacationPopover = () => {
   f7.popover.open(`#${popoverId.value}`, `#${buttonId.value}`);
 };
 
-const closeAddSemesterPopover = () => {
+const closeAddVacationPopover = () => {
   f7.popover.close(`#${popoverId.value}`);
   resetForm();
 };
 
-const handleSaveSemester = async () => {
+const handleSaveVacation = async () => {
   if (!isFormValid.value) {
     if (!validationResult.value.success) {
       const issues = validationResult.value.error.issues;
@@ -173,15 +166,15 @@ const handleSaveSemester = async () => {
   }
 
   try {
-    await semesterStore.addSemester({
+    await vacationStore.addVacation({
       shortName: shortName.value,
       fullName: fullName.value,
       startDate: dayjs(startDate.value[0]).format("YYYY-MM-DD"),
       endDate: dayjs(endDate.value[0]).format("YYYY-MM-DD"),
     });
-    closeAddSemesterPopover();
+    closeAddVacationPopover();
   } catch (error) {
-    console.error("Failed to add semester:", error);
+    console.error("Failed to add vacation:", error);
   }
 };
 
@@ -191,6 +184,6 @@ const resetForm = () => {
   startDate.value = [];
   endDate.value = [];
   formError.value = "";
-  semesterStore.clearError();
+  vacationStore.clearError();
 };
 </script>

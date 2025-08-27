@@ -87,9 +87,7 @@ const courseStore = useCourseStore();
 const semesterStore = useSemesterStore();
 
 const semesterOptions = computed(() =>
-  semesterStore
-    .getPeriodsByType("semester")
-    .map((p) => ({ value: p.id, text: p.name }))
+  semesterStore.sortedSemesters.map((p) => ({ value: p.id, text: p.shortName }))
 );
 
 const courseNumber = ref(props.course.number);

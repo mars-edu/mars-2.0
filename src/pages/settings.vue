@@ -123,7 +123,7 @@ import EditSemesterButton from "@/components/EditSemesterButton.vue";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { storeToRefs } from "pinia";
-import type { AcademicPeriod } from "@/stores/semesterStore";
+import type { Semester } from "@/stores/semesterStore";
 import type { Course } from "@/stores/courseStore";
 
 const activeNavItem = ref("settings");
@@ -132,19 +132,19 @@ const courseStore = useCourseStore();
 const semesterStore = useSemesterStore();
 const { courses } = storeToRefs(courseStore);
 
-const semesters = computed(() => semesterStore.getPeriodsByType("semester"));
+const semesters = computed(() => semesterStore.sortedSemesters);
 
 const getSemestersByCourse = (course: Course) => {
   if (course.semesters && course.semesters.length) {
-    return semesters.value.filter((p: AcademicPeriod) =>
+    return semesters.value.filter((p: Semester) =>
       course.semesters.includes(p.id)
     );
   }
   const regex = new RegExp(`^${course.number}\\b`);
-  return semesters.value.filter((p: AcademicPeriod) => regex.test(p.name));
+  return semesters.value.filter((p: Semester) => regex.test(p.shortName));
 };
 
-const selectedPeriod = ref<AcademicPeriod | null>(null);
+const selectedSemester = ref<Semester | null>(null);
 const selectedCourse = ref<{
   id: string;
   number: string;

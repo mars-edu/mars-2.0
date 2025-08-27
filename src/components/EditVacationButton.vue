@@ -1,37 +1,37 @@
 <template>
   <div>
     <f7-popover
-      :id="'edit-semester-popover-' + semester.id"
+      :id="'edit-vacation-popover-' + vacation.id"
       style="width: 600px !important"
       close-on-escape
-      :target="`#semester-item-${semester.id}`"
+      :target="`#vacation-item-${vacation.id}`"
     >
-      <div class="semester-popover bg-card text-card-foreground">
+      <div class="vacation-popover bg-card text-card-foreground">
         <PopoverHeader
-          title="Редактировать семестр"
-          :disabled="!isFormValid || semesterStore.isLoading"
-          :is-loading="semesterStore.isLoading"
+          title="Редактировать каникулы"
+          :disabled="!isFormValid || vacationStore.isLoading"
+          :is-loading="vacationStore.isLoading"
           :on-cancel="closePopover"
-          :on-save="handleUpdateSemester"
+          :on-save="handleUpdateVacation"
         />
 
         <div
-          v-if="formError || semesterStore.getError"
+          v-if="formError || vacationStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
         >
-          {{ formError || semesterStore.getError }}
+          {{ formError || vacationStore.getError }}
         </div>
 
         <div class="p-4 space-y-4">
           <div class="space-y-2">
             <label
               class="text-sm text-foreground"
-              for="semester-short-name-edit"
+              for="vacation-short-name-edit"
             >
               Краткое название <span class="text-destructive ml-1">*</span>
             </label>
             <f7-input
-              id="semester-short-name-edit"
+              id="vacation-short-name-edit"
               type="text"
               v-model:value="shortName"
             />
@@ -40,12 +40,12 @@
           <div class="space-y-2">
             <label
               class="text-sm text-foreground"
-              for="semester-full-name-edit"
+              for="vacation-full-name-edit"
             >
               Полное название <span class="text-destructive ml-1">*</span>
             </label>
             <f7-input
-              id="semester-full-name-edit"
+              id="vacation-full-name-edit"
               type="text"
               v-model:value="fullName"
             />
@@ -55,12 +55,12 @@
             <div class="space-y-2">
               <label
                 class="text-sm text-foreground"
-                for="semester-start-date-edit"
+                for="vacation-start-date-edit"
               >
                 Дата начала <span class="text-destructive ml-1">*</span>
               </label>
               <f7-input
-                id="semester-start-date-edit"
+                id="vacation-start-date-edit"
                 type="datepicker"
                 placeholder="Дата"
                 readonly
@@ -71,12 +71,12 @@
             <div class="space-y-2">
               <label
                 class="text-sm text-foreground"
-                for="semester-end-date-edit"
+                for="vacation-end-date-edit"
               >
                 Дата окончания <span class="text-destructive ml-1">*</span>
               </label>
               <f7-input
-                id="semester-end-date-edit"
+                id="vacation-end-date-edit"
                 type="datepicker"
                 placeholder="Дата"
                 readonly
@@ -90,7 +90,7 @@
             <button
               class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
               @click="confirmDelete"
-              :disabled="semesterStore.isLoading"
+              :disabled="vacationStore.isLoading"
             >
               <f7-icon
                 ios="f7:trash"
@@ -98,7 +98,7 @@
                 size="18px"
                 class="mr-2"
               />
-              Удалить семестр
+              Удалить каникулы
             </button>
           </div>
         </div>
@@ -113,21 +113,21 @@ import dayjs from "dayjs";
 import { f7, f7Input, f7Icon, f7Popover } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import { z } from "zod";
-import { useSemesterStore } from "@/stores/semesterStore";
-import type { Semester } from "@/stores/semesterStore";
+import { useVacationStore } from "@/stores/vacationStore";
+import type { Vacation } from "@/stores/vacationStore";
 import { calendarParams } from "@/constants/period";
 
-const props = defineProps<{ semester: Semester }>();
+const props = defineProps<{ vacation: Vacation }>();
 
-const semesterStore = useSemesterStore();
+const vacationStore = useVacationStore();
 
-const shortName = ref(props.semester.shortName);
-const fullName = ref(props.semester.fullName);
-const startDate = ref<Date[]>([new Date(props.semester.startDate)]);
-const endDate = ref<Date[]>([new Date(props.semester.endDate)]);
+const shortName = ref(props.vacation.shortName);
+const fullName = ref(props.vacation.fullName);
+const startDate = ref<Date[]>([new Date(props.vacation.startDate)]);
+const endDate = ref<Date[]>([new Date(props.vacation.endDate)]);
 const formError = ref("");
 
-const semesterSchema = z
+const vacationSchema = z
   .object({
     shortName: z.string().min(1),
     fullName: z.string().min(1),
@@ -146,7 +146,7 @@ const semesterSchema = z
   );
 
 const validationResult = computed(() => {
-  return semesterSchema.safeParse({
+  return vacationSchema.safeParse({
     shortName: shortName.value,
     fullName: fullName.value,
     startDate: startDate.value,
@@ -157,11 +157,11 @@ const validationResult = computed(() => {
 const isFormValid = computed(() => validationResult.value.success);
 
 const closePopover = () => {
-  f7.popover.close(`#edit-semester-popover-${props.semester.id}`);
-  semesterStore.clearError();
+  f7.popover.close(`#edit-vacation-popover-${props.vacation.id}`);
+  vacationStore.clearError();
 };
 
-const handleUpdateSemester = async () => {
+const handleUpdateVacation = async () => {
   if (!isFormValid.value) {
     if (!validationResult.value.success) {
       formError.value = validationResult.value.error.issues[0].message;
@@ -170,7 +170,7 @@ const handleUpdateSemester = async () => {
   }
 
   try {
-    await semesterStore.updateSemester(props.semester.id, {
+    await vacationStore.updateVacation(props.vacation.id, {
       shortName: shortName.value,
       fullName: fullName.value,
       startDate: dayjs(startDate.value[0]).format("YYYY-MM-DD"),
@@ -178,21 +178,21 @@ const handleUpdateSemester = async () => {
     });
     closePopover();
   } catch (error) {
-    console.error("Failed to update semester:", error);
+    console.error("Failed to update vacation:", error);
   }
 };
 
 const confirmDelete = () => {
-  f7.popover.close(`#edit-semester-popover-${props.semester.id}`);
+  f7.popover.close(`#edit-vacation-popover-${props.vacation.id}`);
   f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить семестр "${props.semester.shortName}"?</p><p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
-    "Удаление семестра",
+    `<p>Вы уверены, что хотите удалить каникулы "${props.vacation.shortName}"?</p><p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
+    "Удаление каникул",
     async () => {
       try {
-        await semesterStore.deleteSemester(props.semester.id);
+        await vacationStore.deleteVacation(props.vacation.id);
       } catch (error) {
-        console.error("Failed to delete semester:", error);
-        f7.dialog.alert("Произошла ошибка при удалении семестра.");
+        console.error("Failed to delete vacation:", error);
+        f7.dialog.alert("Произошла ошибка при удалении каникул.");
       }
     }
   );
