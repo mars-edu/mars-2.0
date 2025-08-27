@@ -49,24 +49,22 @@
         <!-- Calendar toolbar with navigation -->
         <CalendarToolbar
           :search-placeholder="'Найти'"
+          :month-name="monthName"
+          :year="year"
+          :today-date="todayDate"
           @icon-click="handleIconClick"
           @search="handleSearch"
           @event-added="addEvent"
+          @today="goToToday"
+          @previous-month="previousMonth"
+          @next-month="nextMonth"
         >
           <template #navigation>
             <CalendarNavigation v-model="activeTab" :tabs="navigationTabs" />
           </template>
         </CalendarToolbar>
 
-        <!-- Calendar header -->
-        <CalendarHeader
-          :month-name="monthName"
-          :year="year"
-          :today-date="todayDate"
-          @today="goToToday"
-          @previous-month="previousMonth"
-          @next-month="nextMonth"
-        />
+        <!-- Calendar header removed -->
 
         <!-- Calendar views based on active tab -->
         <div v-if="activeTab === 'month'">
@@ -124,7 +122,6 @@ import Header from "@/components/Header/Header.vue";
 import { useCalendar } from "@/composables/useCalendar";
 import CalendarToolbar from "@/components/Calendar/CalendarToolbar.vue";
 import CalendarNavigation from "@/components/Calendar/CalendarNavigation.vue";
-import CalendarHeader from "@/components/Calendar/CalendarHeader.vue";
 import CalendarGrid from "@/components/Calendar/CalendarGrid.vue";
 import EditEventPopover from "@/components/Calendar/EditEventPopover.vue";
 import JournalPreviewPopover from "@/components/Calendar/JournalPreviewPopover.vue";
