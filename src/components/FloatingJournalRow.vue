@@ -23,7 +23,7 @@
                     №
                   </th>
                   <th
-                    class="p-2 text-left w-64 border-r border-border align-top"
+                    class="p-2 text-left w-64 border-r border-border align-top min-w-[250px]"
                   >
                     Обучающийся
                   </th>
@@ -48,7 +48,7 @@
                     {{ studentIndex + 1 }}
                   </td>
                   <td
-                    class="px-2 py-2 border-r border-border text-sm align-top"
+                    class="px-2 py-2 border-r border-border text-sm align-top min-w-[250px]"
                   >
                     {{ localStudent.name }}
                   </td>

@@ -1,11 +1,16 @@
 <template>
   <div
-    class="h-6 w-full rounded-md border border-border flex items-center justify-center text-xs"
+    class="h-6 w-full rounded-md border border-border flex items-center justify-center text-xs group"
     :class="cellClass"
   >
-    <span :class="{ 'text-green-600': mark === null }">{{
-      mark === null ? "+" : mark
+    <span v-if="mark !== null && mark !== ''" class="font-semibold">{{
+      mark
     }}</span>
+    <span
+      v-else
+      class="text-green-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+      >+</span
+    >
   </div>
 </template>
 
@@ -22,6 +27,6 @@ const cellClass = computed(() => {
   if (props.mark !== null && props.mark !== "") {
     return "font-semibold";
   }
-  return "";
+  return "hover:bg-muted/30 cursor-pointer";
 });
-</script> 
+</script>

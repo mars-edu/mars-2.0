@@ -3,8 +3,7 @@
     ref="inputRef"
     type="text"
     :value="modelValue"
-    class="h-8 w-full rounded-md border-2 border-primary bg-background text-center font-semibold shadow-lg outline-none transition-all duration-300 text-sm"
-    :class="{ '!text-2xl': isZoomed }"
+    class="h-4 w-full rounded-md border-2 border-primary bg-background text-center font-semibold shadow-lg outline-none transition-all duration-300 text-sm"
     @input="onInput"
     @keydown.enter.prevent="$emit('navigate', 'right')"
     @keydown.esc.prevent="$emit('cancel')"
@@ -14,6 +13,7 @@
     @keydown.down.prevent="$emit('navigate', 'down')"
     @blur="$emit('confirm')"
   />
+  <!-- :class="{ '!text-2xl': isZoomed }" -->
 </template>
 
 <script setup lang="ts">
@@ -60,4 +60,4 @@ onMounted(() => {
   inputRef.value?.focus();
   inputRef.value?.select();
 });
-</script> 
+</script>

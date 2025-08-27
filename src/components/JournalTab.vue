@@ -7,7 +7,9 @@
             <th class="p-2 text-left w-12 border-r border-border align-top">
               №
             </th>
-            <th class="p-2 text-left w-64 border-r border-border align-top">
+            <th
+              class="p-2 text-left w-12 border-r border-border align-top min-w-[250px]"
+            >
               Обучающийся
             </th>
             <!-- Dynamic date columns -->
@@ -42,7 +44,7 @@
               {{ studentIndex + 1 }}
             </td>
             <td
-              class="px-2 py-2 border-r border-border text-sm align-top cursor-pointer hover:bg-muted/50 transition-colors"
+              class="px-2 py-2 border-r border-border text-sm align-top cursor-pointer hover:bg-muted/50 transition-colors min-w-[250px]"
               @click="showFloatingRow(student, studentIndex)"
             >
               <div class="flex items-center justify-between">

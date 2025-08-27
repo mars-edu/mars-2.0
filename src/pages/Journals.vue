@@ -73,9 +73,9 @@
               />
             </div>
             <div class="overflow-x-auto">
-              <div class="flex gap-5 min-w-max">
+              <div class="flex gap-5 w-full">
                 <template v-for="(course, idx) in courses" :key="course.id">
-                  <div class="flex flex-col gap-3 w-[250px]">
+                  <div class="flex flex-col gap-3 w-full">
                     <h2
                       class="font-semibold text-sm text-center py-1 bg-muted rounded-md text-muted-foreground"
                     >
@@ -105,7 +105,7 @@
                       <p class="text-sm">Нет доступных журналов</p>
                     </div>
                   </div>
-                  <div v-if="idx === 3" class="flex flex-col gap-3 w-[250px]">
+                  <div v-if="idx === 3" class="flex flex-col gap-3 w-full">
                     <h2
                       class="font-semibold text-sm text-center py-1 bg-muted rounded-md text-muted-foreground"
                     >

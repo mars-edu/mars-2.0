@@ -1,6 +1,6 @@
 <template>
   <div
-    class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-sun to-amber-400 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer select-none hover:scale-[1.02] active:scale-[0.98]"
+    class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-sun to-amber-400 transition-all duration-300 cursor-pointer select-none hover:scale-[1.02] active:scale-[0.98]"
     @click="$emit('click')"
   >
     <!-- Subtle background pattern -->
@@ -9,38 +9,39 @@
     ></div>
 
     <!-- Main content -->
-    <div class="relative p-6 flex items-start gap-4 min-h-[140px]">
-      <div class="flex-1 min-w-0">
-        <div class="text-lg font-bold text-white leading-6 mb-3 drop-shadow-sm">
+    <div class="relative p-2 flex items-start gap-2 h-min-[95px]">
+      <div class="flex-1 min-w-0 flex flex-col justify-between h-full">
+        <div class="text-sm font-bold text-white leading-5 mb-1 drop-shadow-sm">
           {{ title }}
         </div>
-        <div class="text-sm font-medium text-white/80 mb-2 leading-5">
-          {{ subtitle }}
-        </div>
-        <div class="text-sm font-medium text-white/70 leading-5">
-          {{ schedule }}
+        <div class="flex flex-col gap-1">
+          <div class="text-xs font-medium text-white/80">
+            {{ subtitle }}
+          </div>
+          <div class="text-xs font-medium text-white/70 leading-4">
+            {{ schedule }}
+          </div>
         </div>
       </div>
 
       <!-- Progress circle -->
-      <div class="shrink-0 w-20 h-20 relative">
-        <!-- Background circle -->
-        <svg viewBox="0 0 72 72" class="w-20 h-20 -rotate-90 drop-shadow-sm">
+      <div class="shrink-0 w-12 h-12 relative self-end">
+        <svg viewBox="0 0 44 44" class="w-12 h-12 -rotate-90 drop-shadow-sm">
           <circle
-            cx="36"
-            cy="36"
-            r="30"
+            cx="22"
+            cy="22"
+            r="18"
             stroke="rgba(255, 255, 255, 0.2)"
-            stroke-width="6"
+            stroke-width="4"
             fill="none"
             stroke-linecap="round"
           />
           <circle
-            cx="36"
-            cy="36"
-            r="30"
+            cx="22"
+            cy="22"
+            r="18"
             :stroke="progressColor"
-            stroke-width="6"
+            stroke-width="4"
             fill="none"
             stroke-linecap="round"
             :stroke-dasharray="circumference"
@@ -48,9 +49,8 @@
             class="transition-all duration-500 ease-out"
           />
         </svg>
-        <!-- Percentage text -->
         <div class="absolute inset-0 flex items-center justify-center">
-          <span class="text-lg font-bold text-white drop-shadow-sm"
+          <span class="text-xs font-bold text-white drop-shadow-sm"
             >{{ percent }}%</span
           >
         </div>
