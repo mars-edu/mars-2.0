@@ -199,17 +199,33 @@ const generateDates = () => {
     const dates: Mark[] = [];
     const currentDate = new Date(startDate);
 
+    // Get selected weekdays from weeklySchedules if available
+    const selectedWeekdays =
+      currentEvent.value.weeklySchedules?.map((ws) => ws.weekId) || [];
+
     while (currentDate <= endDate) {
-      const dateStr = `${currentDate.getDate().toString().padStart(2, "0")}.${(
-        currentDate.getMonth() + 1
-      )
-        .toString()
-        .padStart(2, "0")}\n${currentDate.getFullYear()}`;
-      dates.push({
-        type: "date",
-        date: dateStr,
-        values: [null, null],
-      });
+      // Convert JavaScript day (0=Sunday) to weekId format (0=Monday)
+      const jsDay = currentDate.getDay();
+      const weekId = (jsDay + 6) % 7; // Convert Sunday=0 to Monday=0
+
+      // Only include dates that match selected weekdays (if weeklySchedules exist)
+      const shouldIncludeDate =
+        selectedWeekdays.length === 0 || selectedWeekdays.includes(weekId);
+
+      if (shouldIncludeDate) {
+        const dateStr = `${currentDate
+          .getDate()
+          .toString()
+          .padStart(2, "0")}.${(currentDate.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}\n${currentDate.getFullYear()}`;
+        dates.push({
+          type: "date",
+          date: dateStr,
+          values: [null, null],
+        });
+      }
+
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
