@@ -1,69 +1,84 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="utf-8" />
 
-<head>
-  <meta charset="utf-8">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: content:"
+    />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
 
-  <meta http-equiv="Content-Security-Policy"
-    content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: content:">
-  <meta name="viewport"
-    content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#fff" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    <title>Mars</title>
 
-  <meta name="theme-color" content="#fff">
-  <meta name="format-detection" content="telephone=no">
-  <meta name="msapplication-tap-highlight" content="no">
-  <title>Mars</title>
-
-  <script>
-    function forceReload() {
-      return true;
-      if (window.__BUILD_INFO__.environment == "production") {
-        console.log("[forceReload] Production environment detected, reloading page");
-        const form = document.createElement('form');
-        form.method = "POST";
-        form.action = location.href;
-        document.body.appendChild(form);
-        form.submit();
-      } else {
-        console.log("[forceReload] Development environment detected, reloading page");
-        window.location.reload();
-      }
-    }
-  </script>
-
-  <script>
-    if (window.location.hash === "") {
-      window.location.replace("/#!/home");
-    }
-  </script>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const storedBuildInfo = localStorage.getItem("buildInfo");
-      console.log("[DOMContentLoaded] Stored build info found, checking version");
-      if (storedBuildInfo) {
-        console.log("[DOMContentLoaded] Stored build info found, checking version");
-        const buildInfo = JSON.parse(storedBuildInfo);
-        if (buildInfo.version !== window.__BUILD_INFO__.version) {
-          localStorage.setItem("buildInfo", JSON.stringify(window.__BUILD_INFO__));
-          forceReload();
+    <script>
+      function forceReload() {
+        return true;
+        if (window.__BUILD_INFO__.environment == "production") {
+          console.log(
+            "[forceReload] Production environment detected, reloading page"
+          );
+          const form = document.createElement("form");
+          form.method = "POST";
+          form.action = location.href;
+          document.body.appendChild(form);
+          form.submit();
+        } else {
+          console.log(
+            "[forceReload] Development environment detected, reloading page"
+          );
+          window.location.reload();
         }
       }
-      forceReload()
-    });
-  </script>
+    </script>
 
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="icon" href="icons/favicon.png">
+    <script>
+      if (window.location.hash === "") {
+        window.location.replace("/#!/home");
+      }
+    </script>
 
-</head>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const storedBuildInfo = localStorage.getItem("buildInfo");
+        console.log(
+          "[DOMContentLoaded] Stored build info found, checking version"
+        );
+        if (storedBuildInfo) {
+          console.log(
+            "[DOMContentLoaded] Stored build info found, checking version"
+          );
+          const buildInfo = JSON.parse(storedBuildInfo);
+          if (buildInfo.version !== window.__BUILD_INFO__.version) {
+            localStorage.setItem(
+              "buildInfo",
+              JSON.stringify(window.__BUILD_INFO__)
+            );
+            forceReload();
+          }
+        }
+        forceReload();
+      });
+    </script>
 
-<body>
-  <div id="app"></div>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="icon" href="icons/favicon.png" />
+  </head>
 
-  <script type="module" src="./js/app.js"></script>
-</body>
+  <body>
+    <div id="app"></div>
 
+    <script type="module" src="./js/app.js"></script>
+  </body>
 </html>

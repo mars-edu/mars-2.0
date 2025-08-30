@@ -30,7 +30,7 @@
                   <th
                     v-for="(header, index) in tableHeaders"
                     :key="index"
-                    class="px-1 py-2 text-center text-xs border-r border-border w-16 transition-all duration-300"
+                    class="px-1 py-2 text-center text-xs border-r border-border w-16 min-w-[56px] transition-all duration-300"
                     :class="[
                       {
                         'scale-125 bg-green-100 text-green-600 font-bold':
@@ -64,7 +64,7 @@
                   <td
                     v-for="(mark, colIndex) in localStudent.marks"
                     :key="colIndex"
-                    class="px-1 py-2 text-center border-r border-border"
+                    class="px-1 py-2 text-center border-r border-border min-w-[56px]"
                     :class="{
                       'bg-muted/90':
                         mark.type === 'session' ||
