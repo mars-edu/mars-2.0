@@ -17,6 +17,13 @@
               v-for="(header, index) in visibleHeaders"
               :key="header.index"
               class="px-1 py-2 text-center text-xs border-r border-border w-16 min-w-[56px] cursor-pointer hover:bg-muted"
+              :class="{
+                'bg-muted/50 text-muted-foreground':
+                  header.type === 'session' ||
+                  header.type === 'pk' ||
+                  header.type === 'e' ||
+                  header.type === 'i',
+              }"
               @click="openDateFocus(header, header.index)"
             >
               <div class="flex flex-col items-center">
@@ -61,6 +68,13 @@
               v-for="(header, vColIdx) in visibleHeaders"
               :key="header.index"
               class="px-1 py-2 text-center border-r border-border min-w-[56px]"
+              :class="{
+                'bg-muted/90':
+                  header.type === 'session' ||
+                  header.type === 'pk' ||
+                  header.type === 'e' ||
+                  header.type === 'i',
+              }"
             >
               <div class="flex flex-col gap-1">
                 <div
@@ -306,13 +320,7 @@ const generateDates = () => {
   }));
 };
 
-const students = ref<Student[]>([
-  {
-    id: 1,
-    name: "Салкимбаев Саке",
-    marks: generateDates(),
-  },
-]);
+const students = ref<Student[]>([]);
 
 const getMark = (studentIndex: number, colIndex: number, markIndex: number) => {
   const mark = students.value[studentIndex].marks[colIndex].values[markIndex];
@@ -596,14 +604,6 @@ const visibleColumnIndices = computed(() => {
 
 watch(
   () => props.journalSettings,
-  () => {
-    computeAllSessionGrades();
-  },
-  { deep: true }
-);
-
-watch(
-  () => students.value,
   () => {
     computeAllSessionGrades();
   },

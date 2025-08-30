@@ -16,8 +16,8 @@
           <div class="flex items-center justify-between">
             <div class="text-xl font-semibold">
               <p>
-                Модуль/дисциплина:
-                <span class="text-green-600">{{ currentJournal?.title }}</span>
+                Результат обучения/дисциплина:
+                <span class="text-green-600">{{ currentClass9Text }}</span>
               </p>
               <p>
                 Учебная группа:
@@ -399,6 +399,7 @@ import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useJournalStore } from "@/stores/journalStore";
+import { useCalendarStore } from "@/stores/calendarStore";
 import Select from "@/components/ui/Select.vue";
 import JournalTab from "@/components/JournalTab.vue";
 import FloatingJournalRow from "@/components/FloatingJournalRow.vue";
@@ -418,6 +419,8 @@ const academicYearStore = useAcademicYearStore();
 const { academicYears } = storeToRefs(academicYearStore);
 
 const journalStore = useJournalStore();
+const calendarStore = useCalendarStore();
+const { class9Options } = storeToRefs(calendarStore);
 
 const selectedAcademicYear = ref("");
 
@@ -431,6 +434,13 @@ const academicYearOptions = computed(() =>
 const currentJournal = computed(() => {
   if (!journalId.value) return null;
   return journalStore.getJournalById(journalId.value);
+});
+
+const currentClass9Text = computed(() => {
+  const disciplineId = currentJournal.value?.disciplineId;
+  if (!disciplineId) return "";
+  const option = class9Options.value.find((o: any) => o.value === disciplineId);
+  return option?.text || "";
 });
 
 const selectedStudent = ref<any>(null);

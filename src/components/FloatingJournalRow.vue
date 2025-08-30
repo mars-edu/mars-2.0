@@ -31,10 +31,19 @@
                     v-for="(header, index) in tableHeaders"
                     :key="index"
                     class="px-1 py-2 text-center text-xs border-r border-border w-16 transition-all duration-300"
-                    :class="{
-                      'scale-125 bg-green-100 text-green-600 font-bold':
-                        editingCell?.col === index,
-                    }"
+                    :class="[
+                      {
+                        'scale-125 bg-green-100 text-green-600 font-bold':
+                          editingCell?.col === index,
+                      },
+                      {
+                        'bg-muted/50 text-muted-foreground':
+                          header.type === 'session' ||
+                          header.type === 'pk' ||
+                          header.type === 'e' ||
+                          header.type === 'i',
+                      },
+                    ]"
                   >
                     <span v-html="header.label.replace('\\n', '<br/>')"></span>
                   </th>
@@ -56,6 +65,13 @@
                     v-for="(mark, colIndex) in localStudent.marks"
                     :key="colIndex"
                     class="px-1 py-2 text-center border-r border-border"
+                    :class="{
+                      'bg-muted/90':
+                        mark.type === 'session' ||
+                        mark.type === 'pk' ||
+                        mark.type === 'e' ||
+                        mark.type === 'i',
+                    }"
                   >
                     <div class="flex flex-col gap-1">
                       <!-- First mark in pair (row 0) -->

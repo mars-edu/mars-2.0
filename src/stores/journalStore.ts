@@ -61,6 +61,23 @@ export const useJournalStore = defineStore(
       return Array.from(codes).join("");
     }
 
+    function createJournalFromEvent(
+      actualEvent: any,
+      courseNumber: number,
+      students: string[],
+      isMixed = false
+    ): Journal {
+      return {
+        id: `${actualEvent.id}`,
+        title: "test",
+        courseNumber,
+        disciplineId: actualEvent.class9Id,
+        group: generateJournalTitle(courseNumber, students),
+        students,
+        isMixedGroup: isMixed,
+      };
+    }
+
     const journalsByCourse = computed(() => {
       const result: Record<number, Journal[]> = {};
 
@@ -98,15 +115,12 @@ export const useJournalStore = defineStore(
 
             if (!result[courseNumber]) result[courseNumber] = [];
 
-            const journal: Journal = {
-              id: actualEvent.id,
-              title: generateJournalTitle(courseNumber, studentsInCourse),
-              courseNumber: courseNumber,
-              disciplineId: actualEvent.class9Id,
-              group: generateGroupFromStudents(studentsInCourse),
-              students: studentsInCourse,
-              isMixedGroup: isMixed,
-            };
+            const journal = createJournalFromEvent(
+              actualEvent,
+              courseNumber,
+              studentsInCourse,
+              isMixed
+            );
 
             result[courseNumber].push(journal);
           }
@@ -132,20 +146,14 @@ export const useJournalStore = defineStore(
 
           const primaryCourse = courseNumbers[0] ?? 1;
 
-          const journal: Journal = {
-            id: `${actualEvent.id}`,
-            title: generateJournalTitle(
+          mixedJournals.push(
+            createJournalFromEvent(
+              actualEvent,
               primaryCourse,
-              actualEvent.participants
-            ),
-            courseNumber: primaryCourse,
-            disciplineId: actualEvent.class9Id,
-            group: generateGroupFromStudents(actualEvent.participants),
-            students: actualEvent.participants,
-            isMixedGroup: true,
-          };
-
-          mixedJournals.push(journal);
+              actualEvent.participants || [],
+              true
+            )
+          );
         }
       });
 
@@ -184,17 +192,12 @@ export const useJournalStore = defineStore(
             courseNumber = 1;
           }
 
-          return {
-            id: actualEvent.id,
-            title: generateJournalTitle(
-              courseNumber,
-              actualEvent.participants || []
-            ),
-            courseNumber: courseNumber,
-            disciplineId: actualEvent.class9Id,
-            group: generateGroupFromStudents(actualEvent.participants || []),
-            students: actualEvent.participants || [],
-          };
+          return createJournalFromEvent(
+            actualEvent,
+            courseNumber,
+            actualEvent.participants || [],
+            false
+          );
         }
 
         return null;
@@ -205,7 +208,7 @@ export const useJournalStore = defineStore(
       loading.value = true;
       try {
         const eventData = {
-          class9Id: journalData.disciplineId, // Using disciplineId as temporary class9Id mapping
+          class9Id: journalData.disciplineId,
           rup: "",
           file: null,
           startDate: new Date().toISOString().split("T")[0],
