@@ -6,32 +6,24 @@
     close-on-escape
     @popover:closed="onClosed"
   >
-    <div class="bg-card text-card-foreground">
+    <div class="bg-card text-card-foreground flex flex-col">
       <div class="p-4">
         <JournalCard
           :title="title"
           :subtitle="subtitle"
           :schedule="scheduleText"
           :percent="percent"
-          @click="noop"
+          @click="handleGoToJournal"
         />
       </div>
 
-      <div class="px-4 pb-4 flex items-center gap-3">
-        <button
-          type="button"
-          class="flex-1 h-11 rounded-xl border border-primary text-primary hover:bg-primary/5 transition-colors"
-          @click="handleGoToJournal"
-        >
-          Перейти журнал
-        </button>
-        <button
-          type="button"
+      <div class="px-4 pb-4 flex items-center gap-3 self-end">
+        <f7-button
           class="w-11 h-11 rounded-xl border border-input hover:bg-secondary grid place-items-center"
           @click="handleEdit"
         >
-          <i class="f7-icons text-foreground">pencil</i>
-        </button>
+          <f7-icon ios="f7:pencil" md="material:edit" size="27px" class="" />
+        </f7-button>
       </div>
     </div>
   </f7-popover>
@@ -119,6 +111,4 @@ const onClosed = () => {
   if (!closingByAction.value) emit("cancel");
   closingByAction.value = false;
 };
-
-const noop = () => {};
 </script>
