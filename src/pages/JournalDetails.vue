@@ -274,6 +274,7 @@
       </div>
     </div>
     <FloatingJournalRow
+      :journal-id="journalId"
       :student="selectedStudent"
       :student-index="selectedStudentIndex"
       :table-headers="tableHeaders"
