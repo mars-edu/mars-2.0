@@ -58,9 +58,13 @@
                 <span>{{ student.name }}</span>
                 <div
                   class="ml-2 px-2 py-1 rounded-full text-xs font-medium text-white min-w-[24px] text-center"
-                  :class="getScoreBadgeClass(getStudentAverageScore(student))"
+                  :class="
+                    getScoreBadgeClass(
+                      getStudentAverageScore(student.studentId)
+                    )
+                  "
                 >
-                  {{ getStudentAverageScore(student) }}
+                  {{ getStudentAverageScore(student.studentId) }}
                 </div>
               </div>
             </td>
@@ -103,7 +107,7 @@
                     @click="editCell(studentIndex, header.index, 0)"
                     class="cursor-pointer w-full"
                   >
-                    <MarkCell :mark="student.marks[header.index].values[0]" />
+                    <MarkCell :mark="student.marks[header.index]?.values[0]" />
                   </div>
                 </div>
                 <div
@@ -132,7 +136,7 @@
                     @click="editCell(studentIndex, header.index, 1)"
                     class="cursor-pointer w-full"
                   >
-                    <MarkCell :mark="student.marks[header.index].values[1]" />
+                    <MarkCell :mark="student.marks[header.index]?.values[1]" />
                   </div>
                 </div>
               </div>
@@ -161,24 +165,9 @@ import KtpDetailFormPopover from "@/components/KtpDetailFormPopover.vue";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSessionStore } from "@/stores/sessionStore";
-
-type MarkType = "date" | "pk" | "e" | "i" | "session";
-
-interface Mark {
-  type: MarkType;
-  date?: string;
-  values: Array<string | null>;
-  label?: string;
-  sessionId?: string;
-  sessionDateIndices?: number[];
-  isoDate?: string;
-}
-
-interface Student {
-  id: number;
-  name: string;
-  marks: Mark[];
-}
+import { useMarksStore } from "@/stores/marksStore";
+import type { Mark } from "@/types/marks";
+import type { StudentWithMarks } from "@/types/student";
 
 interface Props {
   journalId: string;
@@ -194,7 +183,7 @@ const props = defineProps<Props>();
 const emit = defineEmits<{
   "show-floating-row": [student: any, index: number];
   "open-date-focus": [header: { type: string; label: string }, index: number];
-  "update-students": [students: Student[]];
+  "update-students": [students: StudentWithMarks[]];
   "open-ktp-details": [header: { type: string; label: string }, index: number];
 }>();
 
@@ -202,6 +191,7 @@ const calendarStore = useCalendarStore();
 const studentStore = useStudentStore();
 const { getStudentFullName } = studentStore;
 const sessionStore = useSessionStore();
+const marksStore = useMarksStore();
 
 const editingCell = ref<{
   studentIndex: number;
@@ -320,10 +310,51 @@ const generateDates = () => {
   }));
 };
 
-const students = ref<Student[]>([]);
+const getStudentIdByIndex = (index: number): string | null => {
+  if (
+    !props.currentJournal?.students ||
+    index < 0 ||
+    index >= props.currentJournal.students.length
+  ) {
+    return null;
+  }
+  return props.currentJournal.students[index];
+};
+
+// Helper function to get student index by ID
+const getStudentIndexById = (studentId: string): number => {
+  if (!props.currentJournal?.students) return -1;
+  return props.currentJournal.students.indexOf(studentId);
+};
+
+// Computed property for students with marks from store
+const students = computed(() => {
+  if (!props.journalId || !props.currentJournal?.students?.length) return [];
+
+  return props.currentJournal.students.map(
+    (studentId: string, index: number) => {
+      const studentMarks = marksStore.getStudentMarks(
+        props.journalId,
+        studentId
+      );
+      return {
+        id: index + 1,
+        name: getStudentFullName(studentId),
+        marks: studentMarks || [],
+        studentId: studentId,
+      };
+    }
+  );
+});
 
 const getMark = (studentIndex: number, colIndex: number, markIndex: number) => {
-  const mark = students.value[studentIndex].marks[colIndex].values[markIndex];
+  const studentId = getStudentIdByIndex(studentIndex);
+  if (!studentId || !props.journalId) return "";
+
+  const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
+  if (!studentMarks || colIndex >= studentMarks.length) return "";
+
+  const mark = studentMarks[colIndex].values[markIndex];
   if (mark === null) return "";
   return String(mark ?? "");
 };
@@ -334,8 +365,17 @@ const setMark = (
   markIndex: number,
   value: string
 ) => {
+  const studentId = getStudentIdByIndex(studentIndex);
+  if (!studentId || !props.journalId) return;
+
   const newValue = value === "+" || value === "" ? null : value;
-  students.value[studentIndex].marks[colIndex].values[markIndex] = newValue;
+  marksStore.updateStudentMark(
+    props.journalId,
+    studentId,
+    colIndex,
+    markIndex,
+    newValue
+  );
   emit("update-students", students.value);
 };
 
@@ -344,7 +384,13 @@ const editCell = (
   colIndex: number,
   markIndex: number
 ) => {
-  const markType = students.value[studentIndex].marks[colIndex].type;
+  const studentId = getStudentIdByIndex(studentIndex);
+  if (!studentId || !props.journalId) return;
+
+  const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
+  if (!studentMarks || colIndex >= studentMarks.length) return;
+
+  const markType = studentMarks[colIndex].type;
   if (
     markType === "session" &&
     props.journalSettings?.calculationType === "calculated"
@@ -449,17 +495,15 @@ const onPaperclipClick = (
 };
 
 const computeDayAverage = (
-  student: Student,
+  studentId: string,
   dayIndex: number
 ): number | null => {
-  if (
-    !student ||
-    !student.marks ||
-    dayIndex < 0 ||
-    dayIndex >= student.marks.length
-  )
+  if (!studentId || !props.journalId) return null;
+
+  const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
+  if (!studentMarks || dayIndex < 0 || dayIndex >= studentMarks.length)
     return null;
-  const values = student.marks[dayIndex]?.values || [];
+  const values = studentMarks[dayIndex]?.values || [];
   const nums = values
     .map((v) =>
       v !== null && v !== "" && !isNaN(Number(v)) ? Number(v) : null
@@ -471,7 +515,7 @@ const computeDayAverage = (
 };
 
 const computeSessionGradeForStudent = (
-  student: Student,
+  studentId: string,
   sessionDateIndices: number[],
   method: "only-assigned" | "all-days"
 ): string | null => {
@@ -482,7 +526,7 @@ const computeSessionGradeForStudent = (
     if (totalDays === 0) return null;
     let sum = 0;
     sessionDateIndices.forEach((idx) => {
-      const dayAvg = computeDayAverage(student, idx);
+      const dayAvg = computeDayAverage(studentId, idx);
       sum += dayAvg ?? 0;
     });
     const grade = sum / totalDays;
@@ -493,7 +537,7 @@ const computeSessionGradeForStudent = (
   let sum = 0;
   let count = 0;
   sessionDateIndices.forEach((idx) => {
-    const dayAvg = computeDayAverage(student, idx);
+    const dayAvg = computeDayAverage(studentId, idx);
     if (dayAvg !== null) {
       sum += dayAvg;
       count += 1;
@@ -505,30 +549,59 @@ const computeSessionGradeForStudent = (
 };
 
 const computeAllSessionGrades = () => {
-  if (props.journalSettings?.calculationType !== "calculated") return;
+  if (
+    props.journalSettings?.calculationType !== "calculated" ||
+    !props.journalId
+  )
+    return;
   const method = props.journalSettings?.calculationMethod || "only-assigned";
 
-  students.value.forEach((student, sIdx) => {
-    student.marks.forEach((mark, mIdx) => {
+  const journalStudentMarks = marksStore.getJournalStudentMarks(
+    props.journalId
+  );
+
+  journalStudentMarks.forEach((studentMark) => {
+    studentMark.marks.forEach((mark, mIdx) => {
       if (mark.type === "session") {
         const indices = (mark as any).sessionDateIndices as
           | number[]
           | undefined;
         if (!indices || indices.length === 0) return;
-        const grade = computeSessionGradeForStudent(student, indices, method);
+        const grade = computeSessionGradeForStudent(
+          studentMark.studentId,
+          indices,
+          method
+        );
         // Put into first slot; keep second empty
-        students.value[sIdx].marks[mIdx].values[0] = grade;
-        students.value[sIdx].marks[mIdx].values[1] = null;
+        marksStore.updateStudentMark(
+          props.journalId,
+          studentMark.studentId,
+          mIdx,
+          0,
+          grade
+        );
+        marksStore.updateStudentMark(
+          props.journalId,
+          studentMark.studentId,
+          mIdx,
+          1,
+          null
+        );
       }
     });
   });
 };
 
-const getStudentAverageScore = (student: Student): string => {
+const getStudentAverageScore = (studentId: string): string => {
+  if (!props.journalId) return "—";
+
+  const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
+  if (!studentMarks) return "—";
+
   const allMarks: (string | null)[] = [];
 
   // Collect all marks from all columns
-  student.marks.forEach((mark) => {
+  studentMarks.forEach((mark) => {
     mark.values.forEach((value) => {
       if (value !== null && value !== "") {
         allMarks.push(value);
@@ -569,8 +642,14 @@ const getScoreBadgeClass = (score: string): string => {
 };
 
 const tableHeaders = computed(() => {
-  if (students.value.length === 0) return [];
-  return students.value[0].marks.map((mark) => {
+  if (!props.journalId) return [];
+
+  const journalStudentMarks = marksStore.getJournalStudentMarks(
+    props.journalId
+  );
+  if (journalStudentMarks.length === 0) return [];
+
+  return journalStudentMarks[0].marks.map((mark) => {
     if (mark.type === "date") {
       return { type: "date", label: mark.date || "" };
     }
@@ -614,30 +693,59 @@ watch(
 watch(
   () => sessionStore.sortedSessions,
   () => {
-    // Recreate marks with session columns
-    students.value = students.value.map((s) => ({
-      ...s,
-      marks: generateDates(),
-    }));
-    computeAllSessionGrades();
+    console.log("[JournalTab] Sessions changed:", {
+      sessionCount: sessionStore.sortedSessions?.length || 0,
+      journalId: props.journalId,
+      hasStudents: !!props.currentJournal?.students?.length,
+    });
+
+    if (props.journalId && props.currentJournal?.students?.length) {
+      console.log("[JournalTab] Sessions changed, rebuilding marks");
+      // Regenerate marks template and update store
+      const markTemplate = generateDates();
+      console.log("[JournalTab] New mark template from sessions:", {
+        templateLength: markTemplate.length,
+        sessionColumns: markTemplate.filter((m) => m.type === "session").length,
+      });
+
+      marksStore.initializeJournalMarks(
+        props.journalId,
+        props.currentJournal.students,
+        markTemplate
+      );
+      computeAllSessionGrades();
+    }
   },
   { deep: true, immediate: true }
 );
 
 const updateStudent = (updatedStudent: any) => {
-  if (!updatedStudent) return;
-  const index = students.value.findIndex((s) => s.id === updatedStudent.id);
-  if (index !== -1) {
-    const newStudents = [...students.value];
-    newStudents[index] = updatedStudent;
-    students.value = newStudents;
-    emit("update-students", students.value);
+  if (!updatedStudent || !props.journalId) return;
+
+  // Update marks in store
+  if (updatedStudent.marks) {
+    marksStore.updateStudentMarks(
+      props.journalId,
+      updatedStudent.id.toString(),
+      updatedStudent.marks
+    );
   }
+
+  emit("update-students", students.value);
 };
 
 const updateStudents = (updatedStudents: any[]) => {
-  if (updatedStudents) {
-    students.value = updatedStudents;
+  if (updatedStudents && props.journalId) {
+    // Update all students' marks in store
+    const studentMarksToUpdate = updatedStudents.map((student) => ({
+      studentId: student.id.toString(),
+      marks: student.marks,
+    }));
+
+    marksStore.updateMultipleStudentMarks(
+      props.journalId,
+      studentMarksToUpdate
+    );
     emit("update-students", students.value);
   }
 };
@@ -650,13 +758,13 @@ defineExpose({
 });
 
 onMounted(() => {
-  if (props.currentJournal?.students?.length) {
-    students.value = props.currentJournal.students.map(
-      (student: string, index: number) => ({
-        id: index + 1,
-        name: getStudentFullName(student),
-        marks: generateDates(),
-      })
+  if (props.journalId && props.currentJournal?.students?.length) {
+    // Initialize marks in store
+    const markTemplate = generateDates();
+    marksStore.initializeJournalMarks(
+      props.journalId,
+      props.currentJournal.students,
+      markTemplate
     );
   }
 
@@ -671,14 +779,15 @@ onUnmounted(() => {
 watch(
   () => props.currentJournal,
   (newJournal) => {
-    if (newJournal?.students?.length) {
-      students.value = newJournal.students.map(
-        (student: string, index: number) => ({
-          id: index + 1,
-          name: getStudentFullName(student),
-          marks: generateDates(),
-        })
+    if (props.journalId && newJournal?.students?.length) {
+      // Initialize marks in store for the new journal
+      const markTemplate = generateDates();
+      marksStore.initializeJournalMarks(
+        props.journalId,
+        newJournal.students,
+        markTemplate
       );
+      computeAllSessionGrades();
     }
   },
   { immediate: true }

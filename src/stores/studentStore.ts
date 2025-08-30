@@ -3,43 +3,12 @@ import { ref, computed } from "vue";
 import Fuse from "fuse.js";
 import { useAcademicYearStore } from "./academicYearStore";
 import { useCourseStore, type Course } from "./courseStore";
-
-export interface Student {
-  id: string;
-  surname: string;
-  firstName: string;
-  patronymic: string;
-  specialty: string;
-  language: string;
-  base?: number;
-  gender: "male" | "female";
-  academicYearId?: string;
-}
-
-export interface StudentWithCourse extends Student {
-  course: number;
-}
-
-export interface AddStudentPayload {
-  surname: string;
-  firstName: string;
-  patronymic: string;
-  specialty: string;
-  language: string;
-  base?: number;
-  gender: "male" | "female";
-  academicYearId?: string;
-}
-
-export interface StudentFilters {
-  specialty: string;
-  language: string;
-  gender: string;
-  base: string;
-  academicYearId: string;
-  searchTerm: string;
-  course: string;
-}
+import type {
+  Student,
+  StudentWithCourse,
+  AddStudentPayload,
+  StudentFilters
+} from "@/types/student";
 
 export const useStudentStore = defineStore("student", () => {
   const students = ref<Student[]>([]);

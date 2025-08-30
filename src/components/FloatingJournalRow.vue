@@ -59,10 +59,10 @@
                   <td
                     class="px-2 py-2 border-r border-border text-sm align-top min-w-[250px]"
                   >
-                    {{ localStudent.name }}
+                    {{ localStudent?.name }}
                   </td>
                   <td
-                    v-for="(mark, colIndex) in localStudent.marks"
+                    v-for="(mark, colIndex) in localStudent?.marks || []"
                     :key="colIndex"
                     class="px-1 py-2 text-center border-r border-border min-w-[56px]"
                     :class="{
@@ -147,6 +147,8 @@
 import { ref, watch, computed, nextTick } from "vue";
 import MarkCell from "@/components/ui/MarkCell.vue";
 import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
+import { useMarksStore } from "@/stores/marksStore";
+import type { Mark } from "@/types/marks";
 
 const props = defineProps({
   student: {
@@ -161,25 +163,40 @@ const props = defineProps({
     type: Array as () => { type: string; label: string }[],
     required: true,
   },
+  journalId: {
+    type: String,
+    required: true,
+  },
 });
 
 const emit = defineEmits(["close", "update-student"]);
 
-const localStudent = ref<any>(null);
+const marksStore = useMarksStore();
+
 const editingCell = ref<{ row: number; col: number } | null>(null);
 const editedValue = ref("");
 const floatingRowRef = ref<HTMLDivElement | null>(null);
+
+const localStudent = computed(() => {
+  if (!props.student || !props.journalId) return null;
+
+  const studentId = props.student.studentId || props.student.id.toString();
+  const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
+
+  return {
+    ...props.student,
+    marks: studentMarks || props.student.marks || [],
+    studentId: studentId,
+  };
+});
 
 watch(
   () => props.student,
   (newStudent) => {
     if (newStudent) {
-      localStudent.value = JSON.parse(JSON.stringify(newStudent));
       nextTick(() => {
         floatingRowRef.value?.focus();
       });
-    } else {
-      localStudent.value = null;
     }
     editingCell.value = null;
   },
@@ -187,22 +204,65 @@ watch(
 );
 
 const getMark = (row: number, col: number): string => {
+  if (!localStudent.value || !localStudent.value.marks[col]) return "";
   const mark = localStudent.value.marks[col].values[row];
   if (mark === null) return "";
   return String(mark ?? "");
 };
 
 const setMark = (row: number, col: number, value: string) => {
+  console.log("[FloatingJournalRow] Setting mark:", {
+    row,
+    col,
+    value,
+    journalId: props.journalId,
+    hasLocalStudent: !!localStudent.value,
+    studentId: localStudent.value?.studentId,
+  });
+
+  if (!localStudent.value || !props.journalId) {
+    console.log("[FloatingJournalRow] Cannot set mark - missing data:", {
+      hasLocalStudent: !!localStudent.value,
+      journalId: props.journalId,
+    });
+    return;
+  }
+
   const newValue = value === "+" || value === "" ? null : value;
-  localStudent.value.marks[col].values[row] = newValue;
+  const studentId = localStudent.value.studentId;
+
+  console.log("[FloatingJournalRow] Calling marksStore.updateStudentMark:", {
+    journalId: props.journalId,
+    studentId,
+    col,
+    row,
+    newValue,
+  });
+
+  // Update in store
+  const updateResult = marksStore.updateStudentMark(
+    props.journalId,
+    studentId,
+    col,
+    row,
+    newValue
+  );
+  console.log("[FloatingJournalRow] Mark update result:", updateResult);
 };
 
 const editCell = (row: number, col: number) => {
+  console.log("[FloatingJournalRow] Editing cell:", { row, col });
   editingCell.value = { row, col };
   editedValue.value = getMark(row, col);
+  console.log("[FloatingJournalRow] Current mark value:", editedValue.value);
 };
 
 const confirmEdit = () => {
+  console.log("[FloatingJournalRow] Confirming edit:", {
+    hasEditingCell: !!editingCell.value,
+    editedValue: editedValue.value,
+  });
+
   if (!editingCell.value) return;
   const { row, col } = editingCell.value;
   setMark(row, col, editedValue.value);
@@ -255,10 +315,21 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
 };
 
 const handleClose = () => {
+  console.log("[FloatingJournalRow] Handling close:", {
+    hasEditingCell: !!editingCell.value,
+    hasLocalStudent: !!localStudent.value,
+  });
+
   if (editingCell.value) {
     confirmEdit();
   }
-  emit("update-student", localStudent.value);
+  if (localStudent.value) {
+    console.log("[FloatingJournalRow] Emitting updated student:", {
+      studentId: localStudent.value.studentId,
+      marksCount: localStudent.value.marks?.length || 0,
+    });
+    emit("update-student", localStudent.value);
+  }
   emit("close");
 };
 </script>
