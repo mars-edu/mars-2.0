@@ -88,7 +88,7 @@
                 @click="activeTab = 'planning'"
                 class="tab-link"
               >
-                Тематическое планирование
+                Тематическое<br />планирование
               </f7-link>
               <f7-link
                 tab-link="#tab-assignments"

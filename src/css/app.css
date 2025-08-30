@@ -133,3 +133,7 @@ body {
 .content-with-sidebar {
   margin-left: var(--sidebar-width);
 }
+
+.toolbar {
+  @apply h-14;
+}
