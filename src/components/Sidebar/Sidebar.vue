@@ -1,8 +1,8 @@
 <template>
   <aside
-    class="fixed top-[64px] left-0 w-52 bg-card border-r border-border flex flex-col h-[calc(100vh-64px)] z-40 overflow-y-auto shadow-sm"
+    class="fixed top-[64px] left-0 w-52 bg-card border-r border-border flex flex-col h-[calc(100vh-64px)] z-40 overflow-y-auto shadow-sm justify-between"
   >
-    <div class="flex-1 overflow-y-auto">
+    <div class="flex-1 overflow-y-auto w-full">
       <nav class="p-3">
         <div class="space-y-1 mt-2">
           <div
