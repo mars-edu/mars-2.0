@@ -26,7 +26,7 @@
             disabled
             :selected="!modelValue && !modelValueIsInOptions"
           >
-            {{ placeholder || " " }}
+            {{ placeholder }}
           </option>
           <option
             v-for="option in options"
@@ -351,14 +351,18 @@ const onPopupClose = () => {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.list .item-after {
+.smart-select-list-container .item-after {
   margin-left: 0 !important;
   max-width: none;
   @apply text-sm;
-  @apply py-[0.1rem];
+  padding-top: 0;
+  padding-bottom: 0;
+  @apply text-foreground;
 }
 
-.list .item-after {
-  @apply text-foreground;
+/* Normalize text line-height to keep equal height for placeholder vs value */
+.smart-select-list-container .item-title,
+.smart-select-list-container .item-after {
+  line-height: 1.25rem; /* Tailwind text-sm default */
 }
 </style>

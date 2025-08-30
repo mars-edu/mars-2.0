@@ -281,29 +281,19 @@ const goToJournalDetails = (id: number | string) => {
 };
 
 const selectedDiscipline = ref("");
-const disciplineOptions = ref(
-  withAllOption([{ value: "philosophy", text: "Философия" }], "все", "")
-);
+const disciplineOptions = [{ value: "philosophy", text: "Философия" }];
 
 const selectedTerm = ref("");
-const termOptions = ref(
-  withAllOption([{ value: "1y", text: "1 год" }], "все", "")
-);
+const termOptions = ref([{ value: "1y", text: "1 год" }]);
 
 const selectedStatus = ref("");
-const statusOptions = ref(
-  withAllOption([{ value: "active", text: "Активный" }], "все", "")
-);
+const statusOptions = ref([{ value: "active", text: "Активный" }]);
 
 const selectedGroup = ref("");
-const groupOptions = ref(
-  withAllOption([{ value: "pi-1-21", text: "ПИ-1-21" }], "все", "")
-);
+const groupOptions = ref([{ value: "pi-1-21", text: "ПИ-1-21" }]);
 
 const selectedRole = ref("");
-const roleOptions = ref(
-  withAllOption([{ value: "student", text: "Студент" }], "все", "")
-);
+const roleOptions = ref([{ value: "student", text: "Студент" }]);
 
 function onSettingsClick() {
   f7.dialog.alert("Откроются настройки журнала");

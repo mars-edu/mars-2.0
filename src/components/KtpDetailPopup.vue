@@ -3,7 +3,10 @@
     <f7-popover
       id="ktp-detail-popover"
       :arrow="false"
-      style="width: calc(100vw - 50px) !important"
+      style="
+        width: calc(100vw - 50px) !important;
+        height: calc(100dvh - 50px) !important;
+      "
       close-on-escape
       @popover:closed="$emit('update:opened', false)"
     >

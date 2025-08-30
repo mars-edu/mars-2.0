@@ -7,7 +7,11 @@
       close-on-escape
     >
       <div class="download-template-popover bg-card text-card-foreground">
-        <PopoverHeader title="Скачать шаблон" />
+        <PopoverHeader
+          title="Скачать шаблон"
+          cancel-text="Закрыть"
+          :on-cancel="handleClose"
+        />
 
         <div class="p-4 flex flex-col gap-4">
           <a
@@ -44,6 +48,10 @@
 <script setup lang="ts">
 import { f7, f7Popover, f7Icon } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+
+const handleClose = () => {
+  f7.popover.close("#download-template-popover");
+};
 
 const openExcel = () => {
   window.open("/rup_templates/Шаблон КТП Марса.xlsx", "_blank");
