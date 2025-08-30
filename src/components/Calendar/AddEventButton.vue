@@ -111,7 +111,6 @@
                   :style="`background-color: ${eventColor.hex || '#3F51B5'}`"
                   class="w-8 h-8 rounded-lg border border-input shadow-sm"
                 ></div>
-                <span class="text-sm text-muted-foreground">Выбрать цвет</span>
               </div>
 
               <f7-input
@@ -345,7 +344,21 @@ const startDate = ref(dayjs().format("DD/MM/YYYY"));
 const endDate = ref(dayjs().format("DD/MM/YYYY"));
 const participants = ref<string[]>([]);
 const formError = ref<string | null>(null);
-const eventColor = ref({ hex: "#3F51B5" }); // Default blue color
+const eventColor = ref({ hex: "#3F51B5" });
+
+watch(
+  eventColor,
+  (newVal) => {
+    if (newVal && (newVal as any).hex) {
+      try {
+        (f7 as any).colorPicker?.close?.();
+      } catch {
+        console.error("🔴 [AddEventButton] Error closing color picker");
+      }
+    }
+  },
+  { deep: false }
+);
 
 // Verbose logging for debugging
 console.log("🔍 [AddEventButton] Initial startDate:", startDate.value);

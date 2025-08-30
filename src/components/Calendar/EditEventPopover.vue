@@ -98,7 +98,6 @@
               :style="`background-color: ${eventColor.hex || '#3F51B5'}`"
               class="w-8 h-8 rounded-lg border border-input shadow-sm"
             ></div>
-            <span class="text-sm text-muted-foreground">Выбрать цвет</span>
           </div>
 
           <f7-input
@@ -322,6 +321,20 @@ const startDate = ref([props.event.startDate]);
 const endDate = ref([props.event.endDate]);
 const participants = ref<string[]>([...props.event.participants]);
 const eventColor = ref({ hex: props.event.color || "#3F51B5" }); // Initialize with event color or default
+
+watch(
+  eventColor,
+  (newVal) => {
+    if (newVal && (newVal as any).hex) {
+      try {
+        (f7 as any).colorPicker?.close?.();
+      } catch {
+        console.error("🔴 [EditEventPopover] Error closing color picker");
+      }
+    }
+  },
+  { deep: false }
+);
 
 // Verbose logging for debugging
 console.log("🔍 [EditEventPopover] Initial props.event:", props.event);
