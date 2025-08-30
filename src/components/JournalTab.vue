@@ -1,5 +1,73 @@
 <template>
   <div>
+    <div class="mb-3 flex flex-wrap gap-2 items-center justify-end">
+      <f7-button
+        id="journal-settings-button"
+        small
+        default
+        @click="onSettingsClick"
+        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+      >
+        <f7-icon
+          ios="f7:gear"
+          md="material:settings"
+          size="16px"
+          class="mr-2"
+        />
+        Настройки
+      </f7-button>
+      <f7-button
+        small
+        default
+        @click="onCloseJournalClick"
+        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+      >
+        <f7-icon
+          ios="f7:xmark_circle"
+          md="material:cancel"
+          size="16px"
+          class="mr-2"
+        />
+        Закрыть журнал
+      </f7-button>
+      <f7-button
+        small
+        default
+        @click="onDownloadClick"
+        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+      >
+        <f7-icon
+          ios="f7:arrow_down_to_line"
+          md="material:file_download"
+          size="16px"
+          class="mr-2"
+        />
+        Скачать
+      </f7-button>
+      <f7-button
+        small
+        default
+        @click="onUploadClick"
+        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+      >
+        <f7-icon
+          ios="f7:arrow_up_to_line"
+          md="material:file_upload"
+          size="16px"
+          class="mr-2"
+        />
+        Загрузить
+      </f7-button>
+      <f7-button
+        small
+        default
+        @click="onShareClick"
+        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+      >
+        <f7-icon ios="f7:share" md="material:share" size="16px" class="mr-2" />
+        Поделится
+      </f7-button>
+    </div>
     <div class="overflow-x-auto">
       <table class="w-full border-collapse">
         <thead>
@@ -153,12 +221,96 @@
       :parent-id="props.journalId"
       :detail-to-edit="null"
     />
+
+    <!-- Journal Settings Popover (moved here for correct positioning) -->
+    <f7-popover
+      id="journal-settings-popover"
+      style="width: 500px !important"
+      close-on-escape
+      target="#journal-settings-button"
+    >
+      <div class="journal-settings-popover bg-card text-card-foreground">
+        <PopoverHeader
+          title="Настройки журнала"
+          :disabled="false"
+          :is-loading="false"
+          :on-cancel="closeJournalSettings"
+          :on-save="saveJournalSettings"
+        />
+
+        <div class="p-4 space-y-6">
+          <div class="space-y-3">
+            <h3 class="text-sm font-medium text-foreground">
+              Тип расчета сессии
+            </h3>
+
+            <div class="space-y-3">
+              <div class="space-y-2">
+                <label class="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="calculation-type"
+                    value="calculated"
+                    v-model="localJournalSettings.calculationType"
+                    class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary"
+                  />
+                  <span class="text-sm text-foreground">Расчитываемая</span>
+                </label>
+
+                <div
+                  v-if="localJournalSettings.calculationType === 'calculated'"
+                  class="ml-7 space-y-2"
+                >
+                  <label class="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="calculation-method"
+                      value="only-assigned"
+                      v-model="localJournalSettings.calculationMethod"
+                      class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary"
+                    />
+                    <span class="text-sm text-muted-foreground"
+                      >Только выставленных дней</span
+                    >
+                  </label>
+
+                  <label class="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="calculation-method"
+                      value="all-days"
+                      v-model="localJournalSettings.calculationMethod"
+                      class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary"
+                    />
+                    <span class="text-sm text-muted-foreground">Всех дней</span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label class="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="calculation-type"
+                    value="manual"
+                    v-model="localJournalSettings.calculationType"
+                    class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary"
+                  />
+                  <span class="text-sm text-foreground">Выставляемая</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </f7-popover>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted, watch } from "vue";
-import { f7Icon } from "framework7-vue";
+import { f7, f7Icon, f7Button } from "framework7-vue";
+import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import MarkCell from "@/components/ui/MarkCell.vue";
 import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
 import KtpDetailFormPopover from "@/components/KtpDetailFormPopover.vue";
@@ -185,6 +337,12 @@ const emit = defineEmits<{
   "open-date-focus": [header: { type: string; label: string }, index: number];
   "update-students": [students: StudentWithMarks[]];
   "open-ktp-details": [header: { type: string; label: string }, index: number];
+  "open-settings": [];
+  "close-journal": [];
+  download: [];
+  upload: [];
+  share: [];
+  "save-journal-settings": [any];
 }>();
 
 const calendarStore = useCalendarStore();
@@ -486,6 +644,21 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 const ktpPopoverOpened = ref(false);
 const ktpPopoverTarget = ref("");
 
+const localJournalSettings = ref({
+  calculationType: props.journalSettings?.calculationType || "calculated",
+  calculationMethod:
+    props.journalSettings?.calculationMethod || "only-assigned",
+});
+
+const closeJournalSettings = () => {
+  f7.popover.close("#journal-settings-popover");
+};
+
+const saveJournalSettings = () => {
+  emit("save-journal-settings", localJournalSettings.value);
+  closeJournalSettings();
+};
+
 const onPaperclipClick = (
   header: { type: string; label: string },
   index: number
@@ -493,6 +666,12 @@ const onPaperclipClick = (
   ktpPopoverTarget.value = `#paperclip-${index}`;
   ktpPopoverOpened.value = true;
 };
+
+const onSettingsClick = () => emit("open-settings");
+const onCloseJournalClick = () => emit("close-journal");
+const onDownloadClick = () => emit("download");
+const onUploadClick = () => emit("upload");
+const onShareClick = () => emit("share");
 
 const computeDayAverage = (
   studentId: string,

@@ -14,7 +14,7 @@
         <div class="flex flex-col gap-4">
           <!-- Page Header -->
           <div class="flex items-center justify-between">
-            <div class="text-xl font-semibold">
+            <div class="text-l font-semibold">
               <p>
                 Результат обучения/дисциплина:
                 <span class="text-green-600">{{ currentClass9Text }}</span>
@@ -25,27 +25,6 @@
               </p>
             </div>
             <div class="flex items-center gap-2">
-              <!-- Journal Settings Gear Button -->
-              <button
-                id="journal-settings-button"
-                class="flex items-center justify-center w-10 h-10 bg-muted hover:bg-muted/80 rounded-lg transition-colors"
-                @click="openJournalSettings"
-              >
-                <f7-icon
-                  ios="f7:gear"
-                  md="material:settings"
-                  size="18px"
-                  class="text-muted-foreground"
-                />
-              </button>
-
-              <!-- <input
-                type="range"
-                min="0"
-                max="100"
-                value="0"
-                class="w-64 h-2 cursor-pointer accent-primary"
-              /> -->
               <Select
                 v-model="selectedAcademicYear"
                 :options="academicYearOptions"
@@ -147,6 +126,7 @@
                   @open-date-focus="openDateFocus"
                   @update-students="updateStudents"
                   @open-ktp-details="onOpenKtpDetails"
+                  @open-settings="openJournalSettings"
                 />
               </f7-tab>
 

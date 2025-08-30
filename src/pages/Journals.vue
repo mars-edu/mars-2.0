@@ -72,6 +72,79 @@
                 class="flex-1 min-w-[200px]"
               />
             </div>
+            <div class="mb-3 flex flex-wrap gap-2 items-center justify-end">
+              <f7-button
+                id="journal-settings-button"
+                small
+                default
+                @click="onSettingsClick"
+                class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+              >
+                <f7-icon
+                  ios="f7:gear"
+                  md="material:settings"
+                  size="16px"
+                  class="mr-2"
+                />
+                Настройки
+              </f7-button>
+              <f7-button
+                small
+                default
+                @click="onCloseJournalClick"
+                class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+              >
+                <f7-icon
+                  ios="f7:xmark_circle"
+                  md="material:cancel"
+                  size="16px"
+                  class="mr-2"
+                />
+                Закрыть журнал
+              </f7-button>
+              <f7-button
+                small
+                default
+                @click="onDownloadClick"
+                class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+              >
+                <f7-icon
+                  ios="f7:arrow_down_to_line"
+                  md="material:file_download"
+                  size="16px"
+                  class="mr-2"
+                />
+                Скачать
+              </f7-button>
+              <f7-button
+                small
+                default
+                @click="onUploadClick"
+                class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+              >
+                <f7-icon
+                  ios="f7:arrow_up_to_line"
+                  md="material:file_upload"
+                  size="16px"
+                  class="mr-2"
+                />
+                Загрузить
+              </f7-button>
+              <f7-button
+                small
+                default
+                @click="onShareClick"
+                class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+              >
+                <f7-icon
+                  ios="f7:share"
+                  md="material:share"
+                  size="16px"
+                  class="mr-2"
+                />
+                Поделится
+              </f7-button>
+            </div>
             <div class="overflow-x-auto">
               <div class="flex gap-5 w-full">
                 <template v-for="(course, idx) in courses" :key="course.id">
@@ -139,7 +212,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { f7Page, f7Input, f7 } from "framework7-vue";
+import { f7Page, f7Input, f7, f7Icon, f7Button } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
@@ -231,6 +304,26 @@ const selectedRole = ref("");
 const roleOptions = ref(
   withAllOption([{ value: "student", text: "Студент" }], "все", "")
 );
+
+function onSettingsClick() {
+  f7.dialog.alert("Откроются настройки журнала");
+}
+
+function onCloseJournalClick() {
+  f7.dialog.alert("Журнал будет закрыт");
+}
+
+function onDownloadClick() {
+  f7.dialog.alert("Скачать данные журналов");
+}
+
+function onUploadClick() {
+  f7.dialog.alert("Загрузить данные в журналы");
+}
+
+function onShareClick() {
+  f7.dialog.alert("Поделиться журналами");
+}
 </script>
 
 <style>
