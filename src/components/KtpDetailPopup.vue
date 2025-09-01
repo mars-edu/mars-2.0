@@ -220,6 +220,12 @@
         />
 
         <DownloadTemplateDialog />
+
+        <RupImportDialog
+          v-model:opened="isRupImportDialogOpen"
+          :current-parent-id="parentId"
+          @imported="onThemesImported"
+        />
       </div>
     </f7-popover>
   </div>
@@ -232,6 +238,7 @@ import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
 import KtpDetailFormPopover from "@/components/KtpDetailFormPopover.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import DownloadTemplateDialog from "@/components/DownloadTemplateDialog.vue";
+import RupImportDialog from "@/components/RupImportDialog.vue";
 import { storeToRefs } from "pinia";
 import {
   parseEducationalSchedule,
@@ -262,6 +269,7 @@ const isFormPopoverOpen = ref(false);
 const editingDetail = ref<KtpDetail | null>(null);
 const formPopoverTarget = ref("");
 const isImporting = ref(false);
+const isRupImportDialogOpen = ref(false);
 const dragSourceId = ref<string | null>(null);
 const dragOverId = ref<string | null>(null);
 const dropIndex = ref<number | null>(null);
@@ -371,8 +379,7 @@ const uploadDocument = () => {
 };
 
 const importData = () => {
-  console.log("Importing data...");
-  // TODO: Implement data import functionality
+  isRupImportDialogOpen.value = true;
 };
 
 const shareDocument = () => {
@@ -500,6 +507,13 @@ function onDragEnd() {
   dragOverId.value = null;
   dropIndex.value = null;
 }
+
+const onThemesImported = (count: number) => {
+  // Refresh the current list after successful import
+  if (parentId.value) {
+    ktpStore.fetchDetailsForParent(parentId.value);
+  }
+};
 
 watch(parentId, (newParentId) => {
   if (newParentId) {

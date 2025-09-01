@@ -19,7 +19,7 @@
             <i v-if="item.icon" class="f7-icons text-[16px] flex-shrink-0">{{
               item.icon
             }}</i>
-            <span class="truncate">{{ item.label }}</span>
+            <span>{{ item.label }}</span>
             <div
               v-if="item.id === activeNavItem"
               class="absolute left-0 top-0 h-full w-1.5 bg-amber-400 rounded-l-full"
@@ -40,7 +40,7 @@
           <i v-if="item.icon" class="f7-icons text-[16px] flex-shrink-0">{{
             item.icon
           }}</i>
-          <span class="truncate">{{ item.label }}</span>
+          <span>{{ item.label }}</span>
         </div>
       </div>
     </div>

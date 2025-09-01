@@ -159,24 +159,9 @@ onMounted(() => {
   selectedStudent.value = null;
 });
 
-const specialtyOptions = computed(() =>
-  withAllOption(
-    storeSpecialtyOptions.value.map((specialty) => ({
-      value: specialty.value,
-      text: specialty.text.split(" - ")[0], // Use just the name part for filtering
-    })),
-    "Все",
-    "all"
-  )
-);
-
-const languageOptions = computed(() =>
-  withAllOption(storeLanguageOptions.value, "Все", "all")
-);
-
 const genderOptions = computed(() => getGenderOptions());
 
-const baseOptions = computed(() => withAllOption(storeBaseOptions.value));
+const baseOptions = computed(() => storeBaseOptions.value);
 
 selectedAcademicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
 

@@ -7,8 +7,10 @@ import type {
   Student,
   StudentWithCourse,
   AddStudentPayload,
-  StudentFilters
+  StudentFilters,
 } from "@/types/student";
+
+export type { Student } from "@/types/student";
 
 export const useStudentStore = defineStore("student", () => {
   const students = ref<Student[]>([]);
