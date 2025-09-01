@@ -101,6 +101,8 @@
                   Добавить вручную
                 </f7-button>
 
+                <div class="separator-vertical"></div>
+
                 <f7-button
                   small
                   text-color="white"
@@ -137,51 +139,63 @@
                 Загрузка деталей...
               </div>
               <div v-else class="divide-y divide-border">
-                <div
-                  v-for="item in ktpDetails"
-                  :key="item.id"
-                  :id="`ktp-detail-item-${item.id}`"
-                  class="grid grid-cols-[40px_minmax(0,_1fr)_100px_80px_80px_120px_160px] gap-4 px-4 py-3 items-start cursor-pointer hover:bg-muted/50 transition-colors"
-                  :class="{
-                    'is-dragging': dragSourceId === item.id,
-                    'is-drag-over':
-                      dragOverId === item.id && dragSourceId !== item.id,
-                  }"
-                  draggable="true"
-                  @dragstart="onDragStart(item)"
-                  @dragover.prevent
-                  @dragenter.prevent="onDragEnter(item)"
-                  @drop.prevent="onDrop(item)"
-                  @dragend="onDragEnd"
-                  @click="openEditPopover(item)"
-                >
+                <template v-for="(item, idx) in ktpDetails" :key="item.id">
                   <div
-                    class="flex items-center justify-center gap-2 select-none"
+                    v-if="dragSourceId && dropIndex === idx"
+                    class="drop-indicator"
+                  ></div>
+                  <div
+                    :id="`ktp-detail-item-${item.id}`"
+                    class="grid grid-cols-[40px_minmax(0,_1fr)_100px_80px_80px_120px_160px] gap-4 px-4 py-3 items-start cursor-pointer hover:bg-muted/50 transition-colors"
+                    :class="{
+                      'is-dragging': dragSourceId === item.id,
+                      'is-drag-over':
+                        dragOverId === item.id && dragSourceId !== item.id,
+                    }"
+                    draggable="true"
+                    @dragstart="onDragStart(item)"
+                    @dragover.prevent="onDragOver(item, idx, $event)"
+                    @dragenter.prevent="onDragEnter(item, idx, $event)"
+                    @drop.prevent="onDrop()"
+                    @dragend="onDragEnd"
+                    @click="openEditPopover(item)"
                   >
-                    <span
-                      class="drag-handle inline-flex items-center justify-center p-1 rounded cursor-move text-muted-foreground/80 hover:text-foreground hover:bg-muted"
+                    <div
+                      class="flex items-center justify-center gap-2 select-none"
                     >
-                      <f7-icon
-                        ios="f7:line_horizontal_3"
-                        md="material:drag_indicator"
-                        class="!text-base"
-                      ></f7-icon>
-                    </span>
-                    <span class="text-sm font-medium">{{ item.position }}</span>
+                      <span
+                        class="drag-handle inline-flex items-center justify-center p-1 rounded cursor-move text-muted-foreground/80 hover:text-foreground hover:bg-muted"
+                      >
+                        <f7-icon
+                          ios="f7:line_horizontal_3"
+                          md="material:drag_indicator"
+                          class="!text-base"
+                        ></f7-icon>
+                      </span>
+                      <span class="text-sm font-medium">{{
+                        item.position
+                      }}</span>
+                    </div>
+                    <div class="text-sm">{{ item.theme }}</div>
+                    <div class="text-center text-sm">
+                      {{ item.totalHours ?? "—" }}
+                    </div>
+                    <div class="text-center text-sm">
+                      {{ item.srsp ?? "—" }}
+                    </div>
+                    <div class="text-center text-sm">{{ item.srs ?? "—" }}</div>
+                    <div class="text-center text-sm">
+                      {{ item.homework || "—" }}
+                    </div>
+                    <div class="text-center text-sm">
+                      {{ item.notes || "—" }}
+                    </div>
                   </div>
-                  <div class="text-sm">{{ item.theme }}</div>
-                  <div class="text-center text-sm">
-                    {{ item.totalHours ?? "—" }}
-                  </div>
-                  <div class="text-center text-sm">{{ item.srsp ?? "—" }}</div>
-                  <div class="text-center text-sm">{{ item.srs ?? "—" }}</div>
-                  <div class="text-center text-sm">
-                    {{ item.homework || "—" }}
-                  </div>
-                  <div class="text-center text-sm">
-                    {{ item.notes || "—" }}
-                  </div>
-                </div>
+                </template>
+                <div
+                  v-if="dragSourceId && dropIndex === ktpDetails.length"
+                  class="drop-indicator"
+                ></div>
               </div>
             </div>
           </div>
@@ -250,6 +264,7 @@ const formPopoverTarget = ref("");
 const isImporting = ref(false);
 const dragSourceId = ref<string | null>(null);
 const dragOverId = ref<string | null>(null);
+const dropIndex = ref<number | null>(null);
 
 const handleClose = () => {
   emit("update:opened", false);
@@ -388,19 +403,67 @@ function onDragStart(item: KtpDetail) {
   dragSourceId.value = item.id;
 }
 
-function onDragEnter(item: KtpDetail) {
+function onDragEnter(item: KtpDetail, idx: number, event?: DragEvent) {
+  if (dragSourceId.value === item.id) return;
+
+  dragOverId.value = item.id;
+
+  // Calculate drop position based on mouse position within the item
+  if (event) {
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const mouseY = event.clientY;
+    const itemMiddle = rect.top + rect.height / 2;
+
+    // If mouse is in the upper half, drop before this item
+    // If mouse is in the lower half, drop after this item
+    dropIndex.value = mouseY < itemMiddle ? idx : idx + 1;
+  } else {
+    dropIndex.value = idx;
+  }
+}
+
+function onDragOver(item: KtpDetail, idx: number, event: DragEvent) {
+  if (dragSourceId.value === item.id) return;
+
+  // Continuously update drop position based on mouse position for smooth feedback
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  const mouseY = event.clientY;
+  const itemMiddle = rect.top + rect.height / 2;
+
+  // Update drop index based on mouse position
+  dropIndex.value = mouseY < itemMiddle ? idx : idx + 1;
   dragOverId.value = item.id;
 }
 
-function onDrop(targetItem: KtpDetail) {
-  if (!parentId.value || !dragSourceId.value) return;
-
-  const ids = ktpDetails.value.map((d) => d.id);
-  const fromIndex = ids.indexOf(dragSourceId.value);
-  const toIndex = ids.indexOf(targetItem.id);
-  if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) {
+function onDrop() {
+  if (
+    !parentId.value ||
+    dragSourceId.value == null ||
+    dropIndex.value == null
+  ) {
     dragSourceId.value = null;
     dragOverId.value = null;
+    dropIndex.value = null;
+    return;
+  }
+  const ids = ktpDetails.value.map((d) => d.id);
+  const fromIndex = ids.indexOf(dragSourceId.value);
+  let toIndex = dropIndex.value;
+
+  // Adjust the target index if we're moving an item down
+  if (fromIndex < toIndex) {
+    toIndex--;
+  }
+
+  if (
+    fromIndex === -1 ||
+    toIndex < 0 ||
+    toIndex >= ktpDetails.value.length ||
+    fromIndex === toIndex
+  ) {
+    dragSourceId.value = null;
+    dragOverId.value = null;
+    dropIndex.value = null;
     return;
   }
 
@@ -409,15 +472,7 @@ function onDrop(targetItem: KtpDetail) {
   newOrder.splice(toIndex, 0, moved);
 
   const result = ktpStore.reorderKtpDetails(parentId.value, newOrder);
-  if (!result.success) {
-    f7.toast
-      .create({
-        text: `Ошибка при изменении порядка: ${result.error}`,
-        closeTimeout: 3000,
-        cssClass: "color-red",
-      })
-      .open();
-  } else {
+  if (result.success) {
     f7.toast
       .create({
         text: `Порядок элементов обновлен`,
@@ -425,18 +480,25 @@ function onDrop(targetItem: KtpDetail) {
         cssClass: "color-green",
       })
       .open();
+    ktpStore.fetchDetailsForParent(parentId.value);
+  } else {
+    f7.toast
+      .create({
+        text: `Ошибка при изменении порядка: ${result.error}`,
+        closeTimeout: 3000,
+        cssClass: "color-red",
+      })
+      .open();
   }
-
-  // Ensure UI reflects new order immediately
-  ktpStore.fetchDetailsForParent(parentId.value);
-
   dragSourceId.value = null;
   dragOverId.value = null;
+  dropIndex.value = null;
 }
 
 function onDragEnd() {
   dragSourceId.value = null;
   dragOverId.value = null;
+  dropIndex.value = null;
 }
 
 watch(parentId, (newParentId) => {
@@ -485,16 +547,81 @@ watch(opened, (isOpened) => {
 }
 
 .is-dragging {
-  opacity: 0.7;
-  transform: scale(0.995);
+  opacity: 0.6;
+  transform: scale(0.98) rotate(2deg);
+  z-index: 1000;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border: 2px solid var(--f7-theme-color);
+  border-radius: 8px;
+  transition: none;
 }
 
 .is-drag-over {
-  background-color: rgba(255, 159, 67, 0.15);
-  outline: 2px dashed var(--f7-theme-color);
+  background-color: rgba(var(--f7-theme-color-rgb), 0.08);
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
 }
 
 .drag-handle {
   touch-action: none;
+}
+
+.drop-indicator {
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--f7-theme-color) 0%,
+    var(--f7-theme-color-tint) 100%
+  );
+  border-radius: 2px;
+  margin: 2px 16px;
+  position: relative;
+  animation: pulse-indicator 1s ease-in-out infinite alternate;
+  box-shadow: 0 0 8px rgba(var(--f7-theme-color-rgb), 0.4);
+}
+
+.drop-indicator::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background: var(--f7-theme-color);
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(var(--f7-theme-color-rgb), 0.6);
+}
+
+.drop-indicator::after {
+  content: "";
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background: var(--f7-theme-color);
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(var(--f7-theme-color-rgb), 0.6);
+}
+
+@keyframes pulse-indicator {
+  0% {
+    opacity: 0.7;
+    transform: scaleY(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1.2);
+  }
+}
+
+.separator-vertical {
+  width: 1px;
+  height: 24px;
+  background-color: rgba(255, 255, 255, 0.3);
+  margin: 0 8px;
+  flex-shrink: 0;
 }
 </style>
