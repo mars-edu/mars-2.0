@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
+import type { ParsedLesson } from "@/services/excel-parser";
 
 export interface KtpDetail {
   id: string;
@@ -10,83 +11,8 @@ export interface KtpDetail {
   srsp: number | null;
   srs: number | null;
   homework: string;
+  notes: string;
 }
-
-const mockData: KtpDetail[] = [
-  {
-    id: "ktp-detail-1",
-    parentId: "mock-class9-id-1",
-    position: 1,
-    theme: "Формирование полиэтнического общества в советский период.",
-    totalHours: null,
-    srsp: null,
-    srs: null,
-    homework: "",
-  },
-  {
-    id: "ktp-detail-2",
-    parentId: "mock-class9-id-1",
-    position: 2,
-    theme: "Миграционная политика Республики Казахстан.",
-    totalHours: null,
-    srsp: null,
-    srs: null,
-    homework: "",
-  },
-  {
-    id: "ktp-detail-3",
-    parentId: "mock-class9-id-1",
-    position: 3,
-    theme:
-      "Казахстанская модель межэтнического и межконфессионального согласия. Роль Ассамблеи народа Казахстана в общественно-политической и культурной жизни Казахстана.",
-    totalHours: null,
-    srsp: null,
-    srs: null,
-    homework: "",
-  },
-  {
-    id: "ktp-detail-4",
-    parentId: "mock-class9-id-1",
-    position: 4,
-    theme: "Исследовательская работа: Этносы Казахстана: история и судьбы",
-    totalHours: null,
-    srsp: null,
-    srs: null,
-    homework: "",
-  },
-  {
-    id: "ktp-detail-5",
-    parentId: "mock-class9-id-1",
-    position: 5,
-    theme:
-      "Истоки и развитие общественно-политической мысли в период Казахского ханства.",
-    totalHours: null,
-    srsp: null,
-    srs: null,
-    homework: "",
-  },
-  {
-    id: "ktp-detail-6",
-    parentId: "mock-class9-id-1",
-    position: 6,
-    theme:
-      'Идеологические ценности представителей течения "Зарзаман". Общественно-политические взгляды казахских просветителей XIX века.',
-    totalHours: null,
-    srsp: null,
-    srs: null,
-    homework: "",
-  },
-  ...Array.from({ length: 8 }, (_, i) => ({
-    id: `ktp-detail-${i + 7}`,
-    parentId: "mock-class9-id-1",
-    position: i + 7,
-    theme: "",
-    totalHours: null,
-    srsp: null,
-    srs: null,
-    homework: "",
-  })),
-];
 
 function createEmptyKtpDetail(parentId: string, position: number): KtpDetail {
   return {
@@ -98,6 +24,7 @@ function createEmptyKtpDetail(parentId: string, position: number): KtpDetail {
     srsp: null,
     srs: null,
     homework: "",
+    notes: "",
   };
 }
 
@@ -110,12 +37,23 @@ export const useKtpStore = defineStore(
 
     function fetchDetailsForParent(parentId: string) {
       loading.value = true;
-      setTimeout(() => {
-        ktpDetails.value = mockData
-          .filter((d) => d.parentId === "mock-class9-id-1")
-          .sort((a, b) => a.position - b.position);
-        loading.value = false;
-      }, 300);
+      error.value = null;
+
+      // Filter existing store data by parentId
+      const filteredDetails = ktpDetails.value
+        .filter((d) => d.parentId === parentId)
+        .sort((a, b) => a.position - b.position);
+
+      // If no data exists for this parent, initialize with empty array
+      if (
+        filteredDetails.length === 0 &&
+        !ktpDetails.value.some((d) => d.parentId === parentId)
+      ) {
+        // You can optionally add some default empty items here if needed
+        // For now, we'll just use an empty array
+      }
+
+      loading.value = false;
     }
 
     function addKtpDetail(
@@ -147,9 +85,73 @@ export const useKtpStore = defineStore(
       });
     }
 
+    function reorderKtpDetails(parentId: string, reorderedIds: string[]) {
+      try {
+        error.value = null;
+
+        const parentDetails = ktpDetails.value.filter(
+          (d) => d.parentId === parentId
+        );
+        const otherDetails = ktpDetails.value.filter(
+          (d) => d.parentId !== parentId
+        );
+
+        const validIds = new Set(parentDetails.map((d) => d.id));
+        const filteredOrder = reorderedIds.filter((id) => validIds.has(id));
+        if (filteredOrder.length !== parentDetails.length) {
+          throw new Error("Reorder list does not match parent items");
+        }
+
+        const mapById = new Map(parentDetails.map((d) => [d.id, d] as const));
+        const reorderedDetails = filteredOrder.map((id, index) => ({
+          ...mapById.get(id)!,
+          position: index + 1,
+        }));
+
+        ktpDetails.value = [...otherDetails, ...reorderedDetails];
+        return { success: true, reordered: reorderedDetails.length };
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to reorder items";
+        return { success: false, error: error.value };
+      }
+    }
+
+    function bulkImportKtpDetails(parentId: string, lessons: ParsedLesson[]) {
+      try {
+        error.value = null;
+
+        const newDetails: KtpDetail[] = lessons.map((lesson, index) => ({
+          id: crypto.randomUUID(),
+          parentId,
+          position: lesson.lessonNumber || index + 1,
+          theme: lesson.subject || lesson.lessonType || "",
+          totalHours: typeof lesson.hours === "number" ? lesson.hours : null,
+          srsp: null,
+          srs: null,
+          homework: lesson.homework || "",
+          notes: lesson.notes || "",
+        }));
+
+        ktpDetails.value = ktpDetails.value.filter(
+          (d) => d.parentId !== parentId
+        );
+        ktpDetails.value.push(...newDetails);
+        ktpDetails.value.sort((a, b) => a.position - b.position);
+
+        return { success: true, imported: newDetails.length };
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to import data";
+        return { success: false, error: error.value };
+      }
+    }
+
     const getDetailsByParentId = computed(() => {
       return (parentId: string) =>
-        ktpDetails.value.filter((d) => d.parentId === parentId);
+        ktpDetails.value
+          .filter((d) => d.parentId === parentId)
+          .sort((a, b) => a.position - b.position);
     });
 
     return {
@@ -160,6 +162,8 @@ export const useKtpStore = defineStore(
       addKtpDetail,
       updateKtpDetail,
       deleteKtpDetail,
+      reorderKtpDetails,
+      bulkImportKtpDetails,
       getDetailsByParentId,
     };
   },

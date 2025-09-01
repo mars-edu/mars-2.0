@@ -137,3 +137,7 @@ body {
 .toolbar {
   @apply h-14;
 }
+
+:focus-visible {
+  outline: none;
+}

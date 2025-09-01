@@ -30,7 +30,6 @@
             type="textarea"
             v-model:value="formData.theme"
             placeholder="Введите тему занятия"
-            class="h-24"
             resizable
           ></f7-input>
         </div>
@@ -76,6 +75,19 @@
             type="text"
             v-model:value="formData.homework"
             placeholder="Введите домашнее задание"
+          ></f7-input>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-sm text-foreground" for="ktp-notes">
+            Примечание
+          </label>
+          <f7-input
+            id="ktp-notes"
+            type="textarea"
+            v-model:value="formData.notes"
+            placeholder="Введите примечание"
+            resizable
           ></f7-input>
         </div>
 
@@ -126,6 +138,7 @@ const formData = reactive({
   srsp: null as number | null,
   srs: null as number | null,
   homework: "",
+  notes: "",
 });
 
 watch(
@@ -137,6 +150,7 @@ watch(
       formData.srsp = newDetail.srsp;
       formData.srs = newDetail.srs;
       formData.homework = newDetail.homework;
+      formData.notes = newDetail.notes || "";
     } else {
       // Reset for "add" mode
       formData.theme = "";
@@ -144,6 +158,7 @@ watch(
       formData.srsp = null;
       formData.srs = null;
       formData.homework = "";
+      formData.notes = "";
     }
     formError.value = "";
   },
@@ -156,6 +171,7 @@ const formSchema = z.object({
   srsp: z.number().nullable(),
   srs: z.number().nullable(),
   homework: z.string().nullable(),
+  notes: z.string().nullable(),
 });
 
 const validationResult = computed(() => {
