@@ -73,7 +73,7 @@
                   Импорт
                 </f7-button>
 
-                <f7-button
+                <!-- <f7-button
                   small
                   text-color="white"
                   class="!h-8 !min-h-8 !text-xs bg-sun"
@@ -85,7 +85,7 @@
                     class="!text-sm mr-1"
                   ></f7-icon>
                   Поделиться
-                </f7-button>
+                </f7-button> -->
 
                 <f7-button
                   small
@@ -98,7 +98,7 @@
                     md="material:add"
                     class="!text-sm mr-1"
                   ></f7-icon>
-                  Добавить вручную
+                  Добавить
                 </f7-button>
 
                 <div class="separator-vertical"></div>
