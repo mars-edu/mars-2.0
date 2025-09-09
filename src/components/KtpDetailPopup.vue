@@ -243,6 +243,7 @@ import { storeToRefs } from "pinia";
 import {
   parseEducationalSchedule,
   parseEducationalScheduleEnhanced,
+  exportKtpToExcel,
 } from "@/services/excel-parser";
 
 const props = defineProps<{
@@ -282,9 +283,59 @@ const downloadTemplate = () => {
   f7.popover.open("#download-template-popover", "#download-template-button");
 };
 
-const downloadRup = () => {
-  console.log("Downloading RUP...");
-  // TODO: Implement RUP download functionality
+const downloadRup = async () => {
+  if (!parentId.value) {
+    f7.toast
+      .create({
+        text: "Ошибка: не указан родительский элемент",
+        closeTimeout: 3000,
+        cssClass: "color-red",
+      })
+      .open();
+    return;
+  }
+
+  try {
+    const dataRows = ktpDetails.value.map((item) => [
+      item.position,
+      item.theme,
+      item.totalHours ?? null,
+      item.srsp ?? null,
+      item.srs ?? null,
+      item.homework ?? null,
+      item.notes ?? null,
+    ]);
+
+    const templatePath = "/rup_templates/Шаблон КТП Марса.xlsx";
+    const data = await exportKtpToExcel(dataRows, templatePath);
+
+    const blob = new Blob([data], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "РУП.xlsx";
+    a.click();
+    URL.revokeObjectURL(url);
+
+    f7.toast
+      .create({
+        text: "РУП успешно скачан",
+        closeTimeout: 3000,
+        cssClass: "color-green",
+      })
+      .open();
+  } catch (error) {
+    console.error("Error downloading RUP:", error);
+    f7.toast
+      .create({
+        text: `Ошибка: ${(error as Error).message}`,
+        closeTimeout: 5000,
+        cssClass: "color-red",
+      })
+      .open();
+  }
 };
 
 const uploadDocument = () => {
