@@ -76,7 +76,6 @@ body {
   padding-right: 16px;
 }
 
-/* Custom button styles */
 .button {
   text-transform: none;
   font-weight: 500;
@@ -92,10 +91,15 @@ body {
 
 .input {
   @apply bg-gray-100 rounded-lg px-4 py-2;
-
-  .input-with-value {
-    @apply !bg-transparent;
-  }
+}
+.dark .input {
+  @apply bg-gray-800;
+}
+.input .input-with-value {
+  @apply !bg-transparent;
+}
+.dark .input .input-with-value {
+  @apply !bg-transparent;
 }
 
 /* Sidebar transitions */

@@ -7,6 +7,7 @@ export interface Semester {
   fullName: string;
   startDate: string;
   endDate: string;
+  academicYearId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,6 +28,21 @@ export const useSemesterStore = defineStore(
     const sortedSemesters = computed(() => {
       return [...semesters.value].sort((a, b) =>
         a.startDate.localeCompare(b.startDate)
+      );
+    });
+
+    const getSemestersByAcademicYear = computed(() => {
+      return (academicYearId: string) =>
+        semesters.value.filter((s) => s.academicYearId === academicYearId);
+    });
+
+    const getActiveSemester = computed(() => {
+      const today = new Date().toISOString().split("T")[0]; // Get current date in YYYY-MM-DD format
+
+      return (
+        semesters.value.find((semester) => {
+          return semester.startDate <= today && semester.endDate >= today;
+        }) || null
       );
     });
 
@@ -109,108 +125,15 @@ export const useSemesterStore = defineStore(
       error.value = null;
     }
 
-    // Migration function to port old semester data
-    function migrateOldSemesterData() {
-      let hasChanges = false;
-
-      semesters.value = semesters.value.map((semester) => {
-        const oldSemester = semester as any;
-        if (oldSemester.name && (!semester.shortName || !semester.fullName)) {
-          hasChanges = true;
-          return {
-            ...semester,
-            shortName: oldSemester.name,
-            fullName: oldSemester.name,
-            name: undefined,
-          };
-        }
-        return semester;
-      });
-
-      if (hasChanges) {
-        console.log(
-          "Migrated old semester name fields to shortName/fullName structure"
-        );
-      }
-    }
-
-    // Migration function to handle legacy data from unified store
-    function migrateLegacyPeriodData() {
-      try {
-        // Check if we have old period data with mixed types
-        const oldPeriodsData = localStorage.getItem("semester");
-        if (!oldPeriodsData) return { vacations: [], sessions: [] };
-
-        const parsedData = JSON.parse(oldPeriodsData);
-        const oldPeriods = parsedData?.periods || [];
-
-        if (!Array.isArray(oldPeriods) || oldPeriods.length === 0) {
-          return { vacations: [], sessions: [] };
-        }
-
-        // Check if any periods have the old unified structure with 'type' field
-        const hasOldStructure = oldPeriods.some(
-          (period: any) =>
-            period.type &&
-            ["vacation", "session", "semester"].includes(period.type)
-        );
-
-        if (!hasOldStructure) {
-          return { vacations: [], sessions: [] };
-        }
-
-        console.log(
-          "Found legacy period data, migrating to separate stores..."
-        );
-
-        // Separate periods by type and convert name field
-        const vacations: any[] = [];
-        const sessions: any[] = [];
-        const updatedSemesters: any[] = [];
-
-        oldPeriods.forEach((period: any) => {
-          const migratedPeriod = {
-            ...period,
-            shortName: period.name || period.shortName || "Unnamed",
-            fullName: period.name || period.fullName || "Unnamed",
-            // Remove old fields
-            name: undefined,
-            type: undefined,
-          };
-
-          if (period.type === "vacation") {
-            vacations.push(migratedPeriod);
-          } else if (period.type === "session") {
-            sessions.push(migratedPeriod);
-          } else if (period.type === "semester") {
-            updatedSemesters.push(migratedPeriod);
-          }
-        });
-
-        // Update semester store with only semester data
-        if (updatedSemesters.length > 0) {
-          semesters.value = updatedSemesters;
-          console.log(
-            `Migrated ${updatedSemesters.length} semesters to semester store`
-          );
-        }
-
-        return {
-          vacations: vacations,
-          sessions: sessions,
-        };
-      } catch (error) {
-        console.error("Error during legacy data migration:", error);
-        return { vacations: [], sessions: [] };
-      }
-    }
-
+    // Remove migration-related logic
     return {
       semesters,
       loading,
       error,
       getSemesterById,
       sortedSemesters,
+      getSemestersByAcademicYear,
+      getActiveSemester,
       isLoading,
       getError,
       addSemester,
@@ -218,8 +141,6 @@ export const useSemesterStore = defineStore(
       deleteSemester,
       clearError,
       reset,
-      migrateOldSemesterData,
-      migrateLegacyPeriodData,
     };
   },
   {

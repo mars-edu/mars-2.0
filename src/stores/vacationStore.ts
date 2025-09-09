@@ -7,6 +7,7 @@ export interface Vacation {
   fullName: string;
   startDate: string;
   endDate: string;
+  academicYearId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,6 +29,11 @@ export const useVacationStore = defineStore(
       return [...vacations.value].sort((a, b) =>
         a.startDate.localeCompare(b.startDate)
       );
+    });
+
+    const getVacationsByAcademicYear = computed(() => {
+      return (academicYearId: string) =>
+        vacations.value.filter((v) => v.academicYearId === academicYearId);
     });
 
     const isLoading = computed(() => loading.value);
@@ -150,6 +156,7 @@ export const useVacationStore = defineStore(
       error,
       getVacationById,
       sortedVacations,
+      getVacationsByAcademicYear,
       isLoading,
       getError,
       addVacation,

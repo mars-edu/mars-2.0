@@ -5,9 +5,37 @@
 </template>
 
 <script setup lang="ts">
-import { provide, ref } from "vue";
+import { provide, ref, watch } from "vue";
 
-const expandedItems = ref<string[]>([]);
+const props = defineProps<{
+  expandedItems?: string[];
+}>();
+
+const emit = defineEmits<{
+  "update:expandedItems": [items: string[]];
+}>();
+
+const expandedItems = ref<string[]>(props.expandedItems || []);
+
+// Watch for external changes to expandedItems
+watch(
+  () => props.expandedItems,
+  (newItems) => {
+    if (newItems) {
+      expandedItems.value = [...newItems];
+    }
+  },
+  { deep: true }
+);
+
+// Watch for internal changes and emit them
+watch(
+  expandedItems,
+  (newItems) => {
+    emit("update:expandedItems", [...newItems]);
+  },
+  { deep: true }
+);
 
 const toggleItem = (id: string) => {
   const index = expandedItems.value.indexOf(id);
@@ -26,10 +54,20 @@ const addItem = (id: string) => {
   }
 };
 
+const expandAll = (ids: string[]) => {
+  expandedItems.value = [...ids];
+};
+
+const collapseAll = () => {
+  expandedItems.value = [];
+};
+
 provide("accordion", {
   expandedItems,
   toggleItem,
   isExpanded,
   addItem,
+  expandAll,
+  collapseAll,
 });
 </script>

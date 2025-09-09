@@ -97,6 +97,7 @@ import dayjs from "dayjs";
 import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useSessionStore } from "@/stores/sessionStore";
+import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import { calendarParams } from "@/constants/period";
 
@@ -107,6 +108,7 @@ const buttonId = computed(() => `add-${computedPrefix.value}-button`);
 const popoverId = computed(() => `add-${computedPrefix.value}-popover`);
 
 const sessionStore = useSessionStore();
+const academicYearStore = useAcademicYearStore();
 
 const shortName = ref("");
 const fullName = ref("");
@@ -164,11 +166,18 @@ const handleSaveSession = async () => {
   }
 
   try {
+    const activeAcademicYear = academicYearStore.getActiveAcademicYear;
+    if (!activeAcademicYear) {
+      formError.value = "Пожалуйста, выберите активный учебный год";
+      return;
+    }
+
     await sessionStore.addSession({
       shortName: shortName.value,
       fullName: fullName.value,
       startDate: dayjs(startDate.value[0]).format("YYYY-MM-DD"),
       endDate: dayjs(endDate.value[0]).format("YYYY-MM-DD"),
+      academicYearId: activeAcademicYear.id,
     });
     closeAddSessionPopover();
   } catch (error) {

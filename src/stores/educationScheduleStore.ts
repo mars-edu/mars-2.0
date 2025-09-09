@@ -6,6 +6,7 @@ export interface EducationSchedule {
   lessonNumber: number;
   startTime: string;
   endTime: string;
+  academicYearId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -16,6 +17,7 @@ const DEFAULT_SCHEDULES: EducationSchedule[] = [
     lessonNumber: 1,
     startTime: "08:30",
     endTime: "09:15",
+    academicYearId: "1", // Default to first academic year
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -24,6 +26,7 @@ const DEFAULT_SCHEDULES: EducationSchedule[] = [
     lessonNumber: 2,
     startTime: "09:25",
     endTime: "10:10",
+    academicYearId: "1", // Default to first academic year
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -32,6 +35,7 @@ const DEFAULT_SCHEDULES: EducationSchedule[] = [
     lessonNumber: 3,
     startTime: "10:20",
     endTime: "11:05",
+    academicYearId: "1",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -40,6 +44,7 @@ const DEFAULT_SCHEDULES: EducationSchedule[] = [
     lessonNumber: 4,
     startTime: "11:15",
     endTime: "12:00",
+    academicYearId: "1",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -48,6 +53,7 @@ const DEFAULT_SCHEDULES: EducationSchedule[] = [
     lessonNumber: 5,
     startTime: "12:20",
     endTime: "13:05",
+    academicYearId: "1",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -56,6 +62,7 @@ const DEFAULT_SCHEDULES: EducationSchedule[] = [
     lessonNumber: 6,
     startTime: "13:15",
     endTime: "14:00",
+    academicYearId: "1",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -82,6 +89,10 @@ export const useEducationScheduleStore = defineStore(
     });
 
     const getSchedules = computed(() => schedules.value);
+    const getSchedulesByAcademicYear = computed(() => {
+      return (academicYearId: string) =>
+        schedules.value.filter((s) => s.academicYearId === academicYearId);
+    });
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
@@ -172,6 +183,7 @@ export const useEducationScheduleStore = defineStore(
       error,
       getScheduleById,
       getSchedules,
+      getSchedulesByAcademicYear,
       isLoading,
       getError,
       addSchedule,

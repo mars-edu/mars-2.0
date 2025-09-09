@@ -87,9 +87,11 @@ import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { f7, f7Popover, f7Icon, f7Input } from "framework7-vue";
 import { z } from "zod";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
+import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const educationScheduleStore = useEducationScheduleStore();
+const academicYearStore = useAcademicYearStore();
 
 const lessonNumber = ref("");
 const startTime = ref("");
@@ -192,10 +194,17 @@ const handleSaveSchedule = async () => {
   }
 
   try {
+    const activeAcademicYear = academicYearStore.getActiveAcademicYear;
+    if (!activeAcademicYear) {
+      formError.value = "Пожалуйста, выберите активный учебный год";
+      return;
+    }
+
     await educationScheduleStore.addSchedule({
       lessonNumber: Number(lessonNumber.value),
       startTime: startTime.value,
       endTime: endTime.value,
+      academicYearId: activeAcademicYear.id,
     });
     closeAddSchedulePopover();
   } catch (error) {

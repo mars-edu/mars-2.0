@@ -7,6 +7,7 @@ export interface Session {
   fullName: string;
   startDate: string;
   endDate: string;
+  academicYearId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,6 +29,11 @@ export const useSessionStore = defineStore(
       return [...sessions.value].sort((a, b) =>
         a.startDate.localeCompare(b.startDate)
       );
+    });
+
+    const getSessionsByAcademicYear = computed(() => {
+      return (academicYearId: string) =>
+        sessions.value.filter((s) => s.academicYearId === academicYearId);
     });
 
     const isLoading = computed(() => loading.value);
@@ -150,6 +156,7 @@ export const useSessionStore = defineStore(
       error,
       getSessionById,
       sortedSessions,
+      getSessionsByAcademicYear,
       isLoading,
       getError,
       addSession,

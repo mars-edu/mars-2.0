@@ -112,24 +112,29 @@
                   <div
                     v-for="specialty in specialties"
                     :key="specialty.id"
-                    :id="`specialty-item-${specialty.id}`"
-                    class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                    class="flex items-center justify-between gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
                     :class="{
                       'ring-2 ring-primary bg-primary/10':
                         selectedSpecialtyId === specialty.id,
                     }"
                     @click="selectedSpecialtyId = specialty.id"
-                    @mouseenter="
-                      handleSpecialtyMouseEnter(
-                        specialty,
-                        `#specialty-item-${specialty.id}`
-                      )
-                    "
-                    @mouseleave="handleGroupMouseLeave"
                   >
                     <span class="font-medium">
                       {{ specialty.codeName || specialty.name }}
                     </span>
+                    <f7-icon
+                      ios="f7:info_circle"
+                      md="material:info"
+                      size="18px"
+                      :id="`specialty-item-${specialty.id}`"
+                      class="text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                      @click.stop="
+                        handleSpecialtyInfoClick(
+                          specialty,
+                          `#specialty-item-${specialty.id}`
+                        )
+                      "
+                    ></f7-icon>
                   </div>
                   <div
                     v-if="specialties.length === 0"
@@ -302,30 +307,27 @@
         v-if="!isSelectMode"
         @transfer-courses="handleTransferCourses"
       />
-      <f7-popover
-        class="specialty-info-popover w-64"
-        @mouseenter="handlePopoverMouseEnter"
-        @mouseleave="handleGroupMouseLeave"
-      >
-        <div
-          v-if="hoveredSpecialty"
-          class="p-3 bg-primary text-popover-foreground rounded-lg shadow-xl"
-        >
-          <div class="font-semibold text-base mb-1">
-            {{ hoveredSpecialty.name }}
-          </div>
-          <div class="text-sm text-muted-foreground mb-2">
-            {{ hoveredSpecialty.codeName }}
-          </div>
-          <p class="text-sm font-normal">
-            {{
-              hoveredSpecialty.details ||
-              "Дополнительная информация отсутствует."
-            }}
-          </p>
-        </div>
-      </f7-popover>
     </template>
+
+    <f7-popover class="specialty-info-popover w-64">
+      <div
+        v-if="selectedSpecialtyInfo"
+        class="p-3 bg-muted-foreground text-popover-foreground rounded-lg shadow-xl"
+      >
+        <div class="font-semibold text-base mb-1">
+          {{ selectedSpecialtyInfo.name }}
+        </div>
+        <div class="text-sm text-base mb-2">
+          {{ selectedSpecialtyInfo.codeName }}
+        </div>
+        <p class="text-sm font-normal">
+          {{
+            selectedSpecialtyInfo.details ||
+            "Дополнительная информация отсутствует."
+          }}
+        </p>
+      </div>
+    </f7-popover>
   </f7-page>
 </template>
 
@@ -382,43 +384,15 @@ const class9Store = useClass9Store();
 
 const isSelectMode = ref(false);
 
-const hoveredSpecialty = ref<Specialty | null>(null);
-const isMouseOverGroup = ref(false);
-let showTimeout: ReturnType<typeof setTimeout> | null = null;
-let hideTimeout: ReturnType<typeof setTimeout> | null = null;
+const selectedSpecialtyInfo = ref<Specialty | null>(null);
 
-const handleSpecialtyMouseEnter = (specialty: Specialty, targetEl: string) => {
-  isMouseOverGroup.value = true;
-  if (hideTimeout) clearTimeout(hideTimeout);
-  if (showTimeout) clearTimeout(showTimeout);
-
-  showTimeout = setTimeout(() => {
-    const popover = f7.popover.get(".specialty-info-popover");
-    if (popover && popover.opened) return;
-    hoveredSpecialty.value = specialty;
-    f7.popover.open(".specialty-info-popover", targetEl);
-  }, 450);
-};
-
-const handlePopoverMouseEnter = () => {
-  isMouseOverGroup.value = true;
-  if (hideTimeout) clearTimeout(hideTimeout);
-};
-
-const handleGroupMouseLeave = () => {
-  isMouseOverGroup.value = false;
-  if (showTimeout) clearTimeout(showTimeout);
-  if (hideTimeout) clearTimeout(hideTimeout);
-
-  hideTimeout = setTimeout(() => {
-    if (!isMouseOverGroup.value) {
-      f7.popover.close(".specialty-info-popover");
-    }
-  }, 300);
+const handleSpecialtyInfoClick = (specialty: Specialty, targetEl: string) => {
+  selectedSpecialtyInfo.value = specialty;
+  f7.popover.open(".specialty-info-popover", targetEl);
 };
 
 const onPopoverClosed = () => {
-  hoveredSpecialty.value = null;
+  selectedSpecialtyInfo.value = null;
 };
 
 const enableSelectMode = () => {
@@ -545,6 +519,6 @@ onMounted(async () => {
 
 <style scoped>
 .specialty-info-popover.popover {
-  margin-top: -100px;
+  margin-top: -100px !important;
 }
 </style>

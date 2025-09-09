@@ -13,7 +13,7 @@
       <div class="ktp-detail-popover bg-card text-card-foreground">
         <div class="fixed-header">
           <PopoverHeader
-            title="Рабочие учебные программы"
+            :title="moduleTitle"
             cancel-text="Закрыть"
             :on-cancel="handleClose"
             :is-loading="loading"
@@ -26,6 +26,28 @@
 
         <div class="scrollable-content">
           <div class="p-4 space-y-3">
+            <!-- Hour Counter -->
+            <div class="bg-secondary p-4 border border-border rounded-lg">
+              <div class="flex justify-between mb-2">
+                <span class="text-foreground">Запланировано из КТП:</span>
+                <span class="text-foreground font-medium"
+                  >{{ plannedHoursFromKtp }} часов</span
+                >
+              </div>
+              <div class="flex justify-between mb-2">
+                <span class="text-foreground">Запланировано на семестр:</span>
+                <span class="text-foreground font-medium"
+                  >{{ semesterPlannedHours }} часов</span
+                >
+              </div>
+              <!-- <div class="flex justify-between">
+                <span class="text-primary">Запланировано на весь предмет:</span>
+                <span class="text-primary font-medium"
+                  >{{ totalPlannedHours }} часов</span
+                >
+              </div> -->
+            </div>
+
             <div
               class="bg-primary text-primary-foreground rounded-lg p-3 flex items-center justify-between"
             >
@@ -235,6 +257,8 @@
 import { ref, watch, toRefs, computed } from "vue";
 import { f7, f7Popover, f7Icon, f7Fab, f7Button } from "framework7-vue";
 import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
+import { useClass9Store } from "@/stores/class9Store";
+import { useRupStore } from "@/stores/rupStore";
 import KtpDetailFormPopover from "@/components/KtpDetailFormPopover.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import DownloadTemplateDialog from "@/components/DownloadTemplateDialog.vue";
@@ -257,6 +281,8 @@ const emit = defineEmits<{
 
 const { parentId, opened } = toRefs(props);
 const ktpStore = useKtpStore();
+const class9Store = useClass9Store();
+const rupStore = useRupStore();
 const { loading } = storeToRefs(ktpStore);
 const selectedDetailId = ref("ktp-detail-3");
 
@@ -264,6 +290,44 @@ const selectedDetailId = ref("ktp-detail-3");
 const ktpDetails = computed(() => {
   if (!parentId.value) return [];
   return ktpStore.getDetailsByParentId(parentId.value);
+});
+
+// Computed property to get the module name for the header
+const moduleTitle = computed(() => {
+  if (!parentId.value) return "Рабочие учебные программы";
+
+  const class9Item = class9Store.getClass9ById(parentId.value);
+  if (class9Item) {
+    return `${class9Item.moduleIndex} - ${class9Item.moduleName}`;
+  }
+
+  return "Рабочие учебные программы";
+});
+
+// Computed properties for hour calculations
+const plannedHoursFromKtp = computed(() => {
+  const details = ktpDetails.value;
+  const totalHours = details.reduce((sum, detail) => {
+    const hours = detail.totalHours || 0;
+    return sum + hours;
+  }, 0);
+  return totalHours;
+});
+
+const totalPlannedHours = computed(() => {
+  if (!parentId.value) return "0";
+
+  const class9Item = class9Store.getClass9ById(parentId.value);
+  return class9Item?.totalHours || "0";
+});
+
+const semesterPlannedHours = computed(() => {
+  const details = ktpDetails.value;
+  const totalHours = details.reduce((sum, detail) => {
+    const hours = detail.totalHours || 0;
+    return sum + hours;
+  }, 0);
+  return totalHours.toString();
 });
 
 const isFormPopoverOpen = ref(false);

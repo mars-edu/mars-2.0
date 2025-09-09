@@ -81,7 +81,13 @@
                   }"
                   @click="selectItem(item)"
                 >
-                  <div>{{ item.moduleIndex }} - {{ item.moduleName }}</div>
+                  <div>
+                    {{ item.moduleIndex }} - {{ item.moduleName }}
+                    <br />
+                    <span class="text-muted-foreground text-sm">{{
+                      item.learningOutcome
+                    }}</span>
+                  </div>
                   <div class="text-center">
                     {{ getCourseNumber(item.courseId) }}
                   </div>

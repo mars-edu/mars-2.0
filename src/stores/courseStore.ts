@@ -6,6 +6,7 @@ export interface Course {
   number: string;
   admissionYear: string;
   semesters: string[];
+  academicYearId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -16,6 +17,7 @@ const DEFAULT_COURSES = [
     number: "1",
     admissionYear: new Date().getFullYear().toString(),
     semesters: [],
+    academicYearId: "1",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -24,6 +26,7 @@ const DEFAULT_COURSES = [
     number: "2",
     admissionYear: new Date().getFullYear().toString(),
     semesters: [],
+    academicYearId: "1",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -32,6 +35,7 @@ const DEFAULT_COURSES = [
     number: "3",
     admissionYear: new Date().getFullYear().toString(),
     semesters: [],
+    academicYearId: "1",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -40,6 +44,7 @@ const DEFAULT_COURSES = [
     number: "4",
     admissionYear: new Date().getFullYear().toString(),
     semesters: [],
+    academicYearId: "1",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -63,6 +68,11 @@ export const useCourseStore = defineStore(
 
     const getCourseById = computed(() => {
       return (id: string) => courses.value.find((c) => c.id === id);
+    });
+
+    const getCoursesByAcademicYear = computed(() => {
+      return (academicYearId: string) =>
+        courses.value.filter((c) => c.academicYearId === academicYearId);
     });
 
     const isLoading = computed(() => loading.value);
@@ -152,6 +162,7 @@ export const useCourseStore = defineStore(
       loading,
       error,
       getCourseById,
+      getCoursesByAcademicYear,
       isLoading,
       getError,
       addCourse,
