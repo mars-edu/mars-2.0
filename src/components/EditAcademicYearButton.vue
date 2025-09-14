@@ -124,17 +124,11 @@ const academicYearSchema = z
   .object({
     name: z.string().min(1, "Пожалуйста, введите название учебного года"),
     startYear: z
-      .number({
-        required_error: "Пожалуйста, введите год начала",
-        invalid_type_error: "Год начала должен быть числом",
-      })
+      .number()
       .int()
       .positive("Год начала должен быть положительным числом"),
     endYear: z
-      .number({
-        required_error: "Пожалуйста, введите год окончания",
-        invalid_type_error: "Год окончания должен быть числом",
-      })
+      .number()
       .int()
       .positive("Год окончания должен быть положительным числом"),
     isActive: z.boolean(),

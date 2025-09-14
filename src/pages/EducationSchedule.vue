@@ -113,9 +113,8 @@
                   </button>
                 </div>
                 <EditAcademicYearButton
-                  v-for="academicYear in academicYears"
-                  :key="`edit-${academicYear.id}`"
-                  :academic-year="academicYear"
+                  v-if="selectedAcademicYear"
+                  :academic-year="selectedAcademicYear"
                 />
               </div>
             </AccordionItem>
@@ -180,9 +179,8 @@
                   </button>
                 </div>
                 <EditSemesterButton
-                  v-for="semester in semesters"
-                  :key="`edit-${semester.id}`"
-                  :semester="semester"
+                  v-if="selectedSemester"
+                  :semester="selectedSemester"
                 />
               </div>
             </AccordionItem>
@@ -240,9 +238,8 @@
                   </button>
                 </div>
                 <EditEducationScheduleButton
-                  v-for="schedule in schedules"
-                  :key="`edit-${schedule.id}`"
-                  :schedule="schedule"
+                  v-if="selectedSchedule"
+                  :schedule="selectedSchedule"
                 />
               </div>
             </AccordionItem>
@@ -300,9 +297,8 @@
                   </button>
                 </div>
                 <EditLanguageButton
-                  v-for="language in languages"
-                  :key="`edit-${language.id}`"
-                  :language="language"
+                  v-if="selectedLanguage"
+                  :language="selectedLanguage"
                 />
               </div>
             </AccordionItem>
@@ -354,13 +350,12 @@
                   </button>
                 </div>
                 <EditCourseButton
-                  v-for="course in courses"
-                  :key="`edit-${course.id}`"
+                  v-if="selectedCourse"
                   :course="{
-                    id: course.id,
-                    number: course.number,
-                    admissionYear: course.admissionYear,
-                    semesters: course.semesters,
+                    id: selectedCourse.id,
+                    number: selectedCourse.number,
+                    admissionYear: selectedCourse.admissionYear,
+                    semesters: selectedCourse.semesters,
                   }"
                 />
               </div>
@@ -417,9 +412,8 @@
                   </button>
                 </div>
                 <EditVacationButton
-                  v-for="vacation in vacations"
-                  :key="`edit-${vacation.id}`"
-                  :vacation="vacation"
+                  v-if="selectedVacation"
+                  :vacation="selectedVacation"
                 />
               </div>
             </AccordionItem>
@@ -475,9 +469,8 @@
                   </button>
                 </div>
                 <EditSessionButton
-                  v-for="session in sessions"
-                  :key="`edit-${session.id}`"
-                  :session="session"
+                  v-if="selectedSession"
+                  :session="selectedSession"
                 />
               </div>
             </AccordionItem>
@@ -489,7 +482,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, nextTick } from "vue";
+import { ref, computed, nextTick } from "vue";
 import { f7Page, f7Icon, f7, f7Preloader } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -541,9 +534,13 @@ const semesterStore = useSemesterStore();
 const vacationStore = useVacationStore();
 const sessionStore = useSessionStore();
 
+const selectedAcademicYear = ref<AcademicYear | null>(null);
 const selectedSemester = ref<Semester | null>(null);
 const selectedVacation = ref<Vacation | null>(null);
 const selectedSession = ref<Session | null>(null);
+const selectedLanguage = ref<Language | null>(null);
+const selectedCourse = ref<Course | null>(null);
+const selectedSchedule = ref<EducationSchedule | null>(null);
 
 // Accordion IDs for expand/collapse all functionality
 const accordionIds = [
@@ -609,21 +606,27 @@ const sessions = computed(() => {
   return sessionStore.getSessionsByAcademicYear(activeAcademicYear.id);
 });
 
-const openEditSchedule = (schedule: EducationSchedule) => {
+const openEditSchedule = async (schedule: EducationSchedule) => {
+  selectedSchedule.value = schedule;
+  await nextTick();
   const targetEl = document.getElementById(`schedule-item-${schedule.id}`);
   if (targetEl) {
     f7.popover.open(`#edit-schedule-popover-${schedule.id}`, targetEl);
   }
 };
 
-const openEditLanguage = (language: Language) => {
+const openEditLanguage = async (language: Language) => {
+  selectedLanguage.value = language;
+  await nextTick();
   const targetEl = document.getElementById(`language-item-${language.id}`);
   if (targetEl) {
     f7.popover.open(`#edit-language-popover-${language.id}`, targetEl);
   }
 };
 
-const openEditCourse = (course: Course) => {
+const openEditCourse = async (course: Course) => {
+  selectedCourse.value = course;
+  await nextTick();
   const targetEl = document.getElementById(`course-item-${course.id}`);
   if (targetEl) {
     f7.popover.open(`#edit-settings-course-popover-${course.id}`, targetEl);
@@ -634,7 +637,9 @@ const handleSetActiveAcademicYear = (academicYear: AcademicYear) => {
   academicYearStore.setActiveAcademicYear(academicYear.id);
 };
 
-const openEditAcademicYear = (academicYear: AcademicYear) => {
+const openEditAcademicYear = async (academicYear: AcademicYear) => {
+  selectedAcademicYear.value = academicYear;
+  await nextTick();
   const targetEl = document.getElementById(
     `academic-year-item-${academicYear.id}`
   );
@@ -669,6 +674,4 @@ const openEditSession = async (session: Session) => {
     f7.popover.open(`#edit-session-popover-${session.id}`, targetEl);
   }
 };
-
-// Remove onMounted migration block and all migration-related logic
 </script>
