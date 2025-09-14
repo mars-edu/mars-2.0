@@ -20,7 +20,7 @@
         <slot name="actions"></slot>
       </div>
     </div>
-    <div class="p-3 md:p-5 bg-card" v-show="isExpanded">
+    <div class="p-3 md:p-5 bg-card" v-if="isExpanded">
       <slot></slot>
     </div>
   </div>

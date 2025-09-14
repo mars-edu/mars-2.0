@@ -21,7 +21,10 @@ const expandedItems = ref<string[]>(props.expandedItems || []);
 watch(
   () => props.expandedItems,
   (newItems) => {
-    if (newItems) {
+    if (
+      newItems &&
+      JSON.stringify(newItems) !== JSON.stringify(expandedItems.value)
+    ) {
       expandedItems.value = [...newItems];
     }
   },
