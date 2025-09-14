@@ -112,7 +112,7 @@ import AddTeacherButton from "@/components/AddTeacherButton.vue";
 import EditTeacherButton from "@/components/EditTeacherButton.vue";
 import Select from "@/components/ui/Select.vue";
 import { useTeacherStore, type Teacher } from "@/stores/teacherStore";
-import { withAllOption, getGenderOptions } from "@/lib/utils";
+import { getGenderOptions } from "@/lib/utils";
 import { usePositionStore } from "@/stores/positionStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
@@ -142,21 +142,17 @@ onMounted(() => {
 });
 
 const positionOptions = computed(() =>
-  withAllOption(
-    positions.value.map((position) => ({
-      value: position.name,
-      text: position.name,
-    }))
-  )
+  positions.value.map((position) => ({
+    value: position.name,
+    text: position.name,
+  }))
 );
 
 const employmentYearOptions = computed(() =>
-  withAllOption(
-    academicYearsAsNumbers.value.map((year) => ({
-      value: year.toString(),
-      text: year.toString(),
-    }))
-  )
+  academicYearsAsNumbers.value.map((year) => ({
+    value: year.toString(),
+    text: year.toString(),
+  }))
 );
 
 const genderOptions = computed(() => getGenderOptions());
@@ -186,3 +182,9 @@ const selectTeacher = async (teacher: Teacher) => {
   );
 };
 </script>
+
+<style lang="postcss">
+.teacher-card-filters .smart-select-list-container {
+  @apply !bg-white;
+}
+</style>

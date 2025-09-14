@@ -17,16 +17,11 @@
             <div class="flex gap-2">
               <f7-input
                 type="text"
-                placeholder="Поиск..."
-                class="border border-border rounded-lg"
+                placeholder="Поиск по специальности..."
+                v-model:value="searchTerm"
+                class="w-[250px] !bg-white h-full !py-2"
                 clear-button
-              ></f7-input>
-              <f7-input
-                type="text"
-                placeholder="2024-2025"
-                class="border border-border rounded-lg w-32 text-center"
-                readonly
-              ></f7-input>
+              />
             </div>
           </div>
 
@@ -45,7 +40,7 @@
                 </thead>
                 <tbody>
                   <tr
-                    v-for="(specialty, index) in specialties"
+                    v-for="(specialty, index) in filteredSpecialties"
                     :key="specialty.id"
                     :id="`specialty-item-${specialty.id}`"
                     class="border-b border-border hover:bg-muted/30"
@@ -83,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from "vue";
+import { ref, nextTick, computed } from "vue";
 import { f7Page, f7Input, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -91,15 +86,30 @@ import AddSpecialtyButton from "@/components/AddSpecialtyButton.vue";
 import EditSpecialtyButton from "@/components/EditSpecialtyButton.vue";
 import { useSpecialtyStore, type Specialty } from "@/stores/specialtyStore";
 import { storeToRefs } from "pinia";
+import Fuse from "fuse.js";
 
 const activeNavItem = ref("specialty-catalog");
 const specialtyStore = useSpecialtyStore();
 const { specialties } = storeToRefs(specialtyStore);
 const selectedSpecialty = ref<Specialty | null>(null);
+const searchTerm = ref("");
+
+const filteredSpecialties = computed(() => {
+  if (!searchTerm.value) return specialties.value;
+  // Use Fuse.js for fuzzy search if available
+  const fuse = new Fuse(specialties.value, {
+    keys: ["name", "code", "codeName"],
+    threshold: 0.3,
+  });
+  return fuse.search(searchTerm.value).map((result) => result.item);
+});
 
 const selectSpecialty = async (specialty: Specialty) => {
   selectedSpecialty.value = specialty;
   await nextTick();
-  f7.popover.open(`#edit-specialty-popover-${specialty.id}`, `#specialty-item-${specialty.id}`);
+  f7.popover.open(
+    `#edit-specialty-popover-${specialty.id}`,
+    `#specialty-item-${specialty.id}`
+  );
 };
 </script>

@@ -192,15 +192,16 @@ const selectedOptionText = computed(() => {
 
 const listTitle = computed(() => {
   if (!hasOptions.value) return " ";
-  if (props.multiple && Array.isArray(props.modelValue)) {
-    return (props.modelValue as Array<string | number>).length
-      ? ""
-      : props.placeholder || " ";
-  }
-  const selected = props.options.find(
-    (option) => option.value == props.modelValue
-  );
-  return selected ? "" : props.placeholder || " ";
+  // if (props.multiple && Array.isArray(props.modelValue)) {
+  //   return (props.modelValue as Array<string | number>).length
+  //     ? ""
+  //     : props.placeholder || " ";
+  // }
+  // const selected = props.options.find(
+  //   (option) => option.value == props.modelValue
+  // );
+  // return selected ? "" : props.placeholder || " ";
+  return props.placeholder || " ";
 });
 
 const smartSelectView = ref<any>(null);

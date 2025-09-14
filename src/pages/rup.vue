@@ -260,7 +260,7 @@
                     md="material:keyboard_arrow_up"
                     size="18px"
                   ></f7-icon>
-                  <span>Сначала выберите специальность</span>
+                  <span>Сначала выберите специальность и курс</span>
                 </div>
               </div>
               <div

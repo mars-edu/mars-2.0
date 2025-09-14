@@ -79,5 +79,5 @@
 import { ref } from "vue";
 import Logo from "../components/Logo/Logo.vue";
 
-const path = ref(window.location.pathname);
+const path = ref(`${window.location.pathname}${window.location.hash}`);
 </script>

@@ -26,7 +26,7 @@
               <Select
                 v-model="selectedAcademicYear"
                 :options="academicYearOptions"
-                placeholder="Учебный год:"
+                placeholder="Год поступления:"
                 name="academic-year"
                 class="w-[250px]"
               />

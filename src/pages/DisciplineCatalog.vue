@@ -18,13 +18,13 @@
               <f7-input
                 type="text"
                 placeholder="Поиск..."
-                class="border border-border rounded-lg"
+                class="border border-border rounded-lg !bg-white"
                 clear-button
               ></f7-input>
               <f7-input
                 type="text"
                 placeholder="2024-2025"
-                class="border border-border rounded-lg w-32 text-center"
+                class="border border-border rounded-lg w-32 text-center !bg-white"
                 readonly
               ></f7-input>
             </div>
@@ -95,7 +95,7 @@ const selectDiscipline = async (discipline: Discipline) => {
   await nextTick();
   f7.popover.open(
     `#edit-discipline-popover-${discipline.id}`,
-    `#discipline-item-${discipline.id}`,
+    `#discipline-item-${discipline.id}`
   );
 };
 </script>

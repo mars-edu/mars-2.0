@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import type { CalendarEvent } from "@/composables/useCalendar";
-import { defineEmits, computed } from "vue";
+import { computed } from "vue";
 import { useThemeStore } from "@/stores/themeStore";
 
 const props = defineProps<{
