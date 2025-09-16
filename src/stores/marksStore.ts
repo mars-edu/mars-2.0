@@ -92,17 +92,41 @@ export const useMarksStore = defineStore(
             // Preserve existing marks data while updating to new template
             const updatedMarks = JSON.parse(JSON.stringify(markTemplate));
 
-            // Copy over existing marks where possible
+            // Copy over existing marks where possible and align values length
             studentMark.marks.forEach((existingMark, index) => {
               if (
                 index < updatedMarks.length &&
                 updatedMarks[index].type === existingMark.type
               ) {
-                updatedMarks[index].values = [...existingMark.values];
+                const targetLen = updatedMarks[index].values.length;
+                const adjustedValues = existingMark.values
+                  .slice(0, targetLen);
+                while (adjustedValues.length < targetLen) {
+                  adjustedValues.push(null);
+                }
+                updatedMarks[index].values = adjustedValues;
               }
             });
 
             studentMark.marks = updatedMarks;
+          });
+        } else {
+          // Even if total marks length is same, ensure per-column values length match template
+          existingJournal.studentMarks.forEach((studentMark) => {
+            studentMark.marks = studentMark.marks.map((existingMark, index) => {
+              const target = markTemplate[index];
+              if (!target || target.type !== existingMark.type) return existingMark;
+              const targetLen = target.values.length;
+              if (existingMark.values.length === targetLen) return existingMark;
+              const adjustedValues = existingMark.values.slice(0, targetLen);
+              while (adjustedValues.length < targetLen) {
+                adjustedValues.push(null);
+              }
+              return {
+                ...existingMark,
+                values: adjustedValues,
+              };
+            });
           });
         }
 

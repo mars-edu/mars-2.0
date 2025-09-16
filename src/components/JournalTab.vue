@@ -150,19 +150,22 @@
             >
               <div class="flex flex-col gap-1">
                 <div
+                  v-for="(value, mIdx) in student.marks[header.index]?.values ||
+                  []"
+                  :key="mIdx"
                   class="h-8 flex items-center justify-center transition-transform duration-300"
                   :class="{
                     'scale-175 z-10':
                       editingCell?.studentIndex === studentIndex &&
                       editingCell?.colIndex === header.index &&
-                      editingCell?.markIndex === 0,
+                      editingCell?.markIndex === mIdx,
                   }"
                 >
                   <EditableMarkCell
                     v-if="
                       editingCell?.studentIndex === studentIndex &&
                       editingCell?.colIndex === header.index &&
-                      editingCell?.markIndex === 0
+                      editingCell?.markIndex === mIdx
                     "
                     v-model="editedValue"
                     @confirm="confirmEdit"
@@ -172,39 +175,10 @@
                   />
                   <div
                     v-else
-                    @click="editCell(studentIndex, header.index, 0)"
+                    @click="editCell(studentIndex, header.index, mIdx)"
                     class="cursor-pointer w-full"
                   >
-                    <MarkCell :mark="student.marks[header.index]?.values[0]" />
-                  </div>
-                </div>
-                <div
-                  class="h-8 flex items-center justify-center transition-transform duration-300"
-                  :class="{
-                    'scale-175 z-10':
-                      editingCell?.studentIndex === studentIndex &&
-                      editingCell?.colIndex === header.index &&
-                      editingCell?.markIndex === 1,
-                  }"
-                >
-                  <EditableMarkCell
-                    v-if="
-                      editingCell?.studentIndex === studentIndex &&
-                      editingCell?.colIndex === header.index &&
-                      editingCell?.markIndex === 1
-                    "
-                    v-model="editedValue"
-                    @confirm="confirmEdit"
-                    @cancel="cancelEdit"
-                    @navigate="navigate"
-                    :is-zoomed="true"
-                  />
-                  <div
-                    v-else
-                    @click="editCell(studentIndex, header.index, 1)"
-                    class="cursor-pointer w-full"
-                  >
-                    <MarkCell :mark="student.marks[header.index]?.values[1]" />
+                    <MarkCell :mark="value" />
                   </div>
                 </div>
               </div>
@@ -318,7 +292,10 @@ import { useCalendarStore } from "@/stores/calendarStore";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSessionStore } from "@/stores/sessionStore";
 import { useMarksStore } from "@/stores/marksStore";
+import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
+import { storeToRefs } from "pinia";
 import type { Mark } from "@/types/marks";
+import type { EducationSchedule } from "@/stores/educationScheduleStore";
 import type { StudentWithMarks } from "@/types/student";
 
 interface Props {
@@ -350,6 +327,8 @@ const studentStore = useStudentStore();
 const { getStudentFullName } = studentStore;
 const sessionStore = useSessionStore();
 const marksStore = useMarksStore();
+const educationScheduleStore = useEducationScheduleStore();
+const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
 
 const editingCell = ref<{
   studentIndex: number;
@@ -363,6 +342,86 @@ const currentEvent = computed(() => {
   return calendarStore.getEventById(props.journalId);
 });
 
+const timeToMinutes = (time: string | undefined | null) => {
+  if (!time || typeof time !== "string") return null;
+  const parts = time.split(":");
+  if (parts.length < 2) return null;
+  const hours = Number(parts[0]);
+  const minutes = Number(parts[1]);
+  if (isNaN(hours) || isNaN(minutes)) return null;
+  return hours * 60 + minutes;
+};
+
+const normalizeTime = (time?: string) => {
+  if (!time) return time;
+  const parts = time.split(":");
+  if (parts.length < 2) return time;
+  const hh = String(Number(parts[0])).padStart(2, "0");
+  const mm = String(Number(parts[1])).padStart(2, "0");
+  return `${hh}:${mm}`;
+};
+
+const findScheduleIdByStartTime = (
+  schedules: EducationSchedule[],
+  startTime: string
+) => {
+  const normalized = normalizeTime(startTime);
+  const exact = schedules.find(
+    (s) => normalizeTime(s.startTime) === normalized
+  );
+  if (exact) return exact.id;
+  const targetMin = timeToMinutes(normalized) ?? 0;
+  const candidate = schedules
+    .map((s) => ({ s, start: timeToMinutes(s.startTime) ?? 0 }))
+    .filter((x) => x.start >= targetMin)
+    .sort((a, b) => a.start - b.start)[0]?.s;
+  return candidate?.id || schedules[0]?.id;
+};
+
+const findScheduleIdByEndTime = (
+  schedules: EducationSchedule[],
+  endTime: string
+) => {
+  const normalized = normalizeTime(endTime);
+  const exact = schedules.find((s) => normalizeTime(s.endTime) === normalized);
+  if (exact) return exact.id;
+  const targetMin = timeToMinutes(normalized) ?? 24 * 60;
+  const candidate = schedules
+    .map((s) => ({ s, end: timeToMinutes(s.endTime) ?? 0 }))
+    .filter((x) => x.end <= targetMin)
+    .sort((a, b) => b.end - a.end)[0]?.s;
+  return candidate?.id || schedules[schedules.length - 1]?.id;
+};
+
+const resolveScheduleIds = (
+  daySchedule: any,
+  schedules: EducationSchedule[]
+): { startId?: string; endId?: string } => {
+  let startId = daySchedule?.startId as string | undefined;
+  let endId = daySchedule?.endId as string | undefined;
+  if ((!startId || !endId) && daySchedule) {
+    if (!startId && daySchedule?.startTime) {
+      startId = findScheduleIdByStartTime(schedules, daySchedule.startTime);
+    }
+    if (!endId && daySchedule?.endTime) {
+      endId = findScheduleIdByEndTime(schedules, daySchedule.endTime);
+    }
+  }
+  return { startId, endId };
+};
+
+const countLessonsInRange = (startId?: string, endId?: string): number => {
+  const schedules = (getActiveYearSchedules.value || []) as EducationSchedule[];
+  if (!schedules.length) return 2;
+  if (!startId && !endId) return 2;
+  if (startId && !endId) endId = startId;
+  if (!startId && endId) startId = endId;
+  const start = schedules.find((s) => s.id === startId)?.lessonNumber;
+  const end = schedules.find((s) => s.id === endId)?.lessonNumber;
+  if (start == null || end == null) return 2;
+  return Math.max(1, Math.abs(end - start) + 1);
+};
+
 const generateDates = () => {
   if (currentEvent.value) {
     const startDate = new Date(currentEvent.value.startDate);
@@ -372,8 +431,8 @@ const generateDates = () => {
     const currentDate = new Date(startDate);
 
     // Get selected weekdays from weeklySchedules if available
-    const selectedWeekdays =
-      currentEvent.value.weeklySchedules?.map((ws) => ws.weekId) || [];
+    const weeklySchedules = currentEvent.value.weeklySchedules || [];
+    const selectedWeekdays = weeklySchedules.map((ws) => ws.weekId) || [];
 
     while (currentDate <= endDate) {
       // Convert JavaScript day (0=Sunday) to weekId format (0=Monday)
@@ -390,10 +449,21 @@ const generateDates = () => {
         const year = currentDate.getFullYear();
         const dateStr = `${day}.${month}\n${year}`;
         const isoDate = `${year}-${month}-${day}`;
+        // determine rows per day from weekly schedule by lesson ids; fallback from times
+        const daySchedule = weeklySchedules.find(
+          (ws) => ws.weekId === weekId
+        ) as any;
+        const schedulesArr = (getActiveYearSchedules.value ||
+          []) as EducationSchedule[];
+        const { startId, endId } = resolveScheduleIds(
+          daySchedule,
+          schedulesArr
+        );
+        const rows = countLessonsInRange(startId, endId);
         dateMarks.push({
           type: "date",
           date: dateStr,
-          values: [null, null],
+          values: Array.from({ length: rows }, () => null),
           label: dateStr,
           isoDate,
         });
@@ -479,13 +549,6 @@ const getStudentIdByIndex = (index: number): string | null => {
   return props.currentJournal.students[index];
 };
 
-// Helper function to get student index by ID
-const getStudentIndexById = (studentId: string): number => {
-  if (!props.currentJournal?.students) return -1;
-  return props.currentJournal.students.indexOf(studentId);
-};
-
-// Computed property for students with marks from store
 const students = computed(() => {
   if (!props.journalId || !props.currentJournal?.students?.length) return [];
 
@@ -588,6 +651,12 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
 
     const numStudents = students.value.length;
     const numCols = visibleHeaders.value.length;
+    const getColRows = (col: number) => {
+      const firstStudent = students.value[0];
+      const marks = firstStudent?.marks?.[visibleHeaders.value[col]?.index];
+      return Array.isArray(marks?.values) ? marks.values.length : 2;
+    };
+    const currentColRows = getColRows(startCol);
 
     switch (direction) {
       case "up":
@@ -597,19 +666,22 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
         nextStudent += 1;
         break;
       case "right":
-        if (nextMark === 0) {
-          nextMark = 1;
+        if (nextMark < currentColRows - 1) {
+          nextMark += 1;
         } else {
           nextMark = 0;
           nextCol += 1;
         }
         break;
       case "left":
-        if (nextMark === 1) {
-          nextMark = 0;
+        if (nextMark > 0) {
+          nextMark -= 1;
         } else {
-          nextMark = 1;
           nextCol -= 1;
+          const targetRows = getColRows(
+            ((nextCol % numCols) + numCols) % numCols
+          );
+          nextMark = Math.max(0, targetRows - 1);
         }
         break;
     }
@@ -896,6 +968,44 @@ watch(
     }
   },
   { deep: true, immediate: true }
+);
+
+// Rebuild marks when event times or weekly schedules change
+watch(
+  () => {
+    const ev = currentEvent.value;
+    if (!ev) return null;
+    return [ev.startDate, ev.endDate, JSON.stringify(ev.weeklySchedules || [])];
+  },
+  () => {
+    if (props.journalId && props.currentJournal?.students?.length) {
+      const markTemplate = generateDates();
+      marksStore.initializeJournalMarks(
+        props.journalId,
+        props.currentJournal.students,
+        markTemplate
+      );
+      computeAllSessionGrades();
+    }
+  },
+  { deep: false }
+);
+
+// Rebuild marks when active education schedules change (ensures correct row counts once schedules load)
+watch(
+  () => getActiveYearSchedules.value,
+  () => {
+    if (props.journalId && props.currentJournal?.students?.length) {
+      const markTemplate = generateDates();
+      marksStore.initializeJournalMarks(
+        props.journalId,
+        props.currentJournal.students,
+        markTemplate
+      );
+      computeAllSessionGrades();
+    }
+  },
+  { deep: true }
 );
 
 const updateStudent = (updatedStudent: any) => {

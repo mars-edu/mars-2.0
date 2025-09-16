@@ -51,11 +51,16 @@
                 </td>
                 <td class="p-2 text-center rounded-r-lg">
                   <div class="flex flex-col gap-1">
-                    <div class="h-8 flex items-center justify-center">
+                    <div
+                      v-for="(value, rowIdx) in student.marks[selectedDateIndex]
+                        .values"
+                      :key="rowIdx"
+                      class="h-8 flex items-center justify-center"
+                    >
                       <EditableMarkCell
                         v-if="
                           editingCell?.studentIndex === index &&
-                          editingCell?.markIndex === 0
+                          editingCell?.markIndex === rowIdx
                         "
                         v-model="editedValue"
                         @confirm="confirmEdit"
@@ -65,34 +70,10 @@
                       />
                       <div
                         v-else
-                        @click="editCell(index, 0)"
+                        @click="editCell(index, rowIdx)"
                         class="cursor-pointer w-full"
                       >
-                        <MarkCell
-                          :mark="student.marks[selectedDateIndex].values[0]"
-                        />
-                      </div>
-                    </div>
-                    <div class="h-8 flex items-center justify-center">
-                      <EditableMarkCell
-                        v-if="
-                          editingCell?.studentIndex === index &&
-                          editingCell?.markIndex === 1
-                        "
-                        v-model="editedValue"
-                        @confirm="confirmEdit"
-                        @cancel="cancelEdit"
-                        @navigate="navigate"
-                        :is-zoomed="true"
-                      />
-                      <div
-                        v-else
-                        @click="editCell(index, 1)"
-                        class="cursor-pointer w-full"
-                      >
-                        <MarkCell
-                          :mark="student.marks[selectedDateIndex].values[1]"
-                        />
+                        <MarkCell :mark="value" />
                       </div>
                     </div>
                   </div>
@@ -206,12 +187,15 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
   nextTick(() => {
     let nextStudentIndex = startStudentIndex;
     let nextMarkIndex = startMarkIndex;
+    const rowCount =
+      localStudents.value[0]?.marks[props.selectedDateIndex]?.values?.length ||
+      2;
 
     switch (direction) {
       case "right":
       case "down":
-        if (startMarkIndex === 0) {
-          nextMarkIndex = 1;
+        if (nextMarkIndex < rowCount - 1) {
+          nextMarkIndex += 1;
         } else {
           nextMarkIndex = 0;
           nextStudentIndex += 1;
@@ -219,10 +203,10 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
         break;
       case "left":
       case "up":
-        if (startMarkIndex === 1) {
-          nextMarkIndex = 0;
+        if (nextMarkIndex > 0) {
+          nextMarkIndex -= 1;
         } else {
-          nextMarkIndex = 1;
+          nextMarkIndex = Math.max(0, rowCount - 1);
           nextStudentIndex -= 1;
         }
         break;

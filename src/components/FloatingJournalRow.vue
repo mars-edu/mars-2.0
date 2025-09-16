@@ -74,18 +74,19 @@
                     }"
                   >
                     <div class="flex flex-col gap-1">
-                      <!-- First mark in pair (row 0) -->
                       <div
+                        v-for="(value, rowIdx) in mark.values"
+                        :key="rowIdx"
                         class="h-8 flex items-center justify-center transition-transform duration-300"
                         :class="{
                           'scale-175 z-10':
-                            editingCell?.row === 0 &&
+                            editingCell?.row === rowIdx &&
                             editingCell?.col === colIndex,
                         }"
                       >
                         <EditableMarkCell
                           v-if="
-                            editingCell?.row === 0 &&
+                            editingCell?.row === rowIdx &&
                             editingCell?.col === colIndex
                           "
                           v-model="editedValue"
@@ -96,39 +97,10 @@
                         />
                         <div
                           v-else
-                          @click="editCell(0, colIndex)"
+                          @click="editCell(rowIdx, colIndex)"
                           class="cursor-pointer w-full"
                         >
-                          <MarkCell :mark="mark.values[0]" />
-                        </div>
-                      </div>
-
-                      <!-- Second mark in pair (row 1) -->
-                      <div
-                        class="h-8 flex items-center justify-center transition-transform duration-300"
-                        :class="{
-                          'scale-175 z-10':
-                            editingCell?.row === 1 &&
-                            editingCell?.col === colIndex,
-                        }"
-                      >
-                        <EditableMarkCell
-                          v-if="
-                            editingCell?.row === 1 &&
-                            editingCell?.col === colIndex
-                          "
-                          v-model="editedValue"
-                          @confirm="confirmEdit"
-                          @cancel="cancelEdit"
-                          @navigate="navigate"
-                          :is-zoomed="true"
-                        />
-                        <div
-                          v-else
-                          @click="editCell(1, colIndex)"
-                          class="cursor-pointer w-full"
-                        >
-                          <MarkCell :mark="mark.values[1]" />
+                          <MarkCell :mark="value" />
                         </div>
                       </div>
                     </div>
@@ -285,12 +257,17 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
     let nextRow = startRow;
     let nextCol = startCol;
     const numCols = props.tableHeaders.length;
+    const getColRows = (colIndex: number) => {
+      const mark = localStudent.value?.marks[colIndex];
+      return Array.isArray(mark?.values) ? mark!.values.length : 2;
+    };
+    const currentColRows = getColRows(startCol);
 
     switch (direction) {
       case "right":
       case "down":
-        if (startRow === 0) {
-          nextRow = 1;
+        if (nextRow < currentColRows - 1) {
+          nextRow += 1;
         } else {
           nextRow = 0;
           nextCol += 1;
@@ -298,11 +275,14 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
         break;
       case "left":
       case "up":
-        if (startRow === 1) {
-          nextRow = 0;
+        if (nextRow > 0) {
+          nextRow -= 1;
         } else {
-          nextRow = 1;
           nextCol -= 1;
+          const targetRows = getColRows(
+            ((nextCol % numCols) + numCols) % numCols
+          );
+          nextRow = Math.max(0, targetRows - 1);
         }
         break;
     }

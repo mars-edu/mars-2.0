@@ -1,5 +1,7 @@
 import { computed, ref } from "vue";
 import { useCalendarStore } from "@/stores/calendarStore";
+import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
+import { storeToRefs } from "pinia";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 
@@ -27,6 +29,8 @@ export function useCalendar() {
   const todayDate = ref(new Date().getDate().toString());
 
   const calendarStore = useCalendarStore();
+  const educationScheduleStore = useEducationScheduleStore();
+  const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
 
   const setYear = (newYear: string) => {
     year.value = newYear;
@@ -110,7 +114,15 @@ export function useCalendar() {
           const ws = event.weeklySchedules.find(
             (w) => w.weekId === weekIdOfCurrent
           );
-          if (ws && ws.startTime) time = ws.startTime;
+          if (ws) {
+            if ((ws as any).startId) {
+              const schedules = getActiveYearSchedules.value || [];
+              const found = schedules.find((s) => s.id === (ws as any).startId);
+              if (found) time = found.startTime;
+            } else if ((ws as any).startTime) {
+              time = (ws as any).startTime;
+            }
+          }
         }
         return {
           id: event.id,

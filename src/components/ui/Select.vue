@@ -254,7 +254,7 @@ const onPopupClose = () => {
 
 /* Generalize styles */
 .smart-select-list-container .item-content {
-  @apply p-2;
+  @apply p-2 overflow-auto;
 }
 
 .smart-select-list-container .item-content .item-inner .item-title {

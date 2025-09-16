@@ -252,14 +252,14 @@
               <div class="flex items-center gap-2 mb-2">
                 <span class="text-muted-foreground text-sm">от</span>
                 <Select
-                  v-model="day.startTime"
+                  v-model="day.startId"
                   :options="startTimeOptions"
                   placeholder="Выберите время"
                   class="w-full"
                 />
                 <span class="text-muted-foreground text-sm">до</span>
                 <Select
-                  v-model="day.endTime"
+                  v-model="day.endId"
                   :options="endTimeOptions"
                   placeholder="Выберите время"
                   class="w-full"
@@ -371,8 +371,8 @@ const selectedWeekDays = ref<
   {
     weekId: number;
     russianWeekDay: string;
-    startTime: string;
-    endTime: string;
+    startId: string;
+    endId: string;
   }[]
 >([]);
 const studentPopup = ref<{ open: (p: string[]) => void } | null>(null);
@@ -413,14 +413,14 @@ const dateValidationError = computed(() => {
 
 const startTimeOptions = computed(() =>
   getActiveYearSchedules.value.map((schedule) => ({
-    value: schedule.startTime,
+    value: schedule.id,
     text: schedule.startTime,
   }))
 );
 
 const endTimeOptions = computed(() =>
   getActiveYearSchedules.value.map((schedule) => ({
-    value: schedule.endTime,
+    value: schedule.id,
     text: schedule.endTime,
   }))
 );
@@ -526,8 +526,8 @@ const selectWeekDay = (day: {
     selectedWeekDays.value.push({
       weekId: day.weekId,
       russianWeekDay: day.name,
-      startTime: "",
-      endTime: "",
+      startId: "",
+      endId: "",
     });
   } else {
     selectedWeekDays.value.splice(index, 1);
