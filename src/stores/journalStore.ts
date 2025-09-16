@@ -4,10 +4,11 @@ import { useCalendarStore } from "./calendarStore";
 import { useCourseStore } from "./courseStore";
 import { useStudentStore } from "./studentStore";
 import { useSpecialtyStore } from "./specialtyStore";
+import { useClass9Store } from "./class9Store";
+import { WEEK_DAYS } from "@/constants/calendar";
 
 export interface Journal {
   id: string;
-  title: string;
   courseNumber: number;
   disciplineId: string;
   group: string;
@@ -26,39 +27,43 @@ export const useJournalStore = defineStore(
     const courseStore = useCourseStore();
     const studentStore = useStudentStore();
     const specialtyStore = useSpecialtyStore();
+    const class9Store = useClass9Store();
 
     function generateJournalTitle(courseNumber: number, studentIds: string[]) {
-      const codes = new Set<string>();
+      const codeNames = new Set<string>();
+
       studentIds.forEach((id) => {
         const student = studentStore.students.find((s) => s.id === id);
         if (!student) return;
 
         const specialty = specialtyStore.getSpecialtyByCode(student.specialty);
-        if (specialty) {
-          codes.add(specialty.codeName);
+        if (specialty?.codeName) {
+          codeNames.add(specialty.codeName.trim());
         } else {
-          codes.add(student.specialty);
         }
       });
-      const joinedCodes = Array.from(codes).join("");
-      return `${courseNumber} ${joinedCodes}`.trim();
+
+      const sortedCodeNames = Array.from(codeNames).sort();
+      const mergedCodeNames = sortedCodeNames.join("");
+
+      return `${courseNumber} ${mergedCodeNames}`.trim();
     }
 
     function generateGroupFromStudents(studentIds: string[]) {
-      const codes = new Set<string>();
+      const codeNames = new Set<string>();
+
       studentIds.forEach((id) => {
         const student = studentStore.students.find((s) => s.id === id);
         if (!student) return;
 
         const specialty = specialtyStore.getSpecialtyByCode(student.specialty);
-
-        if (specialty) {
-          codes.add(specialty.codeName);
-        } else {
-          codes.add(student.specialty);
+        if (specialty?.codeName) {
+          codeNames.add(specialty.codeName.trim());
         }
       });
-      return Array.from(codes).join("");
+
+      const sortedCodeNames = Array.from(codeNames).sort();
+      return sortedCodeNames.join("");
     }
 
     function createJournalFromEvent(
@@ -69,7 +74,6 @@ export const useJournalStore = defineStore(
     ): Journal {
       return {
         id: `${actualEvent.id}`,
-        title: "test",
         courseNumber,
         disciplineId: actualEvent.class9Id,
         group: generateJournalTitle(courseNumber, students),
@@ -267,6 +271,42 @@ export const useJournalStore = defineStore(
       }
     }
 
+    function getDisciplineTitle(journal: Journal) {
+      const item = class9Store.getClass9ById(journal.disciplineId as any);
+      if (!item)
+        return generateJournalTitle(
+          journal.courseNumber,
+          journal.students || []
+        );
+      const outcome = item.learningOutcome?.trim() || "";
+      const index = item.moduleIndex?.trim() || "";
+      const result = `${index} ${outcome}`.trim();
+      return result;
+    }
+
+    function getJournalSubtitle(journal: Journal) {
+      return `${journal.courseNumber} курс // ${generateJournalTitle(
+        journal.courseNumber,
+        journal.students
+      )}`;
+    }
+
+    function getJournalScheduleText(journal: Journal) {
+      const calendarEvent = calendarStore.getEventById(journal.id);
+      if (!calendarEvent) return "расписание не задано";
+      const ws = calendarEvent.weeklySchedules?.[0];
+      if (!ws) return "расписание не задано";
+      const weekDay = WEEK_DAYS.find((day) => day.weekId === ws.weekId);
+      const day = weekDay?.russianAbbreviation || "";
+      const start = ws.startTime || "";
+      const end = ws.endTime || "";
+      return `${day} // ${start}-${end}`.trim();
+    }
+
+    function getJournalPercent(journal: Journal) {
+      return 25;
+    }
+
     function reset() {
       journals.value = [];
       loading.value = false;
@@ -281,6 +321,10 @@ export const useJournalStore = defineStore(
       mixedGroupJournals,
       generateJournalTitle,
       generateGroupFromStudents,
+      getDisciplineTitle,
+      getJournalSubtitle,
+      getJournalScheduleText,
+      getJournalPercent,
       getJournalById,
       addJournal,
       updateJournal,

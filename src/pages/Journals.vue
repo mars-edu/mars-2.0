@@ -155,23 +155,22 @@
                       {{ course.number }} курс
                     </h2>
                     <div
-                      v-for="journal in journalEventsByCourse[
+                      v-for="journal in journalsByCourse[
                         parseInt(course.number)
                       ]"
                       :key="journal.id"
                     >
                       <JournalCard
-                        :title="getDisciplineTitle(journal)"
-                        :subtitle="`${journal.courseNumber} курс // ${journal.group}`"
-                        :schedule="getScheduleText(journal)"
-                        :percent="25"
+                        :title="journalStore.getDisciplineTitle(journal)"
+                        :subtitle="journalStore.getJournalSubtitle(journal)"
+                        :schedule="journalStore.getJournalScheduleText(journal)"
+                        :percent="journalStore.getJournalPercent(journal)"
                         @click="goToJournalDetails(journal.id)"
                       />
                     </div>
                     <div
                       v-if="
-                        journalEventsByCourse[parseInt(course.number)]
-                          .length === 0
+                        journalsByCourse[parseInt(course.number)].length === 0
                       "
                       class="rounded-lg p-4 text-gray-500 shadow-sm min-h-[90px] flex items-center justify-center bg-gray-50 border border-gray-100"
                     >
@@ -220,8 +219,6 @@ import JournalCard from "@/components/Cards/JournalCard.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useJournalStore, type Journal } from "@/stores/journalStore";
 import { useCourseStore } from "@/stores/courseStore";
-import { useClass9Store } from "@/stores/class9Store";
-import { withAllOption } from "@/lib/utils";
 import { storeToRefs } from "pinia";
 
 const activeNavItem = ref("journals");
@@ -235,8 +232,6 @@ const { courses } = storeToRefs(courseStore);
 const academicYearStore = useAcademicYearStore();
 const { academicYears } = storeToRefs(academicYearStore);
 
-const class9Store = useClass9Store();
-
 function getJournalTitle(journal: Journal) {
   if (!journal.students || journal.students.length === 0) {
     return journal.title;
@@ -246,21 +241,6 @@ function getJournalTitle(journal: Journal) {
     journal.students || []
   );
 }
-
-function getDisciplineTitle(journal: Journal) {
-  const item = class9Store.getClass9ById(journal.disciplineId as any);
-  if (!item) return getJournalTitle(journal);
-  const outcome = item.learningOutcome?.trim() || "";
-  const index = item.moduleIndex?.trim() || "";
-  return `${index} ${outcome}`.trim();
-}
-
-function getScheduleText(_journal: Journal) {
-  return "расписание не задано";
-}
-
-// Journals mapped by course coming directly from the journal store
-const journalEventsByCourse = journalsByCourse;
 
 const selectedAcademicYear = ref("");
 

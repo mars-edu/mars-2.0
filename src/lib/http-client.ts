@@ -1,6 +1,7 @@
 import { ofetch } from "ofetch";
 
 export const API_URL = import.meta.env.VITE_API_URL || "/api";
+// export const API_URL = "https://mars-backend.robanokssamit-1ba.workers.dev/api";
 
 export const httpClient = ofetch.create({
   baseURL: API_URL,
@@ -60,37 +61,6 @@ export const authClient = {
     return httpClient("/auth/register", {
       method: "POST",
       body: userData,
-    });
-  },
-};
-
-interface ColumnNode {
-  id: string;
-  name: string;
-  children_of: string | null;
-}
-
-export interface FileClient {
-  parseExcelColumns: (formData: FormData) => Promise<{
-    success: boolean;
-    columns: ColumnNode[];
-  }>;
-  listExcelSheets: (
-    formData: FormData
-  ) => Promise<{ success: boolean; sheets: string[] }>;
-}
-
-export const fileClient: FileClient = {
-  parseExcelColumns: async (formData: FormData) => {
-    return httpClient("/parse-excel-columns", {
-      method: "POST",
-      body: formData,
-    });
-  },
-  listExcelSheets: async (formData: FormData) => {
-    return httpClient("/list-excel-sheets", {
-      method: "POST",
-      body: formData,
     });
   },
 };

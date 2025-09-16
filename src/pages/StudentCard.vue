@@ -85,7 +85,7 @@
                     <td class="px-4 py-3">
                       {{
                         specialtyStore.getSpecialtyByCode(student.specialty)
-                          ?.details
+                          ?.codeName
                       }}
                     </td>
                     <td class="px-4 py-3">{{ student.language }}</td>
