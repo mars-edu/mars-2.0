@@ -40,7 +40,11 @@ app.use(
   "*",
   cors({
     origin: (origin, c) => {
-      const allowedOrigins = [c.env.FRONTEND_URL, c.env.FRONTEND_URL_DEV];
+      const allowedOrigins = [
+        c.env.FRONTEND_URL,
+        c.env.FRONTEND_URL_DEV,
+        "http://localhost:5173",
+      ];
       return allowedOrigins.includes(origin) ? origin : null;
     },
     allowHeaders: ["Content-Type", "Authorization"],
