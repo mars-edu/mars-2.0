@@ -310,7 +310,7 @@ const selectedItemsStore = useSelectedItemsStore();
 const educationScheduleStore = useEducationScheduleStore();
 
 const { class9Options } = storeToRefs(calendarStore);
-const { schedules } = storeToRefs(educationScheduleStore);
+const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
 const { selectedClass9Item } = storeToRefs(selectedItemsStore);
 
 /* --- REACTIVE STATE --- */
@@ -393,14 +393,14 @@ const dateValidationError = computed(() => {
 });
 
 const startTimeOptions = computed(() =>
-  schedules.value.map((schedule) => ({
+  getActiveYearSchedules.value.map((schedule) => ({
     value: schedule.startTime,
     text: schedule.startTime,
   }))
 );
 
 const endTimeOptions = computed(() =>
-  schedules.value.map((schedule) => ({
+  getActiveYearSchedules.value.map((schedule) => ({
     value: schedule.endTime,
     text: schedule.endTime,
   }))

@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
+import { useAcademicYearStore } from "./academicYearStore";
 
 export interface EducationSchedule {
   id: string;
@@ -11,63 +12,6 @@ export interface EducationSchedule {
   updatedAt: Date;
 }
 
-const DEFAULT_SCHEDULES: EducationSchedule[] = [
-  {
-    id: "1",
-    lessonNumber: 1,
-    startTime: "08:30",
-    endTime: "09:15",
-    academicYearId: "1", // Default to first academic year
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "2",
-    lessonNumber: 2,
-    startTime: "09:25",
-    endTime: "10:10",
-    academicYearId: "1", // Default to first academic year
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "3",
-    lessonNumber: 3,
-    startTime: "10:20",
-    endTime: "11:05",
-    academicYearId: "1",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "4",
-    lessonNumber: 4,
-    startTime: "11:15",
-    endTime: "12:00",
-    academicYearId: "1",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "5",
-    lessonNumber: 5,
-    startTime: "12:20",
-    endTime: "13:05",
-    academicYearId: "1",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "6",
-    lessonNumber: 6,
-    startTime: "13:15",
-    endTime: "14:00",
-    academicYearId: "1",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
-
 export const useEducationScheduleStore = defineStore(
   "educationSchedule",
   () => {
@@ -75,13 +19,12 @@ export const useEducationScheduleStore = defineStore(
     const loading = ref(false);
     const error = ref<string | null>(null);
 
+    const academicYearStore = useAcademicYearStore();
+
     const sortSchedules = () => {
       schedules.value.sort((a, b) => a.lessonNumber - b.lessonNumber);
     };
 
-    if (schedules.value.length === 0) {
-      schedules.value = DEFAULT_SCHEDULES;
-    }
     sortSchedules();
 
     const getScheduleById = computed(() => {
@@ -93,6 +36,15 @@ export const useEducationScheduleStore = defineStore(
       return (academicYearId: string) =>
         schedules.value.filter((s) => s.academicYearId === academicYearId);
     });
+
+    const getActiveYearSchedules = computed(() => {
+      const activeYear = academicYearStore.getActiveAcademicYear;
+      if (!activeYear) return [];
+      return schedules.value
+        .filter((s) => s.academicYearId === activeYear.id)
+        .sort((a, b) => a.lessonNumber - b.lessonNumber);
+    });
+
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
@@ -171,7 +123,7 @@ export const useEducationScheduleStore = defineStore(
     }
 
     function reset() {
-      schedules.value = [...DEFAULT_SCHEDULES];
+      schedules.value = [];
       loading.value = false;
       error.value = null;
       sortSchedules();
@@ -184,6 +136,7 @@ export const useEducationScheduleStore = defineStore(
       getScheduleById,
       getSchedules,
       getSchedulesByAcademicYear,
+      getActiveYearSchedules,
       isLoading,
       getError,
       addSchedule,
