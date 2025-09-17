@@ -26,7 +26,7 @@
             Найдено: {{ filteredOptions.length }}
           </div>
 
-          <div class="max-h-64 overflow-y-auto border border-input rounded-lg">
+          <div class="h-full overflow-y-auto border border-input rounded-lg">
             <table class="w-full text-sm">
               <tbody>
                 <tr

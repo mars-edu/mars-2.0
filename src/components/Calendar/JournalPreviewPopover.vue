@@ -7,6 +7,24 @@
     @popover:closed="onClosed"
   >
     <div class="bg-card text-card-foreground flex flex-col">
+      <PopoverHeader
+        :onCancel="handleClose"
+        cancelText="Закрыть"
+        :onSave="handleEdit"
+      >
+        <template #save="{ disabled, isLoading, onSave }">
+          <Button
+            variant="success"
+            size="md"
+            class="ml-auto"
+            :disabled="disabled"
+            :isLoading="isLoading"
+            @click="onSave"
+          >
+            <f7-icon ios="f7:pencil" md="material:edit" size="20px" />
+          </Button>
+        </template>
+      </PopoverHeader>
       <div class="p-4">
         <JournalCard
           :title="getTitle()"
@@ -16,15 +34,6 @@
           @click="handleGoToJournal"
         />
       </div>
-
-      <div class="px-4 pb-4 flex items-center gap-3 self-end">
-        <f7-button
-          class="w-11 h-11 rounded-xl border border-input hover:bg-secondary grid place-items-center"
-          @click="handleEdit"
-        >
-          <f7-icon ios="f7:pencil" md="material:edit" size="27px" class="" />
-        </f7-button>
-      </div>
     </div>
   </f7-popover>
 </template>
@@ -33,6 +42,8 @@
 import { computed, ref } from "vue";
 import { f7 } from "framework7-vue";
 import JournalCard from "@/components/Cards/JournalCard.vue";
+import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import Button from "@/components/ui/Button.vue";
 import { useJournalStore, type Journal } from "@/stores/journalStore";
 import type { CalendarEvent } from "@/stores/calendarStore";
 
@@ -98,6 +109,10 @@ const handleEdit = () => {
   closingByAction.value = true;
   f7.popover.close("#journal-preview-popover");
   emit("edit");
+};
+
+const handleClose = () => {
+  f7.popover.close("#journal-preview-popover");
 };
 
 const onClosed = () => {

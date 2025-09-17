@@ -32,8 +32,33 @@
           searchable
         />
 
+        <!-- Custom Period Checkbox -->
+        <div class="flex items-center">
+          <f7-checkbox
+            id="use-custom-period-edit"
+            v-model:checked="useCustomPeriod"
+          ></f7-checkbox>
+          <label
+            for="use-custom-period-edit"
+            class="ml-2 text-sm text-foreground"
+          >
+            Установить свой период
+          </label>
+        </div>
+
+        <!-- Semester Date Range Display -->
+        <div
+          v-if="!useCustomPeriod && semesterDates"
+          class="mt-2 p-3 bg-muted rounded-lg border"
+        >
+          <div class="text-sm text-muted-foreground mb-1">Период:</div>
+          <div class="text-sm font-medium text-foreground">
+            {{ semesterDates.startDate }} - {{ semesterDates.endDate }}
+          </div>
+        </div>
+
         <!-- Start Date -->
-        <div class="flex justify-between items-center">
+        <div v-if="useCustomPeriod" class="flex justify-between items-center">
           <span class="text-sm text-foreground">Начало</span>
           <div class="w-1/2">
             <f7-input
@@ -51,7 +76,7 @@
         </div>
 
         <!-- End Date -->
-        <div class="flex justify-between items-center">
+        <div v-if="useCustomPeriod" class="flex justify-between items-center">
           <span class="text-sm text-foreground">Конец</span>
           <div class="w-1/2">
             <f7-input
@@ -69,7 +94,10 @@
         </div>
 
         <!-- Date validation error -->
-        <div v-if="dateValidationError" class="text-destructive text-sm">
+        <div
+          v-if="useCustomPeriod && dateValidationError"
+          class="text-destructive text-sm"
+        >
           {{ dateValidationError }}
         </div>
 
@@ -290,6 +318,7 @@ import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
 import { useClass9Store } from "@/stores/class9Store";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
+import { useSemesterStore } from "@/stores/semesterStore";
 import { storeToRefs } from "pinia";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
@@ -308,15 +337,18 @@ const calendarStore = useCalendarStore();
 const class9Store = useClass9Store();
 const selectedItemsStore = useSelectedItemsStore();
 const educationScheduleStore = useEducationScheduleStore();
+const semesterStore = useSemesterStore();
 
 const { class9Options } = storeToRefs(calendarStore);
 const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
 const { selectedClass9Item } = storeToRefs(selectedItemsStore);
+const { getActiveSemester } = storeToRefs(semesterStore);
 
 /* --- REACTIVE STATE --- */
 const class9Id = ref(props.event.class9Id);
 const rupFile = ref<File | null>(null);
 const rupFileName = ref(props.event.rup);
+const useCustomPeriod = ref(false);
 const startDate = ref([props.event.startDate]);
 const endDate = ref([props.event.endDate]);
 const participants = ref<string[]>([...props.event.participants]);
@@ -336,12 +368,6 @@ watch(
   { deep: false }
 );
 
-// Verbose logging for debugging
-console.log("🔍 [EditEventPopover] Initial props.event:", props.event);
-console.log("🔍 [EditEventPopover] Initial startDate:", props.event.startDate);
-console.log("🔍 [EditEventPopover] Initial endDate:", props.event.endDate);
-console.log("🔍 [EditEventPopover] startDate ref value:", startDate.value);
-console.log("🔍 [EditEventPopover] endDate ref value:", endDate.value);
 const formError = ref<string | null>(null);
 const selectedWeekDays = ref<
   {
@@ -373,15 +399,21 @@ const studentPopup = ref<{ open: (p: string[]) => void } | null>(null);
 /* --- COMPUTED --- */
 const isFormValid = computed(() => {
   const hasRequiredFields = !!class9Id.value;
-  const hasValidDateRange =
-    startDate.value[0] &&
-    endDate.value[0] &&
-    dayjs(endDate.value[0], "DD/MM/YYYY").isAfter(
-      dayjs(startDate.value[0], "DD/MM/YYYY"),
-      "day"
-    );
 
-  return hasRequiredFields && hasValidDateRange;
+  if (useCustomPeriod.value) {
+    // When using custom period, validate date range
+    const hasValidDateRange =
+      startDate.value[0] &&
+      endDate.value[0] &&
+      dayjs(endDate.value[0], "DD/MM/YYYY").isAfter(
+        dayjs(startDate.value[0], "DD/MM/YYYY"),
+        "day"
+      );
+    return hasRequiredFields && hasValidDateRange;
+  } else {
+    // When using semester dates, only require class9Id
+    return hasRequiredFields && !!semesterDates.value;
+  }
 });
 
 const plannedHours = computed(() => {
@@ -389,6 +421,7 @@ const plannedHours = computed(() => {
 });
 
 const dateValidationError = computed(() => {
+  if (!useCustomPeriod.value) return null;
   if (!startDate.value[0] || !endDate.value[0]) return null;
 
   const start = dayjs(startDate.value[0], "DD/MM/YYYY");
@@ -414,6 +447,31 @@ const endTimeOptions = computed(() =>
     text: schedule.endTime,
   }))
 );
+
+const semesterDates = computed(() => {
+  const activeSemester = getActiveSemester.value;
+  if (activeSemester) {
+    return {
+      startDate: dayjs(activeSemester.startDate, "YYYY-MM-DD").format(
+        "DD/MM/YYYY"
+      ),
+      endDate: dayjs(activeSemester.endDate, "YYYY-MM-DD").format("DD/MM/YYYY"),
+    };
+  }
+  return null;
+});
+
+const isEventUsingSemesterDates = computed(() => {
+  if (!semesterDates.value) return false;
+
+  const eventStartDate = props.event.startDate;
+  const eventEndDate = props.event.endDate;
+
+  return (
+    eventStartDate === semesterDates.value.startDate &&
+    eventEndDate === semesterDates.value.endDate
+  );
+});
 
 /* --- METHODS --- */
 const selectWeekDay = (day: {
@@ -494,42 +552,28 @@ const handleUpdateEvent = async () => {
   try {
     formError.value = null;
 
-    console.log("🚀 [EditEventPopover] handleUpdateEvent called");
-    console.log(
-      "🚀 [EditEventPopover] Current startDate.value:",
-      startDate.value
-    );
-    console.log("🚀 [EditEventPopover] Current endDate.value:", endDate.value);
-    console.log(
-      "🚀 [EditEventPopover] startDate.value[0]:",
-      startDate.value[0]
-    );
-    console.log("🚀 [EditEventPopover] endDate.value[0]:", endDate.value[0]);
+    // Validate date range only when using custom period
+    if (useCustomPeriod.value) {
+      if (!startDate.value[0] || !endDate.value[0]) {
+        formError.value = "Пожалуйста, выберите дату начала и окончания.";
+        return;
+      }
 
-    // Validate date range
-    if (!startDate.value[0] || !endDate.value[0]) {
-      formError.value = "Пожалуйста, выберите дату начала и окончания.";
-      return;
-    }
+      const startParsed = dayjs(startDate.value[0], "DD/MM/YYYY");
+      const endParsed = dayjs(endDate.value[0], "DD/MM/YYYY");
 
-    const startParsed = dayjs(startDate.value[0], "DD/MM/YYYY");
-    const endParsed = dayjs(endDate.value[0], "DD/MM/YYYY");
-
-    console.log("🚀 [EditEventPopover] startParsed:", startParsed.format());
-    console.log("🚀 [EditEventPopover] endParsed:", endParsed.format());
-    console.log(
-      "🚀 [EditEventPopover] startParsed.isValid():",
-      startParsed.isValid()
-    );
-    console.log(
-      "🚀 [EditEventPopover] endParsed.isValid():",
-      endParsed.isValid()
-    );
-
-    if (!endParsed.isAfter(startParsed, "day")) {
-      formError.value =
-        "Дата окончания должна быть как минимум на один день позже даты начала.";
-      return;
+      if (!endParsed.isAfter(startParsed, "day")) {
+        formError.value =
+          "Дата окончания должна быть как минимум на один день позже даты начала.";
+        return;
+      }
+    } else {
+      // When using semester dates, ensure we have active semester
+      if (!semesterDates.value) {
+        formError.value =
+          "Активный семестр не найден. Пожалуйста, установите свой период.";
+        return;
+      }
     }
 
     let uploadedFileUrl = rupFileName.value;
@@ -540,14 +584,16 @@ const handleUpdateEvent = async () => {
     const updateData = {
       class9Id: class9Id.value,
       rup: uploadedFileUrl,
-      startDate: startDate.value[0],
-      endDate: endDate.value[0],
+      startDate: useCustomPeriod.value
+        ? startDate.value[0]
+        : semesterDates.value?.startDate ?? startDate.value[0],
+      endDate: useCustomPeriod.value
+        ? endDate.value[0]
+        : semesterDates.value?.endDate ?? endDate.value[0],
       participants: participants.value,
       weeklySchedules: selectedWeekDays.value,
       color: eventColor.value.hex,
     };
-
-    console.log("🚀 [EditEventPopover] updateData:", updateData);
 
     await calendarStore.updateEvent(props.event.id, updateData);
 
@@ -555,21 +601,22 @@ const handleUpdateEvent = async () => {
       ...props.event,
       class9Id: class9Id.value,
       rup: uploadedFileUrl,
-      startDate: startDate.value[0],
-      endDate: endDate.value[0],
+      startDate: useCustomPeriod.value
+        ? startDate.value[0]
+        : semesterDates.value?.startDate ?? startDate.value[0],
+      endDate: useCustomPeriod.value
+        ? endDate.value[0]
+        : semesterDates.value?.endDate ?? endDate.value[0],
       participants: participants.value,
       weeklySchedules: selectedWeekDays.value,
       color: eventColor.value.hex,
     };
-
-    console.log("🚀 [EditEventPopover] emitData:", emitData);
 
     emit("updated", emitData);
 
     closeEditEventPopover();
   } catch (err) {
     formError.value = "Ошибка при обновлении события.";
-    console.error(err);
   }
 };
 
@@ -628,30 +675,35 @@ watch(class9Id, (newId) => {
 });
 
 // Watch for changes in startDate and endDate
+watch(startDate, () => {}, { deep: true });
+watch(endDate, () => {}, { deep: true });
+
+// Initialize useCustomPeriod based on whether event dates match semester dates
 watch(
-  startDate,
-  (newValue, oldValue) => {
-    console.log(
-      "👀 [EditEventPopover] startDate changed from:",
-      oldValue,
-      "to:",
-      newValue
-    );
+  [isEventUsingSemesterDates, semesterDates],
+  ([isUsingSemesterDates, currentSemesterDates]) => {
+    if (isUsingSemesterDates && currentSemesterDates) {
+      useCustomPeriod.value = false;
+      startDate.value = [currentSemesterDates.startDate];
+      endDate.value = [currentSemesterDates.endDate];
+    } else if (!isUsingSemesterDates && currentSemesterDates) {
+      useCustomPeriod.value = true;
+      // Keep existing event dates
+    }
   },
-  { deep: true }
+  { immediate: true }
 );
 
+// Watch for changes in useCustomPeriod and semesterDates
 watch(
-  endDate,
-  (newValue, oldValue) => {
-    console.log(
-      "👀 [EditEventPopover] endDate changed from:",
-      oldValue,
-      "to:",
-      newValue
-    );
+  [useCustomPeriod, semesterDates],
+  ([newUseCustomPeriod, newSemesterDates]) => {
+    if (!newUseCustomPeriod && newSemesterDates) {
+      startDate.value = [newSemesterDates.startDate];
+      endDate.value = [newSemesterDates.endDate];
+    }
   },
-  { deep: true }
+  { immediate: false }
 );
 </script>
 
