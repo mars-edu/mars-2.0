@@ -1,5 +1,6 @@
 import type { Directive, DirectiveBinding } from "vue";
-import { useUserStore, Role } from "../stores/userStore";
+import { useUserStore } from "../stores/userStore";
+import { Role } from "../types/user";
 
 /**
  * Custom directive for role-based authorization in templates

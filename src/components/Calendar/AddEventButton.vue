@@ -134,132 +134,7 @@
             </div>
 
             <!-- Color Picker -->
-            <div class="flex justify-between items-center">
-              <span class="text-sm text-foreground">Цвет</span>
-              <div
-                class="flex items-center gap-2 cursor-pointer"
-                id="color-picker-target"
-                @click="openColorPicker"
-              >
-                <div
-                  :style="`background-color: ${eventColor.hex || '#3F51B5'}`"
-                  class="w-8 h-8 rounded-lg border border-input shadow-sm"
-                ></div>
-              </div>
-
-              <f7-input
-                v-model:value="eventColor"
-                type="colorpicker"
-                class="hidden"
-                :color-picker-params="{
-                  modules: ['palette'],
-                  openIn: 'auto',
-                  openInPhone: 'sheet',
-                  targetEl: '#color-picker-target',
-                  palette: [
-                    [
-                      '#FFEBEE',
-                      '#FFCDD2',
-                      '#EF9A9A',
-                      '#E57373',
-                      '#EF5350',
-                      '#F44336',
-                      '#E53935',
-                      '#D32F2F',
-                      '#C62828',
-                      '#B71C1C',
-                    ],
-                    [
-                      '#F3E5F5',
-                      '#E1BEE7',
-                      '#CE93D8',
-                      '#BA68C8',
-                      '#AB47BC',
-                      '#9C27B0',
-                      '#8E24AA',
-                      '#7B1FA2',
-                      '#6A1B9A',
-                      '#4A148C',
-                    ],
-                    [
-                      '#E8EAF6',
-                      '#C5CAE9',
-                      '#9FA8DA',
-                      '#7986CB',
-                      '#5C6BC0',
-                      '#3F51B5',
-                      '#3949AB',
-                      '#303F9F',
-                      '#283593',
-                      '#1A237E',
-                    ],
-                    [
-                      '#E1F5FE',
-                      '#B3E5FC',
-                      '#81D4FA',
-                      '#4FC3F7',
-                      '#29B6F6',
-                      '#03A9F4',
-                      '#039BE5',
-                      '#0288D1',
-                      '#0277BD',
-                      '#01579B',
-                    ],
-                    [
-                      '#E0F2F1',
-                      '#B2DFDB',
-                      '#80CBC4',
-                      '#4DB6AC',
-                      '#26A69A',
-                      '#009688',
-                      '#00897B',
-                      '#00796B',
-                      '#00695C',
-                      '#004D40',
-                    ],
-                    [
-                      '#F1F8E9',
-                      '#DCEDC8',
-                      '#C5E1A5',
-                      '#AED581',
-                      '#9CCC65',
-                      '#8BC34A',
-                      '#7CB342',
-                      '#689F38',
-                      '#558B2F',
-                      '#33691E',
-                    ],
-                    [
-                      '#FFFDE7',
-                      '#FFF9C4',
-                      '#FFF59D',
-                      '#FFF176',
-                      '#FFEE58',
-                      '#FFEB3B',
-                      '#FDD835',
-                      '#FBC02D',
-                      '#F9A825',
-                      '#F57F17',
-                    ],
-                    [
-                      '#FFF3E0',
-                      '#FFE0B2',
-                      '#FFCC80',
-                      '#FFB74D',
-                      '#FFA726',
-                      '#FF9800',
-                      '#FB8C00',
-                      '#F57C00',
-                      '#EF6C00',
-                      '#E65100',
-                    ],
-                  ],
-                  formatValue(value: any) {
-                    return value.hex;
-                  },
-                }"
-              />
-            </div>
+            <ColorPicker v-model="eventColor" target-id="color-picker-target" />
 
             <div class="text-foreground font-semibold mb-3">Недели</div>
             <div class="flex justify-between gap-1">
@@ -301,17 +176,16 @@
               </div>
             </template>
 
-            <div class="border border-input rounded-lg p-3">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm text-foreground">РУП/КТП</span>
-                <span v-if="rupFile" class="text-sm text-muted-foreground">{{
-                  rupFile.name
-                }}</span>
-              </div>
-              <AddKtpDialog
-                @import-existing="handleImportExisting"
-                @file-selected="handleRupFileChange"
-              />
+            <div
+              class="flex justify-between items-center cursor-pointer"
+              id="add-event-ktp"
+              @click="openKtpPopup"
+            >
+              <span class="text-sm text-foreground">РУП/КТП</span>
+              <span class="text-muted-foreground flex items-center">
+                Открыть
+                <i class="f7-icons text-muted-foreground ml-1">chevron_right</i>
+              </span>
             </div>
 
             <div class="bg-secondary p-4 border-t border-input">
@@ -339,6 +213,11 @@
       @save="handleStudentsSave"
       @close="handleStudentPopupClose"
     />
+    <KtpDetailPopup
+      :opened="isKtpPopupOpen"
+      :class9-id="class9Id"
+      @update:opened="(v:boolean)=>{ isKtpPopupOpen=v }"
+    />
   </div>
 </template>
 
@@ -348,6 +227,7 @@ import { f7 } from "framework7-vue";
 import { storeToRefs } from "pinia";
 import Select from "../ui/Select.vue";
 import PopoverHeader from "../ui/PopoverHeader.vue";
+import ColorPicker from "../ui/ColorPicker.vue";
 import StudentSelectionPopup from "./StudentSelectionPopup.vue";
 import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
 import { useRupStore } from "@/stores/rupStore";
@@ -356,8 +236,7 @@ import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
-import { uploadFile } from "@/composables/useFileUpload";
-import AddKtpDialog from "@/components/AddKtpDialog.vue";
+import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
 import { WEEK_DAYS, DATE_PICKER_PARAMS } from "@/constants/calendar";
 
 const emit = defineEmits<{
@@ -376,27 +255,12 @@ const { getActiveSemester } = storeToRefs(semesterStore);
 const rupStore = useRupStore();
 
 const class9Id = ref("");
-const rupFile = ref<File | null>(null);
 const useCustomPeriod = ref(false);
 const startDate = ref(dayjs().format("DD/MM/YYYY"));
 const endDate = ref(dayjs().format("DD/MM/YYYY"));
 const participants = ref<string[]>([]);
 const formError = ref<string | null>(null);
 const eventColor = ref({ hex: "#3F51B5" });
-
-watch(
-  eventColor,
-  (newVal) => {
-    if (newVal && (newVal as any).hex) {
-      try {
-        (f7 as any).colorPicker?.close?.();
-      } catch {
-        console.error("🔴 [AddEventButton] Error closing color picker");
-      }
-    }
-  },
-  { deep: false }
-);
 
 const selectedWeekDays = ref<
   {
@@ -407,6 +271,7 @@ const selectedWeekDays = ref<
   }[]
 >([]);
 const studentPopup = ref<{ open: (p: string[]) => void } | null>(null);
+const isKtpPopupOpen = ref(false);
 
 const isFormValid = computed(() => {
   const hasRequiredFields = !!class9Id.value;
@@ -504,23 +369,19 @@ const handleAddEvent = async () => {
       }
     }
 
-    const uploadedFileUrl = rupFile.value
-      ? await uploadFile(rupFile.value)
-      : "";
-
     const eventData: Omit<CalendarEvent, "id" | "createdAt" | "updatedAt"> = {
       class9Id: class9Id.value,
-      rup: uploadedFileUrl || (rupFile.value?.name ?? ""),
-      file: null,
       startDate: useCustomPeriod.value
         ? startDate.value
-        : semesterDates.value?.startDate ?? startDate.value,
+        : semesterDates.value?.startDate || "",
       endDate: useCustomPeriod.value
         ? endDate.value
-        : semesterDates.value?.endDate ?? endDate.value,
+        : semesterDates.value?.endDate || "",
       participants: participants.value,
       weeklySchedules: selectedWeekDays.value,
       color: eventColor.value.hex,
+      useCustomPeriod: useCustomPeriod.value,
+      semester: getActiveSemester.value?.id ?? "",
     };
 
     const newEvent = await calendarStore.addEvent(eventData);
@@ -535,12 +396,11 @@ const handleAddEvent = async () => {
 
 const resetForm = () => {
   class9Id.value = "";
-  rupFile.value = null;
-  useCustomPeriod.value = false; // Reset to use semester dates
+  useCustomPeriod.value = false;
   participants.value = [];
   selectedWeekDays.value = [];
   formError.value = null;
-  eventColor.value = { hex: "#3F51B5" }; // Reset to default color
+  eventColor.value = { hex: "#3F51B5" };
 };
 
 const selectWeekDay = (day: {
@@ -597,16 +457,8 @@ const closeAddEventPopover = () => {
   f7.popover.close("#add-event-popover");
 };
 
-const handleRupFileChange = (file: File) => {
-  rupFile.value = file;
-};
-
-const handleImportExisting = () => {
-  emit("import-ktp-existing");
-};
-
-const openColorPicker = () => {
-  // The Framework7 color picker will be triggered automatically via targetEl
+const openKtpPopup = () => {
+  isKtpPopupOpen.value = true;
 };
 
 watch(class9Id, (newId) => {
@@ -614,11 +466,6 @@ watch(class9Id, (newId) => {
   rupStore.setSelectedClass9ItemId(newId);
 });
 
-// Watch for changes in startDate and endDate
-watch(startDate, () => {}, { deep: true });
-watch(endDate, () => {}, { deep: true });
-
-// Watch for changes in useCustomPeriod and semesterDates
 watch(
   [useCustomPeriod, semesterDates],
   ([newUseCustomPeriod, newSemesterDates]) => {
@@ -626,7 +473,6 @@ watch(
       startDate.value = newSemesterDates.startDate;
       endDate.value = newSemesterDates.endDate;
     } else if (!newUseCustomPeriod && !newSemesterDates) {
-      // Fallback to current date if no active semester
       startDate.value = dayjs().format("DD/MM/YYYY");
       endDate.value = dayjs().format("DD/MM/YYYY");
     }

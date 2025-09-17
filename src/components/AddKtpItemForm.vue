@@ -1,5 +1,6 @@
 <template>
   <f7-popover
+    id="add-ktp-item-popover"
     :opened="opened"
     @popover:closed="onPopoverClosed"
     class="popover-center-page"
@@ -8,7 +9,7 @@
   >
     <div class="bg-card text-card-foreground">
       <PopoverHeader
-        title="Добавить Модуль/Дисциплину"
+        title="Результат обучения/дисциплина"
         :disabled="!isFormValid || class9Store.loading"
         :is-loading="class9Store.loading"
         :on-cancel="onPopoverClosed"
@@ -20,86 +21,52 @@
       </div>
 
       <div class="p-4 space-y-3">
-        <div class="space-y-2">
-          <label class="text-sm text-foreground" for="ktp-item-module-index">
-            Индекс модуля
-          </label>
-          <f7-input
-            id="ktp-item-module-index"
-            type="text"
-            v-model:value="formData.moduleIndex"
-            placeholder="Например, ОД.01"
-          ></f7-input>
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm text-foreground" for="ktp-item-module-name">
-            Наименование модуля/дисциплины
-          </label>
-          <f7-input
-            id="ktp-item-module-name"
-            type="textarea"
-            v-model:value="formData.moduleName"
-            placeholder="Введите наименование"
-            class="h-24"
-            resizable
-          ></f7-input>
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm text-foreground" for="ktp-item-total-hours">
-            Всего часов
-          </label>
-          <f7-input
-            id="ktp-item-total-hours"
-            type="number"
-            v-model:value="formData.totalHours"
-            placeholder="0"
-          ></f7-input>
-        </div>
+        <Select
+          label="Результат обучения/дисциплина"
+          placeholder="Выберите результат обучения/дисциплину"
+          v-model="class9Id"
+          :options="class9Options"
+          name="ktp-item-class9"
+          id="ktp-item-class9"
+          searchable
+          @before-open="closeKtpItemPopover"
+          @after-close="openKtpItemPopover"
+        />
       </div>
     </div>
   </f7-popover>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from "vue";
-import { f7Popover, f7Input } from "framework7-vue";
-import { z } from "zod";
+import { ref, computed } from "vue";
+import { f7Popover, f7 } from "framework7-vue";
+import { storeToRefs } from "pinia";
 import { useClass9Store } from "@/stores/class9Store";
+import { useKtpStore } from "@/stores/ktpStore";
+import { useCalendarStore } from "@/stores/calendarStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import Select from "@/components/ui/Select.vue";
 
 const props = defineProps<{
   opened: boolean;
-  academicYearId: string | null;
-  specialtyId: string | null;
-  courseId: string | null;
 }>();
 
 const emit = defineEmits(["update:opened"]);
 
 const class9Store = useClass9Store();
+const ktpStore = useKtpStore();
+const calendarStore = useCalendarStore();
+const { class9Options } = storeToRefs(calendarStore);
 const formError = ref("");
 
-const formData = reactive({
-  moduleIndex: "",
-  moduleName: "",
-  totalHours: "",
-});
+const class9Id = ref("");
 
-const formSchema = z.object({
-  moduleIndex: z.string().min(1, "Индекс не может быть пустым."),
-  moduleName: z.string().min(1, "Наименование не может быть пустым."),
-  totalHours: z.string().min(1, "Укажите количество часов."),
+const isFormValid = computed(() => {
+  return !!class9Id.value;
 });
-
-const validationResult = computed(() => formSchema.safeParse(formData));
-const isFormValid = computed(() => validationResult.value.success);
 
 const resetForm = () => {
-  formData.moduleIndex = "";
-  formData.moduleName = "";
-  formData.totalHours = "";
+  class9Id.value = "";
   formError.value = "";
 };
 
@@ -108,31 +75,44 @@ const onPopoverClosed = () => {
   emit("update:opened", false);
 };
 
-const handleSave = async () => {
-  if (!props.academicYearId || !props.specialtyId || !props.courseId) {
-    formError.value =
-      "Контекст не определен. Выберите год, специальность и курс.";
-    return;
-  }
+const closeKtpItemPopover = () => {
+  f7.popover.close("#add-ktp-item-popover");
+};
 
+const openKtpItemPopover = () => {
+  f7.popover.open("#add-ktp-item-popover");
+};
+
+const handleSave = async () => {
   if (!isFormValid.value) {
-    if (!validationResult.value.success) {
-      formError.value = validationResult.value.error.issues[0].message;
-    }
+    formError.value = "Пожалуйста, выберите результат обучения/дисциплину.";
     return;
   }
 
   try {
-    await class9Store.addClass9(
-      props.academicYearId,
-      props.specialtyId,
-      props.courseId,
-      {
-        moduleIndex: formData.moduleIndex,
-        moduleName: formData.moduleName,
-        totalHours: formData.totalHours,
-      }
-    );
+    const selectedItem = class9Store.getClass9ById(class9Id.value);
+    if (!selectedItem) {
+      formError.value = "Выбранный элемент не найден.";
+      return;
+    }
+
+    // Create initial KTP detail for the selected module/discipline
+    const ktp = ktpStore.ensureKtpForClass9(class9Id.value);
+    ktpStore.addKtpDetail(ktp.id, {
+      theme:
+        selectedItem.learningOutcome ||
+        `${selectedItem.moduleIndex} ${selectedItem.moduleName}`,
+    });
+
+    // Optional toast for feedback
+    f7.toast
+      .create({
+        text: "Элемент КТП создан",
+        closeTimeout: 1500,
+        cssClass: "color-green",
+      })
+      .open();
+
     onPopoverClosed();
   } catch (err) {
     formError.value =

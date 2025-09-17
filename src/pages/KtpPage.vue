@@ -24,28 +24,23 @@
             </span>
             <div class="flex flex-col md:flex-row md:items-center md:gap-3">
               <Select
-                v-model="selectedAcademicYear"
+                v-model="selectedAcademicYearModel"
                 :options="academicYearOptions"
                 placeholder="Учебный год:"
                 name="academic-year"
                 class="w-[250px]"
               />
+              <Select
+                v-model="selectedSemesterId"
+                :options="semesterOptions"
+                placeholder="Семестр:"
+                name="semester"
+                class="w-[220px]"
+              />
             </div>
           </div>
 
           <div class="space-y-3">
-            <div
-              class="bg-primary text-primary-foreground rounded-lg p-3 flex items-center justify-between cursor-pointer"
-            >
-              <div class="flex items-center gap-2">
-                <f7-icon
-                  ios="f7:chevron_down"
-                  md="material:expand_more"
-                ></f7-icon>
-                <span>2 семестр</span>
-              </div>
-            </div>
-
             <div class="border border-border rounded-lg overflow-hidden">
               <div
                 class="grid grid-cols-[minmax(0,_1fr)_100px_100px_120px_120px] gap-4 px-4 py-2 bg-muted/50 text-sm text-muted-foreground"
@@ -71,7 +66,7 @@
               </div>
               <div v-else class="divide-y divide-border">
                 <div
-                  v-for="item in ktpItems"
+                  v-for="item in filteredKtpItems"
                   :key="item.id"
                   class="grid grid-cols-[minmax(0,_1fr)_100px_100px_120px_120px] gap-4 px-4 py-3 items-center cursor-pointer"
                   :class="{
@@ -104,15 +99,10 @@
 
     <KtpDetailPopup
       v-model:opened="isPopupOpened"
-      :parent-id="selectedKtpParentId"
+      :class9-id="selectedKtpParentId"
     />
 
-    <AddKtpItemForm
-      v-model:opened="isAddItemFormOpen"
-      :academic-year-id="selectedAcademicYear"
-      :specialty-id="selectedSpecialtyId"
-      :course-id="selectedCourseId"
-    />
+    <AddKtpItemForm v-model:opened="isAddItemFormOpen" />
 
     <template #fixed>
       <f7-fab
@@ -138,7 +128,10 @@ import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
 import AddKtpItemForm from "@/components/AddKtpItemForm.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useClass9Store, type Class9Data } from "@/stores/class9Store";
+import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
+import { useSemesterStore } from "@/stores/semesterStore";
 import { useCourseStore } from "@/stores/courseStore";
+import { useKtpStore } from "@/stores/ktpStore";
 import { storeToRefs } from "pinia";
 
 const activeNavItem = ref("ktp");
@@ -149,14 +142,21 @@ const { academicYears } = storeToRefs(academicYearStore);
 const class9Store = useClass9Store();
 const { getAllClass9Items: ktpItems, isLoading } = storeToRefs(class9Store);
 const courseStore = useCourseStore();
+const semesterStore = useSemesterStore();
+const { sortedSemesters } = storeToRefs(semesterStore);
+const ktpStore = useKtpStore();
 
-const selectedAcademicYear = ref("");
+const selectedItemsStore = useSelectedItemsStore();
+const {
+  selectedAcademicYearId,
+  selectedSpecialtyId: selectedSpecialtyIdStore,
+  selectedCourseId: selectedCourseIdStore,
+} = storeToRefs(selectedItemsStore);
 const selectedItemId = ref<string | null>(null);
 const isPopupOpened = ref(false);
 const selectedKtpParentId = ref<string | null>(null);
 const isAddItemFormOpen = ref(false);
-const selectedSpecialtyId = ref("");
-const selectedCourseId = ref("");
+const selectedSemesterId = ref<string>("");
 
 const academicYearOptions = computed(() => {
   return academicYears.value.map((year) => ({
@@ -165,11 +165,29 @@ const academicYearOptions = computed(() => {
   }));
 });
 
+const semesterOptions = computed(() => {
+  const yearId = selectedAcademicYearId.value;
+  const list = yearId
+    ? semesterStore.getSemestersByAcademicYear(yearId)
+    : sortedSemesters.value;
+  return list.map((s) => ({ value: s.id, text: s.shortName || s.fullName }));
+});
+
+const filteredKtpItems = computed(() => {
+  const yearId = selectedAcademicYearId.value;
+  const semId = selectedSemesterId.value;
+  return ktpItems.value.filter((item) => {
+    if (yearId && item.academicYearId !== yearId) return false;
+    // TODO: If class9 has semester field, also filter by semId
+    return true;
+  });
+});
+
 const isAddDisabled = computed(
   () =>
-    !selectedAcademicYear.value ||
-    !selectedSpecialtyId.value ||
-    !selectedCourseId.value
+    !selectedAcademicYearId.value ||
+    !selectedSpecialtyIdStore.value ||
+    !selectedCourseIdStore.value
 );
 
 const getCourseNumber = (courseId: string) => {
@@ -179,12 +197,7 @@ const getCourseNumber = (courseId: string) => {
 
 const selectItem = (item: Class9Data) => {
   selectedItemId.value = item.id;
-  // TODO: Remove this mock when real data is available
-  if (ktpItems.value.length > 0 && item.id === ktpItems.value[0].id) {
-    selectedKtpParentId.value = "mock-class9-id-1";
-  } else {
-    selectedKtpParentId.value = item.id;
-  }
+  selectedKtpParentId.value = item.id;
   isPopupOpened.value = true;
 };
 
@@ -195,8 +208,25 @@ const openAddDialog = () => {
 onMounted(async () => {
   const activeYear = academicYearStore.getActiveAcademicYear;
   if (activeYear) {
-    selectedAcademicYear.value = activeYear.id;
+    selectedItemsStore.setSelectedAcademicYear(activeYear.id);
   }
+  const activeSem = semesterStore.getActiveSemester;
+  if (
+    activeSem &&
+    (!selectedAcademicYearId.value ||
+      activeSem.academicYearId === selectedAcademicYearId.value)
+  ) {
+    selectedSemesterId.value = activeSem.id;
+  }
+  // Run KTP migration once at page entry
+  ktpStore.migrateLegacy();
+});
+
+const selectedAcademicYearModel = computed({
+  get: () => selectedAcademicYearId.value ?? "",
+  set: (v: string) => {
+    selectedItemsStore.setSelectedAcademicYear(v || null);
+  },
 });
 </script>
 

@@ -2,9 +2,16 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import type { ParsedLesson } from "@/services/excel-parser";
 
+export interface Ktp {
+  id: string;
+  class9Id: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface KtpDetail {
   id: string;
-  parentId: string;
+  ktpId: string;
   position: number;
   theme: string;
   totalHours: number | null;
@@ -14,10 +21,10 @@ export interface KtpDetail {
   notes: string;
 }
 
-function createEmptyKtpDetail(parentId: string, position: number): KtpDetail {
+function createEmptyKtpDetail(ktpId: string, position: number): KtpDetail {
   return {
     id: crypto.randomUUID(),
-    parentId,
+    ktpId,
     position,
     theme: "",
     totalHours: null,
@@ -31,23 +38,70 @@ function createEmptyKtpDetail(parentId: string, position: number): KtpDetail {
 export const useKtpStore = defineStore(
   "ktp",
   () => {
+    const ktps = ref<Ktp[]>([]);
     const ktpDetails = ref<KtpDetail[]>([]);
     const loading = ref(false);
     const error = ref<string | null>(null);
 
-    function fetchDetailsForParent(parentId: string) {
+    function findKtpByClass9Id(class9Id: string): Ktp | undefined {
+      return ktps.value.find((k) => k.class9Id === class9Id);
+    }
+
+    function createKtp(class9Id: string): Ktp {
+      const newKtp: Ktp = {
+        id: crypto.randomUUID(),
+        class9Id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      ktps.value.push(newKtp);
+      return newKtp;
+    }
+
+    function ensureKtpForClass9(class9Id: string): Ktp {
+      const existing = findKtpByClass9Id(class9Id);
+      return existing || createKtp(class9Id);
+    }
+
+    function migrateDetailsToKtpModel() {
+      // Migrate legacy details that might still have class9Id field
+      const legacy = ktpDetails.value as unknown as Array<any>;
+      const itemsWithLegacyKey = legacy.filter((d) => d.class9Id && !d.ktpId);
+      if (!itemsWithLegacyKey.length) return;
+
+      const mapClass9ToKtpId = new Map<string, string>();
+      for (const item of itemsWithLegacyKey) {
+        const class9Id: string = item.class9Id;
+        let ktpId = mapClass9ToKtpId.get(class9Id);
+        if (!ktpId) {
+          ktpId = ensureKtpForClass9(class9Id).id;
+          mapClass9ToKtpId.set(class9Id, ktpId);
+        }
+        item.ktpId = ktpId;
+        delete item.class9Id;
+      }
+    }
+
+    // Public migration trigger
+    function migrateLegacy() {
+      migrateDetailsToKtpModel();
+    }
+
+    function fetchDetailsForKtp(ktpId: string) {
       loading.value = true;
       error.value = null;
 
-      // Filter existing store data by parentId
+      migrateDetailsToKtpModel();
+
+      // Filter existing store data by ktpId
       const filteredDetails = ktpDetails.value
-        .filter((d) => d.parentId === parentId)
+        .filter((d) => d.ktpId === ktpId)
         .sort((a, b) => a.position - b.position);
 
       // If no data exists for this parent, initialize with empty array
       if (
         filteredDetails.length === 0 &&
-        !ktpDetails.value.some((d) => d.parentId === parentId)
+        !ktpDetails.value.some((d) => d.ktpId === ktpId)
       ) {
         // You can optionally add some default empty items here if needed
         // For now, we'll just use an empty array
@@ -57,12 +111,12 @@ export const useKtpStore = defineStore(
     }
 
     function addKtpDetail(
-      parentId: string,
-      data: Partial<Omit<KtpDetail, "id" | "parentId" | "position">>
+      ktpId: string,
+      data: Partial<Omit<KtpDetail, "id" | "ktpId" | "position">>
     ) {
       const newPosition = ktpDetails.value.length + 1;
       const newItem = {
-        ...createEmptyKtpDetail(parentId, newPosition),
+        ...createEmptyKtpDetail(ktpId, newPosition),
         ...data,
       };
       ktpDetails.value.push(newItem);
@@ -70,7 +124,7 @@ export const useKtpStore = defineStore(
 
     function updateKtpDetail(
       id: string,
-      data: Partial<Omit<KtpDetail, "id" | "parentId">>
+      data: Partial<Omit<KtpDetail, "id" | "ktpId">>
     ) {
       const index = ktpDetails.value.findIndex((d) => d.id === id);
       if (index !== -1) {
@@ -85,16 +139,12 @@ export const useKtpStore = defineStore(
       });
     }
 
-    function reorderKtpDetails(parentId: string, reorderedIds: string[]) {
+    function reorderKtpDetails(ktpId: string, reorderedIds: string[]) {
       try {
         error.value = null;
 
-        const parentDetails = ktpDetails.value.filter(
-          (d) => d.parentId === parentId
-        );
-        const otherDetails = ktpDetails.value.filter(
-          (d) => d.parentId !== parentId
-        );
+        const parentDetails = ktpDetails.value.filter((d) => d.ktpId === ktpId);
+        const otherDetails = ktpDetails.value.filter((d) => d.ktpId !== ktpId);
 
         const validIds = new Set(parentDetails.map((d) => d.id));
         const filteredOrder = reorderedIds.filter((id) => validIds.has(id));
@@ -117,13 +167,13 @@ export const useKtpStore = defineStore(
       }
     }
 
-    function bulkImportKtpDetails(parentId: string, lessons: ParsedLesson[]) {
+    function bulkImportKtpDetails(ktpId: string, lessons: ParsedLesson[]) {
       try {
         error.value = null;
 
         const newDetails: KtpDetail[] = lessons.map((lesson, index) => ({
           id: crypto.randomUUID(),
-          parentId,
+          ktpId,
           position: lesson.lessonNumber || index + 1,
           theme: lesson.subject || lesson.lessonType || "",
           totalHours: typeof lesson.hours === "number" ? lesson.hours : null,
@@ -133,9 +183,7 @@ export const useKtpStore = defineStore(
           notes: lesson.notes || "",
         }));
 
-        ktpDetails.value = ktpDetails.value.filter(
-          (d) => d.parentId !== parentId
-        );
+        ktpDetails.value = ktpDetails.value.filter((d) => d.ktpId !== ktpId);
         ktpDetails.value.push(...newDetails);
         ktpDetails.value.sort((a, b) => a.position - b.position);
 
@@ -147,24 +195,72 @@ export const useKtpStore = defineStore(
       }
     }
 
-    const getDetailsByParentId = computed(() => {
-      return (parentId: string) =>
+    const getDetailsByKtpId = computed(() => {
+      return (ktpId: string) =>
         ktpDetails.value
-          .filter((d) => d.parentId === parentId)
+          .filter((d) => d.ktpId === ktpId)
           .sort((a, b) => a.position - b.position);
     });
 
+    // Convenience wrappers by class9Id for existing components
+    function fetchDetailsForClass9(class9Id: string) {
+      const ktp = ensureKtpForClass9(class9Id);
+      return fetchDetailsForKtp(ktp.id);
+    }
+
+    function addKtpDetailForClass9(
+      class9Id: string,
+      data: Partial<Omit<KtpDetail, "id" | "ktpId" | "position">>
+    ) {
+      const ktp = ensureKtpForClass9(class9Id);
+      return addKtpDetail(ktp.id, data);
+    }
+
+    function reorderKtpDetailsForClass9(
+      class9Id: string,
+      reorderedIds: string[]
+    ) {
+      const ktp = ensureKtpForClass9(class9Id);
+      return reorderKtpDetails(ktp.id, reorderedIds);
+    }
+
+    function bulkImportKtpDetailsForClass9(
+      class9Id: string,
+      lessons: ParsedLesson[]
+    ) {
+      const ktp = ensureKtpForClass9(class9Id);
+      return bulkImportKtpDetails(ktp.id, lessons);
+    }
+
+    const getDetailsByClass9Id = computed(() => {
+      return (class9Id: string) => {
+        const ktp = ensureKtpForClass9(class9Id);
+        return getDetailsByKtpId.value(ktp.id);
+      };
+    });
+
     return {
+      ktps,
       ktpDetails,
       loading,
       error,
-      fetchDetailsForParent,
+      // Primary KTP-based APIs
+      ensureKtpForClass9,
+      findKtpByClass9Id,
+      fetchDetailsForKtp,
       addKtpDetail,
       updateKtpDetail,
       deleteKtpDetail,
       reorderKtpDetails,
       bulkImportKtpDetails,
-      getDetailsByParentId,
+      getDetailsByKtpId,
+      // Convenience class9-based APIs (backward compat)
+      fetchDetailsForClass9,
+      addKtpDetailForClass9,
+      reorderKtpDetailsForClass9,
+      bulkImportKtpDetailsForClass9,
+      getDetailsByClass9Id,
+      migrateLegacy,
     };
   },
   {

@@ -2,24 +2,26 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useClass9Store } from "./class9Store";
 
+export interface WeeklySchedule {
+  weekId: number;
+  startTime?: string;
+  endTime?: string;
+  startId?: string;
+  endId?: string;
+}
+
 export interface CalendarEvent {
   id: string;
   class9Id: string;
-  rup: string;
-  file: File | null;
   startDate: string;
   startTime?: string;
   endDate: string;
   endTime?: string;
   participants: string[];
   color?: string; // hex color code for the event
-  weeklySchedules?: {
-    weekId: number;
-    startTime?: string;
-    endTime?: string;
-    startId?: string;
-    endId?: string;
-  }[];
+  semester: string;
+  useCustomPeriod: boolean;
+  weeklySchedules?: WeeklySchedule[];
   createdAt: Date;
   updatedAt: Date;
 }

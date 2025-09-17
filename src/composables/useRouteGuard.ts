@@ -1,4 +1,4 @@
-import { Role } from "../stores/userStore";
+import { Role } from "../types/user";
 import { useRBAC } from "./useRBAC";
 import { f7 } from "framework7-vue";
 

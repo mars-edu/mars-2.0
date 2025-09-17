@@ -100,23 +100,17 @@
               Пол
             </label>
             <div class="flex gap-2">
-              <f7-button
-                :fill="gender === 'male'"
+              <Button
+                :variant="gender === 'male' ? 'primary' : 'ghost'"
                 @click="gender = 'male'"
-                class="flex-1 !border-solid !border-2"
-                :class="{
-                  '!border-gray-500 !text-gray-500': gender !== 'male',
-                }"
-                >Мужской</f7-button
+                class="flex-1"
+                >Мужской</Button
               >
-              <f7-button
-                :fill="gender === 'female'"
+              <Button
+                :variant="gender === 'female' ? 'primary' : 'ghost'"
                 @click="gender = 'female'"
-                class="flex-1 !border-solid !border-2"
-                :class="{
-                  '!border-gray-500 !text-gray-500': gender !== 'female',
-                }"
-                >Женский</f7-button
+                class="flex-1"
+                >Женский</Button
               >
             </div>
           </div>
@@ -128,13 +122,14 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { f7, f7Popover, f7Input, f7Button, f7Icon } from "framework7-vue";
+import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
 import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import Button from "@/components/ui/Button.vue";
 
 const teacherStore = useTeacherStore();
 const academicYearStore = useAcademicYearStore();
@@ -162,7 +157,7 @@ const teacherSchema = z.object({
   position: z.string().min(1, "Пожалуйста, введите должность"),
   employmentYear: z.string().min(1, "Пожалуйста, выберите год поступления"),
   gender: z.enum(["male", "female"], {
-    required_error: "Пожалуйста, выберите пол",
+    message: "Пожалуйста, выберите пол",
   }),
 });
 
@@ -191,7 +186,7 @@ const closeAddTeacherPopover = () => {
 const handleSaveTeacher = async () => {
   if (!isFormValid.value) {
     if (!validationResult.value.success) {
-      formError.value = validationResult.value.error.errors[0].message;
+      formError.value = validationResult.value.error.issues[0].message;
     }
     return;
   }
@@ -206,9 +201,7 @@ const handleSaveTeacher = async () => {
       gender: gender.value as "male" | "female",
     });
     closeAddTeacherPopover();
-  } catch (error) {
-    
-  }
+  } catch (error) {}
 };
 
 const resetForm = () => {

@@ -1,5 +1,5 @@
-import { useUserStore, Role } from "../stores/userStore";
-import type { User } from "../stores/userStore";
+import { useUserStore } from "../stores/userStore";
+import { Role, type User } from "../types/user";
 import { authClient } from "../lib/http-client";
 
 interface LoginCredentials {

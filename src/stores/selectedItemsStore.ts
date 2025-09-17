@@ -6,9 +6,13 @@ import { useClass9Store } from "./class9Store";
 import { storeToRefs } from "pinia";
 
 export const useSelectedItemsStore = defineStore("selectedItems", () => {
+  const selectedAcademicYearId = ref<string | null>(null);
   const selectedSpecialtyId = ref<string | null>(null);
   const selectedCourseId = ref<string | null>(null);
   const selectedClass9ItemId = ref<string | null>(null);
+  function setSelectedAcademicYear(id: string | null) {
+    selectedAcademicYearId.value = id;
+  }
 
   function setSelectedSpecialty(id: string | null) {
     selectedSpecialtyId.value = id;
@@ -25,13 +29,15 @@ export const useSelectedItemsStore = defineStore("selectedItems", () => {
     selectedClass9ItemId.value = id;
   }
 
-  function clearSelection() {
+  function clear() {
+    selectedAcademicYearId.value = null;
     selectedSpecialtyId.value = null;
     selectedCourseId.value = null;
     selectedClass9ItemId.value = null;
   }
 
   function reset() {
+    selectedAcademicYearId.value = null;
     selectedSpecialtyId.value = null;
     selectedCourseId.value = null;
     selectedClass9ItemId.value = null;
@@ -62,16 +68,18 @@ export const useSelectedItemsStore = defineStore("selectedItems", () => {
   });
 
   return {
+    selectedAcademicYearId,
     selectedSpecialtyId,
     selectedCourseId,
     selectedClass9ItemId,
+    setSelectedAcademicYear,
     selectedSpecialty,
     selectedCourse,
     selectedClass9Item,
     setSelectedSpecialty,
     setSelectedCourse,
     setSelectedClass9ItemId,
-    clearSelection,
+    clear,
     reset,
   };
 });

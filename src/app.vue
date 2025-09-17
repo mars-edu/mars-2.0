@@ -19,10 +19,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted, onBeforeMount } from "vue";
 import { f7, f7ready } from "framework7-vue";
 import type { Framework7Parameters, Router } from "framework7/types";
-import { useUserStore, Role } from "./stores/userStore";
+import { useUserStore } from "./stores/userStore";
+import { Role } from "./types/user";
 import { useThemeStore } from "./stores/themeStore";
 import { routeMiddleware } from "./middleware/routeMiddleware";
 
@@ -159,7 +160,8 @@ const f7params: Framework7Parameters = {
   },
 };
 
-onMounted(() => {
+onMounted(async () => {
+  await userStore.initialize();
   console.log("[App] Component mounted");
   console.log(
     "[App] Verbose logging enabled for authentication and routing process"
@@ -168,15 +170,6 @@ onMounted(() => {
   f7ready(async () => {
     console.log("[F7] Framework7 ready");
     console.log("[F7] Detailed initialization process starting");
-
-    console.log("[UserStore] Initializing user store");
-    console.log("[UserStore] Attempting to load user authentication state");
-    await userStore.initialize();
-    console.log("[UserStore] User authenticated:", userStore.isAuthenticated);
-    console.log("[UserStore] Detailed authentication state:", {
-      isAuthenticated: userStore.isAuthenticated,
-      userRoles: userStore.currentUser?.roles,
-    });
 
     if (f7 && f7.views && f7.views.main) {
       console.log("[Router] Main view router initialized");

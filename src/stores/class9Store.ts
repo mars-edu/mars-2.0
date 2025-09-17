@@ -205,6 +205,59 @@ export const useClass9Store = defineStore(
       }
     }
 
+    async function linkExistingClass9(
+      academicYearId: string,
+      specialtyId: string,
+      courseId: string,
+      existingItemId: string,
+      customData?: Partial<
+        Pick<
+          Class9Data,
+          | "totalHours"
+          | "theoreticalHours"
+          | "labPracticalHours"
+          | "srspHours"
+          | "srsHours"
+        >
+      >
+    ) {
+      loading.value = true;
+      try {
+        const existingItem = getClass9ById.value(existingItemId);
+        if (!existingItem) {
+          throw new Error("Existing item not found");
+        }
+
+        const contextItems = getClass9ItemsByContext.value(
+          academicYearId,
+          specialtyId,
+          courseId
+        );
+
+        const linkedClass9: Class9Data = {
+          ...existingItem,
+          id: crypto.randomUUID(),
+          courseId,
+          specialtyId,
+          academicYearId,
+          position: contextItems.length,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          ...customData,
+        };
+
+        class9Items.value.push(linkedClass9);
+        error.value = null;
+        return linkedClass9;
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to link class9 data";
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    }
+
     async function addClass9Items(items: Class9Data[]) {
       loading.value = true;
       try {
@@ -343,6 +396,7 @@ export const useClass9Store = defineStore(
       getError,
       createEmptyClass9Data,
       addClass9,
+      linkExistingClass9,
       addClass9Items,
       updateClass9,
       updateClass9Order,
