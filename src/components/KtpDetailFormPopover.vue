@@ -121,7 +121,7 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 const props = defineProps<{
   opened: boolean;
   target: string;
-  class9Id: string;
+  ktpId: string;
   detailToEdit: KtpDetail | null;
 }>();
 
@@ -203,7 +203,7 @@ const handleSave = () => {
   if (isEditMode.value && props.detailToEdit) {
     ktpStore.updateKtpDetail(props.detailToEdit.id, dataToSave);
   } else {
-    ktpStore.addKtpDetailForClass9(props.class9Id, dataToSave);
+    ktpStore.addKtpDetail(props.ktpId, dataToSave);
   }
   emit("update:opened", false);
 };

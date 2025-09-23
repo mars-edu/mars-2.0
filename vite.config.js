@@ -5,6 +5,7 @@ import { visualizer } from "rollup-plugin-visualizer";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 import { VitePWA } from "vite-plugin-pwa";
 import buildInfoPlugin from "./vite-plugins/build-info.js";
+import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 const SRC_DIR = path.resolve(__dirname, "./src");
 const PUBLIC_DIR = path.resolve(__dirname, "./public");
@@ -13,6 +14,7 @@ const BUILD_DIR = path.resolve(__dirname, "./dist");
 export default async () => {
   return {
     plugins: [
+      nodePolyfills(),
       VitePWA(),
       vue({
         template: {

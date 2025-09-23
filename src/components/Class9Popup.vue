@@ -79,357 +79,228 @@
             <div class="flex justify-between items-center"></div>
 
             <div class="space-y-4">
-              <div class="space-y-2">
-                <label class="text-sm text-foreground" for="module-index">
-                  Индекс модуля/дисциплины
-                </label>
-                <div class="flex gap-2 w-full">
-                  <f7-input
-                    :id="'module-index-' + index"
-                    class="w-full"
-                    :class="{ 'has-data': stepData.moduleIndex }"
-                    type="text"
-                    placeholder="Введите индекс"
-                    clear-button
-                    v-model:value="stepData.moduleIndex"
-                  >
-                    <template #media>
-                      <f7-icon
-                        f7="checkmark_alt"
-                        class="text-green-500"
-                      ></f7-icon>
-                    </template>
-                  </f7-input>
-                  <f7-button
-                    v-if="index > 0"
-                    small
-                    class="copy-button flex items-center justify-center w-10 h-10 rounded-lg transition-colors duration-200 hover:bg-green-600"
-                    @click="copyFromPreviousStep(index, 'moduleIndex')"
-                    tooltip="Вставить из предыдущего"
-                  >
-                    <f7-icon f7="square_on_square" class="text-lg"></f7-icon>
-                  </f7-button>
-                </div>
-              </div>
+              <Input
+                :id="'module-index-' + index"
+                v-model="stepData.moduleIndex"
+                label="Индекс модуля/дисциплины"
+                placeholder="Введите индекс"
+                :show-copy-button="index > 0"
+                @copy="copyFromPreviousStep(index, 'moduleIndex')"
+              />
 
-              <div class="space-y-2">
-                <label class="text-sm text-foreground" for="module-name">
-                  Наименование модуля
-                </label>
-                <div class="flex gap-2 w-full">
-                  <f7-input
-                    :id="'module-name-' + index"
-                    class="w-full"
-                    :class="{ 'has-data': stepData.moduleName }"
-                    type="text"
-                    placeholder="Введите наименование"
-                    clear-button
-                    v-model:value="stepData.moduleName"
-                  >
-                    <template #media>
-                      <f7-icon
-                        f7="checkmark_alt"
-                        class="text-green-500"
-                      ></f7-icon>
-                    </template>
-                  </f7-input>
-                  <f7-button
-                    v-if="index > 0"
-                    small
-                    class="copy-button flex items-center justify-center w-10 h-10 rounded-lg transition-colors duration-200 hover:bg-green-600"
-                    @click="copyFromPreviousStep(index, 'moduleName')"
-                    tooltip="Вставить из предыдущего"
-                  >
-                    <f7-icon f7="square_on_square" class="text-lg"></f7-icon>
-                  </f7-button>
-                </div>
-              </div>
+              <Input
+                :id="'module-name-' + index"
+                v-model="stepData.moduleName"
+                label="Наименование модуля"
+                placeholder="Введите наименование"
+                :show-copy-button="index > 0"
+                @copy="copyFromPreviousStep(index, 'moduleName')"
+              />
 
-              <div class="space-y-2">
-                <label class="text-sm text-foreground" for="learning-outcome">
-                  Наименование результата обучения/дисциплина
-                </label>
-                <div class="flex gap-2 w-full">
-                  <f7-input
-                    :id="'learning-outcome-' + index"
-                    class="w-full"
-                    :class="{ 'has-data': stepData.learningOutcome }"
-                    type="text"
-                    placeholder="Введите результат"
-                    clear-button
-                    v-model:value="stepData.learningOutcome"
-                  >
-                    <template #media>
-                      <f7-icon
-                        f7="checkmark_alt"
-                        class="text-green-500"
-                      ></f7-icon>
-                    </template>
-                  </f7-input>
-                  <f7-button
-                    v-if="index > 0"
-                    small
-                    class="copy-button flex items-center justify-center w-10 h-10 rounded-lg transition-colors duration-200 hover:bg-green-600"
-                    @click="copyFromPreviousStep(index, 'learningOutcome')"
-                    tooltip="Вставить из предыдущего"
-                  >
-                    <f7-icon f7="square_on_square" class="text-lg"></f7-icon>
-                  </f7-button>
-                </div>
+              <Input
+                :id="'learning-outcome-' + index"
+                v-model="stepData.learningOutcome"
+                label="Наименование результата обучения/дисциплина"
+                placeholder="Введите результат"
+                :show-copy-button="index > 0"
+                @copy="copyFromPreviousStep(index, 'learningOutcome')"
+              />
+
+              <div class="mt-6 grid grid-cols-2 gap-4">
+                <Input
+                  :id="'total-credits-' + index"
+                  v-model="stepData.totalCredits"
+                  label="Всего кредитов"
+                  type="number"
+                  placeholder="0"
+                />
+
+                <Input
+                  :id="'total-hours-' + index"
+                  v-model="stepData.totalHours"
+                  label="Всего часов"
+                  type="number"
+                  placeholder="0"
+                />
+
+                <Input
+                  :id="'theoretical-hours-' + index"
+                  v-model="stepData.theoreticalHours"
+                  label="Теоретических"
+                  type="number"
+                  placeholder="0"
+                />
+
+                <Input
+                  :id="'lab-practical-hours-' + index"
+                  v-model="stepData.labPracticalHours"
+                  label="Лабараторно-практических"
+                  type="number"
+                  placeholder="0"
+                />
+
+                <Input
+                  :id="'field3-value-' + index"
+                  v-model="stepData.field3Value"
+                  label="3"
+                  type="number"
+                  placeholder="0"
+                />
+
+                <Input
+                  :id="'srsp-hours-' + index"
+                  v-model="stepData.srspHours"
+                  label="Самостоятельная работа студента с педагогом"
+                  type="number"
+                  placeholder="0"
+                />
+
+                <Input
+                  :id="'srs-hours-' + index"
+                  v-model="stepData.srsHours"
+                  label="Самостоятельная работа студента"
+                  type="number"
+                  placeholder="0"
+                />
+
+                <Input
+                  :id="'training-practice-hours-' + index"
+                  v-model="stepData.trainingPracticeHours"
+                  label="Производственное обучение / профессиональная практика"
+                  type="number"
+                  placeholder="0"
+                />
+
+                <Input
+                  :id="'individual-hours-' + index"
+                  v-model="stepData.individualHours"
+                  label="Индивидуальные"
+                  type="number"
+                  placeholder="0"
+                />
               </div>
 
               <div class="mt-6">
-                <div class="text-sm font-medium mb-3">Форма контроля</div>
+                <div class="flex items-center justify-between mb-3">
+                  <div class="text-sm font-medium">
+                    Распределение по курсам и семестрам
+                  </div>
+                  <f7-button
+                    small
+                    fill
+                    @click="addDistributionEntry"
+                    class="add-distribution-btn"
+                  >
+                    <f7-icon f7="plus" size="14px" class="mr-1"></f7-icon>
+                    Добавить
+                  </f7-button>
+                </div>
 
                 <div class="space-y-3">
                   <div
-                    class="flex items-center justify-between p-3 border border-input rounded-lg hover:border-red-500"
-                    @click="toggleCheckbox(index, 'exam')"
+                    v-for="(entry, entryIndex) in stepData.distributionEntries"
+                    :key="entry.id"
+                    class="border border-input rounded-lg p-3"
                   >
-                    <div class="flex items-center gap-3">
-                      <f7-checkbox
-                        @click.stop
-                        v-model:checked="stepData.examEnabled"
-                      ></f7-checkbox>
-                      <span class="text-sm">Экзамен</span>
-                    </div>
-                    <div class="flex gap-1">
+                    <div class="flex items-center justify-end mb-3">
                       <f7-button
-                        v-for="i in 8"
-                        :key="i"
                         small
-                        class="semester-button w-7 h-7 min-w-7 border border-red-500"
-                        :fill="stepData.examSemesters[i - 1]"
-                        @click="(e: MouseEvent) => toggleSemester(index, 'exam', i - 1, e)"
-                        >{{ i }}</f7-button
+                        @click="removeDistributionEntry(entry.id)"
+                        class="remove-entry-btn"
                       >
+                        <f7-icon f7="trash" size="14px" color="red"></f7-icon>
+                      </f7-button>
                     </div>
-                  </div>
 
-                  <div
-                    class="flex items-center justify-between p-3 border border-input rounded-lg hover:border-red-500"
-                    @click="toggleCheckbox(index, 'credit')"
-                  >
-                    <div class="flex items-center gap-3">
-                      <f7-checkbox
-                        @click.stop
-                        v-model:checked="stepData.creditEnabled"
-                      ></f7-checkbox>
-                      <span class="text-sm">Зачет</span>
-                    </div>
-                    <div class="flex gap-1">
-                      <f7-button
-                        v-for="i in 8"
-                        :key="i"
-                        small
-                        class="semester-button w-7 h-7 min-w-7 border border-red-500"
-                        :fill="stepData.creditSemesters[i - 1]"
-                        @click="(e: MouseEvent) => toggleSemester(index, 'credit', i - 1, e)"
-                        >{{ i }}</f7-button
-                      >
-                    </div>
-                  </div>
+                    <div class="grid grid-cols-3 gap-3">
+                      <div class="space-y-2">
+                        <Select
+                          :modelValue="entry.academicYearId"
+                          :options="
+                            academicYearStore.academicYears.map((year) => ({
+                              value: year.id,
+                              text: `${year.startYear}-${year.endYear}`,
+                            }))
+                          "
+                          label="Учебный год"
+                          placeholder="Выберите год"
+                          search-placeholder="Поиск учебного года..."
+                          @update:modelValue="
+                            (value) => {
+                              entry.academicYearId = value;
+                              entry.semesterId = ''; // Clear semester when year changes
+                            }
+                          "
+                        />
+                      </div>
 
-                  <div
-                    class="flex items-center justify-between p-3 border border-input rounded-lg hover:border-red-500"
-                    @click="toggleCheckbox(index, 'controlLesson')"
-                  >
-                    <div class="flex items-center gap-3">
-                      <f7-checkbox
-                        @click.stop
-                        v-model:checked="stepData.controlLessonEnabled"
-                      ></f7-checkbox>
-                      <span class="text-sm">Контрольный урок</span>
-                    </div>
-                    <div class="flex gap-1">
-                      <f7-button
-                        v-for="i in 8"
-                        :key="i"
-                        small
-                        class="semester-button w-7 h-7 min-w-7 border border-red-500"
-                        :fill="stepData.controlLessonSemesters[i - 1]"
-                        @click="
-                          (e: MouseEvent) => toggleSemester(index, 'controlLesson', i - 1, e)
-                        "
-                        >{{ i }}</f7-button
-                      >
-                    </div>
-                  </div>
-                </div>
-              </div>
+                      <div class="space-y-2">
+                        <Select
+                          :modelValue="entry.semesterId"
+                          :options="
+                            academicYearSemesterStore
+                              .getAcademicYearSemestersByAcademicYear(
+                                entry.academicYearId
+                              )
+                              .map((academicYearSemester) => ({
+                                value:
+                                  academicYearSemester.semesterNumber.toString(),
+                                text: `Семестр ${academicYearSemester.semesterNumber}`,
+                              }))
+                          "
+                          label="Семестр"
+                          placeholder="Выберите семестр"
+                          search-placeholder="Поиск семестра..."
+                          @update:modelValue="entry.semesterId = $event"
+                        />
+                      </div>
 
-              <div class="mt-6 grid grid-cols-2 gap-4">
-                <div class="space-y-2">
-                  <label class="text-sm text-foreground" for="total-credits">
-                    Всего кредитов
-                  </label>
-                  <f7-input
-                    :id="'total-credits-' + index"
-                    :class="{ 'has-data': stepData.totalCredits }"
-                    type="number"
-                    placeholder="0"
-                    clear-button
-                    v-model:value="stepData.totalCredits"
-                  ></f7-input>
-                </div>
-
-                <div class="space-y-2">
-                  <label class="text-sm text-foreground" for="total-hours">
-                    Всего часов
-                  </label>
-                  <f7-input
-                    :id="'total-hours-' + index"
-                    :class="{ 'has-data': stepData.totalHours }"
-                    type="number"
-                    placeholder="0"
-                    clear-button
-                    v-model:value="stepData.totalHours"
-                  ></f7-input>
-                </div>
-
-                <div class="space-y-2">
-                  <label
-                    class="text-sm text-foreground"
-                    for="theoretical-hours"
-                  >
-                    Теоретических
-                  </label>
-                  <f7-input
-                    :id="'theoretical-hours-' + index"
-                    :class="{ 'has-data': stepData.theoreticalHours }"
-                    type="number"
-                    placeholder="0"
-                    clear-button
-                    v-model:value="stepData.theoreticalHours"
-                  ></f7-input>
-                </div>
-
-                <div class="space-y-2">
-                  <label
-                    class="text-sm text-foreground"
-                    for="lab-practical-hours"
-                  >
-                    Лабараторно-практических
-                  </label>
-                  <f7-input
-                    :id="'lab-practical-hours-' + index"
-                    :class="{ 'has-data': stepData.labPracticalHours }"
-                    type="number"
-                    placeholder="0"
-                    clear-button
-                    v-model:value="stepData.labPracticalHours"
-                  ></f7-input>
-                </div>
-
-                <div class="space-y-2">
-                  <label class="text-sm text-foreground" for="field3-value">
-                    3
-                  </label>
-                  <f7-input
-                    :id="'field3-value-' + index"
-                    :class="{ 'has-data': stepData.field3Value }"
-                    type="number"
-                    placeholder="0"
-                    clear-button
-                    v-model:value="stepData.field3Value"
-                  ></f7-input>
-                </div>
-
-                <div class="space-y-2">
-                  <label class="text-sm text-foreground" for="srsp-hours">
-                    Самостоятельная работа студента с педагогом
-                  </label>
-                  <f7-input
-                    :id="'srsp-hours-' + index"
-                    :class="{ 'has-data': stepData.srspHours }"
-                    type="number"
-                    placeholder="0"
-                    clear-button
-                    v-model:value="stepData.srspHours"
-                  ></f7-input>
-                </div>
-
-                <div class="space-y-2">
-                  <label class="text-sm text-foreground" for="srs-hours">
-                    Самостоятельная работа студента
-                  </label>
-                  <f7-input
-                    :id="'srs-hours-' + index"
-                    :class="{ 'has-data': stepData.srsHours }"
-                    type="number"
-                    placeholder="0"
-                    clear-button
-                    v-model:value="stepData.srsHours"
-                  ></f7-input>
-                </div>
-
-                <div class="space-y-2">
-                  <label
-                    class="text-sm text-foreground"
-                    for="training-practice-hours"
-                  >
-                    Производственное обучение / профессиональная практика
-                  </label>
-                  <f7-input
-                    :id="'training-practice-hours-' + index"
-                    :class="{ 'has-data': stepData.trainingPracticeHours }"
-                    type="number"
-                    placeholder="0"
-                    clear-button
-                    v-model:value="stepData.trainingPracticeHours"
-                  ></f7-input>
-                </div>
-
-                <div class="space-y-2">
-                  <label class="text-sm text-foreground" for="individual-hours">
-                    Индивидуальные
-                  </label>
-                  <f7-input
-                    :id="'individual-hours-' + index"
-                    :class="{ 'has-data': stepData.individualHours }"
-                    type="number"
-                    placeholder="0"
-                    clear-button
-                    v-model:value="stepData.individualHours"
-                  ></f7-input>
-                </div>
-              </div>
-
-              <div class="mt-6">
-                <div class="text-sm font-medium mb-3">
-                  Распределение по курсам и семестрам
-                </div>
-                <div class="border border-input rounded-lg p-3">
-                  <div class="semester-grid mb-2">
-                    <div class="text-sm font-medium">Семестры</div>
-                    <div
-                      v-for="i in 8"
-                      :key="`sem-label-${i}`"
-                      class="semester-label text-center text-sm w-7 h-7 min-w-7 flex items-center justify-center rounded-lg"
-                      :class="{
-                        'semester-active':
-                          Number(stepData.distributionSemesterHours[i - 1]) > 0,
-                      }"
-                    >
-                      {{ i }}
-                    </div>
-                  </div>
-                  <div class="distribution-hours">
-                    <div class="text-sm font-medium">Объем часов</div>
-                    <div
-                      v-for="i in 8"
-                      :key="`sem-input-${i}`"
-                      class="text-center"
-                    >
-                      <f7-input
+                      <Input
+                        v-model="entry.hours"
+                        label="Объем часов"
                         type="number"
-                        placeholder="-"
+                        placeholder="0"
+                        :show-checkmark="false"
                         class="text-center"
-                        v-model:value="
-                          stepData.distributionSemesterHours[i - 1]
-                        "
-                      ></f7-input>
+                      />
                     </div>
+
+                    <div class="mt-4">
+                      <div class="text-sm font-medium mb-3">Форма контроля</div>
+
+                      <div class="grid grid-cols-3 gap-3">
+                        <div class="space-2">
+                          <f7-checkbox
+                            v-model:checked="entry.examEnabled"
+                          ></f7-checkbox>
+                          <label class="text-sm font-medium">Экзамен</label>
+                        </div>
+
+                        <div class="space-2">
+                          <f7-checkbox
+                            v-model:checked="entry.creditEnabled"
+                          ></f7-checkbox>
+                          <label class="text-sm font-medium">Зачет</label>
+                        </div>
+
+                        <div class="space-2">
+                          <f7-checkbox
+                            v-model:checked="entry.controlLessonEnabled"
+                          ></f7-checkbox>
+                          <label class="text-sm font-medium"
+                            >Контрольный урок</label
+                          >
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    v-if="stepData.distributionEntries.length === 0"
+                    class="text-center py-4 text-muted-foreground text-sm"
+                  >
+                    Нет записей распределения. Нажмите "Добавить" чтобы создать
+                    первую запись.
                   </div>
                 </div>
               </div>
@@ -443,17 +314,15 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from "vue";
-import {
-  f7Popover,
-  f7Input,
-  f7Checkbox,
-  f7Icon,
-  f7Button,
-  f7,
-} from "framework7-vue";
+import { f7Popover, f7Checkbox, f7Icon, f7Button, f7 } from "framework7-vue";
 import { useClass9Store } from "@/stores/class9Store";
+import { useAcademicYearStore } from "@/stores/academicYearStore";
+import { useSemesterStore } from "@/stores/semesterStore";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { z } from "zod";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import Select from "@/components/ui/Select.vue";
+import Input from "@/components/ui/Input.vue";
 
 const emit = defineEmits<{
   (e: "submit"): void;
@@ -462,19 +331,20 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   specialtyId: string;
-  courseId: string;
   academicYearId: string;
   initialData?: any;
   editMode?: boolean;
 }>();
 
 const class9Store = useClass9Store();
+const academicYearStore = useAcademicYearStore();
+const semesterStore = useSemesterStore();
+const academicYearSemesterStore = useAcademicYearSemesterStore();
 
 function createEmptyStep() {
   return class9Store.createEmptyClass9Data(
     props.academicYearId,
-    props.specialtyId,
-    props.courseId
+    props.specialtyId
   );
 }
 
@@ -509,6 +379,25 @@ onMounted(async () => {
   });
 });
 
+const distributionEntrySchema = z.object({
+  academicYearId: z.string().min(1, "Учебный год обязателен"),
+  semesterId: z
+    .string()
+    .min(1, "Семестр обязателен")
+    .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+      message: "Семестр должен быть положительным числом",
+    }),
+  hours: z
+    .string()
+    .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+      message: "Объем часов должен быть положительным числом",
+    })
+    .optional(),
+  examEnabled: z.boolean().optional(),
+  creditEnabled: z.boolean().optional(),
+  controlLessonEnabled: z.boolean().optional(),
+});
+
 const class9Schema = z.object({
   moduleIndex: z.string().min(1, "Индекс модуля обязателен"),
   moduleName: z.string().min(1, "Наименование модуля обязательно"),
@@ -539,6 +428,12 @@ const class9Schema = z.object({
       message: "Лабораторно-практические часы должны быть положительным числом",
     })
     .optional(),
+  field3Value: z
+    .string()
+    .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+      message: "Поле 3 должно быть положительным числом",
+    })
+    .optional(),
   srspHours: z
     .string()
     .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
@@ -563,6 +458,7 @@ const class9Schema = z.object({
       message: "Индивидуальные часы должны быть положительным числом",
     })
     .optional(),
+  distributionEntries: z.array(distributionEntrySchema).min(0),
 });
 
 const validationResult = computed(() => {
@@ -577,10 +473,12 @@ const validationResult = computed(() => {
     totalHours: String(step.totalHours),
     theoreticalHours: String(step.theoreticalHours),
     labPracticalHours: String(step.labPracticalHours),
+    field3Value: String(step.field3Value),
     srspHours: String(step.srspHours),
     srsHours: String(step.srsHours),
     trainingPracticeHours: String(step.trainingPracticeHours),
     individualHours: String(step.individualHours),
+    distributionEntries: step.distributionEntries,
   });
 });
 
@@ -646,7 +544,6 @@ async function submit() {
         await class9Store.addClass9(
           props.academicYearId,
           props.specialtyId,
-          props.courseId,
           step
         );
       }
@@ -657,50 +554,52 @@ async function submit() {
   }
 }
 
-function toggleSemester(
-  stepIndex: number,
-  type: "exam" | "credit" | "controlLesson",
-  semesterIndex: number,
-  event?: MouseEvent
+function toggleEntryCheckbox(
+  entryIndex: number,
+  type: "exam" | "credit" | "controlLesson"
 ) {
-  if (event) event.stopPropagation();
-  const stepData = steps.value[stepIndex];
-  if (!stepData) return;
+  const step = steps.value[currentStep.value - 1];
+  if (!step || !step.distributionEntries[entryIndex]) return;
+  const entry = step.distributionEntries[entryIndex];
   switch (type) {
     case "exam":
-      if (!stepData.examEnabled) stepData.examEnabled = true;
-      stepData.examSemesters[semesterIndex] =
-        !stepData.examSemesters[semesterIndex];
+      entry.examEnabled = !entry.examEnabled;
       break;
     case "credit":
-      if (!stepData.creditEnabled) stepData.creditEnabled = true;
-      stepData.creditSemesters[semesterIndex] =
-        !stepData.creditSemesters[semesterIndex];
+      entry.creditEnabled = !entry.creditEnabled;
       break;
     case "controlLesson":
-      if (!stepData.controlLessonEnabled) stepData.controlLessonEnabled = true;
-      stepData.controlLessonSemesters[semesterIndex] =
-        !stepData.controlLessonSemesters[semesterIndex];
+      entry.controlLessonEnabled = !entry.controlLessonEnabled;
       break;
   }
 }
 
-function toggleCheckbox(
-  stepIndex: number,
-  type: "exam" | "credit" | "controlLesson"
-) {
-  const stepData = steps.value[stepIndex];
-  if (!stepData) return;
-  switch (type) {
-    case "exam":
-      stepData.examEnabled = !stepData.examEnabled;
-      break;
-    case "credit":
-      stepData.creditEnabled = !stepData.creditEnabled;
-      break;
-    case "controlLesson":
-      stepData.controlLessonEnabled = !stepData.controlLessonEnabled;
-      break;
+function addDistributionEntry() {
+  const step = steps.value[currentStep.value - 1];
+  if (!step) return;
+
+  const newEntry = {
+    id: crypto.randomUUID(),
+    academicYearId: props.academicYearId, // Default to current academic year
+    semesterId: "",
+    hours: "",
+    examEnabled: false,
+    creditEnabled: false,
+    controlLessonEnabled: false,
+  };
+
+  step.distributionEntries.push(newEntry);
+}
+
+function removeDistributionEntry(entryId: string) {
+  const step = steps.value[currentStep.value - 1];
+  if (!step) return;
+
+  const entryIndex = step.distributionEntries.findIndex(
+    (entry) => entry.id === entryId
+  );
+  if (entryIndex !== -1) {
+    step.distributionEntries.splice(entryIndex, 1);
   }
 }
 
@@ -784,20 +683,6 @@ function showDeleteConfirmation() {
   border-color: var(--f7-theme-color) !important;
 }
 
-.copy-button {
-  background-color: rgb(34 197 94) !important;
-  color: white !important;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-}
-
-.copy-button:active {
-  transform: scale(0.97);
-}
-
-.copy-button:hover {
-  background-color: rgb(22 163 74) !important;
-}
-
 .semester-label {
   border: 1px solid transparent;
   transition: all 0.2s ease;
@@ -809,8 +694,22 @@ function showDeleteConfirmation() {
   color: white;
 }
 
+.add-distribution-btn {
+  background-color: var(--f7-theme-color) !important;
+  color: white !important;
+}
+
+.remove-entry-btn {
+  min-width: 24px !important;
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
+}
+
 :deep(.distribution-hours input[type="number"]) {
   -moz-appearance: textfield;
+  -webkit-appearance: textfield;
+  appearance: textfield;
 }
 
 :deep(.distribution-hours input[type="number"]::-webkit-outer-spin-button),
@@ -829,13 +728,5 @@ function showDeleteConfirmation() {
   display: grid;
   grid-template-columns: 120px repeat(8, 1fr);
   gap: 0.5rem;
-}
-
-:deep(.input:hover) {
-  background-color: rgb(218, 220, 223) !important;
-}
-
-:deep(.has-data) {
-  background-color: rgb(218, 220, 223) !important;
 }
 </style>

@@ -120,7 +120,6 @@
                 <JournalTab
                   ref="journalTabRef"
                   :journal-id="journalId"
-                  :current-journal="currentJournal"
                   :journal-settings="journalSettings"
                   @show-floating-row="showFloatingRow"
                   @open-date-focus="openDateFocus"
@@ -269,10 +268,7 @@
       @close="isDateFocusVisible = false"
       @update-students="updateStudents"
     />
-    <KtpDetailPopup
-      v-model:opened="isKtpPopupOpened"
-      :parent-id="ktpParentId"
-    />
+    <KtpDetailPopup v-model:opened="isKtpPopupOpened" :ktp-id="ktpParentId" />
 
     <!-- Journal Settings Popup -->
     <f7-popover
@@ -381,6 +377,7 @@ import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useJournalStore } from "@/stores/journalStore";
 import { useCalendarStore } from "@/stores/calendarStore";
+import { useClass9Store } from "@/stores/class9Store";
 import Select from "@/components/ui/Select.vue";
 import JournalTab from "@/components/JournalTab.vue";
 import FloatingJournalRow from "@/components/FloatingJournalRow.vue";
@@ -401,7 +398,8 @@ const { academicYears } = storeToRefs(academicYearStore);
 
 const journalStore = useJournalStore();
 const calendarStore = useCalendarStore();
-const { class9Options } = storeToRefs(calendarStore);
+const class9Store = useClass9Store();
+const { class9Options } = storeToRefs(class9Store);
 
 const selectedAcademicYear = ref("");
 

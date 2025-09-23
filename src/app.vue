@@ -29,19 +29,6 @@ import { routeMiddleware } from "./middleware/routeMiddleware";
 
 import routes from "./js/routes";
 import store from "./js/store";
-import { useHashHistory } from "@/composables/hashHistoryWorkaround";
-
-const {
-  currentHash,
-  history,
-  historyIndex,
-  canGoBack,
-  canGoForward,
-  pushHash,
-  replaceHash,
-  goBack,
-  goForward,
-} = useHashHistory();
 
 const userStore = useUserStore();
 const themeStore = useThemeStore();

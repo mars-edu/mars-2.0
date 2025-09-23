@@ -1,20 +1,23 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 
+export interface DistributionEntry {
+  id: string;
+  academicYearId: string;
+  semesterId: string;
+  hours: string;
+  examEnabled: boolean;
+  creditEnabled: boolean;
+  controlLessonEnabled: boolean;
+}
+
 export interface Class9Data {
   id: string;
-  courseId: string;
   specialtyId: string;
   academicYearId: string;
   moduleIndex: string;
   moduleName: string;
   learningOutcome: string;
-  examEnabled: boolean;
-  examSemesters: boolean[];
-  creditEnabled: boolean;
-  creditSemesters: boolean[];
-  controlLessonEnabled: boolean;
-  controlLessonSemesters: boolean[];
   totalCredits: string;
   totalHours: string;
   theoreticalHours: string;
@@ -24,8 +27,7 @@ export interface Class9Data {
   srsHours: string;
   trainingPracticeHours: string;
   individualHours: string;
-  distributionSemestersActive: boolean[];
-  distributionSemesterHours: string[];
+  distributionEntries: DistributionEntry[];
   position: number;
   createdAt: Date;
   updatedAt: Date;
@@ -43,22 +45,14 @@ export const useClass9Store = defineStore(
     });
 
     const getClass9ItemsByContext = computed(() => {
-      return (academicYearId: string, specialtyId: string, courseId: string) =>
+      return (academicYearId: string, specialtyId: string) =>
         class9Items.value
           .filter(
             (c) =>
               c.academicYearId === academicYearId &&
-              c.specialtyId === specialtyId &&
-              c.courseId === courseId
+              c.specialtyId === specialtyId
           )
           .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
-    });
-
-    const getClass9ByCourseId = computed(() => {
-      return (courseId: string, specialtyId: string) =>
-        class9Items.value.find(
-          (c) => c.courseId === courseId && c.specialtyId === specialtyId
-        );
     });
 
     const getAllModulesAndOutcomes = computed(() => {
@@ -124,25 +118,31 @@ export const useClass9Store = defineStore(
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
+    const class9Options = computed(() => {
+      return class9Items.value
+        .filter(
+          (item) => item.learningOutcome && item.learningOutcome.trim() !== ""
+        )
+        .map((item) => ({
+          value: item.id,
+          text: `${item.moduleIndex} ${item.moduleName} - ${item.learningOutcome}`,
+          moduleIndex: item.moduleIndex,
+          moduleName: item.moduleName,
+          learningOutcome: item.learningOutcome,
+        }));
+    });
+
     function createEmptyClass9Data(
       academicYearId: string,
-      specialtyId: string,
-      courseId: string
+      specialtyId: string
     ): Class9Data {
       return {
         id: crypto.randomUUID(),
-        courseId,
         specialtyId,
         academicYearId,
         moduleIndex: "",
         moduleName: "",
         learningOutcome: "",
-        examEnabled: false,
-        examSemesters: Array(8).fill(false),
-        creditEnabled: false,
-        creditSemesters: Array(8).fill(false),
-        controlLessonEnabled: false,
-        controlLessonSemesters: Array(8).fill(false),
         totalCredits: "",
         totalHours: "",
         theoreticalHours: "",
@@ -152,8 +152,7 @@ export const useClass9Store = defineStore(
         srsHours: "",
         trainingPracticeHours: "",
         individualHours: "",
-        distributionSemestersActive: Array(8).fill(false),
-        distributionSemesterHours: Array(8).fill(""),
+        distributionEntries: [],
         position: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -163,16 +162,10 @@ export const useClass9Store = defineStore(
     async function addClass9(
       academicYearId: string,
       specialtyId: string,
-      courseId: string,
       data?: Partial<
         Omit<
           Class9Data,
-          | "id"
-          | "createdAt"
-          | "updatedAt"
-          | "courseId"
-          | "specialtyId"
-          | "academicYearId"
+          "id" | "createdAt" | "updatedAt" | "specialtyId" | "academicYearId"
         >
       >
     ) {
@@ -180,14 +173,12 @@ export const useClass9Store = defineStore(
       try {
         const contextItems = getClass9ItemsByContext.value(
           academicYearId,
-          specialtyId,
-          courseId
+          specialtyId
         );
         const newClass9: Class9Data = {
-          ...createEmptyClass9Data(academicYearId, specialtyId, courseId),
+          ...createEmptyClass9Data(academicYearId, specialtyId),
           ...data,
           // TODO: workaround
-          courseId,
           specialtyId,
           academicYearId,
           position: contextItems.length,
@@ -208,7 +199,6 @@ export const useClass9Store = defineStore(
     async function linkExistingClass9(
       academicYearId: string,
       specialtyId: string,
-      courseId: string,
       existingItemId: string,
       customData?: Partial<
         Pick<
@@ -218,6 +208,8 @@ export const useClass9Store = defineStore(
           | "labPracticalHours"
           | "srspHours"
           | "srsHours"
+          | "trainingPracticeHours"
+          | "individualHours"
         >
       >
     ) {
@@ -230,14 +222,12 @@ export const useClass9Store = defineStore(
 
         const contextItems = getClass9ItemsByContext.value(
           academicYearId,
-          specialtyId,
-          courseId
+          specialtyId
         );
 
         const linkedClass9: Class9Data = {
           ...existingItem,
           id: crypto.randomUUID(),
-          courseId,
           specialtyId,
           academicYearId,
           position: contextItems.length,
@@ -304,14 +294,12 @@ export const useClass9Store = defineStore(
     function updateClass9Order(
       academicYearId: string,
       specialtyId: string,
-      courseId: string,
       oldIndex: number,
       newIndex: number
     ) {
       const contextItems = getClass9ItemsByContext.value(
         academicYearId,
-        specialtyId,
-        courseId
+        specialtyId
       );
       const [movedItem] = contextItems.splice(oldIndex, 1);
       contextItems.splice(newIndex, 0, movedItem);
@@ -345,8 +333,7 @@ export const useClass9Store = defineStore(
       const itemsInContext = class9Items.value.filter(
         (c) =>
           c.academicYearId === itemToDuplicate.academicYearId &&
-          c.specialtyId === itemToDuplicate.specialtyId &&
-          c.courseId === itemToDuplicate.courseId
+          c.specialtyId === itemToDuplicate.specialtyId
       );
 
       itemsInContext.forEach((item) => {
@@ -389,9 +376,9 @@ export const useClass9Store = defineStore(
       error,
       getClass9ById,
       getClass9ItemsByContext,
-      getClass9ByCourseId,
       getAllClass9Items,
       getAllModulesAndOutcomes,
+      class9Options,
       isLoading,
       getError,
       createEmptyClass9Data,

@@ -191,7 +191,7 @@
                       class="rounded-lg p-4 text-gray-800 shadow-md min-h-[90px] flex flex-col justify-between transition-all duration-200 bg-blue-100 border border-blue-200"
                     >
                       <p class="font-semibold text-sm leading-tight">
-                        {{ getJournalTitle(journal) }}
+                        {{ journalStore.getJournalTitle(journal) }}
                       </p>
                     </div>
                     <div
@@ -223,6 +223,7 @@ import { useSemesterStore } from "@/stores/semesterStore";
 import { useJournalStore, type Journal } from "@/stores/journalStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { storeToRefs } from "pinia";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 
 const activeNavItem = ref("journals");
 
@@ -237,18 +238,13 @@ const { academicYears } = storeToRefs(academicYearStore);
 const semesterStore = useSemesterStore();
 const { sortedSemesters } = storeToRefs(semesterStore);
 
-function getJournalTitle(journal: Journal) {
-  if (!journal.students || journal.students.length === 0) {
-    return `Журнал курса ${journal.courseNumber}`;
-  }
-  return journalStore.generateJournalTitle(
-    journal.courseNumber,
-    journal.students || []
-  );
-}
+const academicYearSemesterStore = useAcademicYearSemesterStore();
 
 const selectedAcademicYear = ref("");
 const selectedSemesterId = ref("");
+const { getActiveAcademicYearSemester } = storeToRefs(
+  academicYearSemesterStore
+);
 
 const academicYearOptions = computed(() => {
   return academicYears.value.map((year) => ({
@@ -262,19 +258,22 @@ const semesterOptions = computed(() => {
   const list = yearId
     ? semesterStore.getSemestersByAcademicYear(yearId)
     : sortedSemesters.value;
-  return list.map((s) => ({ value: s.id, text: s.shortName || s.fullName }));
+  return list.map((s) => ({
+    value: s.id,
+    text: s.shortName || s.fullName || "",
+  }));
 });
 
 onMounted(async () => {
   selectedAcademicYear.value =
     academicYearStore.getActiveAcademicYear?.id || "";
-  const activeSem = semesterStore.getActiveSemester;
   if (
-    activeSem &&
+    getActiveAcademicYearSemester.value &&
     (!selectedAcademicYear.value ||
-      activeSem.academicYearId === selectedAcademicYear.value)
+      getActiveAcademicYearSemester.value.academicYearId ===
+        selectedAcademicYear.value)
   ) {
-    selectedSemesterId.value = activeSem.id;
+    selectedSemesterId.value = getActiveAcademicYearSemester.value.id;
   }
 });
 

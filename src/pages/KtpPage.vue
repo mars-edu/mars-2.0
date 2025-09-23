@@ -43,7 +43,7 @@
           <div class="space-y-3">
             <div class="border border-border rounded-lg overflow-hidden">
               <div
-                class="grid grid-cols-[minmax(0,_1fr)_100px_100px_120px_120px] gap-4 px-4 py-2 bg-muted/50 text-sm text-muted-foreground"
+                class="grid grid-cols-[minmax(0,_1fr)_100px_100px_120px_100px] gap-4 px-4 py-2 bg-muted/50 text-sm text-muted-foreground"
               >
                 <div class="font-medium">Модуль/дисциплина</div>
                 <div class="font-medium text-center">Курс</div>
@@ -68,7 +68,7 @@
                 <div
                   v-for="item in filteredKtpItems"
                   :key="item.id"
-                  class="grid grid-cols-[minmax(0,_1fr)_100px_100px_120px_120px] gap-4 px-4 py-3 items-center cursor-pointer"
+                  class="grid grid-cols-[minmax(0,_1fr)_100px_100px_120px_100px] gap-4 px-4 py-3 items-center cursor-pointer"
                   :class="{
                     'ring-2 ring-primary bg-primary/10 font-semibold':
                       item.id === selectedItemId,
@@ -84,9 +84,9 @@
                     }}</span>
                   </div>
                   <div class="text-center">
-                    {{ getCourseNumber(item.courseId) }}
+                    {{ getCourseNumber((item as any).courseId || "") }}
                   </div>
-                  <div class="text-center">{{ item.totalHours }}</div>
+                  <div class="text-center">{{ item.ktpTotalHours }}</div>
                   <div class="text-center">—</div>
                   <div class="text-center">—</div>
                 </div>
@@ -99,10 +99,20 @@
 
     <KtpDetailPopup
       v-model:opened="isPopupOpened"
-      :class9-id="selectedKtpParentId"
+      :ktp-id="
+        getKtpIdForClass9(
+          selectedKtpParentId,
+          selectedAcademicYearId ?? undefined,
+          selectedSemesterId
+        )
+      "
     />
 
-    <AddKtpItemForm v-model:opened="isAddItemFormOpen" />
+    <AddKtpItemForm
+      v-model:opened="isAddItemFormOpen"
+      :selected-academic-year-id="selectedAcademicYearId ?? undefined"
+      :selected-semester-id="selectedSemesterId ?? undefined"
+    />
 
     <template #fixed>
       <f7-fab
@@ -119,7 +129,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { f7Page, f7Icon, f7Fab, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -127,9 +137,10 @@ import Select from "@/components/ui/Select.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
 import AddKtpItemForm from "@/components/AddKtpItemForm.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
-import { useClass9Store, type Class9Data } from "@/stores/class9Store";
+import { useClass9Store } from "@/stores/class9Store";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { useSemesterStore } from "@/stores/semesterStore";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { useKtpStore } from "@/stores/ktpStore";
 import { storeToRefs } from "pinia";
@@ -138,9 +149,40 @@ const activeNavItem = ref("ktp");
 
 const academicYearStore = useAcademicYearStore();
 const { academicYears } = storeToRefs(academicYearStore);
+const academicYearSemesterStore = useAcademicYearSemesterStore();
 
 const class9Store = useClass9Store();
-const { getAllClass9Items: ktpItems, isLoading } = storeToRefs(class9Store);
+
+// Get KTP data and enrich with class9 information
+const ktpItems = computed(() => {
+  const ktps = ktpStore.ktps;
+  const class9Items = class9Store.getAllClass9Items;
+
+  return ktps
+    .map((ktp) => {
+      const class9Item = class9Items.find((c) => c.id === ktp.class9Id);
+      if (!class9Item) return null;
+
+      // Calculate total hours from KTP details
+      const details = ktpStore.getDetailsByKtpId(ktp.id);
+      const totalHours = details.reduce((sum, detail) => {
+        return sum + (detail.totalHours || 0);
+      }, 0);
+
+      return {
+        ...class9Item,
+        ktpId: ktp.id,
+        ktpTotalHours: totalHours,
+        academicYearId: ktp.academicYearId,
+        semesterId: ktp.semesterId,
+        createdAt: ktp.createdAt,
+        updatedAt: ktp.updatedAt,
+      };
+    })
+    .filter(Boolean);
+});
+
+const isLoading = computed(() => ktpStore.loading || class9Store.isLoading);
 const courseStore = useCourseStore();
 const semesterStore = useSemesterStore();
 const { sortedSemesters } = storeToRefs(semesterStore);
@@ -168,19 +210,24 @@ const academicYearOptions = computed(() => {
 const semesterOptions = computed(() => {
   const yearId = selectedAcademicYearId.value;
   const list = yearId
-    ? semesterStore.getSemestersByAcademicYear(yearId)
-    : sortedSemesters.value;
-  return list.map((s) => ({ value: s.id, text: s.shortName || s.fullName }));
+    ? academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(yearId)
+    : [];
+  return list.map((academicYearSemester) => ({
+    value: academicYearSemester.semesterNumber.toString(),
+    text: `Семестр ${academicYearSemester.semesterNumber}`,
+  }));
 });
 
 const filteredKtpItems = computed(() => {
   const yearId = selectedAcademicYearId.value;
   const semId = selectedSemesterId.value;
-  return ktpItems.value.filter((item) => {
-    if (yearId && item.academicYearId !== yearId) return false;
-    // TODO: If class9 has semester field, also filter by semId
-    return true;
-  });
+  return ktpItems.value
+    .filter((item) => item !== null)
+    .filter((item) => {
+      if (yearId && item.academicYearId !== yearId) return false;
+      if (semId && item.semesterId !== semId) return false;
+      return true;
+    });
 });
 
 const isAddDisabled = computed(
@@ -195,13 +242,29 @@ const getCourseNumber = (courseId: string) => {
   return course ? course.number : "—";
 };
 
-const selectItem = (item: Class9Data) => {
+const { getKtpIdForClass9, getModuleTitleForKtp } = storeToRefs(ktpStore);
+
+const selectItem = (item: any) => {
   selectedItemId.value = item.id;
   selectedKtpParentId.value = item.id;
   isPopupOpened.value = true;
 };
 
 const openAddDialog = () => {
+  if (!selectedAcademicYearId.value) {
+    f7.dialog.alert(
+      "Пожалуйста, выберите учебный год перед добавлением КТП",
+      "Предупреждение"
+    );
+    return;
+  }
+  if (!selectedSemesterId.value) {
+    f7.dialog.alert(
+      "Пожалуйста, выберите семестр перед добавлением КТП",
+      "Предупреждение"
+    );
+    return;
+  }
   isAddItemFormOpen.value = true;
 };
 
@@ -210,23 +273,34 @@ onMounted(async () => {
   if (activeYear) {
     selectedItemsStore.setSelectedAcademicYear(activeYear.id);
   }
-  const activeSem = semesterStore.getActiveSemester;
-  if (
-    activeSem &&
-    (!selectedAcademicYearId.value ||
-      activeSem.academicYearId === selectedAcademicYearId.value)
-  ) {
-    selectedSemesterId.value = activeSem.id;
+
+  // Set default semester if we have an active academic year
+  if (activeYear && !selectedAcademicYearId.value) {
+    const activeSemesters =
+      academicYearSemesterStore.getActiveAcademicYearSemesters;
+    if (activeSemesters.length > 0) {
+      selectedSemesterId.value = activeSemesters[0].semesterNumber.toString();
+    }
   }
-  // Run KTP migration once at page entry
-  ktpStore.migrateLegacy();
 });
 
 const selectedAcademicYearModel = computed({
   get: () => selectedAcademicYearId.value ?? "",
   set: (v: string) => {
     selectedItemsStore.setSelectedAcademicYear(v || null);
+    // Clear semester selection when academic year changes
+    if (v !== selectedAcademicYearId.value) {
+      selectedSemesterId.value = "";
+    }
   },
+});
+
+// Watch for academic year changes and update semester options
+watch(selectedAcademicYearId, (newYearId, oldYearId) => {
+  if (newYearId !== oldYearId && newYearId) {
+    // Clear semester selection when academic year changes
+    selectedSemesterId.value = "";
+  }
 });
 </script>
 

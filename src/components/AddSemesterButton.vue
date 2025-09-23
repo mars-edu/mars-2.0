@@ -34,56 +34,15 @@
 
         <div class="p-4 space-y-4">
           <div class="space-y-2">
-            <label class="text-sm text-foreground" for="period-short-name">
-              Краткое название <span class="text-destructive ml-1">*</span>
+            <label class="text-sm text-foreground" for="semester-short-name">
+              Название семестра <span class="text-destructive ml-1">*</span>
             </label>
             <f7-input
-              id="period-short-name"
+              id="semester-short-name"
               type="text"
               v-model:value="shortName"
-              placeholder="Например: Осень 2024"
+              placeholder="Например: Осенний семестр"
             />
-          </div>
-
-          <div class="space-y-2">
-            <label class="text-sm text-foreground" for="period-full-name">
-              Полное название <span class="text-destructive ml-1">*</span>
-            </label>
-            <f7-input
-              id="period-full-name"
-              type="text"
-              v-model:value="fullName"
-              placeholder="Например: Осенний семестр 2024-2025 учебного года"
-            />
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div class="space-y-2">
-              <label class="text-sm text-foreground" for="start-date">
-                Дата начала <span class="text-destructive ml-1">*</span>
-              </label>
-              <f7-input
-                id="start-date"
-                type="datepicker"
-                placeholder="Дата"
-                readonly
-                v-model:value="startDate"
-                :calendar-params="calendarParams"
-              />
-            </div>
-            <div class="space-y-2">
-              <label class="text-sm text-foreground" for="end-date">
-                Дата окончания <span class="text-destructive ml-1">*</span>
-              </label>
-              <f7-input
-                id="end-date"
-                type="datepicker"
-                placeholder="Дата"
-                readonly
-                v-model:value="endDate"
-                :calendar-params="calendarParams"
-              />
-            </div>
           </div>
         </div>
       </div>
@@ -93,13 +52,10 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import dayjs from "dayjs";
 import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useSemesterStore } from "@/stores/semesterStore";
-import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
-import { calendarParams } from "@/constants/period";
 
 const props = defineProps<{ prefix?: string }>();
 
@@ -108,40 +64,17 @@ const buttonId = computed(() => `add-${computedPrefix.value}-button`);
 const popoverId = computed(() => `add-${computedPrefix.value}-popover`);
 
 const semesterStore = useSemesterStore();
-const academicYearStore = useAcademicYearStore();
 
 const shortName = ref("");
-const fullName = ref("");
-const startDate = ref<Date[]>([]);
-const endDate = ref<Date[]>([]);
 const formError = ref("");
 
-const semesterSchema = z
-  .object({
-    shortName: z
-      .string()
-      .min(1, "Пожалуйста, введите краткое название семестра"),
-    fullName: z.string().min(1, "Пожалуйста, введите полное название семестра"),
-    startDate: z.array(z.date()).min(1, "Пожалуйста, укажите дату начала"),
-    endDate: z.array(z.date()).min(1, "Пожалуйста, укажите дату окончания"),
-  })
-  .refine(
-    (data) =>
-      data.startDate.length > 0 &&
-      data.endDate.length > 0 &&
-      data.endDate[0] > data.startDate[0],
-    {
-      message: "Дата окончания должна быть позже даты начала",
-      path: ["endDate"],
-    }
-  );
+const semesterSchema = z.object({
+  shortName: z.string().min(1, "Пожалуйста, введите название семестра"),
+});
 
 const validationResult = computed(() => {
   return semesterSchema.safeParse({
     shortName: shortName.value,
-    fullName: fullName.value,
-    startDate: startDate.value,
-    endDate: endDate.value,
   });
 });
 
@@ -168,18 +101,8 @@ const handleSaveSemester = async () => {
   }
 
   try {
-    const activeAcademicYear = academicYearStore.getActiveAcademicYear;
-    if (!activeAcademicYear) {
-      formError.value = "Пожалуйста, выберите активный учебный год";
-      return;
-    }
-
     await semesterStore.addSemester({
       shortName: shortName.value,
-      fullName: fullName.value,
-      startDate: dayjs(startDate.value[0]).format("YYYY-MM-DD"),
-      endDate: dayjs(endDate.value[0]).format("YYYY-MM-DD"),
-      academicYearId: activeAcademicYear.id,
     });
     closeAddSemesterPopover();
   } catch (error) {
@@ -189,9 +112,6 @@ const handleSaveSemester = async () => {
 
 const resetForm = () => {
   shortName.value = "";
-  fullName.value = "";
-  startDate.value = [];
-  endDate.value = [];
   formError.value = "";
   semesterStore.clearError();
 };

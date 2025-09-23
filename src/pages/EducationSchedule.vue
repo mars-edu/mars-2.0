@@ -122,21 +122,21 @@
             <AccordionItem id="semesters" :default-expanded="false">
               <template #title>Семестры:</template>
               <template #actions>
-                <AddSemesterButton />
+                <AddAcademicYearSemesterButton />
               </template>
               <div
-                v-if="semesterStore.isLoading"
+                v-if="academicYearSemesterStore.isLoading"
                 class="p-4 flex justify-center"
               >
                 <f7-preloader />
               </div>
               <div
-                v-else-if="semesterStore.getError"
+                v-else-if="academicYearSemesterStore.getError"
                 class="p-4 text-destructive"
               >
-                {{ semesterStore.getError }}
+                {{ academicYearSemesterStore.getError }}
               </div>
-              <div v-else-if="semesters.length === 0">
+              <div v-else-if="academicYearSemesters.length === 0">
                 <NoData
                   title="Нет семестров"
                   description="Для данного учебного года семестры не добавлены"
@@ -145,29 +145,45 @@
               </div>
               <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
                 <div
-                  v-for="semester in semesters"
-                  :key="semester.id"
+                  v-for="academicYearSemester in academicYearSemesters"
+                  :key="academicYearSemester.id"
                   class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
-                  :id="`semester-item-${semester.id}`"
+                  :id="`academic-year-semester-item-${academicYearSemester.id}`"
                   :class="{
-                    'border-primary': semester.id === activeSemester?.id,
+                    'border-primary':
+                      academicYearSemesterStore.isSemesterActive(
+                        academicYearSemester
+                      ),
                   }"
-                  @click.stop="openEditSemester(semester)"
+                  @click.stop="
+                    openEditAcademicYearSemester(academicYearSemester)
+                  "
                 >
-                  <span class="font-medium">{{ semester.shortName }}</span>
-                  <span class="text-xs px-2 py-0.5"
-                    >{{ semester.startDate }} - {{ semester.endDate }}</span
-                  >
+                  <div class="flex flex-col w-full">
+                    <span class="font-medium">{{
+                      `Семестр ${academicYearSemester.semesterNumber}`
+                    }}</span>
+                    <span class="text-xs px-2 py-0.5"
+                      >{{ formatUiDate(academicYearSemester.startDate) }}-
+                      {{ formatUiDate(academicYearSemester.endDate) }}</span
+                    >
+                  </div>
                   <span
-                    v-if="semester.id === activeSemester?.id"
+                    v-if="
+                      academicYearSemesterStore.isSemesterActive(
+                        academicYearSemester
+                      )
+                    "
                     class="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full"
                   >
                     Активный
                   </span>
                   <button
                     class="p-1 hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="openEditSemester(semester)"
-                    aria-label="Edit Semester"
+                    @click.stop="
+                      openEditAcademicYearSemester(academicYearSemester)
+                    "
+                    aria-label="Edit Academic Year Semester"
                     type="button"
                   >
                     <f7-icon
@@ -178,9 +194,9 @@
                     />
                   </button>
                 </div>
-                <EditSemesterButton
-                  v-if="selectedSemester"
-                  :semester="selectedSemester"
+                <EditAcademicYearSemesterButton
+                  v-if="selectedAcademicYearSemester"
+                  :academic-year-semester="selectedAcademicYearSemester"
                 />
               </div>
             </AccordionItem>
@@ -244,123 +260,6 @@
               </div>
             </AccordionItem>
 
-            <!-- Added Languages Section -->
-            <AccordionItem id="languages" :default-expanded="false">
-              <template #title>Языки:</template>
-              <template #actions>
-                <AddLanguageButton />
-              </template>
-              <div
-                v-if="languageStore.isLoading"
-                class="p-4 flex justify-center"
-              >
-                <f7-preloader></f7-preloader>
-              </div>
-              <div
-                v-else-if="languageStore.getError"
-                class="p-4 text-destructive"
-              >
-                {{ languageStore.getError }}
-              </div>
-              <div v-else-if="languages.length === 0">
-                <NoData
-                  title="Нет языков"
-                  description="Языки не добавлены в систему"
-                  :icon="{ ios: 'f7:globe', md: 'material:language' }"
-                />
-              </div>
-              <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
-                <div
-                  v-for="language in languages"
-                  :key="language.id"
-                  class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
-                  :id="`language-item-${language.id}`"
-                >
-                  <span class="font-medium">
-                    {{ language.name }}
-                  </span>
-                  <span class="text-xs px-2 py-0.5">
-                    {{ language.code }}
-                  </span>
-                  <button
-                    class="p-1 hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="openEditLanguage(language)"
-                    aria-label="Edit Language"
-                    type="button"
-                  >
-                    <f7-icon
-                      ios="f7:pencil"
-                      md="material:edit"
-                      size="18px"
-                      class="text-primary"
-                    />
-                  </button>
-                </div>
-                <EditLanguageButton
-                  v-if="selectedLanguage"
-                  :language="selectedLanguage"
-                />
-              </div>
-            </AccordionItem>
-
-            <!-- Added Courses Section -->
-            <AccordionItem id="courses" :default-expanded="false">
-              <template #title>Курсы:</template>
-              <template #actions>
-                <AddCourseButton />
-              </template>
-              <div v-if="courseStore.isLoading" class="p-4 flex justify-center">
-                <f7-preloader></f7-preloader>
-              </div>
-              <div
-                v-else-if="courseStore.getError"
-                class="p-4 text-destructive"
-              >
-                {{ courseStore.getError }}
-              </div>
-              <div v-else-if="courses.length === 0">
-                <NoData
-                  title="Нет курсов"
-                  description="Для данного учебного года курсы не добавлены"
-                  :icon="{ ios: 'f7:book', md: 'material:menu_book' }"
-                />
-              </div>
-              <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
-                <div
-                  v-for="course in courses"
-                  :key="course.id"
-                  class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
-                  :id="`course-item-${course.id}`"
-                >
-                  <span class="font-medium">
-                    {{ course.number }}
-                  </span>
-                  <button
-                    class="p-1 hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="openEditCourse(course)"
-                    aria-label="Edit Course"
-                    type="button"
-                  >
-                    <f7-icon
-                      ios="f7:pencil"
-                      md="material:edit"
-                      size="18px"
-                      class="text-primary"
-                    />
-                  </button>
-                </div>
-                <EditCourseButton
-                  v-if="selectedCourse"
-                  :course="{
-                    id: selectedCourse.id,
-                    number: selectedCourse.number,
-                    admissionYear: selectedCourse.admissionYear,
-                    semesters: selectedCourse.semesters,
-                  }"
-                />
-              </div>
-            </AccordionItem>
-
             <AccordionItem id="vacations" :default-expanded="false">
               <template #title>Каникулы:</template>
               <template #actions>
@@ -395,7 +294,8 @@
                 >
                   <span class="font-medium">{{ vacation.shortName }}</span>
                   <span class="text-xs px-2 py-0.5"
-                    >{{ vacation.startDate }} - {{ vacation.endDate }}</span
+                    >{{ formatUiDate(vacation.startDate) }} -
+                    {{ formatUiDate(vacation.endDate) }}</span
                   >
                   <button
                     class="p-1 hover:bg-primary/10 rounded-md transition-colors"
@@ -452,7 +352,8 @@
                 >
                   <span class="font-medium">{{ session.shortName }}</span>
                   <span class="text-xs px-2 py-0.5"
-                    >{{ session.startDate }} - {{ session.endDate }}</span
+                    >{{ formatUiDate(session.startDate) }} -
+                    {{ formatUiDate(session.endDate) }}</span
                   >
                   <button
                     class="p-1 hover:bg-primary/10 rounded-md transition-colors"
@@ -494,52 +395,39 @@ import EditEducationScheduleButton from "@/components/EditEducationScheduleButto
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { storeToRefs } from "pinia";
 import type { EducationSchedule } from "@/stores/educationScheduleStore";
-import AddLanguageButton from "@/components/AddLanguageButton.vue";
-import EditLanguageButton from "@/components/EditLanguageButton.vue";
-import { useLanguageStore } from "@/stores/languageStore";
-import type { Language } from "@/stores/languageStore";
-import AddCourseButton from "@/components/AddCourseButton.vue";
-import EditCourseButton from "@/components/EditCourseButton.vue";
-import { useCourseStore } from "@/stores/courseStore";
-import type { Course } from "@/stores/courseStore";
 import AddAcademicYearButton from "@/components/AddAcademicYearButton.vue";
 import EditAcademicYearButton from "@/components/EditAcademicYearButton.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import type { AcademicYear } from "@/stores/academicYearStore";
-import AddSemesterButton from "@/components/AddSemesterButton.vue";
-import EditSemesterButton from "@/components/EditSemesterButton.vue";
+import AddAcademicYearSemesterButton from "@/components/AddAcademicYearSemesterButton.vue";
+import EditAcademicYearSemesterButton from "@/components/EditAcademicYearSemesterButton.vue";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
+import type { AcademicYearSemester } from "@/stores/academicYearSemesterStore";
 import AddVacationButton from "@/components/AddVacationButton.vue";
 import EditVacationButton from "@/components/EditVacationButton.vue";
 import AddSessionButton from "@/components/AddSessionButton.vue";
 import EditSessionButton from "@/components/EditSessionButton.vue";
-import { useSemesterStore } from "@/stores/semesterStore";
 import { useVacationStore } from "@/stores/vacationStore";
 import { useSessionStore } from "@/stores/sessionStore";
-import type { Semester } from "@/stores/semesterStore";
 import type { Vacation } from "@/stores/vacationStore";
 import type { Session } from "@/stores/sessionStore";
+import dayjs from "dayjs";
+import { DATE_STORAGE_FORMAT, DATE_UI_FORMAT } from "@/constants/calendar";
 
 const activeNavItem = ref("education-schedule");
 const educationScheduleStore = useEducationScheduleStore();
 
-const languageStore = useLanguageStore();
-const { languages } = storeToRefs(languageStore);
-
-const courseStore = useCourseStore();
-
 const academicYearStore = useAcademicYearStore();
 const { academicYears } = storeToRefs(academicYearStore);
 
-const semesterStore = useSemesterStore();
+const academicYearSemesterStore = useAcademicYearSemesterStore();
 const vacationStore = useVacationStore();
 const sessionStore = useSessionStore();
 
 const selectedAcademicYear = ref<AcademicYear | null>(null);
-const selectedSemester = ref<Semester | null>(null);
+const selectedAcademicYearSemester = ref<AcademicYearSemester | null>(null);
 const selectedVacation = ref<Vacation | null>(null);
 const selectedSession = ref<Session | null>(null);
-const selectedLanguage = ref<Language | null>(null);
-const selectedCourse = ref<Course | null>(null);
 const selectedSchedule = ref<EducationSchedule | null>(null);
 
 // Accordion IDs for expand/collapse all functionality
@@ -547,8 +435,6 @@ const accordionIds = [
   "academic-years",
   "semesters",
   "schedule",
-  "languages",
-  "courses",
   "vacations",
   "sessions",
 ];
@@ -572,13 +458,13 @@ const toggleAllAccordions = () => {
   }
 };
 
-const semesters = computed(() => {
+const academicYearSemesters = computed(() => {
   const activeAcademicYear = academicYearStore.getActiveAcademicYear;
   if (!activeAcademicYear) return [];
-  return semesterStore.getSemestersByAcademicYear(activeAcademicYear.id);
+  return academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(
+    activeAcademicYear.id
+  );
 });
-
-const activeSemester = computed(() => semesterStore.getActiveSemester);
 
 const schedules = computed(() => {
   const activeAcademicYear = academicYearStore.getActiveAcademicYear;
@@ -586,12 +472,6 @@ const schedules = computed(() => {
   return educationScheduleStore.getSchedulesByAcademicYear(
     activeAcademicYear.id
   );
-});
-
-const courses = computed(() => {
-  const activeAcademicYear = academicYearStore.getActiveAcademicYear;
-  if (!activeAcademicYear) return [];
-  return courseStore.getCoursesByAcademicYear(activeAcademicYear.id);
 });
 
 const vacations = computed(() => {
@@ -615,24 +495,6 @@ const openEditSchedule = async (schedule: EducationSchedule) => {
   }
 };
 
-const openEditLanguage = async (language: Language) => {
-  selectedLanguage.value = language;
-  await nextTick();
-  const targetEl = document.getElementById(`language-item-${language.id}`);
-  if (targetEl) {
-    f7.popover.open(`#edit-language-popover-${language.id}`, targetEl);
-  }
-};
-
-const openEditCourse = async (course: Course) => {
-  selectedCourse.value = course;
-  await nextTick();
-  const targetEl = document.getElementById(`course-item-${course.id}`);
-  if (targetEl) {
-    f7.popover.open(`#edit-settings-course-popover-${course.id}`, targetEl);
-  }
-};
-
 const handleSetActiveAcademicYear = (academicYear: AcademicYear) => {
   academicYearStore.setActiveAcademicYear(academicYear.id);
 };
@@ -648,12 +510,19 @@ const openEditAcademicYear = async (academicYear: AcademicYear) => {
   }
 };
 
-const openEditSemester = async (semester: Semester) => {
-  selectedSemester.value = semester;
+const openEditAcademicYearSemester = async (
+  academicYearSemester: AcademicYearSemester
+) => {
+  selectedAcademicYearSemester.value = academicYearSemester;
   await nextTick();
-  const targetEl = document.getElementById(`semester-item-${semester.id}`);
+  const targetEl = document.getElementById(
+    `academic-year-semester-item-${academicYearSemester.id}`
+  );
   if (targetEl) {
-    f7.popover.open(`#edit-semester-popover-${semester.id}`, targetEl);
+    f7.popover.open(
+      `#edit-academic-year-semester-popover-${academicYearSemester.id}`,
+      targetEl
+    );
   }
 };
 
@@ -674,4 +543,13 @@ const openEditSession = async (session: Session) => {
     f7.popover.open(`#edit-session-popover-${session.id}`, targetEl);
   }
 };
+
+function formatUiDate(value: string | Date | undefined | null) {
+  if (!value) return "";
+  // Try storage format first, then UI format, then generic parsing
+  let d = dayjs(String(value), DATE_STORAGE_FORMAT, true);
+  if (!d.isValid()) d = dayjs(String(value), DATE_UI_FORMAT, true);
+  if (!d.isValid()) d = dayjs(value as any);
+  return d.isValid() ? d.format(DATE_UI_FORMAT) : String(value);
+}
 </script>

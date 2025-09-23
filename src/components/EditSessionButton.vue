@@ -62,7 +62,7 @@
                 placeholder="Дата"
                 readonly
                 v-model:value="startDate"
-                :calendar-params="calendarParams"
+                :calendar-params="DATE_PICKER_PARAMS"
               />
             </div>
             <div class="space-y-2">
@@ -78,7 +78,7 @@
                 placeholder="Дата"
                 readonly
                 v-model:value="endDate"
-                :calendar-params="calendarParams"
+                :calendar-params="DATE_PICKER_PARAMS"
               />
             </div>
           </div>
@@ -107,12 +107,13 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import dayjs from "dayjs";
+import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { f7, f7Input, f7Icon, f7Popover } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import { z } from "zod";
 import { useSessionStore } from "@/stores/sessionStore";
 import type { Session } from "@/stores/sessionStore";
-import { calendarParams } from "@/constants/period";
+import { DATE_PICKER_PARAMS } from "@/constants/calendar";
 
 const props = defineProps<{ session: Session }>();
 
@@ -170,8 +171,8 @@ const handleUpdateSession = async () => {
     await sessionStore.updateSession(props.session.id, {
       shortName: shortName.value,
       fullName: fullName.value,
-      startDate: dayjs(startDate.value[0]).format("YYYY-MM-DD"),
-      endDate: dayjs(endDate.value[0]).format("YYYY-MM-DD"),
+      startDate: dayjs(startDate.value[0]).format(DATE_STORAGE_FORMAT),
+      endDate: dayjs(endDate.value[0]).format(DATE_STORAGE_FORMAT),
     });
     closePopover();
   } catch (error) {

@@ -10,7 +10,7 @@
       :disabled="disabled"
       :title="
         disabled
-          ? 'Сначала выберите специальность и курс'
+          ? 'Сначала выберите специальность'
           : 'Импортировать рабочий учебный план'
       "
     >
@@ -28,7 +28,6 @@
 const props = defineProps<{
   disabled?: boolean;
   specialtyId?: string;
-  courseId?: string;
 }>();
 
 const emit = defineEmits<{
@@ -45,4 +44,4 @@ const handleImport = () => {
   max-height: 90vh;
   overflow-y: auto;
 }
-</style> 
+</style>

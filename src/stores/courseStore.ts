@@ -6,49 +6,11 @@ export interface Course {
   number: string;
   admissionYear: string;
   semesters: string[];
-  academicYearId: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const DEFAULT_COURSES = [
-  {
-    id: "1",
-    number: "1",
-    admissionYear: new Date().getFullYear().toString(),
-    semesters: [],
-    academicYearId: "1",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "2",
-    number: "2",
-    admissionYear: new Date().getFullYear().toString(),
-    semesters: [],
-    academicYearId: "1",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "3",
-    number: "3",
-    admissionYear: new Date().getFullYear().toString(),
-    semesters: [],
-    academicYearId: "1",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "4",
-    number: "4",
-    admissionYear: new Date().getFullYear().toString(),
-    semesters: [],
-    academicYearId: "1",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
+const DEFAULT_COURSES: Course[] = [];
 
 export const useCourseStore = defineStore(
   "course",
@@ -71,15 +33,17 @@ export const useCourseStore = defineStore(
     });
 
     const getCoursesByAcademicYear = computed(() => {
-      return (academicYearId: string) =>
-        courses.value.filter((c) => c.academicYearId === academicYearId);
+      return (academicYearId: string) => courses.value; // All courses are now global
     });
 
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
     async function addCourse(
-      courseData: Omit<Course, "id" | "createdAt" | "updatedAt">
+      courseData: Omit<
+        Course,
+        "id" | "createdAt" | "updatedAt" | "academicYearId"
+      >
     ) {
       loading.value = true;
       try {
@@ -104,7 +68,9 @@ export const useCourseStore = defineStore(
 
     async function updateCourse(
       id: string,
-      courseData: Partial<Omit<Course, "id" | "createdAt" | "updatedAt">>
+      courseData: Partial<
+        Omit<Course, "id" | "createdAt" | "updatedAt" | "academicYearId">
+      >
     ) {
       loading.value = true;
       try {

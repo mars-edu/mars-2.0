@@ -250,10 +250,10 @@
         </f7-fab>
 
         <KtpDetailFormPopover
-          v-if="class9Id"
+          v-if="ktpId"
           v-model:opened="isFormPopoverOpen"
           :target="formPopoverTarget"
-          :class9-id="class9Id as string"
+          :ktp-id="ktpId"
           :detail-to-edit="editingDetail"
         />
 
@@ -261,7 +261,7 @@
 
         <RupImportDialog
           v-model:opened="isRupImportDialogOpen"
-          :current-class9-id="class9Id"
+          :currentKtpId="ktpId"
           @imported="onThemesImported"
         />
       </div>
@@ -288,52 +288,70 @@ import {
 } from "@/services/excel-parser";
 
 const props = defineProps<{
-  class9Id: string | null;
+  ktpId: string | null;
   opened: boolean;
+  moduleTitle?: string;
 }>();
 
 const emit = defineEmits<{
   (e: "update:opened", value: boolean): void;
 }>();
 
-const { class9Id, opened } = toRefs(props);
+const { ktpId, opened } = toRefs(props);
 const ktpStore = useKtpStore();
 const class9Store = useClass9Store();
 const rupStore = useRupStore();
 const { loading } = storeToRefs(ktpStore);
+const { deleteKtpById } = ktpStore;
 const selectedDetailId = ref("ktp-detail-3");
 
 // Computed property to get filtered details for the current parent
 const ktpDetails = computed(() => {
-  if (!class9Id.value) return [];
-  return ktpStore.getDetailsByClass9Id(class9Id.value);
+  if (!ktpId.value) return [];
+  return ktpStore.getDetailsByKtpId(ktpId.value);
 });
 
 // Computed property to get the module name for the header
+
 const moduleTitle = computed(() => {
-  if (!class9Id.value) return "Рабочие учебные программы";
+  if (!ktpId.value) return "Рабочие учебные программы";
+  const ktpItem = ktpStore.ktps.find((ktp: any) => ktp.id === ktpId.value);
+  if (!ktpItem) return "Рабочие учебные программы";
 
-  const class9Item = class9Store.getClass9ById(class9Id.value);
-  if (class9Item) {
-    return `${class9Item.moduleIndex} - ${class9Item.moduleName}`;
-  }
+  const class9Item = class9Store.getClass9ById(ktpItem.class9Id);
+  if (!class9Item) return "Рабочие учебные программы";
 
-  return "Рабочие учебные программы";
+  return `${class9Item.moduleIndex} - ${class9Item.moduleName}`;
 });
 
 function handleDeleteAll() {
-  if (!class9Id.value) return;
-  const ktp = ktpStore.findKtpByClass9Id(class9Id.value);
-  if (!ktp) return;
+  if (!ktpId.value) return;
+
   f7.dialog.confirm(
     "Вы уверены, что хотите удалить все темы КТП?",
     "Удаление КТП",
     () => {
-      ktpStore.ktpDetails = ktpStore.ktpDetails.filter(
-        (d) => d.ktpId !== ktp.id
-      );
-      ktpStore.ktps = ktpStore.ktps.filter((k) => k.id !== ktp.id);
-      ktpStore.fetchDetailsForClass9(class9Id.value as string);
+      const result = deleteKtpById(ktpId.value as string);
+
+      if (result.success) {
+        f7.toast
+          .create({
+            text: `Все темы КТП успешно удалены${
+              result.deleted > 0 ? ` (${result.deleted} записей)` : ""
+            }`,
+            closeTimeout: 3000,
+            cssClass: "color-green",
+          })
+          .open();
+      } else {
+        f7.toast
+          .create({
+            text: "Ошибка при удалении КТП",
+            closeTimeout: 3000,
+            cssClass: "color-red",
+          })
+          .open();
+      }
     }
   );
 }
@@ -346,13 +364,6 @@ const plannedHoursFromKtp = computed(() => {
     return sum + hours;
   }, 0);
   return totalHours;
-});
-
-const totalPlannedHours = computed(() => {
-  if (!class9Id.value) return "0";
-
-  const class9Item = class9Store.getClass9ById(class9Id.value);
-  return class9Item?.totalHours || "0";
 });
 
 const semesterPlannedHours = computed(() => {
@@ -382,7 +393,7 @@ const downloadTemplate = () => {
 };
 
 const downloadRup = async () => {
-  if (!class9Id.value) {
+  if (!ktpId.value) {
     f7.toast
       .create({
         text: "Ошибка: не указан родительский элемент",
@@ -446,7 +457,7 @@ const uploadDocument = () => {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
 
-    if (!class9Id.value) {
+    if (!ktpId.value) {
       f7.toast
         .create({
           text: "Ошибка: не указан родительский элемент",
@@ -483,8 +494,8 @@ const uploadDocument = () => {
         throw new Error("В файле не найдено ни одного урока для импорта");
       }
 
-      const importResult = ktpStore.bulkImportKtpDetailsForClass9(
-        class9Id.value,
+      const importResult = ktpStore.bulkImportKtpDetails(
+        ktpId.value,
         parseResult.lessons
       );
 
@@ -497,7 +508,7 @@ const uploadDocument = () => {
           })
           .open();
         // Refresh current list to ensure view shows imported data for this parent
-        ktpStore.fetchDetailsForClass9(class9Id.value);
+        ktpStore.fetchDetailsForKtp(ktpId.value);
       } else {
         throw new Error(importResult.error || "Ошибка импорта данных");
       }
@@ -592,11 +603,7 @@ function onDragOver(item: KtpDetail, idx: number, event: DragEvent) {
 }
 
 function onDrop() {
-  if (
-    !class9Id.value ||
-    dragSourceId.value == null ||
-    dropIndex.value == null
-  ) {
+  if (!ktpId.value || dragSourceId.value == null || dropIndex.value == null) {
     dragSourceId.value = null;
     dragOverId.value = null;
     dropIndex.value = null;
@@ -627,7 +634,7 @@ function onDrop() {
   const [moved] = newOrder.splice(fromIndex, 1);
   newOrder.splice(toIndex, 0, moved);
 
-  const result = ktpStore.reorderKtpDetailsForClass9(class9Id.value, newOrder);
+  const result = ktpStore.reorderKtpDetails(ktpId.value, newOrder);
   if (result.success) {
     f7.toast
       .create({
@@ -636,7 +643,7 @@ function onDrop() {
         cssClass: "color-green",
       })
       .open();
-    ktpStore.fetchDetailsForClass9(class9Id.value);
+    ktpStore.fetchDetailsForKtp(ktpId.value);
   } else {
     f7.toast
       .create({
@@ -658,21 +665,21 @@ function onDragEnd() {
 }
 
 const onThemesImported = (count: number) => {
-  if (class9Id.value) {
-    ktpStore.fetchDetailsForClass9(class9Id.value);
+  if (ktpId.value) {
+    ktpStore.fetchDetailsForKtp(ktpId.value);
   }
 };
 
-watch(class9Id, (newClass9Id) => {
-  if (newClass9Id) {
-    ktpStore.fetchDetailsForClass9(newClass9Id);
+watch(ktpId, (newKtpId) => {
+  if (newKtpId) {
+    ktpStore.fetchDetailsForKtp(newKtpId);
   }
 });
 
 watch(opened, (isOpened) => {
   if (isOpened) {
-    if (class9Id.value) {
-      ktpStore.fetchDetailsForClass9(class9Id.value);
+    if (ktpId.value) {
+      ktpStore.fetchDetailsForKtp(ktpId.value);
     }
     f7.popover.open("#ktp-detail-popover");
   } else {

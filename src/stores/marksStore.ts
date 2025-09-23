@@ -99,8 +99,7 @@ export const useMarksStore = defineStore(
                 updatedMarks[index].type === existingMark.type
               ) {
                 const targetLen = updatedMarks[index].values.length;
-                const adjustedValues = existingMark.values
-                  .slice(0, targetLen);
+                const adjustedValues = existingMark.values.slice(0, targetLen);
                 while (adjustedValues.length < targetLen) {
                   adjustedValues.push(null);
                 }
@@ -115,7 +114,8 @@ export const useMarksStore = defineStore(
           existingJournal.studentMarks.forEach((studentMark) => {
             studentMark.marks = studentMark.marks.map((existingMark, index) => {
               const target = markTemplate[index];
-              if (!target || target.type !== existingMark.type) return existingMark;
+              if (!target || target.type !== existingMark.type)
+                return existingMark;
               const targetLen = target.values.length;
               if (existingMark.values.length === targetLen) return existingMark;
               const adjustedValues = existingMark.values.slice(0, targetLen);

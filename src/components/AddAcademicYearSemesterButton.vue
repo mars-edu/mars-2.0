@@ -1,69 +1,54 @@
 <template>
   <div>
     <button
-      :id="buttonId"
+      id="add-academic-year-semester-button"
       class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-green-500 hover:bg-green-600 rounded-full transition-colors"
-      aria-label="Добавить сессию"
+      aria-label="Добавить семестр к учебному году"
       type="button"
-      @click.stop="openAddSessionPopover"
+      @click.stop="openAddAcademicYearSemesterPopover"
     >
       <f7-icon ios="f7:plus" md="material:add" size="16px" class="text-white" />
     </button>
 
     <f7-popover
-      :id="popoverId"
+      id="add-academic-year-semester-popover"
       style="width: 600px !important"
-      :target="`#${buttonId}`"
+      target="#add-academic-year-semester-button"
       close-on-escape
     >
-      <div class="session-popover bg-card text-card-foreground">
+      <div class="semester-popover bg-card text-card-foreground">
         <PopoverHeader
-          title="Создать сессию"
-          :disabled="!isFormValid || sessionStore.isLoading"
-          :is-loading="sessionStore.isLoading"
-          :on-cancel="closeAddSessionPopover"
-          :on-save="handleSaveSession"
+          title="Добавить семестр к учебному году"
+          :disabled="!isFormValid || academicYearSemesterStore.isLoading"
+          :is-loading="academicYearSemesterStore.isLoading"
+          :on-cancel="closeAddAcademicYearSemesterPopover"
+          :on-save="handleSaveAcademicYearSemester"
         />
 
         <div
-          v-if="formError || sessionStore.getError"
+          v-if="formError || academicYearSemesterStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
         >
-          {{ formError || sessionStore.getError }}
+          {{ formError || academicYearSemesterStore.getError }}
         </div>
 
         <div class="p-4 space-y-4">
-          <div class="space-y-2">
-            <label class="text-sm text-foreground" for="session-short-name">
-              Краткое название <span class="text-destructive ml-1">*</span>
-            </label>
-            <f7-input
-              id="session-short-name"
-              type="text"
-              v-model:value="shortName"
-              placeholder="Например: Зимняя сессия"
-            />
-          </div>
-
-          <div class="space-y-2">
-            <label class="text-sm text-foreground" for="session-full-name">
-              Полное название <span class="text-destructive ml-1">*</span>
-            </label>
-            <f7-input
-              id="session-full-name"
-              type="text"
-              v-model:value="fullName"
-              placeholder="Например: Зимняя экзаменационная сессия 2024-2025 учебного года"
-            />
-          </div>
+          <Input
+            v-model="selectedSemesterNumber"
+            label="Номер семестра"
+            placeholder="Введите номер семестра"
+            type="number"
+            required
+            :clear-button="true"
+          />
 
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
-              <label class="text-sm text-foreground" for="session-start-date">
+              <label class="text-sm text-foreground" for="start-date">
                 Дата начала <span class="text-destructive ml-1">*</span>
               </label>
               <f7-input
-                id="session-start-date"
+                id="start-date"
                 type="datepicker"
                 placeholder="Дата"
                 readonly
@@ -72,11 +57,11 @@
               />
             </div>
             <div class="space-y-2">
-              <label class="text-sm text-foreground" for="session-end-date">
+              <label class="text-sm text-foreground" for="end-date">
                 Дата окончания <span class="text-destructive ml-1">*</span>
               </label>
               <f7-input
-                id="session-end-date"
+                id="end-date"
                 type="datepicker"
                 placeholder="Дата"
                 readonly
@@ -97,30 +82,26 @@ import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
-import { useSessionStore } from "@/stores/sessionStore";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import Input from "@/components/ui/Input.vue";
 import { DATE_PICKER_PARAMS } from "@/constants/calendar";
 
-const props = defineProps<{ prefix?: string }>();
-
-const computedPrefix = computed(() => props.prefix || "session");
-const buttonId = computed(() => `add-${computedPrefix.value}-button`);
-const popoverId = computed(() => `add-${computedPrefix.value}-popover`);
-
-const sessionStore = useSessionStore();
+const academicYearSemesterStore = useAcademicYearSemesterStore();
 const academicYearStore = useAcademicYearStore();
 
-const shortName = ref("");
-const fullName = ref("");
+const selectedSemesterNumber = ref<number | string>("");
 const startDate = ref<Date[]>([]);
 const endDate = ref<Date[]>([]);
 const formError = ref("");
 
-const sessionSchema = z
+const academicYearSemesterSchema = z
   .object({
-    shortName: z.string().min(1, "Пожалуйста, введите краткое название сессии"),
-    fullName: z.string().min(1, "Пожалуйста, введите полное название сессии"),
+    semesterNumber: z
+      .number()
+      .min(1, "Номер семестра должен быть больше 0")
+      .max(8, "Номер семестра не может быть больше 8"),
     startDate: z.array(z.date()).min(1, "Пожалуйста, укажите дату начала"),
     endDate: z.array(z.date()).min(1, "Пожалуйста, укажите дату окончания"),
   })
@@ -136,9 +117,8 @@ const sessionSchema = z
   );
 
 const validationResult = computed(() => {
-  return sessionSchema.safeParse({
-    shortName: shortName.value,
-    fullName: fullName.value,
+  return academicYearSemesterSchema.safeParse({
+    semesterNumber: Number(selectedSemesterNumber.value),
     startDate: startDate.value,
     endDate: endDate.value,
   });
@@ -146,16 +126,19 @@ const validationResult = computed(() => {
 
 const isFormValid = computed(() => validationResult.value.success);
 
-const openAddSessionPopover = () => {
-  f7.popover.open(`#${popoverId.value}`, `#${buttonId.value}`);
+const openAddAcademicYearSemesterPopover = () => {
+  f7.popover.open(
+    "#add-academic-year-semester-popover",
+    "#add-academic-year-semester-button"
+  );
 };
 
-const closeAddSessionPopover = () => {
-  f7.popover.close(`#${popoverId.value}`);
+const closeAddAcademicYearSemesterPopover = () => {
+  f7.popover.close("#add-academic-year-semester-popover");
   resetForm();
 };
 
-const handleSaveSession = async () => {
+const handleSaveAcademicYearSemester = async () => {
   if (!isFormValid.value) {
     if (!validationResult.value.success) {
       const issues = validationResult.value.error.issues;
@@ -173,25 +156,23 @@ const handleSaveSession = async () => {
       return;
     }
 
-    await sessionStore.addSession({
-      shortName: shortName.value,
-      fullName: fullName.value,
+    await academicYearSemesterStore.addAcademicYearSemester({
+      academicYearId: activeAcademicYear.id,
+      semesterNumber: Number(selectedSemesterNumber.value),
       startDate: dayjs(startDate.value[0]).format(DATE_STORAGE_FORMAT),
       endDate: dayjs(endDate.value[0]).format(DATE_STORAGE_FORMAT),
-      academicYearId: activeAcademicYear.id,
     });
-    closeAddSessionPopover();
+    closeAddAcademicYearSemesterPopover();
   } catch (error) {
-    console.error("Failed to add session:", error);
+    console.error("Failed to add academic year semester:", error);
   }
 };
 
 const resetForm = () => {
-  shortName.value = "";
-  fullName.value = "";
+  selectedSemesterNumber.value = "";
   startDate.value = [];
   endDate.value = [];
   formError.value = "";
-  sessionStore.clearError();
+  academicYearSemesterStore.clearError();
 };
 </script>

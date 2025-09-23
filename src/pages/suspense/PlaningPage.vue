@@ -1,10 +1,10 @@
 <template>
-  <AsyncRouteWrapper :async-component="Journals" />
+  <AsyncRouteWrapper :async-component="PlaningView" />
 </template>
 
 <script setup lang="ts">
 import { defineAsyncComponent } from "vue";
 import AsyncRouteWrapper from "@/components/AsyncRouteWrapper.vue";
 
-const Journals = defineAsyncComponent(() => import("../journals.vue"));
+const PlaningView = defineAsyncComponent(() => import("../planing.vue"));
 </script>

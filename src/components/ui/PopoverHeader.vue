@@ -2,11 +2,11 @@
   <div
     class="flex items-center px-4 py-3 border-b border-input relative min-h-[56px]"
   >
-    <Button v-if="onCancel" variant="primary" size="md" @click="onCancel">
+    <Button v-if="onCancel" variant="primary" size="md" @click="handleCancel">
       {{ cancelText }}
     </Button>
     <span
-      class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-foreground font-semibold whitespace-nowrap"
+      class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-foreground font-semibold whitespace-nowrap pointer-events-none"
     >
       <slot name="title" v-if="$slots.title"></slot>
       <template v-else>{{ title }}</template>
@@ -16,7 +16,7 @@
       name="save"
       :disabled="disabled"
       :isLoading="isLoading"
-      :onSave="onSave"
+      :onSave="handleSave"
       :saveText="saveText"
     ></slot>
     <Button
@@ -26,7 +26,7 @@
       class="ml-auto"
       :disabled="disabled"
       :isLoading="isLoading"
-      @click="onSave"
+      @click="handleSave"
     >
       {{ saveText }}
     </Button>
@@ -37,7 +37,7 @@
 import type { PropType } from "vue";
 import Button from "./Button.vue";
 
-defineProps({
+const props = defineProps({
   title: {
     type: String,
     required: false,
@@ -66,4 +66,20 @@ defineProps({
     type: Function as PropType<(event: MouseEvent) => void>,
   },
 });
+
+const emit = defineEmits<{
+  (e: "save", event: MouseEvent): void;
+  (e: "cancel", event: MouseEvent): void;
+}>();
+
+function handleSave(event: MouseEvent) {
+  if (props.disabled) return;
+  if (props.onSave) props.onSave(event);
+  emit("save", event);
+}
+
+function handleCancel(event: MouseEvent) {
+  if (props.onCancel) props.onCancel(event);
+  emit("cancel", event);
+}
 </script>

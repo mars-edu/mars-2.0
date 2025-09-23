@@ -16,7 +16,6 @@
       >
         <select
           :name="name"
-          :value="modelValue"
           @change="handleChange"
           :disabled="disabled"
           :multiple="props.multiple"
@@ -32,6 +31,7 @@
             v-for="option in options"
             :key="option.value"
             :value="option.value"
+            :selected="isOptionSelected(option)"
           >
             {{ option.text }}
           </option>
@@ -67,6 +67,7 @@
       v-else
       type="text"
       outline
+      class="mt-2"
       disabled
       :placeholder="!hasOptions ? 'Нет данных' : placeholder || ' '"
     />
@@ -117,7 +118,6 @@ const props = defineProps<{
 
 const f7ListClasses = computed(() => [
   "smart-select-list-container",
-  "no-margin",
   "no-hairlines",
   {
     "opacity-50": props.disabled,
@@ -240,6 +240,14 @@ const onSelectOption = (value: string | number | Array<string | number>) => {
 
 const onPopupClose = () => {
   emit("after-close");
+};
+
+const isOptionSelected = (option: SelectOption) => {
+  return props.multiple
+    ? Array.isArray(props.modelValue)
+      ? props.modelValue.includes(option.value)
+      : false
+    : props.modelValue == option.value;
 };
 </script>
 
@@ -365,5 +373,9 @@ const onPopupClose = () => {
 .smart-select-list-container .item-title,
 .smart-select-list-container .item-after {
   line-height: 1.25rem; /* Tailwind text-sm default */
+}
+
+.popover .list {
+  @apply mt-2;
 }
 </style>

@@ -42,21 +42,6 @@ export const useCalendarStore = defineStore(
 
     const class9Store = useClass9Store();
 
-    const class9Options = computed(() => {
-      return class9Store.getAllClass9Items
-        .filter(
-          (item: any) =>
-            item.learningOutcome && item.learningOutcome.trim() !== ""
-        )
-        .map((item: any) => ({
-          value: item.id,
-          text: `${item.moduleIndex} ${item.moduleName} - ${item.learningOutcome}`,
-          moduleIndex: item.moduleIndex,
-          moduleName: item.moduleName,
-          learningOutcome: item.learningOutcome,
-        }));
-    });
-
     const getEventTitle = (event: CalendarEvent) => {
       const class9Item = class9Store.getClass9ById(event.class9Id);
 
@@ -148,7 +133,6 @@ export const useCalendarStore = defineStore(
       getEventById,
       isLoading,
       getError,
-      class9Options,
       getEventTitle,
       addEvent,
       updateEvent,

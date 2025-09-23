@@ -154,7 +154,7 @@ import { storeToRefs } from "pinia";
 
 const props = defineProps<{
   opened: boolean;
-  currentClass9Id: string | null;
+  currentKtpId: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -201,8 +201,8 @@ const availableRups = computed(() => {
   let filtered = allRups.value;
 
   // Exclude current parent
-  if (props.currentClass9Id) {
-    filtered = filtered.filter((rup) => rup.id !== props.currentClass9Id);
+  if (props.currentKtpId) {
+    filtered = filtered.filter((rup) => rup.id !== props.currentKtpId);
   }
 
   // Filter by academic year
@@ -221,7 +221,9 @@ const availableRups = computed(() => {
 // Get themes for the selected RUP
 const selectedRupThemes = computed(() => {
   if (!selectedRupId.value) return [];
-  return ktpStore.getDetailsByClass9Id(selectedRupId.value);
+  // Use direct KTP ID method instead of class9-based method
+  const ktp = ktpStore.findKtpByClass9Id(selectedRupId.value, selectedAcademicYear.value, selectedSemester.value);
+  return ktp ? ktpStore.getDetailsByKtpId(ktp.id) : [];
 });
 
 const getCourseNumber = (courseId: string) => {
@@ -230,7 +232,9 @@ const getCourseNumber = (courseId: string) => {
 };
 
 const getThemeCount = (rupId: string) => {
-  return ktpStore.getDetailsByClass9Id(rupId).length;
+  // Use direct KTP ID method instead of class9-based method
+  const ktp = ktpStore.findKtpByClass9Id(rupId, selectedAcademicYear.value, selectedSemester.value);
+  return ktp ? ktpStore.getDetailsByKtpId(ktp.id).length : 0;
 };
 
 const selectRup = (rupId: string) => {
@@ -245,7 +249,7 @@ const handleClose = () => {
 };
 
 const handleImport = async () => {
-  if (!selectedRupId.value || !props.currentClass9Id) return;
+  if (!selectedRupId.value || !props.currentKtpId) return;
 
   try {
     isImporting.value = true;
@@ -275,8 +279,11 @@ const handleImport = async () => {
       })
     );
 
-    // Ensure KTP and clear existing themes for it, then add imported ones
-    const ktp = ktpStore.ensureKtpForClass9(props.currentClass9Id);
+    // Clear existing themes for this KTP, then add imported ones
+    const ktp = ktpStore.findKtpById(props.currentKtpId);
+    if (!ktp) {
+      throw new Error("KTP не найден");
+    }
     ktpStore.ktpDetails = ktpStore.ktpDetails.filter((d) => d.ktpId !== ktp.id);
 
     for (const themeData of importedThemes) {

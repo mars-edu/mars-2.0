@@ -1,10 +1,10 @@
 <template>
   <div>
     <f7-popover
-      :id="'edit-settings-course-popover-' + course.id"
+      :id="'edit-settings-course-popover-' + courseId"
       style="width: 600px !important"
       close-on-escape
-      :target="`#course-item-${course.id}`"
+      :target="`#course-item-${courseId}`"
     >
       <div class="course-popover bg-card text-card-foreground">
         <PopoverHeader
@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useCourseStore } from "@/stores/courseStore";
@@ -75,12 +75,7 @@ import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
-  course: {
-    id: string;
-    number: string;
-    admissionYear: string;
-    semesters: string[];
-  };
+  courseId: string;
 }>();
 
 const courseStore = useCourseStore();
@@ -90,8 +85,10 @@ const semesterOptions = computed(() =>
   semesterStore.sortedSemesters.map((p) => ({ value: p.id, text: p.shortName }))
 );
 
-const courseNumber = ref(props.course.number);
-const selectedSemesters = ref<string[]>(props.course.semesters);
+const course = computed(() => courseStore.getCourseById(props.courseId));
+
+const courseNumber = ref("");
+const selectedSemesters = ref<string[]>([]);
 const formError = ref("");
 
 const courseSchema = z.object({
@@ -109,7 +106,7 @@ const validationResult = computed(() => {
 const isFormValid = computed(() => validationResult.value.success);
 
 const closeEditCoursePopover = () => {
-  f7.popover.close(`#edit-settings-course-popover-${props.course.id}`);
+  f7.popover.close(`#edit-settings-course-popover-${props.courseId}`);
   resetForm();
 };
 
@@ -125,7 +122,7 @@ const handleUpdateCourse = async () => {
   }
 
   try {
-    await courseStore.updateCourse(props.course.id, {
+    await courseStore.updateCourse(props.courseId, {
       number: courseNumber.value,
       semesters: selectedSemesters.value,
     });
@@ -136,15 +133,15 @@ const handleUpdateCourse = async () => {
 };
 
 const showDeleteConfirmation = () => {
-  f7.popover.close(`#edit-settings-course-popover-${props.course.id}`);
+  f7.popover.close(`#edit-settings-course-popover-${props.courseId}`);
 
   f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить курс "${props.course.number}"?</p>
+    `<p>Вы уверены, что хотите удалить курс "${course.value?.number ?? ""}"?</p>
      <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление курса",
     async () => {
       try {
-        await courseStore.deleteCourse(props.course.id);
+        await courseStore.deleteCourse(props.courseId);
       } catch (error) {
         console.error("Failed to delete course:", error);
         f7.dialog.alert("Произошла ошибка при удалении курса.");
@@ -154,9 +151,22 @@ const showDeleteConfirmation = () => {
 };
 
 const resetForm = () => {
-  courseNumber.value = props.course.number;
-  selectedSemesters.value = props.course.semesters || [];
+  courseNumber.value = course.value?.number ?? "";
+  selectedSemesters.value = course.value?.semesters
+    ? [...course.value.semesters]
+    : [];
   formError.value = "";
   courseStore.clearError();
 };
+
+watch(
+  course,
+  (c) => {
+    if (c) {
+      courseNumber.value = c.number;
+      selectedSemesters.value = c.semesters ? [...c.semesters] : [];
+    }
+  },
+  { immediate: true }
+);
 </script>

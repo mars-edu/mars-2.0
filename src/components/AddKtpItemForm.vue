@@ -25,7 +25,7 @@
           label="Результат обучения/дисциплина"
           placeholder="Выберите результат обучения/дисциплину"
           v-model="class9Id"
-          :options="class9Options"
+          :options="filteredClass9Options"
           name="ktp-item-class9"
           id="ktp-item-class9"
           searchable
@@ -38,31 +38,54 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { f7Popover, f7 } from "framework7-vue";
 import { storeToRefs } from "pinia";
 import { useClass9Store } from "@/stores/class9Store";
 import { useKtpStore } from "@/stores/ktpStore";
-import { useCalendarStore } from "@/stores/calendarStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import Select from "@/components/ui/Select.vue";
 
 const props = defineProps<{
   opened: boolean;
+  selectedAcademicYearId?: string;
+  selectedSemesterId?: string;
 }>();
 
 const emit = defineEmits(["update:opened"]);
 
 const class9Store = useClass9Store();
 const ktpStore = useKtpStore();
-const calendarStore = useCalendarStore();
-const { class9Options } = storeToRefs(calendarStore);
+const { class9Options } = storeToRefs(class9Store);
 const formError = ref("");
 
 const class9Id = ref("");
 
+// Create filtered class9Options based on selected academic year and semester from props
+const filteredClass9Options = computed(() => {
+  if (!props.selectedAcademicYearId || !props.selectedSemesterId) {
+    return class9Options.value;
+  }
+
+  return class9Options.value.filter((option) => {
+    const class9Item = class9Store.getClass9ById(option.value);
+    if (!class9Item) return false;
+
+    // Check if class9Item has distributionEntries with matching academicYearId and semesterId
+    return class9Item.distributionEntries.some(
+      (entry) =>
+        entry.academicYearId === props.selectedAcademicYearId &&
+        entry.semesterId === props.selectedSemesterId
+    );
+  });
+});
+
 const isFormValid = computed(() => {
-  return !!class9Id.value;
+  return (
+    !!class9Id.value &&
+    !!props.selectedAcademicYearId &&
+    !!props.selectedSemesterId
+  );
 });
 
 const resetForm = () => {
@@ -85,7 +108,7 @@ const openKtpItemPopover = () => {
 
 const handleSave = async () => {
   if (!isFormValid.value) {
-    formError.value = "Пожалуйста, выберите результат обучения/дисциплину.";
+    formError.value = "Пожалуйста, заполните все поля.";
     return;
   }
 
@@ -96,15 +119,12 @@ const handleSave = async () => {
       return;
     }
 
-    // Create initial KTP detail for the selected module/discipline
-    const ktp = ktpStore.ensureKtpForClass9(class9Id.value);
-    ktpStore.addKtpDetail(ktp.id, {
-      theme:
-        selectedItem.learningOutcome ||
-        `${selectedItem.moduleIndex} ${selectedItem.moduleName}`,
-    });
+    const ktp = ktpStore.ensureKtpForClass9(
+      class9Id.value,
+      props.selectedAcademicYearId || "",
+      props.selectedSemesterId || ""
+    );
 
-    // Optional toast for feedback
     f7.toast
       .create({
         text: "Элемент КТП создан",
@@ -113,7 +133,7 @@ const handleSave = async () => {
       })
       .open();
 
-    onPopoverClosed();
+    closeKtpItemPopover();
   } catch (err) {
     formError.value =
       err instanceof Error ? err.message : "Не удалось добавить запись.";

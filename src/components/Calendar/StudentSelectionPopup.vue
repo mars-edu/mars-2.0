@@ -8,8 +8,8 @@
     <f7-page>
       <div class="event-popover bg-card text-card-foreground h-full">
         <PopoverHeader
-          title="Добавить обучающихся"
-          save-text="Добавить"
+          title="Выбрать обучающихся"
+          save-text="Сохранить"
           :on-cancel="internalClose"
           :on-save="save"
         />
@@ -66,7 +66,8 @@
           />
 
           <div class="text-sm text-muted-foreground">
-            Найдено: {{ filteredStudents.length }}
+            Найдено: {{ filteredStudents.length }} | Выбрано:
+            {{ localSelectedStudents.size }}
           </div>
 
           <div class="max-h-64 overflow-y-auto border border-input rounded-lg">
@@ -183,7 +184,9 @@ const filteredStudents = computed(() => {
     .filter(
       (s) => filters.course === "all" || s.course.toString() === filters.course
     )
-    .filter((s) => filters.base === "all" || s.base.toString() === filters.base)
+    .filter(
+      (s) => filters.base === "all" || s.base?.toString() === filters.base
+    )
     .filter(
       (s) => filters.specialty === "all" || s.specialty === filters.specialty
     )

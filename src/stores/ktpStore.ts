@@ -5,6 +5,8 @@ import type { ParsedLesson } from "@/services/excel-parser";
 export interface Ktp {
   id: string;
   class9Id: string;
+  academicYearId: string;
+  semesterId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,14 +45,33 @@ export const useKtpStore = defineStore(
     const loading = ref(false);
     const error = ref<string | null>(null);
 
-    function findKtpByClass9Id(class9Id: string): Ktp | undefined {
-      return ktps.value.find((k) => k.class9Id === class9Id);
+    function findKtpByClass9Id(
+      class9Id: string,
+      academicYearId?: string,
+      semesterId?: string
+    ): Ktp | undefined {
+      return ktps.value.find(
+        (k) =>
+          k.class9Id === class9Id &&
+          (!academicYearId || k.academicYearId === academicYearId) &&
+          (!semesterId || k.semesterId === semesterId)
+      );
     }
 
-    function createKtp(class9Id: string): Ktp {
+    function findKtpById(ktpId: string): Ktp | undefined {
+      return ktps.value.find((k) => k.id === ktpId);
+    }
+
+    function createKtp(
+      class9Id: string,
+      academicYearId: string,
+      semesterId: string
+    ): Ktp {
       const newKtp: Ktp = {
         id: crypto.randomUUID(),
         class9Id,
+        academicYearId,
+        semesterId,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -58,40 +79,18 @@ export const useKtpStore = defineStore(
       return newKtp;
     }
 
-    function ensureKtpForClass9(class9Id: string): Ktp {
-      const existing = findKtpByClass9Id(class9Id);
-      return existing || createKtp(class9Id);
-    }
-
-    function migrateDetailsToKtpModel() {
-      // Migrate legacy details that might still have class9Id field
-      const legacy = ktpDetails.value as unknown as Array<any>;
-      const itemsWithLegacyKey = legacy.filter((d) => d.class9Id && !d.ktpId);
-      if (!itemsWithLegacyKey.length) return;
-
-      const mapClass9ToKtpId = new Map<string, string>();
-      for (const item of itemsWithLegacyKey) {
-        const class9Id: string = item.class9Id;
-        let ktpId = mapClass9ToKtpId.get(class9Id);
-        if (!ktpId) {
-          ktpId = ensureKtpForClass9(class9Id).id;
-          mapClass9ToKtpId.set(class9Id, ktpId);
-        }
-        item.ktpId = ktpId;
-        delete item.class9Id;
-      }
-    }
-
-    // Public migration trigger
-    function migrateLegacy() {
-      migrateDetailsToKtpModel();
+    function ensureKtpForClass9(
+      class9Id: string,
+      academicYearId: string,
+      semesterId: string
+    ): Ktp {
+      const existing = findKtpByClass9Id(class9Id, academicYearId, semesterId);
+      return existing || createKtp(class9Id, academicYearId, semesterId);
     }
 
     function fetchDetailsForKtp(ktpId: string) {
       loading.value = true;
       error.value = null;
-
-      migrateDetailsToKtpModel();
 
       // Filter existing store data by ktpId
       const filteredDetails = ktpDetails.value
@@ -139,6 +138,42 @@ export const useKtpStore = defineStore(
       });
     }
 
+    function deleteKtpByClass9Id(
+      class9Id: string,
+      academicYearId?: string,
+      semesterId?: string
+    ) {
+      const ktp = findKtpByClass9Id(class9Id, academicYearId, semesterId);
+      if (!ktp) return { success: true, deleted: 0 };
+
+      // Delete all KTP details for this KTP
+      const deletedDetails = ktpDetails.value.filter(
+        (d) => d.ktpId === ktp.id
+      ).length;
+      ktpDetails.value = ktpDetails.value.filter((d) => d.ktpId !== ktp.id);
+
+      // Delete the KTP record itself
+      ktps.value = ktps.value.filter((k) => k.id !== ktp.id);
+
+      return { success: true, deleted: deletedDetails };
+    }
+
+    function deleteKtpById(ktpId: string) {
+      const ktp = ktps.value.find((k) => k.id === ktpId);
+      if (!ktp) return { success: true, deleted: 0 };
+
+      // Delete all KTP details for this KTP
+      const deletedDetails = ktpDetails.value.filter(
+        (d) => d.ktpId === ktpId
+      ).length;
+      ktpDetails.value = ktpDetails.value.filter((d) => d.ktpId !== ktpId);
+
+      // Delete the KTP record itself
+      ktps.value = ktps.value.filter((k) => k.id !== ktpId);
+
+      return { success: true, deleted: deletedDetails };
+    }
+
     function reorderKtpDetails(ktpId: string, reorderedIds: string[]) {
       try {
         error.value = null;
@@ -183,6 +218,7 @@ export const useKtpStore = defineStore(
           notes: lesson.notes || "",
         }));
 
+        // Remove existing KTP details for this ktpId
         ktpDetails.value = ktpDetails.value.filter((d) => d.ktpId !== ktpId);
         ktpDetails.value.push(...newDetails);
         ktpDetails.value.sort((a, b) => a.position - b.position);
@@ -203,39 +239,100 @@ export const useKtpStore = defineStore(
     });
 
     // Convenience wrappers by class9Id for existing components
-    function fetchDetailsForClass9(class9Id: string) {
-      const ktp = ensureKtpForClass9(class9Id);
+    function fetchDetailsForClass9(
+      class9Id: string,
+      academicYearId?: string,
+      semesterId?: string
+    ) {
+      const ktp = ensureKtpForClass9(
+        class9Id,
+        academicYearId || "",
+        semesterId || ""
+      );
       return fetchDetailsForKtp(ktp.id);
     }
 
     function addKtpDetailForClass9(
       class9Id: string,
-      data: Partial<Omit<KtpDetail, "id" | "ktpId" | "position">>
+      data: Partial<Omit<KtpDetail, "id" | "ktpId" | "position">>,
+      academicYearId?: string,
+      semesterId?: string
     ) {
-      const ktp = ensureKtpForClass9(class9Id);
+      const ktp = ensureKtpForClass9(
+        class9Id,
+        academicYearId || "",
+        semesterId || ""
+      );
       return addKtpDetail(ktp.id, data);
     }
 
     function reorderKtpDetailsForClass9(
       class9Id: string,
-      reorderedIds: string[]
+      reorderedIds: string[],
+      academicYearId?: string,
+      semesterId?: string
     ) {
-      const ktp = ensureKtpForClass9(class9Id);
+      const ktp = ensureKtpForClass9(
+        class9Id,
+        academicYearId || "",
+        semesterId || ""
+      );
       return reorderKtpDetails(ktp.id, reorderedIds);
     }
 
     function bulkImportKtpDetailsForClass9(
       class9Id: string,
-      lessons: ParsedLesson[]
+      lessons: ParsedLesson[],
+      academicYearId?: string,
+      semesterId?: string
     ) {
-      const ktp = ensureKtpForClass9(class9Id);
+      const ktp = ensureKtpForClass9(
+        class9Id,
+        academicYearId || "",
+        semesterId || ""
+      );
       return bulkImportKtpDetails(ktp.id, lessons);
     }
 
     const getDetailsByClass9Id = computed(() => {
-      return (class9Id: string) => {
-        const ktp = ensureKtpForClass9(class9Id);
+      return (
+        class9Id: string,
+        academicYearId?: string,
+        semesterId?: string
+      ) => {
+        const ktp = ensureKtpForClass9(
+          class9Id,
+          academicYearId || "",
+          semesterId || ""
+        );
         return getDetailsByKtpId.value(ktp.id);
+      };
+    });
+
+    const getKtpIdForClass9 = computed(() => {
+      return (
+        class9Id: string | null | undefined,
+        academicYearId?: string,
+        semesterId?: string
+      ) => {
+        if (!class9Id) return null;
+        const ktp = findKtpByClass9Id(
+          class9Id || "",
+          academicYearId,
+          semesterId
+        );
+        return ktp ? ktp.id : null;
+      };
+    });
+
+    const getModuleTitleForKtp = computed(() => {
+      return (ktpId: string | null | undefined) => {
+        if (!ktpId) return "Рабочие учебные программы";
+        const ktpItem = ktps.value.find((ktp) => ktp.id === ktpId);
+        if (!ktpItem) return "Рабочие учебные программы";
+
+        // Return a basic title since we can't access class9Store from within ktpStore
+        return `КТП ${ktpItem.id.slice(0, 8)}`;
       };
     });
 
@@ -247,20 +344,24 @@ export const useKtpStore = defineStore(
       // Primary KTP-based APIs
       ensureKtpForClass9,
       findKtpByClass9Id,
+      findKtpById,
       fetchDetailsForKtp,
       addKtpDetail,
       updateKtpDetail,
       deleteKtpDetail,
+      deleteKtpByClass9Id,
+      deleteKtpById,
       reorderKtpDetails,
       bulkImportKtpDetails,
       getDetailsByKtpId,
+      getKtpIdForClass9,
+      getModuleTitleForKtp,
       // Convenience class9-based APIs (backward compat)
       fetchDetailsForClass9,
       addKtpDetailForClass9,
       reorderKtpDetailsForClass9,
       bulkImportKtpDetailsForClass9,
       getDetailsByClass9Id,
-      migrateLegacy,
     };
   },
   {
