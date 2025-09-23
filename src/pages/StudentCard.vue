@@ -134,8 +134,6 @@ const languageStore = useLanguageStore();
 const academicYearStore = useAcademicYearStore();
 const baseStore = useBaseStore();
 
-const { specialtyOptions: storeSpecialtyOptions } = storeToRefs(specialtyStore);
-const { languageOptions: storeLanguageOptions } = storeToRefs(languageStore);
 const { academicYearOptions } = storeToRefs(academicYearStore);
 const { filteredStudents } = storeToRefs(studentStore);
 const { baseOptions: storeBaseOptions } = storeToRefs(baseStore);

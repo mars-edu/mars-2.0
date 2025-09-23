@@ -8,10 +8,16 @@ export const WEEK_DAYS = [
   { weekId: 6, russianAbbreviation: "ВС", name: "Воскресенье" },
 ];
 
+export const DATE_UI_FORMAT = "DD/MM/YYYY"; // visible to users
+export const DATE_STORAGE_FORMAT = "YYYY-MM-DD"; // persisted/ISO-like
+export const DATE_DAY_MONTH_FORMAT = "DD.MM"; // for compact table labels
+export const DATE_YEAR_FORMAT = "YYYY"; // for compact table labels
+export const DATE_PICKER_VALUE_FORMAT = "dd/mm/yyyy"; // Framework7 calendar format (numeric month)
+
 export const DATE_PICKER_PARAMS = {
   closeOnSelect: true,
-  dateFormat: "dd/MM/yyyy",
-  locale: "ru",
+  dateFormat: DATE_PICKER_VALUE_FORMAT,
+  // locale: "ru",
   monthNames: [
     "Январь",
     "Февраль",
@@ -49,6 +55,8 @@ export const DATE_PICKER_PARAMS = {
     "Пятница",
     "Суббота",
   ],
+  rangePicker: false,
+  multiple: false,
   dayNamesShort: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
   firstDay: 1,
 };

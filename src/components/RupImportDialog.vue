@@ -154,7 +154,7 @@ import { storeToRefs } from "pinia";
 
 const props = defineProps<{
   opened: boolean;
-  currentParentId: string | null;
+  currentKtpId: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -189,25 +189,11 @@ const academicYearOptions = computed(() => {
 });
 
 const semesterOptions = computed(() => {
-  const defaultOptions = [
-    { value: "", text: "Все семестры" },
-    { value: "1", text: "1 семестр" },
-    { value: "2", text: "2 семестр" },
-    { value: "3", text: "3 семестр" },
-    { value: "4", text: "4 семестр" },
-    { value: "5", text: "5 семестр" },
-    { value: "6", text: "6 семестр" },
-    { value: "7", text: "7 семестр" },
-    { value: "8", text: "8 семестр" },
-  ];
-
   // Add custom semesters from store if any
-  const customSemesters = semesters.value.map((semester) => ({
+  return semesters.value.map((semester) => ({
     value: semester.id,
     text: semester.shortName || semester.fullName,
   }));
-
-  return defaultOptions.concat(customSemesters);
 });
 
 // Filter available RUPs excluding the current one and by selected filters
@@ -215,8 +201,8 @@ const availableRups = computed(() => {
   let filtered = allRups.value;
 
   // Exclude current parent
-  if (props.currentParentId) {
-    filtered = filtered.filter((rup) => rup.id !== props.currentParentId);
+  if (props.currentKtpId) {
+    filtered = filtered.filter((rup) => rup.id !== props.currentKtpId);
   }
 
   // Filter by academic year
@@ -235,7 +221,9 @@ const availableRups = computed(() => {
 // Get themes for the selected RUP
 const selectedRupThemes = computed(() => {
   if (!selectedRupId.value) return [];
-  return ktpStore.getDetailsByParentId(selectedRupId.value);
+  // Use direct KTP ID method instead of class9-based method
+  const ktp = ktpStore.findKtpByClass9Id(selectedRupId.value, selectedAcademicYear.value, selectedSemester.value);
+  return ktp ? ktpStore.getDetailsByKtpId(ktp.id) : [];
 });
 
 const getCourseNumber = (courseId: string) => {
@@ -244,7 +232,9 @@ const getCourseNumber = (courseId: string) => {
 };
 
 const getThemeCount = (rupId: string) => {
-  return ktpStore.getDetailsByParentId(rupId).length;
+  // Use direct KTP ID method instead of class9-based method
+  const ktp = ktpStore.findKtpByClass9Id(rupId, selectedAcademicYear.value, selectedSemester.value);
+  return ktp ? ktpStore.getDetailsByKtpId(ktp.id).length : 0;
 };
 
 const selectRup = (rupId: string) => {
@@ -259,7 +249,7 @@ const handleClose = () => {
 };
 
 const handleImport = async () => {
-  if (!selectedRupId.value || !props.currentParentId) return;
+  if (!selectedRupId.value || !props.currentKtpId) return;
 
   try {
     isImporting.value = true;
@@ -289,13 +279,15 @@ const handleImport = async () => {
       })
     );
 
-    // Clear existing themes for the current parent and add imported ones
-    ktpStore.ktpDetails = ktpStore.ktpDetails.filter(
-      (d) => d.parentId !== props.currentParentId
-    );
+    // Clear existing themes for this KTP, then add imported ones
+    const ktp = ktpStore.findKtpById(props.currentKtpId);
+    if (!ktp) {
+      throw new Error("KTP не найден");
+    }
+    ktpStore.ktpDetails = ktpStore.ktpDetails.filter((d) => d.ktpId !== ktp.id);
 
     for (const themeData of importedThemes) {
-      ktpStore.addKtpDetail(props.currentParentId, themeData);
+      ktpStore.addKtpDetail(ktp.id, themeData);
     }
 
     f7.toast

@@ -70,13 +70,11 @@ import { f7, f7Popover, f7Icon, f7Input } from "framework7-vue";
 import { z } from "zod";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSemesterStore } from "@/stores/semesterStore";
-import { useAcademicYearStore } from "@/stores/academicYearStore";
 import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const courseStore = useCourseStore();
 const semesterStore = useSemesterStore();
-const academicYearStore = useAcademicYearStore();
 
 const semesterOptions = computed(() =>
   semesterStore.sortedSemesters.map((p) => ({ value: p.id, text: p.shortName }))
@@ -124,17 +122,10 @@ const handleSaveCourse = async () => {
   }
 
   try {
-    const activeAcademicYear = academicYearStore.getActiveAcademicYear;
-    if (!activeAcademicYear) {
-      formError.value = "Пожалуйста, выберите активный учебный год";
-      return;
-    }
-
     await courseStore.addCourse({
       number: courseNumber.value,
       admissionYear: new Date().getFullYear().toString(),
       semesters: selectedSemesters.value,
-      academicYearId: activeAcademicYear.id,
     });
     closeAddCoursePopover();
   } catch (error) {

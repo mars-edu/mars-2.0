@@ -1,13 +1,5 @@
 <template>
-  <div
-    class="bg-white min-h-32 p-3 relative group"
-    :class="{
-      'bg-gray-50': [6, 0].includes(new Date(day.date).getDay()),
-      'hover:bg-gray-50':
-        !day.isToday && ![6, 0].includes(new Date(day.date).getDay()),
-      'bg-red-50 border-red-200': day.isToday,
-    }"
-  >
+  <div class="bg-white min-h-32 p-3 relative group" :class="dayClasses">
     <div
       class="text-sm mb-2"
       :class="{
@@ -41,6 +33,8 @@
 <script setup lang="ts">
 import type { CalendarDay } from "@/composables/useCalendar";
 import CalendarEvent from "./CalendarEvent.vue";
+import dayjs from "dayjs";
+import { computed } from "vue";
 
 const emit = defineEmits<{
   (
@@ -57,10 +51,20 @@ const onEventClick = (
   emit("event-click", eventData, evt);
 };
 
-defineProps<{
+const props = defineProps<{
   day: CalendarDay;
   selectedEventId?: number | string | null;
 }>();
+
+const dayClasses = computed(() => {
+  const weekday = dayjs(props.day.date).day();
+  const isWeekend = weekday === 0 || weekday === 6; // Sunday=0, Saturday=6
+  return {
+    "bg-gray-50": isWeekend,
+    "hover:bg-gray-50": !props.day.isToday && !isWeekend,
+    "bg-red-50 border-red-200": props.day.isToday,
+  } as Record<string, boolean>;
+});
 </script>
 
 <style scoped>

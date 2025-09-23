@@ -5,13 +5,19 @@ import { useCourseStore } from "./courseStore";
 import { useAcademicYearStore } from "./academicYearStore";
 import { storeToRefs } from "pinia";
 import { useClass9Store } from "./class9Store";
+import { useSemesterStore } from "./semesterStore";
+import { useAcademicYearSemesterStore } from "./academicYearSemesterStore";
 
 export const useRupStore = defineStore(
   "rup",
   () => {
+    const academicYearSemesterStore = useAcademicYearSemesterStore();
+    const { getActiveAcademicYearSemester } = storeToRefs(
+      academicYearSemesterStore
+    );
+
     const selectedAcademicYearId = ref<string | null>(null);
     const selectedSpecialtyId = ref<string | null>(null);
-    const selectedCourseId = ref<string | null>(null);
 
     const selectedClass9ItemId = ref<string | null>(null);
 
@@ -20,40 +26,30 @@ export const useRupStore = defineStore(
     }
 
     const targetSpecialtyId = ref<string | null>(null);
-    const targetCourseId = ref<string | null>(null);
     const targetAcademicYearId = ref<string | null>(null);
 
     function setSelectedAcademicYear(id: string | null) {
       selectedAcademicYearId.value = id;
       selectedSpecialtyId.value = null;
-      selectedCourseId.value = null;
     }
     function setSelectedSpecialty(id: string | null) {
       selectedSpecialtyId.value = id;
-      if (selectedCourseId.value) selectedCourseId.value = null;
-    }
-    function setSelectedCourse(id: string | null) {
-      selectedCourseId.value = id;
     }
     function clearSelection() {
       // selectedAcademicYearId.value = null;
       selectedSpecialtyId.value = null;
-      selectedCourseId.value = null;
     }
 
     function setTargetContext(
       specialtyId: string | null,
-      courseId: string | null,
       academicYearId: string | null
     ) {
       targetSpecialtyId.value = specialtyId;
-      targetCourseId.value = courseId;
       targetAcademicYearId.value = academicYearId;
     }
 
     function clearTargetContext() {
       targetSpecialtyId.value = null;
-      targetCourseId.value = null;
       targetAcademicYearId.value = null;
     }
 
@@ -74,18 +70,6 @@ export const useRupStore = defineStore(
         (specialty) => specialty.id === selectedSpecialtyId.value
       );
     });
-    const selectedCourse = computed(() => {
-      const courseStore = useCourseStore();
-      const { courses } = storeToRefs(courseStore);
-      if (!selectedCourseId.value) return null;
-      return courses.value.find(
-        (course) => course.id === selectedCourseId.value
-      );
-    });
-    const filteredCourses = computed(() => {
-      const courseStore = useCourseStore();
-      return courseStore.courses;
-    });
 
     const selectedClass9Item = computed(() => {
       const class9Store = useClass9Store();
@@ -101,9 +85,21 @@ export const useRupStore = defineStore(
 
     const selectedClass9SemesterHours = computed(() => {
       if (!selectedClass9Item.value) return "0";
-      const sum = selectedClass9Item.value.distributionSemesterHours
-        .filter((h) => h && h.toString().trim() !== "")
-        .reduce((acc, h) => acc + Number(h), 0);
+
+      if (
+        !getActiveAcademicYearSemester.value ||
+        !getActiveAcademicYearSemester.value?.id
+      )
+        return "0";
+
+      const sum = selectedClass9Item.value.distributionEntries
+        .filter(
+          (entry) =>
+            entry.semesterId === getActiveAcademicYearSemester.value?.id
+        )
+        .filter((entry) => entry.hours && entry.hours.toString().trim() !== "")
+        .reduce((acc, entry) => acc + Number(entry.hours), 0);
+
       return sum.toString();
     });
 
@@ -138,9 +134,7 @@ export const useRupStore = defineStore(
     function reset() {
       selectedAcademicYearId.value = null;
       selectedSpecialtyId.value = null;
-      selectedCourseId.value = null;
       targetSpecialtyId.value = null;
-      targetCourseId.value = null;
       targetAcademicYearId.value = null;
       selectedClass9ItemId.value = null;
       selectedClass9ItemIds.value = [];
@@ -150,20 +144,15 @@ export const useRupStore = defineStore(
     return {
       selectedAcademicYearId,
       selectedSpecialtyId,
-      selectedCourseId,
       targetSpecialtyId,
-      targetCourseId,
       targetAcademicYearId,
       setSelectedAcademicYear,
       setSelectedSpecialty,
-      setSelectedCourse,
       setTargetContext,
       clearTargetContext,
       clearSelection,
       selectedAcademicYear,
       selectedSpecialty,
-      selectedCourse,
-      filteredCourses,
       selectedClass9ItemIds,
       isClass9ItemSelected,
       toggleClass9ItemSelection,

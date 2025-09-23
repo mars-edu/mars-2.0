@@ -78,69 +78,54 @@
               </div>
               <div
                 v-if="
-                  item.examEnabled ||
-                  item.creditEnabled ||
-                  item.controlLessonEnabled
+                  item.distributionEntries &&
+                  item.distributionEntries.some(
+                    (entry) =>
+                      entry.examEnabled ||
+                      entry.creditEnabled ||
+                      entry.controlLessonEnabled
+                  )
                 "
                 class="flex items-center gap-3 px-3 py-1.5 bg-orange-500 text-white rounded-lg"
               >
-                <div v-if="item.examEnabled" class="flex items-center gap-1.5">
-                  <span class="text-xs font-medium">Экзамен</span>
-                  <div class="flex gap-0.5">
-                    <span
-                      v-for="(enabled, i) in item.examSemesters"
-                      :key="'exam' + i"
-                      class="w-5 h-5 flex items-center justify-center text-xs rounded"
-                      :class="
-                        enabled
-                          ? 'bg-white text-orange-500'
-                          : 'bg-orange-400/50'
-                      "
-                    >
-                      {{ i + 1 }}
-                    </span>
-                  </div>
-                </div>
-                <div
-                  v-if="item.creditEnabled"
-                  class="flex items-center gap-1.5"
+                <template
+                  v-for="entry in item.distributionEntries"
+                  :key="entry.id"
                 >
-                  <span class="text-xs font-medium">Зачет</span>
-                  <div class="flex gap-0.5">
-                    <span
-                      v-for="(enabled, i) in item.creditSemesters"
-                      :key="'credit' + i"
-                      class="w-5 h-5 flex items-center justify-center text-xs rounded"
-                      :class="
-                        enabled
-                          ? 'bg-white text-orange-500'
-                          : 'bg-orange-400/50'
-                      "
+                  <div
+                    v-if="entry.examEnabled"
+                    class="flex items-center gap-1.5"
+                  >
+                    <span class="text-xs font-medium">Экз.</span>
+                    <div
+                      class="w-6 h-6 bg-white text-orange-500 rounded flex items-center justify-center"
                     >
-                      {{ i + 1 }}
-                    </span>
+                      <span class="text-xs font-bold">✓</span>
+                    </div>
                   </div>
-                </div>
-                <div
-                  v-if="item.controlLessonEnabled"
-                  class="flex items-center gap-1.5"
-                >
-                  <span class="text-xs font-medium">Контр.</span>
-                  <div class="flex gap-0.5">
-                    <span
-                      v-for="(enabled, i) in item.controlLessonSemesters"
-                      :key="'control' + i"
-                      class="w-5 h-5 flex items-center justify-center text-xs rounded"
-                      :class="
-                        enabled
-                          ? 'bg-white text-orange-500'
-                          : 'bg-orange-400/50'
-                      "
+                  <div
+                    v-if="entry.creditEnabled"
+                    class="flex items-center gap-1.5"
+                  >
+                    <span class="text-xs font-medium">Зач.</span>
+                    <div
+                      class="w-6 h-6 bg-white text-orange-500 rounded flex items-center justify-center"
                     >
-                      {{ i + 1 }}
-                    </span>
+                      <span class="text-xs font-bold">✓</span>
+                    </div>
                   </div>
-                </div>
+                  <div
+                    v-if="entry.controlLessonEnabled"
+                    class="flex items-center gap-1.5"
+                  >
+                    <span class="text-xs font-medium">Контр.</span>
+                    <div
+                      class="w-6 h-6 bg-white text-orange-500 rounded flex items-center justify-center"
+                    >
+                      <span class="text-xs font-bold">✓</span>
+                    </div>
+                  </div>
+                </template>
                 <div
                   v-if="item.totalHours"
                   class="flex items-center gap-1 ml-2 pl-2 border-l border-orange-400"
@@ -159,7 +144,6 @@
     <Class9Popup
       v-if="popupOpen"
       :specialty-id="specialtyId"
-      :course-id="courseId"
       :academic-year-id="academicYearId"
       :initial-data="initialData"
       :edit-mode="editMode"
@@ -180,7 +164,6 @@ import Sortable from "sortablejs";
 
 const props = defineProps<{
   specialtyId: string;
-  courseId: string;
   academicYearId: string;
   selectMode?: boolean;
 }>();
@@ -195,13 +178,12 @@ const sortableList = ref<HTMLElement | null>(null);
 let sortableInstance: Sortable | null = null;
 
 const class9List = computed(() => {
-  if (!props.academicYearId || !props.specialtyId || !props.courseId) {
+  if (!props.academicYearId || !props.specialtyId) {
     return [];
   }
   return class9Store.getClass9ItemsByContext(
     props.academicYearId,
-    props.specialtyId,
-    props.courseId
+    props.specialtyId
   );
 });
 
@@ -216,7 +198,6 @@ onMounted(() => {
           class9Store.updateClass9Order(
             props.academicYearId,
             props.specialtyId,
-            props.courseId,
             evt.oldIndex,
             evt.newIndex
           );

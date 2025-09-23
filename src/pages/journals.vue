@@ -24,10 +24,12 @@
                 name="academic-year"
                 class="w-44"
               />
-              <f7-input
-                type="text"
+              <Select
+                v-model="selectedSemesterId"
+                :options="semesterOptions"
                 placeholder="Семестр:"
-                class="!border !border-border !rounded-lg !w-36 !text-center !h-10 !bg-white"
+                name="semester"
+                class="w-44"
               />
             </div>
           </div>
@@ -189,7 +191,7 @@
                       class="rounded-lg p-4 text-gray-800 shadow-md min-h-[90px] flex flex-col justify-between transition-all duration-200 bg-blue-100 border border-blue-200"
                     >
                       <p class="font-semibold text-sm leading-tight">
-                        {{ getJournalTitle(journal) }}
+                        {{ journalStore.getJournalTitle(journal) }}
                       </p>
                     </div>
                     <div
@@ -217,9 +219,11 @@ import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
 import JournalCard from "@/components/Cards/JournalCard.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
+import { useSemesterStore } from "@/stores/semesterStore";
 import { useJournalStore, type Journal } from "@/stores/journalStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { storeToRefs } from "pinia";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 
 const activeNavItem = ref("journals");
 
@@ -231,18 +235,16 @@ const { courses } = storeToRefs(courseStore);
 
 const academicYearStore = useAcademicYearStore();
 const { academicYears } = storeToRefs(academicYearStore);
+const semesterStore = useSemesterStore();
+const { sortedSemesters } = storeToRefs(semesterStore);
 
-function getJournalTitle(journal: Journal) {
-  if (!journal.students || journal.students.length === 0) {
-    return journal.title;
-  }
-  return journalStore.generateJournalTitle(
-    journal.courseNumber,
-    journal.students || []
-  );
-}
+const academicYearSemesterStore = useAcademicYearSemesterStore();
 
 const selectedAcademicYear = ref("");
+const selectedSemesterId = ref("");
+const { getActiveAcademicYearSemester } = storeToRefs(
+  academicYearSemesterStore
+);
 
 const academicYearOptions = computed(() => {
   return academicYears.value.map((year) => ({
@@ -251,9 +253,28 @@ const academicYearOptions = computed(() => {
   }));
 });
 
+const semesterOptions = computed(() => {
+  const yearId = selectedAcademicYear.value;
+  const list = yearId
+    ? semesterStore.getSemestersByAcademicYear(yearId)
+    : sortedSemesters.value;
+  return list.map((s) => ({
+    value: s.id,
+    text: s.shortName || s.fullName || "",
+  }));
+});
+
 onMounted(async () => {
   selectedAcademicYear.value =
     academicYearStore.getActiveAcademicYear?.id || "";
+  if (
+    getActiveAcademicYearSemester.value &&
+    (!selectedAcademicYear.value ||
+      getActiveAcademicYearSemester.value.academicYearId ===
+        selectedAcademicYear.value)
+  ) {
+    selectedSemesterId.value = getActiveAcademicYearSemester.value.id;
+  }
 });
 
 const goToJournalDetails = (id: number | string) => {

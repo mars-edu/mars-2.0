@@ -1,10 +1,10 @@
 <template>
   <div>
     <f7-popover
-      :id="'edit-semester-popover-' + semester.id"
+      :id="'edit-semester-popover-' + semesterId"
       style="width: 600px !important"
       close-on-escape
-      :target="`#semester-item-${semester.id}`"
+      :target="`#semester-item-${semesterId}`"
     >
       <div class="semester-popover bg-card text-card-foreground">
         <PopoverHeader
@@ -28,62 +28,13 @@
               class="text-sm text-foreground"
               for="semester-short-name-edit"
             >
-              Краткое название <span class="text-destructive ml-1">*</span>
+              Название семестра <span class="text-destructive ml-1">*</span>
             </label>
             <f7-input
               id="semester-short-name-edit"
               type="text"
               v-model:value="shortName"
             />
-          </div>
-
-          <div class="space-y-2">
-            <label
-              class="text-sm text-foreground"
-              for="semester-full-name-edit"
-            >
-              Полное название <span class="text-destructive ml-1">*</span>
-            </label>
-            <f7-input
-              id="semester-full-name-edit"
-              type="text"
-              v-model:value="fullName"
-            />
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div class="space-y-2">
-              <label
-                class="text-sm text-foreground"
-                for="semester-start-date-edit"
-              >
-                Дата начала <span class="text-destructive ml-1">*</span>
-              </label>
-              <f7-input
-                id="semester-start-date-edit"
-                type="datepicker"
-                placeholder="Дата"
-                readonly
-                v-model:value="startDate"
-                :calendar-params="calendarParams"
-              />
-            </div>
-            <div class="space-y-2">
-              <label
-                class="text-sm text-foreground"
-                for="semester-end-date-edit"
-              >
-                Дата окончания <span class="text-destructive ml-1">*</span>
-              </label>
-              <f7-input
-                id="semester-end-date-edit"
-                type="datepicker"
-                placeholder="Дата"
-                readonly
-                v-model:value="endDate"
-                :calendar-params="calendarParams"
-              />
-            </div>
           </div>
 
           <div class="pt-4 border-t border-border">
@@ -108,56 +59,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import dayjs from "dayjs";
+import { ref, computed, watch } from "vue";
 import { f7, f7Input, f7Icon, f7Popover } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import { z } from "zod";
 import { useSemesterStore } from "@/stores/semesterStore";
-import type { Semester } from "@/stores/semesterStore";
-import { calendarParams } from "@/constants/period";
-
-const props = defineProps<{ semester: Semester }>();
+const props = defineProps<{ semesterId: string }>();
 
 const semesterStore = useSemesterStore();
 
-const shortName = ref(props.semester.shortName);
-const fullName = ref(props.semester.fullName);
-const startDate = ref<Date[]>([new Date(props.semester.startDate)]);
-const endDate = ref<Date[]>([new Date(props.semester.endDate)]);
+const semester = computed(() =>
+  semesterStore.getSemesterById(props.semesterId)
+);
+
+const shortName = ref("");
 const formError = ref("");
 
-const semesterSchema = z
-  .object({
-    shortName: z.string().min(1),
-    fullName: z.string().min(1),
-    startDate: z.array(z.date()).min(1),
-    endDate: z.array(z.date()).min(1),
-  })
-  .refine(
-    (data) =>
-      data.startDate.length > 0 &&
-      data.endDate.length > 0 &&
-      data.endDate[0] > data.startDate[0],
-    {
-      message: "Дата окончания должна быть позже даты начала",
-      path: ["endDate"],
-    }
-  );
+const semesterSchema = z.object({
+  shortName: z.string().min(1, "Пожалуйста, введите название семестра"),
+});
 
 const validationResult = computed(() => {
   return semesterSchema.safeParse({
     shortName: shortName.value,
-    fullName: fullName.value,
-    startDate: startDate.value,
-    endDate: endDate.value,
   });
 });
 
 const isFormValid = computed(() => validationResult.value.success);
 
 const closePopover = () => {
-  f7.popover.close(`#edit-semester-popover-${props.semester.id}`);
+  f7.popover.close(`#edit-semester-popover-${props.semesterId}`);
   semesterStore.clearError();
 };
 
@@ -170,11 +101,8 @@ const handleUpdateSemester = async () => {
   }
 
   try {
-    await semesterStore.updateSemester(props.semester.id, {
+    await semesterStore.updateSemester(props.semesterId, {
       shortName: shortName.value,
-      fullName: fullName.value,
-      startDate: dayjs(startDate.value[0]).format("YYYY-MM-DD"),
-      endDate: dayjs(endDate.value[0]).format("YYYY-MM-DD"),
     });
     closePopover();
   } catch (error) {
@@ -183,13 +111,15 @@ const handleUpdateSemester = async () => {
 };
 
 const confirmDelete = () => {
-  f7.popover.close(`#edit-semester-popover-${props.semester.id}`);
+  f7.popover.close(`#edit-semester-popover-${props.semesterId}`);
   f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить семестр "${props.semester.shortName}"?</p><p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
+    `<p>Вы уверены, что хотите удалить семестр "${
+      semester.value?.shortName ?? ""
+    }"?</p><p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление семестра",
     async () => {
       try {
-        await semesterStore.deleteSemester(props.semester.id);
+        await semesterStore.deleteSemester(props.semesterId);
       } catch (error) {
         console.error("Failed to delete semester:", error);
         f7.dialog.alert("Произошла ошибка при удалении семестра.");
@@ -197,4 +127,20 @@ const confirmDelete = () => {
     }
   );
 };
+
+const resetForm = () => {
+  shortName.value = semester.value?.shortName ?? "";
+  formError.value = "";
+  semesterStore.clearError();
+};
+
+watch(
+  semester,
+  (s) => {
+    if (s) {
+      shortName.value = s.shortName;
+    }
+  },
+  { immediate: true }
+);
 </script>

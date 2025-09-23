@@ -1,4 +1,4 @@
-import { Role } from "../stores/userStore";
+import { Role } from "../types/user";
 import type { Router } from "framework7/types";
 import NotFoundPage from "../pages/404.vue";
 
@@ -24,10 +24,6 @@ type RouteConfig = Router.RouteParameters & {
 };
 
 const routes: RouteConfig[] = [
-  // {
-  //   path: "/",
-  //   redirect: "/home",
-  // },
   {
     path: "/home",
     component: HomePage,

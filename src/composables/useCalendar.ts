@@ -3,7 +3,9 @@ import { useCalendarStore } from "@/stores/calendarStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { storeToRefs } from "pinia";
 import dayjs from "dayjs";
+import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import isBetween from "dayjs/plugin/isBetween";
+import { isEventOnDate } from "@/utils/eventDate";
 
 dayjs.extend(isBetween);
 
@@ -71,42 +73,11 @@ export function useCalendar() {
 
   // Helper function to get events for a specific date
   const getEventsForDate = (targetDate: dayjs.Dayjs) => {
-    const parseToDayjs = (dateValue: any) => {
-      if (Array.isArray(dateValue) && dateValue.length > 0) {
-        return dayjs(dateValue[0]);
-      }
-      if (typeof dateValue === "string") {
-        return dayjs(dateValue, "DD/MM/YYYY");
-      }
-      return dayjs(dateValue);
-    };
-
     const weekIdOfCurrent = (targetDate.day() + 6) % 7; // Convert Sunday=0 to Monday=0
 
     return calendarStore.events
       .filter((event) => {
-        const eventStartDate = parseToDayjs(event.startDate);
-        const eventEndDate = parseToDayjs(event.endDate ?? event.startDate);
-
-        // Check if date range matches
-        const inRange = targetDate.isBetween(
-          eventStartDate,
-          eventEndDate,
-          "day",
-          "[]"
-        );
-
-        if (!inRange) return false;
-
-        // If weeklySchedules defined, ensure current weekday is selected
-        if (event.weeklySchedules && event.weeklySchedules.length > 0) {
-          return event.weeklySchedules.some(
-            (ws) => ws.weekId === weekIdOfCurrent
-          );
-        }
-
-        // Otherwise show for all days in range
-        return true;
+        return isEventOnDate(event as any, targetDate);
       })
       .map((event) => {
         let time = event.startTime || "All day";
@@ -162,7 +133,9 @@ export function useCalendar() {
       );
 
       days.push({
-        date: `${date.getFullYear()}-${date.getMonth()}-${dayNumber}`,
+        date: dayjs(
+          new Date(date.getFullYear(), date.getMonth() - 1, dayNumber)
+        ).format(DATE_STORAGE_FORMAT),
         dayNumber,
         isCurrentMonth: false,
         isToday: false,
@@ -182,7 +155,9 @@ export function useCalendar() {
       );
 
       days.push({
-        date: `${date.getFullYear()}-${date.getMonth() + 1}-${i}`,
+        date: dayjs(new Date(parseInt(year.value), monthIndex.value, i)).format(
+          DATE_STORAGE_FORMAT
+        ),
         dayNumber: i,
         isCurrentMonth: true,
         isToday,
@@ -198,7 +173,9 @@ export function useCalendar() {
       );
 
       days.push({
-        date: `${date.getFullYear()}-${date.getMonth() + 2}-${i}`,
+        date: dayjs(
+          new Date(date.getFullYear(), date.getMonth() + 1, i)
+        ).format(DATE_STORAGE_FORMAT),
         dayNumber: i,
         isCurrentMonth: false,
         isToday: false,

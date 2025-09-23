@@ -4,10 +4,7 @@ import { ref, computed } from "vue";
 export interface Semester {
   id: string;
   shortName: string;
-  fullName: string;
-  startDate: string;
-  endDate: string;
-  academicYearId: string;
+  fullName?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,30 +24,22 @@ export const useSemesterStore = defineStore(
 
     const sortedSemesters = computed(() => {
       return [...semesters.value].sort((a, b) =>
-        a.startDate.localeCompare(b.startDate)
+        a.shortName.localeCompare(b.shortName)
       );
     });
 
     const getSemestersByAcademicYear = computed(() => {
-      return (academicYearId: string) =>
-        semesters.value.filter((s) => s.academicYearId === academicYearId);
-    });
-
-    const getActiveSemester = computed(() => {
-      const today = new Date().toISOString().split("T")[0]; // Get current date in YYYY-MM-DD format
-
-      return (
-        semesters.value.find((semester) => {
-          return semester.startDate <= today && semester.endDate >= today;
-        }) || null
-      );
+      return (academicYearId: string) => semesters.value; // All semesters are now global
     });
 
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
     async function addSemester(
-      semesterData: Omit<Semester, "id" | "createdAt" | "updatedAt">
+      semesterData: Omit<
+        Semester,
+        "id" | "createdAt" | "updatedAt" | "academicYearId"
+      >
     ) {
       loading.value = true;
       try {
@@ -74,7 +63,9 @@ export const useSemesterStore = defineStore(
 
     async function updateSemester(
       id: string,
-      semesterData: Partial<Omit<Semester, "id" | "createdAt" | "updatedAt">>
+      semesterData: Partial<
+        Omit<Semester, "id" | "createdAt" | "updatedAt" | "academicYearId">
+      >
     ) {
       loading.value = true;
       try {
@@ -125,7 +116,6 @@ export const useSemesterStore = defineStore(
       error.value = null;
     }
 
-    // Remove migration-related logic
     return {
       semesters,
       loading,
@@ -133,7 +123,6 @@ export const useSemesterStore = defineStore(
       getSemesterById,
       sortedSemesters,
       getSemestersByAcademicYear,
-      getActiveSemester,
       isLoading,
       getError,
       addSemester,

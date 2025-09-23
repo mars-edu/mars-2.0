@@ -10,7 +10,7 @@
       :disabled="disabled"
       :title="
         disabled
-          ? 'Сначала выберите специальность и курс'
+          ? 'Сначала выберите специальность'
           : 'Создать рабочий учебный план'
       "
     >
@@ -60,7 +60,6 @@ const props = defineProps<{
   opened: boolean;
   disabled?: boolean;
   specialtyId: string;
-  courseId: string;
 }>();
 
 const emit = defineEmits<{

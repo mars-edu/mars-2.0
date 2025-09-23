@@ -1,10 +1,10 @@
 <template>
   <div>
     <f7-popover
-      :id="'edit-language-popover-' + language.id"
+      :id="'edit-language-popover-' + languageId"
       style="width: 600px !important"
       close-on-escape
-      :target="`#language-item-${language.id}`"
+      :target="`#language-item-${languageId}`"
     >
       <div class="language-popover bg-card text-card-foreground">
         <PopoverHeader
@@ -69,24 +69,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useLanguageStore } from "@/stores/languageStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
-const props = defineProps<{
-  language: {
-    id: string;
-    name: string;
-    code: string;
-  };
-}>();
+const props = defineProps<{ languageId: string }>();
 
 const languageStore = useLanguageStore();
 
-const languageName = ref(props.language.name);
-const languageCode = ref(props.language.code);
+const language = computed(() =>
+  languageStore.getLanguageById(props.languageId)
+);
+
+const languageName = ref("");
+const languageCode = ref("");
 const formError = ref("");
 
 const languageSchema = z.object({
@@ -104,7 +102,7 @@ const validationResult = computed(() => {
 const isFormValid = computed(() => validationResult.value.success);
 
 const closeEditLanguagePopover = () => {
-  f7.popover.close(`#edit-language-popover-${props.language.id}`);
+  f7.popover.close(`#edit-language-popover-${props.languageId}`);
   resetForm();
 };
 
@@ -120,7 +118,7 @@ const handleUpdateLanguage = async () => {
   }
 
   try {
-    await languageStore.updateLanguage(props.language.id, {
+    await languageStore.updateLanguage(props.languageId, {
       name: languageName.value,
       code: languageCode.value,
     });
@@ -131,15 +129,15 @@ const handleUpdateLanguage = async () => {
 };
 
 const showDeleteConfirmation = () => {
-  f7.popover.close(`#edit-language-popover-${props.language.id}`);
+  f7.popover.close(`#edit-language-popover-${props.languageId}`);
 
   f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить язык "${props.language.name}"?</p>
+    `<p>Вы уверены, что хотите удалить язык "${language.value?.name ?? ""}"?</p>
      <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление языка",
     async () => {
       try {
-        await languageStore.deleteLanguage(props.language.id);
+        await languageStore.deleteLanguage(props.languageId);
       } catch (error) {
         console.error("Failed to delete language:", error);
         f7.dialog.alert("Произошла ошибка при удалении языка.");
@@ -149,9 +147,20 @@ const showDeleteConfirmation = () => {
 };
 
 const resetForm = () => {
-  languageName.value = props.language.name;
-  languageCode.value = props.language.code;
+  languageName.value = language.value?.name ?? "";
+  languageCode.value = language.value?.code ?? "";
   formError.value = "";
   languageStore.clearError();
 };
+
+watch(
+  language,
+  (l) => {
+    if (l) {
+      languageName.value = l.name;
+      languageCode.value = l.code;
+    }
+  },
+  { immediate: true }
+);
 </script>

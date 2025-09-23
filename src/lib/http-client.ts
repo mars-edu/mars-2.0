@@ -1,7 +1,7 @@
 import { ofetch } from "ofetch";
 
-export const API_URL = import.meta.env.VITE_API_URL || "/api";
-// export const API_URL = "https://mars-backend.robanokssamit-1ba.workers.dev/api";
+// export const API_URL = import.meta.env.VITE_API_URL || "/api";
+export const API_URL = "https://mars-backend.robanokssamit-1ba.workers.dev/api";
 
 export const httpClient = ofetch.create({
   baseURL: API_URL,

@@ -6,7 +6,5 @@
 import { defineAsyncComponent } from "vue";
 import AsyncRouteWrapper from "@/components/AsyncRouteWrapper.vue";
 
-const Journals = defineAsyncComponent(
-  () => import("../Journals.vue")
-);
-</script> 
+const Journals = defineAsyncComponent(() => import("../journals.vue"));
+</script>

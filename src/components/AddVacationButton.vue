@@ -68,7 +68,7 @@
                 placeholder="Дата"
                 readonly
                 v-model:value="startDate"
-                :calendar-params="calendarParams"
+                :calendar-params="DATE_PICKER_PARAMS"
               />
             </div>
             <div class="space-y-2">
@@ -81,7 +81,7 @@
                 placeholder="Дата"
                 readonly
                 v-model:value="endDate"
-                :calendar-params="calendarParams"
+                :calendar-params="DATE_PICKER_PARAMS"
               />
             </div>
           </div>
@@ -94,12 +94,13 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import dayjs from "dayjs";
+import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useVacationStore } from "@/stores/vacationStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
-import { calendarParams } from "@/constants/period";
+import { DATE_PICKER_PARAMS } from "@/constants/calendar";
 
 const props = defineProps<{ prefix?: string }>();
 
@@ -177,8 +178,8 @@ const handleSaveVacation = async () => {
     await vacationStore.addVacation({
       shortName: shortName.value,
       fullName: fullName.value,
-      startDate: dayjs(startDate.value[0]).format("YYYY-MM-DD"),
-      endDate: dayjs(endDate.value[0]).format("YYYY-MM-DD"),
+      startDate: dayjs(startDate.value[0]).format(DATE_STORAGE_FORMAT),
+      endDate: dayjs(endDate.value[0]).format(DATE_STORAGE_FORMAT),
       academicYearId: activeAcademicYear.id,
     });
     closeAddVacationPopover();

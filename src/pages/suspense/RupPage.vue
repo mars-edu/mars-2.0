@@ -12,7 +12,10 @@ const userStore = useUserStore();
 const pageView = computed(() => {
   if (userStore.isTeacher) {
     return defineAsyncComponent(() => import("../KtpPage.vue"));
+  } else if (userStore.isAdmin) {
+    return defineAsyncComponent(() => import("../rup.vue"));
   }
-  return defineAsyncComponent(() => import("../rup.vue"));
+  // Default fallback for other user types
+  return defineAsyncComponent(() => import("../KtpPage.vue"));
 });
 </script>

@@ -5,13 +5,13 @@
     </template>
 
     <template #fallback>
-      <f7-page>
+      <PageSkeleton v-if="!isError" />
+      <f7-page v-else>
         <div
           class="display-flex justify-content-center align-items-center"
           style="min-height: 200px"
         >
-          <ErrorDisplay v-if="isError" :message="errorMessage" />
-          <Loader v-else />
+          <ErrorDisplay :message="errorMessage" />
         </div>
       </f7-page>
     </template>
@@ -21,7 +21,7 @@
 <script setup lang="ts">
 import { ref, onErrorCaptured } from "vue";
 import { f7Page } from "framework7-vue";
-import Loader from "./Loader.vue";
+import PageSkeleton from "./PageSkeleton.vue";
 import ErrorDisplay from "./ErrorDisplay.vue";
 
 const isError = ref(false);

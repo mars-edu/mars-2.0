@@ -1,50 +1,38 @@
 <template>
   <div class="flex justify-between items-center mb-2" :class="class">
-    <!-- Icon navigation buttons -->
-    <div class="flex items-center space-x-2 justify-center">
+    <!-- Left side: Navigation -->
+    <div class="flex items-center space-x-2">
       <sidebar-button @click="$emit('icon-click', 'sidebar')" />
-      <list-button @click="$emit('icon-click', 'list')" />
-    </div>
-    <AddEventButton @event-added="handleEventAdded" />
-
-    <!-- Month navigation UI (moved from CalendarHeader) -->
-    <div class="flex items-center" @wheel="handleWheel" ref="monthNavArea">
       <button
-        class="p-1 hover:bg-secondary rounded transition-colors"
-        @click="$emit('previous-month')"
+        @click="$emit('today')"
+        class="flex items-center w-fit hover:bg-secondary rounded-lg p-2 transition-colors"
       >
-        <i class="f7-icons text-muted-foreground text-sm">chevron_left</i>
+        <span
+          class="w-9 h-9 bg-primary text-primary-foreground rounded-full flex items-center justify-center mr-2"
+        >
+          {{ todayDate }}
+        </span>
+        <span class="text-primary font-semibold">Сегодня</span>
       </button>
-      <h1 class="text-xl text-foreground px-2 select-none min-w-fit">
-        {{ monthName }} {{ year }}
-      </h1>
-      <button
-        class="p-1 hover:bg-secondary rounded transition-colors"
-        @click="$emit('next-month')"
-      >
-        <i class="f7-icons text-muted-foreground text-sm">chevron_right</i>
-      </button>
+      <MonthNavigator
+        :monthName="monthName"
+        :year="year"
+        @previous-month="$emit('previous-month')"
+        @next-month="$emit('next-month')"
+      />
     </div>
-
-    <button
-      @click="$emit('today')"
-      class="flex items-center w-fit hover:bg-secondary rounded-lg p-2 transition-colors"
-    >
-      <span
-        class="w-9 h-9 bg-primary text-primary-foreground rounded-full flex items-center justify-center mr-2"
-      >
-        {{ todayDate }}
-      </span>
-      <span class="text-primary font-semibold">Сегодня</span>
-    </button>
 
     <slot name="navigation"></slot>
 
-    <!-- Search bar -->
-    <SearchInput
-      :placeholder="searchPlaceholder"
-      @search="$emit('search', $event)"
-    />
+    <!-- Right side: Actions -->
+    <div class="flex items-center space-x-2">
+      <SearchInput
+        :placeholder="searchPlaceholder"
+        @search="$emit('search', $event)"
+      />
+      <list-button @click="$emit('icon-click', 'list')" />
+      <AddEventButton @event-added="handleEventAdded" />
+    </div>
   </div>
 </template>
 
@@ -54,6 +42,7 @@ import SidebarButton from "./SidebarButton.vue";
 import ListButton from "./ListButton.vue";
 import AddEventButton from "./AddEventButton.vue";
 import SearchInput from "./SearchInput.vue";
+import MonthNavigator from "./MonthNavigator.vue";
 import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
 
 const props = defineProps<{
@@ -74,23 +63,6 @@ const emit = defineEmits<{
 }>();
 
 const calendarStore = useCalendarStore();
-
-const monthNavArea = ref<HTMLElement | null>(null);
-let scrollTimeout: number | null = null;
-const scrollDelay = 200;
-
-const handleWheel = (event: WheelEvent) => {
-  event.preventDefault();
-  if (scrollTimeout !== null) return;
-  scrollTimeout = window.setTimeout(() => {
-    scrollTimeout = null;
-  }, scrollDelay);
-  if (event.deltaY > 0 || event.deltaX > 0) {
-    emit("next-month");
-  } else if (event.deltaY < 0 || event.deltaX < 0) {
-    emit("previous-month");
-  }
-};
 
 const handleEventAdded = (event: CalendarEvent) => {
   // Event is already added to the store in AddEventButton

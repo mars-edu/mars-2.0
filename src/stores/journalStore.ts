@@ -5,7 +5,8 @@ import { useCourseStore } from "./courseStore";
 import { useStudentStore } from "./studentStore";
 import { useSpecialtyStore } from "./specialtyStore";
 import { useClass9Store } from "./class9Store";
-import { WEEK_DAYS } from "@/constants/calendar";
+import { WEEK_DAYS, DATE_STORAGE_FORMAT } from "@/constants/calendar";
+import dayjs from "dayjs";
 
 export interface Journal {
   id: string;
@@ -215,10 +216,8 @@ export const useJournalStore = defineStore(
           class9Id: journalData.disciplineId,
           rup: "",
           file: null,
-          startDate: new Date().toISOString().split("T")[0],
-          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-            .toISOString()
-            .split("T")[0],
+          startDate: dayjs().format(DATE_STORAGE_FORMAT),
+          endDate: dayjs().add(30, "day").format(DATE_STORAGE_FORMAT),
           participants: journalData.students,
         };
 
@@ -307,6 +306,13 @@ export const useJournalStore = defineStore(
       return 25;
     }
 
+    function getJournalTitle(journal: Journal) {
+      if (!journal.students || journal.students.length === 0) {
+        return `Журнал курса ${journal.courseNumber}`;
+      }
+      return generateJournalTitle(journal.courseNumber, journal.students || []);
+    }
+
     function reset() {
       journals.value = [];
       loading.value = false;
@@ -325,6 +331,7 @@ export const useJournalStore = defineStore(
       getJournalSubtitle,
       getJournalScheduleText,
       getJournalPercent,
+      getJournalTitle,
       getJournalById,
       addJournal,
       updateJournal,

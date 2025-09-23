@@ -201,7 +201,7 @@ const studentSchema = z.object({
   language: z.string().min(1, "Пожалуйста, выберите язык обучения"),
   base: z.string().min(1, "Пожалуйста, введите базу"),
   gender: z.enum(["male", "female"], {
-    required_error: "Пожалуйста, выберите пол",
+    error: "Пожалуйста, выберите пол",
   }),
 });
 

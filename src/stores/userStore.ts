@@ -1,38 +1,16 @@
 import { defineStore } from "pinia";
 import AuthService from "../services/auth";
 import { computed, ref } from "vue";
-
-export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  roles: Role[];
-  avatar?: string;
-}
-
-export enum Role {
-  ADMIN = "ADMIN",
-  TEACHER = "TEACHER",
-  STUDENT = "STUDENT",
-  PARENT = "PARENT",
-}
-
-export interface UserState {
-  currentUser: User | null;
-  isAuthenticated: boolean;
-  token: string | null;
-}
+import type { User, UserState } from "../types/user";
+import { Role } from "../types/user";
 
 export const useUserStore = defineStore(
   "user",
   () => {
-    // state
     const currentUser = ref<User | null>(null);
     const isAuthenticated = ref(false);
     const token = ref<string | null>(null);
 
-    // getters
     const hasRole = (role: Role) => {
       return currentUser.value?.roles.includes(role) || false;
     };
@@ -64,7 +42,6 @@ export const useUserStore = defineStore(
       return currentUser.value?.roles.includes(Role.PARENT) || false;
     });
 
-    // actions
     function setUser(user: User) {
       currentUser.value = user;
       isAuthenticated.value = true;
@@ -86,17 +63,14 @@ export const useUserStore = defineStore(
       const storedToken = localStorage.getItem("auth_token");
       if (storedToken) {
         token.value = storedToken;
-
         try {
           const response = await AuthService.validateToken(storedToken);
-
           if (response.success && response.user) {
             setUser(response.user);
           } else {
             logout();
           }
         } catch (error) {
-          console.error("Failed to initialize user session:", error);
           logout();
         }
       }
@@ -130,12 +104,9 @@ export const useUserStore = defineStore(
     }
 
     return {
-      // state
       currentUser,
       isAuthenticated,
       token,
-
-      // getters
       hasRole,
       hasAnyRole,
       fullName,
@@ -143,8 +114,6 @@ export const useUserStore = defineStore(
       isTeacher,
       isStudent,
       isParent,
-
-      // actions
       setUser,
       setToken,
       logout,

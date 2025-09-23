@@ -2,24 +2,26 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useClass9Store } from "./class9Store";
 
+export interface WeeklySchedule {
+  weekId: number;
+  startTime?: string;
+  endTime?: string;
+  startId?: string;
+  endId?: string;
+}
+
 export interface CalendarEvent {
   id: string;
   class9Id: string;
-  rup: string;
-  file: File | null;
   startDate: string;
   startTime?: string;
   endDate: string;
   endTime?: string;
   participants: string[];
   color?: string; // hex color code for the event
-  weeklySchedules?: {
-    weekId: number;
-    startTime?: string;
-    endTime?: string;
-    startId?: string;
-    endId?: string;
-  }[];
+  semester: string;
+  useCustomPeriod: boolean;
+  weeklySchedules?: WeeklySchedule[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,21 +41,6 @@ export const useCalendarStore = defineStore(
     const getError = computed(() => error.value);
 
     const class9Store = useClass9Store();
-
-    const class9Options = computed(() => {
-      return class9Store.getAllClass9Items
-        .filter(
-          (item: any) =>
-            item.learningOutcome && item.learningOutcome.trim() !== ""
-        )
-        .map((item: any) => ({
-          value: item.id,
-          text: `${item.moduleIndex} ${item.moduleName} - ${item.learningOutcome}`,
-          moduleIndex: item.moduleIndex,
-          moduleName: item.moduleName,
-          learningOutcome: item.learningOutcome,
-        }));
-    });
 
     const getEventTitle = (event: CalendarEvent) => {
       const class9Item = class9Store.getClass9ById(event.class9Id);
@@ -146,7 +133,6 @@ export const useCalendarStore = defineStore(
       getEventById,
       isLoading,
       getError,
-      class9Options,
       getEventTitle,
       addEvent,
       updateEvent,

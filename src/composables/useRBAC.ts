@@ -1,5 +1,6 @@
 import { computed } from "vue";
-import { useUserStore, Role } from "../stores/userStore";
+import { useUserStore } from "../stores/userStore";
+import { Role } from "../types/user";
 
 export interface AccessControl {
   roles: Role[];

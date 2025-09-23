@@ -188,12 +188,11 @@
       </table>
     </div>
 
-    <!-- KtpDetailFormPopover -->
-    <KtpDetailFormPopover
-      v-model:opened="ktpPopoverOpened"
-      :target="ktpPopoverTarget"
-      :parent-id="props.journalId"
-      :detail-to-edit="null"
+    <!-- KtpDetailViewPopover -->
+    <KtpDetailViewPopover
+      v-model:opened="ktpViewPopoverOpened"
+      :target="ktpViewPopoverTarget"
+      :detail="selectedKtpDetail"
     />
 
     <!-- Journal Settings Popover (moved here for correct positioning) -->
@@ -283,16 +282,25 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted, watch } from "vue";
+import dayjs from "dayjs";
+import {
+  DATE_DAY_MONTH_FORMAT,
+  DATE_YEAR_FORMAT,
+  DATE_STORAGE_FORMAT,
+} from "@/constants/calendar";
+import { getEventDays } from "@/utils/eventDate";
 import { f7, f7Icon, f7Button } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import MarkCell from "@/components/ui/MarkCell.vue";
 import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
-import KtpDetailFormPopover from "@/components/KtpDetailFormPopover.vue";
+import KtpDetailViewPopover from "@/components/KtpDetailViewPopover.vue";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSessionStore } from "@/stores/sessionStore";
 import { useMarksStore } from "@/stores/marksStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
+import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
+import { useJournalStore } from "@/stores/journalStore";
 import { storeToRefs } from "pinia";
 import type { Mark } from "@/types/marks";
 import type { EducationSchedule } from "@/stores/educationScheduleStore";
@@ -300,7 +308,6 @@ import type { StudentWithMarks } from "@/types/student";
 
 interface Props {
   journalId: string;
-  currentJournal: any;
   journalSettings?: {
     calculationType: "calculated" | "manual";
     calculationMethod: "only-assigned" | "all-days";
@@ -328,6 +335,8 @@ const { getStudentFullName } = studentStore;
 const sessionStore = useSessionStore();
 const marksStore = useMarksStore();
 const educationScheduleStore = useEducationScheduleStore();
+const ktpStore = useKtpStore();
+const journalStore = useJournalStore();
 const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
 
 const editingCell = ref<{
@@ -336,6 +345,11 @@ const editingCell = ref<{
   markIndex: number;
 } | null>(null);
 const editedValue = ref("");
+
+const currentJournal = computed(() => {
+  if (!props.journalId) return null;
+  return journalStore.getJournalById(props.journalId);
+});
 
 const currentEvent = computed(() => {
   if (!props.journalId) return null;
@@ -423,136 +437,115 @@ const countLessonsInRange = (startId?: string, endId?: string): number => {
 };
 
 const generateDates = () => {
-  if (currentEvent.value) {
-    const startDate = new Date(currentEvent.value.startDate);
-    const endDate = new Date(currentEvent.value.endDate);
-
-    const dateMarks: Mark[] = [];
-    const currentDate = new Date(startDate);
-
-    // Get selected weekdays from weeklySchedules if available
-    const weeklySchedules = currentEvent.value.weeklySchedules || [];
-    const selectedWeekdays = weeklySchedules.map((ws) => ws.weekId) || [];
-
-    while (currentDate <= endDate) {
-      // Convert JavaScript day (0=Sunday) to weekId format (0=Monday)
-      const jsDay = currentDate.getDay();
-      const weekId = (jsDay + 6) % 7; // Convert Sunday=0 to Monday=0
-
-      // Only include dates that match selected weekdays (if weeklySchedules exist)
-      const shouldIncludeDate =
-        selectedWeekdays.length === 0 || selectedWeekdays.includes(weekId);
-
-      if (shouldIncludeDate) {
-        const day = currentDate.getDate().toString().padStart(2, "0");
-        const month = (currentDate.getMonth() + 1).toString().padStart(2, "0");
-        const year = currentDate.getFullYear();
-        const dateStr = `${day}.${month}\n${year}`;
-        const isoDate = `${year}-${month}-${day}`;
-        // determine rows per day from weekly schedule by lesson ids; fallback from times
-        const daySchedule = weeklySchedules.find(
-          (ws) => ws.weekId === weekId
-        ) as any;
-        const schedulesArr = (getActiveYearSchedules.value ||
-          []) as EducationSchedule[];
-        const { startId, endId } = resolveScheduleIds(
-          daySchedule,
-          schedulesArr
-        );
-        const rows = countLessonsInRange(startId, endId);
-        dateMarks.push({
-          type: "date",
-          date: dateStr,
-          values: Array.from({ length: rows }, () => null),
-          label: dateStr,
-          isoDate,
-        });
-      }
-
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    // Inject session columns after session end dates if overlapping with journal days
-    const sessionStore = useSessionStore();
-    let marksWithSessions: Mark[] = [...dateMarks];
-
-    const sessions = sessionStore.sortedSessions as unknown as Array<{
-      id: string;
-      shortName: string;
-      startDate: string; // YYYY-MM-DD
-      endDate: string; // YYYY-MM-DD
-    }>;
-
-    // Build insertion plan
-    const insertionPlan: Array<{
-      insertAfter: number;
-      session: any;
-      indices: number[];
-    }> = [];
-    dateMarks.forEach((_m, idx) => {});
-
-    sessions.forEach((session) => {
-      const indices: number[] = [];
-      dateMarks.forEach((m, i) => {
-        const iso = m.isoDate;
-        if (!iso) return;
-        if (iso >= session.startDate && iso <= session.endDate) {
-          indices.push(i);
-        }
-      });
-      if (indices.length > 0) {
-        insertionPlan.push({
-          insertAfter: indices[indices.length - 1],
-          session,
-          indices,
-        });
-      }
-    });
-
-    // Sort by insert position and insert
-    insertionPlan
-      .sort((a, b) => a.insertAfter - b.insertAfter)
-      .forEach((plan, offset) => {
-        const insertIndex = plan.insertAfter + 1 + offset;
-        marksWithSessions.splice(insertIndex, 0, {
-          type: "session",
-          values: [null, null],
-          label: plan.session.shortName,
-          sessionId: plan.session.id,
-          sessionDateIndices: plan.indices,
-        } as Mark);
-      });
-
-    // Append summary columns
-    marksWithSessions.push({ type: "pk", values: [null, null] });
-    marksWithSessions.push({ type: "e", values: [null, null] });
-    marksWithSessions.push({ type: "i", values: [null, null] });
-
-    return marksWithSessions;
+  if (!currentEvent.value) {
+    return Array.from({ length: 17 }, () => ({
+      type: "date" as const,
+      date: "",
+      values: [null, null],
+    }));
   }
 
-  return Array.from({ length: 17 }, () => ({
-    type: "date" as const,
-    date: "",
-    values: [null, null],
-  }));
+  const weeklySchedules = currentEvent.value.weeklySchedules || [];
+  const dateMarks: Mark[] = [];
+  const days = getEventDays(currentEvent.value as any);
+
+  days.forEach(({ day, weekId }) => {
+    const dateStr = `${day.format(DATE_DAY_MONTH_FORMAT)}\n${day.format(
+      DATE_YEAR_FORMAT
+    )}`;
+    const isoDate = day.format(DATE_STORAGE_FORMAT);
+
+    // determine rows per day from weekly schedule by lesson ids; fallback from times
+    const daySchedule = weeklySchedules.find(
+      (ws: any) => ws.weekId === weekId
+    ) as any;
+    const schedulesArr = (getActiveYearSchedules.value ||
+      []) as EducationSchedule[];
+    const { startId, endId } = resolveScheduleIds(daySchedule, schedulesArr);
+    const rows = countLessonsInRange(startId, endId);
+
+    dateMarks.push({
+      type: "date",
+      date: dateStr,
+      values: Array.from({ length: rows }, () => null),
+      label: dateStr,
+      isoDate,
+    });
+  });
+
+  // Inject session columns after session end dates if overlapping with journal days
+  const sessionStore = useSessionStore();
+  let marksWithSessions: Mark[] = [...dateMarks];
+
+  const sessions = sessionStore.sortedSessions as unknown as Array<{
+    id: string;
+    shortName: string;
+    startDate: string; // YYYY-MM-DD
+    endDate: string; // YYYY-MM-DD
+  }>;
+
+  // Build insertion plan
+  const insertionPlan: Array<{
+    insertAfter: number;
+    session: any;
+    indices: number[];
+  }> = [];
+
+  sessions.forEach((session) => {
+    const indices: number[] = [];
+    dateMarks.forEach((m, i) => {
+      const iso = m.isoDate;
+      if (!iso) return;
+      if (iso >= session.startDate && iso <= session.endDate) {
+        indices.push(i);
+      }
+    });
+    if (indices.length > 0) {
+      insertionPlan.push({
+        insertAfter: indices[indices.length - 1],
+        session,
+        indices,
+      });
+    }
+  });
+
+  // Sort by insert position and insert
+  insertionPlan
+    .sort((a, b) => a.insertAfter - b.insertAfter)
+    .forEach((plan, offset) => {
+      const insertIndex = plan.insertAfter + 1 + offset;
+      marksWithSessions.splice(insertIndex, 0, {
+        type: "session",
+        values: [null, null],
+        label: plan.session.shortName,
+        sessionId: plan.session.id,
+        sessionDateIndices: plan.indices,
+      } as Mark);
+    });
+
+  // Append summary columns
+  marksWithSessions.push({ type: "pk", values: [null, null] });
+  marksWithSessions.push({ type: "e", values: [null, null] });
+  marksWithSessions.push({ type: "i", values: [null, null] });
+
+  return marksWithSessions;
 };
 
 const getStudentIdByIndex = (index: number): string | null => {
   if (
-    !props.currentJournal?.students ||
+    !currentJournal.value?.students ||
     index < 0 ||
-    index >= props.currentJournal.students.length
+    index >= currentJournal.value.students.length
   ) {
     return null;
   }
-  return props.currentJournal.students[index];
+  return currentJournal.value.students[index];
 };
 
 const students = computed(() => {
-  if (!props.journalId || !props.currentJournal?.students?.length) return [];
+  if (!props.journalId || !currentJournal.value?.students?.length) return [];
 
-  return props.currentJournal.students.map(
+  return currentJournal.value.students.map(
     (studentId: string, index: number) => {
       const studentMarks = marksStore.getStudentMarks(
         props.journalId,
@@ -713,8 +706,9 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   }
 };
 
-const ktpPopoverOpened = ref(false);
-const ktpPopoverTarget = ref("");
+const ktpViewPopoverOpened = ref(false);
+const ktpViewPopoverTarget = ref("");
+const selectedKtpDetail = ref<KtpDetail | null>(null);
 
 const localJournalSettings = ref({
   calculationType: props.journalSettings?.calculationType || "calculated",
@@ -731,12 +725,50 @@ const saveJournalSettings = () => {
   closeJournalSettings();
 };
 
-const onPaperclipClick = (
+const onPaperclipClick = async (
   header: { type: string; label: string },
   index: number
 ) => {
-  ktpPopoverTarget.value = `#paperclip-${index}`;
-  ktpPopoverOpened.value = true;
+  if (header.type !== "date") return;
+
+  // Find the date for this header to get KTP details
+  const currentEventData = currentEvent.value;
+  if (!currentEventData || !currentJournal.value?.disciplineId) return;
+
+  const days = getEventDays(currentEventData as any);
+
+  // Map the column index to actual day index
+  // We need to find which day this column represents by looking at the visible headers
+  const visibleHeader = visibleHeaders.value.find(
+    (h) => h.index === visibleHeaders.value[index]?.index
+  );
+  if (!visibleHeader) return;
+
+  // Find the actual day index by counting date columns up to this point
+  let dayIndex = 0;
+  for (let i = 0; i < visibleHeaders.value.length; i++) {
+    const h = visibleHeaders.value[i];
+    if (h.index === visibleHeader.index) break;
+    if (h.type === "date") dayIndex++;
+  }
+
+  const dayData = days[dayIndex];
+  if (!dayData) return;
+
+  // Get KTP details using class9Id from currentJournal
+  try {
+    const class9Id = currentJournal.value.disciplineId;
+    const details = ktpStore.getDetailsByClass9Id(class9Id);
+
+    // Select the detail based on day index (0-based)
+    const detailForDate = details[dayIndex] || null;
+
+    selectedKtpDetail.value = detailForDate;
+    ktpViewPopoverTarget.value = `#paperclip-${index}`;
+    ktpViewPopoverOpened.value = true;
+  } catch (error) {
+    console.error("Error fetching KTP details:", error);
+  }
 };
 
 const onSettingsClick = () => emit("open-settings");
@@ -823,7 +855,6 @@ const computeAllSessionGrades = () => {
           indices,
           method
         );
-        // Put into first slot; keep second empty
         marksStore.updateStudentMark(
           props.journalId,
           studentMark.studentId,
@@ -947,10 +978,10 @@ watch(
     console.log("[JournalTab] Sessions changed:", {
       sessionCount: sessionStore.sortedSessions?.length || 0,
       journalId: props.journalId,
-      hasStudents: !!props.currentJournal?.students?.length,
+      hasStudents: !!currentJournal.value?.students?.length,
     });
 
-    if (props.journalId && props.currentJournal?.students?.length) {
+    if (props.journalId && currentJournal.value?.students?.length) {
       console.log("[JournalTab] Sessions changed, rebuilding marks");
       // Regenerate marks template and update store
       const markTemplate = generateDates();
@@ -961,7 +992,7 @@ watch(
 
       marksStore.initializeJournalMarks(
         props.journalId,
-        props.currentJournal.students,
+        currentJournal.value.students,
         markTemplate
       );
       computeAllSessionGrades();
@@ -978,11 +1009,11 @@ watch(
     return [ev.startDate, ev.endDate, JSON.stringify(ev.weeklySchedules || [])];
   },
   () => {
-    if (props.journalId && props.currentJournal?.students?.length) {
+    if (props.journalId && currentJournal.value?.students?.length) {
       const markTemplate = generateDates();
       marksStore.initializeJournalMarks(
         props.journalId,
-        props.currentJournal.students,
+        currentJournal.value.students,
         markTemplate
       );
       computeAllSessionGrades();
@@ -995,11 +1026,11 @@ watch(
 watch(
   () => getActiveYearSchedules.value,
   () => {
-    if (props.journalId && props.currentJournal?.students?.length) {
+    if (props.journalId && currentJournal.value?.students?.length) {
       const markTemplate = generateDates();
       marksStore.initializeJournalMarks(
         props.journalId,
-        props.currentJournal.students,
+        currentJournal.value.students,
         markTemplate
       );
       computeAllSessionGrades();
@@ -1047,12 +1078,12 @@ defineExpose({
 });
 
 onMounted(() => {
-  if (props.journalId && props.currentJournal?.students?.length) {
+  if (props.journalId && currentJournal.value?.students?.length) {
     // Initialize marks in store
     const markTemplate = generateDates();
     marksStore.initializeJournalMarks(
       props.journalId,
-      props.currentJournal.students,
+      currentJournal.value.students,
       markTemplate
     );
   }
@@ -1066,7 +1097,7 @@ onUnmounted(() => {
 });
 
 watch(
-  () => props.currentJournal,
+  () => currentJournal.value,
   (newJournal) => {
     if (props.journalId && newJournal?.students?.length) {
       // Initialize marks in store for the new journal

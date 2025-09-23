@@ -1,4 +1,5 @@
-import { useUserStore, Role } from "../stores/userStore";
+import { useUserStore } from "../stores/userStore";
+import { Role } from "../types/user";
 import { useRouteGuard } from "../composables/useRouteGuard";
 
 interface RouteParams {

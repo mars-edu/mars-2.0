@@ -17,7 +17,23 @@
             cancel-text="Закрыть"
             :on-cancel="handleClose"
             :is-loading="loading"
-          />
+          >
+            <template #save>
+              <Button
+                variant="primary"
+                size="md"
+                class="ml-auto flex items-center gap-1"
+                @click="handleDeleteAll"
+              >
+                <f7-icon
+                  ios="f7:trash"
+                  md="material:delete"
+                  class="!text-sm"
+                ></f7-icon>
+                Удалить
+              </Button>
+            </template>
+          </PopoverHeader>
 
           <div v-if="ktpStore.error" class="px-4 pb-2 text-destructive text-sm">
             {{ ktpStore.error }}
@@ -234,10 +250,10 @@
         </f7-fab>
 
         <KtpDetailFormPopover
-          v-if="parentId"
+          v-if="ktpId"
           v-model:opened="isFormPopoverOpen"
           :target="formPopoverTarget"
-          :parent-id="parentId"
+          :ktp-id="ktpId"
           :detail-to-edit="editingDetail"
         />
 
@@ -245,7 +261,7 @@
 
         <RupImportDialog
           v-model:opened="isRupImportDialogOpen"
-          :current-parent-id="parentId"
+          :currentKtpId="ktpId"
           @imported="onThemesImported"
         />
       </div>
@@ -263,6 +279,7 @@ import KtpDetailFormPopover from "@/components/KtpDetailFormPopover.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import DownloadTemplateDialog from "@/components/DownloadTemplateDialog.vue";
 import RupImportDialog from "@/components/RupImportDialog.vue";
+import Button from "@/components/ui/Button.vue";
 import { storeToRefs } from "pinia";
 import {
   parseEducationalSchedule,
@@ -271,38 +288,73 @@ import {
 } from "@/services/excel-parser";
 
 const props = defineProps<{
-  parentId: string | null;
+  ktpId: string | null;
   opened: boolean;
+  moduleTitle?: string;
 }>();
 
 const emit = defineEmits<{
   (e: "update:opened", value: boolean): void;
 }>();
 
-const { parentId, opened } = toRefs(props);
+const { ktpId, opened } = toRefs(props);
 const ktpStore = useKtpStore();
 const class9Store = useClass9Store();
 const rupStore = useRupStore();
 const { loading } = storeToRefs(ktpStore);
+const { deleteKtpById } = ktpStore;
 const selectedDetailId = ref("ktp-detail-3");
 
 // Computed property to get filtered details for the current parent
 const ktpDetails = computed(() => {
-  if (!parentId.value) return [];
-  return ktpStore.getDetailsByParentId(parentId.value);
+  if (!ktpId.value) return [];
+  return ktpStore.getDetailsByKtpId(ktpId.value);
 });
 
 // Computed property to get the module name for the header
+
 const moduleTitle = computed(() => {
-  if (!parentId.value) return "Рабочие учебные программы";
+  if (!ktpId.value) return "Рабочие учебные программы";
+  const ktpItem = ktpStore.ktps.find((ktp: any) => ktp.id === ktpId.value);
+  if (!ktpItem) return "Рабочие учебные программы";
 
-  const class9Item = class9Store.getClass9ById(parentId.value);
-  if (class9Item) {
-    return `${class9Item.moduleIndex} - ${class9Item.moduleName}`;
-  }
+  const class9Item = class9Store.getClass9ById(ktpItem.class9Id);
+  if (!class9Item) return "Рабочие учебные программы";
 
-  return "Рабочие учебные программы";
+  return `${class9Item.moduleIndex} - ${class9Item.moduleName}`;
 });
+
+function handleDeleteAll() {
+  if (!ktpId.value) return;
+
+  f7.dialog.confirm(
+    "Вы уверены, что хотите удалить все темы КТП?",
+    "Удаление КТП",
+    () => {
+      const result = deleteKtpById(ktpId.value as string);
+
+      if (result.success) {
+        f7.toast
+          .create({
+            text: `Все темы КТП успешно удалены${
+              result.deleted > 0 ? ` (${result.deleted} записей)` : ""
+            }`,
+            closeTimeout: 3000,
+            cssClass: "color-green",
+          })
+          .open();
+      } else {
+        f7.toast
+          .create({
+            text: "Ошибка при удалении КТП",
+            closeTimeout: 3000,
+            cssClass: "color-red",
+          })
+          .open();
+      }
+    }
+  );
+}
 
 // Computed properties for hour calculations
 const plannedHoursFromKtp = computed(() => {
@@ -312,13 +364,6 @@ const plannedHoursFromKtp = computed(() => {
     return sum + hours;
   }, 0);
   return totalHours;
-});
-
-const totalPlannedHours = computed(() => {
-  if (!parentId.value) return "0";
-
-  const class9Item = class9Store.getClass9ById(parentId.value);
-  return class9Item?.totalHours || "0";
 });
 
 const semesterPlannedHours = computed(() => {
@@ -348,7 +393,7 @@ const downloadTemplate = () => {
 };
 
 const downloadRup = async () => {
-  if (!parentId.value) {
+  if (!ktpId.value) {
     f7.toast
       .create({
         text: "Ошибка: не указан родительский элемент",
@@ -412,7 +457,7 @@ const uploadDocument = () => {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
 
-    if (!parentId.value) {
+    if (!ktpId.value) {
       f7.toast
         .create({
           text: "Ошибка: не указан родительский элемент",
@@ -450,7 +495,7 @@ const uploadDocument = () => {
       }
 
       const importResult = ktpStore.bulkImportKtpDetails(
-        parentId.value,
+        ktpId.value,
         parseResult.lessons
       );
 
@@ -463,7 +508,7 @@ const uploadDocument = () => {
           })
           .open();
         // Refresh current list to ensure view shows imported data for this parent
-        ktpStore.fetchDetailsForParent(parentId.value);
+        ktpStore.fetchDetailsForKtp(ktpId.value);
       } else {
         throw new Error(importResult.error || "Ошибка импорта данных");
       }
@@ -558,11 +603,7 @@ function onDragOver(item: KtpDetail, idx: number, event: DragEvent) {
 }
 
 function onDrop() {
-  if (
-    !parentId.value ||
-    dragSourceId.value == null ||
-    dropIndex.value == null
-  ) {
+  if (!ktpId.value || dragSourceId.value == null || dropIndex.value == null) {
     dragSourceId.value = null;
     dragOverId.value = null;
     dropIndex.value = null;
@@ -593,7 +634,7 @@ function onDrop() {
   const [moved] = newOrder.splice(fromIndex, 1);
   newOrder.splice(toIndex, 0, moved);
 
-  const result = ktpStore.reorderKtpDetails(parentId.value, newOrder);
+  const result = ktpStore.reorderKtpDetails(ktpId.value, newOrder);
   if (result.success) {
     f7.toast
       .create({
@@ -602,7 +643,7 @@ function onDrop() {
         cssClass: "color-green",
       })
       .open();
-    ktpStore.fetchDetailsForParent(parentId.value);
+    ktpStore.fetchDetailsForKtp(ktpId.value);
   } else {
     f7.toast
       .create({
@@ -624,22 +665,21 @@ function onDragEnd() {
 }
 
 const onThemesImported = (count: number) => {
-  // Refresh the current list after successful import
-  if (parentId.value) {
-    ktpStore.fetchDetailsForParent(parentId.value);
+  if (ktpId.value) {
+    ktpStore.fetchDetailsForKtp(ktpId.value);
   }
 };
 
-watch(parentId, (newParentId) => {
-  if (newParentId) {
-    ktpStore.fetchDetailsForParent(newParentId);
+watch(ktpId, (newKtpId) => {
+  if (newKtpId) {
+    ktpStore.fetchDetailsForKtp(newKtpId);
   }
 });
 
 watch(opened, (isOpened) => {
   if (isOpened) {
-    if (parentId.value) {
-      ktpStore.fetchDetailsForParent(parentId.value);
+    if (ktpId.value) {
+      ktpStore.fetchDetailsForKtp(ktpId.value);
     }
     f7.popover.open("#ktp-detail-popover");
   } else {

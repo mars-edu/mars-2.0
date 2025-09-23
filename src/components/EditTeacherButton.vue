@@ -88,17 +88,17 @@
               Пол
             </label>
             <div class="flex gap-2">
-              <f7-button
-                :fill="gender === 'male'"
+              <Button
+                :variant="gender === 'male' ? 'primary' : 'ghost'"
                 @click="gender = 'male'"
                 class="flex-1"
-                >Мужской</f7-button
+                >Мужской</Button
               >
-              <f7-button
-                :fill="gender === 'female'"
+              <Button
+                :variant="gender === 'female' ? 'primary' : 'ghost'"
                 @click="gender = 'female'"
                 class="flex-1"
-                >Женский</f7-button
+                >Женский</Button
               >
             </div>
           </div>
@@ -126,13 +126,14 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { f7, f7Popover, f7Input, f7Button, f7Icon } from "framework7-vue";
+import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
 import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import Button from "@/components/ui/Button.vue";
 import type { Teacher } from "@/stores/teacherStore";
 
 const props = defineProps<{
@@ -165,7 +166,7 @@ const teacherSchema = z.object({
   position: z.string().min(1, "Пожалуйста, выберите должность"),
   employmentYear: z.string().min(1, "Пожалуйста, выберите год поступления"),
   gender: z.enum(["male", "female"], {
-    required_error: "Пожалуйста, выберите пол",
+    message: "Пожалуйста, выберите пол",
   }),
 });
 
