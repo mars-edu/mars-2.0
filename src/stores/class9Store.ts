@@ -13,7 +13,7 @@ export interface DistributionEntry {
 
 export interface Class9Data {
   id: string;
-  specialtyId: string;
+  specialtyIds: string[]; // Changed from specialtyId to specialtyIds array
   academicYearId: string;
   moduleIndex: string;
   moduleName: string;
@@ -39,18 +39,24 @@ export const useClass9Store = defineStore(
     const class9Items = ref<Class9Data[]>([]);
     const loading = ref(false);
     const error = ref<string | null>(null);
+    const migrationCompleted = ref(false);
+
+    // Run migration on store initialization
+    migrateClass9DataToMultipleSpecialties();
 
     const getClass9ById = computed(() => {
       return (id: string) => class9Items.value.find((c) => c.id === id);
     });
 
     const getClass9ItemsByContext = computed(() => {
-      return (academicYearId: string, specialtyId: string) =>
+      return (academicYearId: string, specialtyIds?: string[]) =>
         class9Items.value
           .filter(
             (c) =>
               c.academicYearId === academicYearId &&
-              c.specialtyId === specialtyId
+              (!specialtyIds ||
+                specialtyIds.length === 0 ||
+                specialtyIds.some((id) => c.specialtyIds.includes(id)))
           )
           .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
     });
@@ -134,11 +140,11 @@ export const useClass9Store = defineStore(
 
     function createEmptyClass9Data(
       academicYearId: string,
-      specialtyId: string
+      specialtyIds: string[] = []
     ): Class9Data {
       return {
         id: crypto.randomUUID(),
-        specialtyId,
+        specialtyIds,
         academicYearId,
         moduleIndex: "",
         moduleName: "",
@@ -161,11 +167,11 @@ export const useClass9Store = defineStore(
 
     async function addClass9(
       academicYearId: string,
-      specialtyId: string,
+      specialtyIds: string[],
       data?: Partial<
         Omit<
           Class9Data,
-          "id" | "createdAt" | "updatedAt" | "specialtyId" | "academicYearId"
+          "id" | "createdAt" | "updatedAt" | "specialtyIds" | "academicYearId"
         >
       >
     ) {
@@ -173,13 +179,12 @@ export const useClass9Store = defineStore(
       try {
         const contextItems = getClass9ItemsByContext.value(
           academicYearId,
-          specialtyId
+          specialtyIds
         );
         const newClass9: Class9Data = {
-          ...createEmptyClass9Data(academicYearId, specialtyId),
+          ...createEmptyClass9Data(academicYearId, specialtyIds),
           ...data,
-          // TODO: workaround
-          specialtyId,
+          specialtyIds,
           academicYearId,
           position: contextItems.length,
         };
@@ -198,7 +203,7 @@ export const useClass9Store = defineStore(
 
     async function linkExistingClass9(
       academicYearId: string,
-      specialtyId: string,
+      specialtyIds: string[],
       existingItemId: string,
       customData?: Partial<
         Pick<
@@ -222,13 +227,13 @@ export const useClass9Store = defineStore(
 
         const contextItems = getClass9ItemsByContext.value(
           academicYearId,
-          specialtyId
+          specialtyIds
         );
 
         const linkedClass9: Class9Data = {
           ...existingItem,
           id: crypto.randomUUID(),
-          specialtyId,
+          specialtyIds,
           academicYearId,
           position: contextItems.length,
           createdAt: new Date(),
@@ -293,13 +298,13 @@ export const useClass9Store = defineStore(
 
     function updateClass9Order(
       academicYearId: string,
-      specialtyId: string,
+      specialtyIds: string[],
       oldIndex: number,
       newIndex: number
     ) {
       const contextItems = getClass9ItemsByContext.value(
         academicYearId,
-        specialtyId
+        specialtyIds
       );
       const [movedItem] = contextItems.splice(oldIndex, 1);
       contextItems.splice(newIndex, 0, movedItem);
@@ -333,7 +338,7 @@ export const useClass9Store = defineStore(
       const itemsInContext = class9Items.value.filter(
         (c) =>
           c.academicYearId === itemToDuplicate.academicYearId &&
-          c.specialtyId === itemToDuplicate.specialtyId
+          c.specialtyIds.some((id) => itemToDuplicate.specialtyIds.includes(id))
       );
 
       itemsInContext.forEach((item) => {
@@ -370,10 +375,126 @@ export const useClass9Store = defineStore(
       error.value = null;
     }
 
+    function forceMigrateData() {
+      migrationCompleted.value = false;
+      migrateClass9DataToMultipleSpecialties();
+    }
+
+    // Migration method to convert old specialtyId format to new specialtyIds array format
+    function migrateClass9DataToMultipleSpecialties() {
+      if (migrationCompleted.value) {
+        return; // Migration already completed
+      }
+
+      let hasChanges = false;
+      const migratedItems = class9Items.value.map((item) => {
+        // Check if item has old format (specialtyId as string and no specialtyIds array)
+        if (
+          "specialtyId" in item &&
+          typeof (item as any).specialtyId === "string" &&
+          !("specialtyIds" in item)
+        ) {
+          const oldItem = item as any;
+          hasChanges = true;
+
+          // Convert to new format
+          return {
+            ...oldItem,
+            specialtyIds: [oldItem.specialtyId], // Convert single ID to array
+          } as Class9Data;
+        }
+
+        // Item already has new format or no specialty data
+        return item;
+      });
+
+      if (hasChanges) {
+        class9Items.value = migratedItems;
+        console.log(
+          `🔄 Migrated ${migratedItems.length} Class9 items from single specialty to multiple specialties format`
+        );
+      }
+
+      migrationCompleted.value = true;
+    }
+
+    // Test migration method (for development purposes)
+    function testMigration() {
+      console.log("🧪 Testing migration...");
+
+      // Create test data with old format
+      const testItems: Class9Data[] = [
+        {
+          id: "test-1",
+          specialtyId: "old-specialty-1", // Old format
+          academicYearId: "year-1",
+          moduleIndex: "1",
+          moduleName: "Test Module 1",
+          learningOutcome: "Test Outcome 1",
+          totalCredits: "5",
+          totalHours: "100",
+          theoreticalHours: "50",
+          labPracticalHours: "30",
+          field3Value: "10",
+          srspHours: "5",
+          srsHours: "5",
+          trainingPracticeHours: "0",
+          individualHours: "0",
+          distributionEntries: [],
+          position: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as any, // Type assertion to bypass TypeScript for testing
+        {
+          id: "test-2",
+          specialtyIds: ["new-specialty-1", "new-specialty-2"], // Already new format
+          academicYearId: "year-1",
+          moduleIndex: "2",
+          moduleName: "Test Module 2",
+          learningOutcome: "Test Outcome 2",
+          totalCredits: "3",
+          totalHours: "60",
+          theoreticalHours: "30",
+          labPracticalHours: "20",
+          field3Value: "5",
+          srspHours: "3",
+          srsHours: "2",
+          trainingPracticeHours: "0",
+          individualHours: "0",
+          distributionEntries: [],
+          position: 1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+
+      class9Items.value = testItems;
+
+      // Run migration
+      migrateClass9DataToMultipleSpecialties();
+
+      // Check results
+      const migratedItem1 = class9Items.value.find(
+        (item) => item.id === "test-1"
+      );
+      const migratedItem2 = class9Items.value.find(
+        (item) => item.id === "test-2"
+      );
+
+      console.log("✅ Migration test results:");
+      console.log("Test item 1 specialtyIds:", migratedItem1?.specialtyIds);
+      console.log("Test item 2 specialtyIds:", migratedItem2?.specialtyIds);
+      console.log("Migration completed:", migrationCompleted.value);
+
+      // Reset test data
+      class9Items.value = [];
+    }
+
     return {
       class9Items,
       loading,
       error,
+      migrationCompleted,
       getClass9ById,
       getClass9ItemsByContext,
       getAllClass9Items,
@@ -391,6 +512,9 @@ export const useClass9Store = defineStore(
       deleteClass9,
       clearError,
       reset,
+      forceMigrateData,
+      migrateClass9DataToMultipleSpecialties,
+      testMigration,
     };
   },
   {

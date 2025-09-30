@@ -1,14 +1,5 @@
 <template>
   <div class="p-4 space-y-4">
-    <div v-if="showDebug" class="px-4 py-2" :class="debugBgClass">
-      <strong>Debug Info (EventForm):</strong><br />
-      useCustomPeriod: {{ useCustomPeriodModel }}<br />
-      startDate: {{ startDateModel }}<br />
-      endDate: {{ endDateModel }}<br />
-      semesterDates: {{ semesterDates }}<br />
-      isFormValid: {{ isFormValid }}
-    </div>
-
     <Select
       label="Результат обучения/дисциплина"
       placeholder="Выберите результат обучения/дисциплину"
@@ -144,9 +135,26 @@
       </span>
     </div>
 
+    <!-- Planned Hours Display -->
+    <div class="bg-secondary p-4 border-t border-input">
+      <div class="flex justify-between mb-2">
+        <span class="text-foreground">Запланировано на семестр:</span>
+        <span class="text-foreground font-medium"
+          >{{ semesterPlannedHours }} часов</span
+        >
+      </div>
+      <div class="flex justify-between">
+        <span class="text-primary">Запланировано на весь предмет:</span>
+        <span class="text-primary font-medium"
+          >{{ totalPlannedHours }} часов</span
+        >
+      </div>
+    </div>
+
     <StudentSelectionPopup
       ref="studentPopup"
       :selected-students="participantsModel"
+      :class9-id="class9IdModel"
       @save="handleStudentsSave"
       @close="handleStudentPopupClose"
     />
@@ -204,14 +212,13 @@ type WeekDaySchedule = {
 const props = defineProps<{
   class9Id: string;
   useCustomPeriod: boolean;
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
   participants: string[];
   color: string;
   selectedWeekDays: WeekDaySchedule[];
   parentPopoverId: string;
   mode?: "add" | "edit";
-  showDebug?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -237,6 +244,7 @@ const { getActiveAcademicYearSemester } = storeToRefs(
 );
 
 const selectedItemsStore = useSelectedItemsStore();
+const { selectedClass9Item } = storeToRefs(selectedItemsStore);
 const rupStore = useRupStore();
 
 const ktpStore = useKtpStore();
@@ -245,10 +253,48 @@ const { getKtpIdForClass9, getModuleTitleForKtp } = storeToRefs(ktpStore);
 const checkboxId = computed(() =>
   props.mode === "edit" ? "use-custom-period-edit" : "use-custom-period"
 );
-const showDebug = computed(() => props.showDebug ?? false);
-const debugBgClass = computed(() =>
-  props.mode === "edit" ? "bg-yellow-100 text-xs" : "bg-blue-100 text-xs"
-);
+
+const totalPlannedHours = computed(() => {
+  const selectedClass9 = class9Store.getClass9ById(class9IdModel.value);
+  if (!selectedClass9) {
+    return "0";
+  }
+  return selectedClass9.totalHours || "0";
+});
+
+const semesterPlannedHours = computed(() => {
+  const selectedClass9 = class9Store.getClass9ById(class9IdModel.value);
+  const activeSemester = getActiveAcademicYearSemester.value as any;
+
+  if (!selectedClass9 || !activeSemester) {
+    return "0";
+  }
+
+  const semesterNumber = String(activeSemester.semesterNumber ?? "");
+  const activeYearId = activeSemester.academicYearId;
+
+  const matchedEntry = selectedClass9.distributionEntries.find((entry) => {
+    const entrySemesterId = String(entry.semesterId ?? "");
+    const matchesSemester =
+      entrySemesterId === String(activeSemester.id) ||
+      entrySemesterId === semesterNumber;
+    const matchesYear =
+      !entry.academicYearId || !activeYearId
+        ? matchesSemester
+        : entry.academicYearId === activeYearId && matchesSemester;
+    return matchesYear;
+  });
+
+  if (
+    !matchedEntry ||
+    matchedEntry.hours === undefined ||
+    matchedEntry.hours === null
+  ) {
+    return "0";
+  }
+
+  return String(matchedEntry.hours);
+});
 
 const class9IdModel = computed({
   get: () => props.class9Id,
@@ -260,10 +306,24 @@ const useCustomPeriodModel = computed({
 });
 const startDateModel = computed({
   get: () => {
-    if (!props.startDate) return [new Date()];
-    // Parse using the exact DD/MM/YYYY format
-    const parsed = dayjs(props.startDate, DATE_UI_FORMAT, true);
-    return parsed.isValid() ? [parsed.toDate()] : [new Date()];
+    // Use prop value if provided and valid
+    if (props.startDate) {
+      const parsed = dayjs(props.startDate, DATE_UI_FORMAT, true);
+      if (parsed.isValid()) {
+        return [parsed.toDate()];
+      }
+    }
+
+    // Use semester dates if available
+    if (semesterDates.value) {
+      const parsed = dayjs(semesterDates.value.startDate, DATE_UI_FORMAT, true);
+      if (parsed.isValid()) {
+        return [parsed.toDate()];
+      }
+    }
+
+    // Fallback to current date
+    return [new Date()];
   },
   set: (v: Date[]) => {
     if (Array.isArray(v) && v.length > 0) {
@@ -276,10 +336,24 @@ const startDateModel = computed({
 });
 const endDateModel = computed({
   get: () => {
-    if (!props.endDate) return [new Date()];
-    // Parse using the exact DD/MM/YYYY format
-    const parsed = dayjs(props.endDate, DATE_UI_FORMAT, true);
-    return parsed.isValid() ? [parsed.toDate()] : [new Date()];
+    // Use prop value if provided and valid
+    if (props.endDate) {
+      const parsed = dayjs(props.endDate, DATE_UI_FORMAT, true);
+      if (parsed.isValid()) {
+        return [parsed.toDate()];
+      }
+    }
+
+    // Use semester dates if available
+    if (semesterDates.value) {
+      const parsed = dayjs(semesterDates.value.endDate, DATE_UI_FORMAT, true);
+      if (parsed.isValid()) {
+        return [parsed.toDate()];
+      }
+    }
+
+    // Fallback to current date
+    return [new Date()];
   },
   set: (v: Date[]) => {
     if (Array.isArray(v) && v.length > 0) {
@@ -449,10 +523,11 @@ watch(
 
       // Only update if the current values are different from the new values
       // This prevents infinite loops when the computed setters trigger the watcher again
-      if (props.startDate !== nextStart) {
+      // If props don't exist, we should update to semester dates
+      if (!props.startDate || props.startDate !== nextStart) {
         emit("update:startDate", nextStart);
       }
-      if (props.endDate !== nextEnd) {
+      if (!props.endDate || props.endDate !== nextEnd) {
         emit("update:endDate", nextEnd);
       }
     }

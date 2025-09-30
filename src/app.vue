@@ -1,5 +1,6 @@
 <template>
   <f7-app v-bind="f7params">
+    <InactiveTabIndicator />
     <f7-view
       class="safe-areas"
       :main="true"
@@ -29,6 +30,8 @@ import { routeMiddleware } from "./middleware/routeMiddleware";
 
 import routes from "./js/routes";
 import store from "./js/store";
+import { initVisibilityDetector } from "./composables/useVisibility";
+import InactiveTabIndicator from "./components/InactiveTabIndicator.vue";
 
 const userStore = useUserStore();
 const themeStore = useThemeStore();
@@ -148,6 +151,7 @@ const f7params: Framework7Parameters = {
 };
 
 onMounted(async () => {
+  initVisibilityDetector();
   await userStore.initialize();
   console.log("[App] Component mounted");
   console.log(

@@ -23,31 +23,17 @@
         :parent-popover-id="'#edit-event-popover'"
         mode="edit"
         class="overflow-y-auto"
-        :show-debug="false"
-        v-model:class9Id="class9Id"
-        v-model:useCustomPeriod="useCustomPeriod"
         :start-date="dayjs(startDate[0]).format(DATE_UI_FORMAT)"
         :end-date="dayjs(endDate[0]).format(DATE_UI_FORMAT)"
-        @update:startDate="(v:string) => startDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()]"
-        @update:endDate="(v:string) => endDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()]"
+        v-model:class9Id="class9Id"
+        v-model:useCustomPeriod="useCustomPeriod"
         v-model:participants="participants"
         v-model:color="eventColor.hex"
         v-model:selectedWeekDays="selectedWeekDays"
+        @update:startDate="(v:string) => startDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()]"
+        @update:endDate="(v:string) => endDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()]"
         @update:valid="(v:boolean)=>{ isFormValid=v }"
       >
-        <div class="bg-secondary p-4 border-t border-input">
-          <div class="flex justify-between mb-2">
-            <span class="text-foreground">По плану:</span>
-            <span class="text-foreground font-medium"
-              >{{ plannedHours }} часов</span
-            >
-          </div>
-          <div class="flex justify-between">
-            <span class="text-primary">Запланировано:</span>
-            <span class="text-primary font-medium">38 часов</span>
-          </div>
-        </div>
-
         <div class="pt-4 border-t border-border">
           <button
             class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
@@ -175,15 +161,6 @@ const selectedWeekDays = ref<
   }) || []
 );
 
-/* --- COMPUTED --- */
-
-const plannedHours = computed(() => {
-  return selectedClass9Item.value?.totalHours ?? "0";
-});
-
-// plannedHours and other derived values remain
-
-/* --- METHODS --- */
 const handleUpdateEvent = async () => {
   try {
     formError.value = null;

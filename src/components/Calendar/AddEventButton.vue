@@ -36,33 +36,17 @@
             :parent-popover-id="'#add-event-popover'"
             mode="add"
             class="overflow-y-auto"
-            :show-debug="false"
-            v-model:class9Id="class9Id"
-            v-model:useCustomPeriod="useCustomPeriod"
             :start-date="dayjs(startDate[0]).format(DATE_UI_FORMAT)"
             :end-date="dayjs(endDate[0]).format(DATE_UI_FORMAT)"
-            @update:startDate="(v:string) => startDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()]"
-            @update:endDate="(v:string) => endDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()]"
+            v-model:class9Id="class9Id"
+            v-model:useCustomPeriod="useCustomPeriod"
             v-model:participants="participants"
             v-model:color="eventColor.hex"
             v-model:selectedWeekDays="selectedWeekDays"
+            @update:startDate="(v:string) => startDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()]"
+            @update:endDate="(v:string) => endDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()]"
             @update:valid="(v:boolean)=>{ isFormValid=v }"
-          >
-            <div class="bg-secondary p-4 border-t border-input">
-              <div class="flex justify-between mb-2">
-                <span class="text-foreground">Запланировано на семестр:</span>
-                <span class="text-foreground font-medium"
-                  >{{ semesterPlannedHours }} часов</span
-                >
-              </div>
-              <div class="flex justify-between">
-                <span class="text-primary">Запланировано на весь предмет:</span>
-                <span class="text-primary font-medium"
-                  >{{ totalPlannedHours }} часов</span
-                >
-              </div>
-            </div>
-          </EventForm>
+          />
         </div>
       </div>
     </f7-popover>
@@ -111,14 +95,6 @@ const selectedWeekDays = ref<
 >([]);
 
 const isFormValid = ref(false);
-
-const semesterPlannedHours = computed(() => {
-  return rupStore.selectedClass9SemesterHours;
-});
-
-const totalPlannedHours = computed(() => {
-  return rupStore.selectedClass9TotalHours;
-});
 
 const handleAddEvent = async () => {
   try {

@@ -63,10 +63,11 @@ export const useStudentStore = defineStore("student", () => {
         student.academicYearId || ""
       );
 
-      let course = 1;
+      let course = 0;
       if (activeAcademicYear && studentAcademicYear) {
-        course =
+        const diff =
           activeAcademicYear.startYear - studentAcademicYear.startYear + 1;
+        course = Math.max(0, diff);
       }
 
       return {
@@ -203,7 +204,9 @@ export const useStudentStore = defineStore("student", () => {
     );
 
     if (activeAcademicYear && studentAcademicYear) {
-      return activeAcademicYear.startYear - studentAcademicYear.startYear + 1;
+      const diff =
+        activeAcademicYear.startYear - studentAcademicYear.startYear + 1;
+      return Math.max(0, diff);
     }
 
     return null;

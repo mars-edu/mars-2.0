@@ -194,7 +194,7 @@
                   <template v-if="selectedClassLevel === 9">
                     <Class9Table
                       ref="class9TableRef"
-                      :specialty-id="selectedSpecialtyId"
+                      :specialty-ids="[selectedSpecialtyId]"
                       :academic-year-id="selectedAcademicYear"
                       :select-mode="isSelectMode"
                       @duplicate-item="handleDuplicateClass9Item"
@@ -388,6 +388,14 @@ const addClass9 = () => {
     class9TableRef.value.openAddPopup();
   }
 };
+
+// Helper function to get current specialty IDs for multi-specialty support
+const currentSpecialtyIds = computed(() => {
+  if (selectedSpecialtyId.value) {
+    return [selectedSpecialtyId.value];
+  }
+  return [];
+});
 
 const selectedSpecialtyId = computed({
   get: () => rupStore.selectedSpecialtyId,

@@ -76,7 +76,19 @@
             :key="index"
             v-show="currentStep === index + 1"
           >
-            <div class="flex justify-between items-center"></div>
+            <!-- Specialty selection for first step -->
+            <div v-if="index === 0" class="mb-6">
+              <TagsSelector
+                v-model="selectedSpecialtyIds"
+                :items="specialtyOptions"
+                label="Специальности"
+                placeholder="Выберите специальности..."
+                :max-tags="5"
+                display-field="text"
+                :show-search="false"
+                helper-text="Выберите одну или несколько специальностей для данного модуля"
+              />
+            </div>
 
             <div class="space-y-4">
               <Input
@@ -323,6 +335,8 @@ import { z } from "zod";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import Select from "@/components/ui/Select.vue";
 import Input from "@/components/ui/Input.vue";
+import TagsSelector from "@/components/ui/TagsSelector.vue";
+import { useSpecialtyStore } from "@/stores/specialtyStore";
 
 const emit = defineEmits<{
   (e: "submit"): void;
@@ -330,7 +344,7 @@ const emit = defineEmits<{
 }>();
 
 const props = defineProps<{
-  specialtyId: string;
+  specialtyIds?: string[];
   academicYearId: string;
   initialData?: any;
   editMode?: boolean;
@@ -340,36 +354,67 @@ const class9Store = useClass9Store();
 const academicYearStore = useAcademicYearStore();
 const semesterStore = useSemesterStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
+const specialtyStore = useSpecialtyStore();
 
 function createEmptyStep() {
   return class9Store.createEmptyClass9Data(
     props.academicYearId,
-    props.specialtyId
+    props.specialtyIds || []
   );
 }
 
 const steps = ref([createEmptyStep()]);
 const currentStep = ref(1);
+const selectedSpecialtyIds = ref<string[]>([]);
+
+// Specialty options for TagsSelector
+const specialtyOptions = computed(() =>
+  specialtyStore.specialties.map((specialty) => ({
+    id: specialty.id,
+    text: specialty.codeName || specialty.name,
+    codeName: specialty.codeName,
+    name: specialty.name,
+  }))
+);
 
 watch(
   () => [props.initialData, props.editMode],
   ([val, edit]) => {
     if (edit && val) {
       steps.value = [{ ...val }];
+      selectedSpecialtyIds.value = val.specialtyIds || [];
       currentStep.value = 1;
     } else {
       steps.value = [createEmptyStep()];
+      selectedSpecialtyIds.value = props.specialtyIds || [];
       currentStep.value = 1;
     }
   },
   { immediate: true }
 );
 
+// Watch for changes in selectedSpecialtyIds and sync with form data
+watch(
+  selectedSpecialtyIds,
+  (newIds) => {
+    // Update the current step's specialty IDs
+    if (steps.value[0]) {
+      steps.value[0].specialtyIds = newIds;
+    }
+  },
+  { immediate: true }
+);
+
 onMounted(async () => {
+  await specialtyStore.fetchSpecialties();
   steps.value =
     props.editMode && props.initialData
       ? [{ ...props.initialData }]
       : [createEmptyStep()];
+  selectedSpecialtyIds.value =
+    props.editMode && props.initialData
+      ? props.initialData.specialtyIds || []
+      : props.specialtyIds || [];
   currentStep.value = 1;
   nextTick(() => {
     f7.tooltip.create({
@@ -528,6 +573,7 @@ function copyFromPreviousStep(
 function close() {
   steps.value = [createEmptyStep()];
   currentStep.value = 1;
+  selectedSpecialtyIds.value = [];
   emit("close");
 }
 
@@ -536,16 +582,29 @@ async function submit() {
     f7.dialog.alert("Schema validation error");
     return;
   }
+
+  if (selectedSpecialtyIds.value.length === 0) {
+    f7.dialog.alert("Выберите хотя бы одну специальность");
+    return;
+  }
+
   try {
     if (props.editMode && props.initialData && props.initialData.id) {
-      await class9Store.updateClass9(props.initialData.id, steps.value[0]);
+      // Update existing item with new specialty IDs
+      await class9Store.updateClass9(props.initialData.id, {
+        ...steps.value[0],
+        specialtyIds: selectedSpecialtyIds.value,
+      });
     } else {
-      for (const step of steps.value) {
-        await class9Store.addClass9(
-          props.academicYearId,
-          props.specialtyId,
-          step
-        );
+      // Create entries for each selected specialty
+      for (const specialtyId of selectedSpecialtyIds.value) {
+        for (const step of steps.value) {
+          await class9Store.addClass9(
+            props.academicYearId,
+            [specialtyId], // Pass as array for single specialty
+            step
+          );
+        }
       }
     }
     emit("submit");

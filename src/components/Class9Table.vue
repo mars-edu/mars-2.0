@@ -143,7 +143,7 @@
     </div>
     <Class9Popup
       v-if="popupOpen"
-      :specialty-id="specialtyId"
+      :specialty-ids="specialtyIds"
       :academic-year-id="academicYearId"
       :initial-data="initialData"
       :edit-mode="editMode"
@@ -163,7 +163,7 @@ import { useRupStore } from "@/stores/rupStore";
 import Sortable from "sortablejs";
 
 const props = defineProps<{
-  specialtyId: string;
+  specialtyIds?: string[];
   academicYearId: string;
   selectMode?: boolean;
 }>();
@@ -178,12 +178,12 @@ const sortableList = ref<HTMLElement | null>(null);
 let sortableInstance: Sortable | null = null;
 
 const class9List = computed(() => {
-  if (!props.academicYearId || !props.specialtyId) {
+  if (!props.academicYearId) {
     return [];
   }
   return class9Store.getClass9ItemsByContext(
     props.academicYearId,
-    props.specialtyId
+    props.specialtyIds
   );
 });
 
@@ -197,7 +197,7 @@ onMounted(() => {
         if (evt.oldIndex !== undefined && evt.newIndex !== undefined) {
           class9Store.updateClass9Order(
             props.academicYearId,
-            props.specialtyId,
+            props.specialtyIds || [],
             evt.oldIndex,
             evt.newIndex
           );

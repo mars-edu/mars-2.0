@@ -16,31 +16,6 @@
         <div class="p-4 space-y-4">
           <div class="grid grid-cols-2 gap-4">
             <Select
-              label="Курс"
-              placeholder="Выберите курс"
-              v-model="filters.course"
-              :options="courseOptions"
-              name="student-course"
-              id="student-course"
-            />
-            <Select
-              label="База"
-              placeholder="Выберите базу"
-              v-model="filters.base"
-              :options="baseOptions"
-              name="student-base"
-              id="student-base"
-            />
-            <Select
-              label="Специальность"
-              placeholder="Выберите специальность"
-              v-model="filters.specialty"
-              :options="specialtyOptions"
-              name="student-specialty"
-              id="student-specialty"
-              searchable
-            />
-            <Select
               label="Язык обучения"
               placeholder="Выберите язык"
               v-model="filters.language"
@@ -69,8 +44,53 @@
             Найдено: {{ filteredStudents.length }} | Выбрано:
             {{ localSelectedStudents.size }}
           </div>
+          <div
+            class="text-sm text-muted-foreground"
+            v-if="
+              filteredStudentsInfo.bases || filteredStudentsInfo.specialties
+            "
+          >
+            <span v-if="filteredStudentsInfo.bases"
+              >Базы: {{ filteredStudentsInfo.bases }}</span
+            >
+            <span
+              v-if="
+                filteredStudentsInfo.bases && filteredStudentsInfo.specialties
+              "
+            >
+              |
+            </span>
+            <span v-if="filteredStudentsInfo.specialties"
+              >Специальности: {{ filteredStudentsInfo.specialties }}</span
+            >
+          </div>
 
-          <div class="max-h-64 overflow-y-auto border border-input rounded-lg">
+          <div class="flex items-center gap-3 text-xs text-muted-foreground">
+            <button class="underline" @click="showDebug = !showDebug">
+              Отладка
+            </button>
+            <span v-if="showDebug">
+              AY: {{ getActiveAcademicYear?.id || "N/A" }} | Sem:
+              {{
+                getActiveAcademicYearSemesters
+                  .map((s: any) => `${s.id}:${s.semesterNumber}`)
+                  .join(", ")
+              }}
+              | class9Id: {{ class9Id }} | allowIds:
+              {{ (allowedSpecialtyIds || []).join(", ") }} | allowCodes:
+              {{ (allowedSpecialtyCodes || []).join(", ") }} | courses:
+              {{ Array.from(availableCourses).join(", ") }} | students:
+              {{ students.length }} | filtered: {{ filteredStudents.length }}
+            </span>
+          </div>
+
+          <pre
+            v-if="showDebug"
+            class="text-xs bg-muted text-muted-foreground p-2 rounded border border-input whitespace-pre-wrap break-words"
+            >{{ debugText }}</pre
+          >
+
+          <div class="overflow-y-auto border border-input rounded-lg">
             <table class="w-full text-sm">
               <thead class="sticky top-0 bg-card z-10">
                 <tr class="border-b border-input">
@@ -141,9 +161,14 @@ import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
 import { useBaseStore } from "@/stores/baseStore";
 import { useCourseStore } from "@/stores/courseStore";
+import { useSemesterStore } from "@/stores/semesterStore";
+import { useClass9Store } from "@/stores/class9Store";
+import { useAcademicYearStore } from "@/stores/academicYearStore";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 
-defineProps<{
+const props = defineProps<{
   selectedStudents: string[];
+  class9Id?: string;
 }>();
 
 const emit = defineEmits<{
@@ -155,22 +180,244 @@ const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
 const baseStore = useBaseStore();
+const class9Store = useClass9Store();
 const courseStore = useCourseStore();
+const semesterStore = useSemesterStore();
+const academicYearStore = useAcademicYearStore();
+const academicYearSemesterStore = useAcademicYearSemesterStore();
 const { students } = storeToRefs(studentStore);
 const { specialtyOptions: storeSpecialtyOptions } = storeToRefs(specialtyStore);
 const { languageOptions: storeLanguageOptions } = storeToRefs(languageStore);
 const { baseOptions: storeBaseOptions } = storeToRefs(baseStore);
 const { courses } = storeToRefs(courseStore);
+const { semesters } = storeToRefs(semesterStore);
+const { getActiveAcademicYear } = storeToRefs(academicYearStore);
+const { getActiveAcademicYearSemesters } = storeToRefs(
+  academicYearSemesterStore
+);
 
 const isPopupOpen = ref(false);
+const showDebug = ref(false);
 const localSelectedStudents = reactive(new Set<string>());
 const filters = reactive({
   searchTerm: "",
-  course: "all",
-  base: "all",
-  specialty: "all",
   language: "all",
   gender: "",
+});
+
+const availableCourses = computed(() => {
+  const activeAcademicYear = getActiveAcademicYear.value;
+  const activeSemesters = getActiveAcademicYearSemesters.value;
+
+  if (!activeAcademicYear || activeSemesters.length === 0) {
+    // No active context, allow all courses to avoid empty list
+    const allCourses = new Set<number>();
+    students.value.forEach((s) => {
+      const c = studentStore.getCourseByStudentId(s.id);
+      if (c) allCourses.add(c);
+    });
+    return allCourses;
+  }
+
+  const selectedClass9 = props.class9Id
+    ? class9Store.getClass9ById(props.class9Id)
+    : null;
+
+  const expectedCourses = new Set<number>();
+  if (selectedClass9) {
+    selectedClass9.distributionEntries.forEach((entry) => {
+      const sem = academicYearSemesterStore.getAcademicYearSemesterById(
+        entry.semesterId
+      );
+      const semesterNumber = sem?.semesterNumber ?? Number(entry.semesterId);
+      if (isNaN(semesterNumber)) return;
+
+      // Map semesterNumber -> course using configured courses/semesters
+      // We assume: courses[].semesters is an ordered array of semester IDs defining that course
+      const foundCourse = courses.value.find((c) =>
+        (c.semesters || []).some((semId) => {
+          const s = semesterStore.getSemesterById(semId);
+          return (
+            s?.shortName === String(semesterNumber) ||
+            Number(s?.shortName) === semesterNumber
+          );
+        })
+      );
+
+      if (foundCourse) {
+        const num = Number(foundCourse.number);
+        if (!isNaN(num)) expectedCourses.add(num);
+      } else {
+        // Fallback: if settings not configured granularly, keep heuristic
+        expectedCourses.add(Math.ceil(semesterNumber / 2));
+      }
+    });
+  }
+
+  const admittedCourses = students.value.reduce((set, student) => {
+    if (!student.academicYearId) {
+      return set;
+    }
+
+    const studentAcademicYear = academicYearStore.getAcademicYearById(
+      student.academicYearId
+    );
+    if (!studentAcademicYear) {
+      return set;
+    }
+
+    const diff =
+      activeAcademicYear.startYear - studentAcademicYear.startYear + 1;
+    const derivedCourse = Math.max(0, diff);
+
+    if (expectedCourses.size === 0) {
+      set.add(derivedCourse);
+      return set;
+    }
+
+    if (expectedCourses.has(derivedCourse)) {
+      set.add(derivedCourse);
+    }
+
+    return set;
+  }, new Set<number>());
+
+  return admittedCourses;
+});
+
+const allowedSpecialtyCodes = computed<string[]>(() => {
+  const ids = allowedSpecialtyIds.value || [];
+  return ids.map((id: string) => {
+    const s = specialtyStore.getSpecialtyById(id);
+    return s?.code || id;
+  });
+});
+
+const debugText = computed(() => {
+  const activeAY = getActiveAcademicYear.value;
+  const activeSems = getActiveAcademicYearSemesters.value;
+  const selected = props.class9Id
+    ? class9Store.getClass9ById(props.class9Id)
+    : null;
+
+  const withCourse = students.value.map((s) => ({
+    ...s,
+    course: studentStore.getCourseByStudentId(s.id) ?? 0,
+    fullName: studentStore.getStudentFullName(s.id),
+  }));
+
+  const afterCourse = withCourse.filter((s) =>
+    availableCourses.value.size === 0
+      ? true
+      : availableCourses.value.has(s.course)
+  );
+
+  const afterSpecialty = afterCourse.filter(
+    (s) =>
+      !allowedSpecialtyIds.value ||
+      allowedSpecialtyIds.value.length === 0 ||
+      allowedSpecialtyIds.value.includes(s.specialty)
+  );
+
+  const afterLanguage = afterSpecialty.filter(
+    (s) => filters.language === "all" || s.language === filters.language
+  );
+
+  const afterGender = afterLanguage.filter(
+    (s) => !filters.gender || s.gender === filters.gender
+  );
+
+  const term = filters.searchTerm.trim().toLowerCase();
+  const afterSearch = afterGender.filter((s) =>
+    term ? s.fullName.toLowerCase().includes(term) : true
+  );
+
+  const sample = afterSearch.slice(0, 5).map((s) => ({
+    id: s.id,
+    fullName: s.fullName,
+    course: s.course,
+    specialty: s.specialty,
+    base: s.base,
+    language: s.language,
+    gender: s.gender,
+  }));
+
+  // Deep detail sets
+  const coursesSetAll = Array.from(
+    new Set(withCourse.map((s) => s.course))
+  ).sort((a, b) => a - b);
+  const coursesSetAfter = Array.from(
+    new Set(afterCourse.map((s) => s.course))
+  ).sort((a, b) => a - b);
+  const specialtyCodesAll = Array.from(
+    new Set(withCourse.map((s) => s.specialty))
+  );
+  const specialtyNamesAll = specialtyCodesAll.map(
+    (c) => specialtyStore.getSpecialtyByCode(c)?.codeName || c
+  );
+  const baseSetAll = Array.from(new Set(withCourse.map((s) => s.base)));
+
+  // Class9 distribution with resolved semester numbers
+  const class9Entries = (selected?.distributionEntries || []).map((e) => {
+    const sem = academicYearSemesterStore.getAcademicYearSemesterById(
+      e.semesterId
+    );
+    return {
+      academicYearId: e.academicYearId,
+      semesterId: e.semesterId,
+      semesterNumber: sem?.semesterNumber,
+      hours: e.hours,
+    };
+  });
+
+  // Course derivation trace for first 3 students
+  const courseTrace = withCourse.slice(0, 3).map((s) => {
+    const sy = academicYearStore.getAcademicYearById(s.academicYearId || "");
+    const ay = activeAY;
+    const syStart = sy?.startYear;
+    const ayStart = ay?.startYear;
+    const diff =
+      syStart !== undefined && ayStart !== undefined
+        ? ayStart - syStart + 1
+        : undefined;
+    return {
+      id: s.id,
+      name: s.fullName,
+      ayStart,
+      syStart,
+      computed: diff,
+      course: s.course,
+    };
+  });
+
+  const lines = [
+    `ActiveAcademicYear: ${activeAY ? activeAY.id : "N/A"}`,
+    `ActiveSemesters: ${activeSems
+      .map((s: any) => `${s.id}:${s.semesterNumber}`)
+      .join(", ")}`,
+    `SelectedClass9Id: ${props.class9Id || "N/A"}`,
+    `SelectedClass9.distEntries: ${
+      selected ? selected.distributionEntries.length : 0
+    }`,
+    `SelectedClass9.entries: ${JSON.stringify(class9Entries)}`,
+    `AllowedSpecialtyIds: ${(allowedSpecialtyIds.value || []).join(", ")}`,
+    `AllowedSpecialtyCodes: ${(allowedSpecialtyCodes.value || []).join(", ")}`,
+    `Filters: { language: ${filters.language}, gender: ${filters.gender}, searchTerm: ${filters.searchTerm} }`,
+    `AvailableCourses: ${Array.from(availableCourses.value).join(", ")}`,
+    `Distributions: courses(all)=${JSON.stringify(
+      coursesSetAll
+    )}, courses(after)=${JSON.stringify(coursesSetAfter)}`,
+    `Present: specialtyCodes=${JSON.stringify(
+      specialtyCodesAll
+    )}, specialtyNames=${JSON.stringify(
+      specialtyNamesAll
+    )}, bases=${JSON.stringify(baseSetAll)}`,
+    `Counts: total=${withCourse.length}, afterCourse=${afterCourse.length}, afterSpecialty=${afterSpecialty.length}, afterLanguage=${afterLanguage.length}, afterGender=${afterGender.length}, afterSearch=${afterSearch.length}`,
+    `Sample(first 5): ${JSON.stringify(sample)}`,
+    `CourseTrace(first 3): ${JSON.stringify(courseTrace)}`,
+  ];
+
+  return lines.join("\n");
 });
 
 const filteredStudents = computed(() => {
@@ -179,17 +426,22 @@ const filteredStudents = computed(() => {
   return students.value
     .map((s) => ({
       ...s,
-      course: studentStore.getCourseByStudentId(s.id) || 1,
+      course: studentStore.getCourseByStudentId(s.id) ?? 0,
     }))
-    .filter(
-      (s) => filters.course === "all" || s.course.toString() === filters.course
-    )
-    .filter(
-      (s) => filters.base === "all" || s.base?.toString() === filters.base
-    )
-    .filter(
-      (s) => filters.specialty === "all" || s.specialty === filters.specialty
-    )
+    .filter((s) => {
+      if (availableCourses.value.size === 0) {
+        return true;
+      }
+
+      return availableCourses.value.has(s.course);
+    })
+    .filter((s) => {
+      const ids = allowedSpecialtyIds.value || [];
+      const codes = allowedSpecialtyCodes.value || [];
+      if (ids.length === 0 && codes.length === 0) return true;
+      // Students store specialty as code; prefer code comparison, but keep id fallback
+      return codes.includes(s.specialty) || ids.includes(s.specialty);
+    })
     .filter(
       (s) => filters.language === "all" || s.language === filters.language
     )
@@ -207,37 +459,48 @@ const isAllStudentsSelected = computed(
     localSelectedStudents.size === filteredStudents.value.length
 );
 
-const courseOptions = computed(() =>
-  withAllOption(
-    courses.value.map((course) => ({
-      value: course.number,
-      text: course.number,
-    })),
-    "Все",
-    "all"
-  )
-);
-
-const baseOptions = computed(() =>
-  withAllOption(storeBaseOptions.value, "Все", "all")
-);
-
-const specialtyOptions = computed(() =>
-  withAllOption(
-    storeSpecialtyOptions.value.map((specialty) => ({
-      value: specialty.value,
-      text: specialty.text.split(" - ")[0], // Use just the name part for filtering
-    })),
-    "Все",
-    "all"
-  )
-);
-
 const languageOptions = computed(() =>
   withAllOption(storeLanguageOptions.value, "Все", "all")
 );
 
 const genderOptions = computed(() => getGenderOptions());
+
+const allowedSpecialtyIds = computed(() => {
+  if (!props.class9Id) return [];
+  // Get the selected class9 item from the store
+  const selectedClass9 = class9Store.getClass9ById(props.class9Id);
+  return selectedClass9?.specialtyIds || [];
+});
+
+const filteredStudentsInfo = computed(() => {
+  const uniqueBases = new Set<string>();
+  const uniqueSpecialties = new Set<string>();
+
+  filteredStudents.value.forEach((student) => {
+    if (student.base) {
+      const baseOption = storeBaseOptions.value.find(
+        (opt) => opt.value === student.base?.toString()
+      );
+      if (baseOption) {
+        uniqueBases.add(baseOption.text);
+      }
+    }
+
+    if (student.specialty) {
+      const specialtyOption = storeSpecialtyOptions.value.find(
+        (opt) => opt.value === student.specialty
+      );
+      if (specialtyOption) {
+        uniqueSpecialties.add(specialtyOption.text.split(" - ")[0]); // Get short name
+      }
+    }
+  });
+
+  return {
+    bases: Array.from(uniqueBases).join(", "),
+    specialties: Array.from(uniqueSpecialties).join(", "),
+  };
+});
 
 const open = (currentSelection: string[]) => {
   resetFilters();
@@ -263,9 +526,6 @@ const save = () => {
 const resetFilters = () => {
   Object.assign(filters, {
     searchTerm: "",
-    course: "all",
-    base: "all",
-    specialty: "all",
     language: "all",
     gender: "",
   });
