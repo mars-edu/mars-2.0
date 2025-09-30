@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
+import { useAcademicYearStore } from "./academicYearStore";
 
 export interface AcademicYearSemester {
   id: string;
@@ -37,11 +38,16 @@ export const useAcademicYearSemesterStore = defineStore(
     });
 
     const getActiveAcademicYearSemester = computed(() => {
-      const today = dayjs().format(DATE_STORAGE_FORMAT); // Get current date in YYYY-MM-DD format
+      const academicYearStore = useAcademicYearStore();
+      const activeAcademicYear = academicYearStore.getActiveAcademicYear;
+
+      if (!activeAcademicYear) {
+        return null;
+      }
 
       return (
         academicYearSemesters.value.find((semester) => {
-          return semester.startDate <= today && semester.endDate >= today;
+          return semester.academicYearId === activeAcademicYear.id;
         }) || null
       );
     });
@@ -55,10 +61,15 @@ export const useAcademicYearSemesterStore = defineStore(
     };
 
     const getActiveAcademicYearSemesters = computed(() => {
-      const today = dayjs().format(DATE_STORAGE_FORMAT); // Get current date in YYYY-MM-DD format
+      const academicYearStore = useAcademicYearStore();
+      const activeAcademicYear = academicYearStore.getActiveAcademicYear;
+
+      if (!activeAcademicYear) {
+        return [];
+      }
 
       return academicYearSemesters.value.filter((semester) => {
-        return semester.startDate <= today && semester.endDate >= today;
+        return semester.academicYearId === activeAcademicYear.id;
       });
     });
 
