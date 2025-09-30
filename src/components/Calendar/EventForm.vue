@@ -171,7 +171,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, watchEffect } from "vue";
+import { computed, ref, watch, watchEffect, onUnmounted } from "vue";
 import { f7 } from "framework7-vue";
 import { storeToRefs } from "pinia";
 import dayjs from "dayjs";
@@ -209,6 +209,30 @@ type WeekDaySchedule = {
   endId: string;
 };
 
+// Helper to avoid emitting unchanged weekly schedules
+function areWeekDaySchedulesEqual(
+  a: WeekDaySchedule[] | undefined,
+  b: WeekDaySchedule[] | undefined
+): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const ai = a[i];
+    const bi = b[i];
+    if (!bi) return false;
+    if (
+      ai.weekId !== bi.weekId ||
+      ai.russianWeekDay !== bi.russianWeekDay ||
+      ai.startId !== bi.startId ||
+      ai.endId !== bi.endId
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 const props = defineProps<{
   class9Id: string;
   useCustomPeriod: boolean;
@@ -220,6 +244,63 @@ const props = defineProps<{
   parentPopoverId: string;
   mode?: "add" | "edit";
 }>();
+
+// Add watchers to track prop changes
+watch(
+  () => props.class9Id,
+  (newVal, oldVal) => {
+    console.log("🔄 PROPS class9Id changed:", { oldVal, newVal });
+  },
+  { immediate: true }
+);
+
+watch(
+  () => props.useCustomPeriod,
+  (newVal, oldVal) => {
+    console.log("🔄 PROPS useCustomPeriod changed:", { oldVal, newVal });
+  },
+  { immediate: true }
+);
+
+watch(
+  () => props.startDate,
+  (newVal, oldVal) => {
+    console.log("🔄 PROPS startDate changed:", { oldVal, newVal });
+  },
+  { immediate: true }
+);
+
+watch(
+  () => props.endDate,
+  (newVal, oldVal) => {
+    console.log("🔄 PROPS endDate changed:", { oldVal, newVal });
+  },
+  { immediate: true }
+);
+
+watch(
+  () => props.participants,
+  (newVal, oldVal) => {
+    console.log("🔄 PROPS participants changed:", { oldVal, newVal });
+  },
+  { deep: true, immediate: true }
+);
+
+watch(
+  () => props.color,
+  (newVal, oldVal) => {
+    console.log("🔄 PROPS color changed:", { oldVal, newVal });
+  },
+  { immediate: true }
+);
+
+watch(
+  () => props.selectedWeekDays,
+  (newVal, oldVal) => {
+    console.log("🔄 PROPS selectedWeekDays changed:", { oldVal, newVal });
+  },
+  { deep: true, immediate: true }
+);
 
 const emit = defineEmits<{
   (e: "update:class9Id", v: string): void;
@@ -235,38 +316,130 @@ const emit = defineEmits<{
 const class9Store = useClass9Store();
 const { class9Options } = storeToRefs(class9Store);
 
+// Watch store changes
+watch(
+  class9Options,
+  (newVal, oldVal) => {
+    console.log("🔄 STORE class9Options changed:", {
+      oldLength: oldVal?.length,
+      newLength: newVal?.length,
+    });
+  },
+  { deep: true, immediate: true }
+);
+
 const educationScheduleStore = useEducationScheduleStore();
 const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
+
+// Watch store changes
+watch(
+  getActiveYearSchedules,
+  (newVal, oldVal) => {
+    console.log("🔄 STORE getActiveYearSchedules changed:", {
+      oldLength: oldVal?.length,
+      newLength: newVal?.length,
+    });
+  },
+  { deep: true, immediate: true }
+);
 
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const { getActiveAcademicYearSemester } = storeToRefs(
   academicYearSemesterStore
 );
 
+// Watch store changes
+watch(
+  getActiveAcademicYearSemester,
+  (newVal, oldVal) => {
+    console.log("🔄 STORE getActiveAcademicYearSemester changed:", {
+      oldVal,
+      newVal,
+    });
+  },
+  { deep: true, immediate: true }
+);
+
 const selectedItemsStore = useSelectedItemsStore();
 const { selectedClass9Item } = storeToRefs(selectedItemsStore);
+
+// Watch store changes
+watch(
+  selectedClass9Item,
+  (newVal, oldVal) => {
+    console.log("🔄 STORE selectedClass9Item changed:", { oldVal, newVal });
+  },
+  { immediate: true }
+);
+
 const rupStore = useRupStore();
 
 const ktpStore = useKtpStore();
 const { getKtpIdForClass9, getModuleTitleForKtp } = storeToRefs(ktpStore);
 
-const checkboxId = computed(() =>
-  props.mode === "edit" ? "use-custom-period-edit" : "use-custom-period"
+// Watch store changes
+watch(
+  getKtpIdForClass9,
+  (newVal, oldVal) => {
+    console.log("🔄 STORE getKtpIdForClass9 changed:", { oldVal, newVal });
+  },
+  { immediate: true }
 );
 
+watch(
+  getModuleTitleForKtp,
+  (newVal, oldVal) => {
+    console.log("🔄 STORE getModuleTitleForKtp changed:", { oldVal, newVal });
+  },
+  { immediate: true }
+);
+
+const checkboxId = computed(() => {
+  callCounters.checkboxId.calls++;
+  const result =
+    props.mode === "edit" ? "use-custom-period-edit" : "use-custom-period";
+  console.log(
+    `🔄 checkboxId computed called (call #${callCounters.checkboxId.calls})`,
+    { mode: props.mode, result }
+  );
+  return result;
+});
+
 const totalPlannedHours = computed(() => {
+  callCounters.totalPlannedHours.calls++;
+  console.log(
+    `🔄 totalPlannedHours computed called (call #${callCounters.totalPlannedHours.calls})`,
+    {
+      class9IdModel: class9IdModel.value,
+    }
+  );
   const selectedClass9 = class9Store.getClass9ById(class9IdModel.value);
   if (!selectedClass9) {
+    console.log("✅ totalPlannedHours result: '0' (no class9 found)");
     return "0";
   }
-  return selectedClass9.totalHours || "0";
+  const result = selectedClass9.totalHours || "0";
+  console.log("✅ totalPlannedHours result:", result, {
+    selectedClass9: selectedClass9.totalHours,
+  });
+  return result;
 });
 
 const semesterPlannedHours = computed(() => {
+  callCounters.semesterPlannedHours.calls++;
+  console.log(
+    `🔄 semesterPlannedHours computed called (call #${callCounters.semesterPlannedHours.calls})`,
+    {
+      class9IdModel: class9IdModel.value,
+      activeSemester: getActiveAcademicYearSemester.value,
+    }
+  );
+
   const selectedClass9 = class9Store.getClass9ById(class9IdModel.value);
   const activeSemester = getActiveAcademicYearSemester.value as any;
 
   if (!selectedClass9 || !activeSemester) {
+    console.log("✅ semesterPlannedHours result: '0' (no class9 or semester)");
     return "0";
   }
 
@@ -290,26 +463,77 @@ const semesterPlannedHours = computed(() => {
     matchedEntry.hours === undefined ||
     matchedEntry.hours === null
   ) {
+    console.log("✅ semesterPlannedHours result: '0' (no matching entry)");
     return "0";
   }
 
-  return String(matchedEntry.hours);
+  const result = String(matchedEntry.hours);
+  console.log("✅ semesterPlannedHours result:", result, {
+    matchedEntry: matchedEntry.hours,
+  });
+  return result;
 });
 
 const class9IdModel = computed({
-  get: () => props.class9Id,
-  set: (v: string) => emit("update:class9Id", v),
+  get: () => {
+    callCounters.class9IdModel.calls++;
+    console.log(
+      `🔄 class9IdModel GETTER called (call #${callCounters.class9IdModel.calls})`,
+      {
+        propsClass9Id: props.class9Id,
+      }
+    );
+    return props.class9Id;
+  },
+  set: (v: string) => {
+    console.log("🔄 class9IdModel SETTER called", {
+      v,
+      current: props.class9Id,
+    });
+    emit("update:class9Id", v);
+  },
 });
 const useCustomPeriodModel = computed({
-  get: () => props.useCustomPeriod,
-  set: (v: boolean) => emit("update:useCustomPeriod", v),
+  get: () => {
+    callCounters.useCustomPeriodModel.calls++;
+    console.log(
+      `🔄 useCustomPeriodModel GETTER called (call #${callCounters.useCustomPeriodModel.calls})`,
+      {
+        propsUseCustomPeriod: props.useCustomPeriod,
+      }
+    );
+    return props.useCustomPeriod;
+  },
+  set: (v: boolean) => {
+    console.log("🔄 useCustomPeriodModel SETTER called", {
+      v,
+      current: props.useCustomPeriod,
+    });
+    emit("update:useCustomPeriod", v);
+  },
 });
 const startDateModel = computed({
   get: () => {
+    callCounters.startDateModel.calls++;
+    console.log(
+      `🔄 startDateModel GETTER called (call #${callCounters.startDateModel.calls})`,
+      {
+        propsStartDate: props.startDate,
+        semesterDates: semesterDates.value,
+        currentValue: props.startDate
+          ? dayjs(props.startDate, DATE_UI_FORMAT, true).isValid()
+          : "invalid",
+      }
+    );
+
     // Use prop value if provided and valid
     if (props.startDate) {
       const parsed = dayjs(props.startDate, DATE_UI_FORMAT, true);
       if (parsed.isValid()) {
+        console.log(
+          "✅ startDateModel using props.startDate:",
+          props.startDate
+        );
         return [parsed.toDate()];
       }
     }
@@ -318,28 +542,53 @@ const startDateModel = computed({
     if (semesterDates.value) {
       const parsed = dayjs(semesterDates.value.startDate, DATE_UI_FORMAT, true);
       if (parsed.isValid()) {
+        console.log(
+          "✅ startDateModel using semesterDates.startDate:",
+          semesterDates.value.startDate
+        );
         return [parsed.toDate()];
       }
     }
 
     // Fallback to current date
+    console.log("✅ startDateModel fallback to current date");
     return [new Date()];
   },
   set: (v: Date[]) => {
+    console.log("🔄 startDateModel SETTER called", {
+      v,
+      propsStartDate: props.startDate,
+    });
     if (Array.isArray(v) && v.length > 0) {
       const formatted = dayjs(v[0]).format(DATE_UI_FORMAT);
       if (formatted !== props.startDate) {
+        console.log("📤 startDateModel emitting update:startDate:", formatted);
         emit("update:startDate", formatted);
+      } else {
+        console.log("⚠️ startDateModel no change needed");
       }
     }
   },
 });
 const endDateModel = computed({
   get: () => {
+    callCounters.endDateModel.calls++;
+    console.log(
+      `🔄 endDateModel GETTER called (call #${callCounters.endDateModel.calls})`,
+      {
+        propsEndDate: props.endDate,
+        semesterDates: semesterDates.value,
+        currentValue: props.endDate
+          ? dayjs(props.endDate, DATE_UI_FORMAT, true).isValid()
+          : "invalid",
+      }
+    );
+
     // Use prop value if provided and valid
     if (props.endDate) {
       const parsed = dayjs(props.endDate, DATE_UI_FORMAT, true);
       if (parsed.isValid()) {
+        console.log("✅ endDateModel using props.endDate:", props.endDate);
         return [parsed.toDate()];
       }
     }
@@ -348,29 +597,75 @@ const endDateModel = computed({
     if (semesterDates.value) {
       const parsed = dayjs(semesterDates.value.endDate, DATE_UI_FORMAT, true);
       if (parsed.isValid()) {
+        console.log(
+          "✅ endDateModel using semesterDates.endDate:",
+          semesterDates.value.endDate
+        );
         return [parsed.toDate()];
       }
     }
 
     // Fallback to current date
+    console.log("✅ endDateModel fallback to current date");
     return [new Date()];
   },
   set: (v: Date[]) => {
+    console.log("🔄 endDateModel SETTER called", {
+      v,
+      propsEndDate: props.endDate,
+    });
     if (Array.isArray(v) && v.length > 0) {
       const formatted = dayjs(v[0]).format(DATE_UI_FORMAT);
       if (formatted !== props.endDate) {
+        console.log("📤 endDateModel emitting update:endDate:", formatted);
         emit("update:endDate", formatted);
+      } else {
+        console.log("⚠️ endDateModel no change needed");
       }
     }
   },
 });
 const participantsModel = computed({
-  get: () => props.participants,
-  set: (v: string[]) => emit("update:participants", v),
+  get: () => {
+    callCounters.participantsModel.calls++;
+    console.log(
+      `🔄 participantsModel GETTER called (call #${callCounters.participantsModel.calls})`,
+      {
+        propsParticipants: props.participants,
+      }
+    );
+    return props.participants;
+  },
+  set: (v: string[]) => {
+    console.log("🔄 participantsModel SETTER called", {
+      v,
+      current: props.participants,
+    });
+    emit("update:participants", v);
+  },
 });
 const selectedWeekDaysModel = computed<WeekDaySchedule[]>({
-  get: () => props.selectedWeekDays,
-  set: (v: WeekDaySchedule[]) => emit("update:selectedWeekDays", v),
+  get: () => {
+    callCounters.selectedWeekDaysModel.calls++;
+    console.log(
+      `🔄 selectedWeekDaysModel GETTER called (call #${callCounters.selectedWeekDaysModel.calls})`,
+      {
+        selectedWeekDays: props.selectedWeekDays,
+      }
+    );
+    return props.selectedWeekDays;
+  },
+  set: (v: WeekDaySchedule[]) => {
+    console.log("🔄 selectedWeekDaysModel SETTER called", {
+      v,
+      current: props.selectedWeekDays,
+    });
+    if (areWeekDaySchedulesEqual(v, props.selectedWeekDays)) {
+      console.log("⚠️ selectedWeekDaysModel no change needed (deep equal)");
+      return;
+    }
+    emit("update:selectedWeekDays", v);
+  },
 });
 
 const eventColorObj = ref<{ hex: string }>({ hex: props.color || "#3F51B5" });
@@ -388,9 +683,16 @@ watch(
 );
 
 const semesterDates = computed(() => {
+  callCounters.semesterDates.calls++;
+  console.log(
+    `🔄 semesterDates computed called (call #${callCounters.semesterDates.calls})`,
+    {
+      activeSemester: getActiveAcademicYearSemester.value,
+    }
+  );
   const activeSemester = getActiveAcademicYearSemester.value as any;
   if (activeSemester && activeSemester.startDate) {
-    return {
+    const result = {
       startDate: dayjs(activeSemester.startDate, DATE_STORAGE_FORMAT).format(
         DATE_UI_FORMAT
       ),
@@ -398,22 +700,58 @@ const semesterDates = computed(() => {
         DATE_UI_FORMAT
       ),
     };
+    console.log("✅ semesterDates result:", result);
+    return result;
   }
+  console.log("✅ semesterDates result: null");
   return null;
 });
 
 const dateValidationError = computed(() => {
-  if (!useCustomPeriodModel.value) return null;
-  if (!startDateModel.value?.length || !endDateModel.value?.length) return null;
+  callCounters.dateValidationError.calls++;
+  console.log(
+    `🔄 dateValidationError computed called (call #${callCounters.dateValidationError.calls})`,
+    {
+      useCustomPeriodModel: useCustomPeriodModel.value,
+      startDateModelLength: startDateModel.value?.length,
+      endDateModelLength: endDateModel.value?.length,
+    }
+  );
+
+  if (!useCustomPeriodModel.value) {
+    console.log(
+      "✅ dateValidationError result: null (not using custom period)"
+    );
+    return null;
+  }
+  if (!startDateModel.value?.length || !endDateModel.value?.length) {
+    console.log("✅ dateValidationError result: null (missing dates)");
+    return null;
+  }
   const start = dayjs(startDateModel.value[0]);
   const end = dayjs(endDateModel.value[0]);
   if (!end.isAfter(start, "day")) {
-    return "Дата окончания должна быть как минимум на один день позже даты начала";
+    const result =
+      "Дата окончания должна быть как минимум на один день позже даты начала";
+    console.log("✅ dateValidationError result:", result);
+    return result;
   }
+  console.log("✅ dateValidationError result: null (valid dates)");
   return null;
 });
 
 const isFormValid = computed(() => {
+  callCounters.isFormValid.calls++;
+  console.log(
+    `🔄 isFormValid computed called (call #${callCounters.isFormValid.calls})`,
+    {
+      class9IdModel: class9IdModel.value,
+      useCustomPeriodModel: useCustomPeriodModel.value,
+      startDateModelLength: startDateModel.value?.length,
+      endDateModelLength: endDateModel.value?.length,
+    }
+  );
+
   const hasRequiredFields = !!class9IdModel.value;
   if (useCustomPeriodModel.value) {
     const hasValidDateRange =
@@ -423,37 +761,106 @@ const isFormValid = computed(() => {
         dayjs(startDateModel.value[0]),
         "day"
       );
-    return hasRequiredFields && hasValidDateRange;
+    const result = hasRequiredFields && hasValidDateRange;
+    console.log("✅ isFormValid result:", result, {
+      hasRequiredFields,
+      hasValidDateRange,
+    });
+    return result;
   }
-  return hasRequiredFields;
+  const result = hasRequiredFields;
+  console.log("✅ isFormValid result:", result, { hasRequiredFields });
+  return result;
 });
 
+// Add call counters for debugging
+const callCounters = {
+  startDateModel: { calls: 0 },
+  endDateModel: { calls: 0 },
+  selectedWeekDaysModel: { calls: 0 },
+  isFormValid: { calls: 0 },
+  semesterDates: { calls: 0 },
+  dateValidationError: { calls: 0 },
+  totalPlannedHours: { calls: 0 },
+  semesterPlannedHours: { calls: 0 },
+  class9IdModel: { calls: 0 },
+  useCustomPeriodModel: { calls: 0 },
+  participantsModel: { calls: 0 },
+  weekDays: { calls: 0 },
+  startTimeOptions: { calls: 0 },
+  endTimeOptions: { calls: 0 },
+  checkboxId: { calls: 0 },
+};
+
 watchEffect(() => {
+  callCounters.isFormValid.calls++;
+  console.log(
+    `🔄 WATCH_EFFECT [isFormValid] called (call #${callCounters.isFormValid.calls})`,
+    {
+      isFormValid: isFormValid.value,
+      dependencies: {
+        class9IdModel: class9IdModel.value,
+        useCustomPeriodModel: useCustomPeriodModel.value,
+        startDateModelLength: startDateModel.value?.length,
+        endDateModelLength: endDateModel.value?.length,
+      },
+    }
+  );
   emit("update:valid", isFormValid.value);
 });
 
-const startTimeOptions = computed(() =>
-  getActiveYearSchedules.value.map((schedule) => ({
+const startTimeOptions = computed(() => {
+  callCounters.startTimeOptions.calls++;
+  console.log(
+    `🔄 startTimeOptions computed called (call #${callCounters.startTimeOptions.calls})`,
+    {
+      schedulesCount: getActiveYearSchedules.value.length,
+    }
+  );
+  const result = getActiveYearSchedules.value.map((schedule) => ({
     value: schedule.id,
     text: schedule.startTime,
-  }))
-);
-const endTimeOptions = computed(() =>
-  getActiveYearSchedules.value.map((schedule) => ({
+  }));
+  console.log("✅ startTimeOptions result:", result.length, "options");
+  return result;
+});
+const endTimeOptions = computed(() => {
+  callCounters.endTimeOptions.calls++;
+  console.log(
+    `🔄 endTimeOptions computed called (call #${callCounters.endTimeOptions.calls})`,
+    {
+      schedulesCount: getActiveYearSchedules.value.length,
+    }
+  );
+  const result = getActiveYearSchedules.value.map((schedule) => ({
     value: schedule.id,
     text: schedule.endTime,
-  }))
-);
+  }));
+  console.log("✅ endTimeOptions result:", result.length, "options");
+  return result;
+});
 
-const weekDays = computed(() =>
-  WEEK_DAYS.map((day) => ({
+const weekDays = computed(() => {
+  callCounters.weekDays.calls++;
+  console.log(
+    `🔄 weekDays computed called (call #${callCounters.weekDays.calls})`,
+    {
+      weekDaysCount: WEEK_DAYS.length,
+      selectedWeekDaysModelCount: selectedWeekDaysModel.value.length,
+    }
+  );
+
+  const result = WEEK_DAYS.map((day) => ({
     ...day,
     isStartDate: false,
     isSelected: selectedWeekDaysModel.value.some(
       (selected) => selected.weekId === day.weekId
     ),
-  }))
-);
+  }));
+
+  console.log("✅ weekDays result:", result.length, "days");
+  return result;
+});
 
 const selectWeekDay = (day: {
   weekId: number;
@@ -462,78 +869,183 @@ const selectWeekDay = (day: {
   isSelected: boolean;
   name: string;
 }) => {
+  console.log("🔄 selectWeekDay called", {
+    day,
+    selectedWeekDaysModelBefore: selectedWeekDaysModel.value,
+  });
+
   const current = selectedWeekDaysModel.value || [];
   const index = current.findIndex((d) => d.weekId === day.weekId);
+
   if (index === -1) {
     const updated = [
       ...current,
       { weekId: day.weekId, russianWeekDay: day.name, startId: "", endId: "" },
     ];
+    console.log("➕ selectWeekDay adding day:", day.name);
     selectedWeekDaysModel.value = updated;
   } else {
     const updated = [...current];
     updated.splice(index, 1);
+    console.log("➖ selectWeekDay removing day:", day.name);
     selectedWeekDaysModel.value = updated;
   }
+
+  console.log("✅ selectWeekDay after update:", selectedWeekDaysModel.value);
 };
 
 const onSelectedWeekDayChanged = () => {
-  // Trigger v-model sync after nested property change
-  selectedWeekDaysModel.value = [...selectedWeekDaysModel.value];
+  console.log("🔄 onSelectedWeekDayChanged called", {
+    selectedWeekDaysModelBefore: selectedWeekDaysModel.value,
+  });
+  // Re-emit only if actual change occurred (avoid self-triggering loops)
+  const cloned = [...selectedWeekDaysModel.value];
+  if (!areWeekDaySchedulesEqual(cloned, selectedWeekDaysModel.value)) {
+    selectedWeekDaysModel.value = cloned;
+  } else {
+    // Force emit with a normalized array order to ensure stability without churn
+    // Sort by weekId to keep deterministic reference if order changed elsewhere
+    const normalized = [...cloned].sort((a, b) => a.weekId - b.weekId);
+    if (!areWeekDaySchedulesEqual(normalized, selectedWeekDaysModel.value)) {
+      selectedWeekDaysModel.value = normalized;
+    }
+  }
+  console.log("✅ onSelectedWeekDayChanged after update", {
+    selectedWeekDaysModelAfter: selectedWeekDaysModel.value,
+  });
 };
 
 const studentPopup = ref<{ open: (p: string[]) => void } | null>(null);
 const isKtpPopupOpen = ref(false);
 
 const openStreamSelection = () => {
+  console.log("🔄 openStreamSelection called", {
+    participantsModel: participantsModel.value,
+    parentPopoverId: props.parentPopoverId,
+  });
   closeParentPopover();
   studentPopup.value?.open(participantsModel.value || []);
 };
 const handleStudentsSave = (selectedIds: string[]) => {
+  console.log("🔄 handleStudentsSave called", {
+    selectedIds,
+    previousParticipants: participantsModel.value,
+  });
   participantsModel.value = selectedIds;
 };
 const handleStudentPopupClose = () => {
+  console.log("🔄 handleStudentPopupClose called");
   openParentPopover();
 };
 
 const openKtpPopup = () => {
+  console.log("🔄 openKtpPopup called", {
+    class9IdModel: class9IdModel.value,
+    ktpId: getKtpIdForClass9.value,
+  });
   isKtpPopupOpen.value = true;
 };
 
 const openParentPopover = () => {
+  console.log("🔄 openParentPopover called", {
+    parentPopoverId: props.parentPopoverId,
+  });
   f7.popover.open(props.parentPopoverId);
 };
 const closeParentPopover = () => {
+  console.log("🔄 closeParentPopover called", {
+    parentPopoverId: props.parentPopoverId,
+  });
   f7.popover.close(props.parentPopoverId);
 };
 
-watch(class9IdModel, (newId) => {
-  console.log("class9IdModel", newId);
+watch(class9IdModel, (newId, oldId) => {
+  console.log("🔄 WATCHER class9IdModel changed", {
+    oldId,
+    newId,
+    selectedClass9ItemBefore: selectedClass9Item.value,
+    getKtpIdForClass9Before: getKtpIdForClass9.value,
+  });
   selectedItemsStore.setSelectedClass9ItemId(newId);
   rupStore.setSelectedClass9ItemId?.(newId as any);
+  console.log("✅ WATCHER class9IdModel after store updates", {
+    selectedClass9ItemAfter: selectedClass9Item.value,
+    getKtpIdForClass9After: getKtpIdForClass9.value,
+  });
 });
 
 watch(
   [useCustomPeriodModel, semesterDates],
-  ([newUseCustomPeriod, newSemesterDates]) => {
-    console.log("useCustomPeriodModel", newUseCustomPeriod);
+  (
+    [newUseCustomPeriod, newSemesterDates],
+    [oldUseCustomPeriod, oldSemesterDates]
+  ) => {
+    console.log("🔄 WATCHER [useCustomPeriodModel, semesterDates] called", {
+      oldUseCustomPeriod,
+      newUseCustomPeriod,
+      oldSemesterDates,
+      newSemesterDates,
+      propsStartDate: props.startDate,
+      propsEndDate: props.endDate,
+      startDateModelValue: startDateModel.value,
+      endDateModelValue: endDateModel.value,
+    });
+
     if (!newUseCustomPeriod && newSemesterDates) {
       const nextStart = newSemesterDates.startDate;
       const nextEnd = newSemesterDates.endDate;
+
+      console.log("🔍 WATCHER checking if updates needed", {
+        nextStart,
+        nextEnd,
+        propsStartDate: props.startDate,
+        propsEndDate: props.endDate,
+        startDateModelLength: startDateModel.value?.length,
+        endDateModelLength: endDateModel.value?.length,
+      });
 
       // Only update if the current values are different from the new values
       // This prevents infinite loops when the computed setters trigger the watcher again
       // If props don't exist, we should update to semester dates
       if (!props.startDate || props.startDate !== nextStart) {
+        console.log(
+          "📤 WATCHER emitting update:startDate:",
+          nextStart,
+          "(different from props)"
+        );
         emit("update:startDate", nextStart);
+      } else {
+        console.log(
+          "⚠️ WATCHER no change needed for startDate (matches props)"
+        );
       }
       if (!props.endDate || props.endDate !== nextEnd) {
+        console.log(
+          "📤 WATCHER emitting update:endDate:",
+          nextEnd,
+          "(different from props)"
+        );
         emit("update:endDate", nextEnd);
+      } else {
+        console.log("⚠️ WATCHER no change needed for endDate (matches props)");
       }
+    } else {
+      console.log("⚠️ WATCHER no action needed", {
+        useCustomPeriod: newUseCustomPeriod,
+        hasSemesterDates: !!newSemesterDates,
+      });
     }
   },
   { immediate: true }
 );
+
+// Log call counters summary when component unmounts
+onUnmounted(() => {
+  console.log(
+    "📊 EventForm.vue COMPONENT UNMOUNTED - Call Counters Summary:",
+    callCounters
+  );
+});
 </script>
 
 <style scoped></style>

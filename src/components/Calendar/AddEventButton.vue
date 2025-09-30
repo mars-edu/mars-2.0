@@ -43,9 +43,18 @@
             v-model:participants="participants"
             v-model:color="eventColor.hex"
             v-model:selectedWeekDays="selectedWeekDays"
-            @update:startDate="(v:string) => startDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()]"
-            @update:endDate="(v:string) => endDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()]"
-            @update:valid="(v:boolean)=>{ isFormValid=v }"
+            @update:startDate="(v:string) => {
+              console.log('📥 AddEventButton received update:startDate:', v);
+              startDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()];
+            }"
+            @update:endDate="(v:string) => {
+              console.log('📥 AddEventButton received update:endDate:', v);
+              endDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()];
+            }"
+            @update:valid="(v:boolean)=>{
+              console.log('📥 AddEventButton received update:valid:', v);
+              isFormValid=v
+            }"
           />
         </div>
       </div>
@@ -54,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { f7 } from "framework7-vue";
 import PopoverHeader from "../ui/PopoverHeader.vue";
 import EventForm from "./EventForm.vue";
@@ -96,8 +105,54 @@ const selectedWeekDays = ref<
 
 const isFormValid = ref(false);
 
+// Add watchers to track changes
+watch(class9Id, (newVal, oldVal) => {
+  console.log("🔄 AddEventButton class9Id changed:", { oldVal, newVal });
+});
+
+watch(useCustomPeriod, (newVal, oldVal) => {
+  console.log("🔄 AddEventButton useCustomPeriod changed:", { oldVal, newVal });
+});
+
+watch(startDate, (newVal, oldVal) => {
+  console.log("🔄 AddEventButton startDate changed:", { oldVal, newVal });
+});
+
+watch(endDate, (newVal, oldVal) => {
+  console.log("🔄 AddEventButton endDate changed:", { oldVal, newVal });
+});
+
+watch(participants, (newVal, oldVal) => {
+  console.log("🔄 AddEventButton participants changed:", { oldVal, newVal });
+});
+
+watch(
+  selectedWeekDays,
+  (newVal, oldVal) => {
+    console.log("🔄 AddEventButton selectedWeekDays changed:", {
+      oldVal,
+      newVal,
+    });
+  },
+  { deep: true }
+);
+
+watch(eventColor, (newVal, oldVal) => {
+  console.log("🔄 AddEventButton eventColor changed:", { oldVal, newVal });
+});
+
 const handleAddEvent = async () => {
   try {
+    console.log("🔄 handleAddEvent called", {
+      class9Id: class9Id.value,
+      startDate: startDate.value,
+      endDate: endDate.value,
+      participants: participants.value,
+      selectedWeekDays: selectedWeekDays.value,
+      eventColor: eventColor.value.hex,
+      useCustomPeriod: useCustomPeriod.value,
+    });
+
     formError.value = null;
 
     const eventData: Omit<CalendarEvent, "id" | "createdAt" | "updatedAt"> = {
@@ -111,12 +166,15 @@ const handleAddEvent = async () => {
       semester: "",
     };
 
+    console.log("📤 handleAddEvent calling calendarStore.addEvent", eventData);
     const newEvent = await calendarStore.addEvent(eventData);
 
+    console.log("✅ handleAddEvent success", newEvent);
     emit("event-added", newEvent);
     closeAddEventPopover();
     resetForm();
   } catch (error) {
+    console.error("❌ handleAddEvent error", error);
     formError.value = "Ошибка при добавлении события.";
   }
 };
