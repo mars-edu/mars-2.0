@@ -138,14 +138,22 @@
     <!-- Planned Hours Display -->
     <div class="bg-secondary p-4 border-t border-input">
       <div class="flex justify-between mb-2">
+        <span class="text-foreground">Выбрано:</span>
+        <span
+          class="font-medium"
+          :class="isSelectedHoursExceeded ? 'text-red-700' : 'text-foreground'"
+          >{{ selectedHours }} часов</span
+        >
+      </div>
+      <div class="flex justify-between mb-2">
         <span class="text-foreground">Запланировано на семестр:</span>
         <span class="text-foreground font-medium"
           >{{ semesterPlannedHours }} часов</span
         >
       </div>
       <div class="flex justify-between">
-        <span class="text-primary">Запланировано на весь предмет:</span>
-        <span class="text-primary font-medium"
+        <span class="text-foreground">Запланировано на весь предмет:</span>
+        <span class="text-foreground font-medium"
           >{{ totalPlannedHours }} часов</span
         >
       </div>
@@ -474,6 +482,80 @@ const semesterPlannedHours = computed(() => {
   return result;
 });
 
+const selectedHours = computed(() => {
+  callCounters.selectedHours.calls++;
+  console.log(
+    `🔄 selectedHours computed called (call #${callCounters.selectedHours.calls})`,
+    {
+      selectedWeekDaysModel: selectedWeekDaysModel.value,
+      schedulesCount: getActiveYearSchedules.value.length,
+    }
+  );
+
+  let hoursPerWeek = 0;
+  const schedules = getActiveYearSchedules.value;
+
+  for (const day of selectedWeekDaysModel.value) {
+    if (!day.startId || !day.endId) {
+      continue;
+    }
+
+    const startIndex = schedules.findIndex((s) => s.id === day.startId);
+    const endIndex = schedules.findIndex((s) => s.id === day.endId);
+
+    if (startIndex !== -1 && endIndex !== -1 && endIndex >= startIndex) {
+      const hours = endIndex - startIndex + 1;
+      hoursPerWeek += hours;
+      console.log(
+        `📊 Day ${day.russianWeekDay}: ${hours} hours (${startIndex} to ${endIndex})`
+      );
+    }
+  }
+
+  let startDate: dayjs.Dayjs | null = null;
+  let endDate: dayjs.Dayjs | null = null;
+
+  if (useCustomPeriodModel.value) {
+    if (startDateModel.value?.length && endDateModel.value?.length) {
+      startDate = dayjs(startDateModel.value[0]);
+      endDate = dayjs(endDateModel.value[0]);
+    }
+  } else if (semesterDates.value) {
+    startDate = dayjs(semesterDates.value.startDate, DATE_UI_FORMAT);
+    endDate = dayjs(semesterDates.value.endDate, DATE_UI_FORMAT);
+  }
+
+  let weekCount = 0;
+  if (startDate && endDate && startDate.isValid() && endDate.isValid()) {
+    const daysDiff = endDate.diff(startDate, "day") + 1;
+    weekCount = Math.ceil(daysDiff / 7);
+    console.log(`📊 Date range: ${daysDiff} days = ${weekCount} weeks`);
+  }
+
+  const totalHours = hoursPerWeek * weekCount;
+  console.log("✅ selectedHours result:", totalHours, {
+    hoursPerWeek,
+    weekCount,
+  });
+  return String(totalHours);
+});
+
+const isSelectedHoursExceeded = computed(() => {
+  callCounters.isSelectedHoursExceeded.calls++;
+  const selected = Number(selectedHours.value);
+  const planned = Number(semesterPlannedHours.value);
+  const result = selected > planned;
+  console.log(
+    `🔄 isSelectedHoursExceeded computed called (call #${callCounters.isSelectedHoursExceeded.calls})`,
+    {
+      selected,
+      planned,
+      exceeded: result,
+    }
+  );
+  return result;
+});
+
 const class9IdModel = computed({
   get: () => {
     callCounters.class9IdModel.calls++;
@@ -783,6 +865,8 @@ const callCounters = {
   dateValidationError: { calls: 0 },
   totalPlannedHours: { calls: 0 },
   semesterPlannedHours: { calls: 0 },
+  selectedHours: { calls: 0 },
+  isSelectedHoursExceeded: { calls: 0 },
   class9IdModel: { calls: 0 },
   useCustomPeriodModel: { calls: 0 },
   participantsModel: { calls: 0 },
