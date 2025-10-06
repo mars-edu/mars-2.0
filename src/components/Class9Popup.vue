@@ -280,30 +280,20 @@
                     <div class="mt-4">
                       <div class="text-sm font-medium mb-3">Форма контроля</div>
 
-                      <div class="grid grid-cols-3 gap-3">
-                        <div class="space-2">
-                          <f7-checkbox
-                            v-model:checked="entry.examEnabled"
-                          ></f7-checkbox>
-                          <label class="text-sm font-medium">Экзамен</label>
-                        </div>
-
-                        <div class="space-2">
-                          <f7-checkbox
-                            v-model:checked="entry.creditEnabled"
-                          ></f7-checkbox>
-                          <label class="text-sm font-medium">Зачет</label>
-                        </div>
-
-                        <div class="space-2">
-                          <f7-checkbox
-                            v-model:checked="entry.controlLessonEnabled"
-                          ></f7-checkbox>
-                          <label class="text-sm font-medium"
-                            >Контрольный урок</label
-                          >
-                        </div>
-                      </div>
+                      <Select
+                        :modelValue="getSelectedControlType(entry)"
+                        :options="[
+                          { value: 'none', text: 'Не выбрано' },
+                          { value: 'exam', text: 'Экзамен' },
+                          { value: 'credit', text: 'Зачет' },
+                          { value: 'controlLesson', text: 'Контрольный урок' },
+                        ]"
+                        placeholder="Выберите форму контроля"
+                        search-placeholder="Поиск формы контроля..."
+                        @update:modelValue="
+                          setSelectedControlType(entry, $event)
+                        "
+                      />
                     </div>
                   </div>
 
@@ -613,26 +603,6 @@ async function submit() {
   }
 }
 
-function toggleEntryCheckbox(
-  entryIndex: number,
-  type: "exam" | "credit" | "controlLesson"
-) {
-  const step = steps.value[currentStep.value - 1];
-  if (!step || !step.distributionEntries[entryIndex]) return;
-  const entry = step.distributionEntries[entryIndex];
-  switch (type) {
-    case "exam":
-      entry.examEnabled = !entry.examEnabled;
-      break;
-    case "credit":
-      entry.creditEnabled = !entry.creditEnabled;
-      break;
-    case "controlLesson":
-      entry.controlLessonEnabled = !entry.controlLessonEnabled;
-      break;
-  }
-}
-
 function addDistributionEntry() {
   const step = steps.value[currentStep.value - 1];
   if (!step) return;
@@ -659,6 +629,33 @@ function removeDistributionEntry(entryId: string) {
   );
   if (entryIndex !== -1) {
     step.distributionEntries.splice(entryIndex, 1);
+  }
+}
+
+function getSelectedControlType(entry: any): string {
+  if (entry.examEnabled) return "exam";
+  if (entry.creditEnabled) return "credit";
+  if (entry.controlLessonEnabled) return "controlLesson";
+  return "none";
+}
+
+function setSelectedControlType(entry: any, value: string) {
+  // Clear all control types first
+  entry.examEnabled = false;
+  entry.creditEnabled = false;
+  entry.controlLessonEnabled = false;
+
+  // Set the selected control type
+  switch (value) {
+    case "exam":
+      entry.examEnabled = true;
+      break;
+    case "credit":
+      entry.creditEnabled = true;
+      break;
+    case "controlLesson":
+      entry.controlLessonEnabled = true;
+      break;
   }
 }
 

@@ -56,3 +56,11 @@ window.resetAllPiniaStores = () => {
 };
 
 app.mount("#app");
+
+window.addEventListener("storage", (e) => {
+  if (e.key === "auth_token" && e.newValue) {
+    // Trigger a connection attempt if token appears in another tab
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    PiniaServerSync && typeof PiniaServerSync === "function"; // no-op to keep import
+  }
+});

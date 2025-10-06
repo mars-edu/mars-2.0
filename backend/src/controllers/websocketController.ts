@@ -10,11 +10,17 @@ wsApp.get("/", async (c) => {
 
   const token = c.req.query("token");
   if (!token) {
-    return new Response("Unauthorized", { status: 401 });
+    return new Response("Unauthorized: missing token", {
+      status: 401,
+      statusText: "Unauthorized",
+    });
   }
   const validationResult = await authService.validateToken(token);
   if (!validationResult.success) {
-    return new Response("Unauthorized", { status: 401 });
+    return new Response("Unauthorized: invalid token", {
+      status: 401,
+      statusText: "Unauthorized",
+    });
   }
 
   const id = c.env.WEBSOCKET_DO.idFromName("shared-state-room");

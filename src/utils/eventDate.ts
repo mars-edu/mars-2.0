@@ -1,7 +1,9 @@
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
-import { DATE_UI_FORMAT } from "@/constants/calendar";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+import { DATE_UI_FORMAT, DATE_STORAGE_FORMAT } from "@/constants/calendar";
 dayjs.extend(isBetween);
+dayjs.extend(customParseFormat);
 
 export type WeekScheduleLike = { weekId: number };
 
@@ -15,7 +17,14 @@ export function parseEventDate(raw: unknown): dayjs.Dayjs {
   let value: unknown = raw;
   if (Array.isArray(value) && value.length > 0) value = value[0] as unknown;
   if (typeof value === "string") {
-    return dayjs(value as string, DATE_UI_FORMAT);
+    const v = (value as string).trim();
+    // Try strict known formats first to avoid DD/MM vs MM/DD ambiguity
+    let d = dayjs(v, DATE_STORAGE_FORMAT, true);
+    if (d.isValid()) return d;
+    d = dayjs(v, DATE_UI_FORMAT, true);
+    if (d.isValid()) return d;
+    // Fallback to native parsing as a last resort
+    return dayjs(v);
   }
   return dayjs(value as any);
 }

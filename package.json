@@ -27,6 +27,7 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.18",
     "dom7": "^4.0.6",
+    "es-toolkit": "^1.39.10",
     "fast-json-patch": "^3.1.1",
     "framework7": "^8.3.4",
     "framework7-icons": "^5.0.5",

@@ -1,4 +1,4 @@
-export type MarkType = "date" | "pk" | "e" | "i" | "session";
+export type MarkType = "date" | "pk" | "e" | "i" | "session" | "ku" | "z";
 
 export interface Mark {
   type: MarkType;

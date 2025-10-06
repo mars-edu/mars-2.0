@@ -90,7 +90,8 @@
                   header.type === 'session' ||
                   header.type === 'pk' ||
                   header.type === 'e' ||
-                  header.type === 'i',
+                  header.type === 'z' ||
+                  header.type === 'ku',
               }"
               @click="openDateFocus(header, header.index)"
             >
@@ -145,13 +146,13 @@
                   header.type === 'session' ||
                   header.type === 'pk' ||
                   header.type === 'e' ||
-                  header.type === 'i',
+                  header.type === 'z' ||
+                  header.type === 'ku',
               }"
             >
               <div class="flex flex-col gap-1">
                 <div
-                  v-for="(value, mIdx) in student.marks[header.index]?.values ||
-                  []"
+                  v-for="mIdx in getRowIndices(vColIdx)"
                   :key="mIdx"
                   class="h-8 flex items-center justify-center transition-transform duration-300"
                   :class="{
@@ -178,7 +179,9 @@
                     @click="editCell(studentIndex, header.index, mIdx)"
                     class="cursor-pointer w-full"
                   >
-                    <MarkCell :mark="value" />
+                    <MarkCell
+                      :mark="getMark(studentIndex, header.index, mIdx)"
+                    />
                   </div>
                 </div>
               </div>
@@ -282,6 +285,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted, watch } from "vue";
+import { debounce } from "es-toolkit";
 import dayjs from "dayjs";
 import {
   DATE_DAY_MONTH_FORMAT,
@@ -301,6 +305,8 @@ import { useMarksStore } from "@/stores/marksStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
 import { useJournalStore } from "@/stores/journalStore";
+import { useClass9Store } from "@/stores/class9Store";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { storeToRefs } from "pinia";
 import type { Mark } from "@/types/marks";
 import type { EducationSchedule } from "@/stores/educationScheduleStore";
@@ -337,7 +343,12 @@ const marksStore = useMarksStore();
 const educationScheduleStore = useEducationScheduleStore();
 const ktpStore = useKtpStore();
 const journalStore = useJournalStore();
+const class9Store = useClass9Store();
+const academicYearSemesterStore = useAcademicYearSemesterStore();
 const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
+const { getActiveAcademicYearSemester } = storeToRefs(
+  academicYearSemesterStore
+);
 
 const editingCell = ref<{
   studentIndex: number;
@@ -350,6 +361,20 @@ const currentJournal = computed(() => {
   if (!props.journalId) return null;
   return journalStore.getJournalById(props.journalId);
 });
+const DEBUG_JOURNAL_COLUMNS = true;
+const debugLog = (...args: any[]) => {
+  if (!DEBUG_JOURNAL_COLUMNS) return;
+  console.log("[JournalTab][Columns]", ...args);
+};
+const debugGroup = (title: string, fn: () => void) => {
+  if (!DEBUG_JOURNAL_COLUMNS) return;
+  console.group(title);
+  try {
+    fn();
+  } finally {
+    console.groupEnd();
+  }
+};
 
 const currentEvent = computed(() => {
   if (!props.journalId) return null;
@@ -449,6 +474,20 @@ const generateDates = () => {
   const dateMarks: Mark[] = [];
   const days = getEventDays(currentEvent.value as any);
 
+  debugGroup("generateDates() inputs", () => {
+    debugLog("journalId", props.journalId);
+    debugLog("students", currentJournal.value?.students?.length || 0);
+    debugLog("event", {
+      startDate: (currentEvent.value as any)?.startDate,
+      endDate: (currentEvent.value as any)?.endDate,
+      weeklySchedulesCount: weeklySchedules.length,
+    });
+    debugLog(
+      "days",
+      days.map((d: any) => d.day?.format?.(DATE_STORAGE_FORMAT))
+    );
+  });
+
   days.forEach(({ day, weekId }) => {
     const dateStr = `${day.format(DATE_DAY_MONTH_FORMAT)}\n${day.format(
       DATE_YEAR_FORMAT
@@ -464,6 +503,13 @@ const generateDates = () => {
     const { startId, endId } = resolveScheduleIds(daySchedule, schedulesArr);
     const rows = countLessonsInRange(startId, endId);
 
+    debugGroup(`day ${isoDate}`, () => {
+      debugLog("weekId", weekId);
+      debugLog("daySchedule", daySchedule || null);
+      debugLog("resolved schedule", { startId, endId });
+      debugLog("rows", rows);
+    });
+
     dateMarks.push({
       type: "date",
       date: dateStr,
@@ -472,6 +518,8 @@ const generateDates = () => {
       isoDate,
     });
   });
+
+  debugLog("dateMarks length", dateMarks.length);
 
   // Inject session columns after session end dates if overlapping with journal days
   const sessionStore = useSessionStore();
@@ -491,6 +539,18 @@ const generateDates = () => {
     indices: number[];
   }> = [];
 
+  debugGroup("sessions overlap analysis", () => {
+    debugLog(
+      "sessions",
+      sessions.map((s) => ({
+        id: s.id,
+        shortName: s.shortName,
+        startDate: s.startDate,
+        endDate: s.endDate,
+      }))
+    );
+  });
+
   sessions.forEach((session) => {
     const indices: number[] = [];
     dateMarks.forEach((m, i) => {
@@ -501,6 +561,11 @@ const generateDates = () => {
       }
     });
     if (indices.length > 0) {
+      debugLog("session indices", {
+        shortName: session.shortName,
+        indices,
+        insertAfter: indices[indices.length - 1],
+      });
       insertionPlan.push({
         insertAfter: indices[indices.length - 1],
         session,
@@ -514,6 +579,12 @@ const generateDates = () => {
     .sort((a, b) => a.insertAfter - b.insertAfter)
     .forEach((plan, offset) => {
       const insertIndex = plan.insertAfter + 1 + offset;
+      debugLog("inserting session column", {
+        label: plan.session.shortName,
+        insertIndex,
+        afterDateIndex: plan.insertAfter,
+        offset,
+      });
       marksWithSessions.splice(insertIndex, 0, {
         type: "session",
         values: [null, null],
@@ -523,10 +594,105 @@ const generateDates = () => {
       } as Mark);
     });
 
-  // Append summary columns
-  marksWithSessions.push({ type: "pk", values: [null, null] });
-  marksWithSessions.push({ type: "e", values: [null, null] });
-  marksWithSessions.push({ type: "i", values: [null, null] });
+  // Append summary column based on selected control form (exam/credit)
+  const class9Id =
+    (currentJournal.value as any)?.disciplineId ||
+    (currentEvent.value as any)?.class9Id;
+  const class9Item = class9Id
+    ? (class9Store.getClass9ById as any)(class9Id)
+    : null;
+  const activeSem = getActiveAcademicYearSemester.value as any;
+
+  let matchedEntry: any = null;
+  if (class9Item && Array.isArray(class9Item.distributionEntries)) {
+    const semesterNumber = String(activeSem?.semesterNumber ?? "");
+    const activeYearId = activeSem?.academicYearId;
+    matchedEntry =
+      class9Item.distributionEntries.find((entry: any) => {
+        const entrySemesterId = String(entry.semesterId ?? "");
+        const matchesSemester =
+          (activeSem &&
+            (entrySemesterId === String(activeSem.id) ||
+              entrySemesterId === semesterNumber)) ||
+          (!!(currentEvent.value as any)?.semester &&
+            entrySemesterId === String((currentEvent.value as any).semester));
+        const matchesYear =
+          !entry.academicYearId || !activeYearId
+            ? matchesSemester
+            : entry.academicYearId === activeYearId && matchesSemester;
+        return matchesYear;
+      }) || null;
+  }
+
+  debugGroup("control form analysis", () => {
+    debugLog("class9Id", class9Id);
+    debugLog("activeSemester", {
+      id: activeSem?.id,
+      semesterNumber: activeSem?.semesterNumber,
+      academicYearId: activeSem?.academicYearId,
+    });
+    debugLog("matchedEntry", matchedEntry);
+  });
+
+  if (matchedEntry?.examEnabled) {
+    const hasExamSession = marksWithSessions.some(
+      (m: any) =>
+        m.type === "session" &&
+        (m.label === "Э" ||
+          m.label === "ЭКЗ" ||
+          m.label?.toUpperCase?.() === "Э")
+    );
+    if (!hasExamSession) {
+      marksWithSessions.push({ type: "e", values: [null, null] } as Mark);
+      debugLog("appended control column", { type: "e" });
+    } else {
+      debugLog("skipped control column due to existing matching session", {
+        type: "e",
+      });
+    }
+  } else if (matchedEntry?.creditEnabled) {
+    const hasCreditSession = marksWithSessions.some(
+      (m: any) =>
+        m.type === "session" &&
+        (m.label === "З" || m.label?.toUpperCase?.() === "З")
+    );
+    if (!hasCreditSession) {
+      marksWithSessions.push({ type: "z", values: [null, null] } as Mark);
+      debugLog("appended control column", { type: "z" });
+    } else {
+      debugLog("skipped control column due to existing matching session", {
+        type: "z",
+      });
+    }
+  } else if (matchedEntry?.controlLessonEnabled) {
+    const hasKuSession = marksWithSessions.some(
+      (m: any) =>
+        m.type === "session" &&
+        (m.label === "КУ" || m.label?.toUpperCase?.() === "КУ")
+    );
+    if (!hasKuSession) {
+      marksWithSessions.push({ type: "ku", values: [null, null] } as Mark);
+      debugLog("appended control column", { type: "ku" });
+    } else {
+      debugLog("skipped control column due to existing matching session", {
+        type: "ku",
+      });
+    }
+  }
+
+  // Always append final Итог (И)
+  marksWithSessions.push({ type: "i", values: [null, null] } as Mark);
+  debugLog("appended final column", { type: "i" });
+
+  debugGroup("final marks template summary", () => {
+    const summary = marksWithSessions.map((m, idx) => ({
+      idx,
+      type: (m as any).type,
+      label: (m as any).label || (m as any).date || null,
+      values: m.values?.length,
+    }));
+    debugLog("columns", summary);
+  });
 
   return marksWithSessions;
 };
@@ -565,10 +731,13 @@ const getMark = (studentIndex: number, colIndex: number, markIndex: number) => {
   const studentId = getStudentIdByIndex(studentIndex);
   if (!studentId || !props.journalId) return "";
 
+  // Map canonical column index to store column index
+  const storeColIndex = getStoreIndexForCanonicalIndex(colIndex);
   const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
-  if (!studentMarks || colIndex >= studentMarks.length) return "";
+  if (!studentMarks || storeColIndex == null || storeColIndex < 0) return "";
+  if (storeColIndex >= studentMarks.length) return "";
 
-  const mark = studentMarks[colIndex].values[markIndex];
+  const mark = studentMarks[storeColIndex].values[markIndex];
   if (mark === null) return "";
   return String(mark ?? "");
 };
@@ -583,10 +752,15 @@ const setMark = (
   if (!studentId || !props.journalId) return;
 
   const newValue = value === "+" || value === "" ? null : value;
+  const storeColIndex = getStoreIndexForCanonicalIndex(colIndex);
+  if (storeColIndex == null || storeColIndex < 0) {
+    scheduleRebuildMarks();
+    return;
+  }
   marksStore.updateStudentMark(
     props.journalId,
     studentId,
-    colIndex,
+    storeColIndex,
     markIndex,
     newValue
   );
@@ -602,9 +776,10 @@ const editCell = (
   if (!studentId || !props.journalId) return;
 
   const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
-  if (!studentMarks || colIndex >= studentMarks.length) return;
+  const storeColIndex = getStoreIndexForCanonicalIndex(colIndex);
+  if (!studentMarks || storeColIndex == null || storeColIndex < 0) return;
 
-  const markType = studentMarks[colIndex].type;
+  const markType = studentMarks[storeColIndex].type;
   if (
     markType === "session" &&
     props.journalSettings?.calculationType === "calculated"
@@ -644,11 +819,7 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
 
     const numStudents = students.value.length;
     const numCols = visibleHeaders.value.length;
-    const getColRows = (col: number) => {
-      const firstStudent = students.value[0];
-      const marks = firstStudent?.marks?.[visibleHeaders.value[col]?.index];
-      return Array.isArray(marks?.values) ? marks.values.length : 2;
-    };
+    const getColRows = (col: number) => getCanonicalRows(col);
     const currentColRows = getColRows(startCol);
 
     switch (direction) {
@@ -855,20 +1026,26 @@ const computeAllSessionGrades = () => {
           indices,
           method
         );
-        marksStore.updateStudentMark(
-          props.journalId,
-          studentMark.studentId,
-          mIdx,
-          0,
-          grade
-        );
-        marksStore.updateStudentMark(
-          props.journalId,
-          studentMark.studentId,
-          mIdx,
-          1,
-          null
-        );
+        const currentValue0 = mark.values?.[0] ?? null;
+        const currentValue1 = mark.values?.[1] ?? null;
+        if (currentValue0 !== grade) {
+          marksStore.updateStudentMark(
+            props.journalId,
+            studentMark.studentId,
+            mIdx,
+            0,
+            grade
+          );
+        }
+        if (currentValue1 !== null) {
+          marksStore.updateStudentMark(
+            props.journalId,
+            studentMark.studentId,
+            mIdx,
+            1,
+            null
+          );
+        }
       }
     });
   });
@@ -924,29 +1101,16 @@ const getScoreBadgeClass = (score: string): string => {
 };
 
 const tableHeaders = computed(() => {
-  if (!props.journalId) return [];
-
-  const journalStudentMarks = marksStore.getJournalStudentMarks(
-    props.journalId
-  );
-  if (journalStudentMarks.length === 0) return [];
-
-  return journalStudentMarks[0].marks.map((mark) => {
-    if (mark.type === "date") {
-      return { type: "date", label: mark.date || "" };
-    }
-    if (mark.type === "session") {
-      return { type: "session", label: (mark as any).label || "Сессия" };
-    }
-    if (mark.type === "pk") {
-      return { type: "pk", label: "РК" };
-    }
-    if (mark.type === "e") {
-      return { type: "e", label: "Э" };
-    }
-    if (mark.type === "i") {
-      return { type: "i", label: "И" };
-    }
+  const canonical = canonicalTemplate.value;
+  return canonical.map((mark: any) => {
+    if (mark.type === "date") return { type: "date", label: mark.date || "" };
+    if (mark.type === "session")
+      return { type: "session", label: mark.label || "Сессия" };
+    if (mark.type === "pk") return { type: "pk", label: "РК" };
+    if (mark.type === "e") return { type: "e", label: "Э" };
+    if (mark.type === "z") return { type: "z", label: "З" };
+    if (mark.type === "i") return { type: "i", label: "И" };
+    if (mark.type === "ku") return { type: "ku", label: "КУ" };
     return { type: "unknown", label: "" };
   });
 });
@@ -958,20 +1122,88 @@ const visibleHeaders = computed(() => {
       (h) => h.type !== "date" || (h.label && String(h.label).trim() !== "")
     );
 });
+// Canonical template derived from current event/sessions/schedules
+const canonicalTemplate = computed(() => generateDates());
+
+const getCanonicalRows = (canonicalCol: number): number => {
+  const col = canonicalTemplate.value?.[canonicalCol];
+  return Array.isArray(col?.values) ? col.values.length : 2;
+};
+
+const getRowIndices = (canonicalCol: number): number[] => {
+  const n = getCanonicalRows(canonicalCol);
+  return Array.from({ length: n }, (_, i) => i);
+};
+
+// Map canonical column index to current store column index (using first student's marks)
+const getStoreIndexForCanonicalIndex = (
+  canonicalCol: number
+): number | null => {
+  const canonical = canonicalTemplate.value?.[canonicalCol] as any;
+  if (!canonical) return null;
+  const firstStudentId = getStudentIdByIndex(0);
+  if (!firstStudentId || !props.journalId) return null;
+  const studentMarks =
+    marksStore.getStudentMarks(props.journalId, firstStudentId) || [];
+  const findBy = (predicate: (m: any) => boolean) =>
+    studentMarks.findIndex(predicate);
+  if (canonical.type === "date") {
+    const iso = canonical.isoDate;
+    if (!iso) return null;
+    return findBy((m: any) => m.type === "date" && m.isoDate === iso);
+  }
+  if (canonical.type === "session") {
+    const label = canonical.label;
+    return findBy((m: any) => m.type === "session" && m.label === label);
+  }
+  // Control columns by type
+  return findBy((m: any) => m.type === canonical.type);
+};
+watch(
+  () => visibleHeaders.value,
+  (headers) => {
+    debugGroup("visibleHeaders changed", () => {
+      debugLog(
+        "headers",
+        headers.map((h) => ({ index: h.index, type: h.type, label: h.label }))
+      );
+    });
+  },
+  { deep: true, immediate: true }
+);
 
 const visibleColumnIndices = computed(() => {
   return visibleHeaders.value.map((h) => h.index);
 });
 
+const scheduleRecomputeSessionGrades = debounce(() => {
+  computeAllSessionGrades();
+}, 150);
+
 watch(
   () => props.journalSettings,
   () => {
-    computeAllSessionGrades();
+    scheduleRecomputeSessionGrades();
   },
   { deep: true }
 );
 
 // Rebuild marks when sessions list changes (ensures session columns appear on load)
+const rebuildMarks = () => {
+  if (!(props.journalId && currentJournal.value?.students?.length)) return;
+  const markTemplate = generateDates();
+  marksStore.initializeJournalMarks(
+    props.journalId,
+    currentJournal.value.students,
+    markTemplate
+  );
+  scheduleRecomputeSessionGrades();
+};
+
+const scheduleRebuildMarks = debounce(() => {
+  rebuildMarks();
+}, 250);
+
 watch(
   () => sessionStore.sortedSessions,
   () => {
@@ -980,23 +1212,7 @@ watch(
       journalId: props.journalId,
       hasStudents: !!currentJournal.value?.students?.length,
     });
-
-    if (props.journalId && currentJournal.value?.students?.length) {
-      console.log("[JournalTab] Sessions changed, rebuilding marks");
-      // Regenerate marks template and update store
-      const markTemplate = generateDates();
-      console.log("[JournalTab] New mark template from sessions:", {
-        templateLength: markTemplate.length,
-        sessionColumns: markTemplate.filter((m) => m.type === "session").length,
-      });
-
-      marksStore.initializeJournalMarks(
-        props.journalId,
-        currentJournal.value.students,
-        markTemplate
-      );
-      computeAllSessionGrades();
-    }
+    scheduleRebuildMarks();
   },
   { deep: true, immediate: true }
 );
@@ -1009,15 +1225,7 @@ watch(
     return [ev.startDate, ev.endDate, JSON.stringify(ev.weeklySchedules || [])];
   },
   () => {
-    if (props.journalId && currentJournal.value?.students?.length) {
-      const markTemplate = generateDates();
-      marksStore.initializeJournalMarks(
-        props.journalId,
-        currentJournal.value.students,
-        markTemplate
-      );
-      computeAllSessionGrades();
-    }
+    scheduleRebuildMarks();
   },
   { deep: false }
 );
@@ -1026,15 +1234,7 @@ watch(
 watch(
   () => getActiveYearSchedules.value,
   () => {
-    if (props.journalId && currentJournal.value?.students?.length) {
-      const markTemplate = generateDates();
-      marksStore.initializeJournalMarks(
-        props.journalId,
-        currentJournal.value.students,
-        markTemplate
-      );
-      computeAllSessionGrades();
-    }
+    scheduleRebuildMarks();
   },
   { deep: true }
 );
@@ -1078,17 +1278,7 @@ defineExpose({
 });
 
 onMounted(() => {
-  if (props.journalId && currentJournal.value?.students?.length) {
-    // Initialize marks in store
-    const markTemplate = generateDates();
-    marksStore.initializeJournalMarks(
-      props.journalId,
-      currentJournal.value.students,
-      markTemplate
-    );
-  }
-
-  computeAllSessionGrades();
+  scheduleRebuildMarks();
   window.addEventListener("keydown", handleGlobalKeydown);
 });
 
@@ -1100,14 +1290,7 @@ watch(
   () => currentJournal.value,
   (newJournal) => {
     if (props.journalId && newJournal?.students?.length) {
-      // Initialize marks in store for the new journal
-      const markTemplate = generateDates();
-      marksStore.initializeJournalMarks(
-        props.journalId,
-        newJournal.students,
-        markTemplate
-      );
-      computeAllSessionGrades();
+      scheduleRebuildMarks();
     }
   },
   { immediate: true }
