@@ -159,6 +159,10 @@
       </div>
     </div>
 
+    <div v-if="hoursExceededError" class="text-destructive text-sm mt-2">
+      {{ hoursExceededError }}
+    </div>
+
     <StudentSelectionPopup
       ref="studentPopup"
       :selected-students="participantsModel"
@@ -556,6 +560,17 @@ const isSelectedHoursExceeded = computed(() => {
   return result;
 });
 
+const hoursExceededError = computed(() => {
+  callCounters.hoursExceededError.calls++;
+  if (isSelectedHoursExceeded.value) {
+    const result = `Выбранное количество часов (${selectedHours.value}) превышает запланированное на семестр (${semesterPlannedHours.value})`;
+    console.log("✅ hoursExceededError result:", result);
+    return result;
+  }
+  console.log("✅ hoursExceededError result: null");
+  return null;
+});
+
 const class9IdModel = computed({
   get: () => {
     callCounters.class9IdModel.calls++;
@@ -831,10 +846,13 @@ const isFormValid = computed(() => {
       useCustomPeriodModel: useCustomPeriodModel.value,
       startDateModelLength: startDateModel.value?.length,
       endDateModelLength: endDateModel.value?.length,
+      isSelectedHoursExceeded: isSelectedHoursExceeded.value,
     }
   );
 
   const hasRequiredFields = !!class9IdModel.value;
+  const hoursNotExceeded = !isSelectedHoursExceeded.value;
+
   if (useCustomPeriodModel.value) {
     const hasValidDateRange =
       !!startDateModel.value?.length &&
@@ -843,15 +861,19 @@ const isFormValid = computed(() => {
         dayjs(startDateModel.value[0]),
         "day"
       );
-    const result = hasRequiredFields && hasValidDateRange;
+    const result = hasRequiredFields && hasValidDateRange && hoursNotExceeded;
     console.log("✅ isFormValid result:", result, {
       hasRequiredFields,
       hasValidDateRange,
+      hoursNotExceeded,
     });
     return result;
   }
-  const result = hasRequiredFields;
-  console.log("✅ isFormValid result:", result, { hasRequiredFields });
+  const result = hasRequiredFields && hoursNotExceeded;
+  console.log("✅ isFormValid result:", result, {
+    hasRequiredFields,
+    hoursNotExceeded,
+  });
   return result;
 });
 
@@ -867,6 +889,7 @@ const callCounters = {
   semesterPlannedHours: { calls: 0 },
   selectedHours: { calls: 0 },
   isSelectedHoursExceeded: { calls: 0 },
+  hoursExceededError: { calls: 0 },
   class9IdModel: { calls: 0 },
   useCustomPeriodModel: { calls: 0 },
   participantsModel: { calls: 0 },
