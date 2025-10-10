@@ -806,6 +806,8 @@ const setMark = (
     newValue
   );
   emit("update-students", students.value);
+  scheduleRecomputeSessionGrades();
+  scheduleRecomputeFinalGrades();
 };
 
 const editCell = (
@@ -822,7 +824,7 @@ const editCell = (
 
   const markType = studentMarks[storeColIndex].type;
   if (
-    markType === "session" &&
+    (markType === "session" || markType === "i") &&
     props.journalSettings?.calculationType === "calculated"
   ) {
     return;
@@ -1092,6 +1094,102 @@ const computeAllSessionGrades = () => {
   });
 };
 
+const computeFinalGrades = () => {
+  if (
+    props.journalSettings?.calculationType !== "calculated" ||
+    !props.journalId
+  )
+    return;
+
+  const journalStudentMarks = marksStore.getJournalStudentMarks(
+    props.journalId
+  );
+
+  journalStudentMarks.forEach((studentMark) => {
+    const isExamSessionLabel = (label: any) => {
+      const s = String(label || "").toUpperCase();
+      return s === "Э" || s === "ЭКЗ" || s === "З";
+    };
+
+    const rkValues: number[] = [];
+    studentMark.marks.forEach((mark) => {
+      if (mark.type === "pk") {
+        const v0 = mark.values?.[0];
+        const n =
+          v0 !== null && v0 !== "" && !isNaN(Number(v0)) ? Number(v0) : null;
+        if (n !== null) rkValues.push(n);
+      } else if (
+        mark.type === "session" &&
+        !isExamSessionLabel((mark as any).label)
+      ) {
+        const v0 = mark.values?.[0];
+        const n =
+          v0 !== null && v0 !== "" && !isNaN(Number(v0)) ? Number(v0) : null;
+        if (n !== null) rkValues.push(n);
+      }
+    });
+
+    const rkAvg =
+      rkValues.length > 0
+        ? rkValues.reduce((sum, v) => sum + v, 0) / rkValues.length
+        : null;
+
+    let exam: number | null = null;
+    const trySetExam = (predicate: (m: any) => boolean) => {
+      if (exam !== null) return;
+      const idx = studentMark.marks.findIndex(predicate);
+      if (idx >= 0) {
+        const vv = studentMark.marks[idx].values?.[0];
+        const num =
+          vv !== null && vv !== "" && !isNaN(Number(vv)) ? Number(vv) : null;
+        if (num !== null) exam = num;
+      }
+    };
+
+    trySetExam((m) => m.type === "e");
+    trySetExam((m) => m.type === "z");
+    trySetExam(
+      (m) =>
+        m.type === "session" &&
+        typeof m.label === "string" &&
+        ["Э", "ЭКЗ", "З"].includes(String(m.label).toUpperCase())
+    );
+
+    let finalStr: string | null = null;
+    if (rkAvg !== null && exam !== null) {
+      finalStr = (0.6 * rkAvg + 0.4 * exam).toFixed(1);
+    } else if (rkAvg !== null) {
+      finalStr = rkAvg.toFixed(1);
+    } else {
+      finalStr = null;
+    }
+
+    const iIndex = studentMark.marks.findIndex((m) => m.type === "i");
+    if (iIndex >= 0) {
+      const current0 = studentMark.marks[iIndex].values?.[0] ?? null;
+      if (current0 !== finalStr) {
+        marksStore.updateStudentMark(
+          props.journalId,
+          studentMark.studentId,
+          iIndex,
+          0,
+          finalStr
+        );
+      }
+      const current1 = studentMark.marks[iIndex].values?.[1] ?? null;
+      if (current1 !== null) {
+        marksStore.updateStudentMark(
+          props.journalId,
+          studentMark.studentId,
+          iIndex,
+          1,
+          null
+        );
+      }
+    }
+  });
+};
+
 const getStudentAverageScore = (studentId: string): string => {
   if (!props.journalId) return "—";
 
@@ -1210,14 +1308,20 @@ const visibleColumnIndices = computed(() => {
   return visibleHeaders.value.map((h) => h.index);
 });
 
+const scheduleRecomputeFinalGrades = debounce(() => {
+  computeFinalGrades();
+}, 150);
+
 const scheduleRecomputeSessionGrades = debounce(() => {
   computeAllSessionGrades();
+  scheduleRecomputeFinalGrades();
 }, 150);
 
 watch(
   () => props.journalSettings,
   () => {
     scheduleRecomputeSessionGrades();
+    scheduleRecomputeFinalGrades();
   },
   { deep: true }
 );
@@ -1232,6 +1336,7 @@ const rebuildMarks = () => {
     markTemplate
   );
   scheduleRecomputeSessionGrades();
+  scheduleRecomputeFinalGrades();
 };
 
 const scheduleRebuildMarks = debounce(() => {
@@ -1280,19 +1385,19 @@ const updateStudent = (updatedStudent: any) => {
   if (updatedStudent.marks) {
     marksStore.updateStudentMarks(
       props.journalId,
-      updatedStudent.id.toString(),
+      updatedStudent.studentId,
       updatedStudent.marks
     );
   }
-
-  emit("update-students", students.value);
+  scheduleRecomputeSessionGrades();
+  scheduleRecomputeFinalGrades();
 };
 
 const updateStudents = (updatedStudents: any[]) => {
   if (updatedStudents && props.journalId) {
     // Update all students' marks in store
     const studentMarksToUpdate = updatedStudents.map((student) => ({
-      studentId: student.id.toString(),
+      studentId: student.studentId,
       marks: student.marks,
     }));
 
@@ -1300,7 +1405,8 @@ const updateStudents = (updatedStudents: any[]) => {
       props.journalId,
       studentMarksToUpdate
     );
-    emit("update-students", students.value);
+    scheduleRecomputeSessionGrades();
+    scheduleRecomputeFinalGrades();
   }
 };
 

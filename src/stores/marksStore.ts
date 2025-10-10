@@ -229,6 +229,41 @@ export const useMarksStore = defineStore(
       return false;
     };
 
+    // Replace all row values for a specific mark (date/session/PK/etc)
+    const updateStudentMarkRows = (
+      journalId: string,
+      studentId: string,
+      markIndex: number,
+      values: Array<string | null>
+    ) => {
+      const journal = journalMarks.value.get(journalId);
+      if (!journal) return false;
+
+      const studentMark = journal.studentMarks.find(
+        (sm) => sm.studentId === studentId
+      );
+      if (!studentMark) return false;
+
+      if (markIndex < 0 || markIndex >= studentMark.marks.length) return false;
+
+      const targetLen = studentMark.marks[markIndex].values.length;
+      const adjustedValues = values.slice(0, targetLen);
+      while (adjustedValues.length < targetLen) adjustedValues.push(null);
+
+      const oldValues = studentMark.marks[markIndex].values;
+      studentMark.marks[markIndex].values = adjustedValues;
+      journal.lastUpdated = new Date().toISOString();
+      console.log("[marksStore] Replaced mark rows:", {
+        studentId,
+        markIndex,
+        oldValues,
+        newValues: adjustedValues,
+      });
+      // force reactivity for persistence
+      journalMarks.value = new Map(journalMarks.value);
+      return true;
+    };
+
     // Update entire marks array for a student
     const updateStudentMarks = (
       journalId: string,
@@ -415,6 +450,7 @@ export const useMarksStore = defineStore(
       initializeJournalMarks,
       updateStudentMark,
       updateStudentMarks,
+      updateStudentMarkRows,
       updateMultipleStudentMarks,
       deleteJournalMarks,
       deleteStudentMarks,
