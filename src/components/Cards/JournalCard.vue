@@ -1,11 +1,26 @@
 <template>
   <div
     class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-sun to-amber-400 transition-all duration-300 cursor-pointer select-none hover:scale-[1.02] active:scale-[0.98]"
-    @click="$emit('click')"
+    @click="handleClick"
   >
     <div
       class="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent"
     ></div>
+    <div
+      v-if="selectionMode"
+      class="absolute top-3 right-3 z-10 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all duration-200"
+      :class="
+        selected ? 'bg-primary border-primary' : 'bg-white/80 border-gray-400'
+      "
+    >
+      <f7-icon
+        v-if="selected"
+        ios="f7:checkmark"
+        md="material:check"
+        size="16px"
+        class="text-white"
+      />
+    </div>
     <div class="relative p-4 flex items-start gap-2 h-min-[95px]">
       <div class="flex-1 min-w-0 flex flex-col justify-between h-full">
         <div
@@ -61,17 +76,35 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { f7Icon } from "framework7-vue";
 
 interface Props {
   title: string;
   subtitle: string;
   schedule: string;
   percent?: number;
+  selectionMode?: boolean;
+  selected?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   percent: 0,
+  selectionMode: false,
+  selected: false,
 });
+
+const emit = defineEmits<{
+  click: [];
+  "toggle-select": [];
+}>();
+
+const handleClick = () => {
+  if (props.selectionMode) {
+    emit("toggle-select");
+  } else {
+    emit("click");
+  }
+};
 
 const circumference = 2 * Math.PI * 30;
 const normalized = computed(() => Math.min(100, Math.max(0, props.percent)));
