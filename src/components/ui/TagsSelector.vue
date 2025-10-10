@@ -61,10 +61,13 @@
               v-for="item in filteredItems"
               :key="item.id"
               @click="toggleItemSelection(item.id)"
-              class="dropdown-item px-3 py-2 hover:bg-muted cursor-pointer flex items-center gap-2"
+              class="dropdown-item px-3 py-2 cursor-pointer flex items-center gap-2 select-none"
               :class="{ 'bg-primary/10': isSelected(item.id) }"
             >
-              <f7-checkbox :checked="isSelected(item.id)" />
+              <f7-checkbox
+                :checked="isSelected(item.id)"
+                class="pointer-events-none"
+              />
               <span class="flex-1">{{ getDisplayText(item) }}</span>
             </div>
             <div
@@ -285,6 +288,14 @@ watch(isOpen, (open) => {
 
 .dropdown-item {
   @apply transition-colors duration-150;
+}
+
+.dropdown-item:hover {
+  @apply bg-muted/70;
+}
+
+.dropdown-item:active {
+  @apply bg-primary/20;
 }
 
 .search-input :deep(.input) {
