@@ -586,15 +586,12 @@ async function submit() {
         specialtyIds: selectedSpecialtyIds.value,
       });
     } else {
-      // Create entries for each selected specialty
-      for (const specialtyId of selectedSpecialtyIds.value) {
-        for (const step of steps.value) {
-          await class9Store.addClass9(
-            props.academicYearId,
-            [specialtyId], // Pass as array for single specialty
-            step
-          );
-        }
+      for (const step of steps.value) {
+        await class9Store.addClass9(
+          props.academicYearId,
+          selectedSpecialtyIds.value,
+          step
+        );
       }
     }
     emit("submit");
