@@ -6,7 +6,8 @@
       {{ cancelText }}
     </Button>
     <span
-      class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-foreground font-semibold whitespace-nowrap pointer-events-none"
+      class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-foreground font-semibold whitespace-nowrap"
+      :class="{ 'pointer-events-none': !$slots.title }"
     >
       <slot name="title" v-if="$slots.title"></slot>
       <template v-else>{{ title }}</template>
