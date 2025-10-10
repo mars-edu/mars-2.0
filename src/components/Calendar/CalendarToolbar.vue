@@ -2,7 +2,6 @@
   <div class="flex justify-between items-center mb-2" :class="class">
     <!-- Left side: Navigation -->
     <div class="flex items-center space-x-2">
-      <sidebar-button @click="$emit('icon-click', 'sidebar')" />
       <button
         @click="$emit('today')"
         class="flex items-center w-fit hover:bg-secondary rounded-lg p-2 transition-colors"
@@ -30,7 +29,6 @@
         :placeholder="searchPlaceholder"
         @search="$emit('search', $event)"
       />
-      <list-button @click="$emit('icon-click', 'list')" />
       <AddEventButton @event-added="handleEventAdded" />
     </div>
   </div>
@@ -38,8 +36,6 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import SidebarButton from "./SidebarButton.vue";
-import ListButton from "./ListButton.vue";
 import AddEventButton from "./AddEventButton.vue";
 import SearchInput from "./SearchInput.vue";
 import MonthNavigator from "./MonthNavigator.vue";
@@ -54,7 +50,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "icon-click", value: string): void;
   (e: "search", query: string): void;
   (e: "event-added", event: CalendarEvent): void;
   (e: "today"): void;

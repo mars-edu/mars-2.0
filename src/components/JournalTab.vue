@@ -67,6 +67,15 @@
         <f7-icon ios="f7:share" md="material:share" size="16px" class="mr-2" />
         Поделится
       </f7-button>
+      <f7-button
+        id="recalc-button"
+        small
+        default
+        @click.stop="onRecalcClick"
+        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+      >
+        Рассчитать
+      </f7-button>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full border-collapse">
@@ -277,6 +286,33 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </f7-popover>
+    <!-- Recalculate Popover -->
+    <f7-popover
+      id="recalc-popover"
+      style="width: 260px !important"
+      close-on-escape
+      target="#recalc-button"
+    >
+      <div class="bg-card text-card-foreground">
+        <div class="p-3 border-b border-border text-sm font-medium">
+          Выберите расчёт
+        </div>
+        <div class="p-2 space-y-2">
+          <f7-button small fill @click="recalcRk1" class="w-full"
+            >РК1</f7-button
+          >
+          <f7-button small fill @click="recalcRk2" class="w-full"
+            >РК2</f7-button
+          >
+          <f7-button small fill @click="recalcFinal" class="w-full"
+            >Итоговую</f7-button
+          >
+          <f7-button small fill @click="recalcAll" class="w-full"
+            >Все</f7-button
+          >
         </div>
       </div>
     </f7-popover>
@@ -604,24 +640,41 @@ const generateDates = () => {
   });
 
   // Sort by insert position and insert
-  insertionPlan
-    .sort((a, b) => a.insertAfter - b.insertAfter)
-    .forEach((plan, offset) => {
-      const insertIndex = plan.insertAfter + 1 + offset;
-      debugLog("inserting session column", {
-        label: plan.session.shortName,
-        insertIndex,
-        afterDateIndex: plan.insertAfter,
-        offset,
-      });
-      marksWithSessions.splice(insertIndex, 0, {
-        type: "session",
-        values: initialValuesForType("session", 2),
-        label: plan.session.shortName,
-        sessionId: plan.session.id,
-        sessionDateIndices: plan.indices,
-      } as Mark);
+  const sortedPlans = insertionPlan.sort(
+    (a, b) => a.insertAfter - b.insertAfter
+  );
+
+  let lastRk1End: number | null = null;
+  sortedPlans.forEach((plan) => {
+    const label = String(plan.session?.shortName || "").toUpperCase();
+    const isRk1 = /РК\s*1/i.test(label);
+    const isRk2 = /РК\s*2/i.test(label);
+    if (isRk1) {
+      lastRk1End = plan.insertAfter;
+    } else if (isRk2 && lastRk1End != null) {
+      const cumulative: number[] = [];
+      for (let i = lastRk1End + 1; i <= plan.insertAfter; i++)
+        cumulative.push(i);
+      plan.indices = cumulative;
+    }
+  });
+
+  sortedPlans.forEach((plan, offset) => {
+    const insertIndex = plan.insertAfter + 1 + offset;
+    debugLog("inserting session column", {
+      label: plan.session.shortName,
+      insertIndex,
+      afterDateIndex: plan.insertAfter,
+      offset,
     });
+    marksWithSessions.splice(insertIndex, 0, {
+      type: "session",
+      values: initialValuesForType("session", 2),
+      label: plan.session.shortName,
+      sessionId: plan.session.id,
+      sessionDateIndices: plan.indices,
+    } as Mark);
+  });
 
   // Append summary column based on selected control form (exam/credit)
   const class9Id =
@@ -806,8 +859,6 @@ const setMark = (
     newValue
   );
   emit("update-students", students.value);
-  scheduleRecomputeSessionGrades();
-  scheduleRecomputeFinalGrades();
 };
 
 const editCell = (
@@ -990,17 +1041,58 @@ const onCloseJournalClick = () => emit("close-journal");
 const onDownloadClick = () => emit("download");
 const onUploadClick = () => emit("upload");
 const onShareClick = () => emit("share");
+const onRecalcClick = () => {
+  f7.popover.open("#recalc-popover", "#recalc-button");
+};
+
+const recalcRk1 = () => {
+  computeAllSessionGrades({ force: true, labels: [/РК\s*1/i] });
+  computeFinalGrades({ force: true });
+  f7.popover.close("#recalc-popover");
+};
+
+const recalcRk2 = () => {
+  computeAllSessionGrades({ force: true, labels: [/РК\s*2/i] });
+  computeFinalGrades({ force: true });
+  f7.popover.close("#recalc-popover");
+};
+
+const recalcFinal = () => {
+  computeFinalGrades({ force: true });
+  f7.popover.close("#recalc-popover");
+};
+
+const recalcAll = () => {
+  computeAllSessionGrades({ force: true });
+  computeFinalGrades({ force: true });
+  f7.popover.close("#recalc-popover");
+};
+
+const getStoreIndexForDatePosition = (datePos: number): number | null => {
+  const canonical = canonicalTemplate.value as any[] | undefined;
+  if (!canonical || datePos < 0) return null;
+  let seen = -1;
+  for (let ci = 0; ci < canonical.length; ci++) {
+    if ((canonical[ci] as any)?.type === "date") {
+      seen += 1;
+      if (seen === datePos) {
+        return getStoreIndexForCanonicalIndex(ci);
+      }
+    }
+  }
+  return null;
+};
 
 const computeDayAverage = (
   studentId: string,
-  dayIndex: number
+  datePos: number
 ): number | null => {
   if (!studentId || !props.journalId) return null;
-
+  const storeColIndex = getStoreIndexForDatePosition(datePos);
+  if (storeColIndex == null || storeColIndex < 0) return null;
   const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
-  if (!studentMarks || dayIndex < 0 || dayIndex >= studentMarks.length)
-    return null;
-  const values = studentMarks[dayIndex]?.values || [];
+  if (!studentMarks || storeColIndex >= studentMarks.length) return null;
+  const values = studentMarks[storeColIndex]?.values || [];
   const nums = values
     .map((v) =>
       v !== null && v !== "" && !isNaN(Number(v)) ? Number(v) : null
@@ -1045,10 +1137,15 @@ const computeSessionGradeForStudent = (
   return grade.toFixed(1);
 };
 
-const computeAllSessionGrades = () => {
+const computeAllSessionGrades = (opts?: {
+  force?: boolean;
+  labels?: Array<string | RegExp>;
+}) => {
+  const force = !!opts?.force;
   if (
-    props.journalSettings?.calculationType !== "calculated" ||
-    !props.journalId
+    (props.journalSettings?.calculationType !== "calculated" ||
+      !props.journalId) &&
+    !force
   )
     return;
   const method = props.journalSettings?.calculationMethod || "only-assigned";
@@ -1060,6 +1157,15 @@ const computeAllSessionGrades = () => {
   journalStudentMarks.forEach((studentMark) => {
     studentMark.marks.forEach((mark, mIdx) => {
       if (mark.type === "session") {
+        if (opts?.labels && opts.labels.length > 0) {
+          const label = String((mark as any).label || "");
+          const match = opts.labels.some((f) =>
+            typeof f === "string"
+              ? label.toUpperCase() === String(f).toUpperCase()
+              : (f as RegExp).test(label)
+          );
+          if (!match) return;
+        }
         const indices = (mark as any).sessionDateIndices as
           | number[]
           | undefined;
@@ -1094,10 +1200,12 @@ const computeAllSessionGrades = () => {
   });
 };
 
-const computeFinalGrades = () => {
+const computeFinalGrades = (opts?: { force?: boolean }) => {
+  const force = !!opts?.force;
   if (
-    props.journalSettings?.calculationType !== "calculated" ||
-    !props.journalId
+    (props.journalSettings?.calculationType !== "calculated" ||
+      !props.journalId) &&
+    !force
   )
     return;
 
@@ -1309,19 +1417,17 @@ const visibleColumnIndices = computed(() => {
 });
 
 const scheduleRecomputeFinalGrades = debounce(() => {
-  computeFinalGrades();
+  /* manual trigger only */
 }, 150);
 
 const scheduleRecomputeSessionGrades = debounce(() => {
-  computeAllSessionGrades();
-  scheduleRecomputeFinalGrades();
+  /* manual trigger only */
 }, 150);
 
 watch(
   () => props.journalSettings,
   () => {
-    scheduleRecomputeSessionGrades();
-    scheduleRecomputeFinalGrades();
+    /* manual trigger only */
   },
   { deep: true }
 );
@@ -1335,8 +1441,7 @@ const rebuildMarks = () => {
     currentJournal.value.students,
     markTemplate
   );
-  scheduleRecomputeSessionGrades();
-  scheduleRecomputeFinalGrades();
+  /* manual trigger only */
 };
 
 const scheduleRebuildMarks = debounce(() => {

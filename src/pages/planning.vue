@@ -9,50 +9,16 @@
       <Header />
     </div>
 
-    <f7-page-content @mousemove="handleMouseMove" class="planning-content">
-      <!-- Sidebar with transition (when activated by button) -->
-      <transition name="slide">
-        <Sidebar
-          v-if="isSidebarVisible || isMouseInLeftCorner || isSidebarHovered"
-          v-model:activeNavItem="activeNavItem"
-          @mouseenter="handleSidebarMouseEnter"
-          @mouseleave="handleSidebarMouseLeave"
-        />
-      </transition>
+    <f7-page-content class="planning-content">
+      <Sidebar v-model:activeNavItem="activeNavItem" />
 
-      <!-- Teleported sidebar for mouse hover (popover style) -->
-      <Teleport to="body">
-        <transition name="fade">
-          <Sidebar
-            v-if="
-              (isMouseInLeftCorner || isSidebarHovered) && !isSidebarVisible
-            "
-            v-model:activeNavItem="activeNavItem"
-            @mouseenter="handleSidebarMouseEnter"
-            @mouseleave="handleSidebarMouseLeave"
-          />
-        </transition>
-      </Teleport>
-
-      <!-- Left corner detection area -->
-      <div
-        class="left-corner-detector"
-        @mouseenter="isHoveringLeftCorner = true"
-        @mouseleave="isHoveringLeftCorner = false"
-      ></div>
-
-      <div
-        ref="calendarContainer"
-        class="calendar-container p-2"
-        :class="{ 'pl-56': isSidebarVisible }"
-      >
+      <div ref="calendarContainer" class="calendar-container p-2 pl-52">
         <!-- Calendar toolbar with navigation -->
         <CalendarToolbar
           :search-placeholder="'Найти'"
           :month-name="monthName"
           :year="year"
           :today-date="todayDate"
-          @icon-click="handleIconClick"
           @search="handleSearch"
           @event-added="addEvent"
           @today="goToToday"
@@ -131,46 +97,12 @@ import { type CalendarEvent as StoreCalendarEvent } from "@/stores/calendarStore
 import { useCalendarStore } from "@/stores/calendarStore";
 
 const calendarContainer = ref<HTMLElement | null>(null);
-const isAddPopoverOpen = ref(false);
-const isSidebarVisible = ref(false);
 const activeNavItem = ref("calendar");
 
 const selectedEvent = ref<StoreCalendarEvent | null>(null);
 const calendarStore = useCalendarStore();
 
-const isMouseInLeftCorner = ref(false);
-const isHoveringLeftCorner = ref(false);
-const mouseTrackingThreshold = 25;
-
-const isSidebarHovered = ref(false);
-const handleSidebarMouseEnter = () => {
-  isSidebarHovered.value = true;
-};
-const handleSidebarMouseLeave = () => {
-  isSidebarHovered.value = false;
-};
-
-watch(isHoveringLeftCorner, (newValue) => {
-  if (newValue) {
-    isMouseInLeftCorner.value = true;
-  } else {
-    setTimeout(() => {
-      isMouseInLeftCorner.value = false;
-    }, 300);
-  }
-});
-
-const handleMouseMove = (event: MouseEvent) => {
-  if (!isSidebarVisible.value) {
-    const isInLeftCorner = event.clientX < mouseTrackingThreshold;
-    if (
-      isInLeftCorner !== isMouseInLeftCorner.value &&
-      !isHoveringLeftCorner.value
-    ) {
-      isMouseInLeftCorner.value = isInLeftCorner;
-    }
-  }
-};
+// Sidebar is always visible; hover/teleport behavior removed
 
 const {
   year,
@@ -238,14 +170,7 @@ onMounted(() => {
   });
 });
 
-const handleIconClick = (value: string) => {
-  console.log(`Icon clicked: ${value}`);
-  if (value === "add") {
-    isAddPopoverOpen.value = true;
-  } else if (value === "sidebar") {
-    isSidebarVisible.value = !isSidebarVisible.value;
-  }
-};
+// Toolbar icon-click handler removed
 
 const handleSearch = (query: string) => {
   console.log(`Search query: ${query}`);
@@ -303,61 +228,13 @@ const openEditPopoverFromPreview = async () => {
 }
 
 .calendar-container {
-  margin: 0 auto;
   background-color: hsl(var(--card));
   color: hsl(var(--card-foreground));
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   flex: 1;
+  min-width: 0;
   overflow-y: auto;
   overflow-x: hidden;
-}
-
-.slide-enter-active,
-.slide-leave-active {
-  transition: transform 0.3s ease;
-}
-
-.slide-enter-from,
-.slide-leave-to {
-  transform: translateX(-100%);
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-.left-corner-detector {
-  position: fixed;
-  top: 64px;
-  left: 0;
-  width: 20px;
-  height: calc(100vh - 64px);
-  z-index: 10;
-}
-
-.sidebar-popover {
-  position: fixed;
-  top: 64px;
-  left: 0;
-  z-index: 100;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  background-color: hsl(var(--card));
-  border-right: 1px solid hsl(var(--border));
-  width: 13rem;
-}
-
-.sidebar-absolute {
-  position: absolute;
-  z-index: 100;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  background-color: hsl(var(--card));
-  border-right: 1px solid hsl(var(--border));
 }
 </style>
