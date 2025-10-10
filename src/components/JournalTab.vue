@@ -312,6 +312,35 @@ import type { Mark } from "@/types/marks";
 import type { EducationSchedule } from "@/stores/educationScheduleStore";
 import type { StudentWithMarks } from "@/types/student";
 
+// Central source of truth for mark types and helpers
+const MARK_TYPES = [
+  { type: "date", defaultLabel: null, singleRow: false },
+  { type: "session", defaultLabel: "Сессия", singleRow: true },
+  { type: "pk", defaultLabel: "РК", singleRow: true },
+  { type: "e", defaultLabel: "Э", singleRow: true },
+  { type: "z", defaultLabel: "З", singleRow: true },
+  { type: "i", defaultLabel: "И", singleRow: true },
+  { type: "ku", defaultLabel: "КУ", singleRow: true },
+] as const;
+
+type MarkType = (typeof MARK_TYPES)[number]["type"];
+
+const MARK_TYPE_MAP: Readonly<Record<MarkType, (typeof MARK_TYPES)[number]>> =
+  Object.freeze(Object.fromEntries(MARK_TYPES.map((d) => [d.type, d])) as any);
+
+const initialValuesForType = (type: MarkType, dynamicRows: number) =>
+  MARK_TYPE_MAP[type]?.singleRow
+    ? [null]
+    : Array.from({ length: Math.max(1, dynamicRows) }, () => null);
+
+const headerLabelFor = (mark: any): string => {
+  if (mark.type === "date") return mark.date || "";
+  if (mark.type === "session")
+    return mark.label || MARK_TYPE_MAP.session.defaultLabel || "";
+  const def = MARK_TYPE_MAP[mark.type as MarkType];
+  return (def?.defaultLabel ?? "") as string;
+};
+
 interface Props {
   journalId: string;
   journalSettings?: {
@@ -466,7 +495,7 @@ const generateDates = () => {
     return Array.from({ length: 17 }, () => ({
       type: "date" as const,
       date: "",
-      values: [null, null],
+      values: initialValuesForType("date", 2),
     }));
   }
 
@@ -513,7 +542,7 @@ const generateDates = () => {
     dateMarks.push({
       type: "date",
       date: dateStr,
-      values: Array.from({ length: rows }, () => null),
+      values: initialValuesForType("date", rows),
       label: dateStr,
       isoDate,
     });
@@ -587,7 +616,7 @@ const generateDates = () => {
       });
       marksWithSessions.splice(insertIndex, 0, {
         type: "session",
-        values: [null, null],
+        values: initialValuesForType("session", 2),
         label: plan.session.shortName,
         sessionId: plan.session.id,
         sessionDateIndices: plan.indices,
@@ -643,7 +672,10 @@ const generateDates = () => {
           m.label?.toUpperCase?.() === "Э")
     );
     if (!hasExamSession) {
-      marksWithSessions.push({ type: "e", values: [null, null] } as Mark);
+      marksWithSessions.push({
+        type: "e",
+        values: initialValuesForType("e", 2),
+      } as Mark);
       debugLog("appended control column", { type: "e" });
     } else {
       debugLog("skipped control column due to existing matching session", {
@@ -657,7 +689,10 @@ const generateDates = () => {
         (m.label === "З" || m.label?.toUpperCase?.() === "З")
     );
     if (!hasCreditSession) {
-      marksWithSessions.push({ type: "z", values: [null, null] } as Mark);
+      marksWithSessions.push({
+        type: "z",
+        values: initialValuesForType("z", 2),
+      } as Mark);
       debugLog("appended control column", { type: "z" });
     } else {
       debugLog("skipped control column due to existing matching session", {
@@ -671,7 +706,10 @@ const generateDates = () => {
         (m.label === "КУ" || m.label?.toUpperCase?.() === "КУ")
     );
     if (!hasKuSession) {
-      marksWithSessions.push({ type: "ku", values: [null, null] } as Mark);
+      marksWithSessions.push({
+        type: "ku",
+        values: initialValuesForType("ku", 2),
+      } as Mark);
       debugLog("appended control column", { type: "ku" });
     } else {
       debugLog("skipped control column due to existing matching session", {
@@ -681,7 +719,10 @@ const generateDates = () => {
   }
 
   // Always append final Итог (И)
-  marksWithSessions.push({ type: "i", values: [null, null] } as Mark);
+  marksWithSessions.push({
+    type: "i",
+    values: initialValuesForType("i", 2),
+  } as Mark);
   debugLog("appended final column", { type: "i" });
 
   debugGroup("final marks template summary", () => {
@@ -1102,17 +1143,10 @@ const getScoreBadgeClass = (score: string): string => {
 
 const tableHeaders = computed(() => {
   const canonical = canonicalTemplate.value;
-  return canonical.map((mark: any) => {
-    if (mark.type === "date") return { type: "date", label: mark.date || "" };
-    if (mark.type === "session")
-      return { type: "session", label: mark.label || "Сессия" };
-    if (mark.type === "pk") return { type: "pk", label: "РК" };
-    if (mark.type === "e") return { type: "e", label: "Э" };
-    if (mark.type === "z") return { type: "z", label: "З" };
-    if (mark.type === "i") return { type: "i", label: "И" };
-    if (mark.type === "ku") return { type: "ku", label: "КУ" };
-    return { type: "unknown", label: "" };
-  });
+  return canonical.map((mark: any) => ({
+    type: mark.type,
+    label: headerLabelFor(mark),
+  }));
 });
 
 const visibleHeaders = computed(() => {
