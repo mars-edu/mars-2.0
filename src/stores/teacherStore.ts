@@ -41,6 +41,13 @@ export const useTeacherStore = defineStore("teacher", () => {
 
   const getAllTeachers = computed(() => teachers.value);
 
+  const teacherSelectOptions = computed(() => {
+    return teachers.value.map((teacher) => ({
+      value: teacher.id,
+      text: getTeacherFullName(teacher),
+    }));
+  });
+
   const getTeacherFullName = (idOrTeacher: string | Teacher): string => {
     let teacher: Teacher | undefined;
     if (typeof idOrTeacher === "string") {
@@ -175,6 +182,7 @@ export const useTeacherStore = defineStore("teacher", () => {
     isLoading,
     filters,
     getAllTeachers,
+    teacherSelectOptions,
     filteredTeachers,
     setFilter,
     clearFilters,

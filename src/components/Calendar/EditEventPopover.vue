@@ -25,6 +25,7 @@
         class="overflow-y-auto"
         :start-date="dayjs(startDate[0]).format(DATE_UI_FORMAT)"
         :end-date="dayjs(endDate[0]).format(DATE_UI_FORMAT)"
+        :semester="semester"
         v-model:class9Id="class9Id"
         v-model:useCustomPeriod="useCustomPeriod"
         v-model:participants="participants"
@@ -33,6 +34,7 @@
         @update:startDate="(v:string) => startDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()]"
         @update:endDate="(v:string) => endDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()]"
         @update:valid="(v:boolean)=>{ isFormValid=v }"
+        @update:semester="(v:string)=>{ if (!semester) semester = v }"
       >
         <div class="pt-4 border-t border-border">
           <button
@@ -65,6 +67,7 @@ import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
+import { useUserStore } from "@/stores/userStore";
 import { storeToRefs } from "pinia";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
@@ -88,6 +91,17 @@ const academicYearSemesterStore = useAcademicYearSemesterStore();
 const selectedItemsStore = useSelectedItemsStore();
 const educationScheduleStore = useEducationScheduleStore();
 const semesterStore = useSemesterStore();
+const userStore = useUserStore();
+
+const effectiveTeacherId = computed(() => {
+  if (userStore.isAdmin) {
+    return calendarStore.selectedTeacherId || undefined;
+  }
+  if (userStore.isTeacher) {
+    return userStore.currentUser?.id;
+  }
+  return undefined;
+});
 
 const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
 const { selectedClass9Item } = storeToRefs(selectedItemsStore);
@@ -97,6 +111,7 @@ const { getActiveAcademicYearSemester } = storeToRefs(
 
 const class9Id = ref(props.event.class9Id);
 const useCustomPeriod = ref(props.event.useCustomPeriod || false);
+const semester = ref(props.event.semester || "");
 
 // Convert date string to Date array for datepicker
 const formatDateArray = (date: any): Date[] => {
@@ -167,13 +182,17 @@ const handleUpdateEvent = async () => {
 
     const updateData = {
       class9Id: class9Id.value,
+      teacherId: effectiveTeacherId.value,
       startDate: dayjs(startDate.value[0]).format(DATE_UI_FORMAT),
       endDate: dayjs(endDate.value[0]).format(DATE_UI_FORMAT),
       participants: participants.value,
       weeklySchedules: selectedWeekDays.value,
       color: eventColor.value.hex,
       useCustomPeriod: useCustomPeriod.value,
-      semester: (getActiveAcademicYearSemester.value as any)?.id ?? "",
+      semester:
+        semester.value ||
+        (getActiveAcademicYearSemester.value as any)?.id ||
+        "",
     };
 
     await calendarStore.updateEvent(props.event.id, updateData);
@@ -187,7 +206,10 @@ const handleUpdateEvent = async () => {
       weeklySchedules: selectedWeekDays.value,
       color: eventColor.value.hex,
       useCustomPeriod: useCustomPeriod.value,
-      semester: (getActiveAcademicYearSemester.value as any)?.id ?? "",
+      semester:
+        semester.value ||
+        (getActiveAcademicYearSemester.value as any)?.id ||
+        "",
     };
 
     emit("updated", emitData);

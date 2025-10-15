@@ -18,7 +18,7 @@
             <h1 class="text-2xl font-semibold">Журналы</h1>
             <div class="flex items-center gap-3">
               <Select
-                v-model="selectedAcademicYear"
+                v-model="selectedAcademicYearModel"
                 :options="academicYearOptions"
                 placeholder="Учебный год:"
                 name="academic-year"
@@ -29,6 +29,14 @@
                 :options="semesterOptions"
                 placeholder="Семестр:"
                 name="semester"
+                class="w-44"
+              />
+              <Select
+                v-if="userStore.isAdmin"
+                v-model="selectedTeacherId"
+                :options="teacherOptions"
+                placeholder="Преподаватель:"
+                name="teacher"
                 class="w-44"
               />
             </div>
@@ -204,7 +212,7 @@
                       {{ course.number }} курс
                     </h2>
                     <div
-                      v-for="journal in journalsByCourse[
+                      v-for="journal in filteredJournalsByCourse[
                         parseInt(course.number)
                       ]"
                       :key="journal.id"
@@ -236,7 +244,7 @@
                       смешанные группы
                     </h2>
                     <div
-                      v-for="journal in mixedGroupJournals"
+                      v-for="journal in filteredMixedGroupJournals"
                       :key="journal.id"
                     >
                       <JournalCard
@@ -280,10 +288,17 @@ import { useJournalStore, type Journal } from "@/stores/journalStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { storeToRefs } from "pinia";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
+import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
+import { useUserStore } from "@/stores/userStore";
+import { useCalendarStore } from "@/stores/calendarStore";
+import { useTeacherStore } from "@/stores/teacherStore";
 
 const activeNavItem = ref("journals");
 
 const journalStore = useJournalStore();
+const userStore = useUserStore();
+const calendarStore = useCalendarStore();
+const teacherStore = useTeacherStore();
 const { journalsByCourse, mixedGroupJournals } = storeToRefs(journalStore);
 
 const courseStore = useCourseStore();
@@ -295,12 +310,22 @@ const semesterStore = useSemesterStore();
 const { sortedSemesters } = storeToRefs(semesterStore);
 
 const academicYearSemesterStore = useAcademicYearSemesterStore();
+const selectedItemsStore = useSelectedItemsStore();
 
-const selectedAcademicYear = ref("");
 const selectedSemesterId = ref("");
 const { getActiveAcademicYearSemester } = storeToRefs(
   academicYearSemesterStore
 );
+
+const selectedAcademicYearModel = computed({
+  get: () => selectedItemsStore.selectedAcademicYearId ?? "",
+  set: (v: string) => {
+    selectedItemsStore.setSelectedAcademicYear(v || null);
+    if (v !== (selectedItemsStore.selectedAcademicYearId ?? "")) {
+      selectedSemesterId.value = "";
+    }
+  },
+});
 
 const academicYearOptions = computed(() => {
   return academicYears.value.map((year) => ({
@@ -310,31 +335,88 @@ const academicYearOptions = computed(() => {
 });
 
 const semesterOptions = computed(() => {
-  const yearId = selectedAcademicYear.value;
+  const yearId = selectedItemsStore.selectedAcademicYearId;
   const list = yearId
-    ? semesterStore.getSemestersByAcademicYear(yearId)
-    : sortedSemesters.value;
-  return list.map((s) => ({
-    value: s.id,
-    text: s.shortName || s.fullName || "",
+    ? academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(yearId)
+    : [];
+  return list.map((ays) => ({
+    value: ays.id,
+    text: `Семестр ${ays.semesterNumber}`,
   }));
 });
 
+const selectedTeacherId = computed({
+  get: () => calendarStore.selectedTeacherId || "",
+  set: (value: string) => calendarStore.setSelectedTeacher(value || null),
+});
+
+const teacherOptions = computed(() => teacherStore.teacherSelectOptions);
+
 onMounted(async () => {
-  selectedAcademicYear.value =
-    academicYearStore.getActiveAcademicYear?.id || "";
-  if (
-    getActiveAcademicYearSemester.value &&
-    (!selectedAcademicYear.value ||
-      getActiveAcademicYearSemester.value.academicYearId ===
-        selectedAcademicYear.value)
-  ) {
-    selectedSemesterId.value = getActiveAcademicYearSemester.value.id;
+  const activeYear = academicYearStore.getActiveAcademicYear;
+  if (activeYear) {
+    selectedItemsStore.setSelectedAcademicYear(activeYear.id);
+  }
+  const activeSemesters =
+    academicYearSemesterStore.getActiveAcademicYearSemesters;
+  if (activeSemesters.length > 0) {
+    selectedSemesterId.value = activeSemesters[0].id;
+  }
+
+  if (userStore.isTeacher && userStore.currentUser?.id) {
+    calendarStore.setSelectedTeacher(userStore.currentUser.id);
   }
 });
 
+// Filtering journals by selected year/semester/teacher
+const filteredJournalsByCourse = computed(() => {
+  const result: Record<number, Journal[]> = {};
+  courses.value.forEach((course) => {
+    result[parseInt(course.number)] = [];
+  });
+
+  const yearId = selectedItemsStore.selectedAcademicYearId;
+  const semId = selectedSemesterId.value;
+  const teacherId = calendarStore.selectedTeacherId;
+
+  Object.keys(journalsByCourse.value).forEach((courseNumberStr) => {
+    const courseNumber = parseInt(courseNumberStr);
+    result[courseNumber] = journalsByCourse.value[courseNumber].filter(
+      (journal) => {
+        const event = calendarStore.getEventById(journal.id);
+        if (!event) return false;
+        if (teacherId && event.teacherId !== teacherId) return false;
+        if (yearId && event.startDate) {
+          // If events carry academic year id separately, prefer it; otherwise fallback to active year
+          // Here we simply allow all; refine if academicYearId exists in event shape later
+        }
+        if (semId && event.semester !== semId) return false;
+        return true;
+      }
+    );
+  });
+
+  return result;
+});
+
+const filteredMixedGroupJournals = computed(() => {
+  const yearId = selectedItemsStore.selectedAcademicYearId;
+  const semId = selectedSemesterId.value;
+  const teacherId = calendarStore.selectedTeacherId;
+  return mixedGroupJournals.value.filter((journal) => {
+    const event = calendarStore.getEventById(journal.id);
+    if (!event) return false;
+    if (teacherId && event.teacherId !== teacherId) return false;
+    if (yearId && event.startDate) {
+      // Same note as above
+    }
+    if (semId && event.semester !== semId) return false;
+    return true;
+  });
+});
+
 const goToJournalDetails = (id: number | string) => {
-  f7.views.main.router.navigate(`/journals/${id}`);
+  f7.views.main.router.navigate(`/journals/${id}?from=journals`);
 };
 
 const selectedDiscipline = ref("");

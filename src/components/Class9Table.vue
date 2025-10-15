@@ -145,6 +145,7 @@
       v-if="popupOpen"
       :specialty-ids="specialtyIds"
       :academic-year-id="academicYearId"
+      :teacher-id="teacherId"
       :initial-data="initialData"
       :edit-mode="editMode"
       @close="closePopup"
@@ -165,6 +166,7 @@ import Sortable from "sortablejs";
 const props = defineProps<{
   specialtyIds?: string[];
   academicYearId: string;
+  teacherId?: string;
   selectMode?: boolean;
 }>();
 
@@ -183,7 +185,8 @@ const class9List = computed(() => {
   }
   return class9Store.getClass9ItemsByContext(
     props.academicYearId,
-    props.specialtyIds
+    props.specialtyIds,
+    props.teacherId
   );
 });
 

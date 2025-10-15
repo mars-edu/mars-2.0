@@ -55,6 +55,10 @@
               console.log('📥 AddEventButton received update:valid:', v);
               isFormValid=v
             }"
+            @update:semester="(v:string)=>{
+              console.log('📥 AddEventButton received update:semester (id):', v);
+              semester=v
+            }"
           />
         </div>
       </div>
@@ -72,10 +76,10 @@ import dayjs from "dayjs";
 import "dayjs/locale/ru";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
-// Set Russian locale for consistent date parsing
 dayjs.locale("ru");
 dayjs.extend(customParseFormat);
 import { useRupStore } from "@/stores/rupStore";
+import { useUserStore } from "@/stores/userStore";
 import { DATE_UI_FORMAT } from "@/constants/calendar";
 
 const emit = defineEmits<{
@@ -85,6 +89,17 @@ const emit = defineEmits<{
 
 const calendarStore = useCalendarStore();
 const rupStore = useRupStore();
+const userStore = useUserStore();
+
+const effectiveTeacherId = computed(() => {
+  if (userStore.isAdmin) {
+    return calendarStore.selectedTeacherId || undefined;
+  }
+  if (userStore.isTeacher) {
+    return userStore.currentUser?.id;
+  }
+  return undefined;
+});
 
 const class9Id = ref("");
 const useCustomPeriod = ref(false);
@@ -93,6 +108,7 @@ const endDate = ref<Date[]>([new Date()]);
 const participants = ref<string[]>([]);
 const formError = ref<string | null>(null);
 const eventColor = ref({ hex: "#3F51B5" });
+const semester = ref("");
 
 const selectedWeekDays = ref<
   {
@@ -157,13 +173,14 @@ const handleAddEvent = async () => {
 
     const eventData: Omit<CalendarEvent, "id" | "createdAt" | "updatedAt"> = {
       class9Id: class9Id.value,
+      teacherId: effectiveTeacherId.value,
       startDate: dayjs(startDate.value[0]).format(DATE_UI_FORMAT),
       endDate: dayjs(endDate.value[0]).format(DATE_UI_FORMAT),
       participants: participants.value,
       weeklySchedules: selectedWeekDays.value,
       color: eventColor.value.hex,
       useCustomPeriod: useCustomPeriod.value,
-      semester: "",
+      semester: semester.value,
     };
 
     console.log("📤 handleAddEvent calling calendarStore.addEvent", eventData);
@@ -188,6 +205,7 @@ const resetForm = () => {
   selectedWeekDays.value = [];
   formError.value = null;
   eventColor.value = { hex: "#3F51B5" };
+  semester.value = "";
 };
 
 const openAddEventPopover = () => {

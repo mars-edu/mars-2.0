@@ -336,6 +336,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   specialtyIds?: string[];
   academicYearId: string;
+  teacherId?: string;
   initialData?: any;
   editMode?: boolean;
 }>();
@@ -580,17 +581,20 @@ async function submit() {
 
   try {
     if (props.editMode && props.initialData && props.initialData.id) {
-      // Update existing item with new specialty IDs
       await class9Store.updateClass9(props.initialData.id, {
         ...steps.value[0],
         specialtyIds: selectedSpecialtyIds.value,
+        teacherId: props.teacherId,
       });
     } else {
       for (const step of steps.value) {
         await class9Store.addClass9(
           props.academicYearId,
           selectedSpecialtyIds.value,
-          step
+          {
+            ...step,
+            teacherId: props.teacherId,
+          }
         );
       }
     }

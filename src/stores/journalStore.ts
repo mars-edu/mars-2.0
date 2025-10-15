@@ -90,7 +90,7 @@ export const useJournalStore = defineStore(
         result[parseInt(course.number)] = [];
       });
 
-      calendarStore.events.forEach((event: any) => {
+      calendarStore.filteredEvents.forEach((event: any) => {
         const actualEvent = event._custom?.value || event;
 
         // Only process events WITH participants
@@ -138,7 +138,7 @@ export const useJournalStore = defineStore(
     const mixedGroupJournals = computed(() => {
       const mixedJournals: Journal[] = [];
 
-      calendarStore.events.forEach((event: any) => {
+      calendarStore.filteredEvents.forEach((event: any) => {
         const actualEvent = event._custom?.value || event;
 
         if (!actualEvent.participants || actualEvent.participants.length === 0)
@@ -214,11 +214,12 @@ export const useJournalStore = defineStore(
       try {
         const eventData = {
           class9Id: journalData.disciplineId,
-          rup: "",
-          file: null,
           startDate: dayjs().format(DATE_STORAGE_FORMAT),
           endDate: dayjs().add(30, "day").format(DATE_STORAGE_FORMAT),
           participants: journalData.students,
+          semester: "",
+          useCustomPeriod: false,
+          weeklySchedules: [],
         };
 
         const newEvent = await calendarStore.addEvent(eventData);

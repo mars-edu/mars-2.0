@@ -118,6 +118,51 @@ export const useEducationScheduleStore = defineStore(
       }
     }
 
+    async function copySchedulesFromYear(
+      sourceAcademicYearId: string,
+      targetAcademicYearId: string
+    ) {
+      loading.value = true;
+      try {
+        const sourceSchedules = schedules.value.filter(
+          (s) => s.academicYearId === sourceAcademicYearId
+        );
+
+        if (sourceSchedules.length === 0) {
+          throw new Error("No schedules found in source academic year");
+        }
+
+        const existingTargetSchedules = schedules.value.filter(
+          (s) => s.academicYearId === targetAcademicYearId
+        );
+
+        if (existingTargetSchedules.length > 0) {
+          schedules.value = schedules.value.filter(
+            (s) => s.academicYearId !== targetAcademicYearId
+          );
+        }
+
+        const copiedSchedules = sourceSchedules.map((schedule) => ({
+          ...schedule,
+          id: crypto.randomUUID(),
+          academicYearId: targetAcademicYearId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }));
+
+        schedules.value.push(...copiedSchedules);
+        sortSchedules();
+        error.value = null;
+        return copiedSchedules;
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to copy schedules";
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    }
+
     function clearError() {
       error.value = null;
     }
@@ -142,6 +187,7 @@ export const useEducationScheduleStore = defineStore(
       addSchedule,
       updateSchedule,
       deleteSchedule,
+      copySchedulesFromYear,
       clearError,
       reset,
     };

@@ -204,7 +204,10 @@
             <AccordionItem id="schedule">
               <template #title>Расписание звонков:</template>
               <template #actions>
-                <AddEducationScheduleButton />
+                <div class="flex gap-2">
+                  <CopyEducationScheduleButton />
+                  <AddEducationScheduleButton />
+                </div>
               </template>
               <div
                 v-if="educationScheduleStore.isLoading"
@@ -391,6 +394,7 @@ import Accordion from "@/components/ui/accordion/Accordion.vue";
 import AccordionItem from "@/components/ui/accordion/AccordionItem.vue";
 import NoData from "@/components/ui/accordion/NoData.vue";
 import AddEducationScheduleButton from "@/components/AddEducationScheduleButton.vue";
+import CopyEducationScheduleButton from "@/components/CopyEducationScheduleButton.vue";
 import EditEducationScheduleButton from "@/components/EditEducationScheduleButton.vue";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { storeToRefs } from "pinia";

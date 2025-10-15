@@ -75,7 +75,7 @@ export function useCalendar() {
   const getEventsForDate = (targetDate: dayjs.Dayjs) => {
     const weekIdOfCurrent = (targetDate.day() + 6) % 7; // Convert Sunday=0 to Monday=0
 
-    return calendarStore.events
+    return calendarStore.filteredEvents
       .filter((event) => {
         return isEventOnDate(event as any, targetDate);
       })

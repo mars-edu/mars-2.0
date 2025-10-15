@@ -30,6 +30,12 @@
       <div class="text-sm font-medium text-foreground">
         {{ semesterDates.startDate }} - {{ semesterDates.endDate }}
       </div>
+      <div
+        v-if="semesterDates.semesterText"
+        class="text-sm text-muted-foreground mt-1"
+      >
+        {{ semesterDates.semesterText }}
+      </div>
     </div>
 
     <div v-if="useCustomPeriodModel" class="flex justify-between items-center">
@@ -255,6 +261,7 @@ const props = defineProps<{
   selectedWeekDays: WeekDaySchedule[];
   parentPopoverId: string;
   mode?: "add" | "edit";
+  semester?: string;
 }>();
 
 // Add watchers to track prop changes
@@ -323,6 +330,7 @@ const emit = defineEmits<{
   (e: "update:color", v: string): void;
   (e: "update:selectedWeekDays", v: WeekDaySchedule[]): void;
   (e: "update:valid", v: boolean): void;
+  (e: "update:semester", v: string): void;
 }>();
 
 const class9Store = useClass9Store();
@@ -785,17 +793,43 @@ const semesterDates = computed(() => {
     `🔄 semesterDates computed called (call #${callCounters.semesterDates.calls})`,
     {
       activeSemester: getActiveAcademicYearSemester.value,
+      propsSemester: props.semester,
     }
   );
-  const activeSemester = getActiveAcademicYearSemester.value as any;
-  if (activeSemester && activeSemester.startDate) {
+
+  let targetSemester: any = null;
+
+  if (props.semester) {
+    // Prefer lookup by id
+    targetSemester = (academicYearSemesterStore as any)
+      .getAcademicYearSemesterById
+      ? (academicYearSemesterStore as any).getAcademicYearSemesterById(
+          props.semester
+        )
+      : academicYearSemesterStore.academicYearSemesters.find(
+          (s: any) => s.id === props.semester
+        );
+    console.log(
+      "🔍 Using semester from props (id):",
+      props.semester,
+      targetSemester
+    );
+  }
+
+  if (!targetSemester) {
+    targetSemester = getActiveAcademicYearSemester.value as any;
+    console.log("🔍 Falling back to active semester:", targetSemester);
+  }
+
+  if (targetSemester && targetSemester.startDate) {
     const result = {
-      startDate: dayjs(activeSemester.startDate, DATE_STORAGE_FORMAT).format(
+      startDate: dayjs(targetSemester.startDate, DATE_STORAGE_FORMAT).format(
         DATE_UI_FORMAT
       ),
-      endDate: dayjs(activeSemester.endDate, DATE_STORAGE_FORMAT).format(
+      endDate: dayjs(targetSemester.endDate, DATE_STORAGE_FORMAT).format(
         DATE_UI_FORMAT
       ),
+      semesterText: `Семестр ${targetSemester.semesterNumber}`,
     };
     console.log("✅ semesterDates result:", result);
     return result;
@@ -914,6 +948,16 @@ watchEffect(() => {
     }
   );
   emit("update:valid", isFormValid.value);
+});
+
+watchEffect(() => {
+  const semesterValue =
+    props.semester || (getActiveAcademicYearSemester.value as any)?.id || "";
+  console.log("🔄 WATCH_EFFECT [semester] emitting (id):", semesterValue, {
+    fromProps: props.semester,
+    fromActive: (getActiveAcademicYearSemester.value as any)?.id,
+  });
+  emit("update:semester", semesterValue);
 });
 
 const startTimeOptions = computed(() => {

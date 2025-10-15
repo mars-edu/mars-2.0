@@ -13,12 +13,13 @@ export interface WeeklySchedule {
 export interface CalendarEvent {
   id: string;
   class9Id: string;
+  teacherId?: string;
   startDate: string;
   startTime?: string;
   endDate: string;
   endTime?: string;
   participants: string[];
-  color?: string; // hex color code for the event
+  color?: string;
   semester: string;
   useCustomPeriod: boolean;
   weeklySchedules?: WeeklySchedule[];
@@ -32,9 +33,19 @@ export const useCalendarStore = defineStore(
     const events = ref<CalendarEvent[]>([]);
     const loading = ref(false);
     const error = ref<string | null>(null);
+    const selectedTeacherId = ref<string | null>(null);
 
     const getEventById = computed(() => {
       return (id: string) => events.value.find((e) => e.id === id);
+    });
+
+    const filteredEvents = computed(() => {
+      if (!selectedTeacherId.value) {
+        return events.value;
+      }
+      return events.value.filter(
+        (e) => e.teacherId === selectedTeacherId.value
+      );
     });
 
     const isLoading = computed(() => loading.value);
@@ -116,6 +127,10 @@ export const useCalendarStore = defineStore(
       }
     }
 
+    function setSelectedTeacher(teacherId: string | null) {
+      selectedTeacherId.value = teacherId;
+    }
+
     function clearError() {
       error.value = null;
     }
@@ -124,24 +139,30 @@ export const useCalendarStore = defineStore(
       events.value = [];
       loading.value = false;
       error.value = null;
+      selectedTeacherId.value = null;
     }
 
     return {
       events,
       loading,
       error,
+      selectedTeacherId,
       getEventById,
+      filteredEvents,
       isLoading,
       getError,
       getEventTitle,
       addEvent,
       updateEvent,
       deleteEvent,
+      setSelectedTeacher,
       clearError,
       reset,
     };
   },
   {
-    persist: true,
+    persist: {
+      paths: ["events", "loading", "error"],
+    },
   }
 );

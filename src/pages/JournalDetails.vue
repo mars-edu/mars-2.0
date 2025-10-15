@@ -14,29 +14,43 @@
         <div class="flex flex-col gap-4">
           <!-- Page Header -->
           <div class="flex items-center justify-between">
-            <div class="text-l font-semibold">
-              <p>
-                Результат обучения/дисциплина:
-                <span class="text-green-600">{{ currentClass9Text }}</span>
-              </p>
-              <p>
-                Учебная группа:
-                <span class="text-green-600">{{ currentJournal?.group }}</span>
-              </p>
+            <div class="flex items-center gap-3">
+              <f7-link
+                @click="handleBackClick"
+                class="back-button flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted transition-colors cursor-pointer"
+              >
+                <f7-icon
+                  f7="chevron_left"
+                  size="24px"
+                  class="text-foreground"
+                />
+              </f7-link>
+              <div class="text-l font-semibold">
+                <p>
+                  Результат обучения/дисциплина:
+                  <span class="text-green-600">{{ currentClass9Text }}</span>
+                </p>
+                <p>
+                  Учебная группа:
+                  <span class="text-green-600">{{
+                    currentJournal?.group
+                  }}</span>
+                </p>
+              </div>
             </div>
-            <div class="flex items-center gap-2">
-              <Select
-                v-model="selectedAcademicYear"
-                :options="academicYearOptions"
-                placeholder="Учебный год:"
-                name="academic-year"
-                class="w-[250px] !border !border-border !rounded-lg !h-10 !bg-white"
-              />
-              <f7-input
-                type="text"
-                placeholder="Семестр:"
-                class="!border !border-border !rounded-lg !w-36 !text-center !h-10 !bg-white"
-              />
+            <div class="flex flex-col items-end gap-1">
+              <p class="text-sm">
+                Учебный год:
+                <span class="text-green-600 font-medium">{{
+                  currentAcademicYearText
+                }}</span>
+              </p>
+              <p class="text-sm">
+                Семестр:
+                <span class="text-green-600 font-medium">{{
+                  currentSemesterText
+                }}</span>
+              </p>
             </div>
           </div>
 
@@ -360,7 +374,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import {
   f7Page,
   f7,
@@ -368,7 +382,6 @@ import {
   f7Link,
   f7Tabs,
   f7Tab,
-  f7Input,
   f7Icon,
   f7Popover,
 } from "framework7-vue";
@@ -378,7 +391,7 @@ import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useJournalStore } from "@/stores/journalStore";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useClass9Store } from "@/stores/class9Store";
-import Select from "@/components/ui/Select.vue";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import JournalTab from "@/components/JournalTab.vue";
 import FloatingJournalRow from "@/components/FloatingJournalRow.vue";
 import DateColumnFocus from "@/components/DateColumnFocus.vue";
@@ -393,22 +406,26 @@ const journalId = computed(() => {
 const activeNavItem = ref("journal-details");
 const activeTab = ref("journal");
 
+const handleBackClick = () => {
+  const from = f7.views.main.router.currentRoute.query.from as string;
+  if (from === "schedule") {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    f7.views.main.router.navigate(`/planning/${currentYear}/${currentMonth}/`);
+  } else {
+    f7.views.main.router.navigate("/journals/");
+  }
+};
+
 const academicYearStore = useAcademicYearStore();
 const { academicYears } = storeToRefs(academicYearStore);
 
 const journalStore = useJournalStore();
 const calendarStore = useCalendarStore();
+const academicYearSemesterStore = useAcademicYearSemesterStore();
 const class9Store = useClass9Store();
 const { class9Options } = storeToRefs(class9Store);
-
-const selectedAcademicYear = ref("");
-
-const academicYearOptions = computed(() =>
-  academicYears.value.map((year) => ({
-    value: year.id,
-    text: year.name,
-  }))
-);
 
 const currentJournal = computed(() => {
   if (!journalId.value) return null;
@@ -420,6 +437,25 @@ const currentClass9Text = computed(() => {
   if (!disciplineId) return "";
   const option = class9Options.value.find((o: any) => o.value === disciplineId);
   return option?.text || "";
+});
+
+const currentAcademicYearText = computed(() => {
+  const activeYear = academicYearStore.getActiveAcademicYear;
+  return activeYear?.name || "";
+});
+
+const currentSemesterText = computed(() => {
+  if (!journalId.value) return "—";
+  const event = calendarStore.getEventById(journalId.value);
+  if (!event || !event.semester) return "—";
+  const ays = (academicYearSemesterStore as any).getAcademicYearSemesterById
+    ? (academicYearSemesterStore as any).getAcademicYearSemesterById(
+        event.semester
+      )
+    : academicYearSemesterStore.academicYearSemesters.find(
+        (s: any) => s.id === event.semester
+      );
+  return ays ? `Семестр ${ays.semesterNumber}` : "—";
 });
 
 const selectedStudent = ref<any>(null);
@@ -511,9 +547,34 @@ const students = computed(() => {
   return journalTabRef.value?.students || [];
 });
 
-onMounted(async () => {
-  selectedAcademicYear.value =
-    academicYearStore.getActiveAcademicYear?.id || "";
+onMounted(() => {
+  const event = calendarStore.getEventById(journalId.value);
+  const semesterValue = event?.semester || "not set";
+  const ays =
+    semesterValue !== "not set"
+      ? (academicYearSemesterStore as any).getAcademicYearSemesterById
+        ? (academicYearSemesterStore as any).getAcademicYearSemesterById(
+            semesterValue
+          )
+        : academicYearSemesterStore.academicYearSemesters.find(
+            (s: any) => s.id === semesterValue
+          )
+      : null;
+  const semesterResolved = ays ? `Семестр ${ays.semesterNumber}` : "not set";
+
+  f7.dialog.alert(
+    `<div style="text-align: left;">
+      <p><strong>Journal ID:</strong> ${journalId.value}</p>
+      <p><strong>Event Found:</strong> ${event ? "Yes" : "No"}</p>
+      <p><strong>Event Semester (raw):</strong> ${semesterValue}</p>
+      <p><strong>Semester Resolved:</strong> ${semesterResolved}</p>
+      <p><strong>Academic Year:</strong> ${
+        currentAcademicYearText.value || "not set"
+      }</p>
+      <p><strong>Displayed Text:</strong> ${currentSemesterText.value}</p>
+    </div>`,
+    "Semester Debug Info"
+  );
 });
 </script>
 

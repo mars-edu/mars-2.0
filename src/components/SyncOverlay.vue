@@ -1,4 +1,6 @@
 <template>
+  <!-- Sync overlay always hidden - sync state popover disabled -->
+  <!--
   <transition name="fade">
     <div
       v-if="visible"
@@ -24,6 +26,7 @@
       </div>
     </div>
   </transition>
+  -->
 </template>
 
 <script setup lang="ts">
@@ -31,36 +34,39 @@ import { storeToRefs } from "pinia";
 import { useSyncStore } from "@/stores/syncStore";
 import Loader from "./Loader.vue";
 
-import { ref, onMounted, watch } from "vue";
-import { debounce } from "es-toolkit";
-const syncStore = useSyncStore();
-const { isSyncing, syncingList } = storeToRefs(syncStore);
+// Sync overlay always hidden - sync state popover disabled
+// import { ref, onMounted, watch } from "vue";
+// import { debounce } from "es-toolkit";
+// const syncStore = useSyncStore();
+// const { isSyncing, syncingList } = storeToRefs(syncStore);
 
-const visible = ref(false);
-const debouncedHide = debounce(() => {
-  visible.value = false;
-}, 250);
+// const visible = ref(false);
+// const debouncedHide = debounce(() => {
+//   visible.value = false;
+// }, 250);
 
-onMounted(() => {
-  syncStore.markMounted();
-});
+// onMounted(() => {
+//   syncStore.markMounted();
+// });
 
-watch(
-  () => isSyncing.value,
-  (now) => {
-    if (now) {
-      visible.value = true;
-      debouncedHide.cancel?.();
-    } else {
-      // Delay hide a bit to avoid flicker for very fast syncs
-      debouncedHide();
-    }
-  },
-  { immediate: true }
-);
+// watch(
+//   () => isSyncing.value,
+//   (now) => {
+//     if (now) {
+//       visible.value = true;
+//       debouncedHide.cancel?.();
+//     } else {
+//       // Delay hide a bit to avoid flicker for very fast syncs
+//       debouncedHide();
+//     }
+//   },
+//   { immediate: true }
+// );
 </script>
 
 <style scoped>
+/* Sync overlay styles commented out - overlay always hidden */
+/*
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;
@@ -69,4 +75,5 @@ watch(
 .fade-leave-to {
   opacity: 0;
 }
+*/
 </style>

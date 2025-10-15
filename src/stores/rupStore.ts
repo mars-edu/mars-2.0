@@ -18,6 +18,7 @@ export const useRupStore = defineStore(
 
     const selectedAcademicYearId = ref<string | null>(null);
     const selectedSpecialtyId = ref<string | null>(null);
+    const selectedTeacherId = ref<string | null>(null);
 
     const selectedClass9ItemId = ref<string | null>(null);
 
@@ -35,8 +36,10 @@ export const useRupStore = defineStore(
     function setSelectedSpecialty(id: string | null) {
       selectedSpecialtyId.value = id;
     }
+    function setSelectedTeacher(id: string | null) {
+      selectedTeacherId.value = id;
+    }
     function clearSelection() {
-      // selectedAcademicYearId.value = null;
       selectedSpecialtyId.value = null;
     }
 
@@ -134,6 +137,7 @@ export const useRupStore = defineStore(
     function reset() {
       selectedAcademicYearId.value = null;
       selectedSpecialtyId.value = null;
+      selectedTeacherId.value = null;
       targetSpecialtyId.value = null;
       targetAcademicYearId.value = null;
       selectedClass9ItemId.value = null;
@@ -144,10 +148,12 @@ export const useRupStore = defineStore(
     return {
       selectedAcademicYearId,
       selectedSpecialtyId,
+      selectedTeacherId,
       targetSpecialtyId,
       targetAcademicYearId,
       setSelectedAcademicYear,
       setSelectedSpecialty,
+      setSelectedTeacher,
       setTargetContext,
       clearTargetContext,
       clearSelection,

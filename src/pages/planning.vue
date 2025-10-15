@@ -13,7 +13,16 @@
       <Sidebar v-model:activeNavItem="activeNavItem" />
 
       <div ref="calendarContainer" class="calendar-container p-2 pl-52">
-        <!-- Calendar toolbar with navigation -->
+        <div v-if="userStore.isAdmin" class="mb-3 flex justify-end">
+          <Select
+            v-model="selectedTeacherId"
+            :options="teacherOptions"
+            placeholder="Преподаватель:"
+            name="teacher"
+            class="w-[250px]"
+            :searchable="true"
+          />
+        </div>
         <CalendarToolbar
           :search-placeholder="'Найти'"
           :month-name="monthName"
@@ -82,7 +91,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch, nextTick } from "vue";
+import { onMounted, ref, computed, watch, nextTick } from "vue";
 import { f7, f7ready, f7Page, f7PageContent } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import { useCalendar } from "@/composables/useCalendar";
@@ -92,15 +101,20 @@ import CalendarGrid from "@/components/Calendar/CalendarGrid.vue";
 import EditEventPopover from "@/components/Calendar/EditEventPopover.vue";
 import JournalPreviewPopover from "@/components/Calendar/JournalPreviewPopover.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
+import Select from "@/components/ui/Select.vue";
 import { type CalendarEvent as UseCalendarEvent } from "@/composables/useCalendar";
 import { type CalendarEvent as StoreCalendarEvent } from "@/stores/calendarStore";
 import { useCalendarStore } from "@/stores/calendarStore";
+import { useUserStore } from "@/stores/userStore";
+import { useTeacherStore } from "@/stores/teacherStore";
 
 const calendarContainer = ref<HTMLElement | null>(null);
 const activeNavItem = ref("calendar");
 
 const selectedEvent = ref<StoreCalendarEvent | null>(null);
 const calendarStore = useCalendarStore();
+const userStore = useUserStore();
+const teacherStore = useTeacherStore();
 
 // Sidebar is always visible; hover/teleport behavior removed
 
@@ -152,6 +166,23 @@ const navigationTabs = [
 
 const weekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
+const selectedTeacherId = computed({
+  get: () => calendarStore.selectedTeacherId || "",
+  set: (value: string) => calendarStore.setSelectedTeacher(value || null),
+});
+
+const teacherOptions = computed(() => teacherStore.teacherSelectOptions);
+
+const effectiveTeacherId = computed(() => {
+  if (userStore.isAdmin) {
+    return calendarStore.selectedTeacherId || undefined;
+  }
+  if (userStore.isTeacher) {
+    return userStore.currentUser?.id;
+  }
+  return undefined;
+});
+
 const onPageInit = () => {
   console.log("Planning page initialized");
 };
@@ -166,6 +197,10 @@ onMounted(() => {
     if (currentRoute.params) {
       setYear(currentRoute.params.year || "2025");
       setMonth(parseInt(currentRoute.params.month || "2") - 1);
+    }
+
+    if (userStore.isTeacher && userStore.currentUser?.id) {
+      calendarStore.setSelectedTeacher(userStore.currentUser.id);
     }
   });
 });
@@ -205,7 +240,7 @@ const handleEventUpdated = async (updatedEvent: any) => {
 };
 
 const goToJournalDetails = (id: number | string) => {
-  f7.views.main.router.navigate(`/journals/${id}`);
+  f7.views.main.router.navigate(`/journals/${id}?from=schedule`);
 };
 
 const openEditPopoverFromPreview = async () => {

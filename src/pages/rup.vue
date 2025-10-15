@@ -196,6 +196,7 @@
                       ref="class9TableRef"
                       :specialty-ids="[selectedSpecialtyId]"
                       :academic-year-id="selectedAcademicYear"
+                      :teacher-id="effectiveTeacherId"
                       :select-mode="isSelectMode"
                       @duplicate-item="handleDuplicateClass9Item"
                     />
@@ -267,10 +268,14 @@ import ImportWorkingPlanDialog from "@/components/ImportWorkingPlanDialog.vue";
 import FabActions from "@/components/FabActions.vue";
 import { useRupStore } from "@/stores/rupStore";
 import { useClass9Store, type Class9Data } from "@/stores/class9Store";
+import { useUserStore } from "@/stores/userStore";
+import { useTeacherStore } from "@/stores/teacherStore";
 
 const activeNavItem = ref("rup");
 const specialtyStore = useSpecialtyStore();
 const academicYearStore = useAcademicYearStore();
+const userStore = useUserStore();
+const teacherStore = useTeacherStore();
 
 const class9TableRef = ref<InstanceType<typeof Class9Table> | null>(null);
 
@@ -403,6 +408,23 @@ const selectedSpecialtyId = computed({
 });
 
 const selectedSpecialty = computed(() => rupStore.selectedSpecialty);
+
+const selectedTeacherId = computed({
+  get: () => rupStore.selectedTeacherId || "",
+  set: (value) => rupStore.setSelectedTeacher(value || null),
+});
+
+const teacherOptions = computed(() => teacherStore.teacherSelectOptions);
+
+const effectiveTeacherId = computed(() => {
+  if (userStore.isAdmin) {
+    return rupStore.selectedTeacherId || undefined;
+  }
+  if (userStore.isTeacher) {
+    return userStore.currentUser?.id;
+  }
+  return undefined;
+});
 
 onMounted(async () => {
   await specialtyStore.fetchSpecialties();
