@@ -9,7 +9,7 @@
 
       <!-- Main Content Area for Desktop -->
       <div
-        class="flex-1 overflow-y-auto p-4 bg-background text-foreground ml-52"
+        class="flex-1 overflow-y-auto p-4 bg-background text-foreground ml-32"
       >
         <div class="flex flex-row gap-4">
           <div class="flex-1 space-y-4 min-w-[60%]">

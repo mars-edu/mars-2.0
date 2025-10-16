@@ -268,24 +268,24 @@ defineExpose({
 
 <style scoped>
 .class9-table {
-  border: 1px solid rgb(209 213 219);
+  border: 1px solid hsl(var(--border));
   border-radius: 8px;
   overflow: hidden;
 }
 
 .ghost {
   opacity: 0.5;
-  background: #c8ebfb !important;
+  background: hsl(var(--muted)) !important;
   border: 1px dashed var(--f7-theme-color) !important;
 }
 
 .class9-table > div > div:hover {
-  background-color: rgb(218, 220, 223) !important;
+  background-color: hsl(var(--muted)) !important;
   cursor: pointer;
 }
 
 .is-selected {
-  background-color: rgb(201, 218, 248) !important;
+  background-color: hsl(var(--primary) / 0.15) !important;
   border: 1px solid var(--f7-theme-color) !important;
 }
 </style>

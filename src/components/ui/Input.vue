@@ -102,10 +102,10 @@ const onInput = (event: Event) => {
 }
 
 :deep(.has-data) {
-  background-color: rgb(218, 220, 223) !important;
+  background-color: hsl(var(--input)) !important;
 }
 
 :deep(.input:hover) {
-  background-color: rgb(218, 220, 223) !important;
+  background-color: hsl(var(--input)) !important;
 }
 </style>

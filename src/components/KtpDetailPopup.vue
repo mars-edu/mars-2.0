@@ -789,7 +789,7 @@ watch(opened, (isOpened) => {
 .separator-vertical {
   width: 1px;
   height: 24px;
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: hsl(var(--border));
   margin: 0 8px;
   flex-shrink: 0;
 }

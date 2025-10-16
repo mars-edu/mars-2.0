@@ -272,7 +272,8 @@ const isOptionSelected = (option: SelectOption) => {
 .smart-select-list-container {
   border-radius: 0.5rem;
   border: 1px solid transparent;
-  background-color: hsl(var(--background));
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
   --f7-list-item-padding-horizontal: 0px;
   --f7-list-item-padding-vertical: 0px;
   --f7-list-item-min-height: auto;
@@ -281,6 +282,7 @@ const isOptionSelected = (option: SelectOption) => {
 
 .smart-select-list-container:hover {
   border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
 }
 
 .smart-select-list-container .f7-list-item {
@@ -302,6 +304,7 @@ const isOptionSelected = (option: SelectOption) => {
   align-items: center;
   border-bottom: none;
   position: relative;
+  color: hsl(var(--card-foreground));
 }
 
 .smart-select-list-container .f7-list-item .item-content .item-inner::after {
@@ -328,6 +331,7 @@ const isOptionSelected = (option: SelectOption) => {
   flex-shrink: 0;
   margin-right: 0.5rem;
   font-weight: 500;
+  color: hsl(var(--card-foreground));
 }
 
 .smart-select-list-container
@@ -341,6 +345,7 @@ const isOptionSelected = (option: SelectOption) => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: hsl(var(--muted-foreground));
 }
 
 .smart-select-list-container
@@ -361,12 +366,9 @@ const isOptionSelected = (option: SelectOption) => {
 }
 
 .smart-select-list-container .item-after {
-  margin-left: 0 !important;
-  max-width: none;
-  @apply text-sm;
-  padding-top: 0;
-  padding-bottom: 0;
-  @apply text-foreground;
+  white-space: nowrap;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 /* Normalize text line-height to keep equal height for placeholder vs value */
@@ -376,6 +378,9 @@ const isOptionSelected = (option: SelectOption) => {
 }
 
 .popover .list {
-  @apply mt-2;
+  @apply mt-2 bg-card text-card-foreground;
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 </style>

@@ -79,13 +79,13 @@ export function useRBAC() {
       //   roles: [Role.ADMIN, Role.TEACHER],
       //   route: "/testing/",
       // },
-      // {
-      //   id: "report-editor",
-      //   label: "Редактор отчетов",
-      //   icon: "doc_text_fill",
-      //   roles: [Role.ADMIN],
-      //   route: "/report-editor/",
-      // },
+      {
+        id: "analytics",
+        label: "Аналитика",
+        icon: "chart_bar_fill",
+        roles: [Role.ADMIN],
+        route: "/analytics/",
+      },
       // {
       //   id: "room-booking",
       //   label: "Бронирование кабинета",

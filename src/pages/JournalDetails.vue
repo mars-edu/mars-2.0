@@ -9,7 +9,7 @@
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-52"
+        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-32"
       >
         <div class="flex flex-col gap-4">
           <!-- Page Header -->
@@ -548,33 +548,7 @@ const students = computed(() => {
 });
 
 onMounted(() => {
-  const event = calendarStore.getEventById(journalId.value);
-  const semesterValue = event?.semester || "not set";
-  const ays =
-    semesterValue !== "not set"
-      ? (academicYearSemesterStore as any).getAcademicYearSemesterById
-        ? (academicYearSemesterStore as any).getAcademicYearSemesterById(
-            semesterValue
-          )
-        : academicYearSemesterStore.academicYearSemesters.find(
-            (s: any) => s.id === semesterValue
-          )
-      : null;
-  const semesterResolved = ays ? `Семестр ${ays.semesterNumber}` : "not set";
-
-  f7.dialog.alert(
-    `<div style="text-align: left;">
-      <p><strong>Journal ID:</strong> ${journalId.value}</p>
-      <p><strong>Event Found:</strong> ${event ? "Yes" : "No"}</p>
-      <p><strong>Event Semester (raw):</strong> ${semesterValue}</p>
-      <p><strong>Semester Resolved:</strong> ${semesterResolved}</p>
-      <p><strong>Academic Year:</strong> ${
-        currentAcademicYearText.value || "not set"
-      }</p>
-      <p><strong>Displayed Text:</strong> ${currentSemesterText.value}</p>
-    </div>`,
-    "Semester Debug Info"
-  );
+  // Semester debug info removed
 });
 </script>
 

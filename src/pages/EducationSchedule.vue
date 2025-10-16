@@ -9,7 +9,7 @@
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-52"
+        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-32"
       >
         <div
           class="bg-card text-card-foreground rounded-xl p-4 md:p-4 shadow-sm"

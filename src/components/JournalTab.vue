@@ -1433,7 +1433,7 @@ watch(
 );
 
 // Rebuild marks when sessions list changes (ensures session columns appear on load)
-const rebuildMarks = () => {
+const rebuildMarks = async () => {
   if (!(props.journalId && currentJournal.value?.students?.length)) return;
   const markTemplate = generateDates();
   marksStore.initializeJournalMarks(

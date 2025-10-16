@@ -1,46 +1,54 @@
 <template>
   <aside
-    class="fixed top-[64px] left-0 w-52 bg-card border-r border-border flex flex-col h-[calc(100vh-64px)] z-40 overflow-y-auto shadow-sm justify-between"
+    class="fixed top-[55px] left-0 bottom-0 w-28 bg-card border-r border-border overflow-hidden z-50 shadow-sm"
+    style="display: grid; grid-template-rows: 1fr auto"
   >
-    <div class="flex-1 overflow-y-auto w-full">
-      <nav class="p-3">
-        <div class="space-y-1 mt-2">
-          <div
-            v-for="item in navigationItems"
-            :key="item.id"
-            class="group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium cursor-pointer transition-all duration-200"
-            :class="[
-              item.id === activeNavItem
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted',
-            ]"
-            @click="handleNavItemClick(item.id)"
+    <div class="overflow-y-auto w-full">
+      <nav class="flex flex-col items-center py-6 space-y-2">
+        <div
+          v-for="item in navigationItems"
+          :key="item.id"
+          :title="item.label"
+          class="group relative flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all duration-200 px-2 py-2 flex-shrink-0"
+          :class="[
+            item.id === activeNavItem
+              ? 'bg-primary/10 text-primary'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+          ]"
+          @click="handleNavItemClick(item.id)"
+        >
+          <i class="f7-icons text-[22px]">{{ item.icon }}</i>
+          <span
+            class="text-[10px] mt-1 text-center leading-tight max-w-[90px] break-words hyphens-auto"
+            style="hyphens: auto; -webkit-hyphens: auto; -ms-hyphens: auto"
+            >{{ item.label }}</span
           >
-            <i v-if="item.icon" class="f7-icons text-[16px] flex-shrink-0">{{
-              item.icon
-            }}</i>
-            <span>{{ item.label }}</span>
-            <div
-              v-if="item.id === activeNavItem"
-              class="absolute left-0 top-0 h-full w-1.5 bg-amber-400 rounded-l-full"
-            ></div>
-          </div>
+          <div
+            v-if="item.id === activeNavItem"
+            class="absolute bottom-1 w-1 h-1 bg-primary rounded-full"
+          ></div>
         </div>
       </nav>
     </div>
 
-    <div class="border-t border-border bg-card p-3 shrink-0">
+    <div class="border-t border-border bg-card p-3">
       <div class="space-y-1">
         <div
           v-for="item in profileMenuItems"
           :key="item.id"
-          class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm cursor-pointer transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-muted"
+          :title="item.label"
+          class="group relative flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all duration-200 px-2 py-2 flex-shrink-0"
+          :class="[
+            'text-muted-foreground hover:text-foreground hover:bg-muted',
+          ]"
           @click="handleProfileItemClick(item.id)"
         >
-          <i v-if="item.icon" class="f7-icons text-[16px] flex-shrink-0">{{
-            item.icon
-          }}</i>
-          <span>{{ item.label }}</span>
+          <i class="f7-icons text-[22px]">{{ item.icon }}</i>
+          <span
+            class="text-[10px] mt-1 text-center leading-tight max-w-[90px] break-words hyphens-auto"
+            style="hyphens: auto; -webkit-hyphens: auto; -ms-hyphens: auto"
+            >{{ item.label }}</span
+          >
         </div>
       </div>
     </div>
@@ -96,6 +104,14 @@ const handleProfileItemClick = async (itemId: string): Promise<void> => {
     f7.views.main.router.navigate(item.route);
   }
 };
+
+const userInitial = computed(() => {
+  const user = userStore.currentUser;
+  if (user?.firstName) {
+    return user.firstName.charAt(0).toUpperCase();
+  }
+  return "S";
+});
 
 const updateActiveItem = () => {
   const currentPath = f7.views.main.router.currentRoute.path;

@@ -26,7 +26,7 @@
       </div>
 
       <!-- Main Content Skeleton -->
-      <div class="flex-1 overflow-y-auto p-3 md:p-4 bg-background md:ml-52">
+      <div class="flex-1 overflow-y-auto p-3 md:p-4 bg-background md:ml-32">
         <!-- Alert/Info Bar Skeleton -->
         <div class="mb-4">
           <div class="bg-muted/50 h-16 animate-pulse rounded-lg"></div>

@@ -75,7 +75,7 @@ const themeStore = useThemeStore();
 }
 
 .notification-icon {
-  color: #e53935;
+  color: hsl(var(--primary));
   font-size: 22px;
   padding: 8px;
   border-radius: 50%;
@@ -83,7 +83,7 @@ const themeStore = useThemeStore();
 }
 
 .notification-icon:hover {
-  background-color: rgba(229, 57, 53, 0.1);
+  background-color: rgba(var(--primary-rgb), 0.1);
 }
 
 .language-selector {
@@ -114,6 +114,6 @@ const themeStore = useThemeStore();
 }
 
 .avatar-container:hover .user-avatar {
-  border-color: #e53935;
+  border-color: hsl(var(--primary));
 }
 </style>

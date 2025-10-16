@@ -5,7 +5,7 @@ import type { Mark, StudentMark, JournalMarks } from "@/types/marks";
 export const useMarksStore = defineStore(
   "marks",
   () => {
-    const journalMarks = ref<Map<string, JournalMarks>>(new Map());
+    const journalMarks = ref<Record<string, JournalMarks>>({});
     const loading = ref(false);
     const error = ref<string | null>(null);
 
@@ -15,7 +15,7 @@ export const useMarksStore = defineStore(
     const getJournalMarks = computed(() => {
       return (journalId: string): JournalMarks | null => {
         console.log("[marksStore] Getting journal marks for:", journalId);
-        const result = journalMarks.value.get(journalId) || null;
+        const result = journalMarks.value[journalId] || null;
         console.log("[marksStore] Journal marks result:", result);
         return result;
       };
@@ -28,7 +28,7 @@ export const useMarksStore = defineStore(
           journalId,
           studentId,
         });
-        const journal = journalMarks.value.get(journalId);
+        const journal = journalMarks.value[journalId];
         console.log("[marksStore] Found journal:", !!journal);
         if (!journal) {
           console.log("[marksStore] No journal found for ID:", journalId);
@@ -61,9 +61,38 @@ export const useMarksStore = defineStore(
       });
       console.log("[marksStore] Student IDs:", studentIds);
       console.log("[marksStore] Mark template:", markTemplate);
+      console.log(
+        "[marksStore] Current journalMarks in memory:",
+        Object.keys(journalMarks.value)
+      );
 
-      const existingJournal = journalMarks.value.get(journalId);
-      console.log("[marksStore] Existing journal found:", !!existingJournal);
+      // Check immediately for existing data
+      // The persist plugin should restore data synchronously if available
+      const existingJournal = journalMarks.value[journalId];
+      console.log(
+        "[marksStore] Existing journal found (immediate check):",
+        !!existingJournal
+      );
+
+      if (existingJournal) {
+        console.log("[marksStore] Existing journal details:", {
+          studentCount: existingJournal.studentMarks.length,
+          marksPerStudent: existingJournal.studentMarks[0]?.marks.length,
+          lastUpdated: existingJournal.lastUpdated,
+        });
+      }
+
+      // If journal already exists with matching students, don't reinitialize
+      if (
+        existingJournal &&
+        existingJournal.studentMarks.length === studentIds.length &&
+        existingJournal.studentMarks.length > 0
+      ) {
+        console.log(
+          "[marksStore] Journal already exists with correct student count, skipping reinitialization"
+        );
+        return;
+      }
 
       // If journal already exists, update marks template and add new students
       if (existingJournal) {
@@ -98,35 +127,10 @@ export const useMarksStore = defineStore(
                 index < updatedMarks.length &&
                 updatedMarks[index].type === existingMark.type
               ) {
-                const targetLen = updatedMarks[index].values.length;
-                const adjustedValues = existingMark.values.slice(0, targetLen);
-                while (adjustedValues.length < targetLen) {
-                  adjustedValues.push(null);
-                }
-                updatedMarks[index].values = adjustedValues;
+                updatedMarks[index] = existingMark;
               }
             });
-
             studentMark.marks = updatedMarks;
-          });
-        } else {
-          // Even if total marks length is same, ensure per-column values length match template
-          existingJournal.studentMarks.forEach((studentMark) => {
-            studentMark.marks = studentMark.marks.map((existingMark, index) => {
-              const target = markTemplate[index];
-              if (!target || target.type !== existingMark.type)
-                return existingMark;
-              const targetLen = target.values.length;
-              if (existingMark.values.length === targetLen) return existingMark;
-              const adjustedValues = existingMark.values.slice(0, targetLen);
-              while (adjustedValues.length < targetLen) {
-                adjustedValues.push(null);
-              }
-              return {
-                ...existingMark,
-                values: adjustedValues,
-              };
-            });
           });
         }
 
@@ -146,8 +150,8 @@ export const useMarksStore = defineStore(
           "[marksStore] Updated existing journal, total students:",
           existingJournal.studentMarks.length
         );
-        // force reactivity for persistence
-        journalMarks.value = new Map(journalMarks.value);
+        // Trigger reactivity for persistence
+        journalMarks.value = { ...journalMarks.value };
         return;
       }
 
@@ -161,14 +165,24 @@ export const useMarksStore = defineStore(
         lastUpdated: new Date().toISOString(),
       };
 
-      journalMarks.value.set(journalId, newJournalMarks);
+      journalMarks.value[journalId] = newJournalMarks;
       console.log("[marksStore] Created new journal marks:", {
         journalId,
         studentCount: newJournalMarks.studentMarks.length,
-        totalJournals: journalMarks.value.size,
+        totalJournals: Object.keys(journalMarks.value).length,
       });
-      // force reactivity for persistence
-      journalMarks.value = new Map(journalMarks.value);
+      // Trigger reactivity for persistence
+      console.log("[marksStore] BEFORE SPREAD - persisting marks");
+      journalMarks.value = { ...journalMarks.value };
+      console.log("[marksStore] AFTER SPREAD - marks persisted via reactivity");
+      console.log(
+        "[marksStore] After patch, journalMarks keys:",
+        Object.keys(journalMarks.value)
+      );
+      console.log(
+        "[marksStore] Data that should be persisted:",
+        JSON.stringify(journalMarks.value[journalId]).substring(0, 200)
+      );
     };
 
     // Update a specific mark for a student
@@ -187,7 +201,7 @@ export const useMarksStore = defineStore(
         value,
       });
 
-      const journal = journalMarks.value.get(journalId);
+      const journal = journalMarks.value[journalId];
       if (!journal) {
         console.log("[marksStore] Journal not found for update:", journalId);
         return false;
@@ -215,8 +229,8 @@ export const useMarksStore = defineStore(
           newValue: value,
           timestamp: journal.lastUpdated,
         });
-        // force reactivity for persistence
-        journalMarks.value = new Map(journalMarks.value);
+        // Trigger reactivity for persistence
+        journalMarks.value = { ...journalMarks.value };
         return true;
       }
 
@@ -236,7 +250,7 @@ export const useMarksStore = defineStore(
       markIndex: number,
       values: Array<string | null>
     ) => {
-      const journal = journalMarks.value.get(journalId);
+      const journal = journalMarks.value[journalId];
       if (!journal) return false;
 
       const studentMark = journal.studentMarks.find(
@@ -259,8 +273,8 @@ export const useMarksStore = defineStore(
         oldValues,
         newValues: adjustedValues,
       });
-      // force reactivity for persistence
-      journalMarks.value = new Map(journalMarks.value);
+      // Trigger reactivity for persistence
+      journalMarks.value = { ...journalMarks.value };
       return true;
     };
 
@@ -276,7 +290,7 @@ export const useMarksStore = defineStore(
         marksCount: marks.length,
       });
 
-      const journal = journalMarks.value.get(journalId);
+      const journal = journalMarks.value[journalId];
       if (!journal) {
         console.log(
           "[marksStore] Journal not found for student marks update:",
@@ -305,8 +319,8 @@ export const useMarksStore = defineStore(
         newMarksCount: marks.length,
         timestamp: journal.lastUpdated,
       });
-      // force reactivity for persistence
-      journalMarks.value = new Map(journalMarks.value);
+      // Trigger reactivity for persistence
+      journalMarks.value = { ...journalMarks.value };
       return true;
     };
 
@@ -315,7 +329,7 @@ export const useMarksStore = defineStore(
       journalId: string,
       studentMarks: { studentId: string; marks: Mark[] }[]
     ) => {
-      const journal = journalMarks.value.get(journalId);
+      const journal = journalMarks.value[journalId];
       if (!journal) return false;
 
       studentMarks.forEach(({ studentId, marks }) => {
@@ -330,8 +344,8 @@ export const useMarksStore = defineStore(
       });
 
       journal.lastUpdated = new Date().toISOString();
-      // force reactivity for persistence
-      journalMarks.value = new Map(journalMarks.value);
+      // Trigger reactivity for persistence
+      journalMarks.value = { ...journalMarks.value };
       return true;
     };
 
@@ -342,7 +356,7 @@ export const useMarksStore = defineStore(
           "[marksStore] Getting all journal student marks for:",
           journalId
         );
-        const journal = journalMarks.value.get(journalId);
+        const journal = journalMarks.value[journalId];
         if (!journal) {
           console.log(
             "[marksStore] No journal found for student marks:",
@@ -366,15 +380,18 @@ export const useMarksStore = defineStore(
 
     // Delete marks for a journal
     const deleteJournalMarks = (journalId: string) => {
-      const result = journalMarks.value.delete(journalId);
-      // force reactivity for persistence
-      journalMarks.value = new Map(journalMarks.value);
-      return result;
+      const exists = journalId in journalMarks.value;
+      if (exists) {
+        delete journalMarks.value[journalId];
+        // Trigger reactivity for persistence
+        journalMarks.value = { ...journalMarks.value };
+      }
+      return exists;
     };
 
     // Delete marks for a specific student in a journal
     const deleteStudentMarks = (journalId: string, studentId: string) => {
-      const journal = journalMarks.value.get(journalId);
+      const journal = journalMarks.value[journalId];
       if (!journal) return false;
 
       const index = journal.studentMarks.findIndex(
@@ -384,22 +401,22 @@ export const useMarksStore = defineStore(
 
       journal.studentMarks.splice(index, 1);
       journal.lastUpdated = new Date().toISOString();
-      // force reactivity for persistence
-      journalMarks.value = new Map(journalMarks.value);
+      // Trigger reactivity for persistence
+      journalMarks.value = { ...journalMarks.value };
       return true;
     };
 
     // Clear all marks data
     const clearAllMarks = () => {
-      journalMarks.value.clear();
-      // force reactivity for persistence
-      journalMarks.value = new Map(journalMarks.value);
+      journalMarks.value = {};
+      // Trigger reactivity for persistence
+      journalMarks.value = { ...journalMarks.value };
     };
 
     // Get statistics for a journal
     const getJournalStats = computed(() => {
       return (journalId: string) => {
-        const journal = journalMarks.value.get(journalId);
+        const journal = journalMarks.value[journalId];
         if (!journal) return null;
 
         const totalStudents = journal.studentMarks.length;
@@ -426,13 +443,13 @@ export const useMarksStore = defineStore(
     // Debug method to log current state
     const debugState = () => {
       console.log("[marksStore] Current state:", {
-        totalJournals: journalMarks.value.size,
-        journals: Array.from(journalMarks.value.keys()),
+        totalJournals: Object.keys(journalMarks.value).length,
+        journals: Object.keys(journalMarks.value),
         loading: loading.value,
         error: error.value,
       });
 
-      journalMarks.value.forEach((journal, journalId) => {
+      Object.entries(journalMarks.value).forEach(([journalId, journal]) => {
         console.log(`[marksStore] Journal ${journalId}:`, {
           studentCount: journal.studentMarks.length,
           lastUpdated: journal.lastUpdated,
@@ -460,9 +477,8 @@ export const useMarksStore = defineStore(
     };
   },
   {
-    persist: {
-      key: "marks",
-      paths: ["journalMarks"],
+    serverSync: {
+      enabled: true,
     },
   }
 );

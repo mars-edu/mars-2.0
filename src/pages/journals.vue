@@ -9,27 +9,29 @@
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-52"
+        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-32"
       >
         <div class="flex flex-col gap-4">
           <div
             class="flex flex-col md:flex-row md:items-center justify-between gap-3 journals-page-header"
           >
             <h1 class="text-2xl font-semibold">Журналы</h1>
-            <div class="flex items-center gap-3">
+            <div
+              class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto"
+            >
               <Select
                 v-model="selectedAcademicYearModel"
                 :options="academicYearOptions"
                 placeholder="Учебный год:"
                 name="academic-year"
-                class="w-44"
+                class="w-full sm:w-44"
               />
               <Select
                 v-model="selectedSemesterId"
                 :options="semesterOptions"
                 placeholder="Семестр:"
                 name="semester"
-                class="w-44"
+                class="w-full sm:w-44"
               />
               <Select
                 v-if="userStore.isAdmin"
@@ -37,7 +39,7 @@
                 :options="teacherOptions"
                 placeholder="Преподаватель:"
                 name="teacher"
-                class="w-44"
+                class="w-full sm:w-44"
               />
             </div>
           </div>
@@ -51,35 +53,35 @@
                 :options="disciplineOptions"
                 placeholder="Дисциплина"
                 name="discipline"
-                class="flex-1 min-w-[200px]"
+                class="flex-1 min-w-[150px] sm:min-w-[200px]"
               />
               <Select
                 v-model="selectedTerm"
                 :options="termOptions"
                 placeholder="Срок обучения"
                 name="term"
-                class="flex-1 min-w-[200px]"
+                class="flex-1 min-w-[150px] sm:min-w-[200px]"
               />
               <Select
                 v-model="selectedStatus"
                 :options="statusOptions"
                 placeholder="Статус"
                 name="status"
-                class="flex-1 min-w-[200px]"
+                class="flex-1 min-w-[150px] sm:min-w-[200px]"
               />
               <Select
                 v-model="selectedGroup"
                 :options="groupOptions"
                 placeholder="Группа"
                 name="group"
-                class="flex-1 min-w-[200px]"
+                class="flex-1 min-w-[150px] sm:min-w-[200px]"
               />
               <Select
                 v-model="selectedRole"
                 :options="roleOptions"
                 placeholder="Роль"
                 name="role"
-                class="flex-1 min-w-[200px]"
+                class="flex-1 min-w-[150px] sm:min-w-[200px]"
               />
             </div>
             <div class="mb-3 flex flex-wrap gap-2 items-center justify-end">
@@ -88,7 +90,7 @@
                   small
                   default
                   @click="selectAll"
-                  class="bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+                  class="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex-1 sm:flex-none"
                 >
                   <f7-icon
                     ios="f7:checkmark_circle"
@@ -102,7 +104,7 @@
                   small
                   default
                   @click="deselectAll"
-                  class="bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+                  class="bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex-1 sm:flex-none"
                 >
                   <f7-icon
                     ios="f7:xmark_circle"
@@ -116,7 +118,7 @@
                   small
                   default
                   @click="onDownloadClick"
-                  class="bg-primary text-white hover:bg-primary-dark transition-colors"
+                  class="bg-primary text-white hover:bg-primary-dark transition-colors flex-1 sm:flex-none"
                   :disabled="selectedJournalIds.size === 0"
                 >
                   <f7-icon
@@ -134,7 +136,7 @@
                   small
                   default
                   @click="onSettingsClick"
-                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
                   <f7-icon
                     ios="f7:gear"
@@ -148,7 +150,7 @@
                   small
                   default
                   @click="onCloseJournalClick"
-                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
                   <f7-icon
                     ios="f7:xmark_circle"
@@ -162,7 +164,7 @@
                   small
                   default
                   @click="onDownloadClick"
-                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
                   <f7-icon
                     ios="f7:arrow_down_to_line"
@@ -176,7 +178,7 @@
                   small
                   default
                   @click="onUploadClick"
-                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
                   <f7-icon
                     ios="f7:arrow_up_to_line"
@@ -190,7 +192,7 @@
                   small
                   default
                   @click="onShareClick"
-                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
                   <f7-icon
                     ios="f7:share"
@@ -562,10 +564,39 @@ function onShareClick() {
 
 <style>
 .journals-page-header .smart-select-list-container {
-  background-color: #ffffff !important;
+  background-color: hsl(var(--card)) !important;
 }
 
 .journals-page-header .smart-select-list-container .item-inner {
-  background-color: #ffffff !important;
+  background-color: hsl(var(--card)) !important;
+}
+
+.smart-select-list-container .item-after {
+  white-space: nowrap;
+  word-break: normal;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.popover.smart-select-popover {
+  max-width: calc(100vw - 20px);
+}
+
+.popover.smart-select-popover .list {
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+@media (max-width: 640px) {
+  .journals-page-header {
+    gap: 0.75rem;
+  }
+
+  .journals-page-header .smart-select-list-container {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
 }
 </style>
