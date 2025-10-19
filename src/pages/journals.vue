@@ -294,6 +294,13 @@ import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { useUserStore } from "@/stores/userStore";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useTeacherStore } from "@/stores/teacherStore";
+import { useStudentStore } from "@/stores/studentStore";
+import { useSpecialtyStore } from "@/stores/specialtyStore";
+import {
+  exportJournalToExcel,
+  type JournalStudentRow,
+} from "@/services/journal-export";
+import { importJournalFromExcel } from "@/services/excel-parser";
 
 const activeNavItem = ref("journals");
 
@@ -301,7 +308,10 @@ const journalStore = useJournalStore();
 const userStore = useUserStore();
 const calendarStore = useCalendarStore();
 const teacherStore = useTeacherStore();
+const studentStore = useStudentStore();
+const specialtyStore = useSpecialtyStore();
 const { journalsByCourse, mixedGroupJournals } = storeToRefs(journalStore);
+const { students } = storeToRefs(studentStore);
 
 const courseStore = useCourseStore();
 const { courses } = storeToRefs(courseStore);
@@ -468,69 +478,104 @@ function toggleJournalSelection(id: string) {
 }
 
 async function downloadSelectedJournals() {
-  const XLSX = await import("xlsx");
-  const JSZip = (await import("jszip")).default;
-  const { saveAs } = await import("file-saver");
+  try {
+    const JSZip = (await import("jszip")).default;
+    const { saveAs } = await import("file-saver");
 
-  const zip = new JSZip();
+    const zip = new JSZip();
+    const templateUrl = encodeURI(
+      "/journal_templates/1_семестр_РО_4_1_ВА22_академическое_рус_яз_,_ВЭ22_эстрадное_рус.xlsx"
+    );
 
-  selectedJournalIds.value.forEach((journalId) => {
-    let journal: any = null;
+    const exportTasks: Promise<void>[] = [];
 
-    for (const courseNumber in journalsByCourse.value) {
-      const found = journalsByCourse.value[courseNumber].find(
-        (j) => j.id === journalId
-      );
-      if (found) {
-        journal = found;
-        break;
+    selectedJournalIds.value.forEach((journalId) => {
+      let journal: Journal | null = null;
+
+      for (const courseNumber in journalsByCourse.value) {
+        const found = journalsByCourse.value[courseNumber].find(
+          (j) => j.id === journalId
+        );
+        if (found) {
+          journal = found;
+          break;
+        }
       }
-    }
 
-    if (!journal) {
-      journal = mixedGroupJournals.value.find((j) => j.id === journalId);
-    }
+      if (!journal) {
+        journal = mixedGroupJournals.value.find((j) => j.id === journalId) ?? null;
+      }
 
-    if (!journal) return;
+      if (!journal) return;
 
-    const worksheetData = [
-      ["Информация о журнале"],
-      [""],
-      ["Название", journalStore.getDisciplineTitle(journal)],
-      ["Курс и группа", journalStore.getJournalSubtitle(journal)],
-      ["Расписание", journalStore.getJournalScheduleText(journal)],
-      ["Прогресс", `${journalStore.getJournalPercent(journal)}%`],
-      [""],
-      ["Данные студентов"],
-      ["№", "Студент", "Посещаемость", "Оценка"],
-    ];
+      const event = calendarStore.getEventById(journal.id);
 
-    journal.students?.forEach((studentId: string, index: number) => {
-      worksheetData.push([(index + 1).toString(), studentId, "", ""]);
+      const studentRows: JournalStudentRow[] = (journal.students || []).map(
+        (studentId) => ({
+          id: studentId,
+          fullName: studentStore.getStudentFullName(studentId),
+        })
+      );
+
+      const primaryStudentId = journal.students?.[0];
+      const primaryStudent = primaryStudentId
+        ? students.value.find((s) => s.id === primaryStudentId)
+        : undefined;
+      const specialty = primaryStudent?.specialty
+        ? specialtyStore.getSpecialtyByCode(primaryStudent.specialty)
+        : undefined;
+
+      const academicYearId = selectedItemsStore.selectedAcademicYearId;
+      const academicYear = academicYearId
+        ? academicYearStore.getAcademicYearById(academicYearId)
+        : academicYearStore.getActiveAcademicYear;
+
+      const academicYearLabel = academicYear
+        ? `${academicYear.startYear}/${academicYear.endYear}`
+        : "";
+
+      const teacherName = event?.teacherId
+        ? teacherStore.getTeacherFullName(event.teacherId)
+        : "";
+
+      const disciplineTitle = journalStore.getDisciplineTitle(journal);
+      const groupTitle = journalStore.getJournalTitle(journal);
+
+      const filename = `${disciplineTitle}_${groupTitle}`
+        .replace(/[^a-zA-Zа-яА-Я0-9_\-\.]/g, "_")
+        .concat(".xlsx");
+
+      exportTasks.push(
+        exportJournalToExcel({
+          templateUrl,
+          groupName: groupTitle,
+          courseLabel: journal.courseNumber.toString(),
+          specialtyLabel: specialty
+            ? `${specialty.code} - ${specialty.name}`
+            : undefined,
+          academicYearLabel,
+          disciplineTitle,
+          teacherFullName: teacherName,
+          students: studentRows,
+          calendarEvent: event ?? undefined,
+        }).then((buffer) => {
+          zip.file(filename, buffer);
+        })
+      );
     });
 
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Журнал");
+    await Promise.all(exportTasks);
 
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
+    const content = await zip.generateAsync({ type: "blob" });
+    const date = new Date().toISOString().split("T")[0];
+    saveAs(content, `journals-${date}.zip`);
 
-    const filename = `${journalStore.getDisciplineTitle(journal)}_${
-      journal.group
-    }.xlsx`.replace(/[^a-zA-Zа-яА-Я0-9_\-\.]/g, "_");
-
-    zip.file(filename, excelBuffer);
-  });
-
-  const content = await zip.generateAsync({ type: "blob" });
-  const date = new Date().toISOString().split("T")[0];
-  saveAs(content, `journals-${date}.zip`);
-
-  isSelectionMode.value = false;
-  selectedJournalIds.value.clear();
+    isSelectionMode.value = false;
+    selectedJournalIds.value.clear();
+  } catch (error) {
+    console.error("Failed to export journals", error);
+    f7.dialog.alert("Не удалось сформировать журналы. Попробуйте еще раз.");
+  }
 }
 
 function onSettingsClick() {
@@ -554,7 +599,66 @@ function onDownloadClick() {
 }
 
 function onUploadClick() {
-  f7.dialog.alert("Загрузить данные в журналы");
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".xlsx,.xls";
+  input.multiple = false;
+
+  input.onchange = async (event) => {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
+    if (!file) return;
+
+    try {
+      f7.preloader.show();
+      const summary = await importJournalFromExcel(file);
+      f7.preloader.hide();
+
+      if (summary.issues.some((issue) => issue.type === "error")) {
+        const errorText = summary.issues
+          .filter((issue) => issue.type === "error")
+          .map((issue) => `• ${issue.message}`)
+          .join("\n");
+        f7.dialog.alert(errorText || "Не удалось импортировать журнал");
+        return;
+      }
+
+      const warnings = summary.issues
+        .filter((issue) => issue.type === "warning")
+        .map((issue) => `• ${issue.message}`)
+        .join("\n");
+
+      const result = summary.result;
+      if (!result) {
+        f7.dialog.alert("Файл обработан, но данные журнала не получены");
+        return;
+      }
+
+      const messageParts = [
+        `<b>Группа:</b> ${result.metadata.groupName || "не указана"}`,
+        `<b>Курс:</b> ${result.metadata.courseLabel || "-"}`,
+        `<b>Специальность:</b> ${result.metadata.specialtyLabel || "-"}`,
+        `<b>Учебный год:</b> ${result.metadata.academicYearLabel || "-"}`,
+        `<b>Дисциплина:</b> ${result.metadata.disciplineTitle || "-"}`,
+        `<b>Преподаватель:</b> ${result.metadata.teacherFullName || "-"}`,
+        `<b>Студентов:</b> ${result.students.length}`,
+        `<b>Дата столбцов:</b> ${result.metadata.lessonDates.join(", ") || "-"}`,
+      ];
+
+      if (warnings) {
+        messageParts.push(`<br/><b>Предупреждения:</b><br/>${warnings.replace(/\n/g, "<br/>")}`);
+      }
+
+      f7.dialog.alert(messageParts.join("<br/>") || "Импорт завершён");
+    } catch (error) {
+      f7.preloader.hide();
+      const message =
+        error instanceof Error ? error.message : "Не удалось импортировать журнал";
+      f7.dialog.alert(message);
+    }
+  };
+
+  input.click();
 }
 
 function onShareClick() {

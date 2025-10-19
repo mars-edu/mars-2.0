@@ -135,6 +135,8 @@
                   ref="journalTabRef"
                   :journal-id="journalId"
                   :journal-settings="journalSettings"
+                  @download="onDownloadClick"
+                  @upload="onUploadClick"
                   @show-floating-row="showFloatingRow"
                   @open-date-focus="openDateFocus"
                   @update-students="updateStudents"
@@ -398,6 +400,15 @@ import DateColumnFocus from "@/components/DateColumnFocus.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import { storeToRefs } from "pinia";
+import { importJournalFromExcel } from "@/services/excel-parser";
+import {
+  exportJournalToExcel,
+  type JournalStudentRow,
+} from "@/services/journal-export";
+import { useStudentStore } from "@/stores/studentStore";
+import { useTeacherStore } from "@/stores/teacherStore";
+import { useSpecialtyStore } from "@/stores/specialtyStore";
+import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 
 const journalId = computed(() => {
   return f7.views.main.router.currentRoute.params.id as string;
@@ -426,6 +437,11 @@ const calendarStore = useCalendarStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const class9Store = useClass9Store();
 const { class9Options } = storeToRefs(class9Store);
+const studentStore = useStudentStore();
+const teacherStore = useTeacherStore();
+const specialtyStore = useSpecialtyStore();
+const selectedItemsStore = useSelectedItemsStore();
+const { students: studentStoreStudents } = storeToRefs(studentStore);
 
 const currentJournal = computed(() => {
   if (!journalId.value) return null;
@@ -504,6 +520,155 @@ const updateStudent = (updatedStudent: any) => {
   if (journalTabRef.value) {
     journalTabRef.value.updateStudent(updatedStudent);
   }
+};
+
+const onDownloadClick = async () => {
+  const journal = currentJournal.value;
+  if (!journal) {
+    f7.dialog.alert("Журнал не найден");
+    return;
+  }
+
+  try {
+    f7.preloader.show();
+    const { saveAs } = await import("file-saver");
+
+    const templateUrl = encodeURI(
+      "/journal_templates/1_семестр_РО_4_1_ВА22_академическое_рус_яз_,_ВЭ22_эстрадное_рус.xlsx"
+    );
+
+    const event = calendarStore.getEventById(journal.id);
+
+    const studentRows: JournalStudentRow[] = (journal.students || []).map(
+      (studentId) => ({
+        id: studentId,
+        fullName: studentStore.getStudentFullName(studentId),
+      })
+    );
+
+    const primaryStudentId = journal.students?.[0];
+    const primaryStudent = primaryStudentId
+      ? studentStoreStudents.value.find((s) => s.id === primaryStudentId)
+      : undefined;
+    const specialty = primaryStudent?.specialty
+      ? specialtyStore.getSpecialtyByCode(primaryStudent.specialty)
+      : undefined;
+
+    const academicYearId = selectedItemsStore.selectedAcademicYearId;
+    const academicYear = academicYearId
+      ? academicYearStore.getAcademicYearById(academicYearId)
+      : academicYearStore.getActiveAcademicYear;
+
+    const academicYearLabel = academicYear
+      ? `${academicYear.startYear}/${academicYear.endYear}`
+      : "";
+
+    const teacherName = event?.teacherId
+      ? teacherStore.getTeacherFullName(event.teacherId)
+      : "";
+
+    const disciplineTitle = journalStore.getDisciplineTitle(journal);
+    const groupTitle = journalStore.getJournalTitle(journal);
+
+    const filename = `${disciplineTitle}_${groupTitle}`
+      .replace(/[^a-zA-Zа-яА-Я0-9_\-\.]/g, "_")
+      .concat(".xlsx");
+
+    const buffer = await exportJournalToExcel({
+      templateUrl,
+      groupName: groupTitle,
+      courseLabel: journal.courseNumber?.toString?.() ?? "",
+      specialtyLabel: specialty
+        ? `${specialty.code} - ${specialty.name}`
+        : undefined,
+      academicYearLabel,
+      disciplineTitle,
+      teacherFullName: teacherName,
+      students: studentRows,
+      calendarEvent: event ?? undefined,
+    });
+
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    saveAs(blob, filename);
+  } catch (error) {
+    console.error("Failed to export journal", error);
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Не удалось экспортировать журнал";
+    f7.dialog.alert(message);
+  } finally {
+    f7.preloader.hide();
+  }
+};
+
+const onUploadClick = () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".xlsx,.xls";
+  input.multiple = false;
+
+  input.onchange = async (event) => {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
+    if (!file) return;
+
+    try {
+      f7.preloader.show();
+      const summary = await importJournalFromExcel(file);
+      f7.preloader.hide();
+
+      if (summary.issues.some((issue) => issue.type === "error")) {
+        const errorText = summary.issues
+          .filter((issue) => issue.type === "error")
+          .map((issue) => `• ${issue.message}`)
+          .join("\n");
+        f7.dialog.alert(errorText || "Не удалось импортировать журнал");
+        return;
+      }
+
+      const warnings = summary.issues
+        .filter((issue) => issue.type === "warning")
+        .map((issue) => `• ${issue.message}`)
+        .join("\n");
+
+      const result = summary.result;
+      if (!result) {
+        f7.dialog.alert("Файл обработан, но данные журнала не получены");
+        return;
+      }
+
+      const messageParts = [
+        `<b>Группа:</b> ${result.metadata.groupName || "не указана"}`,
+        `<b>Курс:</b> ${result.metadata.courseLabel || "-"}`,
+        `<b>Специальность:</b> ${result.metadata.specialtyLabel || "-"}`,
+        `<b>Учебный год:</b> ${result.metadata.academicYearLabel || "-"}`,
+        `<b>Дисциплина:</b> ${result.metadata.disciplineTitle || "-"}`,
+        `<b>Преподаватель:</b> ${result.metadata.teacherFullName || "-"}`,
+        `<b>Студентов:</b> ${result.students.length}`,
+        `<b>Дата столбцов:</b> ${result.metadata.lessonDates.join(", ") || "-"}`,
+      ];
+
+      if (warnings) {
+        messageParts.push(
+          `<br/><b>Предупреждения:</b><br/>${warnings.replace(/\n/g, "<br/>")}`
+        );
+      }
+
+      f7.dialog.alert(messageParts.join("<br/>") || "Импорт завершён");
+    } catch (error) {
+      f7.preloader.hide();
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Не удалось импортировать журнал";
+      f7.dialog.alert(message);
+    }
+  };
+
+  input.click();
 };
 
 const onOpenKtpDetails = (

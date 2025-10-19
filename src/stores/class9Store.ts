@@ -6,9 +6,11 @@ export interface DistributionEntry {
   academicYearId: string;
   semesterId: string;
   hours: string;
-  examEnabled: boolean;
-  creditEnabled: boolean;
-  controlLessonEnabled: boolean;
+  intermediateControlId?: string | null;
+  finalControlId?: string | null;
+  examEnabled?: boolean;
+  creditEnabled?: boolean;
+  controlLessonEnabled?: boolean;
 }
 
 export interface Class9Data {
@@ -40,9 +42,11 @@ export const useClass9Store = defineStore(
     const loading = ref(false);
     const error = ref<string | null>(null);
     const migrationCompleted = ref(false);
+    const controlMigrationCompleted = ref(false);
 
-    // Run migration on store initialization
+    // Run migrations on store initialization
     migrateClass9DataToMultipleSpecialties();
+    migrateControlTypesToDynamic();
 
     const getClass9ById = computed(() => {
       return (id: string) => class9Items.value.find((c) => c.id === id);
@@ -418,6 +422,36 @@ export const useClass9Store = defineStore(
       migrationCompleted.value = true;
     }
 
+    function migrateControlTypesToDynamic() {
+      if (controlMigrationCompleted.value) {
+        return;
+      }
+
+      let hasChanges = false;
+      class9Items.value.forEach((item) => {
+        item.distributionEntries.forEach((entry) => {
+          const anyEntry = entry as any;
+          if (
+            typeof anyEntry.examEnabled === "boolean" ||
+            typeof anyEntry.creditEnabled === "boolean" ||
+            typeof anyEntry.controlLessonEnabled === "boolean"
+          ) {
+            if (!entry.finalControlId) {
+              hasChanges = true;
+            }
+          }
+        });
+      });
+
+      if (hasChanges) {
+        console.log(
+          `🔄 Migrated Class9 distribution entries to support dynamic control types. Old boolean flags preserved for backward compatibility.`
+        );
+      }
+
+      controlMigrationCompleted.value = true;
+    }
+
     // Test migration method (for development purposes)
     function testMigration() {
       console.log("🧪 Testing migration...");
@@ -495,6 +529,7 @@ export const useClass9Store = defineStore(
       loading,
       error,
       migrationCompleted,
+      controlMigrationCompleted,
       getClass9ById,
       getClass9ItemsByContext,
       getAllClass9Items,
@@ -514,6 +549,7 @@ export const useClass9Store = defineStore(
       reset,
       forceMigrateData,
       migrateClass9DataToMultipleSpecialties,
+      migrateControlTypesToDynamic,
       testMigration,
     };
   },

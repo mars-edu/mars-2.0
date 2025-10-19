@@ -22,7 +22,7 @@
             >
               <span
                 class="text-base md:text-lg font-medium md:font-semibold mb-1 md:mb-0"
-                >Настройки системы:</span
+                >Настройки</span
               >
             </div>
             <div class="flex gap-2">
@@ -214,6 +214,135 @@
                 />
               </div>
             </AccordionItem>
+
+            <!-- Controls Section -->
+            <AccordionItem id="controls" :default-expanded="false">
+              <template #title>Контроли:</template>
+              <Accordion v-model:expanded-items="expandedControlAccordions">
+                <!-- Final Controls Section -->
+                <AccordionItem id="finalControls" :default-expanded="false">
+                  <template #title>Форма итогового контроля:</template>
+                  <template #actions>
+                    <AddFinalControlButton />
+                  </template>
+                  <div
+                    v-if="finalControlStore.isLoading"
+                    class="p-4 flex justify-center"
+                  >
+                    <f7-preloader></f7-preloader>
+                  </div>
+                  <div
+                    v-else-if="finalControlStore.getError"
+                    class="p-4 text-destructive"
+                  >
+                    {{ finalControlStore.getError }}
+                  </div>
+                  <div v-else-if="sortedFinalControls.length === 0">
+                    <NoData
+                      title="Нет форм контроля"
+                      description="Формы итогового контроля не добавлены в систему"
+                      :icon="{
+                        ios: 'f7:check_circle',
+                        md: 'material:verified',
+                      }"
+                    />
+                  </div>
+                  <div
+                    v-else
+                    class="flex flex-wrap items-center gap-2 md:gap-3"
+                  >
+                    <div
+                      v-for="control in sortedFinalControls"
+                      :key="control.id"
+                      class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                      :id="`final-control-item-${control.id}`"
+                    >
+                      <span class="font-medium">{{ control.shortName }}</span>
+                      <button
+                        class="p-1 hover:bg-primary/10 rounded-md transition-colors"
+                        @click.stop="openEditFinalControl(control)"
+                        aria-label="Edit Final Control"
+                        type="button"
+                      >
+                        <f7-icon
+                          ios="f7:pencil"
+                          md="material:edit"
+                          size="18px"
+                          class="text-primary"
+                        />
+                      </button>
+                    </div>
+                    <EditFinalControlButton
+                      v-if="selectedFinalControlId"
+                      :control-id="selectedFinalControlId"
+                    />
+                  </div>
+                </AccordionItem>
+
+                <!-- Intermediate Controls Section -->
+                <AccordionItem
+                  id="intermediateControls"
+                  :default-expanded="false"
+                >
+                  <template #title>Промежуточный контроль:</template>
+                  <template #actions>
+                    <AddIntermediateControlButton />
+                  </template>
+                  <div
+                    v-if="intermediateControlStore.isLoading"
+                    class="p-4 flex justify-center"
+                  >
+                    <f7-preloader></f7-preloader>
+                  </div>
+                  <div
+                    v-else-if="intermediateControlStore.getError"
+                    class="p-4 text-destructive"
+                  >
+                    {{ intermediateControlStore.getError }}
+                  </div>
+                  <div v-else-if="sortedIntermediateControls.length === 0">
+                    <NoData
+                      title="Нет промежуточных контролей"
+                      description="Промежуточный контроль не добавлен в систему"
+                      :icon="{
+                        ios: 'f7:check_circle',
+                        md: 'material:verified',
+                      }"
+                    />
+                  </div>
+                  <div
+                    v-else
+                    class="flex flex-wrap items-center gap-2 md:gap-3"
+                  >
+                    <div
+                      v-for="control in sortedIntermediateControls"
+                      :key="control.id"
+                      class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                      :id="`intermediate-control-item-${control.id}`"
+                    >
+                      <span class="font-medium">{{ control.shortName }}</span>
+                      <button
+                        class="p-1 hover:bg-primary/10 rounded-md transition-colors"
+                        @click.stop="openEditIntermediateControl(control)"
+                        aria-label="Edit Intermediate Control"
+                        type="button"
+                      >
+                        <f7-icon
+                          ios="f7:pencil"
+                          md="material:edit"
+                          size="18px"
+                          class="text-primary"
+                        />
+                      </button>
+                    </div>
+                    <EditIntermediateControlButton
+                      v-if="selectedIntermediateControlId"
+                      :control-id="selectedIntermediateControlId"
+                    />
+                  </div>
+                </AccordionItem>
+              </Accordion>
+            </AccordionItem>
           </Accordion>
         </div>
       </div>
@@ -242,25 +371,40 @@ import AddLanguageButton from "@/components/AddLanguageButton.vue";
 import EditLanguageButton from "@/components/EditLanguageButton.vue";
 import { useLanguageStore } from "@/stores/languageStore";
 import type { Language } from "@/stores/languageStore";
+import AddFinalControlButton from "@/components/AddFinalControlButton.vue";
+import EditFinalControlButton from "@/components/EditFinalControlButton.vue";
+import { useFinalControlStore } from "@/stores/finalControlStore";
+import type { FinalControl } from "@/stores/finalControlStore";
+import AddIntermediateControlButton from "@/components/AddIntermediateControlButton.vue";
+import EditIntermediateControlButton from "@/components/EditIntermediateControlButton.vue";
+import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
+import type { IntermediateControl } from "@/stores/intermediateControlStore";
 
 const activeNavItem = ref("settings");
 const courseStore = useCourseStore();
 const semesterStore = useSemesterStore();
 const languageStore = useLanguageStore();
+const finalControlStore = useFinalControlStore();
+const intermediateControlStore = useIntermediateControlStore();
 const { courses } = storeToRefs(courseStore);
 const { semesters } = storeToRefs(semesterStore);
 const { languages } = storeToRefs(languageStore);
+const { sortedFinalControls } = storeToRefs(finalControlStore);
+const { sortedIntermediateControls } = storeToRefs(intermediateControlStore);
 
 // State for tracking expanded accordions
 const expandedAccordions = ref<string[]>([]);
+const expandedControlAccordions = ref<string[]>([]);
 
 // Accordion IDs for expand/collapse all functionality
-const accordionIds = ref(["courses", "semesters", "languages"]);
+const accordionIds = ref(["courses", "semesters", "languages", "controls"]);
 
-// State for selected course id
+// State for selected ids
 const selectedCourseId = ref<string | null>(null);
 const selectedSemesterId = ref<string | null>(null);
 const selectedLanguageId = ref<string | null>(null);
+const selectedFinalControlId = ref<string | null>(null);
+const selectedIntermediateControlId = ref<string | null>(null);
 
 // stores are already reactive via storeToRefs above
 
@@ -309,6 +453,34 @@ const openEditLanguage = async (language: Language) => {
   const targetEl = document.getElementById(`language-item-${language.id}`);
   if (targetEl) {
     f7.popover.open(`#edit-language-popover-${language.id}`, targetEl);
+  }
+};
+
+// Method to open edit final control popover
+const openEditFinalControl = async (control: FinalControl) => {
+  selectedFinalControlId.value = control.id;
+  await nextTick();
+  const targetEl = document.getElementById(`final-control-item-${control.id}`);
+  if (targetEl) {
+    f7.popover.open(
+      `#edit-settings-final-control-popover-${control.id}`,
+      targetEl
+    );
+  }
+};
+
+// Method to open edit intermediate control popover
+const openEditIntermediateControl = async (control: IntermediateControl) => {
+  selectedIntermediateControlId.value = control.id;
+  await nextTick();
+  const targetEl = document.getElementById(
+    `intermediate-control-item-${control.id}`
+  );
+  if (targetEl) {
+    f7.popover.open(
+      `#edit-settings-intermediate-control-popover-${control.id}`,
+      targetEl
+    );
   }
 };
 </script>

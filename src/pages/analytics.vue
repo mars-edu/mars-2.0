@@ -308,17 +308,63 @@
               <f7-button
                 small
                 default
+                :disabled="!canGenerateReport"
                 @click="generateReport"
-                class="bg-primary text-white hover:bg-primary-dark transition-colors"
+                class="bg-primary text-white hover:bg-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <f7-icon
-                  ios="f7:chart_bar"
-                  md="material:analytics"
+                  ios="f7:doc_on_doc"
+                  md="material:table_view"
                   size="16px"
                   class="mr-2"
                 />
-                Создать отчет
+                Экспорт (HTML)
               </f7-button>
+            </div>
+            <div
+              v-if="hasGeneratedReport"
+              class="mt-6 space-y-3 border-t border-border pt-4"
+            >
+              <div
+                class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+              >
+                <div>
+                  <h2 class="text-lg font-semibold">Предпросмотр отчёта</h2>
+                  <p class="text-xs text-muted-foreground">
+                    Обучающихся: {{ reportSummary.studentCount }} • Дисциплин:
+                    {{ reportSummary.disciplineCount }}
+                    <span v-if="reportGeneratedAtLabel">
+                      • Обновлено {{ reportGeneratedAtLabel }}
+                    </span>
+                  </p>
+                </div>
+                <f7-button
+                  small
+                  outline
+                  @click="clearReportPreview"
+                  class="text-muted-foreground hover:text-foreground"
+                >
+                  <f7-icon
+                    ios="f7:eye_slash"
+                    md="material:visibility_off"
+                    size="16px"
+                    class="mr-2"
+                  />
+                  Скрыть
+                </f7-button>
+              </div>
+              <AnalyticsReportTable
+                :rows="reportRows"
+                :disciplines-semester="reportDisciplineGroupsSemester"
+                :disciplines-without-final="reportDisciplineGroupsWithoutFinal"
+                :disciplines-by-form="reportDisciplineGroupsByForm"
+                :final-forms="reportFinalForms"
+                :is-loading="false"
+              />
+              <p class="text-xs text-muted-foreground">
+                Значения рассчитываются по текущим данным журналов и обновляются
+                при изменении фильтров.
+              </p>
             </div>
           </div>
         </div>
@@ -360,7 +406,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import {
   f7Page,
   f7Icon,
@@ -374,6 +420,7 @@ import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
 import Accordion from "@/components/ui/accordion/Accordion.vue";
 import AccordionItem from "@/components/ui/accordion/AccordionItem.vue";
+import AnalyticsReportTable from "@/components/AnalyticsReportTable.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { useCourseStore } from "@/stores/courseStore";
@@ -384,6 +431,14 @@ import { storeToRefs } from "pinia";
 import { f7Accordion } from "framework7-vue";
 import { useLanguageStore } from "@/stores/languageStore";
 import { useStudentStore } from "@/stores/studentStore";
+import { useJournalStore } from "@/stores/journalStore";
+import { useMarksStore } from "@/stores/marksStore";
+import { useCalendarStore } from "@/stores/calendarStore";
+import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermediateControlStore";
+import type { Mark } from "@/types/marks";
+import type { CalendarEvent } from "@/stores/calendarStore";
+import type { Journal } from "@/stores/journalStore";
+import { useFinalControlStore } from "@/stores/finalControlStore";
 
 const activeNavItem = ref("analytics");
 
@@ -395,6 +450,12 @@ const academicYearSemesterStore = useAcademicYearSemesterStore();
 const selectedItemsStore = useSelectedItemsStore();
 const languageStore = useLanguageStore();
 const studentStore = useStudentStore();
+const journalStore = useJournalStore();
+const marksStore = useMarksStore();
+const calendarStore = useCalendarStore();
+const scheduledIntermediateControlStore =
+  useScheduledIntermediateControlStore();
+const finalControlStore = useFinalControlStore();
 
 const { academicYears } = storeToRefs(academicYearStore);
 const { sortedSemesters } = storeToRefs(semesterStore);
@@ -402,6 +463,8 @@ const { courses } = storeToRefs(courseStore);
 const { specialties } = storeToRefs(specialtyStore);
 const { languages } = storeToRefs(languageStore);
 const { students } = storeToRefs(studentStore);
+const { events } = storeToRefs(calendarStore);
+const { sortedFinalControls } = storeToRefs(finalControlStore);
 
 const selectedReportType = ref("");
 const selectedReportCategory = ref("");
@@ -412,6 +475,16 @@ const selectedCourses = ref<string[]>([]);
 const selectedLanguageGroups = ref<string[]>([]);
 const selectedSpecialtyInfo = ref<any>(null);
 const selectedStudents = ref<string[]>([]);
+const hasGeneratedReport = ref(false);
+const reportGeneratedAt = ref<Date | null>(null);
+let emptyDisciplineToast: any = null;
+
+const clearReportPreview = () => {
+  hasGeneratedReport.value = false;
+  reportGeneratedAt.value = null;
+  emptyDisciplineToast?.close?.();
+  emptyDisciplineToast = null;
+};
 
 const reportTypeOptions = [
   { value: "student-performance", text: "Успеваемость обучающихся" },
@@ -419,11 +492,27 @@ const reportTypeOptions = [
   { value: "grades", text: "Оценки" },
 ];
 
-const reportCategoryOptions = [
-  { value: "final", text: "Итоговые" },
-  { value: "current", text: "Текущие" },
-  { value: "intermediate", text: "Промежуточные" },
-];
+const reportCategoryOptions = computed(() => {
+  const options: Array<{ value: string; text: string }> = [
+    { value: "final", text: "Итоговые" },
+  ];
+
+  const yearId = selectedItemsStore.selectedAcademicYearId;
+  if (yearId) {
+    const intermediateControls =
+      scheduledIntermediateControlStore.getScheduledIntermediateControlsByAcademicYear(
+        yearId
+      );
+    intermediateControls.forEach((control) => {
+      options.push({
+        value: control.shortName,
+        text: control.shortName,
+      });
+    });
+  }
+
+  return options;
+});
 
 const selectedAcademicYearModel = computed({
   get: () => selectedItemsStore.selectedAcademicYearId ?? "",
@@ -431,6 +520,7 @@ const selectedAcademicYearModel = computed({
     selectedItemsStore.setSelectedAcademicYear(v || null);
     if (v !== (selectedItemsStore.selectedAcademicYearId ?? "")) {
       selectedSemesterId.value = "";
+      selectedReportCategory.value = "final";
     }
   },
 });
@@ -480,6 +570,390 @@ const filteredStudentsForAnalytics = computed(() => {
     });
 });
 
+const selectedStudentIds = computed(() => {
+  if (selectedStudents.value.length > 0) {
+    return Array.from(new Set(selectedStudents.value));
+  }
+  return filteredStudentsForAnalytics.value.map((student) => student.id);
+});
+
+const selectedAnalyticsStudents = computed(() => {
+  const ids = new Set(selectedStudentIds.value);
+  return filteredStudentsForAnalytics.value.filter((student) =>
+    ids.has(student.id)
+  );
+});
+
+type ReportJournalEntry = {
+  id: string;
+  title: string;
+  journal: Journal;
+  event: CalendarEvent;
+};
+
+const relevantJournals = computed<ReportJournalEntry[]>(() => {
+  const selectedIds = new Set(selectedStudentIds.value);
+  if (!selectedIds.size) return [];
+
+  const academicYearId = selectedItemsStore.selectedAcademicYearId ?? null;
+  const semesterFilter = selectedSemesterId.value || null;
+  const map = new Map<string, ReportJournalEntry>();
+  const eventList = events.value ?? [];
+
+  eventList.forEach((event) => {
+    if (!event) return;
+    if (!event.participants?.some((id) => selectedIds.has(id))) return;
+
+    if (semesterFilter) {
+      if (event.semester !== semesterFilter) return;
+    } else if (academicYearId) {
+      if (!event.semester) return;
+      const semester = academicYearSemesterStore.getAcademicYearSemesterById(
+        event.semester
+      );
+      if (!semester || semester.academicYearId !== academicYearId) {
+        return;
+      }
+    }
+
+    const journal = journalStore.getJournalById(event.id) as Journal | null;
+    if (!journal) return;
+
+    const title =
+      journalStore.getDisciplineTitle(journal) ||
+      calendarStore.getEventTitle(event) ||
+      "Без названия";
+
+    map.set(event.id, {
+      id: event.id,
+      title,
+      journal,
+      event,
+    });
+  });
+
+  return Array.from(map.values()).sort((a, b) =>
+    a.title.localeCompare(b.title, "ru", { sensitivity: "base" })
+  );
+});
+
+const reportDisciplineColumns = computed(() =>
+  relevantJournals.value.map((entry) => ({
+    id: entry.id,
+    title: entry.title,
+  }))
+);
+
+const reportFinalForms = computed(() =>
+  sortedFinalControls.value.map((form) => ({
+    id: form.id,
+    title: form.shortName,
+  }))
+);
+
+const reportDisciplineGroupsSemester = computed(() =>
+  getDisciplinesForSemester.value.map((d) => ({ id: d.id, title: d.title }))
+);
+
+const reportDisciplineGroupsWithoutFinal = computed(() =>
+  getDisciplinesForWithoutFinal.value.map((d) => ({ id: d.id, title: d.title }))
+);
+
+const reportDisciplineGroupsByForm = computed(() => {
+  const result: Record<string, Array<{ id: string; title: string }>> = {};
+  sortedFinalControls.value.forEach((form) => {
+    result[form.id] = getDisciplinesForFinalForm(form.id).map((d) => ({
+      id: d.id,
+      title: d.title,
+    }));
+  });
+  return result;
+});
+
+const getDisciplinesForSemester = computed(() => {
+  const hasData = new Set<string>();
+  selectedAnalyticsStudents.value.forEach((student) => {
+    relevantJournals.value.forEach((discipline) => {
+      const marks = marksStore.getStudentMarks(discipline.id, student.id);
+      if (marks) {
+        const hasDateMarks = marks.some((m: Mark) => m.type === "date");
+        if (hasDateMarks) hasData.add(discipline.id);
+      }
+    });
+  });
+  return relevantJournals.value.filter((d) => hasData.has(d.id));
+});
+
+const getDisciplinesForWithoutFinal = computed(() => {
+  if (
+    selectedReportCategory.value === "final" ||
+    !selectedReportCategory.value
+  ) {
+    return getDisciplinesForSemester.value;
+  }
+  const categoryName = selectedReportCategory.value;
+  const hasData = new Set<string>();
+  selectedAnalyticsStudents.value.forEach((student) => {
+    relevantJournals.value.forEach((discipline) => {
+      const marks = marksStore.getStudentMarks(discipline.id, student.id);
+      if (marks) {
+        const hasCategory = marks.some(
+          (m: Mark) =>
+            m.type === "session" &&
+            m.controlType === "intermediate" &&
+            m.label === categoryName
+        );
+        if (hasCategory) hasData.add(discipline.id);
+      }
+    });
+  });
+  return relevantJournals.value.filter((d) => hasData.has(d.id));
+});
+
+const getDisciplinesForFinalForm = (formId: string) => {
+  const hasData = new Set<string>();
+  selectedAnalyticsStudents.value.forEach((student) => {
+    relevantJournals.value.forEach((discipline) => {
+      const marks = marksStore.getStudentMarks(discipline.id, student.id);
+      if (marks) {
+        const hasForm = marks.some(
+          (m: Mark) =>
+            m.type === "session" &&
+            m.controlType === "final" &&
+            m.controlId === formId
+        );
+        if (hasForm) hasData.add(discipline.id);
+      }
+    });
+  });
+  return relevantJournals.value.filter((d) => hasData.has(d.id));
+};
+
+type ReportTableRow = {
+  studentId: string;
+  index: number;
+  fullName: string;
+  courseLabel: string;
+  semester: Record<string, number | null>;
+  withoutFinal: Record<string, number | null>;
+  finals: Record<string, Record<string, number | null>>;
+  overallAverage: number | null;
+};
+
+const normalizeNumericValue = (
+  value: string | number | null | undefined
+): number | null => {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const normalized = value.replace(",", ".").trim();
+    if (normalized.length === 0) return null;
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const computeAverageFromMarks = (marks: Mark[] | null): number | null => {
+  if (!marks || !marks.length) return null;
+  const numericValues: number[] = [];
+  marks.forEach((mark) => {
+    if (!Array.isArray(mark.values)) return;
+    mark.values.forEach((value) => {
+      const numeric = normalizeNumericValue(value as any);
+      if (numeric !== null) {
+        numericValues.push(numeric);
+      }
+    });
+  });
+  if (!numericValues.length) return null;
+  const sum = numericValues.reduce((total, current) => total + current, 0);
+  const average = sum / numericValues.length;
+  return Number.isFinite(average)
+    ? Number.parseFloat(average.toFixed(1))
+    : null;
+};
+
+const reportRows = computed<ReportTableRow[]>(() => {
+  const studentsList = selectedAnalyticsStudents.value;
+  const disciplines = relevantJournals.value;
+
+  return studentsList.map((student, index) => {
+    const disciplineScores: Record<string, number | null> = {};
+    const numericScores: number[] = [];
+    const disciplineSemesterScores: Record<string, number | null> = {};
+    const finalsData: Record<string, Record<string, number | null>> = {};
+
+    disciplines.forEach((discipline) => {
+      const participates =
+        (discipline.journal.students || []).includes(student.id) ||
+        discipline.event.participants?.includes(student.id);
+
+      if (!participates) {
+        disciplineScores[discipline.id] = null;
+        disciplineSemesterScores[discipline.id] = null;
+        return;
+      }
+
+      const marks = marksStore.getStudentMarks(discipline.id, student.id) as
+        | Mark[]
+        | null;
+      const average = computeAverageFromMarks(marks);
+      if (average !== null) {
+        numericScores.push(average);
+      }
+      disciplineScores[discipline.id] = average;
+
+      if (marks) {
+        const semesterMarks = marks.filter((m: Mark) => m.type === "date");
+        const semesterAverage = computeAverageFromMarks(semesterMarks);
+        disciplineSemesterScores[discipline.id] = semesterAverage;
+      }
+
+      sortedFinalControls.value.forEach((finalForm) => {
+        if (!finalsData[finalForm.id]) {
+          finalsData[finalForm.id] = {};
+        }
+
+        if (marks) {
+          const sessionMark = marks.find(
+            (m: Mark) =>
+              m.type === "session" &&
+              m.controlType === "final" &&
+              m.controlId === finalForm.id
+          );
+          const value =
+            sessionMark && Array.isArray(sessionMark.values)
+              ? normalizeNumericValue(sessionMark.values[0])
+              : null;
+          finalsData[finalForm.id][discipline.id] = value;
+        } else {
+          finalsData[finalForm.id][discipline.id] = null;
+        }
+      });
+    });
+
+    const computeWithoutFinalValue = (): Record<string, number | null> => {
+      const result: Record<string, number | null> = {};
+
+      disciplines.forEach((discipline) => {
+        const participates =
+          (discipline.journal.students || []).includes(student.id) ||
+          discipline.event.participants?.includes(student.id);
+
+        if (!participates) {
+          result[discipline.id] = null;
+          return;
+        }
+
+        const marks = marksStore.getStudentMarks(discipline.id, student.id) as
+          | Mark[]
+          | null;
+        if (!marks) {
+          result[discipline.id] = null;
+          return;
+        }
+
+        if (selectedReportCategory.value === "final") {
+          const semesterMarks = marks.filter((m: Mark) => m.type === "date");
+          const semesterAverage = computeAverageFromMarks(semesterMarks);
+          result[discipline.id] = semesterAverage;
+        } else {
+          const categoryName = selectedReportCategory.value;
+          if (!categoryName) {
+            result[discipline.id] = null;
+            return;
+          }
+
+          const sessionMark = marks.find(
+            (m: Mark) =>
+              m.type === "session" &&
+              m.controlType === "intermediate" &&
+              m.label === categoryName
+          );
+
+          const value =
+            sessionMark && Array.isArray(sessionMark.values)
+              ? normalizeNumericValue(sessionMark.values[0])
+              : null;
+          result[discipline.id] = value;
+        }
+      });
+
+      return result;
+    };
+
+    const overallAverage =
+      numericScores.length > 0
+        ? Number.parseFloat(
+            (
+              numericScores.reduce((total, current) => total + current, 0) /
+              numericScores.length
+            ).toFixed(1)
+          )
+        : null;
+
+    return {
+      studentId: student.id,
+      index: index + 1,
+      fullName: student.fullName,
+      courseLabel: student.course > 0 ? String(student.course) : "—",
+      semester: disciplineSemesterScores,
+      withoutFinal: computeWithoutFinalValue(),
+      finals: finalsData,
+      overallAverage,
+    };
+  });
+});
+
+const reportSummary = computed(() => ({
+  studentCount: selectedAnalyticsStudents.value.length,
+  disciplineCount: reportDisciplineColumns.value.length,
+}));
+
+const reportGeneratedAtLabel = computed(() => {
+  if (!reportGeneratedAt.value) return "";
+  return new Intl.DateTimeFormat("ru-RU", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(reportGeneratedAt.value);
+});
+
+const canGenerateReport = computed(
+  () => selectedAnalyticsStudents.value.length > 0
+);
+
+watch(
+  () => {
+    const disciplineIds = reportDisciplineColumns.value.map((d) => d.id);
+    const rowsSignature = reportRows.value
+      .map((row) => {
+        const disciplineSignature = disciplineIds
+          .map((id) => row.semester[id] ?? "")
+          .join(",");
+        return `${row.studentId}:${disciplineSignature}:${
+          row.overallAverage ?? ""
+        }`;
+      })
+      .join("|");
+
+    return {
+      students: selectedStudentIds.value.join(","),
+      disciplines: disciplineIds.join(","),
+      rowsSignature,
+    };
+  },
+  () => {
+    if (hasGeneratedReport.value) {
+      reportGeneratedAt.value = new Date();
+    }
+  }
+);
+
 const isAllStudentsSelected = computed(() => {
   return (
     filteredStudentsForAnalytics.value.length > 0 &&
@@ -491,8 +965,8 @@ const toggleSelectAllStudents = () => {
   if (isAllStudentsSelected.value) {
     selectedStudents.value = [];
   } else {
-    filteredStudentsForAnalytics.value.forEach((student) =>
-      selectedStudents.value.push(student.id)
+    selectedStudents.value = filteredStudentsForAnalytics.value.map(
+      (student) => student.id
     );
   }
 };
@@ -572,6 +1046,7 @@ const handleSpecialtyInfoClick = (specialty: any, iconId: string) => {
 };
 
 const resetFilters = () => {
+  clearReportPreview();
   selectedReportType.value = "";
   selectedReportCategory.value = "";
   selectedItemsStore.setSelectedAcademicYear(null);
@@ -583,18 +1058,37 @@ const resetFilters = () => {
 };
 
 const generateReport = () => {
+  if (!canGenerateReport.value) {
+    f7.dialog.alert(
+      "Нет обучающихся, соответствующих текущим фильтрам. Выберите хотя бы одного обучающегося."
+    );
+    return;
+  }
+
+  hasGeneratedReport.value = true;
+  reportGeneratedAt.value = new Date();
+
   const filters = {
     reportType: selectedReportType.value,
     reportCategory: selectedReportCategory.value,
     semester: selectedSemesterId.value,
     academicYear: selectedItemsStore.selectedAcademicYearId,
-    specialties: selectedSpecialties.value,
-    courses: selectedCourses.value,
-    languageGroups: selectedLanguageGroups.value,
-    students: selectedStudents.value,
+    specialties: [...selectedSpecialties.value],
+    courses: [...selectedCourses.value],
+    languageGroups: [...selectedLanguageGroups.value],
+    students: [...selectedStudentIds.value],
   };
 
-  console.log("Generating report with filters:", filters);
+  console.log("[analytics] Generating report preview with filters:", filters);
+
+  if (reportDisciplineColumns.value.length === 0) {
+    emptyDisciplineToast?.close?.();
+    emptyDisciplineToast = f7.toast.create({
+      text: "Дисциплины не найдены для выбранных фильтров — таблица может быть пустой.",
+      closeTimeout: 2500,
+    });
+    emptyDisciplineToast.open();
+  }
 };
 
 onMounted(async () => {

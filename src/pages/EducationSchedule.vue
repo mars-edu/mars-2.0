@@ -22,7 +22,7 @@
             >
               <span
                 class="text-base md:text-lg font-medium md:font-semibold mb-1 md:mb-0"
-                >График звонков:</span
+                >График образовательного процесса:</span
               >
             </div>
             <div class="flex gap-2">
@@ -321,62 +321,153 @@
               </div>
             </AccordionItem>
 
-            <AccordionItem id="sessions" :default-expanded="false">
-              <template #title>Сессии:</template>
-              <template #actions>
-                <AddSessionButton />
-              </template>
-              <div
-                v-if="sessionStore.isLoading"
-                class="p-4 flex justify-center"
-              >
-                <f7-preloader />
-              </div>
-              <div
-                v-else-if="sessionStore.getError"
-                class="p-4 text-destructive"
-              >
-                {{ sessionStore.getError }}
-              </div>
-              <div v-else-if="sessions.length === 0">
-                <NoData
-                  title="Нет сессий"
-                  description="Для данного учебного года сессии не добавлены"
-                  :icon="{ ios: 'f7:doc_check', md: 'material:fact_check' }"
-                />
-              </div>
-              <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
-                <div
-                  v-for="session in sessions"
-                  :key="session.id"
-                  class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
-                  :id="`session-item-${session.id}`"
-                  @click.stop="openEditSession(session)"
+            <AccordionItem id="controls" :default-expanded="false">
+              <template #title>Контроли:</template>
+              <Accordion v-model:expanded-items="expandedControlAccordions">
+                <!-- Scheduled Final Controls Section -->
+                <AccordionItem
+                  id="scheduled-final-controls"
+                  :default-expanded="false"
                 >
-                  <span class="font-medium">{{ session.shortName }}</span>
-                  <span class="text-xs px-2 py-0.5"
-                    >{{ formatUiDate(session.startDate) }} -
-                    {{ formatUiDate(session.endDate) }}</span
+                  <template #title>Форма итогового контроля:</template>
+                  <template #actions>
+                    <AddScheduledFinalControlButton />
+                  </template>
+                  <div
+                    v-if="scheduledFinalControlStore.isLoading"
+                    class="p-4 flex justify-center"
                   >
-                  <button
-                    class="p-1 hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="openEditSession(session)"
-                    aria-label="Edit Session"
-                    type="button"
+                    <f7-preloader />
+                  </div>
+                  <div
+                    v-else-if="scheduledFinalControlStore.getError"
+                    class="p-4 text-destructive"
                   >
-                    <f7-icon
-                      ios="f7:pencil"
-                      md="material:edit"
-                      size="18px"
-                      class="text-primary"
+                    {{ scheduledFinalControlStore.getError }}
+                  </div>
+                  <div v-else-if="scheduledFinalControls.length === 0">
+                    <NoData
+                      title="Нет итоговых контролей"
+                      description="Для данного учебного года итоговые контроли не добавлены"
+                      :icon="{
+                        ios: 'f7:check_circle',
+                        md: 'material:verified',
+                      }"
                     />
-                  </button>
-                </div>
-                <EditSessionButton
-                  v-if="selectedSession"
-                  :session="selectedSession"
-                />
-              </div>
+                  </div>
+                  <div
+                    v-else
+                    class="flex flex-wrap items-center gap-2 md:gap-3"
+                  >
+                    <div
+                      v-for="control in scheduledFinalControls"
+                      :key="control.id"
+                      class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                      :id="`scheduled-final-control-item-${control.id}`"
+                      @click.stop="openEditScheduledFinalControl(control)"
+                    >
+                      <div class="flex flex-col">
+                        <span class="font-medium">{{ control.shortName }}</span>
+                        <span class="text-xs px-2 py-0.5"
+                          >{{ formatUiDate(control.startDate) }} -
+                          {{ formatUiDate(control.endDate) }}</span
+                        >
+                      </div>
+                      <button
+                        class="p-1 hover:bg-primary/10 rounded-md transition-colors"
+                        @click.stop="openEditScheduledFinalControl(control)"
+                        aria-label="Edit Scheduled Final Control"
+                        type="button"
+                      >
+                        <f7-icon
+                          ios="f7:pencil"
+                          md="material:edit"
+                          size="18px"
+                          class="text-primary"
+                        />
+                      </button>
+                    </div>
+                    <EditScheduledFinalControlButton
+                      v-if="selectedScheduledFinalControl"
+                      :control="selectedScheduledFinalControl"
+                    />
+                  </div>
+                </AccordionItem>
+
+                <!-- Scheduled Intermediate Controls Section -->
+                <AccordionItem
+                  id="scheduled-intermediate-controls"
+                  :default-expanded="false"
+                >
+                  <template #title>Промежуточный контроль:</template>
+                  <template #actions>
+                    <AddScheduledIntermediateControlButton />
+                  </template>
+                  <div
+                    v-if="scheduledIntermediateControlStore.isLoading"
+                    class="p-4 flex justify-center"
+                  >
+                    <f7-preloader />
+                  </div>
+                  <div
+                    v-else-if="scheduledIntermediateControlStore.getError"
+                    class="p-4 text-destructive"
+                  >
+                    {{ scheduledIntermediateControlStore.getError }}
+                  </div>
+                  <div v-else-if="scheduledIntermediateControls.length === 0">
+                    <NoData
+                      title="Нет промежуточных контролей"
+                      description="Для данного учебного года промежуточные контроли не добавлены"
+                      :icon="{
+                        ios: 'f7:check_circle',
+                        md: 'material:verified',
+                      }"
+                    />
+                  </div>
+                  <div
+                    v-else
+                    class="flex flex-wrap items-center gap-2 md:gap-3"
+                  >
+                    <div
+                      v-for="control in scheduledIntermediateControls"
+                      :key="control.id"
+                      class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                      :id="`scheduled-intermediate-control-item-${control.id}`"
+                      @click.stop="
+                        openEditScheduledIntermediateControl(control)
+                      "
+                    >
+                      <div class="flex flex-col">
+                        <span class="font-medium">{{ control.shortName }}</span>
+                        <span class="text-xs px-2 py-0.5"
+                          >{{ formatUiDate(control.startDate) }} -
+                          {{ formatUiDate(control.endDate) }}</span
+                        >
+                      </div>
+                      <button
+                        class="p-1 hover:bg-primary/10 rounded-md transition-colors"
+                        @click.stop="
+                          openEditScheduledIntermediateControl(control)
+                        "
+                        aria-label="Edit Scheduled Intermediate Control"
+                        type="button"
+                      >
+                        <f7-icon
+                          ios="f7:pencil"
+                          md="material:edit"
+                          size="18px"
+                          class="text-primary"
+                        />
+                      </button>
+                    </div>
+                    <EditScheduledIntermediateControlButton
+                      v-if="selectedScheduledIntermediateControl"
+                      :control="selectedScheduledIntermediateControl"
+                    />
+                  </div>
+                </AccordionItem>
+              </Accordion>
             </AccordionItem>
           </Accordion>
         </div>
@@ -409,12 +500,16 @@ import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore
 import type { AcademicYearSemester } from "@/stores/academicYearSemesterStore";
 import AddVacationButton from "@/components/AddVacationButton.vue";
 import EditVacationButton from "@/components/EditVacationButton.vue";
-import AddSessionButton from "@/components/AddSessionButton.vue";
-import EditSessionButton from "@/components/EditSessionButton.vue";
+import AddScheduledFinalControlButton from "@/components/AddScheduledFinalControlButton.vue";
+import EditScheduledFinalControlButton from "@/components/EditScheduledFinalControlButton.vue";
+import AddScheduledIntermediateControlButton from "@/components/AddScheduledIntermediateControlButton.vue";
+import EditScheduledIntermediateControlButton from "@/components/EditScheduledIntermediateControlButton.vue";
 import { useVacationStore } from "@/stores/vacationStore";
-import { useSessionStore } from "@/stores/sessionStore";
+import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
+import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermediateControlStore";
 import type { Vacation } from "@/stores/vacationStore";
-import type { Session } from "@/stores/sessionStore";
+import type { ScheduledFinalControl } from "@/stores/scheduledFinalControlStore";
+import type { ScheduledIntermediateControl } from "@/stores/scheduledIntermediateControlStore";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT, DATE_UI_FORMAT } from "@/constants/calendar";
 
@@ -426,12 +521,16 @@ const { academicYears } = storeToRefs(academicYearStore);
 
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const vacationStore = useVacationStore();
-const sessionStore = useSessionStore();
+const scheduledFinalControlStore = useScheduledFinalControlStore();
+const scheduledIntermediateControlStore =
+  useScheduledIntermediateControlStore();
 
 const selectedAcademicYear = ref<AcademicYear | null>(null);
 const selectedAcademicYearSemester = ref<AcademicYearSemester | null>(null);
 const selectedVacation = ref<Vacation | null>(null);
-const selectedSession = ref<Session | null>(null);
+const selectedScheduledFinalControl = ref<ScheduledFinalControl | null>(null);
+const selectedScheduledIntermediateControl =
+  ref<ScheduledIntermediateControl | null>(null);
 const selectedSchedule = ref<EducationSchedule | null>(null);
 
 // Accordion IDs for expand/collapse all functionality
@@ -440,11 +539,12 @@ const accordionIds = [
   "semesters",
   "schedule",
   "vacations",
-  "sessions",
+  "controls",
 ];
 
 // State for tracking expanded accordions
 const expandedAccordions = ref<string[]>([]);
+const expandedControlAccordions = ref<string[]>([]);
 
 // Computed property to check if all accordions are expanded
 const areAllExpanded = computed(() => {
@@ -484,10 +584,20 @@ const vacations = computed(() => {
   return vacationStore.getVacationsByAcademicYear(activeAcademicYear.id);
 });
 
-const sessions = computed(() => {
+const scheduledFinalControls = computed(() => {
   const activeAcademicYear = academicYearStore.getActiveAcademicYear;
   if (!activeAcademicYear) return [];
-  return sessionStore.getSessionsByAcademicYear(activeAcademicYear.id);
+  return scheduledFinalControlStore.getScheduledFinalControlsByAcademicYear(
+    activeAcademicYear.id
+  );
+});
+
+const scheduledIntermediateControls = computed(() => {
+  const activeAcademicYear = academicYearStore.getActiveAcademicYear;
+  if (!activeAcademicYear) return [];
+  return scheduledIntermediateControlStore.getScheduledIntermediateControlsByAcademicYear(
+    activeAcademicYear.id
+  );
 });
 
 const openEditSchedule = async (schedule: EducationSchedule) => {
@@ -539,12 +649,35 @@ const openEditVacation = async (vacation: Vacation) => {
   }
 };
 
-const openEditSession = async (session: Session) => {
-  selectedSession.value = session;
+const openEditScheduledFinalControl = async (
+  control: ScheduledFinalControl
+) => {
+  selectedScheduledFinalControl.value = control;
   await nextTick();
-  const targetEl = document.getElementById(`session-item-${session.id}`);
+  const targetEl = document.getElementById(
+    `scheduled-final-control-item-${control.id}`
+  );
   if (targetEl) {
-    f7.popover.open(`#edit-session-popover-${session.id}`, targetEl);
+    f7.popover.open(
+      `#edit-scheduled-final-control-popover-${control.id}`,
+      targetEl
+    );
+  }
+};
+
+const openEditScheduledIntermediateControl = async (
+  control: ScheduledIntermediateControl
+) => {
+  selectedScheduledIntermediateControl.value = control;
+  await nextTick();
+  const targetEl = document.getElementById(
+    `scheduled-intermediate-control-item-${control.id}`
+  );
+  if (targetEl) {
+    f7.popover.open(
+      `#edit-scheduled-intermediate-control-popover-${control.id}`,
+      targetEl
+    );
   }
 };
 

@@ -81,6 +81,8 @@
                   item.distributionEntries &&
                   item.distributionEntries.some(
                     (entry) =>
+                      entry.finalControlId ||
+                      entry.intermediateControlId ||
                       entry.examEnabled ||
                       entry.creditEnabled ||
                       entry.controlLessonEnabled
@@ -92,6 +94,40 @@
                   v-for="entry in item.distributionEntries"
                   :key="entry.id"
                 >
+                  <div
+                    v-if="entry.finalControlId"
+                    class="flex items-center gap-1.5"
+                  >
+                    <span class="text-xs font-medium">
+                      {{
+                        finalControlStore.getFinalControlById(
+                          entry.finalControlId
+                        )?.shortName ?? "Ф"
+                      }}
+                    </span>
+                    <div
+                      class="w-6 h-6 bg-white text-orange-500 rounded flex items-center justify-center"
+                    >
+                      <span class="text-xs font-bold">✓</span>
+                    </div>
+                  </div>
+                  <div
+                    v-if="entry.intermediateControlId"
+                    class="flex items-center gap-1.5"
+                  >
+                    <span class="text-xs font-medium">
+                      {{
+                        intermediateControlStore.getIntermediateControlById(
+                          entry.intermediateControlId
+                        )?.shortName ?? "П"
+                      }}
+                    </span>
+                    <div
+                      class="w-6 h-6 bg-white text-orange-500 rounded flex items-center justify-center"
+                    >
+                      <span class="text-xs font-bold">✓</span>
+                    </div>
+                  </div>
                   <div
                     v-if="entry.examEnabled"
                     class="flex items-center gap-1.5"
@@ -158,6 +194,8 @@
 <script setup lang="ts">
 import { computed, ref, nextTick, onMounted, onBeforeUnmount } from "vue";
 import { useClass9Store, type Class9Data } from "@/stores/class9Store";
+import { useFinalControlStore } from "@/stores/finalControlStore";
+import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { f7 } from "framework7-vue";
 import Class9Popup from "@/components/Class9Popup.vue";
 import { useRupStore } from "@/stores/rupStore";
@@ -176,6 +214,8 @@ const emit = defineEmits<{
 
 const class9Store = useClass9Store();
 const rupStore = useRupStore();
+const finalControlStore = useFinalControlStore();
+const intermediateControlStore = useIntermediateControlStore();
 const sortableList = ref<HTMLElement | null>(null);
 let sortableInstance: Sortable | null = null;
 
@@ -185,8 +225,7 @@ const class9List = computed(() => {
   }
   return class9Store.getClass9ItemsByContext(
     props.academicYearId,
-    props.specialtyIds,
-    props.teacherId
+    props.specialtyIds
   );
 });
 

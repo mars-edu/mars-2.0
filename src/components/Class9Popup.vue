@@ -240,7 +240,8 @@
                           @update:modelValue="
                             (value) => {
                               entry.academicYearId = value;
-                              entry.semesterId = ''; // Clear semester when year changes
+                              entry.semesterId = '';
+                              entry.finalControlId = null;
                             }
                           "
                         />
@@ -278,21 +279,17 @@
                     </div>
 
                     <div class="mt-4">
-                      <div class="text-sm font-medium mb-3">Форма контроля</div>
-
+                      <div class="text-sm font-medium mb-2">Форма контроля</div>
                       <Select
-                        :modelValue="getSelectedControlType(entry)"
-                        :options="[
-                          { value: 'none', text: 'Не выбрано' },
-                          { value: 'exam', text: 'Экзамен' },
-                          { value: 'credit', text: 'Зачет' },
-                          { value: 'controlLesson', text: 'Контрольный урок' },
-                        ]"
+                        :modelValue="entry.finalControlId ?? ''"
+                        @update:modelValue="
+                          entry.finalControlId = $event || null
+                        "
+                        :options="
+                          getFinalControlOptionsForYear(entry.academicYearId)
+                        "
                         placeholder="Выберите форму контроля"
                         search-placeholder="Поиск формы контроля..."
-                        @update:modelValue="
-                          setSelectedControlType(entry, $event)
-                        "
                       />
                     </div>
                   </div>
@@ -321,6 +318,7 @@ import { useClass9Store } from "@/stores/class9Store";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
+import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
 import { z } from "zod";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import Select from "@/components/ui/Select.vue";
@@ -346,6 +344,7 @@ const academicYearStore = useAcademicYearStore();
 const semesterStore = useSemesterStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const specialtyStore = useSpecialtyStore();
+const scheduledFinalControlStore = useScheduledFinalControlStore();
 
 function createEmptyStep() {
   return class9Store.createEmptyClass9Data(
@@ -429,6 +428,7 @@ const distributionEntrySchema = z.object({
       message: "Объем часов должен быть положительным числом",
     })
     .optional(),
+  finalControlId: z.string().nullable().optional(),
   examEnabled: z.boolean().optional(),
   creditEnabled: z.boolean().optional(),
   controlLessonEnabled: z.boolean().optional(),
@@ -584,7 +584,6 @@ async function submit() {
       await class9Store.updateClass9(props.initialData.id, {
         ...steps.value[0],
         specialtyIds: selectedSpecialtyIds.value,
-        teacherId: props.teacherId,
       });
     } else {
       for (const step of steps.value) {
@@ -593,7 +592,6 @@ async function submit() {
           selectedSpecialtyIds.value,
           {
             ...step,
-            teacherId: props.teacherId,
           }
         );
       }
@@ -610,9 +608,10 @@ function addDistributionEntry() {
 
   const newEntry = {
     id: crypto.randomUUID(),
-    academicYearId: props.academicYearId, // Default to current academic year
+    academicYearId: props.academicYearId,
     semesterId: "",
     hours: "",
+    finalControlId: null,
     examEnabled: false,
     creditEnabled: false,
     controlLessonEnabled: false,
@@ -633,31 +632,23 @@ function removeDistributionEntry(entryId: string) {
   }
 }
 
-function getSelectedControlType(entry: any): string {
-  if (entry.examEnabled) return "exam";
-  if (entry.creditEnabled) return "credit";
-  if (entry.controlLessonEnabled) return "controlLesson";
-  return "none";
-}
-
-function setSelectedControlType(entry: any, value: string) {
-  // Clear all control types first
-  entry.examEnabled = false;
-  entry.creditEnabled = false;
-  entry.controlLessonEnabled = false;
-
-  // Set the selected control type
-  switch (value) {
-    case "exam":
-      entry.examEnabled = true;
-      break;
-    case "credit":
-      entry.creditEnabled = true;
-      break;
-    case "controlLesson":
-      entry.controlLessonEnabled = true;
-      break;
+function getFinalControlOptionsForYear(academicYearId: string) {
+  if (!academicYearId) {
+    return [{ value: "", text: "Не выбрано" }];
   }
+
+  const scheduledControls =
+    scheduledFinalControlStore.getScheduledFinalControlsByAcademicYear(
+      academicYearId
+    );
+
+  return [
+    { value: "", text: "Не выбрано" },
+    ...scheduledControls.map((control) => ({
+      value: control.id,
+      text: control.shortName,
+    })),
+  ];
 }
 
 function showDeleteConfirmation() {

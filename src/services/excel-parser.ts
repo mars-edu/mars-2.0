@@ -1,4 +1,11 @@
 import * as XLSX from "xlsx-js-style";
+import type {
+  JournalImportSummary,
+  JournalImportResult,
+  JournalImportMetadata,
+  JournalImportStudent,
+  JournalImportValidationIssue,
+} from "@/types/journal-import";
 
 export interface ParsedLesson {
   lessonNumber: number;
@@ -220,6 +227,191 @@ export function parseEducationalScheduleEnhanced(
 
     reader.readAsArrayBuffer(file);
   });
+}
+
+function extractMetadataFromRows(rows: string[][]): JournalImportMetadata {
+  const groupLine = rows[1]?.[0] ?? "";
+  const courseLine = rows[2]?.[0] ?? "";
+  const specialtyLine = rows[3]?.[0] ?? "";
+  const yearLine = rows[4]?.[0] ?? "";
+  const disciplineLine = rows[5]?.[0] ?? "";
+  const teacherLine = rows[5]?.[24] ?? "";
+
+  const clean = (text: string, prefix: string) =>
+    text.replace(prefix, "").trim();
+
+  const groupName = clean(groupLine, "Группа №").trim();
+  const courseLabel = clean(courseLine, "Курс (год):").trim();
+  const specialtyLabel = clean(specialtyLine, "Специальность (Профессия):").trim();
+  const academicYearLabel = clean(yearLine, "Учебный год:").trim();
+  const disciplineTitle = disciplineLine
+    .split("\n")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(" ");
+  const teacherFullName = clean(
+    teacherLine.replace("Фамилия имя отчество преподавателя", ""),
+    ""
+  );
+
+  return {
+    groupName,
+    courseLabel,
+    specialtyLabel,
+    academicYearLabel,
+    disciplineTitle,
+    teacherFullName,
+    lessonDates: [],
+  };
+}
+
+function guessLessonDates(headerRow: string[], startIndex: number, endIndex: number) {
+  const dates: string[] = [];
+  for (let i = startIndex; i <= endIndex; i++) {
+    const value = headerRow[i];
+    if (!value) continue;
+    dates.push(value.trim());
+  }
+  return dates;
+}
+
+function detectJournalHeader(rows: string[][]) {
+  let headerRowIndex = -1;
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row) continue;
+    if (row.some((cell) => cell?.includes("№ п/п"))) {
+      headerRowIndex = i;
+      break;
+    }
+  }
+  return headerRowIndex;
+}
+
+function parseJournalStudents(
+  rows: string[][],
+  headerRowIndex: number,
+  attendanceStartCol: number,
+  attendanceEndCol: number,
+  dateCol: number
+) {
+  const students: JournalImportStudent[] = [];
+
+  for (let i = headerRowIndex + 2; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row) continue;
+    const orderCell = row[0];
+    const nameCell = row[1];
+    if (!orderCell && !nameCell) {
+      // reached empty row, stop parsing further
+      break;
+    }
+
+    const order = parseInt(orderCell, 10);
+    if (Number.isNaN(order)) {
+      continue;
+    }
+
+    const attendance: (string | number | null)[] = [];
+    for (let c = attendanceStartCol; c <= attendanceEndCol; c++) {
+      attendance.push(row[c] ?? "");
+    }
+
+    const student: JournalImportStudent = {
+      order,
+      fullName: nameCell?.trim() ?? "",
+      attendance,
+      lessonDate: row[dateCol]?.trim() ?? undefined,
+      hours: row[dateCol + 1]?.trim() ?? undefined,
+      topic: row[dateCol + 2]?.trim() ?? undefined,
+      teacherSignature: row[dateCol + 3]?.trim() ?? undefined,
+      accompanistSignature: row[dateCol + 4]?.trim() ?? undefined,
+    };
+
+    students.push(student);
+  }
+
+  return students;
+}
+
+export async function importJournalFromExcel(file: File): Promise<JournalImportSummary> {
+  const issues: JournalImportValidationIssue[] = [];
+
+  try {
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: "array" });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    if (!worksheet) {
+      throw new Error("Sheet not found in workbook");
+    }
+
+    const rows = XLSX.utils.sheet_to_json<string[]>(worksheet, {
+      header: 1,
+      raw: false,
+      defval: "",
+    });
+
+    if (rows.length < 8) {
+      throw new Error("Template too short or corrupted");
+    }
+
+    const metadata = extractMetadataFromRows(rows as string[][]);
+
+    const headerRowIndex = detectJournalHeader(rows as string[][]);
+    if (headerRowIndex === -1) {
+      throw new Error("Не удалось найти заголовок таблицы (строку с № п/п)");
+    }
+
+    const headerRow = rows[headerRowIndex] as string[];
+    const datesRow = rows[headerRowIndex + 1] as string[];
+
+    const studentNameCol = 1;
+    const attendanceStartCol = 2;
+
+    const dateCol = headerRow.findIndex((cell) =>
+      cell?.toLowerCase()?.includes("дата проведения")
+    );
+    const hoursCol = dateCol + 1;
+    const topicCol = dateCol + 2;
+
+    if (dateCol === -1) {
+      throw new Error("Не удалось определить колонку с датой проведения занятия");
+    }
+
+    const attendanceEndCol = dateCol - 1;
+    metadata.lessonDates = guessLessonDates(datesRow, attendanceStartCol, attendanceEndCol);
+
+    const students = parseJournalStudents(
+      rows as string[][],
+      headerRowIndex,
+      attendanceStartCol,
+      attendanceEndCol,
+      dateCol
+    );
+
+    if (students.length === 0) {
+      issues.push({
+        type: "warning",
+        message: "В шаблоне не найдено студентов. Проверьте содержимое файла.",
+      });
+    }
+
+    const result: JournalImportResult = {
+      metadata,
+      students,
+    };
+
+    return { result, issues };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Не удалось обработать файл журнала";
+    issues.push({ type: "error", message });
+    return {
+      result: null,
+      issues,
+    };
+  }
 }
 
 export async function exportKtpToExcel(

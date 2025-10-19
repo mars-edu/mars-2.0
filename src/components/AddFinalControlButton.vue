@@ -1,0 +1,142 @@
+<template>
+  <div>
+    <button
+      id="add-settings-final-control-button"
+      class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-green-500 hover:bg-green-600 rounded-full transition-colors"
+      aria-label="Add Final Control"
+      type="button"
+      @click.stop="openAddFinalControlPopover"
+    >
+      <f7-icon
+        ios="f7:plus"
+        md="material:add"
+        size="16px"
+        class="text-white"
+      ></f7-icon>
+    </button>
+
+    <f7-popover
+      id="add-settings-final-control-popover"
+      style="width: 600px !important"
+      target="#add-settings-final-control-button"
+      close-on-escape
+    >
+      <div class="final-control-popover bg-card text-card-foreground">
+        <PopoverHeader
+          title="Создать"
+          :disabled="!isFormValid || finalControlStore.isLoading"
+          :is-loading="finalControlStore.isLoading"
+          :on-cancel="closeAddFinalControlPopover"
+          :on-save="handleSaveFinalControl"
+        />
+
+        <div
+          v-if="formError || finalControlStore.getError"
+          class="px-4 pt-2 text-destructive text-sm"
+        >
+          {{ formError || finalControlStore.getError }}
+        </div>
+
+        <div class="p-4 space-y-4">
+          <div class="space-y-2">
+            <label class="text-sm text-foreground" for="final-control-name">
+              Полное название
+              <span class="text-destructive ml-1">*</span>
+            </label>
+            <f7-input
+              id="final-control-name"
+              type="text"
+              v-model:value="controlName"
+              placeholder="Введите полное название"
+            ></f7-input>
+          </div>
+
+          <div class="space-y-2">
+            <label
+              class="text-sm text-foreground"
+              for="final-control-short-name"
+            >
+              Краткое название
+              <span class="text-destructive ml-1">*</span>
+            </label>
+            <f7-input
+              id="final-control-short-name"
+              type="text"
+              v-model:value="controlShortName"
+              placeholder="Введите краткое название"
+            ></f7-input>
+          </div>
+        </div>
+      </div>
+    </f7-popover>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed } from "vue";
+import { f7, f7Popover, f7Icon, f7Input } from "framework7-vue";
+import { z } from "zod";
+import { useFinalControlStore } from "@/stores/finalControlStore";
+import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+
+const finalControlStore = useFinalControlStore();
+
+const controlName = ref("");
+const controlShortName = ref("");
+const formError = ref("");
+
+const finalControlSchema = z.object({
+  name: z.string().min(1, "Пожалуйста, введите полное название"),
+  shortName: z.string().min(1, "Пожалуйста, введите краткое название"),
+});
+
+const validationResult = computed(() => {
+  return finalControlSchema.safeParse({
+    name: controlName.value,
+    shortName: controlShortName.value,
+  });
+});
+
+const isFormValid = computed(() => validationResult.value.success);
+
+const openAddFinalControlPopover = () => {
+  f7.popover.open(
+    "#add-settings-final-control-popover",
+    "#add-settings-final-control-button"
+  );
+};
+
+const closeAddFinalControlPopover = () => {
+  f7.popover.close("#add-settings-final-control-popover");
+  resetForm();
+};
+
+const handleSaveFinalControl = async () => {
+  if (!isFormValid.value) {
+    if (!validationResult.value.success) {
+      const issues = validationResult.value.error.issues;
+      if (issues.length > 0) {
+        formError.value = issues[0].message;
+      }
+    }
+    return;
+  }
+
+  try {
+    await finalControlStore.addFinalControl({
+      name: controlName.value,
+      shortName: controlShortName.value,
+    });
+    closeAddFinalControlPopover();
+  } catch (error) {
+    console.error("Failed to add final control:", error);
+  }
+};
+
+const resetForm = () => {
+  controlName.value = "";
+  controlShortName.value = "";
+  formError.value = "";
+  finalControlStore.clearError();
+};
+</script>

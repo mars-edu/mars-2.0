@@ -1,4 +1,4 @@
-export type MarkType = "date" | "pk" | "e" | "i" | "session" | "ku" | "z";
+export type MarkType = "date" | "session";
 
 export interface Mark {
   type: MarkType;
@@ -8,6 +8,9 @@ export interface Mark {
   sessionId?: string;
   sessionDateIndices?: number[];
   isoDate?: string;
+  controlType?: "intermediate" | "final";
+  controlId?: string;
+  scheduledControlId?: string;
 }
 
 export interface StudentMark {

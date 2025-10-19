@@ -1,0 +1,145 @@
+<template>
+  <div>
+    <button
+      id="add-settings-intermediate-control-button"
+      class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-green-500 hover:bg-green-600 rounded-full transition-colors"
+      aria-label="Add Intermediate Control"
+      type="button"
+      @click.stop="openAddIntermediateControlPopover"
+    >
+      <f7-icon
+        ios="f7:plus"
+        md="material:add"
+        size="16px"
+        class="text-white"
+      ></f7-icon>
+    </button>
+
+    <f7-popover
+      id="add-settings-intermediate-control-popover"
+      style="width: 600px !important"
+      target="#add-settings-intermediate-control-button"
+      close-on-escape
+    >
+      <div class="intermediate-control-popover bg-card text-card-foreground">
+        <PopoverHeader
+          title="Создать"
+          :disabled="!isFormValid || intermediateControlStore.isLoading"
+          :is-loading="intermediateControlStore.isLoading"
+          :on-cancel="closeAddIntermediateControlPopover"
+          :on-save="handleSaveIntermediateControl"
+        />
+
+        <div
+          v-if="formError || intermediateControlStore.getError"
+          class="px-4 pt-2 text-destructive text-sm"
+        >
+          {{ formError || intermediateControlStore.getError }}
+        </div>
+
+        <div class="p-4 space-y-4">
+          <div class="space-y-2">
+            <label
+              class="text-sm text-foreground"
+              for="intermediate-control-name"
+            >
+              Полное название
+              <span class="text-destructive ml-1">*</span>
+            </label>
+            <f7-input
+              id="intermediate-control-name"
+              type="text"
+              v-model:value="controlName"
+              placeholder="Введите полное название"
+            ></f7-input>
+          </div>
+
+          <div class="space-y-2">
+            <label
+              class="text-sm text-foreground"
+              for="intermediate-control-short-name"
+            >
+              Краткое название
+              <span class="text-destructive ml-1">*</span>
+            </label>
+            <f7-input
+              id="intermediate-control-short-name"
+              type="text"
+              v-model:value="controlShortName"
+              placeholder="Введите краткое название"
+            ></f7-input>
+          </div>
+        </div>
+      </div>
+    </f7-popover>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed } from "vue";
+import { f7, f7Popover, f7Icon, f7Input } from "framework7-vue";
+import { z } from "zod";
+import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
+import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+
+const intermediateControlStore = useIntermediateControlStore();
+
+const controlName = ref("");
+const controlShortName = ref("");
+const formError = ref("");
+
+const intermediateControlSchema = z.object({
+  name: z.string().min(1, "Пожалуйста, введите полное название"),
+  shortName: z.string().min(1, "Пожалуйста, введите краткое название"),
+});
+
+const validationResult = computed(() => {
+  return intermediateControlSchema.safeParse({
+    name: controlName.value,
+    shortName: controlShortName.value,
+  });
+});
+
+const isFormValid = computed(() => validationResult.value.success);
+
+const openAddIntermediateControlPopover = () => {
+  f7.popover.open(
+    "#add-settings-intermediate-control-popover",
+    "#add-settings-intermediate-control-button"
+  );
+};
+
+const closeAddIntermediateControlPopover = () => {
+  f7.popover.close("#add-settings-intermediate-control-popover");
+  resetForm();
+};
+
+const handleSaveIntermediateControl = async () => {
+  if (!isFormValid.value) {
+    if (!validationResult.value.success) {
+      const issues = validationResult.value.error.issues;
+      if (issues.length > 0) {
+        formError.value = issues[0].message;
+      }
+    }
+    return;
+  }
+
+  try {
+    await intermediateControlStore.addIntermediateControl({
+      name: controlName.value,
+      shortName: controlShortName.value,
+    });
+    closeAddIntermediateControlPopover();
+  } catch (error) {
+    console.error("Failed to add intermediate control:", error);
+  }
+};
+
+const resetForm = () => {
+  controlName.value = "";
+  controlShortName.value = "";
+  formError.value = "";
+  intermediateControlStore.clearError();
+};
+</script>

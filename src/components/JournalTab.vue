@@ -95,12 +95,7 @@
               :key="header.index"
               class="px-1 py-2 text-center text-xs border-r border-border w-16 min-w-[56px] cursor-pointer hover:bg-muted"
               :class="{
-                'bg-muted/50 text-muted-foreground':
-                  header.type === 'session' ||
-                  header.type === 'pk' ||
-                  header.type === 'e' ||
-                  header.type === 'z' ||
-                  header.type === 'ku',
+                'bg-muted/50 text-muted-foreground': header.type === 'session',
               }"
               @click="openDateFocus(header, header.index)"
             >
@@ -151,12 +146,7 @@
               :key="header.index"
               class="px-1 py-2 text-center border-r border-border min-w-[56px]"
               :class="{
-                'bg-muted/90':
-                  header.type === 'session' ||
-                  header.type === 'pk' ||
-                  header.type === 'e' ||
-                  header.type === 'z' ||
-                  header.type === 'ku',
+                'bg-muted/90': header.type === 'session',
               }"
             >
               <div class="flex flex-col gap-1">
@@ -301,18 +291,9 @@
           Выберите расчёт
         </div>
         <div class="p-2 space-y-2">
-          <f7-button small fill @click="recalcRk1" class="w-full"
-            >РК1</f7-button
-          >
-          <f7-button small fill @click="recalcRk2" class="w-full"
-            >РК2</f7-button
-          >
-          <f7-button small fill @click="recalcFinal" class="w-full"
-            >Итоговую</f7-button
-          >
-          <f7-button small fill @click="recalcAll" class="w-full"
-            >Все</f7-button
-          >
+          <f7-button small fill @click="recalcSessions" class="w-full">
+            Сессии
+          </f7-button>
         </div>
       </div>
     </f7-popover>
@@ -336,13 +317,16 @@ import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
 import KtpDetailViewPopover from "@/components/KtpDetailViewPopover.vue";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useStudentStore } from "@/stores/studentStore";
-import { useSessionStore } from "@/stores/sessionStore";
 import { useMarksStore } from "@/stores/marksStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
 import { useJournalStore } from "@/stores/journalStore";
-import { useClass9Store } from "@/stores/class9Store";
-import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
+import { useAcademicYearStore } from "@/stores/academicYearStore";
+import { useClass9Store, type Class9Data } from "@/stores/class9Store";
+import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
+import { useFinalControlStore } from "@/stores/finalControlStore";
+import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermediateControlStore";
+import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
 import { storeToRefs } from "pinia";
 import type { Mark } from "@/types/marks";
 import type { EducationSchedule } from "@/stores/educationScheduleStore";
@@ -351,12 +335,7 @@ import type { StudentWithMarks } from "@/types/student";
 // Central source of truth for mark types and helpers
 const MARK_TYPES = [
   { type: "date", defaultLabel: null, singleRow: false },
-  { type: "session", defaultLabel: "Сессия", singleRow: true },
-  { type: "pk", defaultLabel: "РК", singleRow: true },
-  { type: "e", defaultLabel: "Э", singleRow: true },
-  { type: "z", defaultLabel: "З", singleRow: true },
-  { type: "i", defaultLabel: "И", singleRow: true },
-  { type: "ku", defaultLabel: "КУ", singleRow: true },
+  { type: "session", defaultLabel: null, singleRow: true },
 ] as const;
 
 type MarkType = (typeof MARK_TYPES)[number]["type"];
@@ -371,8 +350,7 @@ const initialValuesForType = (type: MarkType, dynamicRows: number) =>
 
 const headerLabelFor = (mark: any): string => {
   if (mark.type === "date") return mark.date || "";
-  if (mark.type === "session")
-    return mark.label || MARK_TYPE_MAP.session.defaultLabel || "";
+  if (mark.label) return mark.label;
   const def = MARK_TYPE_MAP[mark.type as MarkType];
   return (def?.defaultLabel ?? "") as string;
 };
@@ -403,17 +381,27 @@ const emit = defineEmits<{
 const calendarStore = useCalendarStore();
 const studentStore = useStudentStore();
 const { getStudentFullName } = studentStore;
-const sessionStore = useSessionStore();
 const marksStore = useMarksStore();
 const educationScheduleStore = useEducationScheduleStore();
 const ktpStore = useKtpStore();
 const journalStore = useJournalStore();
+const academicYearStore = useAcademicYearStore();
 const class9Store = useClass9Store();
-const academicYearSemesterStore = useAcademicYearSemesterStore();
+const intermediateControlStore = useIntermediateControlStore();
+const finalControlStore = useFinalControlStore();
+const scheduledIntermediateControlStore =
+  useScheduledIntermediateControlStore();
+const scheduledFinalControlStore = useScheduledFinalControlStore();
 const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
-const { getActiveAcademicYearSemester } = storeToRefs(
-  academicYearSemesterStore
-);
+const { getClass9ById, class9Items } = storeToRefs(class9Store);
+const { getIntermediateControlById } = storeToRefs(intermediateControlStore);
+const { getFinalControlById } = storeToRefs(finalControlStore);
+const {
+  scheduledIntermediateControls,
+  getScheduledIntermediateControlsByAcademicYear,
+} = storeToRefs(scheduledIntermediateControlStore);
+const { scheduledFinalControls, getScheduledFinalControlsByAcademicYear } =
+  storeToRefs(scheduledFinalControlStore);
 
 const editingCell = ref<{
   studentIndex: number;
@@ -444,6 +432,15 @@ const debugGroup = (title: string, fn: () => void) => {
 const currentEvent = computed(() => {
   if (!props.journalId) return null;
   return calendarStore.getEventById(props.journalId);
+});
+
+const currentClass9 = computed(() => {
+  const class9Id =
+    currentJournal.value?.disciplineId || currentEvent.value?.class9Id;
+  if (!class9Id) return null;
+  const lookup = getClass9ById.value;
+  if (typeof lookup !== "function") return null;
+  return (lookup(class9Id) as Class9Data | null | undefined) ?? null;
 });
 
 const timeToMinutes = (time: string | undefined | null) => {
@@ -586,197 +583,376 @@ const generateDates = () => {
 
   debugLog("dateMarks length", dateMarks.length);
 
-  // Inject session columns after session end dates if overlapping with journal days
-  const sessionStore = useSessionStore();
-  let marksWithSessions: Mark[] = [...dateMarks];
+  const marksWithSessions: Mark[] = [...dateMarks];
+  const event = currentEvent.value;
+  const class9Item = currentClass9.value as
+    | (ReturnType<NonNullable<typeof getClass9ById.value>> & {
+        distributionEntries?: any[];
+      })
+    | null;
+  const academicYearId = class9Item?.academicYearId;
+  const semesterFilter = event?.semester ? String(event.semester) : null;
+  const dateMeta = dateMarks.map((mark, datePos) => {
+    const isoDate = mark.isoDate;
+    const parsed = isoDate ? dayjs(isoDate, DATE_STORAGE_FORMAT, true) : null;
+    return {
+      isoDate,
+      day: parsed && parsed.isValid() ? parsed : null,
+      datePos,
+    };
+  });
 
-  const sessions = sessionStore.sortedSessions as unknown as Array<{
-    id: string;
-    shortName: string;
-    startDate: string; // YYYY-MM-DD
-    endDate: string; // YYYY-MM-DD
-  }>;
+  const parseControlDate = (value?: string | null) => {
+    if (!value) return null;
+    const parsed = dayjs(value, DATE_STORAGE_FORMAT, true);
+    if (parsed.isValid()) return parsed;
+    const fallback = dayjs(value);
+    return fallback.isValid() ? fallback : null;
+  };
 
-  // Build insertion plan
-  const insertionPlan: Array<{
-    insertAfter: number;
-    session: any;
-    indices: number[];
-  }> = [];
+  const controlInsertions: {
+    mark: Mark;
+    insertAfterDatePos: number;
+    sortKey: number;
+    secondarySortKey: string;
+    debug?: Record<string, unknown>;
+  }[] = [];
 
-  debugGroup("sessions overlap analysis", () => {
+  const relevantDistributionEntries = (class9Item?.distributionEntries || [])
+    .filter((entry: any) => {
+      if (!semesterFilter) return true;
+      if (entry?.semesterId == null) return false;
+      return String(entry.semesterId) === semesterFilter;
+    })
+    .filter((entry: any) => {
+      if (!academicYearId) return true;
+      return String(entry?.academicYearId ?? "") === String(academicYearId);
+    })
+    .map((entry: any) => entry);
+
+  debugGroup("Distribution Entries Analysis", () => {
     debugLog(
-      "sessions",
-      sessions.map((s) => ({
-        id: s.id,
-        shortName: s.shortName,
-        startDate: s.startDate,
-        endDate: s.endDate,
+      "class9Item",
+      class9Item
+        ? { id: class9Item.id, moduleName: class9Item.moduleName }
+        : null
+    );
+    debugLog("academicYearId", academicYearId);
+    debugLog("semesterFilter", semesterFilter);
+    debugLog(
+      "All distribution entries in class9Item",
+      class9Item?.distributionEntries?.length || 0
+    );
+    debugLog(
+      "class9Item.distributionEntries (full):",
+      class9Item?.distributionEntries
+    );
+    debugLog(
+      "Relevant distribution entries after filtering",
+      relevantDistributionEntries.length
+    );
+    debugLog(
+      "Relevant entries detail:",
+      relevantDistributionEntries.map((e: any) => ({
+        id: e.id,
+        academicYearId: e.academicYearId,
+        semesterId: e.semesterId,
+        intermediateControlId: e.intermediateControlId,
+        finalControlId: e.finalControlId,
+        ...Object.keys(e).reduce((acc: any, key: string) => {
+          if (
+            ![
+              "id",
+              "academicYearId",
+              "semesterId",
+              "intermediateControlId",
+              "finalControlId",
+            ].includes(key)
+          ) {
+            acc[key] = e[key];
+          }
+          return acc;
+        }, {}),
       }))
     );
   });
 
-  sessions.forEach((session) => {
-    const indices: number[] = [];
-    dateMarks.forEach((m, i) => {
-      const iso = m.isoDate;
-      if (!iso) return;
-      if (iso >= session.startDate && iso <= session.endDate) {
-        indices.push(i);
-      }
-    });
-    if (indices.length > 0) {
-      debugLog("session indices", {
-        shortName: session.shortName,
-        indices,
-        insertAfter: indices[indices.length - 1],
-      });
-      insertionPlan.push({
-        insertAfter: indices[indices.length - 1],
-        session,
-        indices,
-      });
-    }
-  });
+  const scheduledIntermediateForYear =
+    academicYearId &&
+    typeof getScheduledIntermediateControlsByAcademicYear.value === "function"
+      ? getScheduledIntermediateControlsByAcademicYear.value(academicYearId) ||
+        []
+      : [];
 
-  // Sort by insert position and insert
-  const sortedPlans = insertionPlan.sort(
-    (a, b) => a.insertAfter - b.insertAfter
+  const scheduledFinalForYear =
+    academicYearId &&
+    typeof getScheduledFinalControlsByAcademicYear.value === "function"
+      ? getScheduledFinalControlsByAcademicYear.value(academicYearId) || []
+      : [];
+
+  const uniqueIds = <T extends string | null | undefined>(values: T[]) =>
+    Array.from(new Set(values.filter((v): v is string => !!v)));
+
+  const intermediateControlIds = uniqueIds(
+    scheduledIntermediateForYear.map(
+      (control: any) =>
+        control.intermediateControlId as string | null | undefined
+    )
+  );
+  const finalControlIds = uniqueIds(
+    scheduledFinalForYear.map(
+      (control: any) => control.finalControlId as string | null | undefined
+    )
   );
 
-  let lastRk1End: number | null = null;
-  sortedPlans.forEach((plan) => {
-    const label = String(plan.session?.shortName || "").toUpperCase();
-    const isRk1 = /РК\s*1/i.test(label);
-    const isRk2 = /РК\s*2/i.test(label);
-    if (isRk1) {
-      lastRk1End = plan.insertAfter;
-    } else if (isRk2 && lastRk1End != null) {
-      const cumulative: number[] = [];
-      for (let i = lastRk1End + 1; i <= plan.insertAfter; i++)
-        cumulative.push(i);
-      plan.indices = cumulative;
-    }
+  debugGroup("Control IDs Collection", () => {
+    debugLog("intermediateControlIds found:", intermediateControlIds);
+    debugLog("intermediateControlIds count:", intermediateControlIds.length);
+    debugLog("finalControlIds found:", finalControlIds);
+    debugLog("finalControlIds count:", finalControlIds.length);
   });
 
-  sortedPlans.forEach((plan, offset) => {
-    const insertIndex = plan.insertAfter + 1 + offset;
-    debugLog("inserting session column", {
-      label: plan.session.shortName,
-      insertIndex,
-      afterDateIndex: plan.insertAfter,
-      offset,
-    });
-    marksWithSessions.splice(insertIndex, 0, {
+  debugGroup("Scheduled Controls Lookup", () => {
+    debugLog("academicYearId:", academicYearId);
+    debugLog(
+      "scheduledIntermediateForYear count:",
+      scheduledIntermediateForYear.length
+    );
+    debugLog(
+      "scheduledIntermediateForYear details:",
+      scheduledIntermediateForYear.map((c: any) => ({
+        id: c.id,
+        intermediateControlId: c.intermediateControlId,
+        shortName: c.shortName,
+        startDate: c.startDate,
+        endDate: c.endDate,
+        academicYearId: c.academicYearId,
+      }))
+    );
+    debugLog("scheduledFinalForYear count:", scheduledFinalForYear.length);
+  });
+
+  const seenSessionIds = new Set<string>();
+
+  const lastDatePos = dateMeta.length > 0 ? dateMeta.length - 1 : -1;
+
+  const computeInsertAfter = (
+    start: dayjs.Dayjs | null,
+    end: dayjs.Dayjs | null,
+    fallback: number
+  ) => {
+    if (!dateMeta.length) return -1;
+    const effectiveStart = start;
+    const effectiveEnd = end ?? start;
+    const inRange = dateMeta
+      .filter((meta) => {
+        if (!meta.day) return false;
+        const startsOk =
+          !effectiveStart || !effectiveStart.isValid()
+            ? true
+            : !meta.day.isBefore(effectiveStart, "day");
+        const endsOk =
+          !effectiveEnd || !effectiveEnd.isValid()
+            ? true
+            : !meta.day.isAfter(effectiveEnd, "day");
+        return startsOk && endsOk;
+      })
+      .map((meta) => meta.datePos);
+
+    if (inRange.length > 0) {
+      return Math.max(...inRange);
+    }
+
+    if (effectiveStart && effectiveStart.isValid()) {
+      const before = dateMeta
+        .filter((meta) => meta.day && meta.day.isBefore(effectiveStart, "day"))
+        .map((meta) => meta.datePos);
+      if (before.length > 0) {
+        const maxBefore = Math.max(...before);
+        const allBefore = before.length === dateMeta.length;
+        if (allBefore) {
+          return maxBefore + 1000;
+        }
+        return maxBefore;
+      }
+      return -1;
+    }
+
+    return fallback;
+  };
+
+  const collectSessionDateIndices = (
+    start: dayjs.Dayjs | null,
+    end: dayjs.Dayjs | null
+  ) => {
+    if (!dateMeta.length) return [] as number[];
+    if (!start && !end) return [] as number[];
+    return dateMeta
+      .filter((meta) => {
+        if (!meta.day) return false;
+        if (start && start.isValid() && meta.day.isBefore(start, "day")) {
+          return false;
+        }
+        if (end && end.isValid() && meta.day.isAfter(end, "day")) {
+          return false;
+        }
+        return true;
+      })
+      .map((meta) => meta.datePos);
+  };
+
+  const registerScheduledControl = (
+    type: "intermediate" | "final",
+    controlId: string,
+    rawControl: any
+  ) => {
+    if (!rawControl) return;
+    if (seenSessionIds.has(rawControl.id)) return;
+
+    const start = parseControlDate(rawControl.startDate);
+    const end = parseControlDate(rawControl.endDate) || start;
+    const insertAfterDatePos = computeInsertAfter(start, end, lastDatePos);
+    const sessionDateIndices = collectSessionDateIndices(start, end);
+
+    const baseControl =
+      type === "intermediate"
+        ? typeof getIntermediateControlById.value === "function"
+          ? getIntermediateControlById.value(controlId)
+          : null
+        : typeof getFinalControlById.value === "function"
+        ? getFinalControlById.value(controlId)
+        : null;
+
+    const label =
+      (rawControl.shortName || "").trim() ||
+      baseControl?.shortName ||
+      baseControl?.name ||
+      (type === "intermediate" ? "ПК" : "Итог");
+
+    const mark: Mark = {
       type: "session",
-      values: initialValuesForType("session", 2),
-      label: plan.session.shortName,
-      sessionId: plan.session.id,
-      sessionDateIndices: plan.indices,
-    } as Mark);
-  });
+      label,
+      values: initialValuesForType("session", 1),
+      sessionId: rawControl.id,
+      sessionDateIndices,
+      controlType: type,
+      controlId,
+      scheduledControlId: rawControl.id,
+    };
 
-  // Append summary column based on selected control form (exam/credit)
-  const class9Id =
-    (currentJournal.value as any)?.disciplineId ||
-    (currentEvent.value as any)?.class9Id;
-  const class9Item = class9Id
-    ? (class9Store.getClass9ById as any)(class9Id)
-    : null;
-  const activeSem = getActiveAcademicYearSemester.value as any;
+    const sortKey =
+      start?.valueOf?.() ??
+      Number.MAX_SAFE_INTEGER - (type === "final" ? 1 : 2);
 
-  let matchedEntry: any = null;
-  if (class9Item && Array.isArray(class9Item.distributionEntries)) {
-    const semesterNumber = String(activeSem?.semesterNumber ?? "");
-    const activeYearId = activeSem?.academicYearId;
-    matchedEntry =
-      class9Item.distributionEntries.find((entry: any) => {
-        const entrySemesterId = String(entry.semesterId ?? "");
-        const matchesSemester =
-          (activeSem &&
-            (entrySemesterId === String(activeSem.id) ||
-              entrySemesterId === semesterNumber)) ||
-          (!!(currentEvent.value as any)?.semester &&
-            entrySemesterId === String((currentEvent.value as any).semester));
-        const matchesYear =
-          !entry.academicYearId || !activeYearId
-            ? matchesSemester
-            : entry.academicYearId === activeYearId && matchesSemester;
-        return matchesYear;
-      }) || null;
-  }
-
-  debugGroup("control form analysis", () => {
-    debugLog("class9Id", class9Id);
-    debugLog("activeSemester", {
-      id: activeSem?.id,
-      semesterNumber: activeSem?.semesterNumber,
-      academicYearId: activeSem?.academicYearId,
+    controlInsertions.push({
+      mark,
+      insertAfterDatePos,
+      sortKey,
+      secondarySortKey: String(rawControl.id ?? ""),
+      debug: {
+        type,
+        controlId,
+        scheduledControlId: rawControl.id,
+        dateRange: [rawControl.startDate, rawControl.endDate],
+        sessionDateIndices,
+        insertAfterDatePos,
+        sortKey,
+      },
     });
-    debugLog("matchedEntry", matchedEntry);
+
+    seenSessionIds.add(rawControl.id);
+  };
+
+  intermediateControlIds.forEach((controlId) => {
+    const scheduled = scheduledIntermediateForYear
+      .filter((control) => control.intermediateControlId === controlId)
+      .sort((a, b) => (a.startDate || "").localeCompare(b.startDate || ""));
+
+    if (!scheduled.length) {
+      debugLog(
+        "No scheduled intermediate controls found for id",
+        controlId,
+        "in academicYear",
+        academicYearId
+      );
+      return;
+    }
+
+    debugGroup(`Processing intermediate control: ${controlId}`, () => {
+      debugLog("Found scheduled controls count:", scheduled.length);
+      debugLog(
+        "Scheduled controls:",
+        scheduled.map((c: any) => ({
+          id: c.id,
+          intermediateControlId: c.intermediateControlId,
+          shortName: c.shortName,
+          startDate: c.startDate,
+          endDate: c.endDate,
+        }))
+      );
+    });
+
+    scheduled.forEach((control) =>
+      registerScheduledControl("intermediate", controlId, control)
+    );
   });
 
-  if (matchedEntry?.examEnabled) {
-    const hasExamSession = marksWithSessions.some(
-      (m: any) =>
-        m.type === "session" &&
-        (m.label === "Э" ||
-          m.label === "ЭКЗ" ||
-          m.label?.toUpperCase?.() === "Э")
-    );
-    if (!hasExamSession) {
-      marksWithSessions.push({
-        type: "e",
-        values: initialValuesForType("e", 2),
-      } as Mark);
-      debugLog("appended control column", { type: "e" });
-    } else {
-      debugLog("skipped control column due to existing matching session", {
-        type: "e",
-      });
-    }
-  } else if (matchedEntry?.creditEnabled) {
-    const hasCreditSession = marksWithSessions.some(
-      (m: any) =>
-        m.type === "session" &&
-        (m.label === "З" || m.label?.toUpperCase?.() === "З")
-    );
-    if (!hasCreditSession) {
-      marksWithSessions.push({
-        type: "z",
-        values: initialValuesForType("z", 2),
-      } as Mark);
-      debugLog("appended control column", { type: "z" });
-    } else {
-      debugLog("skipped control column due to existing matching session", {
-        type: "z",
-      });
-    }
-  } else if (matchedEntry?.controlLessonEnabled) {
-    const hasKuSession = marksWithSessions.some(
-      (m: any) =>
-        m.type === "session" &&
-        (m.label === "КУ" || m.label?.toUpperCase?.() === "КУ")
-    );
-    if (!hasKuSession) {
-      marksWithSessions.push({
-        type: "ku",
-        values: initialValuesForType("ku", 2),
-      } as Mark);
-      debugLog("appended control column", { type: "ku" });
-    } else {
-      debugLog("skipped control column due to existing matching session", {
-        type: "ku",
-      });
-    }
-  }
+  finalControlIds.forEach((controlId) => {
+    const scheduled = scheduledFinalForYear
+      .filter((control) => control.finalControlId === controlId)
+      .sort((a, b) => (a.startDate || "").localeCompare(b.startDate || ""));
 
-  // Always append final Итог (И)
-  marksWithSessions.push({
-    type: "i",
-    values: initialValuesForType("i", 2),
-  } as Mark);
-  debugLog("appended final column", { type: "i" });
+    if (!scheduled.length) {
+      debugLog(
+        "Skipping final control column, no scheduled control found for id",
+        controlId,
+        "in academicYear",
+        academicYearId
+      );
+      return;
+    }
+
+    scheduled.forEach((control) =>
+      registerScheduledControl("final", controlId, control)
+    );
+  });
+
+  controlInsertions
+    .sort((a, b) => {
+      if (a.insertAfterDatePos !== b.insertAfterDatePos) {
+        return a.insertAfterDatePos - b.insertAfterDatePos;
+      }
+      if (a.sortKey !== b.sortKey) return a.sortKey - b.sortKey;
+      return a.secondarySortKey.localeCompare(b.secondarySortKey);
+    })
+    .forEach(({ mark, insertAfterDatePos, debug }) => {
+      let insertIndex = 0;
+      if (insertAfterDatePos < 0) {
+        insertIndex = 0;
+      } else {
+        let seenDates = -1;
+        insertIndex = marksWithSessions.findIndex((m) => {
+          if (m.type === "date") {
+            seenDates += 1;
+            if (seenDates === insertAfterDatePos) {
+              return true;
+            }
+          }
+          return false;
+        });
+        insertIndex =
+          insertIndex === -1 ? marksWithSessions.length : insertIndex + 1;
+      }
+
+      debugGroup("insert control column", () => {
+        debugLog("label", mark.label);
+        debugLog("insertAfterDatePos", insertAfterDatePos);
+        debugLog("insertIndex", insertIndex);
+        debugLog("metadata", debug || {});
+      });
+
+      marksWithSessions.splice(insertIndex, 0, mark);
+    });
 
   debugGroup("final marks template summary", () => {
     const summary = marksWithSessions.map((m, idx) => ({
@@ -874,10 +1050,10 @@ const editCell = (
   if (!studentMarks || storeColIndex == null || storeColIndex < 0) return;
 
   const markType = studentMarks[storeColIndex].type;
-  if (
-    (markType === "session" || markType === "i") &&
-    props.journalSettings?.calculationType === "calculated"
-  ) {
+  const calculationType =
+    props.journalSettings?.calculationType ||
+    localJournalSettings.value.calculationType;
+  if (markType === "session" && calculationType === "calculated") {
     return;
   }
   editingCell.value = { studentIndex, colIndex, markIndex };
@@ -1045,26 +1221,8 @@ const onRecalcClick = () => {
   f7.popover.open("#recalc-popover", "#recalc-button");
 };
 
-const recalcRk1 = () => {
-  computeAllSessionGrades({ force: true, labels: [/РК\s*1/i] });
-  computeFinalGrades({ force: true });
-  f7.popover.close("#recalc-popover");
-};
-
-const recalcRk2 = () => {
-  computeAllSessionGrades({ force: true, labels: [/РК\s*2/i] });
-  computeFinalGrades({ force: true });
-  f7.popover.close("#recalc-popover");
-};
-
-const recalcFinal = () => {
-  computeFinalGrades({ force: true });
-  f7.popover.close("#recalc-popover");
-};
-
-const recalcAll = () => {
+const recalcSessions = () => {
   computeAllSessionGrades({ force: true });
-  computeFinalGrades({ force: true });
   f7.popover.close("#recalc-popover");
 };
 
@@ -1142,159 +1300,66 @@ const computeAllSessionGrades = (opts?: {
   labels?: Array<string | RegExp>;
 }) => {
   const force = !!opts?.force;
-  if (
-    (props.journalSettings?.calculationType !== "calculated" ||
-      !props.journalId) &&
-    !force
-  )
-    return;
-  const method = props.journalSettings?.calculationMethod || "only-assigned";
+  const calculationType =
+    props.journalSettings?.calculationType ||
+    localJournalSettings.value.calculationType ||
+    "calculated";
 
-  const journalStudentMarks = marksStore.getJournalStudentMarks(
-    props.journalId
-  );
+  if (!props.journalId) return;
+  if (!force && calculationType !== "calculated") return;
 
-  journalStudentMarks.forEach((studentMark) => {
-    studentMark.marks.forEach((mark, mIdx) => {
-      if (mark.type === "session") {
-        if (opts?.labels && opts.labels.length > 0) {
-          const label = String((mark as any).label || "");
-          const match = opts.labels.some((f) =>
-            typeof f === "string"
-              ? label.toUpperCase() === String(f).toUpperCase()
-              : (f as RegExp).test(label)
-          );
-          if (!match) return;
-        }
-        const indices = (mark as any).sessionDateIndices as
-          | number[]
-          | undefined;
-        if (!indices || indices.length === 0) return;
-        const grade = computeSessionGradeForStudent(
-          studentMark.studentId,
-          indices,
-          method
-        );
-        const currentValue0 = mark.values?.[0] ?? null;
-        const currentValue1 = mark.values?.[1] ?? null;
-        if (currentValue0 !== grade) {
-          marksStore.updateStudentMark(
-            props.journalId,
-            studentMark.studentId,
-            mIdx,
-            0,
-            grade
-          );
-        }
-        if (currentValue1 !== null) {
-          marksStore.updateStudentMark(
-            props.journalId,
-            studentMark.studentId,
-            mIdx,
-            1,
-            null
-          );
-        }
-      }
-    });
-  });
-};
+  const canonical = canonicalTemplate.value;
+  if (!Array.isArray(canonical) || canonical.length === 0) return;
 
-const computeFinalGrades = (opts?: { force?: boolean }) => {
-  const force = !!opts?.force;
-  if (
-    (props.journalSettings?.calculationType !== "calculated" ||
-      !props.journalId) &&
-    !force
-  )
-    return;
-
-  const journalStudentMarks = marksStore.getJournalStudentMarks(
-    props.journalId
-  );
-
-  journalStudentMarks.forEach((studentMark) => {
-    const isExamSessionLabel = (label: any) => {
-      const s = String(label || "").toUpperCase();
-      return s === "Э" || s === "ЭКЗ" || s === "З";
-    };
-
-    const rkValues: number[] = [];
-    studentMark.marks.forEach((mark) => {
-      if (mark.type === "pk") {
-        const v0 = mark.values?.[0];
-        const n =
-          v0 !== null && v0 !== "" && !isNaN(Number(v0)) ? Number(v0) : null;
-        if (n !== null) rkValues.push(n);
-      } else if (
-        mark.type === "session" &&
-        !isExamSessionLabel((mark as any).label)
-      ) {
-        const v0 = mark.values?.[0];
-        const n =
-          v0 !== null && v0 !== "" && !isNaN(Number(v0)) ? Number(v0) : null;
-        if (n !== null) rkValues.push(n);
-      }
-    });
-
-    const rkAvg =
-      rkValues.length > 0
-        ? rkValues.reduce((sum, v) => sum + v, 0) / rkValues.length
-        : null;
-
-    let exam: number | null = null;
-    const trySetExam = (predicate: (m: any) => boolean) => {
-      if (exam !== null) return;
-      const idx = studentMark.marks.findIndex(predicate);
-      if (idx >= 0) {
-        const vv = studentMark.marks[idx].values?.[0];
-        const num =
-          vv !== null && vv !== "" && !isNaN(Number(vv)) ? Number(vv) : null;
-        if (num !== null) exam = num;
-      }
-    };
-
-    trySetExam((m) => m.type === "e");
-    trySetExam((m) => m.type === "z");
-    trySetExam(
-      (m) =>
-        m.type === "session" &&
-        typeof m.label === "string" &&
-        ["Э", "ЭКЗ", "З"].includes(String(m.label).toUpperCase())
+  const matchesLabel = (label: string | undefined) => {
+    if (!opts?.labels || opts.labels.length === 0) return true;
+    const safeLabel = label || "";
+    return opts.labels.some((rule) =>
+      typeof rule === "string" ? rule === safeLabel : rule.test(safeLabel)
     );
+  };
 
-    let finalStr: string | null = null;
-    if (rkAvg !== null && exam !== null) {
-      finalStr = (0.6 * rkAvg + 0.4 * exam).toFixed(1);
-    } else if (rkAvg !== null) {
-      finalStr = rkAvg.toFixed(1);
-    } else {
-      finalStr = null;
-    }
+  const calculationMethod =
+    props.journalSettings?.calculationMethod ||
+    localJournalSettings.value.calculationMethod ||
+    "only-assigned";
 
-    const iIndex = studentMark.marks.findIndex((m) => m.type === "i");
-    if (iIndex >= 0) {
-      const current0 = studentMark.marks[iIndex].values?.[0] ?? null;
-      if (current0 !== finalStr) {
-        marksStore.updateStudentMark(
-          props.journalId,
-          studentMark.studentId,
-          iIndex,
-          0,
-          finalStr
-        );
-      }
-      const current1 = studentMark.marks[iIndex].values?.[1] ?? null;
-      if (current1 !== null) {
-        marksStore.updateStudentMark(
-          props.journalId,
-          studentMark.studentId,
-          iIndex,
-          1,
-          null
-        );
-      }
-    }
+  const sessionColumns = canonical
+    .map((mark, canonicalIndex) => ({ mark, canonicalIndex }))
+    .filter(({ mark }) => mark?.type === "session" && matchesLabel(mark.label));
+
+  if (sessionColumns.length === 0) return;
+
+  const students = marksStore.getJournalStudentMarks(props.journalId);
+  if (!Array.isArray(students) || students.length === 0) return;
+
+  sessionColumns.forEach(({ mark, canonicalIndex }) => {
+    const sessionMark = mark as Mark;
+    const dateIndices = Array.isArray(sessionMark.sessionDateIndices)
+      ? sessionMark.sessionDateIndices
+      : [];
+    const storeIndex = getStoreIndexForCanonicalIndex(canonicalIndex);
+    if (storeIndex == null || storeIndex < 0) return;
+
+    students.forEach((studentMark) => {
+      const grade = computeSessionGradeForStudent(
+        studentMark.studentId,
+        dateIndices,
+        calculationMethod
+      );
+
+      const existingValue =
+        studentMark.marks?.[storeIndex]?.values?.[0] ?? null;
+      if (existingValue === grade) return;
+
+      marksStore.updateStudentMark(
+        props.journalId!,
+        studentMark.studentId,
+        storeIndex,
+        0,
+        grade
+      );
+    });
   });
 };
 
@@ -1393,10 +1458,16 @@ const getStoreIndexForCanonicalIndex = (
     return findBy((m: any) => m.type === "date" && m.isoDate === iso);
   }
   if (canonical.type === "session") {
+    const sessionId = canonical.sessionId;
+    if (sessionId) {
+      return findBy(
+        (m: any) => m.type === "session" && m.sessionId === sessionId
+      );
+    }
     const label = canonical.label;
     return findBy((m: any) => m.type === "session" && m.label === label);
   }
-  // Control columns by type
+  // Fallback by type
   return findBy((m: any) => m.type === canonical.type);
 };
 watch(
@@ -1416,18 +1487,14 @@ const visibleColumnIndices = computed(() => {
   return visibleHeaders.value.map((h) => h.index);
 });
 
-const scheduleRecomputeFinalGrades = debounce(() => {
-  /* manual trigger only */
-}, 150);
-
 const scheduleRecomputeSessionGrades = debounce(() => {
-  /* manual trigger only */
+  computeAllSessionGrades();
 }, 150);
 
 watch(
   () => props.journalSettings,
   () => {
-    /* manual trigger only */
+    scheduleRecomputeSessionGrades();
   },
   { deep: true }
 );
@@ -1441,25 +1508,12 @@ const rebuildMarks = async () => {
     currentJournal.value.students,
     markTemplate
   );
-  /* manual trigger only */
+  scheduleRecomputeSessionGrades();
 };
 
 const scheduleRebuildMarks = debounce(() => {
   rebuildMarks();
 }, 250);
-
-watch(
-  () => sessionStore.sortedSessions,
-  () => {
-    console.log("[JournalTab] Sessions changed:", {
-      sessionCount: sessionStore.sortedSessions?.length || 0,
-      journalId: props.journalId,
-      hasStudents: !!currentJournal.value?.students?.length,
-    });
-    scheduleRebuildMarks();
-  },
-  { deep: true, immediate: true }
-);
 
 // Rebuild marks when event times or weekly schedules change
 watch(
@@ -1483,6 +1537,29 @@ watch(
   { deep: true }
 );
 
+watch(
+  () => scheduledIntermediateControls.value,
+  () => {
+    scheduleRebuildMarks();
+  },
+  { deep: true }
+);
+
+watch(
+  () => scheduledFinalControls.value,
+  () => {
+    scheduleRebuildMarks();
+  },
+  { deep: true }
+);
+
+watch(
+  () => currentClass9.value?.distributionEntries,
+  () => {
+    scheduleRebuildMarks();
+  },
+  { deep: true }
+);
 const updateStudent = (updatedStudent: any) => {
   if (!updatedStudent || !props.journalId) return;
 
@@ -1495,7 +1572,6 @@ const updateStudent = (updatedStudent: any) => {
     );
   }
   scheduleRecomputeSessionGrades();
-  scheduleRecomputeFinalGrades();
 };
 
 const updateStudents = (updatedStudents: any[]) => {
@@ -1511,7 +1587,6 @@ const updateStudents = (updatedStudents: any[]) => {
       studentMarksToUpdate
     );
     scheduleRecomputeSessionGrades();
-    scheduleRecomputeFinalGrades();
   }
 };
 
