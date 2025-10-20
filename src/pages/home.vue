@@ -112,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import {
   f7Navbar,
   f7Page,
@@ -137,7 +137,15 @@ import CalendarCard from "@/components/Cards/CalendarCard.vue";
 import ScheduleCard from "@/components/Cards/ScheduleCard.vue";
 import AcademicWeekCard from "@/components/Cards/AcademicWeekCard.vue";
 
+console.log("[HomePage] Component setup initiated");
+
 const activeNavItem = ref("home");
+
+onMounted(() => {
+  console.log("[HomePage] Component mounted");
+  console.log("[HomePage] Active navigation item:", activeNavItem.value);
+  console.log("[HomePage] Navigation items configured:", navigationItems);
+});
 
 const navigationItems = [
   { id: "home", label: "Главная", icon: "house_fill" },

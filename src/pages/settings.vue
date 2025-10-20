@@ -351,7 +351,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from "vue";
+import { ref, computed, nextTick, onMounted, onBeforeMount } from "vue";
 import { storeToRefs } from "pinia";
 import { f7Page, f7Icon, f7, f7Preloader } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
@@ -380,12 +380,17 @@ import EditIntermediateControlButton from "@/components/EditIntermediateControlB
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import type { IntermediateControl } from "@/stores/intermediateControlStore";
 
+console.log("[SettingsPage] Component setup initiated");
+
 const activeNavItem = ref("settings");
 const courseStore = useCourseStore();
 const semesterStore = useSemesterStore();
 const languageStore = useLanguageStore();
 const finalControlStore = useFinalControlStore();
 const intermediateControlStore = useIntermediateControlStore();
+
+console.log("[SettingsPage] Stores initialized");
+
 const { courses } = storeToRefs(courseStore);
 const { semesters } = storeToRefs(semesterStore);
 const { languages } = storeToRefs(languageStore);
@@ -406,6 +411,30 @@ const selectedLanguageId = ref<string | null>(null);
 const selectedFinalControlId = ref<string | null>(null);
 const selectedIntermediateControlId = ref<string | null>(null);
 
+onBeforeMount(() => {
+  console.log("[SettingsPage] Component before mount");
+});
+
+onMounted(() => {
+  console.log("[SettingsPage] Component mounted");
+  console.log("[SettingsPage] Initial state:", {
+    activeNavItem: activeNavItem.value,
+    coursesCount: courses.value.length,
+    semestersCount: semesters.value.length,
+    languagesCount: languages.value.length,
+    finalControlsCount: sortedFinalControls.value.length,
+    intermediateControlsCount: sortedIntermediateControls.value.length,
+    expandedAccordions: expandedAccordions.value,
+    selectedItems: {
+      courseId: selectedCourseId.value,
+      semesterId: selectedSemesterId.value,
+      languageId: selectedLanguageId.value,
+      finalControlId: selectedFinalControlId.value,
+      intermediateControlId: selectedIntermediateControlId.value,
+    },
+  });
+});
+
 // stores are already reactive via storeToRefs above
 
 // Computed property to check if all accordions are expanded
@@ -417,70 +446,113 @@ const areAllExpanded = computed(() => {
 
 // Method to toggle all accordions
 const toggleAllAccordions = () => {
-  if (areAllExpanded.value) {
+  console.log("[SettingsPage] Toggling all accordions");
+  const wasExpanded = areAllExpanded.value;
+  console.log("[SettingsPage] Current expanded state:", wasExpanded);
+
+  if (wasExpanded) {
     // Collapse all
     expandedAccordions.value = [];
+    console.log("[SettingsPage] Collapsing all accordions");
   } else {
     // Expand all
     expandedAccordions.value = [...accordionIds.value];
+    console.log("[SettingsPage] Expanding all accordions");
   }
+
+  console.log(
+    "[SettingsPage] New expanded accordions:",
+    expandedAccordions.value
+  );
 };
 
 // Method to open edit course popover
 const openEditCourse = async (course: Course) => {
+  console.log("[SettingsPage] Opening edit course popover for course:", course);
   selectedCourseId.value = course.id;
   await nextTick();
   const targetEl = document.getElementById(`course-item-${course.id}`);
   if (targetEl) {
+    console.log("[SettingsPage] Target element found, opening popover");
     f7.popover.open(`#edit-settings-course-popover-${course.id}`, targetEl);
+  } else {
+    console.log("[SettingsPage] Target element not found");
   }
 };
 
 // Method to open edit semester popover
 const openEditSemester = async (semester: Semester) => {
+  console.log(
+    "[SettingsPage] Opening edit semester popover for semester:",
+    semester
+  );
   selectedSemesterId.value = semester.id;
   await nextTick();
   const targetEl = document.getElementById(`semester-item-${semester.id}`);
   if (targetEl) {
+    console.log("[SettingsPage] Target element found, opening popover");
     f7.popover.open(`#edit-semester-popover-${semester.id}`, targetEl);
+  } else {
+    console.log("[SettingsPage] Target element not found");
   }
 };
 
 // Method to open edit language popover
 const openEditLanguage = async (language: Language) => {
+  console.log(
+    "[SettingsPage] Opening edit language popover for language:",
+    language
+  );
   selectedLanguageId.value = language.id;
   await nextTick();
   const targetEl = document.getElementById(`language-item-${language.id}`);
   if (targetEl) {
+    console.log("[SettingsPage] Target element found, opening popover");
     f7.popover.open(`#edit-language-popover-${language.id}`, targetEl);
+  } else {
+    console.log("[SettingsPage] Target element not found");
   }
 };
 
 // Method to open edit final control popover
 const openEditFinalControl = async (control: FinalControl) => {
+  console.log(
+    "[SettingsPage] Opening edit final control popover for control:",
+    control
+  );
   selectedFinalControlId.value = control.id;
   await nextTick();
   const targetEl = document.getElementById(`final-control-item-${control.id}`);
   if (targetEl) {
+    console.log("[SettingsPage] Target element found, opening popover");
     f7.popover.open(
       `#edit-settings-final-control-popover-${control.id}`,
       targetEl
     );
+  } else {
+    console.log("[SettingsPage] Target element not found");
   }
 };
 
 // Method to open edit intermediate control popover
 const openEditIntermediateControl = async (control: IntermediateControl) => {
+  console.log(
+    "[SettingsPage] Opening edit intermediate control popover for control:",
+    control
+  );
   selectedIntermediateControlId.value = control.id;
   await nextTick();
   const targetEl = document.getElementById(
     `intermediate-control-item-${control.id}`
   );
   if (targetEl) {
+    console.log("[SettingsPage] Target element found, opening popover");
     f7.popover.open(
       `#edit-settings-intermediate-control-popover-${control.id}`,
       targetEl
     );
+  } else {
+    console.log("[SettingsPage] Target element not found");
   }
 };
 </script>

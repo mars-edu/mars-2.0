@@ -30,8 +30,23 @@ import rasulZhangeldinovichProfile from "@/assets/rassul-zh-profile.jpg";
 import Logo from "../Logo/Logo.vue";
 import ThemeToggle from "../ThemeToggle.vue";
 import { useThemeStore } from "@/stores/themeStore";
+import { onMounted } from "vue";
+
+console.log("[Header] Component setup initiated");
 
 const themeStore = useThemeStore();
+
+console.log("[Header] Theme store initialized");
+console.log("[Header] Current theme:", themeStore.currentTheme);
+
+onMounted(() => {
+  console.log("[Header] Component mounted");
+  console.log("[Header] Profile image loaded:", !!rasulZhangeldinovichProfile);
+  console.log("[Header] Theme store state:", {
+    currentTheme: themeStore.currentTheme,
+    availableThemes: themeStore.themes,
+  });
+});
 </script>
 <style scoped>
 .desktop-header {

@@ -7,14 +7,14 @@
   </f7-page>
 </template>
 
-<script>
-export default {
-  name: "ProfilePage",
-  data() {
-    return {};
-  },
-  methods: {},
-};
+<script setup lang="ts">
+import { onMounted } from "vue";
+
+console.log("[ProfilePage] Component setup initiated");
+
+onMounted(() => {
+  console.log("[ProfilePage] Component mounted");
+});
 </script>
 
 <style scoped></style>

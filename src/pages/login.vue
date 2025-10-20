@@ -54,9 +54,7 @@
                 v-model:checked="showPassword"
                 class="!flex-shrink-0"
               />
-              <span class="text-sm text-gray-600">
-                Показать пароль
-              </span>
+              <span class="text-sm text-gray-600"> Показать пароль </span>
             </div>
 
             <div class="flex items-center justify-between py-2">
@@ -199,10 +197,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted, onBeforeMount } from "vue";
 import { f7 } from "framework7-vue";
 import AuthService from "../services/auth";
 import Logo from "../components/Logo/Logo.vue";
+
+console.log("[LoginPage] Component setup initiated");
 
 const defaultRedirectTo = "/home";
 
@@ -211,6 +211,11 @@ const props = defineProps({
     type: String,
     default: defaultRedirectTo,
   },
+});
+
+console.log("[LoginPage] Props received:", {
+  redirectTo: props.redirectTo,
+  defaultRedirectTo,
 });
 
 const username = ref("");
@@ -223,7 +228,23 @@ const errors = reactive({
   password: "",
 });
 
+onBeforeMount(() => {
+  console.log("[LoginPage] Component before mount");
+});
+
+onMounted(() => {
+  console.log("[LoginPage] Component mounted");
+  console.log("[LoginPage] Form state initialized:", {
+    username: username.value,
+    password: password.value ? "[HIDDEN]" : "",
+    rememberMe: rememberMe.value,
+    isLoading: isLoading.value,
+    showPassword: showPassword.value,
+  });
+});
+
 const validateForm = () => {
+  console.log("[LoginPage] Validating form");
   let isValid = true;
   errors.username = "";
   errors.password = "";
@@ -231,13 +252,16 @@ const validateForm = () => {
   if (!username.value) {
     errors.username = "ФИО обязательно";
     isValid = false;
+    console.log("[LoginPage] Username validation failed - empty field");
   }
 
   if (!password.value) {
     errors.password = "Пароль обязателен";
     isValid = false;
+    console.log("[LoginPage] Password validation failed - empty field");
   }
 
+  console.log("[LoginPage] Form validation result:", { isValid, errors });
   return isValid;
 };
 

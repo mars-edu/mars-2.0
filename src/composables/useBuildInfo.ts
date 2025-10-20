@@ -1,83 +1,134 @@
-import { ref, computed, type Ref, type ComputedRef } from 'vue'
+import { ref, computed, type Ref, type ComputedRef } from "vue";
+
+console.log("[useBuildInfo] Composable module loaded");
 
 export interface BuildInfo {
-  buildTime: string
-  environment: string
-  version: string
-  appName: string
-  timestamp: number
-  viteVersion: string
-  nodeVersion: string
+  buildTime: string;
+  environment: string;
+  version: string;
+  appName: string;
+  timestamp: number;
+  viteVersion: string;
+  nodeVersion: string;
 }
 
 export interface CompileBuildInfo {
-  buildTime: string
-  environment: string
-  version: string
+  buildTime: string;
+  environment: string;
+  version: string;
 }
 
 export interface UseBuildInfoReturn {
-  buildInfo: Ref<Partial<BuildInfo>>
-  compileBuildInfo: CompileBuildInfo
-  formattedBuildTime: ComputedRef<string>
-  isDevelopment: ComputedRef<boolean>
-  isProduction: ComputedRef<boolean>
-  buildAgeMinutes: ComputedRef<number>
-  buildAgeHours: ComputedRef<number>
+  buildInfo: Ref<Partial<BuildInfo>>;
+  compileBuildInfo: CompileBuildInfo;
+  formattedBuildTime: ComputedRef<string>;
+  isDevelopment: ComputedRef<boolean>;
+  isProduction: ComputedRef<boolean>;
+  buildAgeMinutes: ComputedRef<number>;
+  buildAgeHours: ComputedRef<number>;
 }
 
 declare global {
   interface Window {
-    __BUILD_INFO__?: Partial<BuildInfo>
+    __BUILD_INFO__?: Partial<BuildInfo>;
   }
 }
 
-declare const __BUILD_TIME__: string
-declare const __BUILD_ENV__: string
-declare const __APP_VERSION__: string
+declare const __BUILD_TIME__: string;
+declare const __BUILD_ENV__: string;
+declare const __APP_VERSION__: string;
 
 export function useBuildInfo(): UseBuildInfoReturn {
-  const runtimeBuildInfo = ref<Partial<BuildInfo>>(window.__BUILD_INFO__ || {})
-  
+  console.log("[useBuildInfo] Composable function called");
+
+  const runtimeBuildInfo = ref<Partial<BuildInfo>>(window.__BUILD_INFO__ || {});
+  console.log(
+    "[useBuildInfo] Runtime build info loaded:",
+    runtimeBuildInfo.value
+  );
+
   const compileBuildInfo: CompileBuildInfo = {
-    buildTime: typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : 'Unknown',
-    environment: typeof __BUILD_ENV__ !== 'undefined' ? __BUILD_ENV__ : 'development',
-    version: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'
-  }
-  
+    buildTime:
+      typeof __BUILD_TIME__ !== "undefined" ? __BUILD_TIME__ : "Unknown",
+    environment:
+      typeof __BUILD_ENV__ !== "undefined" ? __BUILD_ENV__ : "development",
+    version: typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "1.0.0",
+  };
+
+  console.log("[useBuildInfo] Compile build info:", compileBuildInfo);
+
   const formattedBuildTime = computed<string>(() => {
-    const buildTime = runtimeBuildInfo.value.buildTime || compileBuildInfo.buildTime
-    if (buildTime && buildTime !== 'Unknown') {
+    const buildTime =
+      runtimeBuildInfo.value.buildTime || compileBuildInfo.buildTime;
+    console.log(
+      "[useBuildInfo] Computing formatted build time from:",
+      buildTime
+    );
+
+    if (buildTime && buildTime !== "Unknown") {
       try {
-        return new Date(buildTime).toLocaleString()
+        const formatted = new Date(buildTime).toLocaleString();
+        console.log("[useBuildInfo] Formatted build time computed:", formatted);
+        return formatted;
       } catch (error) {
-        return 'Invalid Date'
+        console.error("[useBuildInfo] Error formatting build time:", error);
+        return "Invalid Date";
       }
     }
-    return 'Unknown'
-  })
-  
+    console.log("[useBuildInfo] No valid build time available");
+    return "Unknown";
+  });
+
   const isDevelopment = computed<boolean>(() => {
-    const env = runtimeBuildInfo.value.environment || compileBuildInfo.environment
-    return env === 'development'
-  })
-  
+    const env =
+      runtimeBuildInfo.value.environment || compileBuildInfo.environment;
+    console.log(
+      "[useBuildInfo] Computing isDevelopment from environment:",
+      env
+    );
+    const result = env === "development";
+    console.log("[useBuildInfo] isDevelopment computed:", result);
+    return result;
+  });
+
   const isProduction = computed<boolean>(() => {
-    const env = runtimeBuildInfo.value.environment || compileBuildInfo.environment
-    return env === 'production'
-  })
-  
+    const env =
+      runtimeBuildInfo.value.environment || compileBuildInfo.environment;
+    console.log("[useBuildInfo] Computing isProduction from environment:", env);
+    const result = env === "production";
+    console.log("[useBuildInfo] isProduction computed:", result);
+    return result;
+  });
+
   const buildAgeMinutes = computed<number>(() => {
-    if (runtimeBuildInfo.value.timestamp) {
-      return Math.floor((Date.now() - runtimeBuildInfo.value.timestamp) / (1000 * 60))
+    const timestamp = runtimeBuildInfo.value.timestamp;
+    console.log(
+      "[useBuildInfo] Computing build age minutes from timestamp:",
+      timestamp
+    );
+
+    if (timestamp) {
+      const age = Math.floor((Date.now() - timestamp) / (1000 * 60));
+      console.log("[useBuildInfo] Build age minutes computed:", age);
+      return age;
     }
-    return 0
-  })
-  
+    console.log(
+      "[useBuildInfo] No timestamp available for build age calculation"
+    );
+    return 0;
+  });
+
   const buildAgeHours = computed<number>(() => {
-    return Math.floor(buildAgeMinutes.value / 60)
-  })
-  
+    const hours = Math.floor(buildAgeMinutes.value / 60);
+    console.log(
+      "[useBuildInfo] Build age hours computed from minutes:",
+      buildAgeMinutes.value,
+      "->",
+      hours
+    );
+    return hours;
+  });
+
   return {
     buildInfo: runtimeBuildInfo,
     compileBuildInfo,
@@ -86,5 +137,5 @@ export function useBuildInfo(): UseBuildInfoReturn {
     isProduction,
     buildAgeMinutes,
     buildAgeHours,
-  }
+  };
 }
