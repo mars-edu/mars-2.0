@@ -13,46 +13,25 @@
       >
         <div class="flex flex-col gap-4">
           <!-- Page Header -->
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <f7-link
-                @click="handleBackClick"
-                class="back-button flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted transition-colors cursor-pointer"
-              >
-                <f7-icon
-                  f7="chevron_left"
-                  size="24px"
-                  class="text-foreground"
-                />
-              </f7-link>
-              <div class="text-l font-semibold">
-                <p>
-                  Результат обучения/дисциплина:
-                  <span class="text-green-600">{{ currentClass9Text }}</span>
-                </p>
-                <p>
-                  Учебная группа:
-                  <span class="text-green-600">{{
-                    currentJournal?.group
-                  }}</span>
-                </p>
-              </div>
-            </div>
-            <div class="flex flex-col items-end gap-1">
-              <p class="text-sm">
-                Учебный год:
-                <span class="text-green-600 font-medium">{{
-                  currentAcademicYearText
-                }}</span>
-              </p>
-              <p class="text-sm">
-                Семестр:
-                <span class="text-green-600 font-medium">{{
-                  currentSemesterText
-                }}</span>
-              </p>
-            </div>
-          </div>
+          <JournalHeader
+            :discipline-text="currentClass9Text"
+            :group="currentJournal?.group"
+            :academic-year="currentAcademicYearText"
+            :semester="currentSemesterText"
+            @back="handleBackClick"
+          />
+
+          <!-- Debug Information Panel -->
+          <JournalDebugPanel
+            :journal-id="journalId"
+            :discipline-id="currentJournal?.disciplineId"
+            :group="currentJournal?.group"
+            :academic-year="currentAcademicYearText"
+            :semester="currentSemesterText"
+            :discipline-text="currentClass9Text"
+            :debug-info="debugInfo"
+            :table-headers="tableHeaders"
+          />
 
           <!-- Main Content Area with Tabs -->
           <div
@@ -142,6 +121,7 @@
                   @update-students="updateStudents"
                   @open-ktp-details="onOpenKtpDetails"
                   @open-settings="openJournalSettings"
+                  @open-rup="openRupDialog"
                 />
               </f7-tab>
 
@@ -285,6 +265,17 @@
       @update-students="updateStudents"
     />
     <KtpDetailPopup v-model:opened="isKtpPopupOpened" :ktp-id="ktpParentId" />
+    
+    <!-- Class9 (RUP) Popup -->
+    <Class9Popup
+      v-if="isRupPopupOpened"
+      :specialty-ids="rupSpecialtyIds"
+      :academic-year-id="rupAcademicYearId"
+      :initial-data="rupInitialData"
+      :edit-mode="true"
+      @close="closeRupPopup"
+      @submit="handleRupSubmit"
+    />
 
     <!-- Journal Settings Popup -->
     <f7-popover
@@ -376,7 +367,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, nextTick } from "vue";
 import {
   f7Page,
   f7,
@@ -395,9 +386,12 @@ import { useCalendarStore } from "@/stores/calendarStore";
 import { useClass9Store } from "@/stores/class9Store";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import JournalTab from "@/components/JournalTab.vue";
+import JournalHeader from "@/components/JournalHeader.vue";
+import JournalDebugPanel from "@/components/JournalDebugPanel.vue";
 import FloatingJournalRow from "@/components/FloatingJournalRow.vue";
 import DateColumnFocus from "@/components/DateColumnFocus.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
+import Class9Popup from "@/components/Class9Popup.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import { storeToRefs } from "pinia";
 import { importJournalFromExcel } from "@/services/excel-parser";
@@ -409,6 +403,10 @@ import { useStudentStore } from "@/stores/studentStore";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
+import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
+import { useFinalControlStore } from "@/stores/finalControlStore";
+import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermediateControlStore";
+import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
 
 const journalId = computed(() => {
   return f7.views.main.router.currentRoute.params.id as string;
@@ -484,6 +482,22 @@ const focusedDateIndex = ref(0);
 const isKtpPopupOpened = ref(false);
 const ktpParentId = ref<string | null>(null);
 
+// RUP Popup state
+const isRupPopupOpened = ref(false);
+const rupInitialData = ref<any>(null);
+
+const rupSpecialtyIds = computed(() => {
+  const disciplineId = currentJournal.value?.disciplineId;
+  if (!disciplineId) return [];
+  const class9Item = class9Store.getClass9ById(disciplineId);
+  return class9Item?.specialtyIds || [];
+});
+
+const rupAcademicYearId = computed(() => {
+  return selectedItemsStore.selectedAcademicYearId || 
+    academicYearStore.getActiveAcademicYear?.id || "";
+});
+
 const journalTabRef = ref<InstanceType<typeof JournalTab> | null>(null);
 
 // Journal settings state
@@ -491,6 +505,9 @@ const journalSettings = ref({
   calculationType: "calculated" as "calculated" | "manual",
   calculationMethod: "only-assigned" as "only-assigned" | "all-days",
 });
+
+// Debug copy state
+const debugCopied = ref(false);
 
 const openDateFocus = (
   header: { type: string; label: string },
@@ -522,6 +539,34 @@ const updateStudent = (updatedStudent: any) => {
   }
 };
 
+const copyDebugInfo = async () => {
+  try {
+    const debugData = {
+      timestamp: new Date().toISOString(),
+      journal: {
+        id: journalId.value,
+        disciplineId: currentJournal.value?.disciplineId,
+        group: currentJournal.value?.group,
+        discipline: currentClass9Text.value,
+        academicYear: currentAcademicYearText.value,
+        semester: currentSemesterText.value,
+      },
+      debugInfo: debugInfo.value,
+    };
+    
+    const jsonString = JSON.stringify(debugData, null, 2);
+    await navigator.clipboard.writeText(jsonString);
+    
+    debugCopied.value = true;
+    setTimeout(() => {
+      debugCopied.value = false;
+    }, 2000);
+  } catch (error) {
+    console.error("Failed to copy debug info:", error);
+    f7.dialog.alert("Не удалось скопировать информацию в буфер обмена");
+  }
+};
+
 const onDownloadClick = async () => {
   const journal = currentJournal.value;
   if (!journal) {
@@ -533,16 +578,28 @@ const onDownloadClick = async () => {
     f7.preloader.show();
     const { saveAs } = await import("file-saver");
 
+    const snapshot = journalTabRef.value?.getExportSnapshot?.();
+    if (!snapshot) {
+      f7.preloader.hide();
+      f7.dialog.alert("Данные журнала ещё загружаются. Повторите попытку позже.");
+      return;
+    }
+
     const templateUrl = encodeURI(
       "/journal_templates/1_семестр_РО_4_1_ВА22_академическое_рус_яз_,_ВЭ22_эстрадное_рус.xlsx"
     );
 
     const event = calendarStore.getEventById(journal.id);
 
-    const studentRows: JournalStudentRow[] = (journal.students || []).map(
-      (studentId) => ({
-        id: studentId,
-        fullName: studentStore.getStudentFullName(studentId),
+    const studentRows: JournalStudentRow[] = snapshot.students.map(
+      (row) => ({
+        id: row.studentId,
+        fullName: row.fullName,
+        attendance: [...row.attendance],
+        finalGrade:
+          row.finalSummary && row.finalSummary !== "—"
+            ? row.finalSummary
+            : undefined,
       })
     );
 
@@ -586,9 +643,14 @@ const onDownloadClick = async () => {
       teacherFullName: teacherName,
       students: studentRows,
       calendarEvent: event ?? undefined,
+      lessonDates: snapshot.columns.map((column) => column.label),
     });
 
-    const blob = new Blob([buffer], {
+    const blobBuffer = buffer.buffer.slice(
+      buffer.byteOffset,
+      buffer.byteOffset + buffer.byteLength
+    ) as ArrayBuffer;
+    const blob = new Blob([blobBuffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
     saveAs(blob, filename);
@@ -688,6 +750,42 @@ const onOpenKtpDetails = (
   isKtpPopupOpened.value = true;
 };
 
+// Open RUP dialog
+const openRupDialog = () => {
+  const disciplineId = currentJournal.value?.disciplineId;
+  if (!disciplineId) {
+    f7.dialog.alert("Дисциплина не найдена");
+    return;
+  }
+  
+  // Load the class9 data for editing
+  const class9Item = class9Store.getClass9ById(disciplineId);
+  if (class9Item) {
+    rupInitialData.value = class9Item;
+  }
+  
+  isRupPopupOpened.value = true;
+  nextTick(() => {
+    f7.popover.open("#class9-popover");
+  });
+};
+
+const closeRupPopup = () => {
+  isRupPopupOpened.value = false;
+  rupInitialData.value = null;
+  f7.popover.close("#class9-popover");
+};
+
+const handleRupSubmit = () => {
+  closeRupPopup();
+  // Optionally refresh the debug info or journal data
+  f7.toast.create({
+    text: "РУП успешно сохранен",
+    position: "center",
+    closeTimeout: 2000,
+  }).open();
+};
+
 // Journal settings functions
 const openJournalSettings = () => {
   f7.popover.open("#journal-settings-popover", "#journal-settings-button");
@@ -712,12 +810,217 @@ const students = computed(() => {
   return journalTabRef.value?.students || [];
 });
 
+// Initialize control stores
+const intermediateControlStore = useIntermediateControlStore();
+const finalControlStore = useFinalControlStore();
+const scheduledIntermediateControlStore = useScheduledIntermediateControlStore();
+const scheduledFinalControlStore = useScheduledFinalControlStore();
+
+const { 
+  intermediateControls,
+  getIntermediateControlById 
+} = storeToRefs(intermediateControlStore);
+
+const { 
+  finalControls,
+  getFinalControlById 
+} = storeToRefs(finalControlStore);
+
+const { 
+  scheduledIntermediateControls,
+  getScheduledIntermediateControlsByAcademicYear 
+} = storeToRefs(scheduledIntermediateControlStore);
+
+const { 
+  scheduledFinalControls,
+  getScheduledFinalControlsByAcademicYear 
+} = storeToRefs(scheduledFinalControlStore);
+
+// Debug information computed property
+const debugInfo = computed(() => {
+  const journal = currentJournal.value;
+  const event = journal ? calendarStore.getEventById(journal.id) : null;
+  const academicYearId = selectedItemsStore.selectedAcademicYearId || 
+    academicYearStore.getActiveAcademicYear?.id;
+  const semesterId = event?.semester;
+
+  // Get distribution entries for this discipline from class9
+  const disciplineId = journal?.disciplineId;
+  const class9Item = disciplineId 
+    ? class9Store.getClass9ById(disciplineId) 
+    : null;
+  
+  const relevantDistributionEntries = (class9Item?.distributionEntries || [])
+    .filter((entry: any) => {
+      if (!semesterId) return true;
+      if (entry?.semesterId == null) return false;
+      
+      // Match by UUID only
+      return String(entry.semesterId) === String(semesterId);
+    })
+    .filter((entry: any) => {
+      if (!academicYearId) return true;
+      return String(entry?.academicYearId ?? "") === String(academicYearId);
+    });
+
+  // Debug: Log distribution entries filtering
+  console.log('[JournalDetails] Distribution Entries Filtering:', {
+    totalDistributionEntries: class9Item?.distributionEntries?.length || 0,
+    allDistributionEntries: class9Item?.distributionEntries,
+    currentSemesterId: semesterId,
+    currentAcademicYearId: academicYearId,
+    matching: {
+      info: 'Entries match only by UUID: entry.semesterId === semesterUUID',
+      byUUID: 'entry.semesterId === ' + semesterId,
+    },
+    afterSemesterFilter: (class9Item?.distributionEntries || []).filter((entry: any) => {
+      if (!semesterId) return true;
+      if (entry?.semesterId == null) return false;
+      return String(entry.semesterId) === String(semesterId);
+    }).length,
+    afterBothFilters: relevantDistributionEntries.length,
+    relevantDistributionEntries,
+  });
+
+  // Extract control IDs from distribution
+  const distributionIntermediateControlIds = Array.from(
+    new Set(
+      relevantDistributionEntries
+        .map((entry: any) => entry.intermediateControlId)
+        .filter((id: any): id is string => typeof id === "string" && id.length > 0)
+    )
+  );
+
+  const distributionFinalControlIds = Array.from(
+    new Set(
+      relevantDistributionEntries
+        .map((entry: any) => entry.finalControlId)
+        .filter((id: any): id is string => typeof id === "string" && id.length > 0)
+    )
+  );
+
+  // Get scheduled controls for the academic year
+  const scheduledIntermediateForYear = academicYearId && 
+    typeof getScheduledIntermediateControlsByAcademicYear.value === "function"
+      ? getScheduledIntermediateControlsByAcademicYear.value(academicYearId) || []
+      : [];
+
+  const scheduledFinalForYear = academicYearId && 
+    typeof getScheduledFinalControlsByAcademicYear.value === "function"
+      ? getScheduledFinalControlsByAcademicYear.value(academicYearId) || []
+      : [];
+
+  // ALWAYS show intermediate controls (РК1, РК2) regardless of distribution
+  const filteredScheduledIntermediate = scheduledIntermediateForYear;
+
+  // Only show final controls that are specified in distribution
+  const finalControlFilteringLog: any[] = [];
+  const filteredScheduledFinal = scheduledFinalForYear.filter(
+    (control: any) => {
+      const log = {
+        controlId: control.finalControlId,
+        controlName: finalControls.value?.find((fc: any) => fc.id === control.finalControlId)?.name || "Unknown",
+        distributionIdsCount: distributionFinalControlIds.length,
+        distributionIds: [...distributionFinalControlIds],
+        isInDistribution: distributionFinalControlIds.includes(control.finalControlId),
+        decision: "",
+      };
+
+      if (distributionFinalControlIds.length === 0) {
+        log.decision = "HIDDEN: No final controls in distribution (empty РУП)";
+        finalControlFilteringLog.push(log);
+        return false;
+      }
+
+      const isIncluded = distributionFinalControlIds.includes(control.finalControlId);
+      log.decision = isIncluded 
+        ? "SHOWN: Control ID matches distribution" 
+        : "HIDDEN: Control ID not found in distribution";
+      finalControlFilteringLog.push(log);
+      
+      return isIncluded;
+    }
+  );
+
+  // Build intermediate controls details
+  const intermediateControlsDetails = (intermediateControls.value || []).map((control: any) => {
+    const inDistribution = distributionIntermediateControlIds.includes(control.id);
+    const scheduledControl = scheduledIntermediateForYear.find(
+      (sc: any) => sc.intermediateControlId === control.id
+    );
+    return {
+      id: control.id,
+      name: control.name || "—",
+      shortName: control.shortName || "—",
+      inDistribution,
+      scheduledForYear: !!scheduledControl,
+      startDate: scheduledControl?.startDate || "—",
+      endDate: scheduledControl?.endDate || "—",
+    };
+  });
+
+  // Build final controls details
+  const finalControlsDetails = (finalControls.value || []).map((control: any) => {
+    const inDistribution = distributionFinalControlIds.includes(control.id);
+    const scheduledControl = scheduledFinalForYear.find(
+      (sc: any) => sc.finalControlId === control.id
+    );
+    const filterLog = finalControlFilteringLog.find((log: any) => log.controlId === control.id);
+    
+    return {
+      id: control.id,
+      name: control.name || "—",
+      shortName: control.shortName || "—",
+      inDistribution,
+      scheduledForYear: !!scheduledControl,
+      startDate: scheduledControl?.startDate || "—",
+      endDate: scheduledControl?.endDate || "—",
+      filterDecision: filterLog?.decision || "Not scheduled for this year",
+      willBeShown: !!scheduledControl && (distributionFinalControlIds.length === 0 ? false : inDistribution),
+    };
+  });
+
+  // Build headers summary
+  const headers = tableHeaders.value || [];
+  const sessionHeaders = headers.filter((h: any) => h.type === "session");
+  const headersSummary = headers.map((h: any, idx: number) => ({
+    index: idx,
+    type: h.type,
+    label: h.label,
+  }));
+
+  return {
+    academicYearId: academicYearId || "—",
+    semesterId: semesterId || "—",
+    distributionEntriesCount: relevantDistributionEntries.length,
+    totalDistributionEntries: class9Item?.distributionEntries?.length || 0,
+    allDistributionEntries: (class9Item?.distributionEntries || []).map((e: any) => ({
+      id: e.id,
+      academicYearId: e.academicYearId,
+      semesterId: e.semesterId,
+      intermediateControlId: e.intermediateControlId,
+      finalControlId: e.finalControlId,
+    })),
+    distributionIntermediateControlIds,
+    distributionFinalControlIds,
+    scheduledIntermediateCount: scheduledIntermediateForYear.length,
+    scheduledFinalCount: scheduledFinalForYear.length,
+    filteredIntermediateCount: filteredScheduledIntermediate.length,
+    filteredFinalCount: filteredScheduledFinal.length,
+    intermediateControlsDetails,
+    finalControlsDetails,
+    finalControlFilteringLog,
+    sessionHeadersCount: sessionHeaders.length,
+    headersSummary,
+  };
+});
+
 onMounted(() => {
   // Semester debug info removed
 });
 </script>
 
-<style>
+<style lang="postcss">
 .tab-link {
   @apply px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200;
   @apply text-muted-foreground hover:text-foreground hover:bg-muted;

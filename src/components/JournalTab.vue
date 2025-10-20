@@ -2,6 +2,20 @@
   <div>
     <div class="mb-3 flex flex-wrap gap-2 items-center justify-end">
       <f7-button
+        small
+        default
+        @click="onOpenRupClick"
+        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+      >
+        <f7-icon
+          ios="f7:doc_text"
+          md="material:description"
+          size="16px"
+          class="mr-2"
+        />
+        РУП
+      </f7-button>
+      <f7-button
         id="journal-settings-button"
         small
         default
@@ -92,12 +106,22 @@
             <!-- Dynamic date columns -->
             <th
               v-for="(header, index) in visibleHeaders"
-              :key="header.index"
-              class="px-1 py-2 text-center text-xs border-r border-border w-16 min-w-[56px] cursor-pointer hover:bg-muted"
-              :class="{
-                'bg-muted/50 text-muted-foreground': header.type === 'session',
-              }"
-              @click="openDateFocus(header, header.index)"
+              :key="header.isFinalSummary ? 'final-summary' : header.index"
+              class="px-1 py-2 text-center text-xs border-r border-border w-16 min-w-[56px]"
+              :class="[
+                header.isFinalSummary
+                  ? 'bg-primary/10 text-primary font-semibold cursor-default'
+                  : 'cursor-pointer hover:bg-muted',
+                {
+                  'bg-muted/50 text-muted-foreground':
+                    header.type === 'session',
+                },
+              ]"
+              @click="
+                !header.isFinalSummary && header.index >= 0
+                  ? openDateFocus(header, header.index)
+                  : null
+              "
             >
               <div class="flex flex-col items-center">
                 <f7-icon
@@ -143,15 +167,18 @@
             </td>
             <td
               v-for="(header, vColIdx) in visibleHeaders"
-              :key="header.index"
+              :key="header.isFinalSummary ? 'final-summary' : header.index"
               class="px-1 py-2 text-center border-r border-border min-w-[56px]"
-              :class="{
-                'bg-muted/90': header.type === 'session',
-              }"
+              :class="[
+                header.isFinalSummary ? 'bg-primary/5' : '',
+                {
+                  'bg-muted/90': header.type === 'session',
+                },
+              ]"
             >
               <div class="flex flex-col gap-1">
                 <div
-                  v-for="mIdx in getRowIndices(vColIdx)"
+                  v-for="mIdx in getRowIndices(header.index)"
                   :key="mIdx"
                   class="h-8 flex items-center justify-center transition-transform duration-300"
                   :class="{
@@ -175,8 +202,14 @@
                   />
                   <div
                     v-else
-                    @click="editCell(studentIndex, header.index, mIdx)"
-                    class="cursor-pointer w-full"
+                    @click="
+                      !header.isFinalSummary
+                        ? editCell(studentIndex, header.index, mIdx)
+                        : null
+                    "
+                    :class="
+                      header.isFinalSummary ? 'w-full' : 'cursor-pointer w-full'
+                    "
                   >
                     <MarkCell
                       :mark="getMark(studentIndex, header.index, mIdx)"
@@ -309,7 +342,7 @@ import {
   DATE_YEAR_FORMAT,
   DATE_STORAGE_FORMAT,
 } from "@/constants/calendar";
-import { getEventDays } from "@/utils/eventDate";
+import { getEventDays, type SemesterInfo } from "@/utils/eventDate";
 import { f7, f7Icon, f7Button } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import MarkCell from "@/components/ui/MarkCell.vue";
@@ -322,6 +355,7 @@ import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
 import { useJournalStore } from "@/stores/journalStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useClass9Store, type Class9Data } from "@/stores/class9Store";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";
@@ -355,6 +389,22 @@ const headerLabelFor = (mark: any): string => {
   return (def?.defaultLabel ?? "") as string;
 };
 
+const exportHeaderLabelFor = (mark: any): string => {
+  if (mark.type === "date") {
+    const iso = mark?.isoDate;
+    if (iso) {
+      const parsed = dayjs(iso, DATE_STORAGE_FORMAT, true);
+      if (parsed.isValid()) {
+        return parsed.format("DD.MM.YYYY");
+      }
+    }
+    const label = headerLabelFor(mark);
+    return typeof label === "string" ? label.replace(/\n/g, " ").trim() : "";
+  }
+  const label = headerLabelFor(mark);
+  return typeof label === "string" ? label.replace(/\n/g, " ").trim() : "";
+};
+
 interface Props {
   journalId: string;
   journalSettings?: {
@@ -370,6 +420,7 @@ const emit = defineEmits<{
   "open-date-focus": [header: { type: string; label: string }, index: number];
   "update-students": [students: StudentWithMarks[]];
   "open-ktp-details": [header: { type: string; label: string }, index: number];
+  "open-rup": [];
   "open-settings": [];
   "close-journal": [];
   download: [];
@@ -386,6 +437,7 @@ const educationScheduleStore = useEducationScheduleStore();
 const ktpStore = useKtpStore();
 const journalStore = useJournalStore();
 const academicYearStore = useAcademicYearStore();
+const academicYearSemesterStore = useAcademicYearSemesterStore();
 const class9Store = useClass9Store();
 const intermediateControlStore = useIntermediateControlStore();
 const finalControlStore = useFinalControlStore();
@@ -428,6 +480,8 @@ const debugGroup = (title: string, fn: () => void) => {
     console.groupEnd();
   }
 };
+
+const FINAL_SUMMARY_LABEL = "Итог";
 
 const currentEvent = computed(() => {
   if (!props.journalId) return null;
@@ -534,7 +588,31 @@ const generateDates = () => {
 
   const weeklySchedules = currentEvent.value.weeklySchedules || [];
   const dateMarks: Mark[] = [];
-  const days = getEventDays(currentEvent.value as any);
+
+  // Get active semester info for fallback date range
+  const activeSemester =
+    academicYearSemesterStore.getActiveAcademicYearSemester;
+  const semesterInfo: SemesterInfo | undefined = activeSemester
+    ? {
+        startDate: activeSemester.startDate,
+        endDate: activeSemester.endDate,
+      }
+    : undefined;
+
+  debugLog("activeSemester", {
+    exists: !!activeSemester,
+    semester: activeSemester
+      ? {
+          id: activeSemester.id,
+          semesterNumber: activeSemester.semesterNumber,
+          startDate: activeSemester.startDate,
+          endDate: activeSemester.endDate,
+        }
+      : null,
+    semesterInfo,
+  });
+
+  const days = getEventDays(currentEvent.value as any, semesterInfo);
 
   debugGroup("generateDates() inputs", () => {
     debugLog("journalId", props.journalId);
@@ -622,6 +700,8 @@ const generateDates = () => {
     .filter((entry: any) => {
       if (!semesterFilter) return true;
       if (entry?.semesterId == null) return false;
+
+      // Match by UUID only
       return String(entry.semesterId) === semesterFilter;
     })
     .filter((entry: any) => {
@@ -629,6 +709,42 @@ const generateDates = () => {
       return String(entry?.academicYearId ?? "") === String(academicYearId);
     })
     .map((entry: any) => entry);
+
+  // Debug: Log distribution entries filtering in detail
+  console.log("[JournalTab] РУП Distribution Entries Analysis:", {
+    disciplineId: class9Item?.id,
+    disciplineName: class9Item?.moduleName,
+    totalDistributionEntries: class9Item?.distributionEntries?.length || 0,
+    allDistributionEntries: class9Item?.distributionEntries?.map((e: any) => ({
+      id: e.id,
+      academicYearId: e.academicYearId,
+      semesterId: e.semesterId,
+      intermediateControlId: e.intermediateControlId,
+      finalControlId: e.finalControlId,
+    })),
+    filters: {
+      semesterUUID: semesterFilter,
+      academicYearId,
+    },
+    matching: {
+      info: "Entries match only by UUID: entry.semesterId === semesterUUID",
+    },
+    afterSemesterFilter: (class9Item?.distributionEntries || []).filter(
+      (entry: any) => {
+        if (!semesterFilter) return true;
+        if (entry?.semesterId == null) return false;
+        return String(entry.semesterId) === semesterFilter;
+      }
+    ).length,
+    afterBothFilters: relevantDistributionEntries.length,
+    relevantDistributionEntries: relevantDistributionEntries.map((e: any) => ({
+      id: e.id,
+      academicYearId: e.academicYearId,
+      semesterId: e.semesterId,
+      intermediateControlId: e.intermediateControlId,
+      finalControlId: e.finalControlId,
+    })),
+  });
 
   debugGroup("Distribution Entries Analysis", () => {
     debugLog(
@@ -677,6 +793,38 @@ const generateDates = () => {
     );
   });
 
+  const distributionIntermediateControlIds = Array.from(
+    new Set(
+      relevantDistributionEntries
+        .map((entry: any) => entry.intermediateControlId)
+        .filter((id): id is string => typeof id === "string" && id.length > 0)
+    )
+  );
+
+  const distributionFinalControlIds = Array.from(
+    new Set(
+      relevantDistributionEntries
+        .map((entry: any) => entry.finalControlId)
+        .filter((id): id is string => typeof id === "string" && id.length > 0)
+    )
+  );
+
+  console.log("[JournalTab] DEBUG - Extracted from distribution:", {
+    distributionFinalControlIds,
+    allDistributionEntries: relevantDistributionEntries.map((e: any) => {
+      const finalControl =
+        typeof getFinalControlById.value === "function"
+          ? getFinalControlById.value(e.finalControlId)
+          : null;
+      return {
+        id: e.id,
+        finalControlId: e.finalControlId,
+        finalControlName: finalControl?.name,
+        finalControlShortName: finalControl?.shortName,
+      };
+    }),
+  });
+
   const scheduledIntermediateForYear =
     academicYearId &&
     typeof getScheduledIntermediateControlsByAcademicYear.value === "function"
@@ -690,20 +838,107 @@ const generateDates = () => {
       ? getScheduledFinalControlsByAcademicYear.value(academicYearId) || []
       : [];
 
-  const uniqueIds = <T extends string | null | undefined>(values: T[]) =>
-    Array.from(new Set(values.filter((v): v is string => !!v)));
+  console.log("[JournalTab] Scheduled final controls for year:", {
+    academicYearId,
+    count: scheduledFinalForYear.length,
+    controls: scheduledFinalForYear.map((c: any) => {
+      const finalControl =
+        typeof getFinalControlById.value === "function"
+          ? getFinalControlById.value(c.finalControlId)
+          : null;
+      return {
+        id: c.id,
+        finalControlId: c.finalControlId,
+        finalControlName: finalControl?.name,
+        finalControlShortName: finalControl?.shortName,
+        shortName: c.shortName,
+      };
+    }),
+  });
+
+  // ALWAYS show intermediate controls (РК1, РК2) regardless of distribution
+  const filteredScheduledIntermediate = scheduledIntermediateForYear;
+
+  // Only show final controls that are specified in distribution
+  const filteredScheduledFinal = scheduledFinalForYear.filter(
+    (control: any) => {
+      console.log("[JournalTab] Checking scheduled final control:", {
+        controlId: control.id,
+        finalControlId: control.finalControlId,
+        distributionFinalControlIds,
+        includesById: distributionFinalControlIds.includes(control.id),
+        includesByFinalControlId: distributionFinalControlIds.includes(
+          control.finalControlId
+        ),
+      });
+
+      if (distributionFinalControlIds.length === 0) {
+        return false;
+      }
+      return (
+        distributionFinalControlIds.includes(control.id) ||
+        distributionFinalControlIds.includes(control.finalControlId)
+      );
+    }
+  );
+
+  console.log("[JournalTab] After filtering scheduled final controls:", {
+    filteredCount: filteredScheduledFinal.length,
+    scheduled: scheduledFinalForYear.map((c: any) => ({
+      id: c.id,
+      finalControlId: c.finalControlId,
+    })),
+    filtered: filteredScheduledFinal.map((c: any) => ({
+      id: c.id,
+      finalControlId: c.finalControlId,
+    })),
+  });
+
+  const uniqueIds = (values: Array<string | null | undefined>) =>
+    Array.from(
+      new Set(
+        values.filter((v): v is string => typeof v === "string" && v.length > 0)
+      )
+    );
 
   const intermediateControlIds = uniqueIds(
-    scheduledIntermediateForYear.map(
+    filteredScheduledIntermediate.map(
       (control: any) =>
         control.intermediateControlId as string | null | undefined
     )
   );
   const finalControlIds = uniqueIds(
-    scheduledFinalForYear.map(
+    filteredScheduledFinal.map(
       (control: any) => control.finalControlId as string | null | undefined
     )
   );
+
+  console.log("[JournalTab] DEBUG - Extract from entries:", {
+    relevantDistributionEntriesControlIds: relevantDistributionEntries.map(
+      (e: any) => ({
+        id: e.id,
+        intermediateControlId: e.intermediateControlId,
+        finalControlId: e.finalControlId,
+      })
+    ),
+    distributionIntermediateControlIds,
+    distributionFinalControlIds,
+  });
+
+  console.log("[JournalTab] DEBUG - Extract from scheduled:", {
+    scheduledIntermediateForYear: scheduledIntermediateForYear.map(
+      (c: any) => ({
+        id: c.id,
+        intermediateControlId: c.intermediateControlId,
+      })
+    ),
+    scheduledFinalForYear: scheduledFinalForYear.map((c: any) => ({
+      id: c.id,
+      finalControlId: c.finalControlId,
+    })),
+    filteredScheduledIntermediateCount: filteredScheduledIntermediate.length,
+    filteredScheduledFinalCount: filteredScheduledFinal.length,
+  });
 
   debugGroup("Control IDs Collection", () => {
     debugLog("intermediateControlIds found:", intermediateControlIds);
@@ -719,6 +954,10 @@ const generateDates = () => {
       scheduledIntermediateForYear.length
     );
     debugLog(
+      "filteredScheduledIntermediate count:",
+      filteredScheduledIntermediate.length
+    );
+    debugLog(
       "scheduledIntermediateForYear details:",
       scheduledIntermediateForYear.map((c: any) => ({
         id: c.id,
@@ -729,10 +968,12 @@ const generateDates = () => {
         academicYearId: c.academicYearId,
       }))
     );
+    debugLog("filteredScheduledFinal count:", filteredScheduledFinal.length);
     debugLog("scheduledFinalForYear count:", scheduledFinalForYear.length);
   });
 
   const seenSessionIds = new Set<string>();
+  const lastAssignedDatePosByControlKey = new Map<string, number>();
 
   const lastDatePos = dateMeta.length > 0 ? dateMeta.length - 1 : -1;
 
@@ -812,7 +1053,48 @@ const generateDates = () => {
     const start = parseControlDate(rawControl.startDate);
     const end = parseControlDate(rawControl.endDate) || start;
     const insertAfterDatePos = computeInsertAfter(start, end, lastDatePos);
-    const sessionDateIndices = collectSessionDateIndices(start, end);
+    const controlKey = `${type}:${controlId}`;
+    const previousMax = lastAssignedDatePosByControlKey.get(controlKey) ?? -1;
+    let sessionDateIndices = collectSessionDateIndices(start, end)
+      .filter((idx) => idx > previousMax)
+      .filter((idx) => insertAfterDatePos < 0 || idx <= insertAfterDatePos);
+
+    if (!sessionDateIndices.length && insertAfterDatePos >= 0) {
+      sessionDateIndices = dateMeta
+        .filter(
+          (meta) =>
+            meta.datePos > previousMax && meta.datePos <= insertAfterDatePos
+        )
+        .map((meta) => meta.datePos);
+    }
+
+    if (!sessionDateIndices.length) {
+      sessionDateIndices = dateMeta
+        .filter(
+          (meta) =>
+            meta.datePos > previousMax &&
+            (insertAfterDatePos < 0 || meta.datePos <= insertAfterDatePos)
+        )
+        .map((meta) => meta.datePos);
+    }
+
+    if (!sessionDateIndices.length && insertAfterDatePos >= 0) {
+      sessionDateIndices = [insertAfterDatePos];
+    }
+
+    if (!sessionDateIndices.length && dateMeta.length) {
+      const nextMeta = dateMeta.find((meta) => meta.datePos > previousMax);
+      sessionDateIndices = nextMeta
+        ? [nextMeta.datePos]
+        : [dateMeta[dateMeta.length - 1].datePos];
+    }
+
+    if (sessionDateIndices.length) {
+      lastAssignedDatePosByControlKey.set(
+        controlKey,
+        Math.max(previousMax, ...sessionDateIndices)
+      );
+    }
 
     const baseControl =
       type === "intermediate"
@@ -864,7 +1146,7 @@ const generateDates = () => {
   };
 
   intermediateControlIds.forEach((controlId) => {
-    const scheduled = scheduledIntermediateForYear
+    const scheduled = filteredScheduledIntermediate
       .filter((control) => control.intermediateControlId === controlId)
       .sort((a, b) => (a.startDate || "").localeCompare(b.startDate || ""));
 
@@ -874,6 +1156,16 @@ const generateDates = () => {
         controlId,
         "in academicYear",
         academicYearId
+      );
+      debugLog(
+        "DEBUG: All filteredScheduledIntermediate controls:",
+        filteredScheduledIntermediate.map((c: any) => ({
+          id: c.id,
+          intermediateControlId: c.intermediateControlId,
+          shortName: c.shortName,
+          startDate: c.startDate,
+          endDate: c.endDate,
+        }))
       );
       return;
     }
@@ -898,7 +1190,7 @@ const generateDates = () => {
   });
 
   finalControlIds.forEach((controlId) => {
-    const scheduled = scheduledFinalForYear
+    const scheduled = filteredScheduledFinal
       .filter((control) => control.finalControlId === controlId)
       .sort((a, b) => (a.startDate || "").localeCompare(b.startDate || ""));
 
@@ -1001,6 +1293,10 @@ const getMark = (studentIndex: number, colIndex: number, markIndex: number) => {
   const studentId = getStudentIdByIndex(studentIndex);
   if (!studentId || !props.journalId) return "";
 
+  if (colIndex < 0) {
+    return markIndex === 0 ? getStudentAverageScore(studentId) : "";
+  }
+
   // Map canonical column index to store column index
   const storeColIndex = getStoreIndexForCanonicalIndex(colIndex);
   const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
@@ -1020,6 +1316,7 @@ const setMark = (
 ) => {
   const studentId = getStudentIdByIndex(studentIndex);
   if (!studentId || !props.journalId) return;
+  if (colIndex < 0) return;
 
   const newValue = value === "+" || value === "" ? null : value;
   const storeColIndex = getStoreIndexForCanonicalIndex(colIndex);
@@ -1044,6 +1341,7 @@ const editCell = (
 ) => {
   const studentId = getStudentIdByIndex(studentIndex);
   if (!studentId || !props.journalId) return;
+  if (colIndex < 0) return;
 
   const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
   const storeColIndex = getStoreIndexForCanonicalIndex(colIndex);
@@ -1176,13 +1474,21 @@ const onPaperclipClick = async (
   const currentEventData = currentEvent.value;
   if (!currentEventData || !currentJournal.value?.disciplineId) return;
 
-  const days = getEventDays(currentEventData as any);
+  // Get active semester info for fallback date range
+  const activeSemester =
+    academicYearSemesterStore.getActiveAcademicYearSemester;
+  const semesterInfo: SemesterInfo | undefined = activeSemester
+    ? {
+        startDate: activeSemester.startDate,
+        endDate: activeSemester.endDate,
+      }
+    : undefined;
+
+  const days = getEventDays(currentEventData as any, semesterInfo);
 
   // Map the column index to actual day index
   // We need to find which day this column represents by looking at the visible headers
-  const visibleHeader = visibleHeaders.value.find(
-    (h) => h.index === visibleHeaders.value[index]?.index
-  );
+  const visibleHeader = visibleHeaders.value[index];
   if (!visibleHeader) return;
 
   // Find the actual day index by counting date columns up to this point
@@ -1212,6 +1518,7 @@ const onPaperclipClick = async (
   }
 };
 
+const onOpenRupClick = () => emit("open-rup");
 const onSettingsClick = () => emit("open-settings");
 const onCloseJournalClick = () => emit("close-journal");
 const onDownloadClick = () => emit("download");
@@ -1413,24 +1720,40 @@ const getScoreBadgeClass = (score: string): string => {
 };
 
 const tableHeaders = computed(() => {
-  const canonical = canonicalTemplate.value;
-  return canonical.map((mark: any) => ({
+  const canonical = canonicalTemplate.value || [];
+  return canonical.map((mark: any, index: number) => ({
     type: mark.type,
     label: headerLabelFor(mark),
+    index,
   }));
 });
 
 const visibleHeaders = computed(() => {
-  return tableHeaders.value
-    .map((header, index) => ({ ...header, index }))
+  const baseHeaders = tableHeaders.value
+    .map((header, displayIndex) => ({
+      ...header,
+      displayIndex,
+      isFinalSummary: false,
+    }))
     .filter(
       (h) => h.type !== "date" || (h.label && String(h.label).trim() !== "")
     );
+
+  const finalHeader = {
+    type: "final-summary",
+    label: FINAL_SUMMARY_LABEL,
+    index: -1,
+    displayIndex: baseHeaders.length,
+    isFinalSummary: true,
+  };
+
+  return [...baseHeaders, finalHeader];
 });
 // Canonical template derived from current event/sessions/schedules
 const canonicalTemplate = computed(() => generateDates());
 
 const getCanonicalRows = (canonicalCol: number): number => {
+  if (canonicalCol < 0) return 1;
   const col = canonicalTemplate.value?.[canonicalCol];
   return Array.isArray(col?.values) ? col.values.length : 2;
 };
@@ -1444,6 +1767,7 @@ const getRowIndices = (canonicalCol: number): number[] => {
 const getStoreIndexForCanonicalIndex = (
   canonicalCol: number
 ): number | null => {
+  if (canonicalCol == null || canonicalCol < 0) return null;
   const canonical = canonicalTemplate.value?.[canonicalCol] as any;
   if (!canonical) return null;
   const firstStudentId = getStudentIdByIndex(0);
@@ -1590,11 +1914,61 @@ const updateStudents = (updatedStudents: any[]) => {
   }
 };
 
+const getExportSnapshot = () => {
+  if (!props.journalId) return null;
+  const canonical = canonicalTemplate.value || [];
+  const exportColumns = canonical.map((mark: any, index: number) => ({
+    canonicalIndex: index,
+    type: mark.type,
+    label: exportHeaderLabelFor(mark),
+    isoDate: mark?.isoDate ?? null,
+  }));
+
+  const rows = (currentJournal.value?.students || []).map(
+    (studentId: string) => {
+      const studentMarks =
+        marksStore.getStudentMarks(props.journalId!, studentId) || [];
+
+      const attendance = exportColumns.map(({ canonicalIndex, type }) => {
+        const storeIndex = getStoreIndexForCanonicalIndex(canonicalIndex);
+        if (storeIndex == null || storeIndex < 0) return "";
+        const mark = studentMarks[storeIndex];
+        if (!mark) return "";
+
+        if (type === "date") {
+          const combined = (mark.values || [])
+            .map((value) =>
+              value === null || value === "" ? "" : String(value).trim()
+            )
+            .filter((value) => value.length > 0);
+          return combined.join(" / ");
+        }
+
+        const value = mark.values?.[0];
+        return value == null || value === "" ? "" : String(value);
+      });
+
+      return {
+        studentId,
+        fullName: getStudentFullName(studentId),
+        attendance,
+        finalSummary: getStudentAverageScore(studentId),
+      };
+    }
+  );
+
+  return {
+    columns: exportColumns.map(({ canonicalIndex, ...rest }) => rest),
+    students: rows,
+  };
+};
+
 defineExpose({
   updateStudent,
   updateStudents,
   tableHeaders: computed(() => tableHeaders.value),
   students: computed(() => students.value),
+  getExportSnapshot,
 });
 
 onMounted(() => {

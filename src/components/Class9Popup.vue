@@ -256,15 +256,24 @@
                                 entry.academicYearId
                               )
                               .map((academicYearSemester) => ({
-                                value:
-                                  academicYearSemester.semesterNumber.toString(),
+                                value: academicYearSemester.id,
                                 text: `Семестр ${academicYearSemester.semesterNumber}`,
                               }))
                           "
                           label="Семестр"
                           placeholder="Выберите семестр"
                           search-placeholder="Поиск семестра..."
-                          @update:modelValue="entry.semesterId = $event"
+                          @update:modelValue="
+                            (value) => {
+                              console.log('[Class9Popup] Semester changed:', {
+                                entryId: entry.id,
+                                oldValue: entry.semesterId,
+                                newValue: value,
+                                academicYearId: entry.academicYearId,
+                              });
+                              entry.semesterId = value;
+                            }
+                          "
                         />
                       </div>
 
@@ -286,7 +295,10 @@
                           entry.finalControlId = $event || null
                         "
                         :options="
-                          getFinalControlOptionsForYear(entry.academicYearId)
+                          getFinalControlOptionsForYear(
+                            entry.academicYearId,
+                            entry.semesterId
+                          )
                         "
                         placeholder="Выберите форму контроля"
                         search-placeholder="Поиск формы контроля..."
@@ -319,6 +331,7 @@ import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
+import { useFinalControlStore } from "@/stores/finalControlStore";
 import { z } from "zod";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import Select from "@/components/ui/Select.vue";
@@ -345,6 +358,7 @@ const semesterStore = useSemesterStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const specialtyStore = useSpecialtyStore();
 const scheduledFinalControlStore = useScheduledFinalControlStore();
+const finalControlStore = useFinalControlStore();
 
 function createEmptyStep() {
   return class9Store.createEmptyClass9Data(
@@ -416,12 +430,7 @@ onMounted(async () => {
 
 const distributionEntrySchema = z.object({
   academicYearId: z.string().min(1, "Учебный год обязателен"),
-  semesterId: z
-    .string()
-    .min(1, "Семестр обязателен")
-    .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
-      message: "Семестр должен быть положительным числом",
-    }),
+  semesterId: z.string().min(1, "Семестр обязателен"),
   hours: z
     .string()
     .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
@@ -632,15 +641,32 @@ function removeDistributionEntry(entryId: string) {
   }
 }
 
-function getFinalControlOptionsForYear(academicYearId: string) {
+function getFinalControlOptionsForYear(
+  academicYearId: string,
+  semesterId?: string
+) {
   if (!academicYearId) {
     return [{ value: "", text: "Не выбрано" }];
   }
 
-  const scheduledControls =
+  const allScheduledControls =
     scheduledFinalControlStore.getScheduledFinalControlsByAcademicYear(
       academicYearId
     );
+
+  // Filter by semesterId if provided
+  const scheduledControls = semesterId
+    ? allScheduledControls.filter((control) => {
+        // Get the final control details to check if it matches the semester
+        const finalControl = finalControlStore.getFinalControlById(
+          control.finalControlId
+        );
+        if (!finalControl) return true; // Include if we can't determine
+        // Since we're looking at scheduled controls, they should already be semester-specific
+        // This is a pass-through filter for now - the backend should handle this
+        return true;
+      })
+    : allScheduledControls;
 
   return [
     { value: "", text: "Не выбрано" },

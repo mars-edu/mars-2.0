@@ -13,6 +13,11 @@ export type CalendarEventLike = {
   weeklySchedules?: WeekScheduleLike[];
 };
 
+export type SemesterInfo = {
+  startDate: string;
+  endDate: string;
+};
+
 export function parseEventDate(raw: unknown): dayjs.Dayjs {
   let value: unknown = raw;
   if (Array.isArray(value) && value.length > 0) value = value[0] as unknown;
@@ -34,12 +39,77 @@ export function getWeekIdForDay(d: dayjs.Dayjs): number {
   return (jsDay + 6) % 7; // Convert Sunday=0 to Monday=0
 }
 
-export function getEventDays(event: CalendarEventLike): {
+export function getEventDays(
+  event: CalendarEventLike,
+  semesterInfo?: SemesterInfo
+): {
   day: dayjs.Dayjs;
   weekId: number;
 }[] {
-  const start = parseEventDate(event.startDate);
-  const end = parseEventDate(event.endDate ?? event.startDate);
+  console.log(
+    "[DBG] weeklySchedules type:",
+    typeof event.weeklySchedules,
+    "isArray:",
+    Array.isArray(event.weeklySchedules),
+    "value:",
+    event.weeklySchedules,
+    "length:",
+    event.weeklySchedules?.length
+  );
+
+  let start = parseEventDate(event.startDate);
+  let end = parseEventDate(event.endDate ?? event.startDate);
+
+  console.log("[getEventDays] Input:", {
+    eventStartDate: event.startDate,
+    eventEndDate: event.endDate,
+    startDate: start.format("YYYY-MM-DD"),
+    endDate: end.format("YYYY-MM-DD"),
+    startEqualsEnd: start.isSame(end, "day"),
+    hasWeeklySchedules:
+      Array.isArray(event.weeklySchedules) && event.weeklySchedules.length > 0,
+    semesterInfoProvided: !!semesterInfo,
+    semesterInfo: semesterInfo
+      ? {
+          startDate: semesterInfo.startDate,
+          endDate: semesterInfo.endDate,
+        }
+      : null,
+  });
+
+  console.log("[getEventDays] Weekly Schedules:", event.weeklySchedules);
+  console.log("[getEventDays] Semester Info:", semesterInfo);
+
+  // FALLBACK: If start and end are the same AND no weekly schedules exist,
+  // use semester date range if available
+  if (
+    start.isSame(end, "day") &&
+    (!Array.isArray(event.weeklySchedules) ||
+      event.weeklySchedules.length === 0)
+  ) {
+    console.log(
+      "[getEventDays] Detected same-day event without schedules, applying fallback"
+    );
+    if (semesterInfo) {
+      start = parseEventDate(semesterInfo.startDate);
+      end = parseEventDate(semesterInfo.endDate);
+      console.log("[getEventDays] Fallback applied - using semester dates:", {
+        newStart: start.format("YYYY-MM-DD"),
+        newEnd: end.format("YYYY-MM-DD"),
+      });
+    } else {
+      console.log("[getEventDays] No semester info available for fallback");
+    }
+  } else {
+    console.log("[getEventDays] Fallback condition NOT met:", {
+      startEqualsEnd: start.isSame(end, "day"),
+      hasWeeklySchedules:
+        Array.isArray(event.weeklySchedules) &&
+        event.weeklySchedules.length > 0,
+      weeklySchedules: event.weeklySchedules,
+    });
+  }
+
   const result: { day: dayjs.Dayjs; weekId: number }[] = [];
   const hasWeekly =
     Array.isArray(event.weeklySchedules) && event.weeklySchedules.length > 0;
@@ -55,6 +125,45 @@ export function getEventDays(event: CalendarEventLike): {
     }
     cursor = cursor.add(1, "day");
   }
+
+  console.log("[getEventDays] Result:", {
+    daysCount: result.length,
+    firstDay: result[0]?.day.format("YYYY-MM-DD"),
+    lastDay: result[result.length - 1]?.day.format("YYYY-MM-DD"),
+  });
+
+  // SECONDARY FALLBACK: If result is empty but we have semester info and a same-day event with schedules,
+  // this means the schedules don't match the event's date. Use semester range instead.
+  const originalStart = parseEventDate(event.startDate);
+  const originalEnd = parseEventDate(event.endDate ?? event.startDate);
+  if (
+    result.length === 0 &&
+    originalStart.isSame(originalEnd, "day") &&
+    hasWeekly &&
+    semesterInfo
+  ) {
+    console.log(
+      "[getEventDays] Empty result with same-day event and schedules, applying secondary fallback"
+    );
+    start = parseEventDate(semesterInfo.startDate);
+    end = parseEventDate(semesterInfo.endDate);
+
+    cursor = start.clone();
+    while (cursor.diff(end, "day") <= 0) {
+      const weekId = getWeekIdForDay(cursor);
+      if (allowedWeeks.includes(weekId)) {
+        result.push({ day: cursor.clone(), weekId });
+      }
+      cursor = cursor.add(1, "day");
+    }
+
+    console.log("[getEventDays] Secondary Fallback Result:", {
+      daysCount: result.length,
+      firstDay: result[0]?.day.format("YYYY-MM-DD"),
+      lastDay: result[result.length - 1]?.day.format("YYYY-MM-DD"),
+    });
+  }
+
   return result;
 }
 

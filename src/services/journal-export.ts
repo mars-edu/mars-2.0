@@ -10,6 +10,7 @@ export interface JournalStudentRow {
   date?: string | null;
   hours?: number | string | null;
   topic?: string | null;
+  finalGrade?: string | number | null;
 }
 
 export interface JournalExportPayload {
@@ -579,6 +580,15 @@ export async function exportJournalToExcel(
         row,
         header.dateCol + 2,
         student.topic,
+        columnTemplates
+      );
+    }
+    if (student.finalGrade !== undefined) {
+      setCell(
+        worksheet,
+        row,
+        header.finalGradeCol,
+        student.finalGrade,
         columnTemplates
       );
     }
