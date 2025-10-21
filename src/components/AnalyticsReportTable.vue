@@ -8,28 +8,16 @@
       >
         <tr class="bg-muted/40">
           <th
-            :rowspan="
-              (disciplinesSemester.length ? 2 : 1) + (finalForms?.length ?? 0)
-            "
+            :rowspan="frozenHeaderRowspan"
             class="px-3 py-3 text-center align-middle"
           >
             №
           </th>
           <th
-            :rowspan="
-              (disciplinesSemester.length ? 2 : 1) + (finalForms?.length ?? 0)
-            "
+            :rowspan="frozenHeaderRowspan"
             class="px-3 py-3 text-left align-middle"
           >
             Ф.И.О.
-          </th>
-          <th
-            :rowspan="
-              (disciplinesSemester.length ? 2 : 1) + (finalForms?.length ?? 0)
-            "
-            class="px-3 py-3 text-center align-middle"
-          >
-            Курс
           </th>
           <th
             v-if="disciplinesSemester.length"
@@ -46,73 +34,86 @@
             Без итогового контроля
           </th>
           <th
-            v-for="form in finalForms"
+            v-for="form in finalFormsFiltered"
             :key="form.id"
-            :colspan="disciplinesByForm[form.id]?.length ?? 0"
+            :colspan="disciplinesByForm[form.id]?.length"
             class="px-3 py-3 text-center align-middle"
           >
             {{ form.title }}
           </th>
           <th
-            :rowspan="
-              (disciplinesSemester.length ? 2 : 1) + (finalForms?.length ?? 0)
-            "
+            :rowspan="frozenHeaderRowspan"
             class="px-3 py-3 text-center align-middle"
           >
             Ср
           </th>
         </tr>
-        <tr
-          v-if="disciplinesSemester.length"
-          class="bg-muted/60 text-foreground"
-        >
+        <tr v-if="hasAnySubheaders" class="bg-muted/60 text-foreground">
           <th
             v-for="discipline in disciplinesSemester"
             :key="discipline.id"
-            class="px-3 py-2 text-center align-middle"
+            class="px-2 py-2 text-center align-middle w-8 min-w-8"
           >
-            <span
-              class="block max-w-[24rem] truncate"
-              :title="discipline.title"
+            <div
+              class="flex items-center justify-center"
+              :style="{ height: headerHeightPx + 'px' }"
             >
-              {{ discipline.title }}
-            </span>
+              <span
+                class="block transform -rotate-90 text-xs font-medium truncate"
+                :title="discipline.title"
+                :data-title="discipline.title"
+                :ref="registerHeaderLabel"
+                :style="{ maxWidth: headerHeightPx - 12 + 'px' }"
+              >
+                {{ discipline.title }}
+              </span>
+            </div>
           </th>
-        </tr>
-        <tr
-          v-if="disciplinesWithoutFinal.length"
-          class="bg-muted/60 text-foreground"
-        >
           <th
             v-for="discipline in disciplinesWithoutFinal"
             :key="`without-final-${discipline.id}`"
-            class="px-3 py-2 text-center align-middle"
+            class="px-2 py-2 text-center align-middle w-8 min-w-8"
           >
-            <span
-              class="block max-w-[24rem] truncate"
-              :title="discipline.title"
+            <div
+              class="flex items-center justify-center"
+              :style="{ height: headerHeightPx + 'px' }"
             >
-              {{ discipline.title }}
-            </span>
+              <span
+                class="block transform -rotate-90 text-xs font-medium truncate"
+                :title="discipline.title"
+                :data-title="discipline.title"
+                :ref="registerHeaderLabel"
+                :style="{ maxWidth: headerHeightPx - 12 + 'px' }"
+              >
+                {{ discipline.title }}
+              </span>
+            </div>
           </th>
-        </tr>
-        <tr
-          v-for="(form, formIdx) in finalForms"
-          :key="`final-header-${form.id}`"
-          class="bg-muted/60 text-foreground"
-        >
-          <th
-            v-for="discipline in disciplinesByForm[form.id]"
-            :key="`${form.id}-${discipline.id}`"
-            class="px-3 py-2 text-center align-middle"
+          <template
+            v-for="form in finalFormsFiltered"
+            :key="`final-row-${form.id}`"
           >
-            <span
-              class="block max-w-[24rem] truncate"
-              :title="discipline.title"
+            <th
+              v-for="discipline in disciplinesByForm[form.id]"
+              :key="`${form.id}-${discipline.id}`"
+              class="px-2 py-2 text-center align-middle w-8 min-w-8"
             >
-              {{ discipline.title }}
-            </span>
-          </th>
+              <div
+                class="flex items-center justify-center"
+                :style="{ height: headerHeightPx + 'px' }"
+              >
+                <span
+                  class="block transform -rotate-90 text-xs font-medium truncate"
+                  :title="discipline.title"
+                  :data-title="discipline.title"
+                  :ref="registerHeaderLabel"
+                  :style="{ maxWidth: headerHeightPx - 12 + 'px' }"
+                >
+                  {{ discipline.title }}
+                </span>
+              </div>
+            </th>
+          </template>
         </tr>
       </thead>
       <tbody class="divide-y divide-border text-foreground">
@@ -143,20 +144,18 @@
           <td class="px-3 py-2">
             <div class="font-medium">{{ row.fullName }}</div>
           </td>
-          <td class="px-3 py-2 text-center text-muted-foreground">
-            {{ row.courseLabel || "—" }}
-          </td>
+
           <td
             v-for="discipline in disciplinesSemester"
             :key="`${row.studentId}-${discipline.id}`"
-            class="px-3 py-2 text-center"
+            class="px-1 py-2 text-center text-xs w-8 min-w-8"
           >
             {{ formatScore(row.semester[discipline.id]) }}
           </td>
           <td
             v-for="discipline in disciplinesWithoutFinal"
             :key="`${row.studentId}-without-final-${discipline.id}`"
-            class="px-3 py-2 text-center"
+            class="px-1 py-2 text-center text-xs w-8 min-w-8"
           >
             {{ formatScore(row.withoutFinal[discipline.id]) }}
           </td>
@@ -167,7 +166,7 @@
             <td
               v-for="discipline in disciplinesByForm[form.id]"
               :key="`${row.studentId}-${form.id}-${discipline.id}`"
-              class="px-3 py-2 text-center"
+              class="px-1 py-2 text-center text-xs w-8 min-w-8"
             >
               {{ formatScore(row.finals[form.id]?.[discipline.id] ?? null) }}
             </td>
@@ -182,7 +181,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, onMounted, nextTick, watch } from "vue";
+import type { ComponentPublicInstance } from "vue";
 
 interface ReportTableRow {
   studentId: string;
@@ -214,8 +214,79 @@ const props = defineProps<{
   isLoading?: boolean;
 }>();
 
+const finalFormsFiltered = computed(() => {
+  const forms = props.finalForms ?? [];
+  return forms.filter(
+    (form) => (props.disciplinesByForm[form.id]?.length ?? 0) > 0
+  );
+});
+
+const hasAnySubheaders = computed(() => {
+  if (props.disciplinesSemester.length > 0) return true;
+  if (props.disciplinesWithoutFinal.length > 0) return true;
+  return finalFormsFiltered.value.length > 0;
+});
+
+const frozenHeaderRowspan = computed(() => (hasAnySubheaders.value ? 2 : 1));
+
+// Dynamic header height (rotated labels) with truncation
+const MIN_HEADER_HEIGHT = 96; // px
+const MAX_HEADER_HEIGHT = 180; // px
+const headerHeightPx = ref<number>(MIN_HEADER_HEIGHT);
+const headerLabelEls: HTMLElement[] = [];
+const registerHeaderLabel = (
+  value: Element | ComponentPublicInstance | null
+) => {
+  if (!value) return;
+  const el: HTMLElement | null = (value as any).$el
+    ? ((value as any).$el as HTMLElement)
+    : (value as HTMLElement) || null;
+  if (!el) return;
+  if (!headerLabelEls.includes(el)) headerLabelEls.push(el);
+};
+
+const recomputeHeaderHeight = () => {
+  let maxNeeded = MIN_HEADER_HEIGHT;
+  const liveEls = headerLabelEls.filter((el) => el && el.isConnected);
+  liveEls.forEach((el) => {
+    const text = el.getAttribute("data-title") || el.textContent || "";
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const style = window.getComputedStyle(el);
+    const font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    ctx.font = font;
+    const metrics = ctx.measureText(text);
+    const width = metrics.width + 24; // padding + margin safety
+    maxNeeded = Math.max(maxNeeded, Math.ceil(width));
+  });
+  headerHeightPx.value = Math.max(
+    MIN_HEADER_HEIGHT,
+    Math.min(MAX_HEADER_HEIGHT, maxNeeded)
+  );
+};
+
+onMounted(async () => {
+  await nextTick();
+  recomputeHeaderHeight();
+});
+
+watch(
+  () => [
+    props.disciplinesSemester.map((d) => d.id + d.title).join("|"),
+    props.disciplinesWithoutFinal.map((d) => d.id + d.title).join("|"),
+    (props.finalForms ?? [])
+      .map((f) => f.id + (props.disciplinesByForm[f.id]?.length ?? 0))
+      .join("|"),
+  ],
+  async () => {
+    await nextTick();
+    recomputeHeaderHeight();
+  }
+);
+
 const totalColumnCount = computed(() => {
-  let count = 3;
+  let count = 2;
   count += props.disciplinesSemester.length;
   count += props.disciplinesWithoutFinal.length;
   if (props.finalForms?.length) {

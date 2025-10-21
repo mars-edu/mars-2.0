@@ -320,6 +320,21 @@
                 />
                 Экспорт (HTML)
               </f7-button>
+              <f7-button
+                small
+                default
+                :disabled="!canGenerateReport"
+                @click="exportToExcel"
+                class="bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <f7-icon
+                  ios="f7:doc_text"
+                  md="material:download"
+                  size="16px"
+                  class="mr-2"
+                />
+                Экспорт (Excel)
+              </f7-button>
             </div>
             <div
               v-if="hasGeneratedReport"
@@ -353,14 +368,40 @@
                   Скрыть
                 </f7-button>
               </div>
-              <AnalyticsReportTable
-                :rows="reportRows"
-                :disciplines-semester="reportDisciplineGroupsSemester"
-                :disciplines-without-final="reportDisciplineGroupsWithoutFinal"
-                :disciplines-by-form="reportDisciplineGroupsByForm"
-                :final-forms="reportFinalForms"
-                :is-loading="false"
-              />
+              <Accordion>
+                <AccordionItem
+                  v-for="courseGroup in reportGroupsByCourse"
+                  :key="`course-group-${courseGroup.course}`"
+                  :id="`course-${courseGroup.course}`"
+                >
+                  <template #title>
+                    {{
+                      courseGroup.course === "—"
+                        ? "Без курса"
+                        : `Курс ${courseGroup.course}`
+                    }}
+                  </template>
+                  <div
+                    v-for="specialtyGroup in courseGroup.specialtyGroups"
+                    :key="`specialty-group-${courseGroup.course}-${specialtyGroup.specialtyCode}`"
+                    class="space-y-2 mb-4"
+                  >
+                    <div class="text-sm font-medium text-muted-foreground pl-4">
+                      Специальность: {{ specialtyGroup.specialtyName }}
+                    </div>
+                    <AnalyticsReportTable
+                      :rows="specialtyGroup.rows"
+                      :disciplines-semester="specialtyGroup.disciplinesSemester"
+                      :disciplines-without-final="
+                        specialtyGroup.disciplinesWithoutFinal
+                      "
+                      :disciplines-by-form="specialtyGroup.disciplinesByForm"
+                      :final-forms="reportFinalForms"
+                      :is-loading="false"
+                    />
+                  </div>
+                </AccordionItem>
+              </Accordion>
               <p class="text-xs text-muted-foreground">
                 Значения рассчитываются по текущим данным журналов и обновляются
                 при изменении фильтров.
@@ -439,6 +480,8 @@ import type { Mark } from "@/types/marks";
 import type { CalendarEvent } from "@/stores/calendarStore";
 import type { Journal } from "@/stores/journalStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";
+import * as XLSX from "xlsx-js-style";
+import { saveAs } from "file-saver";
 
 const activeNavItem = ref("analytics");
 
@@ -910,6 +953,244 @@ const reportRows = computed<ReportTableRow[]>(() => {
   });
 });
 
+const reportRowsByCourseAndSpecialty = computed(() => {
+  const courseGroups = new Map<string, Map<string, ReportTableRow[]>>();
+
+  reportRows.value.forEach((row) => {
+    const courseKey = row.courseLabel || "—";
+    const student = students.value.find((s) => s.id === row.studentId);
+    const specialtyKey = student?.specialty || "—";
+
+    if (!courseGroups.has(courseKey)) {
+      courseGroups.set(courseKey, new Map());
+    }
+    const specialtyGroups = courseGroups.get(courseKey)!;
+    if (!specialtyGroups.has(specialtyKey)) {
+      specialtyGroups.set(specialtyKey, []);
+    }
+    specialtyGroups.get(specialtyKey)!.push(row);
+  });
+
+  const courseEntries = Array.from(courseGroups.entries()).map(
+    ([course, specialtyMap]) => {
+      const specialtyEntries = Array.from(specialtyMap.entries()).map(
+        ([specialtyCode, rows]) => {
+          const sorted = rows.slice().sort((a, b) =>
+            a.fullName.localeCompare(b.fullName, "ru", {
+              sensitivity: "base",
+            })
+          );
+          const reindexed = sorted.map((r, i) => ({ ...r, index: i + 1 }));
+
+          const specialty = specialties.value.find(
+            (s) => s.code === specialtyCode
+          );
+          const specialtyName =
+            specialty?.codeName || specialty?.name || specialtyCode;
+
+          return {
+            specialtyCode,
+            specialtyName,
+            rows: reindexed,
+          };
+        }
+      );
+
+      specialtyEntries.sort((a, b) =>
+        a.specialtyName.localeCompare(b.specialtyName, "ru", {
+          sensitivity: "base",
+        })
+      );
+
+      return { course, specialtyGroups: specialtyEntries };
+    }
+  );
+
+  courseEntries.sort((a, b) => {
+    const an = Number.parseInt(a.course, 10);
+    const bn = Number.parseInt(b.course, 10);
+    const aValid = Number.isFinite(an);
+    const bValid = Number.isFinite(bn);
+    if (aValid && bValid) return an - bn;
+    if (aValid) return -1;
+    if (bValid) return 1;
+    return a.course.localeCompare(b.course, "ru", { sensitivity: "base" });
+  });
+
+  return courseEntries;
+});
+
+const getRelevantJournalsForStudents = (
+  studentIds: string[]
+): ReportJournalEntry[] => {
+  const selectedIds = new Set(studentIds);
+  if (!selectedIds.size) return [];
+
+  const academicYearId = selectedItemsStore.selectedAcademicYearId ?? null;
+  const semesterFilter = selectedSemesterId.value || null;
+  const map = new Map<string, ReportJournalEntry>();
+  const eventList = events.value ?? [];
+
+  eventList.forEach((event) => {
+    if (!event) return;
+    if (!event.participants?.some((id) => selectedIds.has(id))) return;
+
+    if (semesterFilter) {
+      if (event.semester !== semesterFilter) return;
+    } else if (academicYearId) {
+      if (!event.semester) return;
+      const semester = academicYearSemesterStore.getAcademicYearSemesterById(
+        event.semester
+      );
+      if (!semester || semester.academicYearId !== academicYearId) {
+        return;
+      }
+    }
+
+    const journal = journalStore.getJournalById(event.id) as Journal | null;
+    if (!journal) return;
+
+    const title =
+      journalStore.getDisciplineTitle(journal) ||
+      calendarStore.getEventTitle(event) ||
+      "Без названия";
+
+    map.set(event.id, {
+      id: event.id,
+      title,
+      journal,
+      event,
+    });
+  });
+
+  return Array.from(map.values()).sort((a, b) =>
+    a.title.localeCompare(b.title, "ru", { sensitivity: "base" })
+  );
+};
+
+const getDisciplinesForSemesterForGroup = (
+  journals: ReportJournalEntry[],
+  studentIds: string[]
+) => {
+  const hasData = new Set<string>();
+  studentIds.forEach((studentId) => {
+    journals.forEach((discipline) => {
+      const marks = marksStore.getStudentMarks(discipline.id, studentId);
+      if (marks) {
+        const hasDateMarks = (marks as Mark[]).some(
+          (m: Mark) => m.type === "date"
+        );
+        if (hasDateMarks) hasData.add(discipline.id);
+      }
+    });
+  });
+  return journals
+    .filter((d) => hasData.has(d.id))
+    .map((d) => ({ id: d.id, title: d.title }));
+};
+
+const getDisciplinesForWithoutFinalForGroup = (
+  journals: ReportJournalEntry[],
+  studentIds: string[],
+  categoryName: string | null
+) => {
+  if (!categoryName || categoryName === "final") {
+    return getDisciplinesForSemesterForGroup(journals, studentIds);
+  }
+  const hasData = new Set<string>();
+  studentIds.forEach((studentId) => {
+    journals.forEach((discipline) => {
+      const marks = marksStore.getStudentMarks(discipline.id, studentId);
+      if (marks) {
+        const hasCategory = (marks as Mark[]).some(
+          (m: Mark) =>
+            m.type === "session" &&
+            m.controlType === "intermediate" &&
+            m.label === categoryName
+        );
+        if (hasCategory) hasData.add(discipline.id);
+      }
+    });
+  });
+  return journals
+    .filter((d) => hasData.has(d.id))
+    .map((d) => ({ id: d.id, title: d.title }));
+};
+
+const getDisciplinesForFinalFormForGroup = (
+  journals: ReportJournalEntry[],
+  studentIds: string[],
+  formId: string
+) => {
+  const hasData = new Set<string>();
+  studentIds.forEach((studentId) => {
+    journals.forEach((discipline) => {
+      const marks = marksStore.getStudentMarks(discipline.id, studentId);
+      if (marks) {
+        const hasForm = (marks as Mark[]).some(
+          (m: Mark) =>
+            m.type === "session" &&
+            m.controlType === "final" &&
+            m.controlId === formId
+        );
+        if (hasForm) hasData.add(discipline.id);
+      }
+    });
+  });
+  return journals
+    .filter((d) => hasData.has(d.id))
+    .map((d) => ({ id: d.id, title: d.title }));
+};
+
+const reportGroupsByCourse = computed(() => {
+  return reportRowsByCourseAndSpecialty.value.map((courseGroup) => {
+    const specialtyGroupsWithDisciplines = courseGroup.specialtyGroups.map(
+      (specialtyGroup) => {
+        const studentIds = specialtyGroup.rows.map((r) => r.studentId);
+        const journals = getRelevantJournalsForStudents(studentIds);
+        const disciplinesSemester = getDisciplinesForSemesterForGroup(
+          journals,
+          studentIds
+        );
+        const categoryValue = selectedReportCategory.value || null;
+        const disciplinesWithoutFinal =
+          categoryValue === "final" || !categoryValue
+            ? []
+            : getDisciplinesForWithoutFinalForGroup(
+                journals,
+                studentIds,
+                categoryValue
+              );
+        const disciplinesByForm: Record<
+          string,
+          Array<{ id: string; title: string }>
+        > = {};
+        sortedFinalControls.value.forEach((form) => {
+          disciplinesByForm[form.id] = getDisciplinesForFinalFormForGroup(
+            journals,
+            studentIds,
+            form.id
+          );
+        });
+
+        return {
+          specialtyCode: specialtyGroup.specialtyCode,
+          specialtyName: specialtyGroup.specialtyName,
+          rows: specialtyGroup.rows,
+          disciplinesSemester,
+          disciplinesWithoutFinal,
+          disciplinesByForm,
+        };
+      }
+    );
+
+    return {
+      course: courseGroup.course,
+      specialtyGroups: specialtyGroupsWithDisciplines,
+    };
+  });
+});
+
 const reportSummary = computed(() => ({
   studentCount: selectedAnalyticsStudents.value.length,
   disciplineCount: reportDisciplineColumns.value.length,
@@ -948,6 +1229,9 @@ watch(
     };
   },
   () => {
+    if (selectedStudents.value.length > 0 && !hasGeneratedReport.value) {
+      hasGeneratedReport.value = true;
+    }
     if (hasGeneratedReport.value) {
       reportGeneratedAt.value = new Date();
     }
@@ -1106,6 +1390,248 @@ onMounted(async () => {
     }
   });
 });
+
+const buildCourseSheet = (courseLabel: string) => {
+  console.debug("[excel] buildCourseSheet:start", { courseLabel });
+  const courseGroup = reportGroupsByCourse.value.find(
+    (g) => g.course === courseLabel
+  );
+  if (!courseGroup) return null;
+
+  const rows: Array<Array<any>> = [];
+  const merges: XLSX.Range[] = [] as any;
+
+  const headerStyle: XLSX.CellStyle = {
+    font: { bold: true, sz: 11 },
+    alignment: { horizontal: "center", vertical: "center", wrapText: true },
+    fill: { patternType: "solid", fgColor: { rgb: "F3F4F6" } },
+    border: {
+      top: { style: "thin", color: { rgb: "D1D5DB" } },
+      left: { style: "thin", color: { rgb: "D1D5DB" } },
+      right: { style: "thin", color: { rgb: "D1D5DB" } },
+      bottom: { style: "thin", color: { rgb: "D1D5DB" } },
+    },
+  } as any;
+
+  const cellStyle: XLSX.CellStyle = {
+    alignment: { horizontal: "center", vertical: "center", wrapText: true },
+    border: {
+      top: { style: "thin", color: { rgb: "E5E7EB" } },
+      left: { style: "thin", color: { rgb: "E5E7EB" } },
+      right: { style: "thin", color: { rgb: "E5E7EB" } },
+      bottom: { style: "thin", color: { rgb: "E5E7EB" } },
+    },
+  } as any;
+
+  let currentRow = 0;
+
+  rows[currentRow] = [
+    {
+      v: `Курс ${courseLabel}`,
+      s: { ...headerStyle, font: { bold: true, sz: 13 } },
+    },
+  ];
+  merges.push({ s: { r: currentRow, c: 0 }, e: { r: currentRow, c: 10 } });
+  currentRow += 2;
+
+  courseGroup.specialtyGroups.forEach((spec, specIdx) => {
+    console.debug("[excel] specialty:start", { courseLabel, specIdx, spec });
+    rows[currentRow] = [
+      { v: `Специальность: ${spec.specialtyName}`, s: { ...headerStyle } },
+    ];
+    merges.push({ s: { r: currentRow, c: 0 }, e: { r: currentRow, c: 10 } });
+    currentRow += 1;
+
+    const disciplinesSemester = spec.disciplinesSemester;
+    const disciplinesWithoutFinal = spec.disciplinesWithoutFinal;
+    const finalForms = sortedFinalControls.value;
+
+    const firstHeader: any[] = [
+      { v: "№", s: headerStyle },
+      { v: "Ф.И.О.", s: headerStyle },
+    ];
+
+    if (disciplinesSemester.length) {
+      firstHeader.push({ v: "Семестровые дисциплины", s: headerStyle });
+      if (disciplinesSemester.length > 1) {
+        merges.push({
+          s: { r: currentRow, c: firstHeader.length - 1 },
+          e: {
+            r: currentRow,
+            c: firstHeader.length - 1 + disciplinesSemester.length - 1,
+          },
+        });
+      }
+      for (let i = 1; i < disciplinesSemester.length; i++)
+        firstHeader.push({ v: "", s: headerStyle });
+    }
+    if (disciplinesWithoutFinal.length) {
+      firstHeader.push({ v: "Без итогового контроля", s: headerStyle });
+      if (disciplinesWithoutFinal.length > 1) {
+        merges.push({
+          s: { r: currentRow, c: firstHeader.length - 1 },
+          e: {
+            r: currentRow,
+            c: firstHeader.length - 1 + disciplinesWithoutFinal.length - 1,
+          },
+        });
+      }
+      for (let i = 1; i < disciplinesWithoutFinal.length; i++)
+        firstHeader.push({ v: "", s: headerStyle });
+    }
+    finalForms.forEach((form) => {
+      const ds = spec.disciplinesByForm[form.id] ?? [];
+      if (!ds.length) return;
+      firstHeader.push({ v: form.shortName, s: headerStyle } as any);
+      if (ds.length > 1) {
+        merges.push({
+          s: { r: currentRow, c: firstHeader.length - 1 },
+          e: { r: currentRow, c: firstHeader.length - 1 + ds.length - 1 },
+        });
+      }
+      for (let i = 1; i < ds.length; i++)
+        firstHeader.push({ v: "", s: headerStyle });
+    });
+    firstHeader.push({ v: "Ср", s: headerStyle });
+
+    rows[currentRow] = firstHeader;
+    currentRow += 1;
+
+    const secondHeader: any[] = [
+      { v: "", s: headerStyle },
+      { v: "", s: headerStyle },
+      ...disciplinesSemester.map((d) => ({ v: d.title, s: headerStyle })),
+      ...disciplinesWithoutFinal.map((d) => ({ v: d.title, s: headerStyle })),
+    ];
+    finalForms.forEach((form) => {
+      const ds = spec.disciplinesByForm[form.id] ?? [];
+      ds.forEach((d) => secondHeader.push({ v: d.title, s: headerStyle }));
+    });
+    secondHeader.push({ v: "", s: headerStyle });
+    rows[currentRow] = secondHeader;
+    merges.push({ s: { r: currentRow - 1, c: 0 }, e: { r: currentRow, c: 0 } });
+    merges.push({ s: { r: currentRow - 1, c: 1 }, e: { r: currentRow, c: 1 } });
+    merges.push({
+      s: { r: currentRow - 1, c: secondHeader.length - 1 },
+      e: { r: currentRow, c: secondHeader.length - 1 },
+    });
+    currentRow += 1;
+
+    spec.rows.forEach((r) => {
+      // Guard against undefined sections
+      const row: any[] = [
+        { v: r.index, s: cellStyle },
+        {
+          v: r.fullName,
+          s: {
+            ...cellStyle,
+            alignment: { ...cellStyle.alignment, horizontal: "left" },
+          },
+        },
+      ];
+
+      disciplinesSemester.forEach((d) =>
+        row.push({ v: r.semester[d.id] ?? "—", s: cellStyle })
+      );
+      disciplinesWithoutFinal.forEach((d) =>
+        row.push({ v: r.withoutFinal[d.id] ?? "—", s: cellStyle })
+      );
+      finalForms.forEach((form) => {
+        const ds = spec.disciplinesByForm[form.id] ?? [];
+        ds.forEach((d) =>
+          row.push({ v: r.finals[form.id]?.[d.id] ?? "—", s: cellStyle })
+        );
+      });
+      row.push({ v: r.overallAverage ?? "—", s: cellStyle });
+      rows[currentRow] = row;
+      currentRow += 1;
+    });
+
+    currentRow += 1;
+  });
+
+  const safeRows = Array.isArray(rows) && rows.length ? rows : [["Нет данных"]];
+  console.debug("[excel] buildCourseSheet:rowsReady", {
+    courseLabel,
+    rowCount: safeRows.length,
+    merges: merges.length,
+  });
+  let sheet: XLSX.WorkSheet | null = null;
+  try {
+    sheet = XLSX.utils.aoa_to_sheet(safeRows as any);
+  } catch (e) {
+    console.error("[excel] aoa_to_sheet failed", e, {
+      courseLabel,
+      sample: safeRows.slice(0, 3),
+    });
+    return null;
+  }
+  // validate merges
+  const validMerges = merges.filter((m) => {
+    const ok =
+      m &&
+      m.s &&
+      m.e &&
+      Number.isInteger((m as any).s.r) &&
+      Number.isInteger((m as any).s.c) &&
+      Number.isInteger((m as any).e.r) &&
+      Number.isInteger((m as any).e.c) &&
+      (m as any).s.r <= (m as any).e.r &&
+      (m as any).s.c <= (m as any).e.c &&
+      (m as any).s.r >= 0 &&
+      (m as any).s.c >= 0 &&
+      (m as any).e.r >= 0 &&
+      (m as any).e.c >= 0;
+    if (!ok) console.warn("[excel] drop invalid merge", m);
+    return ok;
+  });
+  (sheet as any)["!merges"] = validMerges;
+  (sheet as any)["!cols"] = new Array(
+    safeRows[1]?.length || safeRows[0]?.length || 10
+  )
+    .fill(0)
+    .map((_, i) => ({ wch: i === 1 ? 40 : 10 }));
+  (sheet as any)["!rows"] = safeRows.map(() => ({ hpt: 18 }));
+  return sheet;
+};
+
+const exportToExcel = async () => {
+  if (!canGenerateReport.value) return;
+  console.debug("[excel] export:start", {
+    totalCourses: reportGroupsByCourse.value.length,
+  });
+  const wb = XLSX.utils.book_new();
+  reportGroupsByCourse.value.forEach((group, idx) => {
+    try {
+      const sheet = buildCourseSheet(group.course);
+      if (!sheet) {
+        console.warn("[excel] sheet is null, skip", { course: group.course });
+        return;
+      }
+      const name = `Курс_${group.course}`.slice(0, 31) || `Курс_${idx}`;
+      XLSX.utils.book_append_sheet(wb, sheet, name);
+      console.debug("[excel] sheet appended", { name });
+    } catch (e) {
+      console.error("[excel] append failed", e, { course: group.course });
+    }
+  });
+  const date = new Date();
+  const name = `Отчёт_успеваемость_${date.getFullYear()}-${String(
+    date.getMonth() + 1
+  ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}.xlsx`;
+  try {
+    console.debug("[excel] write:begin");
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([wbout], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    saveAs(blob, name);
+    console.debug("[excel] saveAs success", { name, size: blob.size });
+  } catch (e) {
+    console.error("[excel] finalize failed", e);
+    f7.dialog.alert("Ошибка при экспорте в Excel. Подробности в консоли.");
+  }
+};
 </script>
 
 <style>
