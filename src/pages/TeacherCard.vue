@@ -60,6 +60,7 @@
                   <tr class="bg-gray-500 text-white">
                     <th class="px-4 py-2 text-left">№</th>
                     <th class="px-4 py-2 text-left">ФИО</th>
+                    <th class="px-4 py-2 text-left">Логин</th>
                     <th class="px-4 py-2 text-left">Email</th>
                     <th class="px-4 py-2 text-left">Должность</th>
                     <th class="px-4 py-2 text-left">Год поступления</th>
@@ -82,6 +83,7 @@
                     <td class="px-4 py-3">
                       {{ teacherStore.getTeacherFullName(teacher.id) }}
                     </td>
+                    <td class="px-4 py-3">{{ teacher.username || "-" }}</td>
                     <td class="px-4 py-3">{{ teacher.email || "-" }}</td>
                     <td class="px-4 py-3">{{ teacher.position }}</td>
                     <td class="px-4 py-3">{{ teacher.employmentYear }}</td>
@@ -212,6 +214,7 @@ const generateCredentials = async (teacher: Teacher) => {
       success: boolean;
       email: string;
       password: string;
+      username: string;
       teacherId: string;
     }>("/teachers/register", {
       method: "POST",
@@ -231,6 +234,7 @@ const generateCredentials = async (teacher: Teacher) => {
     if (teacherIndex !== -1) {
       teacherStore.teachers[teacherIndex].email = response.email;
       teacherStore.teachers[teacherIndex].password = response.password;
+      teacherStore.teachers[teacherIndex].username = response.username;
     }
 
     const fullName = `${teacher.surname} ${teacher.firstName} ${teacher.patronymic}`;
@@ -238,6 +242,7 @@ const generateCredentials = async (teacher: Teacher) => {
     f7.dialog.alert(
       `<div class="text-left">
         <p class="mb-2"><strong>ФИО:</strong> ${fullName}</p>
+        <p class="mb-2"><strong>Логин:</strong> ${response.username}</p>
         <p class="mb-2"><strong>Email:</strong> ${response.email}</p>
         <p class="mb-2"><strong>Пароль:</strong> ${response.password}</p>
         <p class="text-sm text-gray-600 mt-3">Пожалуйста, сохраните эти данные. Пароль больше не будет показан.</p>

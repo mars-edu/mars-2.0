@@ -105,14 +105,11 @@ class AuthService {
 
   async register(data: RegisterData) {
     try {
-      const username = `${data.lastName} ${data.firstName} ${
-        data.middleName || ""
-      }`;
-      // const baseUsername = this.generateBaseUsername(
-      //   data.lastName,
-      //   data.firstName
-      // );
-      // const username = await this.generateUniqueUsername(baseUsername);
+      const baseUsername = this.generateBaseUsername(
+        data.lastName,
+        data.firstName
+      );
+      const username = await this.generateUniqueUsername(baseUsername);
 
       const hashedPassword = this.hashPassword(data.password);
 

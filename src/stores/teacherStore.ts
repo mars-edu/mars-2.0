@@ -13,6 +13,7 @@ export interface Teacher {
   gender: "male" | "female";
   email?: string;
   password?: string;
+  username?: string;
 }
 
 export interface AddTeacherPayload {
@@ -117,6 +118,7 @@ export const useTeacherStore = defineStore("teacher", () => {
         success: boolean;
         email: string;
         password: string;
+        username: string;
         teacherId: string;
       }>("/teachers/register", {
         method: "POST",
@@ -140,6 +142,7 @@ export const useTeacherStore = defineStore("teacher", () => {
         gender: payload.gender,
         email: response.email,
         password: response.password,
+        username: response.username,
       };
 
       teachers.value.push(newTeacher);

@@ -208,6 +208,7 @@ const handleSaveTeacher = async () => {
       f7.dialog.alert(
         `<div class="text-left">
           <p class="mb-2"><strong>ФИО:</strong> ${fullName}</p>
+          <p class="mb-2"><strong>Логин:</strong> ${newTeacher.username}</p>
           <p class="mb-2"><strong>Email:</strong> ${newTeacher.email}</p>
           <p class="mb-2"><strong>Пароль:</strong> ${newTeacher.password}</p>
           <p class="text-sm text-gray-600 mt-3">Пожалуйста, сохраните эти данные. Пароль больше не будет показан.</p>

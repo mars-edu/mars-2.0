@@ -62,6 +62,7 @@ teachers.post("/register", async (c: Context<{ Bindings: Env }>) => {
       success: true,
       email,
       password,
+      username: result.user.username,
       teacherId: result.user.id,
     });
   } catch (error) {
