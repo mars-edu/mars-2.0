@@ -28,14 +28,15 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.888.0",
     "@hono/node-ws": "^1.2.0",
     "@prisma/adapter-d1": "^6.16.1",
     "@prisma/client": "^6.16.1",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.3.3",
-    "@aws-sdk/client-s3": "^3.888.0",
     "bcryptjs": "^3.0.2",
+    "cyrillic-to-translit-js": "^3.2.1",
     "fast-json-patch": "^3.1.1",
     "hono": "^4.9.7",
     "hono-sessions": "^0.8.0",

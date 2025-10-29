@@ -192,7 +192,7 @@ const handleSaveTeacher = async () => {
   }
   formError.value = "";
   try {
-    await teacherStore.addTeacher({
+    const newTeacher = await teacherStore.addTeacher({
       surname: surname.value,
       firstName: firstName.value,
       patronymic: patronymic.value,
@@ -201,6 +201,20 @@ const handleSaveTeacher = async () => {
       gender: gender.value as "male" | "female",
     });
     closeAddTeacherPopover();
+
+    if (newTeacher && newTeacher.email && newTeacher.password) {
+      const fullName = `${newTeacher.surname} ${newTeacher.firstName} ${newTeacher.patronymic}`;
+
+      f7.dialog.alert(
+        `<div class="text-left">
+          <p class="mb-2"><strong>ФИО:</strong> ${fullName}</p>
+          <p class="mb-2"><strong>Email:</strong> ${newTeacher.email}</p>
+          <p class="mb-2"><strong>Пароль:</strong> ${newTeacher.password}</p>
+          <p class="text-sm text-gray-600 mt-3">Пожалуйста, сохраните эти данные. Пароль больше не будет показан.</p>
+        </div>`,
+        "Учётные данные созданы"
+      );
+    }
   } catch (error) {}
 };
 

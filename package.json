@@ -25,6 +25,7 @@
     "caniuse-lite": "^1.0.30001749",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cyrillic-to-translit-js": "^3.2.1",
     "dayjs": "^1.11.18",
     "dom7": "^4.0.6",
     "es-toolkit": "^1.40.0",

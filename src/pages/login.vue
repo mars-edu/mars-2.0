@@ -88,14 +88,14 @@
               </div>
             </f7-button>
 
-            <div class="text-center mt-4">
+            <!-- <div class="text-center mt-4">
               <f7-link
                 href="/register"
                 class="text-primary hover:text-primary/80 font-medium"
               >
                 Нет аккаунта? Зарегистрироваться
               </f7-link>
-            </div>
+            </div> -->
           </form>
         </div>
       </div>
@@ -181,14 +181,14 @@
               Войти
             </f7-button>
 
-            <div class="text-center mt-4">
+            <!-- <div class="text-center mt-4">
               <f7-link
                 href="/register"
                 class="text-primary hover:text-primary/80 font-medium"
               >
                 Нет аккаунта? Зарегистрироваться
               </f7-link>
-            </div>
+            </div> -->
           </form>
         </div>
       </div>

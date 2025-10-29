@@ -60,8 +60,10 @@
                   <tr class="bg-gray-500 text-white">
                     <th class="px-4 py-2 text-left">№</th>
                     <th class="px-4 py-2 text-left">ФИО</th>
+                    <th class="px-4 py-2 text-left">Email</th>
                     <th class="px-4 py-2 text-left">Должность</th>
                     <th class="px-4 py-2 text-left">Год поступления</th>
+                    <th class="px-4 py-2 text-left">Действия</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -80,8 +82,26 @@
                     <td class="px-4 py-3">
                       {{ teacherStore.getTeacherFullName(teacher.id) }}
                     </td>
+                    <td class="px-4 py-3">{{ teacher.email || "-" }}</td>
                     <td class="px-4 py-3">{{ teacher.position }}</td>
                     <td class="px-4 py-3">{{ teacher.employmentYear }}</td>
+                    <td class="px-4 py-3">
+                      <button
+                        v-if="!teacher.email"
+                        @click.stop="generateCredentials(teacher)"
+                        :disabled="generatingForId === teacher.id"
+                        class="px-3 py-1 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      >
+                        {{
+                          generatingForId === teacher.id
+                            ? "Генерация..."
+                            : "Создать учётную запись"
+                        }}
+                      </button>
+                      <span v-else class="text-green-600 text-sm"
+                        >✓ Создана</span
+                      >
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -116,6 +136,7 @@ import { getGenderOptions } from "@/lib/utils";
 import { usePositionStore } from "@/stores/positionStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
+import { httpClient } from "@/lib/http-client";
 
 const activeNavItem = ref("teacher-card");
 const teacherStore = useTeacherStore();
@@ -131,6 +152,7 @@ const selectedEmploymentYear = ref("");
 const selectedGender = ref("");
 const searchTerm = ref("");
 const selectedTeacher = ref<Teacher | null>(null);
+const generatingForId = ref<string | null>(null);
 
 onMounted(() => {
   teacherStore.clearFilters();
@@ -180,6 +202,57 @@ const selectTeacher = async (teacher: Teacher) => {
     `#edit-teacher-popover-${teacher.id}`,
     `#teacher-item-${teacher.id}`
   );
+};
+
+const generateCredentials = async (teacher: Teacher) => {
+  try {
+    generatingForId.value = teacher.id;
+
+    const response = await httpClient<{
+      success: boolean;
+      email: string;
+      password: string;
+      teacherId: string;
+    }>("/teachers/register", {
+      method: "POST",
+      body: {
+        firstName: teacher.firstName,
+        lastName: teacher.surname,
+        middleName: teacher.patronymic,
+        position: teacher.position,
+        gender: teacher.gender,
+        employmentYear: teacher.employmentYear,
+      },
+    });
+
+    const teacherIndex = teacherStore.teachers.findIndex(
+      (t) => t.id === teacher.id
+    );
+    if (teacherIndex !== -1) {
+      teacherStore.teachers[teacherIndex].email = response.email;
+      teacherStore.teachers[teacherIndex].password = response.password;
+    }
+
+    const fullName = `${teacher.surname} ${teacher.firstName} ${teacher.patronymic}`;
+
+    f7.dialog.alert(
+      `<div class="text-left">
+        <p class="mb-2"><strong>ФИО:</strong> ${fullName}</p>
+        <p class="mb-2"><strong>Email:</strong> ${response.email}</p>
+        <p class="mb-2"><strong>Пароль:</strong> ${response.password}</p>
+        <p class="text-sm text-gray-600 mt-3">Пожалуйста, сохраните эти данные. Пароль больше не будет показан.</p>
+      </div>`,
+      "Учётные данные созданы"
+    );
+  } catch (error) {
+    console.error("Failed to generate credentials:", error);
+    f7.dialog.alert(
+      "Не удалось создать учётную запись. Попробуйте позже.",
+      "Ошибка"
+    );
+  } finally {
+    generatingForId.value = null;
+  }
 };
 </script>
 

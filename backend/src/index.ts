@@ -4,6 +4,7 @@ import { logger } from "hono/logger";
 import auth from "./controllers/authController.js";
 import ws from "./controllers/websocketController.js";
 import files from "./controllers/fileController.js";
+import teachers from "./controllers/teacherController.js";
 import { getPrismaClient } from "./utils/prismaClient.js";
 import type { Env } from "./types/env.js";
 
@@ -33,6 +34,7 @@ api.get("/", (c) => {
 api.route("/auth", auth);
 api.route("/ws", ws);
 api.route("/files", files);
+api.route("/teachers", teachers);
 
 const app = new Hono<{ Bindings: Env }>();
 

@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import Fuse from "fuse.js";
+import { httpClient } from "@/lib/http-client";
 
 export interface Teacher {
   id: string;
@@ -10,6 +11,8 @@ export interface Teacher {
   position: string;
   employmentYear: number;
   gender: "male" | "female";
+  email?: string;
+  password?: string;
 }
 
 export interface AddTeacherPayload {
@@ -19,6 +22,8 @@ export interface AddTeacherPayload {
   position: string;
   employmentYear: number;
   gender: "male" | "female";
+  email?: string;
+  password?: string;
 }
 
 export interface TeacherFilters {
@@ -108,12 +113,37 @@ export const useTeacherStore = defineStore("teacher", () => {
       isLoading.value = true;
       error.value = null;
 
+      const response = await httpClient<{
+        success: boolean;
+        email: string;
+        password: string;
+        teacherId: string;
+      }>("/teachers/register", {
+        method: "POST",
+        body: {
+          firstName: payload.firstName,
+          lastName: payload.surname,
+          middleName: payload.patronymic,
+          position: payload.position,
+          gender: payload.gender,
+          employmentYear: payload.employmentYear,
+        },
+      });
+
       const newTeacher: Teacher = {
-        id: crypto.randomUUID(),
-        ...payload,
+        id: response.teacherId,
+        surname: payload.surname,
+        firstName: payload.firstName,
+        patronymic: payload.patronymic,
+        position: payload.position,
+        employmentYear: payload.employmentYear,
+        gender: payload.gender,
+        email: response.email,
+        password: response.password,
       };
 
       teachers.value.push(newTeacher);
+      return newTeacher;
     } catch (e) {
       error.value = e instanceof Error ? e.message : "Failed to add teacher";
       throw e;
