@@ -17,6 +17,7 @@ import JournalsPage from "../pages/suspense/JournalsPage.vue";
 import JournalDetailsPage from "../pages/suspense/JournalDetailsPage.vue";
 import EducationSchedulePage from "../pages/suspense/EducationSchedulePage.vue";
 import AnalyticsPage from "../pages/suspense/AnalyticsPage.vue";
+import ReportsPage from "../pages/suspense/ReportsPage.vue";
 
 type RouteConfig = Router.RouteParameters & {
   options?: {
@@ -105,6 +106,13 @@ const routes: RouteConfig[] = [
   {
     path: "/analytics/",
     component: AnalyticsPage,
+    options: {
+      roles: [Role.ADMIN],
+    },
+  },
+  {
+    path: "/reports/",
+    component: ReportsPage,
     options: {
       roles: [Role.ADMIN],
     },

@@ -86,6 +86,13 @@ export function useRBAC() {
         roles: [Role.ADMIN],
         route: "/analytics/",
       },
+      {
+        id: "reports",
+        label: "Отчеты",
+        icon: "doc_chart_fill",
+        roles: [Role.ADMIN],
+        route: "/reports/",
+      },
       // {
       //   id: "room-booking",
       //   label: "Бронирование кабинета",
