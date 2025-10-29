@@ -318,7 +318,7 @@
                   size="16px"
                   class="mr-2"
                 />
-                Экспорт (HTML)
+                Экспорт
               </f7-button>
               <f7-button
                 small
@@ -1590,7 +1590,7 @@ const buildCourseSheet = (courseLabel: string) => {
     safeRows[1]?.length || safeRows[0]?.length || 10
   )
     .fill(0)
-    .map((_, i) => ({ wch: i === 1 ? 20 : 10 }));
+    .map((_, i) => ({ wch: i === 1 ? 40 : 10 }));
   (sheet as any)["!rows"] = safeRows.map(() => ({ hpt: 18 }));
   return sheet;
 };

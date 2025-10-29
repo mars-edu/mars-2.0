@@ -52,7 +52,7 @@
           <th
             v-for="discipline in disciplinesSemester"
             :key="discipline.id"
-            class="px-2 py-2 text-center align-middle w-8 min-w-8"
+            class="px-2 py-2 text-center align-middle w-6 min-w-6"
           >
             <div
               class="flex items-center justify-center"
@@ -72,7 +72,7 @@
           <th
             v-for="discipline in disciplinesWithoutFinal"
             :key="`without-final-${discipline.id}`"
-            class="px-2 py-2 text-center align-middle w-8 min-w-8"
+            class="px-2 py-2 text-center align-middle w-6 min-w-6"
           >
             <div
               class="flex items-center justify-center"
@@ -96,7 +96,7 @@
             <th
               v-for="discipline in disciplinesByForm[form.id]"
               :key="`${form.id}-${discipline.id}`"
-              class="px-2 py-2 text-center align-middle w-8 min-w-8"
+              class="px-2 py-2 text-center align-middle w-6 min-w-6"
             >
               <div
                 class="flex items-center justify-center"
@@ -148,14 +148,14 @@
           <td
             v-for="discipline in disciplinesSemester"
             :key="`${row.studentId}-${discipline.id}`"
-            class="px-1 py-2 text-center text-xs w-8 min-w-8"
+            class="px-1 py-2 text-center text-xs w-6 min-w-6"
           >
             {{ formatScore(row.semester[discipline.id]) }}
           </td>
           <td
             v-for="discipline in disciplinesWithoutFinal"
             :key="`${row.studentId}-without-final-${discipline.id}`"
-            class="px-1 py-2 text-center text-xs w-8 min-w-8"
+            class="px-1 py-2 text-center text-xs w-6 min-w-6"
           >
             {{ formatScore(row.withoutFinal[discipline.id]) }}
           </td>
@@ -166,7 +166,7 @@
             <td
               v-for="discipline in disciplinesByForm[form.id]"
               :key="`${row.studentId}-${form.id}-${discipline.id}`"
-              class="px-1 py-2 text-center text-xs w-8 min-w-8"
+              class="px-1 py-2 text-center text-xs w-6 min-w-6"
             >
               {{ formatScore(row.finals[form.id]?.[discipline.id] ?? null) }}
             </td>
