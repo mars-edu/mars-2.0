@@ -77,4 +77,47 @@ teachers.post("/register", async (c: Context<{ Bindings: Env }>) => {
   }
 });
 
+teachers.post("/regenerate-password", async (c: Context<{ Bindings: Env }>) => {
+  try {
+    const { userId } = await c.req.json();
+
+    if (!userId) {
+      return c.json(
+        {
+          success: false,
+          message: "User ID is required",
+        },
+        400
+      );
+    }
+
+    const authService = new AuthService(c);
+    const result = await authService.regeneratePassword(userId);
+
+    if (!result.success) {
+      return c.json(
+        {
+          success: false,
+          message: result.message || "Failed to regenerate password",
+        },
+        400
+      );
+    }
+
+    return c.json({
+      success: true,
+      password: result.password,
+    });
+  } catch (error) {
+    console.error("Password regeneration error:", error);
+    return c.json(
+      {
+        success: false,
+        message: "An error occurred during password regeneration",
+      },
+      500
+    );
+  }
+});
+
 export default teachers;

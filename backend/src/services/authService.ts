@@ -4,6 +4,7 @@ import { sign, verify, SignOptions } from "jsonwebtoken";
 import type { Context } from "hono";
 import type { Env } from "../types/env.js";
 import type { User, UserRole } from "@prisma/client";
+import { generatePassword } from "../utils/passwordGenerator.js";
 
 const SALT_ROUNDS = 10;
 
@@ -343,6 +344,39 @@ class AuthService {
     });
 
     return !!existingUser;
+  }
+
+  async regeneratePassword(userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        return {
+          success: false,
+          message: "User not found",
+        };
+      }
+
+      const newPassword = generatePassword(2);
+      const hashedPassword = this.hashPassword(newPassword);
+
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { password: hashedPassword },
+      });
+
+      return {
+        success: true,
+        password: newPassword,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "An error occurred during password regeneration",
+      };
+    }
   }
 }
 

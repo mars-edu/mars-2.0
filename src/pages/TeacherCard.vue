@@ -100,9 +100,18 @@
                             : "Создать учётную запись"
                         }}
                       </button>
-                      <span v-else class="text-green-600 text-sm"
-                        >✓ Создана</span
+                      <button
+                        v-else
+                        @click.stop="regeneratePassword(teacher)"
+                        :disabled="generatingForId === teacher.id"
+                        class="px-2 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
                       >
+                        {{
+                          generatingForId === teacher.id
+                            ? "Генерация..."
+                            : "🔄 Обновить пароль"
+                        }}
+                      </button>
                     </td>
                   </tr>
                 </tbody>
@@ -255,6 +264,47 @@ const generateCredentials = async (teacher: Teacher) => {
       "Не удалось создать учётную запись. Попробуйте позже.",
       "Ошибка"
     );
+  } finally {
+    generatingForId.value = null;
+  }
+};
+
+const regeneratePassword = async (teacher: Teacher) => {
+  try {
+    generatingForId.value = teacher.id;
+
+    const response = await httpClient<{
+      success: boolean;
+      password: string;
+    }>("/teachers/regenerate-password", {
+      method: "POST",
+      body: {
+        userId: teacher.id,
+      },
+    });
+
+    const teacherIndex = teacherStore.teachers.findIndex(
+      (t) => t.id === teacher.id
+    );
+    if (teacherIndex !== -1) {
+      teacherStore.teachers[teacherIndex].password = response.password;
+    }
+
+    const fullName = `${teacher.surname} ${teacher.firstName} ${teacher.patronymic}`;
+
+    f7.dialog.alert(
+      `<div class="text-left">
+        <p class="mb-2"><strong>ФИО:</strong> ${fullName}</p>
+        <p class="mb-2"><strong>Логин:</strong> ${teacher.username}</p>
+        <p class="mb-2"><strong>Email:</strong> ${teacher.email}</p>
+        <p class="mb-2"><strong>Новый пароль:</strong> ${response.password}</p>
+        <p class="text-sm text-gray-600 mt-3">Пожалуйста, сохраните новый пароль. Старый пароль больше не действителен.</p>
+      </div>`,
+      "Пароль обновлён"
+    );
+  } catch (error) {
+    console.error("Failed to regenerate password:", error);
+    f7.dialog.alert("Не удалось обновить пароль. Попробуйте позже.", "Ошибка");
   } finally {
     generatingForId.value = null;
   }
