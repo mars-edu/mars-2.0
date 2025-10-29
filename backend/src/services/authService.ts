@@ -346,10 +346,12 @@ class AuthService {
     return !!existingUser;
   }
 
-  async regeneratePassword(userId: string) {
+  async regeneratePassword(userIdOrUsername: string) {
     try {
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
+      const user = await this.prisma.user.findFirst({
+        where: {
+          OR: [{ id: userIdOrUsername }, { username: userIdOrUsername }],
+        },
       });
 
       if (!user) {
@@ -363,7 +365,7 @@ class AuthService {
       const hashedPassword = this.hashPassword(newPassword);
 
       await this.prisma.user.update({
-        where: { id: userId },
+        where: { id: user.id },
         data: { password: hashedPassword },
       });
 

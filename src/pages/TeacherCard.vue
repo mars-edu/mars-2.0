@@ -279,7 +279,7 @@ const regeneratePassword = async (teacher: Teacher) => {
     }>("/teachers/regenerate-password", {
       method: "POST",
       body: {
-        userId: teacher.id,
+        userId: teacher.username,
       },
     });
 
