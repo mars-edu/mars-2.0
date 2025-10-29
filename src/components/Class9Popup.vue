@@ -83,7 +83,6 @@
                 :items="specialtyOptions"
                 label="Специальности"
                 placeholder="Выберите специальности..."
-                :max-tags="5"
                 display-field="text"
                 :show-search="false"
                 helper-text="Выберите одну или несколько специальностей для данного модуля"
