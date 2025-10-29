@@ -1590,7 +1590,7 @@ const buildCourseSheet = (courseLabel: string) => {
     safeRows[1]?.length || safeRows[0]?.length || 10
   )
     .fill(0)
-    .map((_, i) => ({ wch: i === 1 ? 40 : 10 }));
+    .map((_, i) => ({ wch: i === 1 ? 20 : 10 }));
   (sheet as any)["!rows"] = safeRows.map(() => ({ hpt: 18 }));
   return sheet;
 };
