@@ -37,7 +37,7 @@ export const useJournalStore = defineStore(
         const student = studentStore.students.find((s) => s.id === id);
         if (!student) return;
 
-        const specialty = specialtyStore.getSpecialtyByCode(student.specialty);
+        const specialty = specialtyStore.getSpecialtyById(student.specialty);
         if (specialty?.codeName) {
           codeNames.add(specialty.codeName.trim());
         } else {
@@ -57,7 +57,7 @@ export const useJournalStore = defineStore(
         const student = studentStore.students.find((s) => s.id === id);
         if (!student) return;
 
-        const specialty = specialtyStore.getSpecialtyByCode(student.specialty);
+        const specialty = specialtyStore.getSpecialtyById(student.specialty);
         if (specialty?.codeName) {
           codeNames.add(specialty.codeName.trim());
         }

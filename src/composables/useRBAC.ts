@@ -90,7 +90,7 @@ export function useRBAC() {
         id: "reports",
         label: "Отчеты",
         icon: "doc_chart_fill",
-        roles: [Role.ADMIN],
+        roles: [Role.ADMIN, Role.TEACHER],
         route: "/reports/",
       },
       // {

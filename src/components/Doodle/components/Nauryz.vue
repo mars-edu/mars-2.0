@@ -1,8 +1,8 @@
 <template>
   <div class="nauryz-content">
     <div class="nauryz-text">
-      <div class="nauryz-title">С днем солиста<br />поздравляем!</div>
-      <div class="nauryz-date">6 июля</div>
+      <div class="nauryz-quote">„Образование — это то, что остаётся после того, как забывается всё выученное в школе."</div>
+      <div class="nauryz-author">Альберт Эйнштейн</div>
     </div>
     <div
       class="nauryz-background"
@@ -30,11 +30,11 @@
   transform: scale(1.01);
 }
 
-.nauryz-title {
-  @apply text-white text-base font-bold mb-0.5;
+.nauryz-quote {
+  @apply text-white text-base font-medium mb-2 italic;
 }
 
-.nauryz-date {
-  @apply text-white/80 text-xs;
+.nauryz-author {
+  @apply text-white/90 text-sm font-semibold;
 }
 </style>

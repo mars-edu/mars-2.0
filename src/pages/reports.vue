@@ -33,6 +33,7 @@
             <div class="space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Select
+                  v-if="userStore.isAdmin"
                   v-model="selectedTeacherId"
                   :options="teacherOptions"
                   label="Преподаватель"
@@ -108,6 +109,9 @@ import { useCalendarStore } from "@/stores/calendarStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useClass9Store } from "@/stores/class9Store";
 import { useStudentStore } from "@/stores/studentStore";
+import { useUserStore } from "@/stores/userStore";
+import { useJournalStore } from "@/stores/journalStore";
+import { useMarksStore } from "@/stores/marksStore";
 import {
   exportTeacherWorkloadToExcel,
   type WorkloadEntry,
@@ -115,14 +119,22 @@ import {
   type MonthlyDistributionEntry,
   type TeacherWorkloadExportPayload,
 } from "@/services/teacher-workload-export";
+import {
+  generateDailyWorkload,
+  generateWorkloadSummary,
+  generateMonthlyDistribution,
+} from "@/services/teacher-workload-calculator";
 
 const activeNavItem = ref("reports");
+const userStore = useUserStore();
 const teacherStore = useTeacherStore();
 const academicYearStore = useAcademicYearStore();
 const calendarStore = useCalendarStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const class9Store = useClass9Store();
 const studentStore = useStudentStore();
+const journalStore = useJournalStore();
+const marksStore = useMarksStore();
 
 const selectedTeacherId = ref("");
 const selectedAcademicYearId = ref("");
@@ -194,98 +206,133 @@ async function generateWorkloadReport() {
       ? academicYears.value.find((y) => y.id === selectedAcademicYearId.value)
       : academicYears.value.find((y) => y.isActive);
 
+    // Filter events by teacher
     const teacherEvents = calendarStore.events.filter(
       (e) => e.teacherId === selectedTeacherId.value
     );
 
-    const entries: WorkloadEntry[] = [];
-    const summaryEntries: WorkloadSummaryEntry[] = [];
-    const monthlyDistribution: MonthlyDistributionEntry[] = [];
+    // Get period date range for filtering
+    let filterStartDate: Date | undefined;
+    let filterEndDate: Date | undefined;
 
-    teacherEvents.forEach((event, idx) => {
-      const class9Item = class9Store.getClass9ById(event.class9Id);
-      const moduleIndex = class9Item?.moduleIndex || "N/A";
-      const moduleName = class9Item?.moduleName || "Не указан";
+    if (selectedPeriod.value !== "full_year") {
+      const semester = availableSemesters.value.find(
+        (s) => s.id === selectedPeriod.value
+      );
+      if (semester) {
+        filterStartDate = new Date(semester.startDate);
+        filterEndDate = new Date(semester.endDate);
+      }
+    }
 
-      const groupNames: string[] = [];
-      if (event.participants && event.participants.length > 0) {
-        const firstStudentId = event.participants[0];
-        const student = studentStore.students.find(
-          (s) => s.id === firstStudentId
-        );
-        if (student) {
-          const studentGroupName = (student as any).groupName;
-          if (studentGroupName) {
-            groupNames.push(studentGroupName);
-          }
+    // Enrich students with course information
+    const enrichedStudents = studentStore.students.map((student) => ({
+      ...student,
+      course: studentStore.getCourseByStudentId(student.id),
+    }));
+
+    // Get all class9 items
+    const class9Items = class9Store.class9Items;
+
+    // For Form 1 (daily workload), intelligently select month based on semester selection
+    // Month is 0-indexed in JavaScript (0 = January, 8 = September, etc.)
+    let reportMonth: number;
+    let reportYear: number;
+
+    console.log('[Reports] Semester selection:', selectedPeriod.value);
+    console.log('[Reports] Academic year:', academicYear?.name);
+
+    if (selectedPeriod.value === "full_year") {
+      // Full year: use current month if in academic year (Sept-June), else September
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      reportYear = academicYear?.startYear || now.getFullYear();
+
+      // Academic year is Sept (8) through June (5 of next year)
+      // If current month is Sept-Dec (8-11) or Jan-June (0-5), use it; else default to Sept
+      if (currentMonth >= 8 || currentMonth <= 5) {
+        reportMonth = currentMonth;
+        // Adjust year if we're in Jan-June (it's the next calendar year)
+        if (currentMonth <= 5) {
+          reportYear = reportYear + 1;
+        }
+      } else {
+        reportMonth = 8; // September
+      }
+    } else {
+      // Semester selected: use first month of semester or current month if within semester range
+      if (!filterStartDate || !filterEndDate) {
+        // Fallback to September if dates are missing
+        reportMonth = 8;
+        reportYear = academicYear?.startYear || new Date().getFullYear();
+      } else {
+        const semesterStartMonth = filterStartDate.getMonth();
+        const semesterEndMonth = filterEndDate.getMonth();
+        reportYear = filterStartDate.getFullYear();
+
+        const now = new Date();
+        const currentMonth = now.getMonth();
+
+        // Use current month if it falls within the semester range
+        if (currentMonth >= semesterStartMonth && currentMonth <= semesterEndMonth) {
+          reportMonth = currentMonth;
+          // Adjust year if current date year matches semester end year
+          reportYear = now.getFullYear();
+        } else {
+          // Use first month of semester as default
+          reportMonth = semesterStartMonth;
         }
       }
-      const groupName =
-        groupNames.length > 0 ? groupNames.join(", ") : `Группа ${idx + 1}`;
+    }
 
-      const dailyHours = Array(30).fill(null);
-      for (let day = 1; day <= 30; day++) {
-        const hasLesson = Math.random() > 0.7;
-        if (hasLesson) {
-          dailyHours[day - 1] = Math.floor(Math.random() * 3) + 1;
-        }
-      }
+    const monthNamesEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    console.log(`[Reports] Report month selected: ${reportMonth} (${monthNamesEn[reportMonth]}), year: ${reportYear}`);
+    console.log('[Reports] Teacher events count:', teacherEvents.length);
+    console.log('[Reports] Class9 items count:', class9Items.length);
 
-      const monthTotal = dailyHours.reduce((sum, h) => sum + (h || 0), 0);
-      const plannedHours = class9Item?.totalHours
-        ? parseInt(class9Item.totalHours) || 0
-        : 38;
+    // Flatten journals from computed property
+    const allJournals = Object.values(journalStore.journalsByCourse).flat();
+    console.log('[Reports] Total journals available:', allJournals.length);
+    console.log('[Reports] JournalMarks keys count:', Object.keys(marksStore.journalMarks).length);
 
-      entries.push({
-        rowNumber: idx + 1,
-        moduleIndex,
-        subjectName: moduleName,
-        groupName,
-        dailyHours,
-        monthTotal,
-        plannedHours,
-        actualHours: monthTotal,
-        cumulativeHours: monthTotal,
-        remainingHours: plannedHours - monthTotal,
+    // Generate real data using calculator service
+    const entries: WorkloadEntry[] = generateDailyWorkload(
+      teacherEvents,
+      class9Items,
+      enrichedStudents,
+      reportMonth,
+      reportYear,
+      academicYear?.startYear || new Date().getFullYear(), // Academic year start for cumulative calculation
+      allJournals,
+      marksStore.journalMarks
+    );
+
+    console.log('[Reports] Form 1 entries generated:', entries.length);
+    if (entries.length > 0) {
+      console.log('[Reports] First entry sample:', {
+        subject: entries[0].subjectName,
+        group: entries[0].groupName,
+        monthTotal: entries[0].monthTotal,
+        actualHours: entries[0].actualHours,
+        dailyHoursCount: entries[0].dailyHours.filter(h => h !== null).length
       });
+    }
 
-      summaryEntries.push({
-        groupName,
-        subjectName: `${moduleIndex} ${moduleName}`,
-        plannedHours,
-        actualHours: monthTotal,
-        totalHours: monthTotal,
-      });
+    const summaryEntries: WorkloadSummaryEntry[] = generateWorkloadSummary(
+      teacherEvents,
+      class9Items,
+      enrichedStudents,
+      filterStartDate,
+      filterEndDate
+    );
 
-      monthlyDistribution.push({
-        groupName,
-        september: Math.floor(Math.random() * 10) + 1,
-        october: Math.floor(Math.random() * 10) + 1,
-        november: Math.floor(Math.random() * 10) + 1,
-        december: Math.floor(Math.random() * 10) + 1,
-        january: Math.floor(Math.random() * 5),
-        february: Math.floor(Math.random() * 10) + 1,
-        march: Math.floor(Math.random() * 10) + 1,
-        april: Math.floor(Math.random() * 10) + 1,
-        may: Math.floor(Math.random() * 10) + 1,
-        june: Math.floor(Math.random() * 5),
-        total: 0,
-      });
-    });
-
-    monthlyDistribution.forEach((entry) => {
-      entry.total =
-        entry.september +
-        entry.october +
-        entry.november +
-        entry.december +
-        entry.january +
-        entry.february +
-        entry.march +
-        entry.april +
-        entry.may +
-        entry.june;
-    });
+    const monthlyDistribution: MonthlyDistributionEntry[] =
+      generateMonthlyDistribution(
+        teacherEvents,
+        class9Items,
+        enrichedStudents,
+        academicYear!
+      );
 
     let periodLabel = "за весь учебный год";
     if (selectedPeriod.value !== "full_year") {
@@ -297,12 +344,19 @@ async function generateWorkloadReport() {
       }
     }
 
+    // Get month name for Form 1 (0-indexed)
+    const monthNames = [
+      'январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
+      'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'
+    ];
+    const reportMonthName = monthNames[reportMonth];
+
     const payload: TeacherWorkloadExportPayload = {
       institutionName:
         "Музыкалық колледж - дарынды балаларға арналған мамандандырылған мектеп-интернат",
       teacherFullName: teacher ? getTeacherFullName(teacher) : "Не указан",
       academicYear: academicYear ? academicYear.name : "2024/2025",
-      month: periodLabel,
+      month: reportMonthName,
       entries: entries,
       summaryEntries: summaryEntries,
       monthlyDistribution: monthlyDistribution,
@@ -353,6 +407,10 @@ onMounted(() => {
     if (activeYear) {
       selectedAcademicYearId.value = activeYear.id;
     }
+  }
+
+  if (userStore.isTeacher && userStore.currentUser?.id) {
+    selectedTeacherId.value = userStore.currentUser.id;
   }
 });
 </script>

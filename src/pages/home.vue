@@ -14,7 +14,7 @@
         <div class="flex flex-row gap-4">
           <div class="flex-1 space-y-4 min-w-[60%]">
             <Doodle size="large">
-              <Nauryz />
+              <Quote />
             </Doodle>
             <AcademicWeekCard />
             <ActivityCard />
@@ -130,7 +130,7 @@ import {
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Doodle from "@/components/Doodle/Doodle.vue";
-import Nauryz from "@/components/Doodle/components/Nauryz.vue";
+import Quote from "@/components/Doodle/components/Quote.vue";
 import ActivityCard from "@/components/Cards/ActivityCard.vue";
 import AnnouncementsCard from "@/components/Cards/AnnouncementsCard.vue";
 import CalendarCard from "@/components/Cards/CalendarCard.vue";

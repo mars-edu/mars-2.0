@@ -349,11 +349,11 @@ const debugText = computed(() => {
   const coursesSetAfter = Array.from(
     new Set(afterCourse.map((s) => s.course))
   ).sort((a, b) => a - b);
-  const specialtyCodesAll = Array.from(
+  const specialtyIdsAll = Array.from(
     new Set(withCourse.map((s) => s.specialty))
   );
-  const specialtyNamesAll = specialtyCodesAll.map(
-    (c) => specialtyStore.getSpecialtyByCode(c)?.codeName || c
+  const specialtyNamesAll = specialtyIdsAll.map(
+    (id) => specialtyStore.getSpecialtyById(id)?.codeName || id
   );
   const baseSetAll = Array.from(new Set(withCourse.map((s) => s.base)));
 
@@ -437,10 +437,9 @@ const filteredStudents = computed(() => {
     })
     .filter((s) => {
       const ids = allowedSpecialtyIds.value || [];
-      const codes = allowedSpecialtyCodes.value || [];
-      if (ids.length === 0 && codes.length === 0) return true;
-      // Students store specialty as code; prefer code comparison, but keep id fallback
-      return codes.includes(s.specialty) || ids.includes(s.specialty);
+      if (ids.length === 0) return true;
+      // Students now store specialty as id
+      return ids.includes(s.specialty);
     })
     .filter(
       (s) => filters.language === "all" || s.language === filters.language

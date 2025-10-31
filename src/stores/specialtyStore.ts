@@ -37,7 +37,7 @@ export const useSpecialtyStore = defineStore(
 
     const specialtyOptions = computed(() =>
       specialties.value.map((s) => ({
-        value: s.code,
+        value: s.id,
         text: `${s.name} - ${s.details}`,
       }))
     );

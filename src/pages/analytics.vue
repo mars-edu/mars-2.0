@@ -974,7 +974,7 @@ const reportRowsByCourseAndSpecialty = computed(() => {
   const courseEntries = Array.from(courseGroups.entries()).map(
     ([course, specialtyMap]) => {
       const specialtyEntries = Array.from(specialtyMap.entries()).map(
-        ([specialtyCode, rows]) => {
+        ([specialtyId, rows]) => {
           const sorted = rows.slice().sort((a, b) =>
             a.fullName.localeCompare(b.fullName, "ru", {
               sensitivity: "base",
@@ -983,13 +983,13 @@ const reportRowsByCourseAndSpecialty = computed(() => {
           const reindexed = sorted.map((r, i) => ({ ...r, index: i + 1 }));
 
           const specialty = specialties.value.find(
-            (s) => s.code === specialtyCode
+            (s) => s.id === specialtyId
           );
           const specialtyName =
-            specialty?.codeName || specialty?.name || specialtyCode;
+            specialty?.codeName || specialty?.name || specialtyId;
 
           return {
-            specialtyCode,
+            specialtyCode: specialty?.code || specialtyId,
             specialtyName,
             rows: reindexed,
           };
@@ -1300,7 +1300,7 @@ const toggleSelectAllSpecialties = () => {
   ) {
     selectedSpecialties.value = [];
   } else {
-    selectedSpecialties.value = specialties.value.map((s) => s.code);
+    selectedSpecialties.value = specialties.value.map((s) => s.id);
   }
 };
 

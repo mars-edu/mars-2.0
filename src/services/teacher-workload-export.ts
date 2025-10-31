@@ -1,5 +1,27 @@
-import * as XLSX from "xlsx-js-style";
-import type { CellObject } from "xlsx-js-style";
+/**
+ * Teacher Workload Export - ExcelJS Version
+ * Migrated from xlsx-js-style to ExcelJS
+ */
+
+import * as ExcelJS from 'exceljs';
+import { generateWorkbookTemplate } from './excel-template-generator';
+import {
+  type ColumnTemplateMap,
+  collectColumnTemplates,
+  setCell,
+  updateCellWithText,
+  detectDataStartRow,
+  getColumnRange,
+  applyWorkloadGridStyles,
+  getCell,
+  applyDataCellStyle,
+  applyHeaderCellStyle,
+  applyTotalCellStyle,
+} from './excel-utils';
+
+// ============================================================================
+// Type Definitions (kept same as original)
+// ============================================================================
 
 export interface WorkloadEntry {
   rowNumber: number;
@@ -16,6 +38,7 @@ export interface WorkloadEntry {
 
 export interface WorkloadSummaryEntry {
   groupName: string;
+  moduleIndex: string;
   subjectName: string;
   plannedHours: number;
   actualHours: number;
@@ -53,380 +76,355 @@ export interface TeacherWorkloadExportPayload {
   monthlyDistribution: MonthlyDistributionEntry[];
 }
 
-const TEMPLATE_CACHE = new Map<string, ArrayBuffer>();
-
-async function loadTemplate(url: string): Promise<ArrayBuffer> {
-  if (TEMPLATE_CACHE.has(url)) {
-    const buffer = TEMPLATE_CACHE.get(url);
-    if (buffer) {
-      return buffer.slice(0);
-    }
-  }
-
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to load template: ${response.status}`);
-  }
-  const buffer = await response.arrayBuffer();
-  TEMPLATE_CACHE.set(url, buffer);
-  return buffer.slice(0);
-}
-
-type Worksheet = XLSX.WorkSheet;
-type ColumnTemplateMap = Record<number, CellObject | undefined>;
-
-function cloneTemplateCell(
-  cell: CellObject | undefined
-): CellObject | undefined {
-  if (!cell) return undefined;
-  return JSON.parse(JSON.stringify(cell)) as CellObject;
-}
-
-function sanitizeTemplateCell(cell: CellObject): CellObject {
-  const clone = cloneTemplateCell(cell)!;
-  clone.v = null as any;
-  if ("w" in clone) {
-    delete (clone as any).w;
-  }
-  if ((clone as any).text) {
-    delete (clone as any).text;
-  }
-  if (clone.t === undefined) {
-    clone.t = "z";
-  }
-
-  if (!clone.s) {
-    clone.s = {};
-  }
-
-  if (!clone.s.font) {
-    clone.s.font = {
-      name: "Calibri",
-      sz: 11,
-      color: { rgb: "000000" },
-    };
-  }
-
-  if (!clone.s.alignment) {
-    clone.s.alignment = {
-      vertical: "center",
-      horizontal: "center",
-      wrapText: true,
-    };
-  }
-
-  return clone;
-}
-
-function collectColumnTemplates(
-  worksheet: Worksheet,
-  templateRow: number,
-  startCol: number,
-  endCol: number
-): ColumnTemplateMap {
-  const templates: ColumnTemplateMap = {};
-
-  for (let c = startCol; c <= endCol; c++) {
-    const addr = XLSX.utils.encode_cell({ r: templateRow, c });
-    const cell = worksheet[addr] as CellObject | undefined;
-    templates[c] = cell ? sanitizeTemplateCell(cell) : undefined;
-  }
-
-  return templates;
-}
-
-function updateCellWithText(
-  worksheet: Worksheet,
-  searchSubstr: string,
-  replacement: string
-) {
-  const ref = worksheet["!ref"];
-  if (!ref) return;
-  const range = XLSX.utils.decode_range(ref);
-  for (let r = range.s.r; r <= Math.min(range.e.r, range.s.r + 20); r++) {
-    for (let c = range.s.c; c <= range.e.c; c++) {
-      const addr = XLSX.utils.encode_cell({ r, c });
-      const cell = worksheet[addr];
-      if (!cell || typeof cell.v !== "string") continue;
-      if (cell.v.includes(searchSubstr)) {
-        cell.v = cell.v.replace(new RegExp(searchSubstr, "g"), replacement);
-        cell.t = "s";
-        return;
-      }
-    }
-  }
-}
-
-function ensureCell(
-  worksheet: Worksheet,
-  row: number,
-  col: number,
-  templates: ColumnTemplateMap
-): CellObject {
-  const addr = XLSX.utils.encode_cell({ r: row, c: col });
-  const template = templates[col];
-  let cell = worksheet[addr] as CellObject | undefined;
-  const isNewCell = !cell;
-
-  if (!cell) {
-    const base = cloneTemplateCell(template) ?? ({ t: "z" } as CellObject);
-    base.v = null as any;
-    cell = base;
-    worksheet[addr] = cell;
-  }
-
-  if (template?.s && (isNewCell || !cell.s)) {
-    cell.s = JSON.parse(JSON.stringify(template.s));
-  }
-
-  if (template?.z) {
-    cell.z = template.z;
-  }
-
-  return cell;
-}
-
-function setCell(
-  worksheet: Worksheet,
-  row: number,
-  col: number,
-  value: string | number | Date | null | undefined,
-  templates: ColumnTemplateMap
-) {
-  const cell = ensureCell(worksheet, row, col, templates);
-  const template = templates[col];
-
-  if (value === null || value === undefined || value === "") {
-    const emptyValue = "";
-    cell.v = emptyValue as any;
-    cell.t = template?.t && template.t !== "z" ? template.t : "s";
-    if (template?.z) {
-      cell.z = template.z;
-    }
-    return;
-  }
-
-  if (value instanceof Date) {
-    cell.v = value;
-    cell.t = template?.t === "n" ? "n" : template?.t === "d" ? "d" : "d";
-  } else if (typeof value === "number") {
-    cell.v = value;
-    cell.t = "n";
-  } else {
-    cell.v = value;
-    cell.t = template?.t && template.t !== "z" ? template.t : "s";
-  }
-}
-
-function detectDataStartRow(worksheet: Worksheet, sheetIndex: number): number {
-  const ref = worksheet["!ref"];
-  if (!ref) return 9;
-  const range = XLSX.utils.decode_range(ref);
-
-  for (let r = range.s.r; r <= Math.min(range.e.r, range.s.r + 20); r++) {
-    const cell = worksheet[XLSX.utils.encode_cell({ r, c: range.s.c })];
-    const value = typeof cell?.v === "string" ? cell.v.trim() : cell?.v;
-
-    if (typeof value === "string") {
-      if (sheetIndex === 0 && value.includes("№ п/п")) {
-        return r + 1;
-      } else if (sheetIndex === 1 && value.includes("№ п/п")) {
-        return r + 1;
-      } else if (sheetIndex === 2 && value.includes("№")) {
-        return r + 1;
-      }
-    }
-  }
-
-  return 9;
-}
-
-function getColumnRange(worksheet: Worksheet): { start: number; end: number } {
-  const ref = worksheet["!ref"];
-  if (!ref) return { start: 0, end: 40 };
-  const range = XLSX.utils.decode_range(ref);
-  return { start: range.s.c, end: range.e.c };
-}
+// ============================================================================
+// Main Export Function
+// ============================================================================
 
 export async function exportTeacherWorkloadToExcel(
   payload: TeacherWorkloadExportPayload
 ): Promise<Uint8Array> {
-  const templateUrl = "/ООД Килаш 2024-2025 форма 1-3.xls";
-  const templateBuffer = await loadTemplate(templateUrl);
-  const workbook = XLSX.read(templateBuffer, {
-    type: "array",
-    cellStyles: true,
-    cellDates: true,
-    cellNF: true,
-  });
+  // Generate template programmatically (no file loading needed)
+  const workbook = generateWorkbookTemplate();
 
-  const form1Sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const form2Sheet = workbook.Sheets[workbook.SheetNames[1]];
-  const form3Sheet = workbook.Sheets[workbook.SheetNames[2]];
+  // Get the three form sheets
+  const form1Sheet = workbook.getWorksheet(1);
+  const form2Sheet = workbook.getWorksheet(2);
+  const form3Sheet = workbook.getWorksheet(3);
 
   if (!form1Sheet || !form2Sheet || !form3Sheet) {
-    throw new Error("Template sheets are missing");
+    throw new Error('Template sheets are missing');
   }
 
-  updateCellWithText(form1Sheet, "Килаш А.А.", payload.teacherFullName);
-  updateCellWithText(form1Sheet, "2024-2025", payload.academicYear);
-  updateCellWithText(form1Sheet, "сентябрь", payload.month);
+  // Update text placeholders (search in more rows for Kilash name)
+  updateCellWithText(form1Sheet, 'Килаш', payload.teacherFullName, 30);
+  updateCellWithText(form1Sheet, '2024-2025', payload.academicYear, 30);
+  updateCellWithText(form1Sheet, 'сентябрь', payload.month, 30);
 
-  updateCellWithText(form2Sheet, "Килаш А.А.", payload.teacherFullName);
-  updateCellWithText(form2Sheet, "2024-2025", payload.academicYear);
+  updateCellWithText(form2Sheet, 'Килаш', payload.teacherFullName, 60);
+  updateCellWithText(form2Sheet, '2024-2025', payload.academicYear, 30);
 
-  updateCellWithText(form3Sheet, "Килаш А.А.", payload.teacherFullName);
-  updateCellWithText(form3Sheet, "2024-2025", payload.academicYear);
+  updateCellWithText(form3Sheet, 'Килаш', payload.teacherFullName, 30);
+  updateCellWithText(form3Sheet, '2024-2025', payload.academicYear, 30);
 
-  const form1DataRow = detectDataStartRow(form1Sheet, 0);
-  const form1ColRange = getColumnRange(form1Sheet);
+  // ========== FORM 1: Daily Workload ==========
+  await populateForm1(form1Sheet, payload);
+
+  // ========== FORM 2: Summary by Subject/Group ==========
+  await populateForm2(form2Sheet, payload);
+
+  // ========== FORM 3: Monthly Distribution ==========
+  await populateForm3(form3Sheet, payload);
+
+  // Write workbook to buffer using ExcelJS (preserves all styling)
+  const buffer = await workbook.xlsx.writeBuffer();
+  return new Uint8Array(buffer);
+}
+
+// ============================================================================
+// Form 1 Population
+// ============================================================================
+
+async function populateForm1(
+  worksheet: ExcelJS.Worksheet,
+  payload: TeacherWorkloadExportPayload
+): Promise<void> {
+  // Find header row (row 8 in template, contains "№ п/п")
+  const form1HeaderRow = detectDataStartRow(worksheet, ['№ п/п'], 20);
+  // Data starts 2 rows after header (row 10 in template)
+  // Form 1 has: Row 8 = header, Row 9 = day numbers, Row 10 = data
+  const form1DataRow = form1HeaderRow + 2; // +2 to skip header row (8) and day numbers row (9), data starts at row 10
+
+  const form1ColRange = getColumnRange(worksheet);
+
+  // Collect column templates from the day numbers row (row 9)
   const form1Templates = collectColumnTemplates(
-    form1Sheet,
-    form1DataRow - 1,
+    worksheet,
+    form1HeaderRow, // This is the day numbers row (row after header)
     form1ColRange.start,
     form1ColRange.end
   );
 
-  const form1Ref = form1Sheet["!ref"];
-  const form1Range = form1Ref ? XLSX.utils.decode_range(form1Ref) : null;
-  const form1ClearEnd = form1Range
-    ? Math.max(form1Range.e.r, form1DataRow + payload.entries.length - 1)
-    : form1DataRow + payload.entries.length - 1;
+  // Only clear rows that will have data (don't create unnecessary empty rows)
+  // Clear only up to the number of entries we have
+  const clearEnd = form1DataRow + Math.max(payload.entries.length, 1); // At least 1 row
 
-  for (let r = form1DataRow; r <= form1ClearEnd; r++) {
+  for (let r = form1DataRow; r < clearEnd; r++) {
     for (let c = form1ColRange.start; c <= form1ColRange.end; c++) {
-      setCell(form1Sheet, r, c, null, form1Templates);
+      setCell(worksheet, r, c, null, form1Templates);
     }
   }
 
+  // Column offset: Template has data in column B (index 1), not column A (index 0)
+  const COL_OFFSET = 1;
+
+  // Header styles are already applied during template generation
+  // No need to reapply them here
+
+  // Populate data rows
   payload.entries.forEach((entry, index) => {
     const row = form1DataRow + index;
-    setCell(form1Sheet, row, 0, entry.rowNumber, form1Templates);
-    setCell(form1Sheet, row, 1, entry.moduleIndex, form1Templates);
-    setCell(form1Sheet, row, 2, entry.subjectName, form1Templates);
-    setCell(form1Sheet, row, 3, entry.groupName, form1Templates);
 
+    // Column B: Row Number
+    const rowNumCell = getCell(worksheet, row, COL_OFFSET + 0);
+    rowNumCell.value = entry.rowNumber;
+    applyDataCellStyle(rowNumCell, { numFmt: '0' });
+
+    // Column C: Module Index
+    const moduleCell = getCell(worksheet, row, COL_OFFSET + 1);
+    moduleCell.value = entry.moduleIndex;
+    applyDataCellStyle(moduleCell);
+
+    // Column D: Subject Name
+    const subjectCell = getCell(worksheet, row, COL_OFFSET + 2);
+    subjectCell.value = entry.subjectName;
+    applyDataCellStyle(subjectCell, { horizontal: 'left' });
+
+    // Column E: Group Name
+    const groupCell = getCell(worksheet, row, COL_OFFSET + 3);
+    groupCell.value = entry.groupName;
+    applyDataCellStyle(groupCell);
+
+    // Daily hours columns start at column F (index 5 = COL_OFFSET + 4)
     entry.dailyHours.forEach((hours, dayIndex) => {
-      const col = 4 + dayIndex;
-      setCell(form1Sheet, row, col, hours, form1Templates);
+      const col = COL_OFFSET + 4 + dayIndex;
+      const cell = getCell(worksheet, row, col);
+      cell.value = hours;
+      applyDataCellStyle(cell, { numFmt: '0.0' });
     });
 
-    const monthTotalCol = 4 + entry.dailyHours.length;
-    setCell(form1Sheet, row, monthTotalCol, entry.monthTotal, form1Templates);
-    setCell(
-      form1Sheet,
-      row,
-      monthTotalCol + 1,
-      entry.plannedHours,
-      form1Templates
-    );
-    setCell(
-      form1Sheet,
-      row,
-      monthTotalCol + 2,
-      entry.actualHours,
-      form1Templates
-    );
-    setCell(
-      form1Sheet,
-      row,
-      monthTotalCol + 3,
-      entry.cumulativeHours,
-      form1Templates
-    );
-    setCell(
-      form1Sheet,
-      row,
-      monthTotalCol + 4,
-      entry.remainingHours,
-      form1Templates
-    );
+    // Summary columns
+    const monthTotalCol = COL_OFFSET + 4 + entry.dailyHours.length;
+
+    // Month Total
+    const totalCell = getCell(worksheet, row, monthTotalCol);
+    totalCell.value = entry.monthTotal;
+    applyTotalCellStyle(totalCell, false);
+
+    // Planned Hours
+    const plannedCell = getCell(worksheet, row, monthTotalCol + 1);
+    plannedCell.value = entry.plannedHours;
+    applyDataCellStyle(plannedCell, { numFmt: '0.0' });
+
+    // Actual Hours
+    const actualCell = getCell(worksheet, row, monthTotalCol + 2);
+    actualCell.value = entry.actualHours;
+    applyDataCellStyle(actualCell, { numFmt: '0.0' });
+
+    // Cumulative Hours
+    const cumulativeCell = getCell(worksheet, row, monthTotalCol + 3);
+    cumulativeCell.value = entry.cumulativeHours;
+    applyDataCellStyle(cumulativeCell, { numFmt: '0.0' });
+
+    // Remaining Hours (last column - medium right border)
+    const remainingCell = getCell(worksheet, row, monthTotalCol + 4);
+    remainingCell.value = entry.remainingHours;
+    applyDataCellStyle(remainingCell, { numFmt: '0.0' });
+    remainingCell.border = {
+      ...remainingCell.border,
+      right: { style: 'medium', color: { argb: 'FF000000' } },
+    };
   });
 
-  const form2DataRow = detectDataStartRow(form2Sheet, 1);
-  const form2ColRange = getColumnRange(form2Sheet);
+  // Styles already applied individually to each cell
+}
+
+// ============================================================================
+// Form 2 Population
+// ============================================================================
+
+async function populateForm2(
+  worksheet: ExcelJS.Worksheet,
+  payload: TeacherWorkloadExportPayload
+): Promise<void> {
+  // Form 2 has: Rows 3-5 = multi-row header, Row 6 = column numbers (1,2,3...), Row 7 = data
+  // We need to find row 6 which contains the column numbers
+  // Looking for a row that has sequential numbers like "1", "2", "3"
+  let form2HeaderRow = 6; // Default to row 6 (1-based)
+
+  // Try to find the row with column numbers
+  for (let r = 1; r <= 10; r++) {
+    const rowObj = worksheet.getRow(r);
+    let hasSequentialNumbers = false;
+    let foundOne = false;
+    let foundTwo = false;
+
+    rowObj.eachCell((cell) => {
+      const val = cell.value;
+      if (val === 1 || val === '1') foundOne = true;
+      if (val === 2 || val === '2') foundTwo = true;
+    });
+
+    if (foundOne && foundTwo) {
+      form2HeaderRow = r;
+      hasSequentialNumbers = true;
+      break;
+    }
+  }
+
+  const form2DataRow = form2HeaderRow + 1; // Data starts right after the column numbers row (next row)
+  const form2ColRange = getColumnRange(worksheet);
+
   const form2Templates = collectColumnTemplates(
-    form2Sheet,
-    form2DataRow - 1,
+    worksheet,
+    form2HeaderRow, // Collect templates from the column numbers row itself
     form2ColRange.start,
     form2ColRange.end
   );
 
-  const form2Ref = form2Sheet["!ref"];
-  const form2Range = form2Ref ? XLSX.utils.decode_range(form2Ref) : null;
-  const form2ClearEnd = form2Range
-    ? Math.max(form2Range.e.r, form2DataRow + payload.summaryEntries.length - 1)
-    : form2DataRow + payload.summaryEntries.length - 1;
+  // Only clear rows that will have data (don't create unnecessary empty rows)
+  const clearEnd = form2DataRow + Math.max(payload.summaryEntries.length, 1);
 
-  for (let r = form2DataRow; r <= form2ClearEnd; r++) {
+  for (let r = form2DataRow; r < clearEnd; r++) {
     for (let c = form2ColRange.start; c <= form2ColRange.end; c++) {
-      setCell(form2Sheet, r, c, null, form2Templates);
+      setCell(worksheet, r, c, null, form2Templates);
     }
   }
 
+  // Column offset: Template has data in column B (index 1)
+  const COL_OFFSET = 1;
+
+  // Header styles are already applied during template generation
+  // No need to reapply them here
+
+  // Populate data rows
   payload.summaryEntries.forEach((entry, index) => {
     const row = form2DataRow + index;
-    setCell(form2Sheet, row, 0, index + 1, form2Templates);
-    setCell(form2Sheet, row, 1, entry.groupName, form2Templates);
-    setCell(form2Sheet, row, 2, entry.subjectName, form2Templates);
-    setCell(form2Sheet, row, 3, entry.plannedHours, form2Templates);
-    setCell(form2Sheet, row, 4, entry.actualHours, form2Templates);
-    setCell(form2Sheet, row, 5, entry.facultativePlanned || 0, form2Templates);
-    setCell(form2Sheet, row, 6, entry.facultativeActual || 0, form2Templates);
-    setCell(
-      form2Sheet,
-      row,
-      7,
-      entry.consultationsPlanned || 0,
-      form2Templates
-    );
-    setCell(form2Sheet, row, 8, entry.consultationsActual || 0, form2Templates);
-    setCell(form2Sheet, row, 9, entry.examsPlanned || 0, form2Templates);
-    setCell(form2Sheet, row, 10, entry.examsActual || 0, form2Templates);
-    setCell(form2Sheet, row, 11, entry.totalHours, form2Templates);
+
+    // Combine moduleIndex and subjectName for display (e.g., "ООД 10 Всемирная история")
+    const combinedSubjectName = entry.moduleIndex
+      ? `${entry.moduleIndex} ${entry.subjectName}`
+      : entry.subjectName;
+
+    // Column B: Group Name
+    const groupCell = getCell(worksheet, row, COL_OFFSET + 0);
+    groupCell.value = entry.groupName;
+    applyDataCellStyle(groupCell);
+
+    // Column C: Subject Name (with Module Index)
+    const subjectCell = getCell(worksheet, row, COL_OFFSET + 1);
+    subjectCell.value = combinedSubjectName;
+    applyDataCellStyle(subjectCell, { horizontal: 'left' });
+
+    // Column D: Planned Hours
+    const plannedCell = getCell(worksheet, row, COL_OFFSET + 2);
+    plannedCell.value = entry.plannedHours;
+    applyDataCellStyle(plannedCell, { numFmt: '0.0' });
+
+    // Column E: Actual Hours
+    const actualCell = getCell(worksheet, row, COL_OFFSET + 3);
+    actualCell.value = entry.actualHours;
+    applyDataCellStyle(actualCell, { numFmt: '0.0' });
+
+    // Column F: Facultative Planned
+    const facPlanCell = getCell(worksheet, row, COL_OFFSET + 4);
+    facPlanCell.value = entry.facultativePlanned || null;
+    applyDataCellStyle(facPlanCell, { numFmt: '0.0' });
+
+    // Column G: Facultative Actual
+    const facActualCell = getCell(worksheet, row, COL_OFFSET + 5);
+    facActualCell.value = entry.facultativeActual || null;
+    applyDataCellStyle(facActualCell, { numFmt: '0.0' });
+
+    // Column H: Consultations Planned
+    const consPlanCell = getCell(worksheet, row, COL_OFFSET + 6);
+    consPlanCell.value = entry.consultationsPlanned || null;
+    applyDataCellStyle(consPlanCell, { numFmt: '0.0' });
+
+    // Column I: Consultations Actual
+    const consActualCell = getCell(worksheet, row, COL_OFFSET + 7);
+    consActualCell.value = entry.consultationsActual || null;
+    applyDataCellStyle(consActualCell, { numFmt: '0.0' });
+
+    // Column J: Exams Planned
+    const examsPlanCell = getCell(worksheet, row, COL_OFFSET + 8);
+    examsPlanCell.value = entry.examsPlanned || null;
+    applyDataCellStyle(examsPlanCell, { numFmt: '0.0' });
+
+    // Column K: Exams Actual
+    const examsActualCell = getCell(worksheet, row, COL_OFFSET + 9);
+    examsActualCell.value = entry.examsActual || null;
+    applyDataCellStyle(examsActualCell, { numFmt: '0.0' });
+
+    // Column L: Total Hours (last column)
+    const totalCell = getCell(worksheet, row, COL_OFFSET + 10);
+    totalCell.value = entry.totalHours;
+    applyTotalCellStyle(totalCell, true);
   });
 
-  const form3DataRow = detectDataStartRow(form3Sheet, 2);
-  const form3ColRange = getColumnRange(form3Sheet);
+  // Styles already applied individually to each cell
+}
+
+// ============================================================================
+// Form 3 Population
+// ============================================================================
+
+async function populateForm3(
+  worksheet: ExcelJS.Worksheet,
+  payload: TeacherWorkloadExportPayload
+): Promise<void> {
+  // Form 3: Header at row 15 (detected), data starts at row 16
+  // Find header by looking for "сентябрь" or "Итого" or "Топтар"
+  const form3HeaderRow = detectDataStartRow(worksheet, ['қыркүйек', 'сентябрь', 'Итого', 'Топтар'], 30);
+  const form3DataRow = form3HeaderRow + 1; // Data starts right after header (row 16)
+
+  const form3ColRange = getColumnRange(worksheet);
+
   const form3Templates = collectColumnTemplates(
-    form3Sheet,
-    form3DataRow - 1,
+    worksheet,
+    form3HeaderRow, // Collect templates from header row itself
     form3ColRange.start,
     form3ColRange.end
   );
 
-  const form3Ref = form3Sheet["!ref"];
-  const form3Range = form3Ref ? XLSX.utils.decode_range(form3Ref) : null;
-  const form3ClearEnd = form3Range
-    ? Math.max(
-        form3Range.e.r,
-        form3DataRow + payload.monthlyDistribution.length - 1
-      )
-    : form3DataRow + payload.monthlyDistribution.length - 1;
+  // Only clear rows that will have data (don't create unnecessary empty rows)
+  const clearEnd = form3DataRow + Math.max(payload.monthlyDistribution.length, 1);
 
-  for (let r = form3DataRow; r <= form3ClearEnd; r++) {
+  for (let r = form3DataRow; r < clearEnd; r++) {
     for (let c = form3ColRange.start; c <= form3ColRange.end; c++) {
-      setCell(form3Sheet, r, c, null, form3Templates);
+      setCell(worksheet, r, c, null, form3Templates);
     }
   }
 
+  // Column offset: Template has data in column B (index 1)
+  const COL_OFFSET = 1;
+
+  // Header styles are already applied during template generation
+  // No need to reapply them here
+
+  // Populate data rows
   payload.monthlyDistribution.forEach((entry, index) => {
     const row = form3DataRow + index;
-    setCell(form3Sheet, row, 0, index + 1, form3Templates);
-    setCell(form3Sheet, row, 1, entry.groupName, form3Templates);
-    setCell(form3Sheet, row, 2, entry.september, form3Templates);
-    setCell(form3Sheet, row, 3, entry.october, form3Templates);
-    setCell(form3Sheet, row, 4, entry.november, form3Templates);
-    setCell(form3Sheet, row, 5, entry.december, form3Templates);
-    setCell(form3Sheet, row, 6, entry.january, form3Templates);
-    setCell(form3Sheet, row, 7, entry.february, form3Templates);
-    setCell(form3Sheet, row, 8, entry.march, form3Templates);
-    setCell(form3Sheet, row, 9, entry.april, form3Templates);
-    setCell(form3Sheet, row, 10, entry.may, form3Templates);
-    setCell(form3Sheet, row, 11, entry.june, form3Templates);
-    setCell(form3Sheet, row, 12, entry.total, form3Templates);
+
+    // Column B: Group Name
+    const groupCell = getCell(worksheet, row, COL_OFFSET + 0);
+    groupCell.value = entry.groupName;
+    applyDataCellStyle(groupCell);
+
+    // Columns C-L: September through June
+    const monthValues = [
+      entry.september,
+      entry.october,
+      entry.november,
+      entry.december,
+      entry.january,
+      entry.february,
+      entry.march,
+      entry.april,
+      entry.may,
+      entry.june,
+    ];
+
+    monthValues.forEach((value, idx) => {
+      const cell = getCell(worksheet, row, COL_OFFSET + 1 + idx);
+      cell.value = value;
+      applyDataCellStyle(cell, { numFmt: '0.0' });
+    });
+
+    // Column M: Total (last column)
+    const totalCell = getCell(worksheet, row, COL_OFFSET + 11);
+    totalCell.value = entry.total;
+    applyTotalCellStyle(totalCell, true);
   });
 
-  const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-  return new Uint8Array(buffer);
+  // Styles already applied individually to each cell
 }

@@ -6,11 +6,10 @@
       >
         <div class="absolute inset-0 opacity-10"></div>
 
-        <div class="text-white max-w-md w-full">
-          <h1 class="text-3xl font-bold mb-4">Лучшие выбирают лучших!</h1>
-          <p class="text-opacity-90">
-            Пусть рутина уйдёт, а вдохновение останется — мы автоматизируем
-            образовательный процесс.
+        <div class="text-white max-w-md w-full text-center">
+          <h1 class="text-5xl font-bold mb-4">Добро пожаловать на Марс!</h1>
+          <p class="text-lg text-white text-opacity-95">
+            Передовая образовательная экосистема будущего.
           </p>
         </div>
       </div>
@@ -118,10 +117,9 @@
           <div class="flex justify-center mb-6">
             <Logo class="h-14 w-auto" />
           </div>
-          <h2 class="text-2xl font-bold mb-2">С возвращением!</h2>
+          <h2 class="text-2xl font-bold mb-2">Добро пожаловать на Марс!</h2>
           <p class="text-muted-foreground">
-            Войдите в свою учетную запись, чтобы продолжить образовательное
-            путешествие.
+            Передовая образовательная экосистема будущего.
           </p>
 
           <form @submit.prevent="handleLogin" class="space-y-6 mt-8">

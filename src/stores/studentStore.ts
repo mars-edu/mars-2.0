@@ -235,4 +235,6 @@ export const useStudentStore = defineStore("student", () => {
     getCourseByStudentId,
     getStudentFullName,
   };
+}, {
+  persist: true,
 });
