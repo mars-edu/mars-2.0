@@ -14,7 +14,7 @@
           :on-save="save"
         />
         <div class="p-4 space-y-4">
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-3 gap-4">
             <Select
               label="Язык обучения"
               placeholder="Выберите язык"
@@ -22,6 +22,14 @@
               :options="languageOptions"
               name="student-language"
               id="student-language"
+            />
+            <Select
+              label="Специальность"
+              placeholder="Выберите специальность"
+              v-model="filters.specialty"
+              :options="specialtyOptions"
+              name="student-specialty"
+              id="student-specialty"
             />
             <Select
               label="Пол"
@@ -202,6 +210,7 @@ const localSelectedStudents = reactive(new Set<string>());
 const filters = reactive({
   searchTerm: "",
   language: "all",
+  specialty: "all",
   gender: "",
 });
 
@@ -323,7 +332,11 @@ const debugText = computed(() => {
     (s) => filters.language === "all" || s.language === filters.language
   );
 
-  const afterGender = afterLanguage.filter(
+  const afterSpecialtyFilter = afterLanguage.filter(
+    (s) => filters.specialty === "all" || s.specialty === filters.specialty
+  );
+
+  const afterGender = afterSpecialtyFilter.filter(
     (s) => !filters.gender || s.gender === filters.gender
   );
 
@@ -351,6 +364,9 @@ const debugText = computed(() => {
   ).sort((a, b) => a - b);
   const specialtyIdsAll = Array.from(
     new Set(withCourse.map((s) => s.specialty))
+  );
+  const specialtyCodesAll = specialtyIdsAll.map(
+    (id) => specialtyStore.getSpecialtyById(id)?.code || id
   );
   const specialtyNamesAll = specialtyIdsAll.map(
     (id) => specialtyStore.getSpecialtyById(id)?.codeName || id
@@ -402,7 +418,7 @@ const debugText = computed(() => {
     `SelectedClass9.entries: ${JSON.stringify(class9Entries)}`,
     `AllowedSpecialtyIds: ${(allowedSpecialtyIds.value || []).join(", ")}`,
     `AllowedSpecialtyCodes: ${(allowedSpecialtyCodes.value || []).join(", ")}`,
-    `Filters: { language: ${filters.language}, gender: ${filters.gender}, searchTerm: ${filters.searchTerm} }`,
+    `Filters: { language: ${filters.language}, specialty: ${filters.specialty}, gender: ${filters.gender}, searchTerm: ${filters.searchTerm} }`,
     `AvailableCourses: ${Array.from(availableCourses.value).join(", ")}`,
     `Distributions: courses(all)=${JSON.stringify(
       coursesSetAll
@@ -412,7 +428,7 @@ const debugText = computed(() => {
     )}, specialtyNames=${JSON.stringify(
       specialtyNamesAll
     )}, bases=${JSON.stringify(baseSetAll)}`,
-    `Counts: total=${withCourse.length}, afterCourse=${afterCourse.length}, afterSpecialty=${afterSpecialty.length}, afterLanguage=${afterLanguage.length}, afterGender=${afterGender.length}, afterSearch=${afterSearch.length}`,
+    `Counts: total=${withCourse.length}, afterCourse=${afterCourse.length}, afterSpecialty=${afterSpecialty.length}, afterLanguage=${afterLanguage.length}, afterSpecialtyFilter=${afterSpecialtyFilter.length}, afterGender=${afterGender.length}, afterSearch=${afterSearch.length}`,
     `Sample(first 5): ${JSON.stringify(sample)}`,
     `CourseTrace(first 3): ${JSON.stringify(courseTrace)}`,
   ];
@@ -444,6 +460,9 @@ const filteredStudents = computed(() => {
     .filter(
       (s) => filters.language === "all" || s.language === filters.language
     )
+    .filter(
+      (s) => filters.specialty === "all" || s.specialty === filters.specialty
+    )
     .filter((s) => !filters.gender || s.gender === filters.gender)
     .filter((s) =>
       term
@@ -460,6 +479,10 @@ const isAllStudentsSelected = computed(
 
 const languageOptions = computed(() =>
   withAllOption(storeLanguageOptions.value, "Все", "all")
+);
+
+const specialtyOptions = computed(() =>
+  withAllOption(storeSpecialtyOptions.value, "Все", "all")
 );
 
 const genderOptions = computed(() => getGenderOptions());
@@ -526,6 +549,7 @@ const resetFilters = () => {
   Object.assign(filters, {
     searchTerm: "",
     language: "all",
+    specialty: "all",
     gender: "",
   });
 };
