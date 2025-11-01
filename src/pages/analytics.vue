@@ -1284,12 +1284,12 @@ const toggleSelectAllCourses = () => {
   }
 };
 
-const toggleSpecialtySelection = (specialtyCode: string) => {
-  const index = selectedSpecialties.value.indexOf(specialtyCode);
+const toggleSpecialtySelection = (specialtyId: string) => {
+  const index = selectedSpecialties.value.indexOf(specialtyId);
   if (index > -1) {
     selectedSpecialties.value.splice(index, 1);
   } else {
-    selectedSpecialties.value.push(specialtyCode);
+    selectedSpecialties.value.push(specialtyId);
   }
 };
 
