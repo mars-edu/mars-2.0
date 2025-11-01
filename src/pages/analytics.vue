@@ -93,9 +93,9 @@
                     class="flex items-center justify-between gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
                     :class="{
                       'ring-2 ring-primary bg-primary/10':
-                        selectedSpecialties.includes(specialty.code),
+                        selectedSpecialties.includes(specialty.id),
                     }"
-                    @click="toggleSpecialtySelection(specialty.code)"
+                    @click="toggleSpecialtySelection(specialty.id)"
                   >
                     <span class="font-medium">
                       {{ specialty.codeName || specialty.name }}
