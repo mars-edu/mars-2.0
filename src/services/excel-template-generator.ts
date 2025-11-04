@@ -86,14 +86,14 @@ function createForm1Sheet(workbook: ExcelJS.Workbook): void {
     sheet.getColumn(col).width = 5.66371681415929;
   }
 
-  // Summary columns
+  // Summary columns (6 columns after month total)
   sheet.getColumn(37).width = 12.8849557522124; // AK - Итого за месяц
-  sheet.getColumn(38).width = 30; // AL
-  sheet.getColumn(39).width = 54.3362831858407; // AM
-  sheet.getColumn(40).width = 19; // AN
-  sheet.getColumn(41).width = 9.88495575221239; // AO
-  sheet.getColumn(42).width = 11.6637168141593; // AP
-  sheet.getColumn(43).width = 11.8849557522124; // AQ
+  sheet.getColumn(38).width = 30; // AL - Group (duplicate)
+  sheet.getColumn(39).width = 54.3362831858407; // AM - Subject (duplicate)
+  sheet.getColumn(40).width = 19; // AN - Planned hours
+  sheet.getColumn(41).width = 9.88495575221239; // AO - Actual monthly
+  sheet.getColumn(42).width = 11.6637168141593; // AP - Cumulative
+  sheet.getColumn(43).width = 11.8849557522124; // AQ - Remaining
 
   // Set row heights
   sheet.getRow(2).height = 24.9;

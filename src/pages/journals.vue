@@ -232,7 +232,7 @@
                     </div>
                     <div
                       v-if="
-                        journalsByCourse[parseInt(course.number)].length === 0
+                        filteredJournalsByCourse[parseInt(course.number)].length === 0
                       "
                       class="rounded-lg p-4 text-gray-500 shadow-sm min-h-[90px] flex items-center justify-center bg-gray-50 border border-gray-100"
                     >
@@ -261,7 +261,7 @@
                       />
                     </div>
                     <div
-                      v-if="mixedGroupJournals.length === 0"
+                      v-if="filteredMixedGroupJournals.length === 0"
                       class="rounded-lg p-4 text-gray-500 shadow-sm min-h-[90px] flex items-center justify-center bg-gray-50 border border-gray-100"
                     >
                       <p class="text-sm">Нет доступных журналов</p>
@@ -278,7 +278,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { f7Page, f7Input, f7, f7Icon, f7Button } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -365,20 +365,99 @@ const selectedTeacherId = computed({
 const teacherOptions = computed(() => teacherStore.teacherSelectOptions);
 
 onMounted(async () => {
+  console.log("\n\n");
+  console.log("╔════════════════════════════════════════════════════════════╗");
+  console.log("║              🔍 JOURNALS PAGE MOUNTED                      ║");
+  console.log("╚════════════════════════════════════════════════════════════╝");
+
   const activeYear = academicYearStore.getActiveAcademicYear;
+  console.log("\n📅 Active Year:", activeYear);
   if (activeYear) {
     selectedItemsStore.setSelectedAcademicYear(activeYear.id);
+    console.log("   ✅ Set selected year to:", activeYear.name);
   }
+
   const activeSemesters =
     academicYearSemesterStore.getActiveAcademicYearSemesters;
+  console.log("\n📚 Active Semesters:", activeSemesters);
+
   if (activeSemesters.length > 0) {
     selectedSemesterId.value = activeSemesters[0].id;
+    console.log(`   ✅ Auto-selected semester "${activeSemesters[0].semesterNumber}" with ID: ${activeSemesters[0].id}`);
+  } else {
+    console.warn("   ⚠️  No active semesters found!");
   }
 
   if (userStore.isTeacher && userStore.currentUser?.id) {
     calendarStore.setSelectedTeacher(userStore.currentUser.id);
+    console.log("\n👨‍🏫 Teacher mode - filtered by:", userStore.currentUser.id);
   }
+
+  console.log("\n📊 Total journals by course:", Object.keys(journalsByCourse.value).length);
+
+  // Debug: Show all calendar events and their semester values
+  console.log("\n");
+  console.log("╔════════════════════════════════════════════════════════════╗");
+  console.log("║           📋 ALL CALENDAR EVENTS & SEMESTERS               ║");
+  console.log("╚════════════════════════════════════════════════════════════╝");
+
+  const allEvents = calendarStore.filteredEvents || [];
+  console.log(`\nTotal events: ${allEvents.length}`);
+
+  allEvents.forEach((event: any, idx: number) => {
+    const actualEvent = event._custom?.value || event;
+    const semesterValue = actualEvent.semester;
+    const disciplineId = actualEvent.class9Id;
+    const hasWeeklySchedules = actualEvent.weeklySchedules && actualEvent.weeklySchedules.length > 0;
+
+    console.log(`\n${idx + 1}. Event ID: ${actualEvent.id}`);
+    console.log(`   📌 Semester: "${semesterValue || "(empty)"}" ${!semesterValue ? '⚠️' : '✅'}`);
+    console.log(`   📅 Start Date: ${actualEvent.startDate}`);
+    console.log(`   📅 End Date: ${actualEvent.endDate}`);
+    console.log(`   📆 Weekly Schedules: ${hasWeeklySchedules ? actualEvent.weeklySchedules.length + ' schedule(s)' : 'None'}`);
+    if (hasWeeklySchedules) {
+      const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const scheduledDays = actualEvent.weeklySchedules.map((ws: any) => weekDays[ws.weekId] || ws.weekId).join(', ');
+      console.log(`      Days: ${scheduledDays}`);
+    }
+    console.log(`   👥 Students: ${actualEvent.participants?.length || 0}`);
+    console.log(`   📖 Discipline ID: ${disciplineId || 'N/A'}`);
+  });
+
+  console.log("\n" + "═".repeat(60));
+  console.log("\n\n");
 });
+
+// Watch for semester changes
+watch(selectedSemesterId, (newVal, oldVal) => {
+  console.log("\n");
+  console.log("╔════════════════════════════════════════════════════════════╗");
+  console.log("║              🔄 SEMESTER FILTER CHANGED                    ║");
+  console.log("╚════════════════════════════════════════════════════════════╝");
+  console.log(`\n   Old: "${oldVal || "(none)"}"`);
+  console.log(`   New: "${newVal || "(none)"}"`);
+  console.log("\n" + "─".repeat(60));
+});
+
+// Watch for academicYearSemester data to arrive and auto-select
+watch(
+  () => academicYearSemesterStore.academicYearSemesters,
+  (semesters) => {
+    console.log("\n🔔 AcademicYearSemesters changed, count:", semesters.length);
+
+    // Only auto-select if no semester is currently selected and we have data
+    if (!selectedSemesterId.value && semesters.length > 0) {
+      const activeSemesters = academicYearSemesterStore.getActiveAcademicYearSemesters;
+      console.log("   Active semesters available:", activeSemesters.length);
+
+      if (activeSemesters.length > 0) {
+        selectedSemesterId.value = activeSemesters[0].id;
+        console.log(`   ✅ Auto-selected semester: ${activeSemesters[0].semesterNumber} (ID: ${activeSemesters[0].id})`);
+      }
+    }
+  },
+  { deep: true }
+);
 
 // Filtering journals by selected year/semester/teacher
 const filteredJournalsByCourse = computed(() => {
@@ -391,22 +470,99 @@ const filteredJournalsByCourse = computed(() => {
   const semId = selectedSemesterId.value;
   const teacherId = calendarStore.selectedTeacherId;
 
+  // DEBUG: Show filter state
+  console.log("\n");
+  console.log("╔════════════════════════════════════════════════════════════╗");
+  console.log("║              🔍 FILTERING JOURNALS                         ║");
+  console.log("╚════════════════════════════════════════════════════════════╝");
+  console.log(`\n🎯 Filter Criteria:`);
+  console.log(`   Semester ID: "${semId || "(none)"}"`);
+  console.log(`   Year ID: "${yearId || "(none)"}"`);
+  console.log(`   Teacher ID: "${teacherId || "(none)"}"`);
+
   Object.keys(journalsByCourse.value).forEach((courseNumberStr) => {
     const courseNumber = parseInt(courseNumberStr);
+    console.log(`\n${"─".repeat(60)}`);
+    console.log(`📚 COURSE ${courseNumber}`);
+    console.log("─".repeat(60));
+
     result[courseNumber] = journalsByCourse.value[courseNumber].filter(
       (journal) => {
         const event = calendarStore.getEventById(journal.id);
-        if (!event) return false;
-        if (teacherId && event.teacherId !== teacherId) return false;
+        const disciplineTitle = journalStore.getDisciplineTitle(journal);
+
+        console.log(`\n   📖 ${disciplineTitle}`);
+        console.log(`      ID: ${journal.id}`);
+        console.log(`      🔀 Is Mixed Group: ${journal.isMixedGroup ? 'Yes' : 'No'}`);
+
+        // Skip mixed group journals - they should only appear in the mixed groups column
+        if (journal.isMixedGroup) {
+          console.log(`      ⏭️  SKIPPED: Mixed group journal (will show in mixed groups column)`);
+          return false;
+        }
+
+        if (!event) {
+          console.log(`      ❌ FILTERED: Event not found`);
+          return false;
+        }
+
+        console.log(`      📌 Event Semester: "${event.semester || "(empty)"}"`);
+        console.log(`      📅 Date Range: ${event.startDate} to ${event.endDate}`);
+        console.log(`      📆 Weekly Schedules: ${event.weeklySchedules?.length || 0}`);
+        console.log(`      👨‍🏫 Event Teacher: ${event.teacherId || "(none)"}`);
+
+        if (teacherId && event.teacherId !== teacherId) {
+          console.log(`      ❌ FILTERED: Teacher mismatch`);
+          return false;
+        }
+
         if (yearId && event.startDate) {
           // If events carry academic year id separately, prefer it; otherwise fallback to active year
           // Here we simply allow all; refine if academicYearId exists in event shape later
         }
-        if (semId && event.semester !== semId) return false;
+
+        // Strict filtering: hide events with empty semesters when any semester is selected
+        if (semId && (!event.semester || event.semester !== semId)) {
+          if (!event.semester) {
+            console.log(`      ❌ FILTERED: No semester assigned (empty) - strict filtering applied`);
+          } else {
+            console.log(`      ❌ FILTERED: Semester mismatch (has "${event.semester}", need "${semId}")`);
+          }
+          return false;
+        }
+
+        console.log(`      ✅ PASSED: Will be displayed`);
         return true;
       }
     );
+
+    console.log(`\n   📊 Course ${courseNumber} Result: ${result[courseNumber].length} journal(s)`);
   });
+
+  console.log("\n" + "═".repeat(60));
+
+  // Summary
+  const totalDisplayed = Object.values(result).reduce(
+    (sum, journals) => sum + journals.length,
+    0
+  );
+
+  console.log("\n📊 FINAL SUMMARY:");
+  console.log(`   Total Journals Displayed: ${totalDisplayed}`);
+
+  const courseSummary = Object.entries(result)
+    .filter(([_, journals]) => journals.length > 0)
+    .map(([course, journals]) => `      • Course ${course}: ${journals.length} journal(s)`)
+    .join("\n");
+
+  if (courseSummary) {
+    console.log(courseSummary);
+  } else {
+    console.log("      • No journals passed filters");
+  }
+
+  console.log("\n" + "═".repeat(60));
+  console.log("\n");
 
   return result;
 });
@@ -415,16 +571,58 @@ const filteredMixedGroupJournals = computed(() => {
   const yearId = selectedItemsStore.selectedAcademicYearId;
   const semId = selectedSemesterId.value;
   const teacherId = calendarStore.selectedTeacherId;
-  return mixedGroupJournals.value.filter((journal) => {
+
+  console.log("\n");
+  console.log("╔════════════════════════════════════════════════════════════╗");
+  console.log("║           🔀 FILTERING MIXED GROUP JOURNALS                ║");
+  console.log("╚════════════════════════════════════════════════════════════╝");
+
+  const filtered = mixedGroupJournals.value.filter((journal) => {
     const event = calendarStore.getEventById(journal.id);
-    if (!event) return false;
-    if (teacherId && event.teacherId !== teacherId) return false;
+    const disciplineTitle = journalStore.getDisciplineTitle(journal);
+
+    console.log(`\n   📖 ${disciplineTitle}`);
+    console.log(`      ID: ${journal.id}`);
+    console.log(`      🔀 Is Mixed Group: ${journal.isMixedGroup ? 'Yes ✅' : 'No'}`);
+
+    if (!event) {
+      console.log(`      ❌ FILTERED: Event not found`);
+      return false;
+    }
+
+    console.log(`      📌 Event Semester: "${event.semester || "(empty)"}"`);
+    console.log(`      📅 Date Range: ${event.startDate} to ${event.endDate}`);
+    console.log(`      📆 Weekly Schedules: ${event.weeklySchedules?.length || 0}`);
+    console.log(`      👨‍🏫 Event Teacher: ${event.teacherId || "(none)"}`);
+
+    if (teacherId && event.teacherId !== teacherId) {
+      console.log(`      ❌ FILTERED: Teacher mismatch`);
+      return false;
+    }
+
     if (yearId && event.startDate) {
       // Same note as above
     }
-    if (semId && event.semester !== semId) return false;
+
+    // Strict filtering: hide events with empty semesters when any semester is selected
+    if (semId && (!event.semester || event.semester !== semId)) {
+      if (!event.semester) {
+        console.log(`      ❌ FILTERED: No semester assigned (empty) - strict filtering applied`);
+      } else {
+        console.log(`      ❌ FILTERED: Semester mismatch (has "${event.semester}", need "${semId}")`);
+      }
+      return false;
+    }
+
+    console.log(`      ✅ PASSED: Will be displayed`);
     return true;
   });
+
+  console.log(`\n📊 Mixed Groups Result: ${filtered.length} journal(s)`);
+  console.log("\n" + "═".repeat(60));
+  console.log("\n");
+
+  return filtered;
 });
 
 const goToJournalDetails = (id: number | string) => {

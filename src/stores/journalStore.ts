@@ -5,6 +5,7 @@ import { useCourseStore } from "./courseStore";
 import { useStudentStore } from "./studentStore";
 import { useSpecialtyStore } from "./specialtyStore";
 import { useClass9Store } from "./class9Store";
+import { useAcademicYearSemesterStore } from "./academicYearSemesterStore";
 import { WEEK_DAYS, DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import dayjs from "dayjs";
 
@@ -29,8 +30,12 @@ export const useJournalStore = defineStore(
     const studentStore = useStudentStore();
     const specialtyStore = useSpecialtyStore();
     const class9Store = useClass9Store();
+    const academicYearSemesterStore = useAcademicYearSemesterStore();
 
-    function generateJournalTitle(courseNumber: number, studentIds: string[]) {
+    function generateJournalTitle(
+      courseNumbers: number[],
+      studentIds: string[]
+    ) {
       const codeNames = new Set<string>();
 
       studentIds.forEach((id) => {
@@ -40,14 +45,31 @@ export const useJournalStore = defineStore(
         const specialty = specialtyStore.getSpecialtyById(student.specialty);
         if (specialty?.codeName) {
           codeNames.add(specialty.codeName.trim());
-        } else {
         }
       });
 
       const sortedCodeNames = Array.from(codeNames).sort();
       const mergedCodeNames = sortedCodeNames.join("");
 
-      return `${courseNumber} ${mergedCodeNames}`.trim();
+      // Generate course display
+      const uniqueCourses = Array.from(new Set(courseNumbers)).sort(
+        (a, b) => a - b
+      );
+
+      let courseDisplay: string;
+      if (uniqueCourses.length > 1) {
+        // Check if consecutive for range format
+        const isConsecutive = uniqueCourses.every(
+          (num, idx) => idx === 0 || num === uniqueCourses[idx - 1] + 1
+        );
+        courseDisplay = isConsecutive
+          ? `${uniqueCourses[0]}-${uniqueCourses[uniqueCourses.length - 1]}`
+          : uniqueCourses.join(", ");
+      } else {
+        courseDisplay = uniqueCourses[0]?.toString() || "";
+      }
+
+      return `${courseDisplay} ${mergedCodeNames}`.trim();
     }
 
     function generateGroupFromStudents(studentIds: string[]) {
@@ -69,15 +91,15 @@ export const useJournalStore = defineStore(
 
     function createJournalFromEvent(
       actualEvent: any,
-      courseNumber: number,
+      courseNumbers: number[],
       students: string[],
       isMixed = false
     ): Journal {
       return {
         id: `${actualEvent.id}`,
-        courseNumber,
+        courseNumber: courseNumbers[0] || 1, // Primary course for sorting/filtering
         disciplineId: actualEvent.class9Id,
-        group: generateJournalTitle(courseNumber, students),
+        group: generateJournalTitle(courseNumbers, students),
         students,
         isMixedGroup: isMixed,
       };
@@ -122,7 +144,7 @@ export const useJournalStore = defineStore(
 
             const journal = createJournalFromEvent(
               actualEvent,
-              courseNumber,
+              [courseNumber],
               studentsInCourse,
               isMixed
             );
@@ -149,12 +171,15 @@ export const useJournalStore = defineStore(
             .map((id: string) => studentStore.getCourseByStudentId(id) ?? 1)
             .sort((a: number, b: number) => a - b);
 
-          const primaryCourse = courseNumbers[0] ?? 1;
+          // Get unique course numbers for mixed group
+          const uniqueCourses = Array.from(new Set(courseNumbers)).sort(
+            (a, b) => a - b
+          );
 
           mixedJournals.push(
             createJournalFromEvent(
               actualEvent,
-              primaryCourse,
+              uniqueCourses,
               actualEvent.participants || [],
               true
             )
@@ -178,13 +203,19 @@ export const useJournalStore = defineStore(
 
     const getJournalById = computed(() => {
       return (id: string) => {
+        // Check mixed group journals FIRST to get all students
+        const mixedJournal = mixedGroupJournals.value.find((j) => j.id === id);
+        if (mixedJournal) return mixedJournal;
+
+        // Then check course-specific journals
         for (const courseNumber in journalsByCourse.value) {
           const journal = journalsByCourse.value[courseNumber].find(
-            (j) => j.id === id || j.id.startsWith(id.split("-")[0])
+            (j) => j.id === id
           );
           if (journal) return journal;
         }
 
+        // Fallback: create from event if not found in computed lists
         const event: any = calendarStore.getEventById(id);
         if (event) {
           const actualEvent = event._custom?.value || event;
@@ -199,7 +230,7 @@ export const useJournalStore = defineStore(
 
           return createJournalFromEvent(
             actualEvent,
-            courseNumber,
+            [courseNumber],
             actualEvent.participants || [],
             false
           );
@@ -212,12 +243,14 @@ export const useJournalStore = defineStore(
     async function addJournal(journalData: Omit<Journal, "id">) {
       loading.value = true;
       try {
+        const activeSemester = academicYearSemesterStore.getActiveAcademicYearSemester;
+
         const eventData = {
           class9Id: journalData.disciplineId,
           startDate: dayjs().format(DATE_STORAGE_FORMAT),
           endDate: dayjs().add(30, "day").format(DATE_STORAGE_FORMAT),
           participants: journalData.students,
-          semester: "",
+          semester: activeSemester?.id || "",
           useCustomPeriod: false,
           weeklySchedules: [],
         };
@@ -275,7 +308,7 @@ export const useJournalStore = defineStore(
       const item = class9Store.getClass9ById(journal.disciplineId as any);
       if (!item)
         return generateJournalTitle(
-          journal.courseNumber,
+          [journal.courseNumber],
           journal.students || []
         );
       const outcome = item.learningOutcome?.trim() || "";
@@ -285,8 +318,24 @@ export const useJournalStore = defineStore(
     }
 
     function getJournalSubtitle(journal: Journal) {
-      return `${journal.courseNumber} курс // ${generateJournalTitle(
-        journal.courseNumber,
+      // Extract course numbers from students
+      const courseNumbers = journal.students.length > 0
+        ? journal.students
+            .map((id) => studentStore.getCourseByStudentId(id) ?? 1)
+            .filter((num): num is number => num !== null)
+        : [journal.courseNumber];
+
+      const uniqueCourses = Array.from(new Set(courseNumbers)).sort(
+        (a, b) => a - b
+      );
+
+      const courseDisplay =
+        uniqueCourses.length > 1
+          ? `${uniqueCourses[0]}-${uniqueCourses[uniqueCourses.length - 1]}`
+          : uniqueCourses[0]?.toString() || journal.courseNumber.toString();
+
+      return `${courseDisplay} курс // ${generateJournalTitle(
+        uniqueCourses,
         journal.students
       )}`;
     }
@@ -311,7 +360,7 @@ export const useJournalStore = defineStore(
       if (!journal.students || journal.students.length === 0) {
         return `Журнал курса ${journal.courseNumber}`;
       }
-      return generateJournalTitle(journal.courseNumber, journal.students || []);
+      return generateJournalTitle([journal.courseNumber], journal.students || []);
     }
 
     function reset() {

@@ -9,14 +9,10 @@ export const useMarksStore = defineStore(
     const loading = ref(false);
     const error = ref<string | null>(null);
 
-    console.log("[marksStore] Store initialized");
-
     // Get marks for a specific journal
     const getJournalMarks = computed(() => {
       return (journalId: string): JournalMarks | null => {
-        console.log("[marksStore] Getting journal marks for:", journalId);
         const result = journalMarks.value[journalId] || null;
-        console.log("[marksStore] Journal marks result:", result);
         return result;
       };
     });
@@ -24,25 +20,13 @@ export const useMarksStore = defineStore(
     // Get marks for a specific student in a journal
     const getStudentMarks = computed(() => {
       return (journalId: string, studentId: string): Mark[] | null => {
-        console.log("[marksStore] Getting student marks for:", {
-          journalId,
-          studentId,
-        });
         const journal = journalMarks.value[journalId];
-        console.log("[marksStore] Found journal:", !!journal);
         if (!journal) {
-          console.log("[marksStore] No journal found for ID:", journalId);
           return null;
         }
 
         const studentMark = journal.studentMarks.find(
           (sm) => sm.studentId === studentId
-        );
-        console.log("[marksStore] Found student mark:", !!studentMark);
-        console.log(
-          "[marksStore] Student marks result:",
-          studentMark?.marks?.length || 0,
-          "marks"
         );
         return studentMark?.marks || null;
       };
@@ -54,18 +38,6 @@ export const useMarksStore = defineStore(
       studentIds: string[],
       markTemplate: Mark[]
     ) => {
-      console.log("[marksStore] Initializing journal marks:", {
-        journalId,
-        studentCount: studentIds.length,
-        markTemplateLength: markTemplate.length,
-      });
-      console.log("[marksStore] Student IDs:", studentIds);
-      console.log("[marksStore] Mark template:", markTemplate);
-      console.log(
-        "[marksStore] Current journalMarks in memory:",
-        Object.keys(journalMarks.value)
-      );
-
       const uniqueStudentIds = Array.from(
         new Set(studentIds.filter((id): id is string => typeof id === "string" && id.length > 0))
       );
@@ -192,10 +164,6 @@ export const useMarksStore = defineStore(
       };
 
       const existingJournal = journalMarks.value[journalId];
-      console.log(
-        "[marksStore] Existing journal found (immediate check):",
-        !!existingJournal
-      );
 
       const nextStudentMarks = uniqueStudentIds.map((studentId) => {
         const existingStudent = existingJournal?.studentMarks.find(
@@ -211,17 +179,8 @@ export const useMarksStore = defineStore(
       };
 
       journalMarks.value[journalId] = newJournalMarks;
-      console.log("[marksStore] Journal marks synchronized:", {
-        journalId,
-        studentCount: nextStudentMarks.length,
-        totalJournals: Object.keys(journalMarks.value).length,
-      });
 
       journalMarks.value = { ...journalMarks.value };
-      console.log(
-        "[marksStore] After sync, journalMarks keys:",
-        Object.keys(journalMarks.value)
-      );
     };
 
     // Update a specific mark for a student
@@ -232,17 +191,8 @@ export const useMarksStore = defineStore(
       valueIndex: number,
       value: string | null
     ) => {
-      console.log("[marksStore] Updating student mark:", {
-        journalId,
-        studentId,
-        markIndex,
-        valueIndex,
-        value,
-      });
-
       const journal = journalMarks.value[journalId];
       if (!journal) {
-        console.log("[marksStore] Journal not found for update:", journalId);
         return false;
       }
 
@@ -250,7 +200,6 @@ export const useMarksStore = defineStore(
         (sm) => sm.studentId === studentId
       );
       if (!studentMark) {
-        console.log("[marksStore] Student not found for update:", studentId);
         return false;
       }
 
@@ -260,25 +209,13 @@ export const useMarksStore = defineStore(
         valueIndex >= 0 &&
         valueIndex < studentMark.marks[markIndex].values.length
       ) {
-        const oldValue = studentMark.marks[markIndex].values[valueIndex];
         studentMark.marks[markIndex].values[valueIndex] = value;
         journal.lastUpdated = new Date().toISOString();
-        console.log("[marksStore] Mark updated successfully:", {
-          oldValue,
-          newValue: value,
-          timestamp: journal.lastUpdated,
-        });
         // Trigger reactivity for persistence
         journalMarks.value = { ...journalMarks.value };
         return true;
       }
 
-      console.log("[marksStore] Invalid mark indices:", {
-        markIndex,
-        valueIndex,
-        maxMarkIndex: studentMark.marks.length - 1,
-        maxValueIndex: studentMark.marks[markIndex]?.values.length - 1,
-      });
       return false;
     };
 
@@ -303,15 +240,8 @@ export const useMarksStore = defineStore(
       const adjustedValues = values.slice(0, targetLen);
       while (adjustedValues.length < targetLen) adjustedValues.push(null);
 
-      const oldValues = studentMark.marks[markIndex].values;
       studentMark.marks[markIndex].values = adjustedValues;
       journal.lastUpdated = new Date().toISOString();
-      console.log("[marksStore] Replaced mark rows:", {
-        studentId,
-        markIndex,
-        oldValues,
-        newValues: adjustedValues,
-      });
       // Trigger reactivity for persistence
       journalMarks.value = { ...journalMarks.value };
       return true;
@@ -323,18 +253,8 @@ export const useMarksStore = defineStore(
       studentId: string,
       marks: Mark[]
     ) => {
-      console.log("[marksStore] Updating entire student marks:", {
-        journalId,
-        studentId,
-        marksCount: marks.length,
-      });
-
       const journal = journalMarks.value[journalId];
       if (!journal) {
-        console.log(
-          "[marksStore] Journal not found for student marks update:",
-          journalId
-        );
         return false;
       }
 
@@ -342,10 +262,6 @@ export const useMarksStore = defineStore(
         (sm) => sm.studentId === studentId
       );
       if (studentMarkIndex === -1) {
-        console.log(
-          "[marksStore] Student not found for marks update:",
-          studentId
-        );
         return false;
       }
 
@@ -353,11 +269,6 @@ export const useMarksStore = defineStore(
         JSON.stringify(marks)
       );
       journal.lastUpdated = new Date().toISOString();
-      console.log("[marksStore] Student marks updated successfully:", {
-        studentId,
-        newMarksCount: marks.length,
-        timestamp: journal.lastUpdated,
-      });
       // Trigger reactivity for persistence
       journalMarks.value = { ...journalMarks.value };
       return true;
@@ -391,16 +302,8 @@ export const useMarksStore = defineStore(
     // Get all marks for all students in a journal (formatted for table)
     const getJournalStudentMarks = computed(() => {
       return (journalId: string) => {
-        console.log(
-          "[marksStore] Getting all journal student marks for:",
-          journalId
-        );
         const journal = journalMarks.value[journalId];
         if (!journal) {
-          console.log(
-            "[marksStore] No journal found for student marks:",
-            journalId
-          );
           return [];
         }
 
@@ -408,11 +311,6 @@ export const useMarksStore = defineStore(
           studentId: studentMark.studentId,
           marks: studentMark.marks,
         }));
-        console.log(
-          "[marksStore] Returning student marks for",
-          result.length,
-          "students"
-        );
         return result;
       };
     });
@@ -481,19 +379,7 @@ export const useMarksStore = defineStore(
 
     // Debug method to log current state
     const debugState = () => {
-      console.log("[marksStore] Current state:", {
-        totalJournals: Object.keys(journalMarks.value).length,
-        journals: Object.keys(journalMarks.value),
-        loading: loading.value,
-        error: error.value,
-      });
-
-      Object.entries(journalMarks.value).forEach(([journalId, journal]) => {
-        console.log(`[marksStore] Journal ${journalId}:`, {
-          studentCount: journal.studentMarks.length,
-          lastUpdated: journal.lastUpdated,
-        });
-      });
+      // Logging removed
     };
 
     return {

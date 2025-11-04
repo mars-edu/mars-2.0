@@ -192,31 +192,41 @@ async function populateForm1(
       applyDataCellStyle(cell, { numFmt: '0.0' });
     });
 
-    // Summary columns
+    // Summary columns (6 columns after month total)
     const monthTotalCol = COL_OFFSET + 4 + entry.dailyHours.length;
 
-    // Month Total
+    // Column AK: Month Total
     const totalCell = getCell(worksheet, row, monthTotalCol);
     totalCell.value = entry.monthTotal;
     applyTotalCellStyle(totalCell, false);
 
-    // Planned Hours
-    const plannedCell = getCell(worksheet, row, monthTotalCol + 1);
+    // Column AL: Group Name (duplicate from column E)
+    const summaryGroupCell = getCell(worksheet, row, monthTotalCol + 1);
+    summaryGroupCell.value = entry.groupName;
+    applyDataCellStyle(summaryGroupCell);
+
+    // Column AM: Subject Name (duplicate from column D)
+    const summarySubjectCell = getCell(worksheet, row, monthTotalCol + 2);
+    summarySubjectCell.value = entry.subjectName;
+    applyDataCellStyle(summarySubjectCell, { horizontal: 'left' });
+
+    // Column AN: Planned Hours
+    const plannedCell = getCell(worksheet, row, monthTotalCol + 3);
     plannedCell.value = entry.plannedHours;
     applyDataCellStyle(plannedCell, { numFmt: '0.0' });
 
-    // Actual Hours
-    const actualCell = getCell(worksheet, row, monthTotalCol + 2);
+    // Column AO: Actual Hours (monthly)
+    const actualCell = getCell(worksheet, row, monthTotalCol + 4);
     actualCell.value = entry.actualHours;
     applyDataCellStyle(actualCell, { numFmt: '0.0' });
 
-    // Cumulative Hours
-    const cumulativeCell = getCell(worksheet, row, monthTotalCol + 3);
+    // Column AP: Cumulative Hours
+    const cumulativeCell = getCell(worksheet, row, monthTotalCol + 5);
     cumulativeCell.value = entry.cumulativeHours;
     applyDataCellStyle(cumulativeCell, { numFmt: '0.0' });
 
-    // Remaining Hours (last column - medium right border)
-    const remainingCell = getCell(worksheet, row, monthTotalCol + 4);
+    // Column AQ: Remaining Hours (last column - medium right border)
+    const remainingCell = getCell(worksheet, row, monthTotalCol + 6);
     remainingCell.value = entry.remainingHours;
     applyDataCellStyle(remainingCell, { numFmt: '0.0' });
     remainingCell.border = {

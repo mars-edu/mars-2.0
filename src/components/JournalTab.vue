@@ -91,6 +91,74 @@
         Рассчитать
       </f7-button>
     </div>
+
+    <!-- Academic Year Mismatch Warning Banner -->
+    <div
+      v-if="academicYearMismatchInfo"
+      class="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded-md"
+      role="alert"
+    >
+      <div class="flex items-start">
+        <f7-icon
+          ios="f7:exclamationmark_triangle"
+          md="material:warning"
+          size="24px"
+          class="text-yellow-600 mr-3 flex-shrink-0"
+        />
+        <div class="flex-1">
+          <h3 class="font-semibold text-lg mb-2">
+            Промежуточный контроль не настроен для этого учебного года
+          </h3>
+          <p class="mb-2">
+            Колонки промежуточного контроля (РК1, РК2 и т.д.) не отображаются, потому что в
+            расписании не настроены промежуточные контроли для учебного года
+            {{ academicYearMismatchInfo.usingSemesterYear ? 'семестра' : 'дисциплины' }} этого журнала.
+          </p>
+          <div class="bg-white p-3 rounded border border-yellow-200 mb-3">
+            <p class="text-sm mb-1">
+              <strong>ID учебного года {{ academicYearMismatchInfo.usingSemesterYear ? '(из семестра)' : '(из РУП)' }}:</strong>
+              <code class="bg-gray-100 px-2 py-1 rounded text-xs ml-1">
+                {{ academicYearMismatchInfo.journalAcademicYearId }}
+              </code>
+            </p>
+            <p class="text-sm">
+              <strong>Промежуточные контроли настроены для учебных годов:</strong>
+              <span
+                v-for="(yearId, index) in academicYearMismatchInfo.availableAcademicYearIds"
+                :key="yearId"
+                class="inline-block"
+              >
+                <code class="bg-gray-100 px-2 py-1 rounded text-xs ml-1">{{ yearId }}</code>
+                <span v-if="index < academicYearMismatchInfo.availableAcademicYearIds.length - 1">,</span>
+              </span>
+            </p>
+          </div>
+          <div class="space-y-1">
+            <p class="font-medium">Для решения проблемы:</p>
+            <ol class="list-decimal list-inside space-y-1 text-sm ml-2">
+              <li>
+                Перейдите на страницу
+                <strong>"Расписание образования"</strong> (Education Schedule)
+              </li>
+              <li>
+                Разверните раздел
+                <strong>"Промежуточный контроль"</strong>
+              </li>
+              <li>
+                Добавьте промежуточные контроли (РК1, РК2 и т.д.) для учебного года {{ academicYearMismatchInfo.usingSemesterYear ? 'семестра' : 'дисциплины' }}
+              </li>
+              <li v-if="academicYearMismatchInfo.usingSemesterYear">
+                Или обновите учебный год семестра в графике образовательного процесса
+              </li>
+              <li v-else>
+                Или обновите учебный год дисциплины в РУП
+              </li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="overflow-x-auto">
       <table class="w-full border-collapse">
         <thead>
@@ -446,6 +514,7 @@ const scheduledIntermediateControlStore =
 const scheduledFinalControlStore = useScheduledFinalControlStore();
 const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
 const { getClass9ById, class9Items } = storeToRefs(class9Store);
+const { getAcademicYearSemesterById } = storeToRefs(academicYearSemesterStore);
 const { getIntermediateControlById } = storeToRefs(intermediateControlStore);
 const { getFinalControlById } = storeToRefs(finalControlStore);
 const {
@@ -495,6 +564,43 @@ const currentClass9 = computed(() => {
   const lookup = getClass9ById.value;
   if (typeof lookup !== "function") return null;
   return (lookup(class9Id) as Class9Data | null | undefined) ?? null;
+});
+
+// Detect academic year mismatch for intermediate controls
+const academicYearMismatchInfo = computed(() => {
+  // Use semester's academic year (from calendar/planning), not discipline's academic year (from РУП)
+  const event = currentEvent.value;
+  const semesterId = event?.semester ? String(event.semester) : null;
+  const currentSemester =
+    semesterId && typeof getAcademicYearSemesterById.value === "function"
+      ? getAcademicYearSemesterById.value(semesterId)
+      : null;
+  const academicYearId = currentSemester?.academicYearId || currentClass9.value?.academicYearId;
+
+  if (!academicYearId) return null;
+
+  const allScheduledControls = scheduledIntermediateControls.value || [];
+  if (allScheduledControls.length === 0) return null;
+
+  const scheduledForYear =
+    typeof getScheduledIntermediateControlsByAcademicYear.value === "function"
+      ? getScheduledIntermediateControlsByAcademicYear.value(academicYearId) || []
+      : [];
+
+  // If there are scheduled controls but none for this year, we have a mismatch
+  if (scheduledForYear.length === 0 && allScheduledControls.length > 0) {
+    const uniqueAcademicYears = Array.from(
+      new Set(allScheduledControls.map((c: any) => c.academicYearId))
+    );
+    return {
+      journalAcademicYearId: academicYearId,
+      availableAcademicYearIds: uniqueAcademicYears,
+      scheduledControlsCount: allScheduledControls.length,
+      usingSemesterYear: !!currentSemester,
+    };
+  }
+
+  return null;
 });
 
 const timeToMinutes = (time: string | undefined | null) => {
@@ -668,8 +774,15 @@ const generateDates = () => {
         distributionEntries?: any[];
       })
     | null;
-  const academicYearId = class9Item?.academicYearId;
   const semesterFilter = event?.semester ? String(event.semester) : null;
+
+  // Get academic year from semester (for intermediate/final controls)
+  // instead of from discipline/РУП (class9Item)
+  const currentSemester =
+    semesterFilter && typeof getAcademicYearSemesterById.value === "function"
+      ? getAcademicYearSemesterById.value(semesterFilter)
+      : null;
+  const academicYearId = currentSemester?.academicYearId || class9Item?.academicYearId;
   const dateMeta = dateMarks.map((mark, datePos) => {
     const isoDate = mark.isoDate;
     const parsed = isoDate ? dayjs(isoDate, DATE_STORAGE_FORMAT, true) : null;
@@ -838,6 +951,65 @@ const generateDates = () => {
       ? getScheduledFinalControlsByAcademicYear.value(academicYearId) || []
       : [];
 
+  // 🔍 DIAGNOSTIC: Check intermediate controls availability
+  console.log("[JournalTab] 🔍 INTERMEDIATE CONTROLS DIAGNOSTIC:", {
+    academicYearId,
+    academicYearSource: currentSemester
+      ? `semester (${currentSemester.id})`
+      : "class9/РУП fallback",
+    class9ItemExists: !!class9Item,
+    class9AcademicYearId: class9Item?.academicYearId,
+    semesterId: semesterFilter,
+    semesterAcademicYearId: currentSemester?.academicYearId,
+    scheduledIntermediateCount: scheduledIntermediateForYear.length,
+    scheduledIntermediateDetails: scheduledIntermediateForYear.map((c: any) => ({
+      id: c.id,
+      intermediateControlId: c.intermediateControlId,
+      shortName: c.shortName,
+      startDate: c.startDate,
+      endDate: c.endDate,
+      academicYearId: c.academicYearId,
+    })),
+  });
+
+  if (scheduledIntermediateForYear.length === 0) {
+    console.warn(
+      "⚠️ [JournalTab] NO INTERMEDIATE CONTROLS SCHEDULED FOR ACADEMIC YEAR:",
+      academicYearId,
+      "\n  This is why intermediate control columns (РК1, РК2, etc.) are NOT appearing!",
+      "\n  To fix: Go to Education Schedule page → expand 'Промежуточный контроль' → add scheduled controls for this academic year"
+    );
+
+    // Show ALL scheduled controls in the store to diagnose academic year mismatch
+    console.log("🔍 [JournalTab] ALL SCHEDULED INTERMEDIATE CONTROLS IN STORE:", {
+      totalCount: scheduledIntermediateControls.value.length,
+      allControls: scheduledIntermediateControls.value.map((c: any) => ({
+        id: c.id,
+        academicYearId: c.academicYearId,
+        intermediateControlId: c.intermediateControlId,
+        shortName: c.shortName,
+        startDate: c.startDate,
+        endDate: c.endDate,
+      })),
+    });
+
+    if (scheduledIntermediateControls.value.length > 0) {
+      const uniqueAcademicYears = Array.from(
+        new Set(scheduledIntermediateControls.value.map((c: any) => c.academicYearId))
+      );
+      console.error(
+        "❌ [JournalTab] ACADEMIC YEAR MISMATCH DETECTED!",
+        "\n  Journal's academic year ID:",
+        academicYearId,
+        "\n  Scheduled controls exist for academic year IDs:",
+        uniqueAcademicYears,
+        "\n  FIX: Update the journal's class9 discipline to use the correct academic year ID,",
+        "\n       OR add scheduled controls for academic year ID",
+        academicYearId
+      );
+    }
+  }
+
   console.log("[JournalTab] Scheduled final controls for year:", {
     academicYearId,
     count: scheduledFinalForYear.length,
@@ -912,6 +1084,24 @@ const generateDates = () => {
       (control: any) => control.finalControlId as string | null | undefined
     )
   );
+
+  // 🔍 DIAGNOSTIC: Check extracted control IDs
+  console.log("[JournalTab] 🔍 EXTRACTED CONTROL IDs:", {
+    intermediateControlIds,
+    intermediateControlIdsCount: intermediateControlIds.length,
+    finalControlIds,
+    finalControlIdsCount: finalControlIds.length,
+  });
+
+  if (intermediateControlIds.length === 0 && scheduledIntermediateForYear.length > 0) {
+    console.error(
+      "❌ [JournalTab] CRITICAL: Scheduled intermediate controls exist but intermediateControlIds is EMPTY!",
+      "\n  scheduledIntermediateForYear:",
+      scheduledIntermediateForYear,
+      "\n  This means intermediate controls are missing 'intermediateControlId' field!",
+      "\n  Check the data structure in scheduledIntermediateControlStore"
+    );
+  }
 
   console.log("[JournalTab] DEBUG - Extract from entries:", {
     relevantDistributionEntriesControlIds: relevantDistributionEntries.map(
@@ -1255,6 +1445,39 @@ const generateDates = () => {
     }));
     debugLog("columns", summary);
   });
+
+  // 🔍 DIAGNOSTIC: Final column summary
+  const sessionColumns = marksWithSessions.filter((m: any) => m.type === "session");
+  const intermediateColumns = sessionColumns.filter((m: any) =>
+    m.sessionType === "intermediate"
+  );
+  const finalColumns = sessionColumns.filter((m: any) =>
+    m.sessionType === "final"
+  );
+
+  console.log("[JournalTab] 🔍 FINAL COLUMNS SUMMARY:", {
+    totalColumns: marksWithSessions.length,
+    dateColumns: marksWithSessions.filter((m: any) => m.type === "date").length,
+    sessionColumns: sessionColumns.length,
+    intermediateControlColumns: intermediateColumns.length,
+    intermediateControlLabels: intermediateColumns.map((m: any) => m.label),
+    finalControlColumns: finalColumns.length,
+    finalControlLabels: finalColumns.map((m: any) => m.label),
+  });
+
+  if (intermediateColumns.length === 0) {
+    console.warn(
+      "⚠️ [JournalTab] NO INTERMEDIATE CONTROL COLUMNS were created!",
+      "\n  Check the diagnostics above to see why."
+    );
+  } else {
+    console.log(
+      "✅ [JournalTab] Successfully created",
+      intermediateColumns.length,
+      "intermediate control columns:",
+      intermediateColumns.map((m: any) => m.label).join(", ")
+    );
+  }
 
   return marksWithSessions;
 };
