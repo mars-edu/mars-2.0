@@ -36,6 +36,13 @@ export const useCourseStore = defineStore(
       return (academicYearId: string) => courses.value; // All courses are now global
     });
 
+    const courseOptions = computed(() =>
+      courses.value.map((c) => ({
+        value: c.number,
+        text: `Курс ${c.number}`,
+      }))
+    );
+
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
@@ -129,6 +136,7 @@ export const useCourseStore = defineStore(
       error,
       getCourseById,
       getCoursesByAcademicYear,
+      courseOptions,
       isLoading,
       getError,
       addCourse,
