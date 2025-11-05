@@ -53,7 +53,7 @@ export function useRBAC() {
       },
       {
         id: "schedule",
-        label: "Расписание",
+        label: "Планирование",
         icon: "calendar_fill",
         roles: [Role.ADMIN, Role.TEACHER],
         route: `/planning/${currentYear}/${currentMonth}/`,
