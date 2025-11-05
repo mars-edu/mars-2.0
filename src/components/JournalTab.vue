@@ -2097,12 +2097,6 @@ const getStudentAverageScore = (studentId: string): string => {
   const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
   if (!studentMarks) return "—";
 
-  // Check if all intermediate and final controls are calculated
-  // If not, return "—" to indicate incomplete data
-  if (!areAllControlsCalculated(studentId)) {
-    return "—";
-  }
-
   const allMarks: (string | null)[] = [];
 
   // Collect all marks from all columns
