@@ -45,8 +45,25 @@
       </div>
     </template>
 
+    <!-- Error State: No Active Semester -->
+    <div v-if="!semesterData" class="p-4 rounded-lg" :class="theme === 'dark' ? 'bg-red-900/20 border border-red-800' : 'bg-red-50 border border-red-200'">
+      <div class="flex items-start">
+        <svg class="w-5 h-5 mr-2 flex-shrink-0" :class="theme === 'dark' ? 'text-red-400' : 'text-red-600'" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <div>
+          <p class="text-sm font-medium" :class="theme === 'dark' ? 'text-red-400' : 'text-red-800'">
+            Активный семестр не настроен
+          </p>
+          <p class="mt-1 text-sm" :class="theme === 'dark' ? 'text-red-300' : 'text-red-700'">
+            Пожалуйста, настройте график образовательного процесса в разделе "Планирование"
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- Week Details -->
-    <div class="grid grid-cols-2 gap-4">
+    <div v-else class="grid grid-cols-2 gap-4">
       <div :class="detailBoxClass">
         <div class="text-sm" :class="mutedTextClass">Начало семестра</div>
         <div class="mt-1 text-sm font-medium" :class="textClass">
@@ -65,7 +82,9 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { storeToRefs } from "pinia";
 import Card from "@/components/ui/Card.vue";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 
 interface Props {
   theme?: "white" | "dark" | "lavanda";
@@ -75,9 +94,49 @@ const props = withDefaults(defineProps<Props>(), {
   theme: "white",
 });
 
-const TOTAL_WEEKS = 15;
-const semesterStartDate = new Date(2025, 0, 15);
-const semesterEndDate = new Date(2025, 4, 31);
+// Initialize store to get active semester data
+const academicYearSemesterStore = useAcademicYearSemesterStore();
+const { getActiveAcademicYearSemester } = storeToRefs(academicYearSemesterStore);
+
+// Computed property to get semester data from store
+const semesterData = computed(() => {
+  const activeSemester = getActiveAcademicYearSemester.value;
+
+  if (!activeSemester) {
+    // No active semester configured - return null to show error state
+    return null;
+  }
+
+  const startDate = new Date(activeSemester.startDate);
+  const endDate = new Date(activeSemester.endDate);
+
+  // Calculate total weeks in the semester (using consistent day-based calculation)
+  const startOfSemester = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate()
+  );
+  const endOfSemester = new Date(
+    endDate.getFullYear(),
+    endDate.getMonth(),
+    endDate.getDate()
+  );
+
+  const timeDiff = endOfSemester.getTime() - startOfSemester.getTime();
+  const totalDays = Math.floor(timeDiff / (24 * 60 * 60 * 1000)) + 1; // +1 to include both start and end days
+  const totalWeeks = Math.ceil(totalDays / 7);
+
+  return {
+    startDate,
+    endDate,
+    totalWeeks
+  };
+});
+
+// Helper computed properties for easier access
+const semesterStartDate = computed(() => semesterData.value?.startDate ?? null);
+const semesterEndDate = computed(() => semesterData.value?.endDate ?? null);
+const TOTAL_WEEKS = computed(() => semesterData.value?.totalWeeks ?? 15);
 
 
 const textClass = computed(() => {
@@ -132,20 +191,44 @@ const formatDate = (date: Date): string => {
   });
 };
 
-const semesterStart = computed(() => formatDate(semesterStartDate));
-const semesterEnd = computed(() => formatDate(semesterEndDate));
+const semesterStart = computed(() =>
+  semesterStartDate.value ? formatDate(semesterStartDate.value) : "-"
+);
+const semesterEnd = computed(() =>
+  semesterEndDate.value ? formatDate(semesterEndDate.value) : "-"
+);
 
 const currentWeek = computed(() => {
+  // Return 0 if no semester data available (will show error state)
+  if (!semesterStartDate.value || !semesterData.value) {
+    return 0;
+  }
+
   const today = new Date();
-  const timeDiff = today.getTime() - semesterStartDate.getTime();
-  const weekNumber = Math.ceil(timeDiff / (7 * 24 * 60 * 60 * 1000));
-  return Math.min(Math.max(1, weekNumber), TOTAL_WEEKS);
+  // Set both dates to midnight to avoid time-of-day issues
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const startOfSemester = new Date(
+    semesterStartDate.value.getFullYear(),
+    semesterStartDate.value.getMonth(),
+    semesterStartDate.value.getDate()
+  );
+
+  const timeDiff = startOfToday.getTime() - startOfSemester.getTime();
+  const daysSinceStart = Math.floor(timeDiff / (24 * 60 * 60 * 1000));
+
+  // Week 1 starts on day 0, week 2 starts on day 7, etc.
+  const weekNumber = Math.floor(daysSinceStart / 7) + 1;
+
+  return Math.min(Math.max(1, weekNumber), TOTAL_WEEKS.value);
 });
 
 const circumference = computed(() => 2 * Math.PI * 26);
-const semesterProgress = computed(() =>
-  Math.round((currentWeek.value / TOTAL_WEEKS) * 100)
-);
+const semesterProgress = computed(() => {
+  if (!semesterData.value || TOTAL_WEEKS.value === 0) {
+    return 0;
+  }
+  return Math.round((currentWeek.value / TOTAL_WEEKS.value) * 100);
+});
 const dashOffset = computed(
   () =>
     circumference.value - (semesterProgress.value / 100) * circumference.value

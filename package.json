@@ -29,6 +29,7 @@
     "dayjs": "^1.11.18",
     "dom7": "^4.0.6",
     "es-toolkit": "^1.40.0",
+    "exceljs": "^4.4.0",
     "fast-json-patch": "^3.1.1",
     "file-saver": "^2.0.5",
     "framework7": "^8.3.4",
@@ -58,7 +59,6 @@
     "vite-plugin-node-polyfills": "^0.24.0",
     "vue": "^3.5.22",
     "xlsx": "^0.18.5",
-    "xlsx-js-style": "^1.2.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
@@ -71,7 +71,6 @@
     "autoprefixer": "^10.4.21",
     "cpy-cli": "^6.0.0",
     "cross-env": "^10.1.0",
-    "exceljs": "^4.4.0",
     "jest": "^29.7.0",
     "postcss": "^8.5.6",
     "postcss-preset-env": "^10.4.0",

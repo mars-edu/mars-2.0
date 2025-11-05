@@ -296,6 +296,9 @@ import { useCalendarStore } from "@/stores/calendarStore";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
+import { useClass9Store } from "@/stores/class9Store";
+import { useFinalControlStore } from "@/stores/finalControlStore";
+import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
 import {
   exportJournalToExcel,
   type JournalStudentRow,
@@ -310,6 +313,9 @@ const calendarStore = useCalendarStore();
 const teacherStore = useTeacherStore();
 const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
+const class9Store = useClass9Store();
+const finalControlStore = useFinalControlStore();
+const scheduledFinalControlStore = useScheduledFinalControlStore();
 const { journalsByCourse, mixedGroupJournals } = storeToRefs(journalStore);
 const { students } = storeToRefs(studentStore);
 
@@ -681,9 +687,6 @@ async function downloadSelectedJournals() {
     const { saveAs } = await import("file-saver");
 
     const zip = new JSZip();
-    const templateUrl = encodeURI(
-      "/journal_templates/1_семестр_РО_4_1_ВА22_академическое_рус_яз_,_ВЭ22_эстрадное_рус.xlsx"
-    );
 
     const exportTasks: Promise<void>[] = [];
 
@@ -739,13 +742,33 @@ async function downloadSelectedJournals() {
       const disciplineTitle = journalStore.getDisciplineTitle(journal);
       const groupTitle = journalStore.getJournalTitle(journal);
 
+      // Get final control form from distribution entry
+      let finalControlForm: string | null = null;
+      const class9Item = class9Store.class9Items.find((c) => c.id === journal.disciplineId);
+      if (class9Item && academicYear) {
+        const semesters = academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(academicYear.id);
+        const semester = semesters.find((s) => s.semesterNumber === (event?.semester ?? 1));
+        if (semester) {
+          const distributionEntry = class9Item.distributionEntries.find(
+            (entry) => entry.academicYearId === academicYear.id && entry.semesterId === semester.id
+          );
+          if (distributionEntry?.finalControlId) {
+            // distributionEntry.finalControlId is ScheduledFinalControl.id, not FinalControl.id
+            const scheduledControl = scheduledFinalControlStore.getScheduledFinalControlById(distributionEntry.finalControlId);
+            if (scheduledControl) {
+              const finalControl = finalControlStore.getFinalControlById(scheduledControl.finalControlId);
+              finalControlForm = finalControl?.name ?? null;
+            }
+          }
+        }
+      }
+
       const filename = `${disciplineTitle}_${groupTitle}`
         .replace(/[^a-zA-Zа-яА-Я0-9_\-\.]/g, "_")
         .concat(".xlsx");
 
       exportTasks.push(
         exportJournalToExcel({
-          templateUrl,
           groupName: groupTitle,
           courseLabel: journal.courseNumber.toString(),
           specialtyLabel: specialty
@@ -754,6 +777,7 @@ async function downloadSelectedJournals() {
           academicYearLabel,
           disciplineTitle,
           teacherFullName: teacherName,
+          finalControlForm,
           students: studentRows,
           calendarEvent: event ?? undefined,
         }).then((buffer) => {

@@ -585,10 +585,6 @@ const onDownloadClick = async () => {
       return;
     }
 
-    const templateUrl = encodeURI(
-      "/journal_templates/1_семестр_РО_4_1_ВА22_академическое_рус_яз_,_ВЭ22_эстрадное_рус.xlsx"
-    );
-
     const event = calendarStore.getEventById(journal.id);
 
     const studentRows: JournalStudentRow[] = snapshot.students.map(
@@ -627,12 +623,32 @@ const onDownloadClick = async () => {
     const disciplineTitle = journalStore.getDisciplineTitle(journal);
     const groupTitle = journalStore.getJournalTitle(journal);
 
+    // Get final control form from distribution entry
+    let finalControlForm: string | null = null;
+    const class9Item = class9Store.class9Items.find((c) => c.id === journal.disciplineId);
+    if (class9Item && academicYear) {
+      const semesters = academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(academicYear.id);
+      const semester = semesters.find((s) => s.semesterNumber === (event?.semester ?? 1));
+      if (semester) {
+        const distributionEntry = class9Item.distributionEntries.find(
+          (entry) => entry.academicYearId === academicYear.id && entry.semesterId === semester.id
+        );
+        if (distributionEntry?.finalControlId) {
+          // distributionEntry.finalControlId is ScheduledFinalControl.id, not FinalControl.id
+          const scheduledControl = scheduledFinalControlStore.getScheduledFinalControlById(distributionEntry.finalControlId);
+          if (scheduledControl) {
+            const finalControl = finalControlStore.getFinalControlById(scheduledControl.finalControlId);
+            finalControlForm = finalControl?.name ?? null;
+          }
+        }
+      }
+    }
+
     const filename = `${disciplineTitle}_${groupTitle}`
       .replace(/[^a-zA-Zа-яА-Я0-9_\-\.]/g, "_")
       .concat(".xlsx");
 
     const buffer = await exportJournalToExcel({
-      templateUrl,
       groupName: groupTitle,
       courseLabel: journal.courseNumber?.toString?.() ?? "",
       specialtyLabel: specialty
@@ -641,6 +657,7 @@ const onDownloadClick = async () => {
       academicYearLabel,
       disciplineTitle,
       teacherFullName: teacherName,
+      finalControlForm,
       students: studentRows,
       calendarEvent: event ?? undefined,
       lessonDates: snapshot.columns.map((column) => column.label),
