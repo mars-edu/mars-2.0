@@ -71,6 +71,7 @@
                         mark.type === 'pk' ||
                         mark.type === 'e' ||
                         mark.type === 'i',
+                      'bg-gray-100 cursor-not-allowed': mark.type === 'date' && mark.isoDate && isFutureDate(mark.isoDate),
                     }"
                   >
                     <div class="flex flex-col gap-1">
@@ -97,8 +98,13 @@
                         />
                         <div
                           v-else
-                          @click="editCell(rowIdx, colIndex)"
-                          class="cursor-pointer w-full"
+                          @click="handleCellClick(rowIdx, colIndex)"
+                          :class="[
+                            'w-full',
+                            mark.type === 'date' && mark.isoDate && isFutureDate(mark.isoDate)
+                              ? 'cursor-not-allowed'
+                              : 'cursor-pointer'
+                          ]"
                         >
                           <MarkCell :mark="value" />
                         </div>
@@ -121,6 +127,9 @@ import MarkCell from "@/components/ui/MarkCell.vue";
 import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
 import { useMarksStore } from "@/stores/marksStore";
 import type { Mark } from "@/types/marks";
+import dayjs from "dayjs";
+import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
+import { f7 } from "framework7-vue";
 
 const props = defineProps({
   student: {
@@ -222,8 +231,64 @@ const setMark = (row: number, col: number, value: string) => {
   console.log("[FloatingJournalRow] Mark update result:", updateResult);
 };
 
+// Utility function to check if a date is in the future
+const isFutureDate = (isoDate: string | undefined): boolean => {
+  if (!isoDate) return false;
+  const today = dayjs().startOf('day');
+  const cellDate = dayjs(isoDate, DATE_STORAGE_FORMAT);
+  return cellDate.isAfter(today);
+};
+
+const handleCellClick = (row: number, col: number) => {
+  const currentMark = getMark(row, col);
+  const hasExistingValue = currentMark !== "" && currentMark !== null;
+
+  if (hasExistingValue) {
+    // Show confirmation dialog for existing values
+    f7.dialog.create({
+      title: 'Изменить оценку?',
+      text: `Текущая оценка: ${currentMark}. Вы действительно хотите изменить её?`,
+      buttons: [
+        {
+          text: 'Отмена',
+          close: true,
+        },
+        {
+          text: 'Нет',
+          close: true,
+        },
+        {
+          text: 'Да',
+          bold: true,
+          onClick: () => {
+            editCell(row, col);
+          }
+        }
+      ],
+      verticalButtons: false,
+    }).open();
+  } else {
+    // Empty cell, edit directly
+    editCell(row, col);
+  }
+};
+
 const editCell = (row: number, col: number) => {
   console.log("[FloatingJournalRow] Editing cell:", { row, col });
+
+  // Check if this is a future date
+  if (localStudent.value?.marks[col]) {
+    const mark = localStudent.value.marks[col];
+    if (mark.type === "date" && mark.isoDate && isFutureDate(mark.isoDate)) {
+      f7.toast.create({
+        text: 'Нельзя выставлять оценки за будущие даты',
+        position: 'center',
+        closeTimeout: 2000,
+      }).open();
+      return;
+    }
+  }
+
   editingCell.value = { row, col };
   editedValue.value = getMark(row, col);
   console.log("[FloatingJournalRow] Current mark value:", editedValue.value);

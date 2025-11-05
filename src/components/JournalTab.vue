@@ -31,6 +31,21 @@
         Настройки
       </f7-button>
       <f7-button
+        id="journal-history-button"
+        small
+        default
+        @click="onHistoryClick"
+        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+      >
+        <f7-icon
+          ios="f7:clock"
+          md="material:history"
+          size="16px"
+          class="mr-2"
+        />
+        История
+      </f7-button>
+      <f7-button
         small
         default
         @click="onCloseJournalClick"
@@ -193,7 +208,7 @@
             >
               <div class="flex flex-col items-center">
                 <f7-icon
-                  v-if="header.type === 'date'"
+                  v-if="header.type === 'date' && getKtpForHeader(header.index) !== null"
                   f7="paperclip"
                   class="h-8 text-gray-400"
                   @click.stop="onPaperclipClick(header, index)"
@@ -241,6 +256,7 @@
                 header.isFinalSummary ? 'bg-primary/5' : '',
                 {
                   'bg-muted/90': header.type === 'session',
+                  'bg-gray-100 cursor-not-allowed': header.type === 'date' && header.isoDate && isFutureDate(header.isoDate),
                 },
               ]"
             >
@@ -272,12 +288,15 @@
                     v-else
                     @click="
                       !header.isFinalSummary
-                        ? editCell(studentIndex, header.index, mIdx)
+                        ? handleCellClick(studentIndex, header.index, mIdx)
                         : null
                     "
-                    :class="
-                      header.isFinalSummary ? 'w-full' : 'cursor-pointer w-full'
-                    "
+                    :class="[
+                      header.isFinalSummary ? 'w-full' : 'cursor-pointer w-full',
+                      {
+                        'cursor-not-allowed': header.type === 'date' && header.isoDate && isFutureDate(header.isoDate),
+                      }
+                    ]"
                   >
                     <MarkCell
                       :mark="getMark(studentIndex, header.index, mIdx)"
@@ -296,6 +315,11 @@
       v-model:opened="ktpViewPopoverOpened"
       :target="ktpViewPopoverTarget"
       :detail="selectedKtpDetail"
+    />
+
+    <!-- Journal History Popover -->
+    <JournalHistoryPopover
+      :journal-id="props.journalId"
     />
 
     <!-- Journal Settings Popover (moved here for correct positioning) -->
@@ -416,6 +440,7 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import MarkCell from "@/components/ui/MarkCell.vue";
 import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
 import KtpDetailViewPopover from "@/components/KtpDetailViewPopover.vue";
+import JournalHistoryPopover from "@/components/JournalHistoryPopover.vue";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useStudentStore } from "@/stores/studentStore";
 import { useMarksStore } from "@/stores/marksStore";
@@ -1557,6 +1582,52 @@ const setMark = (
   emit("update-students", students.value);
 };
 
+// Utility function to check if a date is in the future
+const isFutureDate = (isoDate: string | undefined): boolean => {
+  if (!isoDate) return false;
+  const today = dayjs().startOf('day');
+  const cellDate = dayjs(isoDate, DATE_STORAGE_FORMAT);
+  return cellDate.isAfter(today);
+};
+
+const handleCellClick = (
+  studentIndex: number,
+  colIndex: number,
+  markIndex: number
+) => {
+  const currentMark = getMark(studentIndex, colIndex, markIndex);
+  const hasExistingValue = currentMark !== "" && currentMark !== null;
+
+  if (hasExistingValue) {
+    // Show confirmation dialog for existing values
+    f7.dialog.create({
+      title: 'Изменить оценку?',
+      text: `Текущая оценка: ${currentMark}. Вы действительно хотите изменить её?`,
+      buttons: [
+        {
+          text: 'Отмена',
+          close: true,
+        },
+        {
+          text: 'Нет',
+          close: true,
+        },
+        {
+          text: 'Да',
+          bold: true,
+          onClick: () => {
+            editCell(studentIndex, colIndex, markIndex);
+          }
+        }
+      ],
+      verticalButtons: false,
+    }).open();
+  } else {
+    // Empty cell, edit directly
+    editCell(studentIndex, colIndex, markIndex);
+  }
+};
+
 const editCell = (
   studentIndex: number,
   colIndex: number,
@@ -1577,6 +1648,18 @@ const editCell = (
   if (markType === "session" && calculationType === "calculated") {
     return;
   }
+
+  // Check if this is a future date
+  const mark = studentMarks[storeColIndex];
+  if (mark.type === "date" && mark.isoDate && isFutureDate(mark.isoDate)) {
+    f7.toast.create({
+      text: 'Нельзя выставлять оценки за будущие даты',
+      position: 'center',
+      closeTimeout: 2000,
+    }).open();
+    return;
+  }
+
   editingCell.value = { studentIndex, colIndex, markIndex };
   editedValue.value = getMark(studentIndex, colIndex, markIndex);
 };
@@ -1687,6 +1770,36 @@ const saveJournalSettings = () => {
   closeJournalSettings();
 };
 
+/**
+ * Get KTP detail for a specific header index.
+ * Returns KtpDetail only if it exists and has a non-empty theme.
+ * @param headerIndex - The index of the header in visibleHeaders
+ * @returns KtpDetail if exists and has theme, null otherwise
+ */
+const getKtpForHeader = (headerIndex: number): KtpDetail | null => {
+  const class9Id = currentJournal.value?.disciplineId;
+  if (!class9Id) return null;
+
+  // Find dayIndex - position of this date among all date columns
+  let dayIndex = 0;
+  for (let i = 0; i < visibleHeaders.value.length; i++) {
+    const h = visibleHeaders.value[i];
+    if (h.index === headerIndex) break;
+    if (h.type === "date") dayIndex++;
+  }
+
+  // Get KTP details for the discipline
+  const details = ktpStore.getDetailsByClass9Id(class9Id);
+  const detail = details[dayIndex];
+
+  // Check that KTP exists AND theme is not empty
+  if (!detail || !detail.theme || detail.theme.trim() === "") {
+    return null;
+  }
+
+  return detail;
+};
+
 const onPaperclipClick = async (
   header: { type: string; label: string },
   index: number
@@ -1743,6 +1856,9 @@ const onPaperclipClick = async (
 
 const onOpenRupClick = () => emit("open-rup");
 const onSettingsClick = () => emit("open-settings");
+const onHistoryClick = () => {
+  f7.popover.open('#journal-history-popover', '#journal-history-button');
+};
 const onCloseJournalClick = () => emit("close-journal");
 const onDownloadClick = () => emit("download");
 const onUploadClick = () => emit("upload");
@@ -1893,11 +2009,99 @@ const computeAllSessionGrades = (opts?: {
   });
 };
 
+/**
+ * Check if all intermediate and final controls are calculated for a student.
+ * A control is considered "calculated" if it has at least one non-empty value.
+ * @param studentId - The ID of the student to check
+ * @returns true if all controls have grades, false otherwise
+ */
+const areAllControlsCalculated = (studentId: string): boolean => {
+  if (!props.journalId) return false;
+
+  // Get list of all controls from canonical template
+  const canonical = canonicalTemplate.value;
+  if (!Array.isArray(canonical) || canonical.length === 0) {
+    // If no template, consider all calculated (nothing to check)
+    return true;
+  }
+
+  // Filter only intermediate and final controls
+  const controlColumns = canonical.filter((col: Mark) => {
+    return (
+      col.type === "session" &&
+      (col.controlType === "intermediate" || col.controlType === "final")
+    );
+  });
+
+  // If no controls, consider all calculated
+  if (controlColumns.length === 0) {
+    return true;
+  }
+
+  // Get student's marks
+  const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
+  if (!studentMarks) {
+    // No marks - controls not calculated
+    return false;
+  }
+
+  // For each control, check if there's a non-empty grade
+  for (const controlCol of controlColumns) {
+    // Find corresponding mark in studentMarks
+    const correspondingMark = studentMarks.find((mark: Mark) => {
+      if (mark.type !== "session") return false;
+
+      // Match by scheduledControlId (most accurate)
+      if (
+        controlCol.scheduledControlId &&
+        mark.scheduledControlId === controlCol.scheduledControlId
+      ) {
+        return true;
+      }
+
+      // Alternatively by sessionId
+      if (controlCol.sessionId && mark.sessionId === controlCol.sessionId) {
+        return true;
+      }
+
+      // Alternatively by label (less reliable, but fallback)
+      if (controlCol.label && mark.label === controlCol.label) {
+        return true;
+      }
+
+      return false;
+    });
+
+    // If no corresponding mark found - control not calculated
+    if (!correspondingMark) {
+      return false;
+    }
+
+    // Check that there's at least one non-empty value
+    const hasNonEmptyValue = correspondingMark.values.some(
+      (value) => value !== null && value !== undefined && value !== ""
+    );
+
+    if (!hasNonEmptyValue) {
+      return false;
+    }
+  }
+
+  // All controls calculated
+  return true;
+};
+
 const getStudentAverageScore = (studentId: string): string => {
   if (!props.journalId) return "—";
 
   const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
   if (!studentMarks) return "—";
+
+  // Check if all intermediate and final controls are calculated
+  // If not, return "—" to indicate incomplete data
+  if (!areAllControlsCalculated(studentId)) {
+    return "—";
+  }
 
   const allMarks: (string | null)[] = [];
 

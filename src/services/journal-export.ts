@@ -52,6 +52,7 @@ type HeaderInfo = {
   firstCol: number;
   lastCol: number;
   studentNameCol: number;
+  attendanceStartCol: number;
   dateCol: number;
   finalGradeCol: number;
   noFinalControlCol: number;
@@ -76,6 +77,7 @@ function detectHeader(worksheet: Worksheet): HeaderInfo {
   let firstCol = range.e.c;
   let lastCol = range.s.c;
   let studentNameCol = range.s.c + 1;
+  let attendanceStartCol = range.s.c + 2;
   let dateCol = range.s.c + 2;
   let finalGradeCol = range.e.c - 2;
   let noFinalControlCol = range.e.c - 1;
@@ -87,16 +89,24 @@ function detectHeader(worksheet: Worksheet): HeaderInfo {
     firstCol = Math.min(firstCol, c);
     lastCol = Math.max(lastCol, c);
     if (typeof value === "string") {
-      if (value.toLowerCase().includes("фамилия")) {
+      const lowerValue = value.toLowerCase();
+      if (lowerValue.includes("фамилия")) {
         studentNameCol = c;
-      } else if (value.toLowerCase().includes("дата проведения")) {
+      } else if (lowerValue.includes("месяц") || lowerValue.includes("число") || lowerValue.includes("посещ")) {
+        attendanceStartCol = c;
+      } else if (lowerValue.includes("дата проведения")) {
         dateCol = c;
-      } else if (value.toLowerCase().includes("итоговая")) {
+      } else if (lowerValue.includes("итоговая")) {
         finalGradeCol = c;
-      } else if (value.toLowerCase().includes("без итогового")) {
+      } else if (lowerValue.includes("без итогового")) {
         noFinalControlCol = c;
       }
     }
+  }
+
+  // If attendanceStartCol wasn't explicitly detected, calculate it from studentNameCol
+  if (attendanceStartCol === range.s.c + 2 && studentNameCol !== range.s.c + 1) {
+    attendanceStartCol = studentNameCol + 1;
   }
 
   return {
@@ -104,6 +114,7 @@ function detectHeader(worksheet: Worksheet): HeaderInfo {
     firstCol,
     lastCol,
     studentNameCol,
+    attendanceStartCol,
     dateCol,
     finalGradeCol,
     noFinalControlCol,
@@ -365,7 +376,7 @@ function applyJournalGridStyles(
       left: getLeftWeight(c),
       right: getRightWeight(c),
     });
-    if (c >= header.studentNameCol + 1 && c <= header.dateCol - 1) {
+    if (c >= header.attendanceStartCol && c <= header.dateCol - 1) {
       cell.s.alignment = {
         ...(cell.s.alignment || {}),
         horizontal: "center",
@@ -393,7 +404,7 @@ function applyJournalGridStyles(
           vertical: "center",
           wrapText: true,
         };
-      } else if (c === header.firstCol || c >= header.studentNameCol + 1) {
+      } else if (c === header.firstCol || c >= header.attendanceStartCol) {
         cell.s.alignment = {
           ...(cell.s.alignment || {}),
           horizontal: "center",
@@ -453,7 +464,7 @@ export async function exportJournalToExcel(
     header.row
   );
 
-  const attendanceStartCol = header.studentNameCol + 1;
+  const attendanceStartCol = header.attendanceStartCol;
   const attendanceEndCol = header.dateCol - 1;
   const attendanceColumnCount = Math.max(
     0,

@@ -6,6 +6,7 @@ import { useStudentStore } from "./studentStore";
 import { useSpecialtyStore } from "./specialtyStore";
 import { useClass9Store } from "./class9Store";
 import { useAcademicYearSemesterStore } from "./academicYearSemesterStore";
+import { useEducationScheduleStore } from "./educationScheduleStore";
 import { WEEK_DAYS, DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import dayjs from "dayjs";
 
@@ -31,6 +32,7 @@ export const useJournalStore = defineStore(
     const specialtyStore = useSpecialtyStore();
     const class9Store = useClass9Store();
     const academicYearSemesterStore = useAcademicYearSemesterStore();
+    const educationScheduleStore = useEducationScheduleStore();
 
     function generateJournalTitle(
       courseNumbers: number[],
@@ -343,12 +345,48 @@ export const useJournalStore = defineStore(
     function getJournalScheduleText(journal: Journal) {
       const calendarEvent = calendarStore.getEventById(journal.id);
       if (!calendarEvent) return "расписание не задано";
+
+      // Check for weeklySchedules first
       const ws = calendarEvent.weeklySchedules?.[0];
-      if (!ws) return "расписание не задано";
-      const weekDay = WEEK_DAYS.find((day) => day.weekId === ws.weekId);
+      if (ws) {
+        const weekDay = WEEK_DAYS.find((day) => day.weekId === ws.weekId);
+        const day = weekDay?.russianAbbreviation || "";
+
+        // Get start and end times - either from direct time strings or by looking up schedule IDs
+        let start = ws.startTime || "";
+        let end = ws.endTime || "";
+
+        // If times are not directly stored, look them up by ID
+        if (!start && ws.startId) {
+          const schedule = educationScheduleStore.getScheduleById(ws.startId);
+          start = schedule?.startTime || "";
+        }
+        if (!end && ws.endId) {
+          const schedule = educationScheduleStore.getScheduleById(ws.endId);
+          end = schedule?.endTime || "";
+        }
+
+        if (start || end) {
+          return `${day} // ${start}-${end}`.trim();
+        }
+      }
+
+      // Fallback to direct startTime/endTime if weeklySchedules not present
+      const start = calendarEvent.startTime || "";
+      const end = calendarEvent.endTime || "";
+
+      if (!start && !end) {
+        return "расписание не задано";
+      }
+
+      // Get day of week from startDate
+      const startDate = dayjs(calendarEvent.startDate, DATE_STORAGE_FORMAT);
+      // Get JavaScript day (0=Sunday, 1=Monday, etc.) and convert to weekId (0=Monday, 1=Tuesday, etc.)
+      const jsDay = startDate.day();
+      const weekId = jsDay === 0 ? 6 : jsDay - 1; // Convert Sunday from 0 to 6, and shift others down by 1
+      const weekDay = WEEK_DAYS.find((day) => day.weekId === weekId);
       const day = weekDay?.russianAbbreviation || "";
-      const start = ws.startTime || "";
-      const end = ws.endTime || "";
+
       return `${day} // ${start}-${end}`.trim();
     }
 

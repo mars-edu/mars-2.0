@@ -9,7 +9,10 @@
       tabindex="-1"
     >
       <div class="bg-mars-muted rounded-xl shadow-lg p-4 w-full max-w-md">
-        <div class="bg-card rounded-lg p-2">
+        <div
+          class="bg-card rounded-lg p-2"
+          :class="{ 'bg-gray-100': isColumnFutureDate }"
+        >
           <table class="w-full">
             <thead>
               <tr class="bg-muted/50">
@@ -70,8 +73,11 @@
                       />
                       <div
                         v-else
-                        @click="editCell(index, rowIdx)"
-                        class="cursor-pointer w-full"
+                        @click="handleCellClick(index, rowIdx)"
+                        :class="[
+                          'w-full',
+                          isColumnFutureDate ? 'cursor-not-allowed' : 'cursor-pointer'
+                        ]"
                       >
                         <MarkCell :mark="value" />
                       </div>
@@ -88,9 +94,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from "vue";
+import { ref, watch, nextTick, computed } from "vue";
 import MarkCell from "@/components/ui/MarkCell.vue";
 import EditableMarkCell from "./ui/EditableMarkCell.vue";
+import dayjs from "dayjs";
+import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
+import { f7 } from "framework7-vue";
 
 const props = defineProps({
   visible: {
@@ -102,7 +111,7 @@ const props = defineProps({
     required: true,
   },
   columnHeader: {
-    type: Object as () => { type: string; label: string } | null,
+    type: Object as () => { type: string; label: string; isoDate?: string } | null,
     required: false,
     default: null,
   },
@@ -160,7 +169,66 @@ const setMark = (studentIndex: number, markIndex: number, value: string) => {
   ] = newValue;
 };
 
+// Utility function to check if a date is in the future
+const isFutureDate = (isoDate: string | undefined): boolean => {
+  if (!isoDate) return false;
+  const today = dayjs().startOf('day');
+  const cellDate = dayjs(isoDate, DATE_STORAGE_FORMAT);
+  return cellDate.isAfter(today);
+};
+
+// Check if the current column is a future date
+const isColumnFutureDate = computed(() => {
+  return props.columnHeader?.type === 'date' &&
+         props.columnHeader?.isoDate &&
+         isFutureDate(props.columnHeader.isoDate);
+});
+
+const handleCellClick = (studentIndex: number, markIndex: number) => {
+  const currentMark = getMark(studentIndex, markIndex);
+  const hasExistingValue = currentMark !== "" && currentMark !== null;
+
+  if (hasExistingValue) {
+    // Show confirmation dialog for existing values
+    f7.dialog.create({
+      title: 'Изменить оценку?',
+      text: `Текущая оценка: ${currentMark}. Вы действительно хотите изменить её?`,
+      buttons: [
+        {
+          text: 'Отмена',
+          close: true,
+        },
+        {
+          text: 'Нет',
+          close: true,
+        },
+        {
+          text: 'Да',
+          bold: true,
+          onClick: () => {
+            editCell(studentIndex, markIndex);
+          }
+        }
+      ],
+      verticalButtons: false,
+    }).open();
+  } else {
+    // Empty cell, edit directly
+    editCell(studentIndex, markIndex);
+  }
+};
+
 const editCell = (studentIndex: number, markIndex: number) => {
+  // Check if this is a future date column
+  if (isColumnFutureDate.value) {
+    f7.toast.create({
+      text: 'Нельзя выставлять оценки за будущие даты',
+      position: 'center',
+      closeTimeout: 2000,
+    }).open();
+    return;
+  }
+
   editingCell.value = { studentIndex, markIndex };
   editedValue.value = getMark(studentIndex, markIndex);
 };

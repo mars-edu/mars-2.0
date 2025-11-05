@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import type { Mark, StudentMark, JournalMarks } from "@/types/marks";
+import { useJournalHistoryStore } from "./journalHistoryStore";
 
 export const useMarksStore = defineStore(
   "marks",
@@ -209,8 +210,32 @@ export const useMarksStore = defineStore(
         valueIndex >= 0 &&
         valueIndex < studentMark.marks[markIndex].values.length
       ) {
+        // Capture old value BEFORE changing
+        const oldValue = studentMark.marks[markIndex].values[valueIndex];
+
+        // Make the change
         studentMark.marks[markIndex].values[valueIndex] = value;
         journal.lastUpdated = new Date().toISOString();
+
+        // Record history (only if value actually changed)
+        if (oldValue !== value) {
+          const historyStore = useJournalHistoryStore();
+          const mark = studentMark.marks[markIndex];
+          const columnLabel = mark.label || mark.date || `Column ${markIndex}`;
+          const columnDate = mark.isoDate;
+
+          historyStore.addRecord(
+            journalId,
+            studentId,
+            markIndex,
+            valueIndex,
+            oldValue,
+            value,
+            columnLabel,
+            columnDate
+          );
+        }
+
         // Trigger reactivity for persistence
         journalMarks.value = { ...journalMarks.value };
         return true;

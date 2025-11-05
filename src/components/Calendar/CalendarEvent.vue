@@ -13,6 +13,9 @@
     <div class="text-opacity-80" :style="{ color: textColor }">
       {{ event.time }}
     </div>
+    <div v-if="event.group" class="text-opacity-70 text-[10px] mt-0.5" :style="{ color: textColor }">
+      {{ event.group }}
+    </div>
   </div>
 </template>
 

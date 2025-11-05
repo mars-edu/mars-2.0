@@ -1,6 +1,7 @@
 import { computed, ref } from "vue";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
+import { useJournalStore } from "@/stores/journalStore";
 import { storeToRefs } from "pinia";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
@@ -13,6 +14,7 @@ export interface CalendarEvent {
   id: string;
   title: string;
   time: string;
+  group?: string; // course and group info like "2 курс // 2 ДСФ"
   color?: string; // hex color code for the event
 }
 
@@ -32,6 +34,7 @@ export function useCalendar() {
 
   const calendarStore = useCalendarStore();
   const educationScheduleStore = useEducationScheduleStore();
+  const journalStore = useJournalStore();
   const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
 
   const setYear = (newYear: string) => {
@@ -95,10 +98,19 @@ export function useCalendar() {
             }
           }
         }
+
+        // Get group information from journal
+        let group: string | undefined = undefined;
+        const journal = journalStore.getJournalById(event.id);
+        if (journal) {
+          group = journalStore.getJournalSubtitle(journal);
+        }
+
         return {
           id: event.id,
           title: calendarStore.getEventTitle(event),
           time,
+          group,
           color: event.color, // pass through the color from store event
         };
       });
