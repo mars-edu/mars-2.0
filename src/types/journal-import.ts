@@ -12,6 +12,8 @@ export interface JournalImportStudent {
   order: number;
   fullName: string;
   attendance: (string | number | null)[];
+  finalControlForm?: string | null;
+  finalGrade?: string | number | null;
   lessonDate?: string;
   hours?: number | string | null;
   topic?: string | null;

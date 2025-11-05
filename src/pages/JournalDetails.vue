@@ -277,6 +277,19 @@
       @submit="handleRupSubmit"
     />
 
+    <!-- Journal Import Confirmation Dialog -->
+    <JournalImportConfirmDialog
+      v-if="isImportDialogOpened && importPreparedData && importMapping"
+      v-model:opened="isImportDialogOpened"
+      v-model:overwrite-mode="importOverwriteMode"
+      :stats="importPreparedData.stats"
+      :warnings="importPreparedData.warnings"
+      :unmatched-students="importMapping.unmatchedStudents"
+      :unmatched-dates="importMapping.unmatchedDates"
+      @confirm="onImportConfirm"
+      @cancel="onImportCancel"
+    />
+
     <!-- Journal Settings Popup -->
     <f7-popover
       id="journal-settings-popover"
@@ -367,7 +380,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from "vue";
+import { ref, computed, onMounted, nextTick, watch } from "vue";
 import {
   f7Page,
   f7,
@@ -396,6 +409,12 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import { storeToRefs } from "pinia";
 import { importJournalFromExcel } from "@/services/excel-parser";
 import {
+  createImportMapping,
+  prepareMarksUpdate,
+  applyUpdatesToMarks,
+} from "@/services/journal-import-mapper";
+import JournalImportConfirmDialog from "@/components/JournalImportConfirmDialog.vue";
+import {
   exportJournalToExcel,
   type JournalStudentRow,
 } from "@/services/journal-export";
@@ -403,6 +422,7 @@ import { useStudentStore } from "@/stores/studentStore";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
+import { useMarksStore } from "@/stores/marksStore";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermediateControlStore";
@@ -439,6 +459,7 @@ const studentStore = useStudentStore();
 const teacherStore = useTeacherStore();
 const specialtyStore = useSpecialtyStore();
 const selectedItemsStore = useSelectedItemsStore();
+const marksStore = useMarksStore();
 const { students: studentStoreStudents } = storeToRefs(studentStore);
 
 const currentJournal = computed(() => {
@@ -485,6 +506,13 @@ const ktpParentId = ref<string | null>(null);
 // RUP Popup state
 const isRupPopupOpened = ref(false);
 const rupInitialData = ref<any>(null);
+
+// Import dialog state
+const isImportDialogOpened = ref(false);
+const importOverwriteMode = ref(false);
+const importPreparedData = ref<ReturnType<typeof prepareMarksUpdate> | null>(null);
+const importMapping = ref<ReturnType<typeof createImportMapping> | null>(null);
+const importResult = ref<Awaited<ReturnType<typeof importJournalFromExcel>>["result"] | null>(null);
 
 const rupSpecialtyIds = computed(() => {
   const disciplineId = currentJournal.value?.disciplineId;
@@ -697,9 +725,9 @@ const onUploadClick = () => {
     try {
       f7.preloader.show();
       const summary = await importJournalFromExcel(file);
-      f7.preloader.hide();
 
       if (summary.issues.some((issue) => issue.type === "error")) {
+        f7.preloader.hide();
         const errorText = summary.issues
           .filter((issue) => issue.type === "error")
           .map((issue) => `• ${issue.message}`)
@@ -708,35 +736,61 @@ const onUploadClick = () => {
         return;
       }
 
-      const warnings = summary.issues
-        .filter((issue) => issue.type === "warning")
-        .map((issue) => `• ${issue.message}`)
-        .join("\n");
-
       const result = summary.result;
       if (!result) {
+        f7.preloader.hide();
         f7.dialog.alert("Файл обработан, но данные журнала не получены");
         return;
       }
 
-      const messageParts = [
-        `<b>Группа:</b> ${result.metadata.groupName || "не указана"}`,
-        `<b>Курс:</b> ${result.metadata.courseLabel || "-"}`,
-        `<b>Специальность:</b> ${result.metadata.specialtyLabel || "-"}`,
-        `<b>Учебный год:</b> ${result.metadata.academicYearLabel || "-"}`,
-        `<b>Дисциплина:</b> ${result.metadata.disciplineTitle || "-"}`,
-        `<b>Преподаватель:</b> ${result.metadata.teacherFullName || "-"}`,
-        `<b>Студентов:</b> ${result.students.length}`,
-        `<b>Дата столбцов:</b> ${result.metadata.lessonDates.join(", ") || "-"}`,
-      ];
-
-      if (warnings) {
-        messageParts.push(
-          `<br/><b>Предупреждения:</b><br/>${warnings.replace(/\n/g, "<br/>")}`
-        );
+      // Get journal data
+      if (!journalId.value || !currentJournal.value) {
+        f7.preloader.hide();
+        f7.dialog.alert("Журнал не найден");
+        return;
       }
 
-      f7.dialog.alert(messageParts.join("<br/>") || "Импорт завершён");
+      const journalMarks = marksStore.getJournalMarks(journalId.value);
+      if (!journalMarks || journalMarks.studentMarks.length === 0) {
+        f7.preloader.hide();
+        f7.dialog.alert("Журнал пуст. Сначала инициализируйте журнал с датами и студентами.");
+        return;
+      }
+
+      // Get first student's marks as template
+      const firstStudentMarks = journalMarks.studentMarks[0].marks;
+      const studentIds = journalMarks.studentMarks.map((sm) => sm.studentId);
+
+      // Create mapping
+      const mapping = createImportMapping(
+        result,
+        studentIds,
+        firstStudentMarks,
+        (id: string) => {
+          const student = studentStore.students.find((s) => s.id === id);
+          if (!student) return null;
+          return {
+            fullName: `${student.surname} ${student.firstName} ${student.patronymic}`.trim(),
+          };
+        }
+      );
+
+      // Prepare updates with default overwrite mode (false)
+      const prepared = prepareMarksUpdate(result, mapping, false);
+
+      f7.preloader.hide();
+
+      // Store for dialog
+      importResult.value = result;
+      importMapping.value = mapping;
+      importPreparedData.value = prepared;
+      importOverwriteMode.value = false;
+
+      // Show confirmation dialog
+      isImportDialogOpened.value = true;
+      nextTick(() => {
+        f7.popover.open("#journal-import-confirm-popover");
+      });
     } catch (error) {
       f7.preloader.hide();
       const message =
@@ -749,6 +803,71 @@ const onUploadClick = () => {
 
   input.click();
 };
+
+// Handle import confirmation
+const onImportConfirm = () => {
+  if (!importPreparedData.value || !importMapping.value || !journalId.value) {
+    f7.dialog.alert("Ошибка: данные для импорта не подготовлены");
+    return;
+  }
+
+  try {
+    f7.preloader.show();
+    f7.popover.close("#journal-import-confirm-popover");
+
+    // Apply updates to marks store
+    applyUpdatesToMarks(
+      journalId.value,
+      importPreparedData.value,
+      marksStore.getStudentMarks,
+      marksStore.updateStudentMark
+    );
+
+    f7.preloader.hide();
+
+    // Show success message
+    const stats = importPreparedData.value.stats;
+    f7.toast
+      .create({
+        text: `Импорт завершен! Обновлено ${stats.totalUpdates} значений для ${stats.matchedStudents} студентов.`,
+        closeTimeout: 3000,
+        position: "center",
+      })
+      .open();
+
+    // Clear import data
+    isImportDialogOpened.value = false;
+    importPreparedData.value = null;
+    importMapping.value = null;
+    importResult.value = null;
+  } catch (error) {
+    f7.preloader.hide();
+    const message =
+      error instanceof Error ? error.message : "Не удалось применить импорт";
+    f7.dialog.alert(message);
+  }
+};
+
+// Handle import cancel
+const onImportCancel = () => {
+  isImportDialogOpened.value = false;
+  importPreparedData.value = null;
+  importMapping.value = null;
+  importResult.value = null;
+  f7.popover.close("#journal-import-confirm-popover");
+};
+
+// Watch overwrite mode changes and recalculate
+watch(importOverwriteMode, (newMode) => {
+  if (!importMapping.value || !importResult.value) return;
+
+  // Recalculate prepared data with new overwrite mode
+  importPreparedData.value = prepareMarksUpdate(
+    importResult.value,
+    importMapping.value,
+    newMode
+  );
+});
 
 const onOpenKtpDetails = (
   header: { type: string; label: string },

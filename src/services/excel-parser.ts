@@ -329,6 +329,8 @@ function parseJournalStudents(
   headerRowIndex: number,
   attendanceStartCol: number,
   attendanceEndCol: number,
+  finalControlFormCol: number,
+  finalGradeCol: number,
   dateCol: number
 ) {
   const students: JournalImportStudent[] = [];
@@ -357,6 +359,8 @@ function parseJournalStudents(
       order,
       fullName: nameCell?.trim() ?? "",
       attendance,
+      finalControlForm: finalControlFormCol !== -1 ? (row[finalControlFormCol]?.trim() ?? null) : null,
+      finalGrade: finalGradeCol !== -1 ? (row[finalGradeCol]?.trim() ?? null) : null,
       lessonDate: row[dateCol]?.trim() ?? undefined,
       hours: row[dateCol + 1]?.trim() ?? undefined,
       topic: row[dateCol + 2]?.trim() ?? undefined,
@@ -421,7 +425,25 @@ export async function importJournalFromExcel(file: File): Promise<JournalImportS
       throw new Error("Не удалось определить колонку с датой проведения занятия");
     }
 
-    const attendanceEndCol = dateCol - 1;
+    // Detect if finalControlForm and finalGrade columns exist
+    const finalControlFormCol = headerRow.findIndex((cell) =>
+      cell?.toLowerCase()?.includes("форма итогового контроля") ||
+      cell?.toLowerCase()?.includes("қорытынды бақылау нысаны")
+    );
+
+    const finalGradeCol = headerRow.findIndex((cell) =>
+      cell?.toLowerCase()?.includes("итог") && cell?.toLowerCase()?.includes("нәтиже")
+    );
+
+    // Calculate attendance end column based on whether new columns exist
+    let attendanceEndCol: number;
+    if (finalControlFormCol !== -1 && finalGradeCol !== -1) {
+      // New format: attendance ends 3 columns before dateCol
+      attendanceEndCol = dateCol - 3;
+    } else {
+      // Old format: attendance ends 1 column before dateCol
+      attendanceEndCol = dateCol - 1;
+    }
     metadata.lessonDates = guessLessonDates(datesRow, attendanceStartCol, attendanceEndCol);
 
     const students = parseJournalStudents(
@@ -429,6 +451,8 @@ export async function importJournalFromExcel(file: File): Promise<JournalImportS
       headerRowIndex,
       attendanceStartCol,
       attendanceEndCol,
+      finalControlFormCol,
+      finalGradeCol,
       dateCol
     );
 
