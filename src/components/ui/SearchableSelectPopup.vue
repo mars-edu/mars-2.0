@@ -57,7 +57,7 @@
 <script setup lang="ts">
 import { ref, computed, reactive } from "vue";
 import Fuse from "fuse.js";
-import { f7Input, f7Radio, f7Popup, f7Page } from "framework7-vue";
+import { f7Input, f7Radio, f7Checkbox, f7Popup, f7Page } from "framework7-vue";
 import PopoverHeader from "./PopoverHeader.vue";
 
 interface SelectOption {

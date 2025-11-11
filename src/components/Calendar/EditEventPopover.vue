@@ -22,6 +22,7 @@
       <EventForm
         :parent-popover-id="'#edit-event-popover'"
         mode="edit"
+        :event-id="props.event.id"
         class="overflow-y-auto"
         :start-date="dayjs(startDate[0]).format(DATE_UI_FORMAT)"
         :end-date="dayjs(endDate[0]).format(DATE_UI_FORMAT)"

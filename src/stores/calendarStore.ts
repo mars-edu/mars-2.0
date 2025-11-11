@@ -1,6 +1,8 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useClass9Store } from "./class9Store";
+import { useKtpStore } from "./ktpStore";
+import { useAcademicYearSemesterStore } from "./academicYearSemesterStore";
 
 export interface WeeklySchedule {
   weekId: number;
@@ -13,6 +15,7 @@ export interface WeeklySchedule {
 export interface CalendarEvent {
   id: string;
   class9Id: string;
+  ktpId?: string; // Direct reference to the event's dedicated KTP
   teacherId?: string;
   startDate: string;
   startTime?: string;
@@ -62,16 +65,35 @@ export const useCalendarStore = defineStore(
     };
 
     async function addEvent(
-      eventData: Omit<CalendarEvent, "id" | "createdAt" | "updatedAt">
+      eventData: Omit<CalendarEvent, "id" | "createdAt" | "updatedAt">,
+      preGeneratedId?: string
     ) {
       loading.value = true;
       try {
         const newEvent: CalendarEvent = {
           ...eventData,
-          id: crypto.randomUUID(),
+          id: preGeneratedId || crypto.randomUUID(),
           createdAt: new Date(),
           updatedAt: new Date(),
         };
+
+        // Create event-specific KTP and link it
+        const ktpStore = useKtpStore();
+        const academicYearSemesterStore = useAcademicYearSemesterStore();
+        const semester = academicYearSemesterStore.academicYearSemesters.find(
+          (s: any) => s.id === newEvent.semester
+        );
+
+        if (semester && semester.academicYearId) {
+          const ktp = ktpStore.ensureKtpForClass9(
+            newEvent.class9Id,
+            semester.academicYearId,
+            newEvent.semester,
+            newEvent.id // Link KTP to this specific event
+          );
+          newEvent.ktpId = ktp.id;
+        }
+
         events.value.push(newEvent);
         error.value = null;
         return newEvent;
@@ -95,11 +117,32 @@ export const useCalendarStore = defineStore(
           throw new Error("Event not found");
         }
 
+        const originalEvent = events.value[index];
         const updatedEvent = {
-          ...events.value[index],
+          ...originalEvent,
           ...eventData,
           updatedAt: new Date(),
         };
+
+        // If class9Id changed, create new event-specific KTP
+        if (eventData.class9Id && eventData.class9Id !== originalEvent.class9Id) {
+          const ktpStore = useKtpStore();
+          const academicYearSemesterStore = useAcademicYearSemesterStore();
+          const semesterId = eventData.semester || originalEvent.semester;
+          const semester = academicYearSemesterStore.academicYearSemesters.find(
+            (s: any) => s.id === semesterId
+          );
+
+          if (semester && semester.academicYearId) {
+            const ktp = ktpStore.ensureKtpForClass9(
+              eventData.class9Id,
+              semester.academicYearId,
+              semesterId,
+              id // Link KTP to this specific event
+            );
+            updatedEvent.ktpId = ktp.id;
+          }
+        }
 
         events.value[index] = updatedEvent;
         error.value = null;

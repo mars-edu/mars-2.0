@@ -27,6 +27,7 @@
               label="Специальность"
               placeholder="Выберите специальность"
               v-model="filters.specialty"
+              :multiple="true"
               :options="specialtyOptions"
               name="student-specialty"
               id="student-specialty"
@@ -217,7 +218,7 @@ const localSelectedStudents = reactive(new Set<string>());
 const filters = reactive({
   searchTerm: "",
   language: "all",
-  specialty: "all",
+  specialty: [] as string[],
   course: "all",
   gender: "",
 });
@@ -259,7 +260,7 @@ const debugText = computed(() => {
   );
 
   const afterSpecialtyFilter = afterLanguage.filter(
-    (s) => filters.specialty === "all" || s.specialty === filters.specialty
+    (s) => filters.specialty.length === 0 || filters.specialty.includes(s.specialty)
   );
 
   const afterGender = afterSpecialtyFilter.filter(
@@ -383,7 +384,7 @@ const filteredStudents = computed(() => {
       (s) => filters.language === "all" || s.language === filters.language
     )
     .filter(
-      (s) => filters.specialty === "all" || s.specialty === filters.specialty
+      (s) => filters.specialty.length === 0 || filters.specialty.includes(s.specialty)
     )
     .filter((s) => !filters.gender || s.gender === filters.gender)
     .filter((s) =>
@@ -475,7 +476,7 @@ const resetFilters = () => {
   Object.assign(filters, {
     searchTerm: "",
     language: "all",
-    specialty: "all",
+    specialty: [],
     course: "all",
     gender: "",
   });
@@ -491,9 +492,9 @@ const toggleStudentSelection = (studentId: string) => {
 
 const toggleSelectAllStudents = () => {
   if (isAllStudentsSelected.value) {
-    // localSelectedStudents.clear();
+    localSelectedStudents.clear();
   } else {
-    // localSelectedStudents.clear();
+    localSelectedStudents.clear();
     filteredStudents.value.forEach((student) =>
       localSelectedStudents.add(student.id)
     );

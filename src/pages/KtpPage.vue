@@ -68,16 +68,15 @@
                 <div
                   v-for="item in filteredKtpItems"
                   :key="item.id"
-                  class="grid grid-cols-[minmax(0,_1fr)_100px_100px_120px_100px] gap-4 px-4 py-3 items-center cursor-pointer"
-                  :class="{
-                    'ring-2 ring-primary bg-primary/10 font-semibold':
-                      item.id === selectedItemId,
-                    'hover:bg-muted/50': item.id !== selectedItemId,
-                  }"
+                  class="grid grid-cols-[minmax(0,_1fr)_100px_100px_120px_100px] gap-4 px-4 py-3 items-center cursor-pointer hover:bg-muted/50"
                   @click="selectItem(item)"
                 >
                   <div>
                     {{ item.moduleIndex }} - {{ item.moduleName }}
+                    <br />
+                    <span class="text-muted-foreground text-xs font-medium">{{
+                      getKtpSubtitle(item)
+                    }}</span>
                     <br />
                     <span class="text-muted-foreground text-sm">{{
                       item.learningOutcome
@@ -143,6 +142,8 @@ import { useSemesterStore } from "@/stores/semesterStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { useKtpStore } from "@/stores/ktpStore";
+import { useJournalStore } from "@/stores/journalStore";
+import { useCalendarStore } from "@/stores/calendarStore";
 import { storeToRefs } from "pinia";
 
 const activeNavItem = ref("ktp");
@@ -152,6 +153,8 @@ const { academicYears } = storeToRefs(academicYearStore);
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 
 const class9Store = useClass9Store();
+const journalStore = useJournalStore();
+const calendarStore = useCalendarStore();
 
 // Get KTP data and enrich with class9 information
 const ktpItems = computed(() => {
@@ -240,6 +243,33 @@ const isAddDisabled = computed(
 const getCourseNumber = (courseId: string) => {
   const course = courseStore.getCourseById(courseId);
   return course ? course.number : "—";
+};
+
+const getKtpSubtitle = (item: any) => {
+  // Find the calendar event that corresponds to this KTP's class9Id and semester
+  const events = calendarStore.filteredEvents;
+  const matchingEvent = events.find((event: any) => {
+    const actualEvent = event._custom?.value || event;
+    return (
+      actualEvent.class9Id === item.id &&
+      actualEvent.semester === item.semesterId
+    );
+  });
+
+  if (!matchingEvent) {
+    return "";
+  }
+
+  // Get the journal using the event ID
+  const eventId = matchingEvent._custom?.value?.id || matchingEvent.id;
+  const journal = journalStore.getJournalById(eventId);
+
+  if (!journal) {
+    return "";
+  }
+
+  // Use the journalStore's subtitle method
+  return journalStore.getJournalSubtitle(journal);
 };
 
 const { getKtpIdForClass9, getModuleTitleForKtp } = storeToRefs(ktpStore);

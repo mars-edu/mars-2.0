@@ -6,6 +6,7 @@ import type {
   PiniaPluginContext,
   DefineStoreOptionsBase,
 } from "pinia";
+import { nextTick } from "vue";
 import { useSyncStore } from "../../stores/syncStore";
 
 declare module "pinia" {
@@ -140,7 +141,7 @@ const connect = () => {
       reject(new Error("WebSocket connection failed"));
     };
 
-    ws.onmessage = (event: MessageEvent) => {
+    ws.onmessage = async (event: MessageEvent) => {
       try {
         const message: WsMessage = pluginOptions!.serializer.deserialize(
           event.data
@@ -178,6 +179,9 @@ const connect = () => {
               const syncStore = useSyncStore();
               syncStore.endSync(store.$id);
             } catch {}
+
+            // Wait for Vue to process the patch before removing the flag
+            await nextTick();
           } else if (
             message.type === "STATE_PATCH" &&
             message.patch &&
@@ -198,6 +202,9 @@ const connect = () => {
               const syncStore = useSyncStore();
               syncStore.endSync(store.$id);
             } catch {}
+
+            // Wait for Vue to process the patch before removing the flag
+            await nextTick();
           }
         } finally {
           patchingStores.delete(store.$id);

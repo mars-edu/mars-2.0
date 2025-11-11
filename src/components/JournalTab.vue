@@ -1542,7 +1542,8 @@ const getMark = (studentIndex: number, colIndex: number, markIndex: number) => {
   if (!studentId || !props.journalId) return "";
 
   if (colIndex < 0) {
-    return markIndex === 0 ? getStudentAverageScore(studentId) : "";
+    // Final summary column - use getStudentFinalGrade instead of average
+    return markIndex === 0 ? getStudentFinalGrade(studentId) : "";
   }
 
   // Map canonical column index to store column index
@@ -1556,6 +1557,50 @@ const getMark = (studentIndex: number, colIndex: number, markIndex: number) => {
   return String(mark ?? "");
 };
 
+// Pending updates map for optimistic UI
+const pendingUpdates = new Map<string, { value: string | null; timestamp: number }>();
+const userEditInProgress = ref(false);
+
+// Debounced mark update function (300ms delay to batch rapid changes)
+const debouncedUpdateMark = debounce(
+  async (
+    studentIndex: number,
+    colIndex: number,
+    markIndex: number,
+    value: string | null
+  ) => {
+    userEditInProgress.value = true;
+
+    const studentId = getStudentIdByIndex(studentIndex);
+    if (!studentId || !props.journalId) {
+      userEditInProgress.value = false;
+      return;
+    }
+
+    const storeColIndex = getStoreIndexForCanonicalIndex(colIndex);
+    if (storeColIndex == null || storeColIndex < 0) {
+      userEditInProgress.value = false;
+      scheduleRebuildMarks();
+      return;
+    }
+
+    await marksStore.updateStudentMark(
+      props.journalId,
+      studentId,
+      storeColIndex,
+      markIndex,
+      value
+    );
+
+    const key = `${studentIndex}-${colIndex}-${markIndex}`;
+    pendingUpdates.delete(key);
+    emit("update-students", students.value);
+
+    userEditInProgress.value = false;
+  },
+  300
+);
+
 const setMark = (
   studentIndex: number,
   colIndex: number,
@@ -1567,19 +1612,13 @@ const setMark = (
   if (colIndex < 0) return;
 
   const newValue = value === "+" || value === "" ? null : value;
-  const storeColIndex = getStoreIndexForCanonicalIndex(colIndex);
-  if (storeColIndex == null || storeColIndex < 0) {
-    scheduleRebuildMarks();
-    return;
-  }
-  marksStore.updateStudentMark(
-    props.journalId,
-    studentId,
-    storeColIndex,
-    markIndex,
-    newValue
-  );
-  emit("update-students", students.value);
+
+  // Store pending update for optimistic UI
+  const key = `${studentIndex}-${colIndex}-${markIndex}`;
+  pendingUpdates.set(key, { value: newValue, timestamp: Date.now() });
+
+  // Debounced store update
+  debouncedUpdateMark(studentIndex, colIndex, markIndex, newValue);
 };
 
 // Utility function to check if a date is in the future
@@ -1604,10 +1643,6 @@ const handleCellClick = (
       title: 'Изменить оценку?',
       text: `Текущая оценка: ${currentMark}. Вы действительно хотите изменить её?`,
       buttons: [
-        {
-          text: 'Отмена',
-          close: true,
-        },
         {
           text: 'Нет',
           close: true,
@@ -1675,7 +1710,7 @@ const cancelEdit = () => {
   editingCell.value = null;
 };
 
-const navigate = (direction: "up" | "down" | "left" | "right") => {
+const navigate = async (direction: "up" | "down" | "left" | "right") => {
   if (!editingCell.value) return;
 
   const {
@@ -1684,6 +1719,10 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
     markIndex: startMark,
   } = editingCell.value;
   setMark(startStudent, startCol, startMark, editedValue.value);
+
+  // Flush pending updates before moving to prevent data loss
+  await debouncedUpdateMark.flush();
+
   editingCell.value = null;
 
   nextTick(() => {
@@ -1867,8 +1906,8 @@ const onRecalcClick = () => {
   f7.popover.open("#recalc-popover", "#recalc-button");
 };
 
-const recalcSessions = () => {
-  computeAllSessionGrades({ force: true });
+const recalcSessions = async () => {
+  await computeAllSessionGrades({ force: true });
   f7.popover.close("#recalc-popover");
 };
 
@@ -1941,7 +1980,7 @@ const computeSessionGradeForStudent = (
   return grade.toFixed(1);
 };
 
-const computeAllSessionGrades = (opts?: {
+const computeAllSessionGrades = async (opts?: {
   force?: boolean;
   labels?: Array<string | RegExp>;
 }) => {
@@ -1979,6 +2018,9 @@ const computeAllSessionGrades = (opts?: {
   const students = marksStore.getJournalStudentMarks(props.journalId);
   if (!Array.isArray(students) || students.length === 0) return;
 
+  // Collect all update promises to await them together
+  const updatePromises: Promise<boolean>[] = [];
+
   sessionColumns.forEach(({ mark, canonicalIndex }) => {
     const sessionMark = mark as Mark;
     const dateIndices = Array.isArray(sessionMark.sessionDateIndices)
@@ -1998,15 +2040,20 @@ const computeAllSessionGrades = (opts?: {
         studentMark.marks?.[storeIndex]?.values?.[0] ?? null;
       if (existingValue === grade) return;
 
-      marksStore.updateStudentMark(
+      // Queue the update and collect the promise
+      const updatePromise = marksStore.updateStudentMark(
         props.journalId!,
         studentMark.studentId,
         storeIndex,
         0,
         grade
       );
+      updatePromises.push(updatePromise);
     });
   });
+
+  // Wait for all session grade updates to complete before returning
+  await Promise.all(updatePromises);
 };
 
 /**
@@ -2122,6 +2169,118 @@ const getStudentAverageScore = (studentId: string): string => {
   return average.toFixed(1);
 };
 
+const getStudentFinalGrade = (studentId: string): string => {
+  if (!props.journalId) return "—";
+
+  const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
+  if (!studentMarks) return "—";
+
+  const canonical = canonicalTemplate.value || [];
+
+  // DEBUG: Log all canonical columns to understand the structure
+  console.log("[getStudentFinalGrade] All canonical columns:", {
+    totalColumns: canonical.length,
+    columns: canonical.map((mark: any, index: number) => ({
+      index,
+      type: mark?.type,
+      controlType: mark?.controlType,
+      label: mark?.label,
+      shortName: mark?.shortName,
+      // Show all keys to understand structure
+      allKeys: Object.keys(mark || {}),
+      fullMark: mark,
+    })),
+  });
+
+  // Find all intermediate control columns (РК1, РК2, etc.)
+  const intermediateControlColumns = canonical
+    .map((mark: any, index: number) => ({ mark, index }))
+    .filter(({ mark }) => mark?.type === "session" && mark?.controlType === "intermediate");
+
+  console.log("[getStudentFinalGrade] Debug info:", {
+    studentId,
+    intermediateControlColumnsCount: intermediateControlColumns.length,
+    intermediateControlColumns: intermediateControlColumns.map(({ mark, index }) => ({
+      index,
+      label: mark?.label,
+      controlType: mark?.controlType,
+      type: mark?.type,
+    })),
+  });
+
+  // If no intermediate controls are scheduled, return "—"
+  if (intermediateControlColumns.length === 0) {
+    console.log("[getStudentFinalGrade] No intermediate controls found, returning —");
+    return "—";
+  }
+
+  // Check if student has values for ALL intermediate controls
+  const rkGrades: number[] = [];
+
+  for (const { mark, index: canonicalIndex } of intermediateControlColumns) {
+    const storeColIndex = getStoreIndexForCanonicalIndex(canonicalIndex);
+
+    console.log("[getStudentFinalGrade] Checking РК column:", {
+      canonicalIndex,
+      storeColIndex,
+      label: mark?.label,
+    });
+
+    if (storeColIndex == null || storeColIndex < 0) {
+      console.log("[getStudentFinalGrade] Store column not found, returning —");
+      return "—";
+    }
+
+    if (storeColIndex >= studentMarks.length) {
+      console.log("[getStudentFinalGrade] Store column out of bounds, returning —");
+      return "—";
+    }
+
+    const markValues = studentMarks[storeColIndex].values;
+
+    console.log("[getStudentFinalGrade] Mark values:", {
+      storeColIndex,
+      markValues,
+      firstValue: markValues?.[0],
+    });
+
+    // Get the first value from the РК column (usually there's only one value per session)
+    const rkValue = markValues?.[0];
+
+    if (rkValue === null || rkValue === "" || rkValue === undefined) {
+      console.log("[getStudentFinalGrade] РК value is empty, returning —");
+      return "—";
+    }
+
+    // Try to parse as number
+    const numericValue = Number(rkValue);
+    if (isNaN(numericValue)) {
+      console.log("[getStudentFinalGrade] РК value is not a number, returning —", { rkValue });
+      return "—";
+    }
+
+    console.log("[getStudentFinalGrade] Found valid РК grade:", numericValue);
+    rkGrades.push(numericValue);
+  }
+
+  // If we collected fewer grades than expected, some РК are missing
+  if (rkGrades.length < intermediateControlColumns.length) {
+    console.log("[getStudentFinalGrade] Not all РК collected, returning —", {
+      collected: rkGrades.length,
+      expected: intermediateControlColumns.length,
+    });
+    return "—";
+  }
+
+  // Calculate average of РК grades only
+  const average = rkGrades.reduce((sum, grade) => sum + grade, 0) / rkGrades.length;
+  console.log("[getStudentFinalGrade] Calculated final grade:", {
+    rkGrades,
+    average: average.toFixed(1),
+  });
+  return average.toFixed(1);
+};
+
 const getScoreBadgeClass = (score: string): string => {
   if (score === "—") {
     return "bg-gray-400";
@@ -2232,9 +2391,10 @@ const visibleColumnIndices = computed(() => {
   return visibleHeaders.value.map((h) => h.index);
 });
 
-const scheduleRecomputeSessionGrades = debounce(() => {
-  computeAllSessionGrades();
-}, 150);
+// Increased delay from 150ms to 500ms to ensure user edits (300ms) complete first
+const scheduleRecomputeSessionGrades = debounce(async () => {
+  await computeAllSessionGrades();
+}, 500);
 
 watch(
   () => props.journalSettings,
@@ -2247,6 +2407,16 @@ watch(
 // Rebuild marks when sessions list changes (ensures session columns appear on load)
 const rebuildMarks = async () => {
   if (!(props.journalId && currentJournal.value?.students?.length)) return;
+
+  // If user is editing, defer the rebuild to avoid wiping pending changes
+  if (userEditInProgress.value || pendingUpdates.size > 0) {
+    console.log("[JournalTab] Deferring rebuildMarks - user edit in progress");
+    // Flush pending updates first
+    await debouncedUpdateMark.flush();
+    // Wait a bit for updates to complete
+    await nextTick();
+  }
+
   const markTemplate = generateDates();
   marksStore.initializeJournalMarks(
     props.journalId,
@@ -2305,8 +2475,11 @@ watch(
   },
   { deep: true }
 );
-const updateStudent = (updatedStudent: any) => {
+const updateStudent = async (updatedStudent: any) => {
   if (!updatedStudent || !props.journalId) return;
+
+  // Flush pending debounced updates before bulk update to prevent race conditions
+  await debouncedUpdateMark.flush();
 
   // Update marks in store
   if (updatedStudent.marks) {
@@ -2319,8 +2492,11 @@ const updateStudent = (updatedStudent: any) => {
   scheduleRecomputeSessionGrades();
 };
 
-const updateStudents = (updatedStudents: any[]) => {
+const updateStudents = async (updatedStudents: any[]) => {
   if (updatedStudents && props.journalId) {
+    // Flush pending debounced updates before bulk update to prevent race conditions
+    await debouncedUpdateMark.flush();
+
     // Update all students' marks in store
     const studentMarksToUpdate = updatedStudents.map((student) => ({
       studentId: student.studentId,
@@ -2373,7 +2549,7 @@ const getExportSnapshot = () => {
         studentId,
         fullName: getStudentFullName(studentId),
         attendance,
-        finalSummary: getStudentAverageScore(studentId),
+        finalSummary: getStudentFinalGrade(studentId),
       };
     }
   );

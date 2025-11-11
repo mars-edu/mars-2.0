@@ -179,8 +179,8 @@
 
     <KtpDetailPopup
       :opened="isKtpPopupOpen"
-      :ktp-id="getKtpIdForClass9(class9IdModel) || null"
-      :module-title="getModuleTitleForKtp(getKtpIdForClass9(class9IdModel))"
+      :ktp-id="currentKtpId"
+      :module-title="currentKtpTitle"
       @update:opened="(v:boolean)=>{ isKtpPopupOpen=v }"
     />
 
@@ -262,6 +262,7 @@ const props = defineProps<{
   parentPopoverId: string;
   mode?: "add" | "edit";
   semester?: string;
+  eventId?: string; // Event ID for linking to dedicated KTP (only in edit mode)
 }>();
 
 // Add watchers to track prop changes
@@ -1069,6 +1070,43 @@ const onSelectedWeekDayChanged = () => {
 const studentPopup = ref<{ open: (p: string[]) => void } | null>(null);
 const isKtpPopupOpen = ref(false);
 
+// Computed property for KTP ID that ensures KTP exists
+const currentKtpId = computed(() => {
+  const activeSemester = getActiveAcademicYearSemester.value as any;
+  const academicYearId = activeSemester?.academicYearId;
+  const semesterId = activeSemester?.id || props.semester;
+
+  if (!class9IdModel.value || !academicYearId || !semesterId) {
+    return null;
+  }
+
+  // Ensure KTP exists (will create if it doesn't exist)
+  // Pass eventId to create event-specific KTP (if eventId exists)
+  const ktp = ktpStore.ensureKtpForClass9(
+    class9IdModel.value,
+    academicYearId,
+    semesterId,
+    props.eventId // Event-specific KTP if eventId is provided
+  );
+
+  return ktp.id;
+});
+
+// Computed property for KTP module title
+const currentKtpTitle = computed(() => {
+  if (!currentKtpId.value || !class9IdModel.value) {
+    return undefined;
+  }
+
+  // Get the class9 item to build the proper title
+  const class9Item = class9Store.getClass9ById(class9IdModel.value);
+  if (!class9Item) {
+    return undefined;
+  }
+
+  return `${class9Item.moduleIndex} - ${class9Item.moduleName}`;
+});
+
 const openStreamSelection = () => {
   console.log("🔄 openStreamSelection called", {
     participantsModel: participantsModel.value,
@@ -1090,10 +1128,19 @@ const handleStudentPopupClose = () => {
 };
 
 const openKtpPopup = () => {
+  if (!class9IdModel.value) {
+    f7.dialog.alert(
+      "Пожалуйста, сначала выберите результат обучения/дисциплину",
+      "Внимание"
+    );
+    return;
+  }
+
   console.log("🔄 openKtpPopup called", {
     class9IdModel: class9IdModel.value,
-    ktpId: getKtpIdForClass9.value,
+    ktpId: currentKtpId.value,
   });
+
   isKtpPopupOpen.value = true;
 };
 

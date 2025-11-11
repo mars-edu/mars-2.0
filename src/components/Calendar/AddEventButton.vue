@@ -35,6 +35,7 @@
           <EventForm
             :parent-popover-id="'#add-event-popover'"
             mode="add"
+            :event-id="tempEventId"
             class="overflow-y-auto"
             :start-date="dayjs(startDate[0]).format(DATE_UI_FORMAT)"
             :end-date="dayjs(endDate[0]).format(DATE_UI_FORMAT)"
@@ -109,6 +110,7 @@ const participants = ref<string[]>([]);
 const formError = ref<string | null>(null);
 const eventColor = ref({ hex: "#3F51B5" });
 const semester = ref("");
+const tempEventId = ref<string>(""); // Pre-generated event ID for creating KTP before saving
 
 const selectedWeekDays = ref<
   {
@@ -183,8 +185,11 @@ const handleAddEvent = async () => {
       semester: semester.value,
     };
 
-    console.log("📤 handleAddEvent calling calendarStore.addEvent", eventData);
-    const newEvent = await calendarStore.addEvent(eventData);
+    console.log("📤 handleAddEvent calling calendarStore.addEvent", {
+      eventData,
+      tempEventId: tempEventId.value,
+    });
+    const newEvent = await calendarStore.addEvent(eventData, tempEventId.value);
 
     console.log("✅ handleAddEvent success", newEvent);
     emit("event-added", newEvent);
@@ -206,9 +211,13 @@ const resetForm = () => {
   formError.value = null;
   eventColor.value = { hex: "#3F51B5" };
   semester.value = "";
+  tempEventId.value = ""; // Reset temporary event ID
 };
 
 const openAddEventPopover = () => {
+  // Generate temporary event ID for KTP creation
+  tempEventId.value = crypto.randomUUID();
+  console.log("🆔 Generated temporary event ID:", tempEventId.value);
   f7.popover.open("#add-event-popover");
 };
 

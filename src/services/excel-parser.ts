@@ -75,6 +75,56 @@ function getCellValueAsString(cell: ExcelJS.Cell): string {
   return String(cell.value);
 }
 
+/**
+ * Detect which column contains lesson numbers (numeric values starting from 1)
+ * Returns the column index (0-based for arrays)
+ */
+function detectLessonNumberColumn(rawData: any[][], headerRowIndex: number): number {
+  // Check first 10 columns to find which one has numeric lesson numbers
+  for (let col = 0; col < 10; col++) {
+    let numericCount = 0;
+    let sequentialCount = 0;
+    const values: number[] = [];
+
+    // Check up to 10 rows after header
+    for (let i = 1; i <= Math.min(10, rawData.length - headerRowIndex - 1); i++) {
+      const rowIndex = headerRowIndex + i;
+      if (rowIndex >= rawData.length) break;
+
+      const row = rawData[rowIndex];
+      if (!row || !Array.isArray(row) || col >= row.length) continue;
+
+      const cellValue = row[col];
+      if (cellValue === null || cellValue === undefined) continue;
+
+      const parsed = parseInt(String(cellValue).trim());
+      if (!isNaN(parsed) && parsed > 0) {
+        numericCount++;
+        values.push(parsed);
+      }
+    }
+
+    // Check if values are sequential (1, 2, 3, ...)
+    if (values.length >= 2) {
+      values.sort((a, b) => a - b);
+      let isSequential = true;
+      for (let i = 1; i < values.length; i++) {
+        if (values[i] - values[i - 1] === 1) {
+          sequentialCount++;
+        }
+      }
+
+      // If we have at least 2 numeric values and they're mostly sequential, this is likely the lesson number column
+      if (numericCount >= 2 && (sequentialCount >= numericCount - 2 || values[0] === 1)) {
+        return col;
+      }
+    }
+  }
+
+  // Default to column 0 if no pattern found
+  return 0;
+}
+
 export function parseEducationalSchedule(file: File): Promise<ParseResult> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -115,6 +165,10 @@ export function parseEducationalSchedule(file: File): Promise<ParseResult> {
           throw new Error("No headers found in the Excel file");
         }
 
+        // Detect which column contains lesson numbers
+        const lessonNumberCol = detectLessonNumberColumn(rawData, headerRowIndex);
+        console.log(`Detected lesson number column: ${lessonNumberCol} (Column ${String.fromCharCode(65 + lessonNumberCol)})`);
+
         const dataRows = [];
         for (let i = headerRowIndex + 1; i < rawData.length; i++) {
           const row = rawData[i];
@@ -131,16 +185,18 @@ export function parseEducationalSchedule(file: File): Promise<ParseResult> {
         const lessons: ParsedLesson[] = [];
 
         for (const row of dataRows) {
-          if (!Array.isArray(row) || !row[0] || isNaN(parseInt(row[0])))
+          // Use detected column offset
+          const lessonNumberValue = row[lessonNumberCol];
+          if (!Array.isArray(row) || !lessonNumberValue || isNaN(parseInt(String(lessonNumberValue))))
             continue;
 
           const lesson: ParsedLesson = {
-            lessonNumber: parseInt(row[0]),
-            subject: cleanString(row[1]),
-            hours: parseHours(row[2]),
-            lessonType: cleanString(row[3]),
-            homework: cleanString(row[4]),
-            notes: cleanString(row[5]),
+            lessonNumber: parseInt(String(lessonNumberValue)),
+            subject: cleanString(row[lessonNumberCol + 1]),
+            hours: parseHours(row[lessonNumberCol + 2]),
+            lessonType: cleanString(row[lessonNumberCol + 3]),
+            homework: cleanString(row[lessonNumberCol + 4]),
+            notes: cleanString(row[lessonNumberCol + 5]),
           };
 
           lessons.push(lesson);
@@ -190,17 +246,54 @@ export function parseEducationalScheduleEnhanced(
           throw new Error('No worksheet found');
         }
 
+        // Find header row by checking first 10 columns
         let headerRow = 0;
         for (let r = 1; r <= 100; r++) {
-          const cell = sheet.getRow(r).getCell(1);
-          if (cell.value) {
-            headerRow = r;
-            break;
+          for (let c = 1; c <= 10; c++) {
+            const cell = sheet.getRow(r).getCell(c);
+            if (cell.value) {
+              headerRow = r;
+              break;
+            }
+          }
+          if (headerRow > 0) break;
+        }
+
+        if (headerRow === 0) {
+          throw new Error('No header row found');
+        }
+
+        // Detect lesson number column by checking multiple columns
+        let lessonNumberCol = 1;
+        for (let c = 1; c <= 10; c++) {
+          let numericCount = 0;
+          const values: number[] = [];
+
+          for (let r = headerRow + 1; r <= Math.min(headerRow + 10, 100); r++) {
+            const cell = sheet.getRow(r).getCell(c);
+            if (cell.value !== null && cell.value !== undefined) {
+              const parsed = parseInt(getCellValueAsString(cell));
+              if (!isNaN(parsed) && parsed > 0) {
+                numericCount++;
+                values.push(parsed);
+              }
+            }
+          }
+
+          // If we found numeric sequential values starting from 1, this is the lesson number column
+          if (values.length >= 2) {
+            values.sort((a, b) => a - b);
+            if (values[0] === 1 && numericCount >= 2) {
+              lessonNumberCol = c;
+              break;
+            }
           }
         }
 
+        console.log(`Enhanced parser: Detected lesson number column: ${lessonNumberCol}`);
+
         const headers: string[] = [];
-        for (let c = 1; c <= 10; c++) {
+        for (let c = lessonNumberCol; c <= 10; c++) {
           const cell = sheet.getRow(headerRow).getCell(c);
           if (cell.value) {
             headers.push(getCellValueAsString(cell));
@@ -211,7 +304,7 @@ export function parseEducationalScheduleEnhanced(
 
         const lessons: ParsedLesson[] = [];
         for (let r = headerRow + 1; r <= 100; r++) {
-          const lessonNumberCell = sheet.getRow(r).getCell(1);
+          const lessonNumberCell = sheet.getRow(r).getCell(lessonNumberCol);
           if (!lessonNumberCell.value) break;
 
           const lessonNumber = parseInt(getCellValueAsString(lessonNumberCell));
@@ -219,10 +312,10 @@ export function parseEducationalScheduleEnhanced(
 
           const lesson: any = { lessonNumber };
 
-          for (let c = 2; c <= headers.length; c++) {
+          for (let c = lessonNumberCol + 1; c <= lessonNumberCol + headers.length; c++) {
             const cell = sheet.getRow(r).getCell(c);
             const value = cell.value;
-            lesson[headers[c - 1]] =
+            lesson[headers[c - lessonNumberCol]] =
               typeof value === "number" ? value : getCellValueAsString(cell);
           }
 

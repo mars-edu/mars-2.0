@@ -130,15 +130,17 @@
                 class="page-content"
                 :tab-active="activeTab === 'participants'"
               >
-                <div class="flex flex-col gap-4">
-                  <div class="text-center py-8">
-                    <h3 class="text-lg font-medium text-muted-foreground">
-                      Участники
-                    </h3>
-                    <p class="text-sm text-muted-foreground mt-2">
-                      Здесь будут отображаться участники журнала
-                    </p>
-                  </div>
+                <div class="flex flex-col gap-4 p-4">
+                  <StudentListTable
+                    :student-ids="currentJournal?.students || []"
+                    :show-filters="true"
+                    :show-row-number="true"
+                    :show-course="true"
+                    :show-specialty="true"
+                    :show-language="true"
+                    :clickable="true"
+                    @student-click="handleStudentClick"
+                  />
                 </div>
               </f7-tab>
 
@@ -147,13 +149,14 @@
                 class="page-content"
                 :tab-active="activeTab === 'planning'"
               >
-                <div class="flex flex-col gap-4">
-                  <div class="text-center py-8">
-                    <h3 class="text-lg font-medium text-muted-foreground">
-                      Тематическое планирование
-                    </h3>
-                    <p class="text-sm text-muted-foreground mt-2">
-                      Здесь будет тематическое планирование
+                <div class="h-full">
+                  <KtpDetailPopupBody
+                    v-if="ktpIdForJournal"
+                    :ktp-id="ktpIdForJournal"
+                  />
+                  <div v-else class="text-center py-8">
+                    <p class="text-sm text-muted-foreground">
+                      Дисциплина не найдена
                     </p>
                   </div>
                 </div>
@@ -376,6 +379,13 @@
         </div>
       </div>
     </f7-popover>
+
+    <!-- Student Edit Popover -->
+    <div id="student-edit-trigger" style="display: none;"></div>
+    <EditStudentButton
+      v-if="selectedStudentForEdit"
+      :student="selectedStudentForEdit"
+    />
   </f7-page>
 </template>
 
@@ -397,6 +407,7 @@ import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useJournalStore } from "@/stores/journalStore";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useClass9Store } from "@/stores/class9Store";
+import { useKtpStore } from "@/stores/ktpStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import JournalTab from "@/components/JournalTab.vue";
 import JournalHeader from "@/components/JournalHeader.vue";
@@ -404,8 +415,11 @@ import JournalDebugPanel from "@/components/JournalDebugPanel.vue";
 import FloatingJournalRow from "@/components/FloatingJournalRow.vue";
 import DateColumnFocus from "@/components/DateColumnFocus.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
+import KtpDetailPopupBody from "@/components/KtpDetailPopupBody.vue";
 import Class9Popup from "@/components/Class9Popup.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import StudentListTable from "@/components/StudentListTable.vue";
+import EditStudentButton from "@/components/EditStudentButton.vue";
 import { storeToRefs } from "pinia";
 import { importJournalFromExcel } from "@/services/excel-parser";
 import {
@@ -455,6 +469,7 @@ const calendarStore = useCalendarStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const class9Store = useClass9Store();
 const { class9Options } = storeToRefs(class9Store);
+const ktpStore = useKtpStore();
 const studentStore = useStudentStore();
 const teacherStore = useTeacherStore();
 const specialtyStore = useSpecialtyStore();
@@ -503,6 +518,9 @@ const focusedDateIndex = ref(0);
 const isKtpPopupOpened = ref(false);
 const ktpParentId = ref<string | null>(null);
 
+// Student edit state
+const selectedStudentForEdit = ref<any>(null);
+
 // RUP Popup state
 const isRupPopupOpened = ref(false);
 const rupInitialData = ref<any>(null);
@@ -522,8 +540,15 @@ const rupSpecialtyIds = computed(() => {
 });
 
 const rupAcademicYearId = computed(() => {
-  return selectedItemsStore.selectedAcademicYearId || 
+  return selectedItemsStore.selectedAcademicYearId ||
     academicYearStore.getActiveAcademicYear?.id || "";
+});
+
+// Get the proper KTP ID for the journal's discipline
+const ktpIdForJournal = computed(() => {
+  const disciplineId = currentJournal.value?.disciplineId;
+  if (!disciplineId) return null;
+  return ktpStore.getKtpIdForClass9(disciplineId);
 });
 
 const journalTabRef = ref<InstanceType<typeof JournalTab> | null>(null);
@@ -805,7 +830,7 @@ const onUploadClick = () => {
 };
 
 // Handle import confirmation
-const onImportConfirm = () => {
+const onImportConfirm = async () => {
   if (!importPreparedData.value || !importMapping.value || !journalId.value) {
     f7.dialog.alert("Ошибка: данные для импорта не подготовлены");
     return;
@@ -816,7 +841,7 @@ const onImportConfirm = () => {
     f7.popover.close("#journal-import-confirm-popover");
 
     // Apply updates to marks store
-    applyUpdatesToMarks(
+    await applyUpdatesToMarks(
       journalId.value,
       importPreparedData.value,
       marksStore.getStudentMarks,
@@ -935,6 +960,14 @@ const saveJournalSettings = () => {
   // TODO: Implement saving journal settings to backend/store
   console.log("Saving journal settings:", journalSettings.value);
   closeJournalSettings();
+};
+
+// Handle student click from StudentListTable
+const handleStudentClick = (student: any) => {
+  selectedStudentForEdit.value = student;
+  nextTick(() => {
+    f7.popover.open(`#edit-student-popover-${student.id}`, `#student-edit-trigger`);
+  });
 };
 
 // Get computed properties from JournalTab component

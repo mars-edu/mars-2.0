@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, nextTick } from "vue";
 import type { Mark, StudentMark, JournalMarks } from "@/types/marks";
 import { useJournalHistoryStore } from "./journalHistoryStore";
 
@@ -9,6 +9,28 @@ export const useMarksStore = defineStore(
     const journalMarks = ref<Record<string, JournalMarks>>({});
     const loading = ref(false);
     const error = ref<string | null>(null);
+
+    // Update queue for atomic operations
+    const updateQueue: Array<() => void | Promise<void>> = [];
+    let processingQueue = false;
+
+    // Process queued updates sequentially to prevent race conditions
+    const processUpdateQueue = async () => {
+      if (processingQueue || updateQueue.length === 0) return;
+
+      processingQueue = true;
+      while (updateQueue.length > 0) {
+        const update = updateQueue.shift();
+        if (update) {
+          try {
+            await update();
+          } catch (err) {
+            console.error("[marksStore] Error processing queued update:", err);
+          }
+        }
+      }
+      processingQueue = false;
+    };
 
     // Get marks for a specific journal
     const getJournalMarks = computed(() => {
@@ -191,57 +213,70 @@ export const useMarksStore = defineStore(
       markIndex: number,
       valueIndex: number,
       value: string | null
-    ) => {
-      const journal = journalMarks.value[journalId];
-      if (!journal) {
-        return false;
-      }
+    ): Promise<boolean> => {
+      return new Promise<boolean>((resolve) => {
+        // Queue the update to ensure atomic execution
+        updateQueue.push(async () => {
+          const journal = journalMarks.value[journalId];
+          if (!journal) {
+            resolve(false);
+            return;
+          }
 
-      const studentMark = journal.studentMarks.find(
-        (sm) => sm.studentId === studentId
-      );
-      if (!studentMark) {
-        return false;
-      }
-
-      if (
-        markIndex >= 0 &&
-        markIndex < studentMark.marks.length &&
-        valueIndex >= 0 &&
-        valueIndex < studentMark.marks[markIndex].values.length
-      ) {
-        // Capture old value BEFORE changing
-        const oldValue = studentMark.marks[markIndex].values[valueIndex];
-
-        // Make the change
-        studentMark.marks[markIndex].values[valueIndex] = value;
-        journal.lastUpdated = new Date().toISOString();
-
-        // Record history (only if value actually changed)
-        if (oldValue !== value) {
-          const historyStore = useJournalHistoryStore();
-          const mark = studentMark.marks[markIndex];
-          const columnLabel = mark.label || mark.date || `Column ${markIndex}`;
-          const columnDate = mark.isoDate;
-
-          historyStore.addRecord(
-            journalId,
-            studentId,
-            markIndex,
-            valueIndex,
-            oldValue,
-            value,
-            columnLabel,
-            columnDate
+          const studentMark = journal.studentMarks.find(
+            (sm) => sm.studentId === studentId
           );
-        }
+          if (!studentMark) {
+            resolve(false);
+            return;
+          }
 
-        // Trigger reactivity for persistence
-        journalMarks.value = { ...journalMarks.value };
-        return true;
-      }
+          if (
+            markIndex >= 0 &&
+            markIndex < studentMark.marks.length &&
+            valueIndex >= 0 &&
+            valueIndex < studentMark.marks[markIndex].values.length
+          ) {
+            // Capture old value BEFORE changing
+            const oldValue = studentMark.marks[markIndex].values[valueIndex];
 
-      return false;
+            // Make the change
+            studentMark.marks[markIndex].values[valueIndex] = value;
+            journal.lastUpdated = new Date().toISOString();
+
+            // Record history (only if value actually changed)
+            if (oldValue !== value) {
+              const historyStore = useJournalHistoryStore();
+              const mark = studentMark.marks[markIndex];
+              const columnLabel = mark.label || mark.date || `Column ${markIndex}`;
+              const columnDate = mark.isoDate;
+
+              historyStore.addRecord(
+                journalId,
+                studentId,
+                markIndex,
+                valueIndex,
+                oldValue,
+                value,
+                columnLabel,
+                columnDate
+              );
+            }
+
+            // Trigger reactivity for persistence
+            journalMarks.value = { ...journalMarks.value };
+
+            // Wait for Vue to process the reactivity before resolving
+            await nextTick();
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        });
+
+        // Process the queue
+        processUpdateQueue();
+      });
     };
 
     // Replace all row values for a specific mark (date/session/PK/etc)

@@ -313,7 +313,7 @@ function normalizeValue(value: string | number | null | undefined): string | nul
 /**
  * Apply updates to marks store (batch update helper)
  */
-export function applyUpdatesToMarks(
+export async function applyUpdatesToMarks(
   journalId: string,
   preparedImport: PreparedImport,
   getStudentMarks: (journalId: string, studentId: string) => Mark[] | null,
@@ -323,8 +323,8 @@ export function applyUpdatesToMarks(
     markIndex: number,
     valueIndex: number,
     value: string | null
-  ) => void
-): void {
+  ) => Promise<boolean>
+): Promise<void> {
   for (const update of preparedImport.updates) {
     const { studentId, markUpdates } = update;
 
@@ -345,7 +345,7 @@ export function applyUpdatesToMarks(
         continue;
       }
 
-      updateStudentMark(journalId, studentId, markIndex, valueIndex, value);
+      await updateStudentMark(journalId, studentId, markIndex, valueIndex, value);
     }
   }
 }

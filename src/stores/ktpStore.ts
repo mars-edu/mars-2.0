@@ -7,6 +7,8 @@ export interface Ktp {
   class9Id: string;
   academicYearId: string;
   semesterId: string;
+  eventId?: string; // Back-reference to the calendar event (if KTP is event-specific)
+  name?: string; // Optional custom name for the KTP
   createdAt: Date;
   updatedAt: Date;
 }
@@ -48,13 +50,15 @@ export const useKtpStore = defineStore(
     function findKtpByClass9Id(
       class9Id: string,
       academicYearId?: string,
-      semesterId?: string
+      semesterId?: string,
+      eventId?: string
     ): Ktp | undefined {
       return ktps.value.find(
         (k) =>
           k.class9Id === class9Id &&
           (!academicYearId || k.academicYearId === academicYearId) &&
-          (!semesterId || k.semesterId === semesterId)
+          (!semesterId || k.semesterId === semesterId) &&
+          (!eventId || k.eventId === eventId)
       );
     }
 
@@ -65,13 +69,17 @@ export const useKtpStore = defineStore(
     function createKtp(
       class9Id: string,
       academicYearId: string,
-      semesterId: string
+      semesterId: string,
+      eventId?: string,
+      name?: string
     ): Ktp {
       const newKtp: Ktp = {
         id: crypto.randomUUID(),
         class9Id,
         academicYearId,
         semesterId,
+        eventId,
+        name,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -82,10 +90,12 @@ export const useKtpStore = defineStore(
     function ensureKtpForClass9(
       class9Id: string,
       academicYearId: string,
-      semesterId: string
+      semesterId: string,
+      eventId?: string,
+      name?: string
     ): Ktp {
-      const existing = findKtpByClass9Id(class9Id, academicYearId, semesterId);
-      return existing || createKtp(class9Id, academicYearId, semesterId);
+      const existing = findKtpByClass9Id(class9Id, academicYearId, semesterId, eventId);
+      return existing || createKtp(class9Id, academicYearId, semesterId, eventId, name);
     }
 
     function fetchDetailsForKtp(ktpId: string) {

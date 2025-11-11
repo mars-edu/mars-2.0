@@ -2,7 +2,7 @@
   <transition name="fade">
     <div
       v-if="visible"
-      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-4"
+      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[9999] p-4"
       @click.self="handleClose"
       @keydown.esc.prevent="handleClose"
       ref="focusContainer"
@@ -194,10 +194,6 @@ const handleCellClick = (studentIndex: number, markIndex: number) => {
       title: 'Изменить оценку?',
       text: `Текущая оценка: ${currentMark}. Вы действительно хотите изменить её?`,
       buttons: [
-        {
-          text: 'Отмена',
-          close: true,
-        },
         {
           text: 'Нет',
           close: true,

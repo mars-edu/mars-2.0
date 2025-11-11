@@ -39,7 +39,7 @@
       </f7-list-item>
     </f7-list>
     <f7-list
-      v-else-if="props.searchable && hasOptions"
+      v-else-if="(props.searchable || props.multiple) && hasOptions"
       :class="f7ListSearchableClasses"
     >
       <f7-list-item
@@ -72,7 +72,7 @@
       :placeholder="!hasOptions ? 'Нет данных' : placeholder || ' '"
     />
     <SearchableSelectPopup
-      v-if="props.searchable"
+      v-if="props.searchable || props.multiple"
       ref="searchablePopupRef"
       :options="options"
       :title="label || placeholder || 'Выберите'"
@@ -137,7 +137,7 @@ const f7ListSearchableClasses = computed(() => [
   attrs.class,
 ]);
 
-const showSmartSelect = computed(() => !props.searchable);
+const showSmartSelect = computed(() => !props.searchable && !props.multiple);
 
 const searchablePopupRef = ref<any>(null);
 

@@ -3,7 +3,7 @@
     <div
       v-if="student"
       ref="floatingRowRef"
-      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-4"
+      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[99999] p-4"
       tabindex="-1"
       @click.self="handleClose"
       @keydown.esc.prevent="handleClose"
@@ -59,7 +59,15 @@
                   <td
                     class="px-2 py-2 border-r border-border text-sm align-top min-w-[250px]"
                   >
-                    {{ localStudent?.name }}
+                    <div class="flex items-center justify-between">
+                      <span>{{ localStudent?.name }}</span>
+                      <div
+                        class="ml-2 px-2 py-1 rounded-full text-xs font-medium text-white min-w-[24px] text-center"
+                        :class="getScoreBadgeClass(studentAverageScore)"
+                      >
+                        {{ studentAverageScore }}
+                      </div>
+                    </div>
                   </td>
                   <td
                     v-for="(mark, colIndex) in localStudent?.marks || []"
@@ -123,6 +131,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed, nextTick } from "vue";
+import { debounce } from "es-toolkit";
 import MarkCell from "@/components/ui/MarkCell.vue";
 import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
 import { useMarksStore } from "@/stores/marksStore";
@@ -171,6 +180,56 @@ const localStudent = computed(() => {
   };
 });
 
+const studentAverageScore = computed((): string => {
+  if (!localStudent.value || !props.journalId) return "—";
+
+  const studentId = localStudent.value.studentId;
+  const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
+  if (!studentMarks) return "—";
+
+  const allMarks: (string | null)[] = [];
+
+  // Collect all marks from all columns
+  studentMarks.forEach((mark) => {
+    mark.values.forEach((value) => {
+      if (value !== null && value !== "") {
+        allMarks.push(value);
+      }
+    });
+  });
+
+  // Filter out non-numeric values and convert to numbers
+  const numericMarks = allMarks
+    .filter((mark) => mark && !isNaN(Number(mark)))
+    .map((mark) => Number(mark));
+
+  if (numericMarks.length === 0) {
+    return "—"; // Em dash for no scores
+  }
+
+  const average =
+    numericMarks.reduce((sum, mark) => sum + mark, 0) / numericMarks.length;
+  return average.toFixed(1);
+});
+
+const getScoreBadgeClass = (score: string): string => {
+  if (score === "—") {
+    return "bg-gray-400";
+  }
+
+  const numScore = parseFloat(score);
+
+  if (numScore >= 4.5) {
+    return "bg-emerald-500"; // Green for excellent (5-4.5)
+  } else if (numScore >= 3.5) {
+    return "bg-gradient-to-r from-yellow-400 to-emerald-500"; // Yellow-green gradient for good (4.4-3.5)
+  } else if (numScore >= 2.5) {
+    return "bg-yellow-500"; // Yellow for satisfactory (3.4-2.5)
+  } else {
+    return "bg-red-500"; // Red for poor (below 2.5)
+  }
+};
+
 watch(
   () => props.student,
   (newStudent) => {
@@ -191,6 +250,34 @@ const getMark = (row: number, col: number): string => {
   return String(mark ?? "");
 };
 
+// Debounced mark update function (300ms delay to batch rapid changes)
+const debouncedUpdateMark = debounce(
+  async (row: number, col: number, value: string | null) => {
+    if (!localStudent.value || !props.journalId) return;
+
+    const studentId = localStudent.value.studentId;
+
+    console.log("[FloatingJournalRow] Calling marksStore.updateStudentMark:", {
+      journalId: props.journalId,
+      studentId,
+      col,
+      row,
+      value,
+    });
+
+    // Update in store and wait for completion
+    const updateResult = await marksStore.updateStudentMark(
+      props.journalId,
+      studentId,
+      col,
+      row,
+      value
+    );
+    console.log("[FloatingJournalRow] Mark update result:", updateResult);
+  },
+  300
+);
+
 const setMark = (row: number, col: number, value: string) => {
   console.log("[FloatingJournalRow] Setting mark:", {
     row,
@@ -210,25 +297,9 @@ const setMark = (row: number, col: number, value: string) => {
   }
 
   const newValue = value === "+" || value === "" ? null : value;
-  const studentId = localStudent.value.studentId;
 
-  console.log("[FloatingJournalRow] Calling marksStore.updateStudentMark:", {
-    journalId: props.journalId,
-    studentId,
-    col,
-    row,
-    newValue,
-  });
-
-  // Update in store
-  const updateResult = marksStore.updateStudentMark(
-    props.journalId,
-    studentId,
-    col,
-    row,
-    newValue
-  );
-  console.log("[FloatingJournalRow] Mark update result:", updateResult);
+  // Debounced store update
+  debouncedUpdateMark(row, col, newValue);
 };
 
 // Utility function to check if a date is in the future
@@ -249,10 +320,6 @@ const handleCellClick = (row: number, col: number) => {
       title: 'Изменить оценку?',
       text: `Текущая оценка: ${currentMark}. Вы действительно хотите изменить её?`,
       buttons: [
-        {
-          text: 'Отмена',
-          close: true,
-        },
         {
           text: 'Нет',
           close: true,
@@ -310,12 +377,16 @@ const cancelEdit = () => {
   editingCell.value = null;
 };
 
-const navigate = (direction: "up" | "down" | "left" | "right") => {
+const navigate = async (direction: "up" | "down" | "left" | "right") => {
   if (!editingCell.value) return;
 
   const { row: startRow, col: startCol } = editingCell.value;
 
   setMark(startRow, startCol, editedValue.value);
+
+  // Flush pending updates before moving to prevent data loss
+  await debouncedUpdateMark.flush();
+
   editingCell.value = null;
 
   nextTick(() => {
@@ -359,7 +430,7 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
   });
 };
 
-const handleClose = () => {
+const handleClose = async () => {
   console.log("[FloatingJournalRow] Handling close:", {
     hasEditingCell: !!editingCell.value,
     hasLocalStudent: !!localStudent.value,
@@ -368,6 +439,10 @@ const handleClose = () => {
   if (editingCell.value) {
     confirmEdit();
   }
+
+  // Flush pending updates before closing to prevent data loss
+  await debouncedUpdateMark.flush();
+
   if (localStudent.value) {
     console.log("[FloatingJournalRow] Emitting updated student:", {
       studentId: localStudent.value.studentId,
