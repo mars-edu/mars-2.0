@@ -491,9 +491,9 @@ const toggleStudentSelection = (studentId: string) => {
 
 const toggleSelectAllStudents = () => {
   if (isAllStudentsSelected.value) {
-    localSelectedStudents.clear();
+    // localSelectedStudents.clear();
   } else {
-    localSelectedStudents.clear();
+    // localSelectedStudents.clear();
     filteredStudents.value.forEach((student) =>
       localSelectedStudents.add(student.id)
     );
