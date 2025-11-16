@@ -587,6 +587,10 @@ export const marksRouter = router({
 
         console.log(`[Marks Migration] Found ${entries.length} journals to process`);
 
+        // Batch size to avoid CPU time limits
+        const BATCH_SIZE = 5;
+        const MARKS_PER_BATCH = 50;
+
         // Process each journal
         for (const [journalId, journalData] of entries) {
           console.log(`[Marks Migration] Processing journal: ${journalId}`);
@@ -623,30 +627,50 @@ export const marksRouter = router({
             continue;
           }
 
+          // Batch create journal-student relationships
+          const journalStudentCreates = studentMarks.map(sm => ({
+            where: {
+              journalId_studentId: {
+                journalId,
+                studentId: sm.studentId,
+              },
+            },
+            update: {},
+            create: {
+              journalId,
+              studentId: sm.studentId,
+            },
+          }));
+
+          // Process journal-students in batches
+          for (let i = 0; i < journalStudentCreates.length; i += BATCH_SIZE) {
+            const batch = journalStudentCreates.slice(i, i + BATCH_SIZE);
+            try {
+              await Promise.all(
+                batch.map(js => ctx.prisma.journalStudent.upsert(js))
+              );
+            } catch (err) {
+              console.error(`[Marks Migration] Error creating journal-student batch:`, err);
+            }
+          }
+
+          // Collect all marks to insert
+          const marksToInsert: Array<{
+            journalId: string;
+            studentId: string;
+            columnIndex: number;
+            rowIndex: number;
+            value: string;
+            columnType: string;
+            columnDate?: string;
+            columnLabel?: string;
+            sessionId?: string;
+          }> = [];
+
           // Process each student
           for (const studentMark of studentMarks) {
             const { studentId, marks } = studentMark;
             if (!marks || !Array.isArray(marks)) continue;
-
-            // Ensure student relationship exists
-            try {
-              await ctx.prisma.journalStudent.upsert({
-                where: {
-                  journalId_studentId: {
-                    journalId,
-                    studentId,
-                  },
-                },
-                update: {},
-                create: {
-                  journalId,
-                  studentId,
-                },
-              });
-            } catch (err) {
-              console.error(`[Marks Migration] Error creating journal-student relationship:`, err);
-              continue;
-            }
 
             // Process each column (mark)
             for (let columnIndex = 0; columnIndex < marks.length; columnIndex++) {
@@ -660,60 +684,87 @@ export const marksRouter = router({
                 // Only migrate non-null, non-empty values
                 if (value === null || value === undefined || value === "") continue;
 
-                try {
-                  // Check if mark already exists with a value
-                  const existingMark = await ctx.prisma.mark.findUnique({
-                    where: {
-                      journalId_studentId_columnIndex_rowIndex: {
-                        journalId,
-                        studentId,
-                        columnIndex,
-                        rowIndex,
-                      },
-                    },
-                  });
-
-                  // Only update if the existing mark is null/empty or doesn't exist
-                  if (!existingMark || existingMark.value === null || existingMark.value === "") {
-                    await ctx.prisma.mark.upsert({
-                      where: {
-                        journalId_studentId_columnIndex_rowIndex: {
-                          journalId,
-                          studentId,
-                          columnIndex,
-                          rowIndex,
-                        },
-                      },
-                      update: {
-                        value,
-                        columnType: mark.type || "date",
-                        columnDate: mark.isoDate,
-                        columnLabel: mark.label,
-                        sessionId: mark.sessionId,
-                        updatedAt: new Date(),
-                      },
-                      create: {
-                        journalId,
-                        studentId,
-                        columnIndex,
-                        rowIndex,
-                        value,
-                        columnType: mark.type || "date",
-                        columnDate: mark.isoDate,
-                        columnLabel: mark.label,
-                        sessionId: mark.sessionId,
-                      },
-                    });
-
-                    migratedCount++;
-                  }
-                } catch (err) {
-                  console.error(`[Marks Migration] Error migrating mark for journal ${journalId}, student ${studentId}, col ${columnIndex}, row ${rowIndex}:`, err);
-                  // Continue with next mark
-                }
+                marksToInsert.push({
+                  journalId,
+                  studentId,
+                  columnIndex,
+                  rowIndex,
+                  value,
+                  columnType: mark.type || "date",
+                  columnDate: mark.isoDate,
+                  columnLabel: mark.label,
+                  sessionId: mark.sessionId,
+                });
               }
             }
           }
+
+          console.log(`[Marks Migration] Journal ${journalId}: Found ${marksToInsert.length} marks to migrate`);
+
+          // Process marks in batches
+          for (let i = 0; i < marksToInsert.length; i += MARKS_PER_BATCH) {
+            const batch = marksToInsert.slice(i, i + MARKS_PER_BATCH);
+            
+            try {
+              await Promise.all(
+                batch.map(async (markData) => {
+                  try {
+                    const existingMark = await ctx.prisma.mark.findUnique({
+                      where: {
+                        journalId_studentId_columnIndex_rowIndex: {
+                          journalId: markData.journalId,
+                          studentId: markData.studentId,
+                          columnIndex: markData.columnIndex,
+                          rowIndex: markData.rowIndex,
+                        },
+                      },
+                      select: { value: true },
+                    });
+
+                    // Only insert if doesn't exist or is empty
+                    if (!existingMark || existingMark.value === null || existingMark.value === "") {
+                      await ctx.prisma.mark.upsert({
+                        where: {
+                          journalId_studentId_columnIndex_rowIndex: {
+                            journalId: markData.journalId,
+                            studentId: markData.studentId,
+                            columnIndex: markData.columnIndex,
+                            rowIndex: markData.rowIndex,
+                          },
+                        },
+                        update: {
+                          value: markData.value,
+                          columnType: markData.columnType,
+                          columnDate: markData.columnDate,
+                          columnLabel: markData.columnLabel,
+                          sessionId: markData.sessionId,
+                          updatedAt: new Date(),
+                        },
+                        create: {
+                          journalId: markData.journalId,
+                          studentId: markData.studentId,
+                          columnIndex: markData.columnIndex,
+                          rowIndex: markData.rowIndex,
+                          value: markData.value,
+                          columnType: markData.columnType,
+                          columnDate: markData.columnDate,
+                          columnLabel: markData.columnLabel,
+                          sessionId: markData.sessionId,
+                        },
+                      });
+                      migratedCount++;
+                    }
+                  } catch (err) {
+                    // Silently continue on individual mark errors
+                  }
+                })
+              );
+            } catch (err) {
+              console.error(`[Marks Migration] Error in batch:`, err);
+            }
+          }
+
+          console.log(`[Marks Migration] Journal ${journalId} completed. Total migrated so far: ${migratedCount}`);
         }
 
         // Mark migration as completed
