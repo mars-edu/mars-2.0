@@ -580,8 +580,17 @@ export const marksRouter = router({
           console.log(`[Marks Migration] Processing journal: ${journalId}`);
           journalsProcessed++;
 
+          console.log(`[Marks Migration] Journal ${journalId} keys:`, Object.keys(journalData || {}));
           const { studentMarks } = journalData;
-          if (!studentMarks || !Array.isArray(studentMarks)) continue;
+          console.log(`[Marks Migration] Journal ${journalId} studentMarks type:`, typeof studentMarks);
+          console.log(`[Marks Migration] Journal ${journalId} studentMarks isArray:`, Array.isArray(studentMarks));
+          
+          if (!studentMarks || !Array.isArray(studentMarks)) {
+            console.log(`[Marks Migration] Skipping journal ${journalId} - invalid studentMarks`);
+            continue;
+          }
+          
+          console.log(`[Marks Migration] Journal ${journalId} has ${studentMarks.length} students`);
 
           // Ensure journal exists first
           try {
