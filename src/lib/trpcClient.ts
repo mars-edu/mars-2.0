@@ -6,9 +6,6 @@ import superjson from "superjson";
  * Get API URL from environment or use default
  */
 const getApiUrl = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
   // return "http://localhost:3001";
   return "https://mars-backend.robanokssamit-1ba.workers.dev";
 };
