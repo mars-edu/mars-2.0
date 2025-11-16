@@ -14,7 +14,7 @@
         <p class="text-sm text-gray-600 mb-2">Сохраняем изменения в облаке…</p>
         <ul class="space-y-1 max-h-48 overflow-auto">
           <li
-            v-for="entry in syncingList"
+            v-for="entry in trpcSyncingList"
             :key="entry.storeId"
             class="text-sm text-gray-700"
           >
@@ -33,7 +33,7 @@ import { useSyncStore } from "@/stores/syncStore";
 import Loader from "./Loader.vue";
 
 const syncStore = useSyncStore();
-const { isSyncing, syncingList } = storeToRefs(syncStore);
+const { isTrpcSyncing, trpcSyncingList } = storeToRefs(syncStore);
 
 const visible = ref(false);
 let hideTimer: number | null = null;
@@ -61,7 +61,7 @@ onMounted(() => {
 });
 
 watch(
-  () => isSyncing.value,
+  () => isTrpcSyncing.value,
   (now) => {
     if (now) {
       showOverlay();
