@@ -1,6 +1,4 @@
 <template>
-  <!-- Sync overlay always hidden - sync state popover disabled -->
-  <!--
   <transition name="fade">
     <div
       v-if="visible"
@@ -20,53 +18,62 @@
             :key="entry.storeId"
             class="text-sm text-gray-700"
           >
-            {{ entry.storeId }}
+            {{ entry.label ?? entry.storeId }}
           </li>
         </ul>
       </div>
     </div>
   </transition>
-  -->
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useSyncStore } from "@/stores/syncStore";
 import Loader from "./Loader.vue";
 
-// Sync overlay always hidden - sync state popover disabled
-// import { ref, onMounted, watch } from "vue";
-// import { debounce } from "es-toolkit";
-// const syncStore = useSyncStore();
-// const { isSyncing, syncingList } = storeToRefs(syncStore);
+const syncStore = useSyncStore();
+const { isSyncing, syncingList } = storeToRefs(syncStore);
 
-// const visible = ref(false);
-// const debouncedHide = debounce(() => {
-//   visible.value = false;
-// }, 250);
+const visible = ref(false);
+let hideTimer: number | null = null;
 
-// onMounted(() => {
-//   syncStore.markMounted();
-// });
+const showOverlay = () => {
+  if (hideTimer) {
+    window.clearTimeout(hideTimer);
+    hideTimer = null;
+  }
+  visible.value = true;
+};
 
-// watch(
-//   () => isSyncing.value,
-//   (now) => {
-//     if (now) {
-//       visible.value = true;
-//       debouncedHide.cancel?.();
-//     } else {
-//       // Delay hide a bit to avoid flicker for very fast syncs
-//       debouncedHide();
-//     }
-//   },
-//   { immediate: true }
-// );
+const scheduleHide = () => {
+  if (hideTimer) {
+    window.clearTimeout(hideTimer);
+  }
+  hideTimer = window.setTimeout(() => {
+    visible.value = false;
+    hideTimer = null;
+  }, 250);
+};
+
+onMounted(() => {
+  syncStore.markMounted();
+});
+
+watch(
+  () => isSyncing.value,
+  (now) => {
+    if (now) {
+      showOverlay();
+    } else {
+      scheduleHide();
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>
-/* Sync overlay styles commented out - overlay always hidden */
-/*
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;
@@ -75,5 +82,4 @@ import Loader from "./Loader.vue";
 .fade-leave-to {
   opacity: 0;
 }
-*/
 </style>

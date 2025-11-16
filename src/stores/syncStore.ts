@@ -5,6 +5,7 @@ const syncTimeoutsById: Record<string, number> = {};
 export interface SyncEntry {
   storeId: string;
   startedAt: number;
+  label?: string;
 }
 
 export const useSyncStore = defineStore("sync", {
@@ -21,8 +22,12 @@ export const useSyncStore = defineStore("sync", {
     },
   },
   actions: {
-    startSync(storeId: string, timeoutMs = 8000) {
-      this.syncingById[storeId] = { storeId, startedAt: Date.now() };
+    startSync(storeId: string, timeoutMs = 8000, label?: string) {
+      this.syncingById[storeId] = {
+        storeId,
+        startedAt: Date.now(),
+        label,
+      };
       if (syncTimeoutsById[storeId]) {
         clearTimeout(syncTimeoutsById[storeId]);
       }
