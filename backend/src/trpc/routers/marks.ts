@@ -604,40 +604,10 @@ export const marksRouter = router({
           
           console.log(`[Marks Migration] Journal ${journalId} has ${studentMarks.length} students`);
 
-          // Ensure journal exists first
-          try {
-            await ctx.prisma.journal.findUniqueOrThrow({
-              where: { id: journalId },
-            });
-          } catch {
-            console.warn(`[Marks Migration] Journal ${journalId} not found, skipping`);
-            continue;
-          }
-
           // Process each student
           for (const studentMark of studentMarks) {
             const { studentId, marks } = studentMark;
             if (!marks || !Array.isArray(marks)) continue;
-
-            // Ensure student relationship exists
-            try {
-              await ctx.prisma.journalStudent.upsert({
-                where: {
-                  journalId_studentId: {
-                    journalId,
-                    studentId,
-                  },
-                },
-                update: {},
-                create: {
-                  journalId,
-                  studentId,
-                },
-              });
-            } catch (err) {
-              console.error(`[Marks Migration] Error creating journal-student relationship:`, err);
-              continue;
-            }
 
             // Process each column (mark)
             for (let columnIndex = 0; columnIndex < marks.length; columnIndex++) {
