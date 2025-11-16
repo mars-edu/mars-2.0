@@ -519,7 +519,12 @@ export const marksRouter = router({
    * This is a one-time migration for local development
    */
   migrateFromPiniaState: protectedProcedure
-    .mutation(async ({ ctx }) => {
+    .input(
+      z.object({
+        force: z.boolean().optional().default(false),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
       try {
         console.log("[Marks Migration] Starting migration from PiniaState...");
         
@@ -528,14 +533,21 @@ export const marksRouter = router({
           where: { storeId: "marks_migration_completed" },
         });
 
-        if (migrationMarker) {
+        if (migrationMarker && !input.force) {
           console.log("[Marks Migration] Migration already completed previously");
           return {
             success: true,
-            message: "Migration was already completed previously",
+            message: "Migration was already completed previously. Use force=true to re-run.",
             migrated: 0,
             alreadyCompleted: true,
           };
+        }
+
+        if (input.force && migrationMarker) {
+          console.log("[Marks Migration] Force flag set, deleting migration marker");
+          await ctx.prisma.piniaState.delete({
+            where: { storeId: "marks_migration_completed" },
+          });
         }
 
         // Get marks from PiniaState
