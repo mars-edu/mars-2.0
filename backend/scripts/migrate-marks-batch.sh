@@ -7,7 +7,7 @@ API_URL="https://mars-backend.robanokssamit-1ba.workers.dev/api/trpc/marks.migra
 TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJkMWIyOTQ5NS1jM2ZiLTRlNTktYmFiYi00ODQyOGY1Y2ZjMWMiLCJyb2xlcyI6WyJBRE1JTiJdLCJpYXQiOjE3NjMzMTk4NTcsImV4cCI6MTc2MzQwNjI1N30.-8D3fppL7Lr1khd3p8CMdAKd-5FsUlmV1BhCQPM4a8c"
 
 SKIP=0
-LIMIT=2  # Process 2 journals at a time to avoid CPU limits
+LIMIT=1  # Process 2 journals at a time to avoid CPU limits
 HAS_MORE="true"
 
 echo "Starting batch migration..."
