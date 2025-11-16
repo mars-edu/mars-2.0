@@ -554,12 +554,16 @@ export const marksRouter = router({
         const state = JSON.parse(piniaState.state);
         console.log("[Marks Migration] PiniaState state keys:", Object.keys(state));
         console.log("[Marks Migration] PiniaState state.json keys:", state.json ? Object.keys(state.json) : "no json property");
-        console.log("[Marks Migration] Full state structure:", JSON.stringify(state, null, 2));
         
         const journalMarks = state.json?.journalMarks || state.journalMarks;
         console.log("[Marks Migration] journalMarks type:", typeof journalMarks);
         console.log("[Marks Migration] journalMarks isArray:", Array.isArray(journalMarks));
-        console.log("[Marks Migration] journalMarks value:", journalMarks);
+        
+        if (journalMarks) {
+          console.log("[Marks Migration] journalMarks length:", journalMarks.length);
+          console.log("[Marks Migration] First item type:", typeof journalMarks[0]);
+          console.log("[Marks Migration] First item keys:", journalMarks[0] ? Object.keys(journalMarks[0]) : "empty");
+        }
         
         if (!journalMarks || !Array.isArray(journalMarks)) {
           console.error("[Marks Migration] Invalid marks data structure. Expected array, got:", typeof journalMarks);
