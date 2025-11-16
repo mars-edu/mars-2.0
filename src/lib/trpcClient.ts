@@ -10,7 +10,7 @@ const getApiUrl = () => {
     return import.meta.env.VITE_API_URL;
   }
   // return "http://localhost:3001";
-  return "https://mars-backend.robanokssamit-1ba.workers.dev/api";
+  return "https://mars-backend.robanokssamit-1ba.workers.dev";
 };
 
 const API_URL = getApiUrl();
