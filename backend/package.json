@@ -22,8 +22,7 @@
     "@types/bun": "latest",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.6",
-    "wrangler": "^4.36.0",
-    "@inlang/paraglide-js": "2.5.0"
+    "wrangler": "^4.36.0"
   },
   "peerDependencies": {
     "typescript": "^5.8.2"
