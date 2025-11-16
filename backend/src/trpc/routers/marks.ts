@@ -604,10 +604,49 @@ export const marksRouter = router({
           
           console.log(`[Marks Migration] Journal ${journalId} has ${studentMarks.length} students`);
 
+          // Ensure journal exists first - create it from the journalData
+          try {
+            await ctx.prisma.journal.upsert({
+              where: { id: journalId },
+              update: {},
+              create: {
+                id: journalId,
+                disciplineId: journalData.disciplineId || journalId,
+                groupName: journalData.groupName,
+                academicYear: journalData.academicYear || "2024-2025",
+                semester: journalData.semester || "1",
+              },
+            });
+            console.log(`[Marks Migration] Journal ${journalId} created/updated`);
+          } catch (err) {
+            console.error(`[Marks Migration] Error creating journal ${journalId}:`, err);
+            continue;
+          }
+
           // Process each student
           for (const studentMark of studentMarks) {
             const { studentId, marks } = studentMark;
             if (!marks || !Array.isArray(marks)) continue;
+
+            // Ensure student relationship exists
+            try {
+              await ctx.prisma.journalStudent.upsert({
+                where: {
+                  journalId_studentId: {
+                    journalId,
+                    studentId,
+                  },
+                },
+                update: {},
+                create: {
+                  journalId,
+                  studentId,
+                },
+              });
+            } catch (err) {
+              console.error(`[Marks Migration] Error creating journal-student relationship:`, err);
+              continue;
+            }
 
             // Process each column (mark)
             for (let columnIndex = 0; columnIndex < marks.length; columnIndex++) {
