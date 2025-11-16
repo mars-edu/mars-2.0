@@ -69,7 +69,7 @@ app.use(
       ];
       return allowedOrigins.includes(origin) ? origin : null;
     },
-    allowHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: ["Content-Type", "Authorization", "X-Language"],
     allowMethods: ["POST", "GET", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
     maxAge: 600,
