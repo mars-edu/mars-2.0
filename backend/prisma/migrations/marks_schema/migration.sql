@@ -1,41 +1,4 @@
 -- CreateTable
-CREATE TABLE "User" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "firstName" TEXT NOT NULL,
-    "lastName" TEXT NOT NULL,
-    "username" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
-);
-
--- CreateTable
-CREATE TABLE "UserRole" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "role" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    CONSTRAINT "UserRole_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
-
--- CreateTable
-CREATE TABLE "PiniaState" (
-    "storeId" TEXT NOT NULL PRIMARY KEY,
-    "state" TEXT NOT NULL,
-    "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- CreateTable
-CREATE TABLE "File" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "key" TEXT NOT NULL,
-    "url" TEXT NOT NULL,
-    "size" INTEGER NOT NULL,
-    "contentType" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- CreateTable
 CREATE TABLE "Journal" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "disciplineId" TEXT NOT NULL,
@@ -92,40 +55,25 @@ CREATE TABLE "MarkHistory" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
-
--- CreateIndex
-CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
-
--- CreateIndex
-CREATE UNIQUE INDEX "UserRole_userId_role_key" ON "UserRole"("userId", "role");
-
--- CreateIndex
-CREATE UNIQUE INDEX "PiniaState_storeId_key" ON "PiniaState"("storeId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "File_key_key" ON "File"("key");
-
--- CreateIndex
 CREATE INDEX "Journal_disciplineId_idx" ON "Journal"("disciplineId");
 
 -- CreateIndex
 CREATE INDEX "Journal_academicYear_semester_idx" ON "Journal"("academicYear", "semester");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "JournalStudent_journalId_studentId_key" ON "JournalStudent"("journalId", "studentId");
+
+-- CreateIndex
 CREATE INDEX "JournalStudent_studentId_idx" ON "JournalStudent"("studentId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "JournalStudent_journalId_studentId_key" ON "JournalStudent"("journalId", "studentId");
+CREATE UNIQUE INDEX "Mark_journalId_studentId_columnIndex_rowIndex_key" ON "Mark"("journalId", "studentId", "columnIndex", "rowIndex");
 
 -- CreateIndex
 CREATE INDEX "Mark_journalId_studentId_idx" ON "Mark"("journalId", "studentId");
 
 -- CreateIndex
 CREATE INDEX "Mark_studentId_idx" ON "Mark"("studentId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Mark_journalId_studentId_columnIndex_rowIndex_key" ON "Mark"("journalId", "studentId", "columnIndex", "rowIndex");
 
 -- CreateIndex
 CREATE INDEX "MarkHistory_journalId_studentId_idx" ON "MarkHistory"("journalId", "studentId");

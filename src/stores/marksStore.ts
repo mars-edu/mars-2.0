@@ -1,7 +1,8 @@
 import { defineStore } from "pinia";
-import { ref, computed, nextTick } from "vue";
+import { ref, computed } from "vue";
 import type { Mark, StudentMark, JournalMarks } from "@/types/marks";
 import { useJournalHistoryStore } from "./journalHistoryStore";
+import { trpcClient } from "@/lib/trpcClient";
 
 export const useMarksStore = defineStore(
   "marks",
@@ -9,27 +10,115 @@ export const useMarksStore = defineStore(
     const journalMarks = ref<Record<string, JournalMarks>>({});
     const loading = ref(false);
     const error = ref<string | null>(null);
+    const initializedJournals = ref<Set<string>>(new Set());
 
-    // Update queue for atomic operations
-    const updateQueue: Array<() => void | Promise<void>> = [];
-    let processingQueue = false;
+    // No more queue or debounce logic - direct API calls
 
-    // Process queued updates sequentially to prevent race conditions
-    const processUpdateQueue = async () => {
-      if (processingQueue || updateQueue.length === 0) return;
+    // Load journal marks from backend and merge with existing template
+    const loadJournalMarks = async (journalId: string): Promise<boolean> => {
+      try {
+        loading.value = true;
+        error.value = null;
 
-      processingQueue = true;
-      while (updateQueue.length > 0) {
-        const update = updateQueue.shift();
-        if (update) {
-          try {
-            await update();
-          } catch (err) {
-            console.error("[marksStore] Error processing queued update:", err);
-          }
+        console.log("[marksStore] Fetching marks from backend for journal:", journalId);
+        const result = await trpcClient.marks.getJournalMarks.query({ journalId });
+        console.log("[marksStore] Received marks from backend:", {
+          journalId,
+          marksCount: result.marks.length,
+          studentCount: result.journal?.students?.length || 0
+        });
+
+        // Get existing journal marks (which should have the template already)
+        const existingJournal = journalMarks.value[journalId];
+        if (!existingJournal) {
+          console.warn("[marksStore] No existing journal template found, cannot merge marks");
+          loading.value = false;
+          return false;
         }
+
+        // Build a map of backend marks: studentId -> columnIndex -> rowIndex -> value
+        const backendMarksMap = new Map<string, Map<number, Map<number, string | null>>>();
+        
+        result.marks.forEach((mark) => {
+          if (!backendMarksMap.has(mark.studentId)) {
+            backendMarksMap.set(mark.studentId, new Map());
+          }
+          const studentMap = backendMarksMap.get(mark.studentId)!;
+          if (!studentMap.has(mark.columnIndex)) {
+            studentMap.set(mark.columnIndex, new Map());
+          }
+          studentMap.get(mark.columnIndex)!.set(mark.rowIndex, mark.value);
+        });
+
+        // Merge backend marks into the existing template
+        existingJournal.studentMarks.forEach((studentMark) => {
+          const backendStudentMarks = backendMarksMap.get(studentMark.studentId);
+          if (!backendStudentMarks) return;
+
+          studentMark.marks.forEach((mark, columnIndex) => {
+            const backendColumnMarks = backendStudentMarks.get(columnIndex);
+            if (!backendColumnMarks) return;
+
+            mark.values.forEach((_, rowIndex) => {
+              if (backendColumnMarks.has(rowIndex)) {
+                mark.values[rowIndex] = backendColumnMarks.get(rowIndex)!;
+              }
+            });
+          });
+        });
+
+        existingJournal.lastUpdated = new Date().toISOString();
+        
+        // Trigger reactivity
+        journalMarks.value = { ...journalMarks.value };
+        
+        console.log("[marksStore] Marks merged successfully into template");
+        loading.value = false;
+        return true;
+      } catch (err) {
+        console.error("[marksStore] Error loading journal marks:", err);
+        error.value = "Failed to load marks";
+        loading.value = false;
+        return false;
       }
-      processingQueue = false;
+    };
+
+    // Initialize journal in backend
+    const initializeJournalBackend = async (
+      journalId: string,
+      disciplineId: string,
+      groupName: string | undefined,
+      academicYear: string,
+      semester: string,
+      students: string[]
+    ): Promise<boolean> => {
+      try {
+        console.log("[marksStore] Initializing journal in backend:", {
+          journalId,
+          disciplineId,
+          groupName,
+          academicYear,
+          semester,
+          studentCount: students.length
+        });
+        
+        await trpcClient.marks.initializeJournal.mutate({
+          journalId,
+          disciplineId,
+          groupName,
+          academicYear,
+          semester,
+          students,
+        });
+        
+        initializedJournals.value.add(journalId);
+        console.log("[marksStore] Journal initialized successfully");
+        return true;
+      } catch (err) {
+        console.error("[marksStore] Error initializing journal:", err);
+        error.value = "Failed to initialize journal";
+        return false;
+      }
     };
 
     // Get marks for a specific journal
@@ -206,77 +295,164 @@ export const useMarksStore = defineStore(
       journalMarks.value = { ...journalMarks.value };
     };
 
-    // Update a specific mark for a student
-    const updateStudentMark = (
+    // Update a specific mark for a student - now uses tRPC directly
+    const updateStudentMark = async (
       journalId: string,
       studentId: string,
       markIndex: number,
       valueIndex: number,
       value: string | null
     ): Promise<boolean> => {
-      return new Promise<boolean>((resolve) => {
-        // Queue the update to ensure atomic execution
-        updateQueue.push(async () => {
-          const journal = journalMarks.value[journalId];
-          if (!journal) {
-            resolve(false);
-            return;
+      try {
+        const journal = journalMarks.value[journalId];
+        if (!journal) {
+          console.error("[marksStore] Journal not found in local state:", journalId);
+          return false;
+        }
+
+        const studentMark = journal.studentMarks.find(
+          (sm) => sm.studentId === studentId
+        );
+        if (!studentMark) {
+          console.error("[marksStore] Student not found in journal:", studentId);
+          return false;
+        }
+
+        if (
+          markIndex >= 0 &&
+          markIndex < studentMark.marks.length &&
+          valueIndex >= 0 &&
+          valueIndex < studentMark.marks[markIndex].values.length
+        ) {
+          const oldValue = studentMark.marks[markIndex].values[valueIndex];
+          const mark = studentMark.marks[markIndex];
+
+          // Optimistic update - update UI immediately
+          studentMark.marks[markIndex].values[valueIndex] = value;
+          journal.lastUpdated = new Date().toISOString();
+
+          // Record history locally
+          if (oldValue !== value) {
+            const historyStore = useJournalHistoryStore();
+            const columnLabel = mark.label || mark.date || `Column ${markIndex}`;
+            const columnDate = mark.isoDate;
+
+            historyStore.addRecord(
+              journalId,
+              studentId,
+              markIndex,
+              valueIndex,
+              oldValue,
+              value,
+              columnLabel,
+              columnDate
+            );
           }
 
-          const studentMark = journal.studentMarks.find(
-            (sm) => sm.studentId === studentId
-          );
-          if (!studentMark) {
-            resolve(false);
-            return;
-          }
-
-          if (
-            markIndex >= 0 &&
-            markIndex < studentMark.marks.length &&
-            valueIndex >= 0 &&
-            valueIndex < studentMark.marks[markIndex].values.length
-          ) {
-            // Capture old value BEFORE changing
-            const oldValue = studentMark.marks[markIndex].values[valueIndex];
-
-            // Make the change
-            studentMark.marks[markIndex].values[valueIndex] = value;
-            journal.lastUpdated = new Date().toISOString();
-
-            // Record history (only if value actually changed)
-            if (oldValue !== value) {
-              const historyStore = useJournalHistoryStore();
-              const mark = studentMark.marks[markIndex];
-              const columnLabel = mark.label || mark.date || `Column ${markIndex}`;
-              const columnDate = mark.isoDate;
-
-              historyStore.addRecord(
+          // Save to backend via tRPC
+          try {
+            await trpcClient.marks.updateMark.mutate({
+              journalId,
+              studentId,
+              columnIndex: markIndex,
+              rowIndex: valueIndex,
+              value,
+              columnType: mark.type,
+              columnDate: mark.isoDate,
+              columnLabel: mark.label,
+              controlType: mark.controlType,
+              controlId: mark.controlId,
+              sessionId: mark.sessionId,
+              scheduledControlId: mark.scheduledControlId,
+            });
+          } catch (updateError: any) {
+            // If foreign key constraint error, journal needs initialization
+            if (updateError?.message?.includes("Foreign key constraint") || 
+                updateError?.message?.includes("does not exist")) {
+              console.warn("[marksStore] Journal not initialized in backend, attempting auto-initialization...");
+              
+              // Try to get journal info from other stores
+              const { useJournalStore } = await import("./journalStore");
+              const { useCalendarStore } = await import("./calendarStore");
+              const { useClass9Store } = await import("./class9Store");
+              
+              const journalStore = useJournalStore();
+              const calendarStore = useCalendarStore();
+              const class9Store = useClass9Store();
+              
+              const journalInfo = journalStore.getJournalById(journalId);
+              const event = calendarStore.getEventById(journalId);
+              
+              if (!journalInfo) {
+                console.error("[marksStore] Cannot auto-initialize - journal not found in store:", journalId);
+                throw updateError;
+              }
+              
+              // Get academic year and semester from the event or class9
+              let academicYear = "2024-2025"; // fallback
+              let semesterId = "1"; // fallback
+              
+              if (event?.semester) {
+                semesterId = String(event.semester);
+              }
+              
+              // Try to get academic year from the discipline
+              const class9Item = class9Store.getClass9ById(journalInfo.disciplineId);
+              if (class9Item?.academicYearId) {
+                academicYear = String(class9Item.academicYearId);
+              }
+              
+              console.log("[marksStore] Auto-initializing journal with:", {
                 journalId,
-                studentId,
-                markIndex,
-                valueIndex,
-                oldValue,
-                value,
-                columnLabel,
-                columnDate
+                disciplineId: journalInfo.disciplineId,
+                group: journalInfo.group,
+                academicYear,
+                semesterId,
+                studentCount: journalInfo.students.length
+              });
+              
+              const initialized = await initializeJournalBackend(
+                journalId,
+                journalInfo.disciplineId,
+                journalInfo.group,
+                academicYear,
+                semesterId,
+                journalInfo.students
               );
+              
+              if (initialized) {
+                // Retry the mark update
+                console.log("[marksStore] Retrying mark update after initialization...");
+                await trpcClient.marks.updateMark.mutate({
+                  journalId,
+                  studentId,
+                  columnIndex: markIndex,
+                  rowIndex: valueIndex,
+                  value,
+                  columnType: mark.type,
+                  columnDate: mark.isoDate,
+                  columnLabel: mark.label,
+                  controlType: mark.controlType,
+                  controlId: mark.controlId,
+                  sessionId: mark.sessionId,
+                  scheduledControlId: mark.scheduledControlId,
+                });
+                console.log("[marksStore] Mark updated successfully after auto-initialization");
+                return true;
+              }
             }
-
-            // Trigger reactivity for persistence
-            journalMarks.value = { ...journalMarks.value };
-
-            // Wait for Vue to process the reactivity before resolving
-            await nextTick();
-            resolve(true);
-          } else {
-            resolve(false);
+            throw updateError;
           }
-        });
 
-        // Process the queue
-        processUpdateQueue();
-      });
+          return true;
+        }
+
+        return false;
+      } catch (err: any) {
+        console.error("[marksStore] Error updating mark:", err);
+        error.value = "Failed to save mark";
+        return false;
+      }
     };
 
     // Replace all row values for a specific mark (date/session/PK/etc)
@@ -450,6 +626,8 @@ export const useMarksStore = defineStore(
       getStudentMarks,
       getJournalStudentMarks,
       initializeJournalMarks,
+      loadJournalMarks,
+      initializeJournalBackend,
       updateStudentMark,
       updateStudentMarks,
       updateStudentMarkRows,
@@ -463,7 +641,7 @@ export const useMarksStore = defineStore(
   },
   {
     serverSync: {
-      enabled: true,
+      enabled: false, // Disabled - using tRPC instead
     },
   }
 );

@@ -340,7 +340,7 @@ import { ref, reactive } from "vue";
 import { f7 } from "framework7-vue";
 import Logo from "../components/Logo/Logo.vue";
 import { vMaska } from "maska/vue";
-import { authClient } from "../lib/http-client";
+import AuthService from "../services/auth";
 
 const isLoading = ref(false);
 const showPassword = ref(false);
@@ -434,7 +434,7 @@ const handleRegister = async (e: Event) => {
   isLoading.value = true;
 
   try {
-    const data = await authClient.register({
+    const result = await AuthService.register({
       firstName: formData.firstName,
       lastName: formData.lastName,
       middleName: formData.middleName || undefined,
@@ -443,7 +443,7 @@ const handleRegister = async (e: Event) => {
       password: formData.password,
     });
 
-    if (data.success) {
+    if (result.success) {
       f7.toast.show({
         text: "Регистрация успешно завершена",
         closeTimeout: 3000,
@@ -453,7 +453,7 @@ const handleRegister = async (e: Event) => {
       f7.views.main.router.navigate("/login");
     } else {
       f7.toast.show({
-        text: data.message || "Произошла ошибка при регистрации",
+        text: result.message || "Произошла ошибка при регистрации",
         closeTimeout: 3000,
         position: "center",
       });

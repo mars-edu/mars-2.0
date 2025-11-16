@@ -1,6 +1,6 @@
 import { ofetch } from "ofetch";
 
-// export const API_URL = import.meta.env.VITE_API_URL || "/api";
+// export const API_URL = "http://localhost:3001/api";
 export const API_URL = "https://mars-backend.robanokssamit-1ba.workers.dev/api";
 
 export const httpClient = ofetch.create({
@@ -12,9 +12,16 @@ export const httpClient = ofetch.create({
   credentials: "include",
   onRequest({ options }) {
     const token = localStorage.getItem("auth_token");
-    if (token) {
+    const language = localStorage.getItem("app_language") || navigator.language?.split("-")[0] || "en";
+    
+    if (token || language) {
       const headers = new Headers(options.headers);
-      headers.set("Authorization", `Bearer ${token}`);
+      
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+      
+      headers.set("X-Language", language);
       options.headers = headers;
     }
 

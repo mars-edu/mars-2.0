@@ -131,7 +131,6 @@
 
 <script setup lang="ts">
 import { ref, watch, computed, nextTick } from "vue";
-import { debounce } from "es-toolkit";
 import MarkCell from "@/components/ui/MarkCell.vue";
 import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
 import { useMarksStore } from "@/stores/marksStore";
@@ -250,33 +249,30 @@ const getMark = (row: number, col: number): string => {
   return String(mark ?? "");
 };
 
-// Debounced mark update function (300ms delay to batch rapid changes)
-const debouncedUpdateMark = debounce(
-  async (row: number, col: number, value: string | null) => {
-    if (!localStudent.value || !props.journalId) return;
+// Direct mark update function - no debounce, immediate save
+const updateMark = async (row: number, col: number, value: string | null) => {
+  if (!localStudent.value || !props.journalId) return;
 
-    const studentId = localStudent.value.studentId;
+  const studentId = localStudent.value.studentId;
 
-    console.log("[FloatingJournalRow] Calling marksStore.updateStudentMark:", {
-      journalId: props.journalId,
-      studentId,
-      col,
-      row,
-      value,
-    });
+  console.log("[FloatingJournalRow] Calling marksStore.updateStudentMark:", {
+    journalId: props.journalId,
+    studentId,
+    col,
+    row,
+    value,
+  });
 
-    // Update in store and wait for completion
-    const updateResult = await marksStore.updateStudentMark(
-      props.journalId,
-      studentId,
-      col,
-      row,
-      value
-    );
-    console.log("[FloatingJournalRow] Mark update result:", updateResult);
-  },
-  300
-);
+  // Update in store and wait for completion
+  const updateResult = await marksStore.updateStudentMark(
+    props.journalId,
+    studentId,
+    col,
+    row,
+    value
+  );
+  console.log("[FloatingJournalRow] Mark update result:", updateResult);
+};
 
 const setMark = (row: number, col: number, value: string) => {
   console.log("[FloatingJournalRow] Setting mark:", {
@@ -298,8 +294,8 @@ const setMark = (row: number, col: number, value: string) => {
 
   const newValue = value === "+" || value === "" ? null : value;
 
-  // Debounced store update
-  debouncedUpdateMark(row, col, newValue);
+  // Direct store update - no debounce
+  updateMark(row, col, newValue);
 };
 
 // Utility function to check if a date is in the future
@@ -384,9 +380,7 @@ const navigate = async (direction: "up" | "down" | "left" | "right") => {
 
   setMark(startRow, startCol, editedValue.value);
 
-  // Flush pending updates before moving to prevent data loss
-  await debouncedUpdateMark.flush();
-
+  // No need to flush - updates are immediate with tRPC
   editingCell.value = null;
 
   nextTick(() => {
@@ -440,8 +434,7 @@ const handleClose = async () => {
     confirmEdit();
   }
 
-  // Flush pending updates before closing to prevent data loss
-  await debouncedUpdateMark.flush();
+  // No need to flush - updates are immediate with tRPC
 
   if (localStudent.value) {
     console.log("[FloatingJournalRow] Emitting updated student:", {

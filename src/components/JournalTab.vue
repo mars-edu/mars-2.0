@@ -452,6 +452,7 @@ import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore
 import { useClass9Store, type Class9Data } from "@/stores/class9Store";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";
+import { trpcClient } from "@/lib/trpcClient";
 import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermediateControlStore";
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
 import { storeToRefs } from "pinia";
@@ -1557,49 +1558,42 @@ const getMark = (studentIndex: number, colIndex: number, markIndex: number) => {
   return String(mark ?? "");
 };
 
-// Pending updates map for optimistic UI
-const pendingUpdates = new Map<string, { value: string | null; timestamp: number }>();
+// Pending updates map for optimistic UI (no longer needed with direct tRPC)
 const userEditInProgress = ref(false);
 
-// Debounced mark update function (300ms delay to batch rapid changes)
-const debouncedUpdateMark = debounce(
-  async (
-    studentIndex: number,
-    colIndex: number,
-    markIndex: number,
-    value: string | null
-  ) => {
-    userEditInProgress.value = true;
+// Direct mark update function - no debounce, immediate save
+const updateMark = async (
+  studentIndex: number,
+  colIndex: number,
+  markIndex: number,
+  value: string | null
+) => {
+  userEditInProgress.value = true;
 
-    const studentId = getStudentIdByIndex(studentIndex);
-    if (!studentId || !props.journalId) {
-      userEditInProgress.value = false;
-      return;
-    }
-
-    const storeColIndex = getStoreIndexForCanonicalIndex(colIndex);
-    if (storeColIndex == null || storeColIndex < 0) {
-      userEditInProgress.value = false;
-      scheduleRebuildMarks();
-      return;
-    }
-
-    await marksStore.updateStudentMark(
-      props.journalId,
-      studentId,
-      storeColIndex,
-      markIndex,
-      value
-    );
-
-    const key = `${studentIndex}-${colIndex}-${markIndex}`;
-    pendingUpdates.delete(key);
-    emit("update-students", students.value);
-
+  const studentId = getStudentIdByIndex(studentIndex);
+  if (!studentId || !props.journalId) {
     userEditInProgress.value = false;
-  },
-  300
-);
+    return;
+  }
+
+  const storeColIndex = getStoreIndexForCanonicalIndex(colIndex);
+  if (storeColIndex == null || storeColIndex < 0) {
+    userEditInProgress.value = false;
+    scheduleRebuildMarks();
+    return;
+  }
+
+  await marksStore.updateStudentMark(
+    props.journalId,
+    studentId,
+    storeColIndex,
+    markIndex,
+    value
+  );
+
+  emit("update-students", students.value);
+  userEditInProgress.value = false;
+};
 
 const setMark = (
   studentIndex: number,
@@ -1613,12 +1607,8 @@ const setMark = (
 
   const newValue = value === "+" || value === "" ? null : value;
 
-  // Store pending update for optimistic UI
-  const key = `${studentIndex}-${colIndex}-${markIndex}`;
-  pendingUpdates.set(key, { value: newValue, timestamp: Date.now() });
-
-  // Debounced store update
-  debouncedUpdateMark(studentIndex, colIndex, markIndex, newValue);
+  // Direct store update - no debounce
+  updateMark(studentIndex, colIndex, markIndex, newValue);
 };
 
 // Utility function to check if a date is in the future
@@ -1720,9 +1710,7 @@ const navigate = async (direction: "up" | "down" | "left" | "right") => {
   } = editingCell.value;
   setMark(startStudent, startCol, startMark, editedValue.value);
 
-  // Flush pending updates before moving to prevent data loss
-  await debouncedUpdateMark.flush();
-
+  // No need to flush - updates are immediate with tRPC
   editingCell.value = null;
 
   nextTick(() => {
@@ -2408,13 +2396,31 @@ watch(
 const rebuildMarks = async () => {
   if (!(props.journalId && currentJournal.value?.students?.length)) return;
 
-  // If user is editing, defer the rebuild to avoid wiping pending changes
-  if (userEditInProgress.value || pendingUpdates.size > 0) {
+  // If user is editing, wait for completion
+  if (userEditInProgress.value) {
     console.log("[JournalTab] Deferring rebuildMarks - user edit in progress");
-    // Flush pending updates first
-    await debouncedUpdateMark.flush();
-    // Wait a bit for updates to complete
+    // Wait for current update to complete
     await nextTick();
+  }
+
+  // Initialize journal in backend if needed
+  const event = currentEvent.value;
+  const semester = academicYearSemesterStore.getActiveAcademicYearSemester;
+  
+  if (event && semester) {
+    try {
+      await marksStore.initializeJournalBackend(
+        props.journalId,
+        currentJournal.value.disciplineId,
+        currentJournal.value.group,
+        semester.academicYearId,
+        semester.id,
+        currentJournal.value.students
+      );
+    } catch (err) {
+      console.warn("[JournalTab] Failed to initialize journal in backend:", err);
+      // Continue anyway - marks will work locally
+    }
   }
 
   const markTemplate = generateDates();
@@ -2423,6 +2429,17 @@ const rebuildMarks = async () => {
     currentJournal.value.students,
     markTemplate
   );
+  
+  // Load marks from backend to merge with the template
+  try {
+    console.log("[JournalTab] Loading marks from backend for journal:", props.journalId);
+    await marksStore.loadJournalMarks(props.journalId);
+    console.log("[JournalTab] Marks loaded successfully from backend");
+  } catch (err) {
+    console.warn("[JournalTab] Failed to load marks from backend:", err);
+    // Continue - marks will work with local template
+  }
+  
   scheduleRecomputeSessionGrades();
 };
 
@@ -2478,8 +2495,7 @@ watch(
 const updateStudent = async (updatedStudent: any) => {
   if (!updatedStudent || !props.journalId) return;
 
-  // Flush pending debounced updates before bulk update to prevent race conditions
-  await debouncedUpdateMark.flush();
+  // No need to flush - updates are immediate with tRPC
 
   // Update marks in store
   if (updatedStudent.marks) {
@@ -2494,8 +2510,7 @@ const updateStudent = async (updatedStudent: any) => {
 
 const updateStudents = async (updatedStudents: any[]) => {
   if (updatedStudents && props.journalId) {
-    // Flush pending debounced updates before bulk update to prevent race conditions
-    await debouncedUpdateMark.flush();
+    // No need to flush - updates are immediate with tRPC
 
     // Update all students' marks in store
     const studentMarksToUpdate = updatedStudents.map((student) => ({

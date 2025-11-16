@@ -60,6 +60,7 @@ import { computed, onMounted, onUnmounted } from "vue";
 import { useRBAC } from "@/composables/useRBAC";
 import { f7 } from "framework7-vue";
 import { useUserStore } from "@/stores/userStore";
+import AuthService from "@/services/auth";
 import type { NavigationItem } from "@/composables/useRBAC";
 
 interface Props {
@@ -95,7 +96,7 @@ const handleNavItemClick = (itemId: string): void => {
 
 const handleProfileItemClick = async (itemId: string): Promise<void> => {
   if (itemId === "logout") {
-    userStore.logout();
+    await AuthService.logout();
     f7.views.main.router.navigate("/login");
     return;
   }
