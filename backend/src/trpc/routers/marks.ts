@@ -522,6 +522,9 @@ export const marksRouter = router({
     .input(
       z.object({
         force: z.boolean().optional().default(false),
+        journalId: z.string().optional(), // Migrate specific journal
+        skip: z.number().optional().default(0), // Skip N journals
+        limit: z.number().optional().default(5), // Process N journals at a time
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -585,14 +588,27 @@ export const marksRouter = router({
           ? journalMarks 
           : Object.entries(journalMarks);
 
-        console.log(`[Marks Migration] Found ${entries.length} journals to process`);
+        console.log(`[Marks Migration] Found ${entries.length} journals total`);
+
+        // Filter to specific journal if requested
+        let filteredEntries = entries;
+        if (input.journalId) {
+          filteredEntries = entries.filter(([id]) => id === input.journalId);
+          console.log(`[Marks Migration] Filtering to journal: ${input.journalId}`);
+        } else {
+          // Apply skip and limit for batch processing
+          filteredEntries = entries.slice(input.skip, input.skip + input.limit);
+          console.log(`[Marks Migration] Processing journals ${input.skip} to ${input.skip + input.limit} of ${entries.length}`);
+        }
+
+        console.log(`[Marks Migration] Processing ${filteredEntries.length} journals`);
 
         // Batch size to avoid CPU time limits
         const BATCH_SIZE = 5;
         const MARKS_PER_BATCH = 50;
 
         // Process each journal
-        for (const [journalId, journalData] of entries) {
+        for (const [journalId, journalData] of filteredEntries) {
           console.log(`[Marks Migration] Processing journal: ${journalId}`);
           journalsProcessed++;
 
@@ -786,6 +802,9 @@ export const marksRouter = router({
           message: `Successfully migrated ${migratedCount} marks from ${journalsProcessed} journals`,
           migrated: migratedCount,
           journals: journalsProcessed,
+          totalJournals: entries.length,
+          hasMore: input.skip + input.limit < entries.length,
+          nextSkip: input.skip + input.limit,
         };
       } catch (err) {
         console.error("[Marks Migration] Error:", err);
