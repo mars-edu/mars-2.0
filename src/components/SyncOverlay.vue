@@ -1,5 +1,5 @@
 <template>
-  <transition name="fade">
+  <!-- <transition name="fade">
     <div
       v-if="visible"
       class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-start justify-end z-[9998]"
@@ -23,7 +23,7 @@
         </ul>
       </div>
     </div>
-  </transition>
+  </transition> -->
 </template>
 
 <script setup lang="ts">
