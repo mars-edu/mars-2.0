@@ -5,7 +5,7 @@
     class="select-search-popup"
   >
     <f7-page>
-      <div class="event-popover bg-card text-card-foreground h-full">
+      <div class="event-popover bg-card text-card-foreground flex flex-col h-full">
         <PopoverHeader
           :title="title"
           cancel-text="Назад"
@@ -14,7 +14,7 @@
           :on-save="saveSelection"
           :disabled="localSelected.size === 0"
         />
-        <div class="p-4 space-y-4">
+        <div class="p-4 space-y-4 flex-1 overflow-y-auto">
           <f7-input
             type="text"
             :placeholder="searchPlaceholder || 'Поиск...'"
@@ -26,7 +26,7 @@
             Найдено: {{ filteredOptions.length }}
           </div>
 
-          <div class="h-full overflow-y-auto border border-input rounded-lg">
+          <div class="border border-input rounded-lg">
             <table class="w-full text-sm">
               <tbody>
                 <tr
@@ -154,7 +154,8 @@ defineExpose({ open });
 <style>
 .select-search-popup {
   width: 600px;
-  height: auto;
+  height: 80vh;
+  max-height: 600px;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
@@ -163,5 +164,6 @@ defineExpose({ open });
 }
 .select-search-popup .page-content {
   padding: 0;
+  height: 100%;
 }
 </style>

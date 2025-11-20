@@ -6,14 +6,14 @@
     class="student-selection-popup"
   >
     <f7-page>
-      <div class="event-popover bg-card text-card-foreground h-full">
+      <div class="event-popover bg-card text-card-foreground flex flex-col h-full">
         <PopoverHeader
           title="Выбрать обучающихся"
           save-text="Сохранить"
           :on-cancel="internalClose"
           :on-save="save"
         />
-        <div class="p-4 space-y-4">
+        <div class="p-4 space-y-4 flex-1 overflow-y-auto">
           <div class="grid grid-cols-2 gap-4">
             <Select
               label="Язык обучения"
@@ -106,7 +106,7 @@
             >{{ debugText }}</pre
           >
 
-          <div class="overflow-y-auto border border-input rounded-lg">
+          <div class="border border-input rounded-lg">
             <table class="w-full text-sm">
               <thead class="sticky top-0 bg-card z-10">
                 <tr class="border-b border-input">
@@ -152,7 +152,8 @@
 <style>
 .student-selection-popup {
   width: 700px;
-  height: auto;
+  height: 80vh;
+  max-height: 600px;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
@@ -162,6 +163,7 @@
 
 .student-selection-popup .page-content {
   padding: 0;
+  height: 100%;
 }
 </style>
 

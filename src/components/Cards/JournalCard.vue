@@ -37,6 +37,22 @@
           </div>
         </div>
       </div>
+      <div
+        v-if="showEditButton && !selectionMode"
+        class="shrink-0 mr-2 self-center"
+      >
+        <button
+          @click="handleEditClick"
+          class="w-8 h-8 rounded-lg bg-white/30 hover:bg-white/50 flex items-center justify-center transition-colors"
+        >
+          <f7-icon
+            ios="f7:pencil"
+            md="material:edit"
+            size="18px"
+            class="text-gray-900"
+          />
+        </button>
+      </div>
       <div class="shrink-0 w-12 h-12 relative self-end">
         <svg viewBox="0 0 44 44" class="w-12 h-12 -rotate-90 drop-shadow-sm">
           <circle
@@ -85,17 +101,20 @@ interface Props {
   percent?: number;
   selectionMode?: boolean;
   selected?: boolean;
+  showEditButton?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   percent: 0,
   selectionMode: false,
   selected: false,
+  showEditButton: false,
 });
 
 const emit = defineEmits<{
   click: [];
   "toggle-select": [];
+  edit: [];
 }>();
 
 const handleClick = () => {
@@ -104,6 +123,11 @@ const handleClick = () => {
   } else {
     emit("click");
   }
+};
+
+const handleEditClick = (event: Event) => {
+  event.stopPropagation();
+  emit("edit");
 };
 
 const circumference = 2 * Math.PI * 30;

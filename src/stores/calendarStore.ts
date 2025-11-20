@@ -26,6 +26,9 @@ export interface CalendarEvent {
   semester: string;
   useCustomPeriod: boolean;
   weeklySchedules?: WeeklySchedule[];
+  isIndividualJournal?: boolean;
+  mergedJournalIds?: string[];
+  parentIndividualJournalId?: string;
   createdAt: Date;
   updatedAt: Date;
 }

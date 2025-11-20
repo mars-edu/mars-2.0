@@ -1,7 +1,6 @@
 <template>
   <f7-app v-bind="f7params">
     <InactiveTabIndicator />
-    <SyncOverlay />
     <f7-view
       class="safe-areas"
       :main="true"
@@ -31,7 +30,6 @@ import routes from "./js/routes";
 import store from "./js/store";
 import { initVisibilityDetector } from "./composables/useVisibility";
 import InactiveTabIndicator from "./components/InactiveTabIndicator.vue";
-import SyncOverlay from "./components/SyncOverlay.vue";
 
 const userStore = useUserStore();
 const themeStore = useThemeStore();

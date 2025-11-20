@@ -444,6 +444,9 @@ export const useMarksStore = defineStore(
             throw updateError;
           }
 
+          // After successfully saving the mark, sync to parent journals if this is an individual journal
+          await syncToParentJournals(journalId, studentId, markIndex, valueIndex, value, mark);
+
           return true;
         }
 
@@ -452,6 +455,97 @@ export const useMarksStore = defineStore(
         console.error("[marksStore] Error updating mark:", err);
         error.value = "Failed to save mark";
         return false;
+      }
+    };
+
+    // Sync marks from individual journal to parent journals (internal helper)
+    const syncToParentJournals = async (
+      individualJournalId: string,
+      studentId: string,
+      markIndex: number,
+      valueIndex: number,
+      value: string | null,
+      mark: Mark
+    ): Promise<void> => {
+      try {
+        const { useCalendarStore } = await import("./calendarStore");
+        const calendarStore = useCalendarStore();
+
+        const individualEvent = calendarStore.getEventById(individualJournalId);
+
+        // Check if this is an individual journal
+        if (!individualEvent?.isIndividualJournal || !individualEvent.mergedJournalIds) {
+          return; // Not an individual journal, no sync needed
+        }
+
+        console.log("[marksStore] Syncing mark from individual journal to parent journals:", {
+          individualJournalId,
+          studentId,
+          parentJournals: individualEvent.mergedJournalIds,
+        });
+
+        // Find which parent journal this student belongs to
+        for (const parentJournalId of individualEvent.mergedJournalIds) {
+          const parentEvent = calendarStore.getEventById(parentJournalId);
+
+          // Check if this student is in this parent journal
+          if (parentEvent?.participants?.includes(studentId)) {
+            console.log("[marksStore] Syncing to parent journal:", {
+              parentJournalId,
+              studentId,
+            });
+
+            // Get parent journal marks
+            const parentJournal = journalMarks.value[parentJournalId];
+            if (!parentJournal) {
+              console.warn("[marksStore] Parent journal not loaded in state, skipping sync");
+              continue;
+            }
+
+            const parentStudentMark = parentJournal.studentMarks.find(
+              (sm) => sm.studentId === studentId
+            );
+
+            if (!parentStudentMark) {
+              console.warn("[marksStore] Student not found in parent journal");
+              continue;
+            }
+
+            // Update local state
+            if (
+              markIndex >= 0 &&
+              markIndex < parentStudentMark.marks.length &&
+              valueIndex >= 0 &&
+              valueIndex < parentStudentMark.marks[markIndex].values.length
+            ) {
+              parentStudentMark.marks[markIndex].values[valueIndex] = value;
+              parentJournal.lastUpdated = new Date().toISOString();
+
+              // Save to backend
+              try {
+                await trpcClient.marks.updateMark.mutate({
+                  journalId: parentJournalId,
+                  studentId,
+                  columnIndex: markIndex,
+                  rowIndex: valueIndex,
+                  value,
+                  columnType: mark.type,
+                  columnDate: mark.isoDate,
+                  columnLabel: mark.label,
+                  controlType: mark.controlType,
+                  controlId: mark.controlId,
+                  sessionId: mark.sessionId,
+                  scheduledControlId: mark.scheduledControlId,
+                });
+                console.log("[marksStore] Successfully synced mark to parent journal");
+              } catch (syncError) {
+                console.error("[marksStore] Error saving synced mark to parent journal:", syncError);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("[marksStore] Error syncing individual journal marks:", err);
       }
     };
 

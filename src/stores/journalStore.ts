@@ -17,6 +17,9 @@ export interface Journal {
   group: string;
   students: string[];
   isMixedGroup?: boolean;
+  isIndividualJournal?: boolean;
+  mergedJournalIds?: string[];
+  parentIndividualJournalId?: string;
 }
 
 export const useJournalStore = defineStore(
@@ -190,6 +193,42 @@ export const useJournalStore = defineStore(
       });
 
       return mixedJournals;
+    });
+
+    const individualJournals = computed(() => {
+      const result: Journal[] = [];
+
+      calendarStore.filteredEvents.forEach((event: any) => {
+        const actualEvent = event._custom?.value || event;
+
+        // Only include events marked as individual journals
+        if (!actualEvent.isIndividualJournal) return;
+
+        if (!actualEvent.participants || actualEvent.participants.length === 0)
+          return;
+
+        const courseNumbers = actualEvent.participants
+          .map((id: string) => studentStore.getCourseByStudentId(id) ?? 1)
+          .filter((num): num is number => num !== null);
+
+        const uniqueCourses = Array.from(new Set(courseNumbers)).sort(
+          (a, b) => a - b
+        );
+
+        const journal = createJournalFromEvent(
+          actualEvent,
+          uniqueCourses,
+          actualEvent.participants || [],
+          false
+        );
+
+        journal.isIndividualJournal = true;
+        journal.mergedJournalIds = actualEvent.mergedJournalIds || [];
+
+        result.push(journal);
+      });
+
+      return result;
     });
 
     function hasMixedGroups(participants: string[]): boolean {
@@ -413,6 +452,7 @@ export const useJournalStore = defineStore(
       error,
       journalsByCourse,
       mixedGroupJournals,
+      individualJournals,
       generateJournalTitle,
       generateGroupFromStudents,
       getDisciplineTitle,

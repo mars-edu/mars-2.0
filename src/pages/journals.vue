@@ -226,6 +226,7 @@
                         :percent="journalStore.getJournalPercent(journal)"
                         :selection-mode="isSelectionMode"
                         :selected="selectedJournalIds.has(journal.id)"
+                        :show-edit-button="false"
                         @click="goToJournalDetails(journal.id)"
                         @toggle-select="toggleJournalSelection(journal.id)"
                       />
@@ -256,6 +257,7 @@
                         :percent="journalStore.getJournalPercent(journal)"
                         :selection-mode="isSelectionMode"
                         :selected="selectedJournalIds.has(journal.id)"
+                        :show-edit-button="false"
                         @click="goToJournalDetails(journal.id)"
                         @toggle-select="toggleJournalSelection(journal.id)"
                       />
@@ -267,6 +269,47 @@
                       <p class="text-sm">Нет доступных журналов</p>
                     </div>
                   </div>
+                  <div v-if="idx === 3" class="flex flex-col gap-3 w-full">
+                    <h2
+                      class="font-semibold text-sm text-center py-1 bg-primary/10 rounded-md text-primary flex items-center justify-between px-2"
+                    >
+                      <span>индивидуальный журнал</span>
+                      <button
+                        @click="onAddIndividualJournal"
+                        class="w-6 h-6 rounded-md bg-primary hover:bg-primary-dark transition-colors flex items-center justify-center"
+                      >
+                        <f7-icon
+                          ios="f7:plus"
+                          md="material:add"
+                          size="16px"
+                          class="text-white"
+                        />
+                      </button>
+                    </h2>
+                    <div
+                      v-for="journal in filteredIndividualJournals"
+                      :key="journal.id"
+                    >
+                      <JournalCard
+                        :title="journalStore.getDisciplineTitle(journal)"
+                        :subtitle="journalStore.getJournalSubtitle(journal)"
+                        :schedule="journalStore.getJournalScheduleText(journal)"
+                        :percent="journalStore.getJournalPercent(journal)"
+                        :selection-mode="isSelectionMode"
+                        :selected="selectedJournalIds.has(journal.id)"
+                        :show-edit-button="true"
+                        @click="goToJournalDetails(journal.id)"
+                        @toggle-select="toggleJournalSelection(journal.id)"
+                        @edit="onEditIndividualJournal(journal.id)"
+                      />
+                    </div>
+                    <div
+                      v-if="filteredIndividualJournals.length === 0"
+                      class="rounded-lg p-4 text-gray-500 shadow-sm min-h-[90px] flex items-center justify-center bg-gray-50 border border-gray-100"
+                    >
+                      <p class="text-sm">Нет индивидуальных журналов</p>
+                    </div>
+                  </div>
                 </template>
               </div>
             </div>
@@ -274,6 +317,12 @@
         </div>
       </div>
     </div>
+
+    <IndividualJournalPopup
+      ref="individualJournalPopupRef"
+      @save="onIndividualJournalSave"
+      @close="onIndividualJournalClose"
+    />
   </f7-page>
 </template>
 
@@ -284,6 +333,7 @@ import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
 import JournalCard from "@/components/Cards/JournalCard.vue";
+import IndividualJournalPopup from "@/components/IndividualJournalPopup.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { useJournalStore, type Journal } from "@/stores/journalStore";
@@ -316,7 +366,7 @@ const specialtyStore = useSpecialtyStore();
 const class9Store = useClass9Store();
 const finalControlStore = useFinalControlStore();
 const scheduledFinalControlStore = useScheduledFinalControlStore();
-const { journalsByCourse, mixedGroupJournals } = storeToRefs(journalStore);
+const { journalsByCourse, mixedGroupJournals, individualJournals } = storeToRefs(journalStore);
 const { students } = storeToRefs(studentStore);
 
 const courseStore = useCourseStore();
@@ -631,6 +681,24 @@ const filteredMixedGroupJournals = computed(() => {
   return filtered;
 });
 
+const filteredIndividualJournals = computed(() => {
+  const yearId = selectedItemsStore.selectedAcademicYearId;
+  const semId = selectedSemesterId.value;
+  const teacherId = calendarStore.selectedTeacherId;
+
+  return individualJournals.value.filter((journal) => {
+    const event = calendarStore.getEventById(journal.id);
+
+    if (!event) return false;
+
+    if (teacherId && event.teacherId !== teacherId) return false;
+
+    if (semId && (!event.semester || event.semester !== semId)) return false;
+
+    return true;
+  });
+});
+
 const goToJournalDetails = (id: number | string) => {
   f7.views.main.router.navigate(`/journals/${id}?from=journals`);
 };
@@ -885,6 +953,24 @@ function onUploadClick() {
 
 function onShareClick() {
   f7.dialog.alert("Поделиться журналами");
+}
+
+const individualJournalPopupRef = ref<InstanceType<typeof IndividualJournalPopup>>();
+
+function onAddIndividualJournal() {
+  individualJournalPopupRef.value?.open();
+}
+
+function onEditIndividualJournal(journalId: string) {
+  individualJournalPopupRef.value?.open(journalId);
+}
+
+function onIndividualJournalSave() {
+  console.log("Individual journal saved");
+}
+
+function onIndividualJournalClose() {
+  console.log("Individual journal popup closed");
 }
 </script>
 
