@@ -10,7 +10,7 @@ import "../css/app.css";
 import App from "../app.vue";
 import localforage from "localforage";
 import { PiniaServerSync } from "./plugin/pinia-server-sync";
-import { API_URL } from "../lib/http-client";
+import { API_URL } from "../lib/config";
 import superjson from "superjson";
 
 Framework7.use(Framework7Vue);

@@ -1,7 +1,6 @@
 import { ofetch } from "ofetch";
-
-// export const API_URL = "http://localhost:3001/api";
-export const API_URL = "https://mars-backend.robanokssamit-1ba.workers.dev/api";
+import { API_URL } from "./config";
+import { getAuthHeaders } from "./auth";
 
 export const httpClient = ofetch.create({
   baseURL: API_URL,
@@ -11,19 +10,14 @@ export const httpClient = ofetch.create({
   timeout: 45 * 1000,
   credentials: "include",
   onRequest({ options }) {
-    const token = localStorage.getItem("auth_token");
-    const language = localStorage.getItem("app_language") || navigator.language?.split("-")[0] || "en";
+    const authHeaders = getAuthHeaders();
+    const headers = new Headers(options.headers);
     
-    if (token || language) {
-      const headers = new Headers(options.headers);
-      
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-      
-      headers.set("X-Language", language);
-      options.headers = headers;
-    }
+    Object.entries(authHeaders).forEach(([key, value]) => {
+      headers.set(key, value);
+    });
+    
+    options.headers = headers;
 
     if (options.body && options.body instanceof FormData) {
       const headers = new Headers(options.headers);

@@ -3,16 +3,9 @@ import type { AppRouter } from "../../backend/src/trpc/routers/index";
 import superjson from "superjson";
 import { observable } from "@trpc/server/observable";
 import { useSyncStore } from "@/stores/syncStore";
+import { API_URL } from "./config";
+import { getAuthHeaders } from "./auth";
 
-/**
- * Get API URL from environment or use default
- */
-const getApiUrl = () => {
-  // return "http://localhost:3001";
-  return "https://mars-backend.robanokssamit-1ba.workers.dev";
-};
-
-const API_URL = getApiUrl();
 let trpcRequestCounter = 0;
 
 const safeSyncStore = () => {
@@ -78,23 +71,10 @@ export const trpcClient = createTRPCProxyClient<AppRouter>({
   links: [
     syncOverlayLink,
     httpBatchLink({
-      url: `${API_URL}/api/trpc`,
+      url: `${API_URL}/trpc`,
 
       // Add authentication headers
-      headers() {
-        const token = localStorage.getItem("auth_token");
-        const language = localStorage.getItem("app_language") || navigator.language?.split("-")[0] || "en";
-        
-        const headers: Record<string, string> = {
-          "X-Language": language,
-        };
-        
-        if (token) {
-          headers.Authorization = `Bearer ${token}`;
-        }
-        
-        return headers;
-      },
+      headers: getAuthHeaders,
 
       // Use superjson for serialization (same as backend)
       // This handles Date, Map, Set, BigInt, etc.
@@ -102,17 +82,3 @@ export const trpcClient = createTRPCProxyClient<AppRouter>({
     }),
   ],
 });
-
-/**
- * Helper to check if user is authenticated
- */
-export const isAuthenticated = () => {
-  return !!localStorage.getItem("auth_token");
-};
-
-/**
- * Helper to get auth token
- */
-export const getAuthToken = () => {
-  return localStorage.getItem("auth_token");
-};
