@@ -11,6 +11,7 @@ import App from "../app.vue";
 import localforage from "localforage";
 import { PiniaServerSync } from "./plugin/pinia-server-sync";
 import { API_URL } from "../lib/config";
+import { httpToWebSocketUrl } from "../lib/utils";
 import superjson from "superjson";
 
 Framework7.use(Framework7Vue);
@@ -34,7 +35,7 @@ pinia.use(
 );
 pinia.use(
   PiniaServerSync({
-    url: `${API_URL}/ws`,
+    url: httpToWebSocketUrl(`${API_URL}/ws`),
     serializer: {
       serialize: superjson.stringify,
       deserialize: superjson.parse,

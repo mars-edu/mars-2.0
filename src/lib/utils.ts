@@ -46,3 +46,34 @@ export function getGenderOptions(allText = "Все", allValue: any = "") {
 
   return result;
 }
+
+/**
+ * Converts an HTTP(S) URL to a WebSocket URL
+ * @param httpUrl - The HTTP or HTTPS URL to convert
+ * @returns The same URL with ws:// or wss:// protocol
+ * @throws Error if the URL doesn't use http:// or https:// protocol
+ *
+ * @example
+ * httpToWebSocketUrl('https://example.com/api')
+ * // Returns: 'wss://example.com/api'
+ *
+ * httpToWebSocketUrl('http://localhost:3000/ws')
+ * // Returns: 'ws://localhost:3000/ws'
+ */
+export function httpToWebSocketUrl(httpUrl: string): string {
+  console.log("[lib/utils] httpToWebSocketUrl called with URL:", httpUrl);
+
+  if (httpUrl.startsWith("https://")) {
+    const result = httpUrl.replace("https://", "wss://");
+    console.log("[lib/utils] Converted https:// to wss://:", result);
+    return result;
+  } else if (httpUrl.startsWith("http://")) {
+    const result = httpUrl.replace("http://", "ws://");
+    console.log("[lib/utils] Converted http:// to ws://:", result);
+    return result;
+  } else {
+    const error = `Invalid URL protocol. Expected http:// or https://, got: ${httpUrl}`;
+    console.error("[lib/utils] httpToWebSocketUrl error:", error);
+    throw new Error(error);
+  }
+}
