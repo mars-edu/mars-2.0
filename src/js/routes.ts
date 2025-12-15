@@ -2,23 +2,6 @@ import { Role } from "../types/user";
 import type { Router } from "framework7/types";
 import NotFoundPage from "../pages/404.vue";
 
-import HomePage from "../pages/suspense/HomePage.vue";
-import PlanningPage from "../pages/suspense/PlanningPage.vue";
-import LoginPage from "../pages/suspense/LoginPage.vue";
-import RegisterPage from "../pages/suspense/RegisterPage.vue";
-import RestorePasswordPage from "../pages/suspense/RestorePasswordPage.vue";
-import RupPage from "../pages/suspense/RupPage.vue";
-import SettingsPage from "../pages/suspense/SettingsPage.vue";
-import SpecialtyCatalogPage from "../pages/suspense/SpecialtyCatalogPage.vue";
-import StudentCardPage from "../pages/suspense/StudentCardPage.vue";
-import TeacherCardPage from "../pages/suspense/TeacherCardPage.vue";
-import DisciplineCatalogPage from "../pages/suspense/DisciplineCatalogPage.vue";
-import JournalsPage from "../pages/suspense/JournalsPage.vue";
-import JournalDetailsPage from "../pages/suspense/JournalDetailsPage.vue";
-import EducationSchedulePage from "../pages/suspense/EducationSchedulePage.vue";
-import AnalyticsPage from "../pages/suspense/AnalyticsPage.vue";
-import ReportsPage from "../pages/suspense/ReportsPage.vue";
-
 type RouteConfig = Router.RouteParameters & {
   options?: {
     roles?: Role[];
@@ -28,106 +11,106 @@ type RouteConfig = Router.RouteParameters & {
 const routes: RouteConfig[] = [
   {
     path: "/home",
-    component: HomePage,
+    asyncComponent: () => import("../pages/suspense/HomePage.vue"),
     options: {
       roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
     },
   },
   {
     path: "/planning/:year/:month",
-    component: PlanningPage,
+    asyncComponent: () => import("../pages/suspense/PlanningPage.vue"),
     options: {
       roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
     },
   },
   {
     path: "/rup/",
-    component: RupPage,
+    asyncComponent: () => import("../pages/suspense/RupPage.vue"),
     options: {
       roles: [Role.ADMIN, Role.TEACHER],
     },
   },
   {
     path: "/specialty-catalog/",
-    component: SpecialtyCatalogPage,
+    asyncComponent: () => import("../pages/suspense/SpecialtyCatalogPage.vue"),
     options: {
       roles: [Role.ADMIN, Role.TEACHER],
     },
   },
   {
     path: "/student-card/",
-    component: StudentCardPage,
+    asyncComponent: () => import("../pages/suspense/StudentCardPage.vue"),
     options: {
       roles: [Role.ADMIN, Role.TEACHER],
     },
   },
   {
     path: "/teacher-card/",
-    component: TeacherCardPage,
+    asyncComponent: () => import("../pages/suspense/TeacherCardPage.vue"),
     options: {
       roles: [Role.ADMIN, Role.TEACHER],
     },
   },
   {
     path: "/discipline-catalog/",
-    component: DisciplineCatalogPage,
+    asyncComponent: () => import("../pages/suspense/DisciplineCatalogPage.vue"),
     options: {
       roles: [Role.ADMIN, Role.TEACHER],
     },
   },
   {
     path: "/journals/",
-    component: JournalsPage,
+    asyncComponent: () => import("../pages/suspense/JournalsPage.vue"),
     options: {
       roles: [Role.ADMIN, Role.TEACHER],
     },
   },
   {
     path: "/journals/:id",
-    component: JournalDetailsPage,
+    asyncComponent: () => import("../pages/suspense/JournalDetailsPage.vue"),
     options: {
       roles: [Role.ADMIN, Role.TEACHER],
     },
   },
   {
     path: "/settings/",
-    component: SettingsPage,
+    asyncComponent: () => import("../pages/suspense/SettingsPage.vue"),
     options: {
       roles: [Role.ADMIN],
     },
   },
   {
     path: "/education-schedule/",
-    component: EducationSchedulePage,
+    asyncComponent: () => import("../pages/suspense/EducationSchedulePage.vue"),
     options: {
       roles: [Role.ADMIN],
     },
   },
   {
     path: "/analytics/",
-    component: AnalyticsPage,
+    asyncComponent: () => import("../pages/suspense/AnalyticsPage.vue"),
     options: {
       roles: [Role.ADMIN],
     },
   },
   {
     path: "/reports/",
-    component: ReportsPage,
+    asyncComponent: () => import("../pages/suspense/ReportsPage.vue"),
     options: {
       roles: [Role.ADMIN],
     },
   },
   {
     path: "/login",
-    component: LoginPage,
+    asyncComponent: () => import("../pages/suspense/LoginPage.vue"),
   },
   {
     path: "/register",
-    component: RegisterPage,
+    asyncComponent: () => import("../pages/suspense/RegisterPage.vue"),
   },
   {
     path: "/restore-password",
-    component: RestorePasswordPage,
+    asyncComponent: () => import("../pages/suspense/RestorePasswordPage.vue"),
   },
   {
     path: "(.*)",
