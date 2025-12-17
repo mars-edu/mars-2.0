@@ -3,42 +3,59 @@
  *
  * Convex actions for generating and parsing Excel files on the backend.
  * Uses "use node" directive to enable Node.js runtime with ExcelJS.
+ *
+ * NOTE: Currently disabled due to ExcelJS compatibility issues with Convex local backend.
+ * These actions work fine in production but the local backend has trouble bundling ExcelJS.
+ * For now, Excel operations should be performed on the client side.
  */
-"use node";
+// "use node";
 
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 
-import {
-  exportJournalToExcel,
-  type JournalExportPayload,
-  type JournalStudentRow,
-} from "./journalExport";
+// import {
+//   exportJournalToExcel,
+//   type JournalExportPayload,
+//   type JournalStudentRow,
+// } from "./journalExport";
 
-import {
-  exportTeacherWorkloadToExcel,
-  type TeacherWorkloadExportPayload,
-  type WorkloadEntry,
-  type WorkloadSummaryEntry,
-  type MonthlyDistributionEntry,
-} from "./workloadExport";
+// import {
+//   exportTeacherWorkloadToExcel,
+//   type TeacherWorkloadExportPayload,
+//   type WorkloadEntry,
+//   type WorkloadSummaryEntry,
+//   type MonthlyDistributionEntry,
+// } from "./workloadExport";
 
-import {
-  exportAnalyticsToExcel,
-  type AnalyticsExportPayload,
-  type CourseGroup,
-  type SpecialtyGroup,
-  type StudentRow,
-  type DisciplineInfo,
-  type FinalControlForm,
-} from "./analyticsExport";
+// import {
+//   exportAnalyticsToExcel,
+//   type AnalyticsExportPayload,
+//   type CourseGroup,
+//   type SpecialtyGroup,
+//   type StudentRow,
+//   type DisciplineInfo,
+//   type FinalControlForm,
+// } from "./analyticsExport";
 
-import {
-  importJournalFromBuffer,
-  parseEducationalScheduleFromBuffer,
-  type JournalImportSummary,
-  type ParseResult,
-} from "./imports";
+// import {
+//   importJournalFromBuffer,
+//   parseEducationalScheduleFromBuffer,
+//   type JournalImportSummary,
+//   type ParseResult,
+// } from "./imports";
+
+// Placeholder types while ExcelJS is disabled
+type JournalExportPayload = any;
+type JournalStudentRow = any;
+type TeacherWorkloadExportPayload = any;
+type WorkloadEntry = any;
+type WorkloadSummaryEntry = any;
+type MonthlyDistributionEntry = any;
+type AnalyticsExportPayload = any;
+type CourseGroup = any;
+type FinalControlForm = any;
+type JournalImportSummary = any;
+type ParseResult = any;
 
 // ============================================================================
 // Journal Export Action

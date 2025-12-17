@@ -98,7 +98,7 @@ export const GRAY_FILL = {
   type: "pattern" as const,
   pattern: "solid" as const,
   fgColor: { theme: 0, tint: -0.499984740745262 },
-  bgColor: { indexed: 64 },
+  bgColor: { indexed: 64 } as any,
 };
 
 // ============================================================================
@@ -280,7 +280,7 @@ export function applyCellStyle(cell: ExcelJS.Cell, style: CellStyle): void {
     if (colorValue) {
       cell.fill = {
         type: "pattern",
-        pattern: (style.fill.pattern as ExcelJS.FillPattern) || "solid",
+        pattern: (style.fill.pattern || "solid") as any,
         fgColor: {
           argb: colorValue.startsWith("FF") ? colorValue : "FF" + colorValue,
         },
