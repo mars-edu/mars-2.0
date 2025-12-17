@@ -1,5 +1,8 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
+import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { api } from "@convex/_generated/api";
+import { useConvexQuery } from "convex-vue";
 
 export interface IntermediateControl {
   id: string;
@@ -24,7 +27,26 @@ export const useIntermediateControlStore = defineStore(
       );
     };
 
-    if (intermediateControls.value.length === 0) {
+    // Reactive subscription to Convex
+    if (useConvexFeatures() && convex) {
+      const { data: convexControls } = useConvexQuery(
+        api.intermediateControls.queries.list,
+        ref({})
+      );
+
+      watch(convexControls, (newData) => {
+        if (newData) {
+          intermediateControls.value = newData.map((c) => ({
+            id: c._id,
+            name: c.name,
+            shortName: c.shortName,
+            createdAt: new Date(c.createdAt),
+            updatedAt: new Date(c.updatedAt),
+          }));
+          sortIntermediateControls();
+        }
+      });
+    } else if (intermediateControls.value.length === 0) {
       intermediateControls.value = DEFAULT_INTERMEDIATE_CONTROLS;
     }
     sortIntermediateControls();
@@ -48,6 +70,17 @@ export const useIntermediateControlStore = defineStore(
     ) {
       loading.value = true;
       try {
+        if (useConvexFeatures() && convex) {
+          // Use Convex - the reactive subscription will handle updating the local state
+          await convex.mutation(api.intermediateControls.mutations.create, {
+            name: controlData.name,
+            shortName: controlData.shortName,
+          });
+          // Don't push to intermediateControls.value - the reactive subscription will handle it
+          error.value = null;
+          return;
+        }
+
         const newControl: IntermediateControl = {
           ...controlData,
           id: crypto.randomUUID(),
@@ -77,6 +110,18 @@ export const useIntermediateControlStore = defineStore(
     ) {
       loading.value = true;
       try {
+        if (useConvexFeatures() && convex) {
+          // Use Convex - the reactive subscription will handle updating the local state
+          await convex.mutation(api.intermediateControls.mutations.update, {
+            id: id as any,
+            name: controlData.name,
+            shortName: controlData.shortName,
+          });
+          // Don't update intermediateControls.value - the reactive subscription will handle it
+          error.value = null;
+          return;
+        }
+
         const index = intermediateControls.value.findIndex((c) => c.id === id);
         if (index === -1) {
           throw new Error("Intermediate control not found");
@@ -106,6 +151,16 @@ export const useIntermediateControlStore = defineStore(
     async function deleteIntermediateControl(id: string) {
       loading.value = true;
       try {
+        if (useConvexFeatures() && convex) {
+          // Use Convex - the reactive subscription will handle updating the local state
+          await convex.mutation(api.intermediateControls.mutations.remove, {
+            id: id as any,
+          });
+          // Don't filter intermediateControls.value - the reactive subscription will handle it
+          error.value = null;
+          return;
+        }
+        // Fallback: local-only
         intermediateControls.value = intermediateControls.value.filter(
           (c) => c.id !== id
         );
@@ -116,6 +171,29 @@ export const useIntermediateControlStore = defineStore(
             ? err.message
             : "Failed to delete intermediate control";
         throw err;
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    async function loadFromBackend() {
+      if (!useConvexFeatures() || !convex) return;
+
+      loading.value = true;
+      try {
+        const data = await convex.query(api.intermediateControls.queries.list, {});
+        intermediateControls.value = data.map((c) => ({
+          id: c._id,
+          name: c.name,
+          shortName: c.shortName,
+          createdAt: new Date(c.createdAt),
+          updatedAt: new Date(c.updatedAt),
+        }));
+        sortIntermediateControls();
+        error.value = null;
+      } catch (err) {
+        console.error("[intermediateControlStore] Failed to load from Convex:", err);
+        error.value = "Failed to load intermediate controls";
       } finally {
         loading.value = false;
       }
@@ -145,6 +223,7 @@ export const useIntermediateControlStore = defineStore(
       deleteIntermediateControl,
       clearError,
       reset,
+      loadFromBackend,
     };
   },
   {

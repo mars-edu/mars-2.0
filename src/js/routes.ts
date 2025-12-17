@@ -1,6 +1,7 @@
 import { Role } from "../types/user";
 import type { Router } from "framework7/types";
 import NotFoundPage from "../pages/404.vue";
+import { useUserStore } from "../stores/userStore";
 
 type RouteConfig = Router.RouteParameters & {
   options?: {
@@ -8,10 +9,91 @@ type RouteConfig = Router.RouteParameters & {
   };
 };
 
+/**
+ * Route guard for protected routes.
+ * Checks authentication and role-based access.
+ * Preserves the intended destination URL on redirect to login.
+ */
+function createAuthGuard(roles?: Role[]) {
+  return (ctx: Router.RouteCallbackCtx) => {
+    const userStore = useUserStore();
+    const hasToken = localStorage.getItem("auth_token");
+
+    console.log("[Routes] Auth guard check:", {
+      path: ctx.to.url,
+      isAuthenticated: userStore.isAuthenticated,
+      hasToken: !!hasToken,
+      requiredRoles: roles,
+      userRoles: userStore.currentUser?.roles,
+    });
+
+    // If we have a token but user store isn't authenticated yet, initialize it
+    if (!userStore.isAuthenticated && hasToken) {
+      console.log("[Routes] Waiting for user store initialization...");
+      userStore.initialize().then(() => {
+        console.log("[Routes] User store initialized, rechecking auth:", userStore.isAuthenticated);
+
+        if (!userStore.isAuthenticated) {
+          // Token was invalid, redirect to login
+          const redirectUrl = `/login?redirect=${encodeURIComponent(ctx.to.url)}`;
+          console.log("[Routes] Token invalid, redirecting to:", redirectUrl);
+          ctx.router.navigate(redirectUrl, { reloadCurrent: true, clearPreviousHistory: true });
+          ctx.reject();
+          return;
+        }
+
+        // Check role-based access
+        if (roles && roles.length > 0) {
+          const hasAccess = userStore.hasAnyRole(roles);
+          if (!hasAccess) {
+            console.log("[Routes] Insufficient permissions, redirecting to home");
+            ctx.router.navigate("/home", { reloadCurrent: true });
+            ctx.reject();
+            return;
+          }
+        }
+
+        // User is authenticated and has access
+        ctx.resolve();
+      });
+      return;
+    }
+
+    if (!userStore.isAuthenticated) {
+      // No token, redirect to login with the intended destination
+      const redirectUrl = `/login?redirect=${encodeURIComponent(ctx.to.url)}`;
+      console.log("[Routes] Not authenticated, redirecting to:", redirectUrl);
+      ctx.router.navigate(redirectUrl, { reloadCurrent: true, clearPreviousHistory: true });
+      ctx.reject();
+      return;
+    }
+
+    // Check role-based access if roles are specified
+    if (roles && roles.length > 0) {
+      const hasAccess = userStore.hasAnyRole(roles);
+      if (!hasAccess) {
+        console.log("[Routes] Insufficient permissions, redirecting to home");
+        ctx.router.navigate("/home", { reloadCurrent: true });
+        ctx.reject();
+        return;
+      }
+    }
+
+    // User is authenticated and has access
+    ctx.resolve();
+  };
+}
+
 const routes: RouteConfig[] = [
+  // Root route - redirect to login
+  {
+    path: "/",
+    redirect: "/login",
+  },
   {
     path: "/home",
     asyncComponent: () => import("../pages/suspense/HomePage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT])],
     options: {
       roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
     },
@@ -19,48 +101,55 @@ const routes: RouteConfig[] = [
   {
     path: "/planning/:year/:month",
     asyncComponent: () => import("../pages/suspense/PlanningPage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT])],
     options: {
       roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
     },
   },
   {
-    path: "/rup/",
+    path: "/rup",
     asyncComponent: () => import("../pages/suspense/RupPage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN, Role.TEACHER])],
     options: {
       roles: [Role.ADMIN, Role.TEACHER],
     },
   },
   {
-    path: "/specialty-catalog/",
+    path: "/specialty-catalog",
     asyncComponent: () => import("../pages/suspense/SpecialtyCatalogPage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN, Role.TEACHER])],
     options: {
       roles: [Role.ADMIN, Role.TEACHER],
     },
   },
   {
-    path: "/student-card/",
+    path: "/student-card",
     asyncComponent: () => import("../pages/suspense/StudentCardPage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN, Role.TEACHER])],
     options: {
       roles: [Role.ADMIN, Role.TEACHER],
     },
   },
   {
-    path: "/teacher-card/",
+    path: "/teacher-card",
     asyncComponent: () => import("../pages/suspense/TeacherCardPage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN, Role.TEACHER])],
     options: {
       roles: [Role.ADMIN, Role.TEACHER],
     },
   },
   {
-    path: "/discipline-catalog/",
+    path: "/discipline-catalog",
     asyncComponent: () => import("../pages/suspense/DisciplineCatalogPage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN, Role.TEACHER])],
     options: {
       roles: [Role.ADMIN, Role.TEACHER],
     },
   },
   {
-    path: "/journals/",
+    path: "/journals",
     asyncComponent: () => import("../pages/suspense/JournalsPage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN, Role.TEACHER])],
     options: {
       roles: [Role.ADMIN, Role.TEACHER],
     },
@@ -68,38 +157,52 @@ const routes: RouteConfig[] = [
   {
     path: "/journals/:id",
     asyncComponent: () => import("../pages/suspense/JournalDetailsPage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN, Role.TEACHER])],
     options: {
       roles: [Role.ADMIN, Role.TEACHER],
     },
   },
   {
-    path: "/settings/",
+    path: "/settings",
     asyncComponent: () => import("../pages/suspense/SettingsPage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN])],
     options: {
       roles: [Role.ADMIN],
     },
   },
   {
-    path: "/education-schedule/",
+    path: "/education-schedule",
     asyncComponent: () => import("../pages/suspense/EducationSchedulePage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN])],
     options: {
       roles: [Role.ADMIN],
     },
   },
   {
-    path: "/analytics/",
+    path: "/analytics",
     asyncComponent: () => import("../pages/suspense/AnalyticsPage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN])],
     options: {
       roles: [Role.ADMIN],
     },
   },
   {
-    path: "/reports/",
+    path: "/reports",
     asyncComponent: () => import("../pages/suspense/ReportsPage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN])],
     options: {
       roles: [Role.ADMIN],
     },
   },
+  {
+    path: "/profile",
+    asyncComponent: () => import("../pages/suspense/ProfilePage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT])],
+    options: {
+      roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
+    },
+  },
+  // Public routes - no auth required
   {
     path: "/login",
     asyncComponent: () => import("../pages/suspense/LoginPage.vue"),

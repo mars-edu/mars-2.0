@@ -218,9 +218,5 @@ export const useUserStore = defineStore(
       reset,
     };
   },
-  {
-    serverSync: {
-      enabled: false,
-    },
-  }
+  {}
 );

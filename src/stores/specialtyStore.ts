@@ -1,5 +1,8 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
+import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { api } from "@convex/_generated/api";
+import { useConvexQuery } from "convex-vue";
 
 export interface Specialty {
   id: string;
@@ -26,6 +29,30 @@ export const useSpecialtyStore = defineStore(
     const specialties = ref<Specialty[]>([]);
     const loading = ref(false);
     const error = ref<string | null>(null);
+
+    // Reactive subscription to Convex
+    if (useConvexFeatures() && convex) {
+      const { data: convexSpecialties } = useConvexQuery(
+        api.specialties.queries.list,
+        ref({})
+      );
+
+      watch(convexSpecialties, (newData) => {
+        if (newData) {
+          specialties.value = newData.map((s) => ({
+            id: s._id,
+            name: s.name,
+            codeName: s.codeName,
+            code: s.code,
+            hasModule: s.hasModule || false,
+            details: s.details || "",
+            isHighlighted: s.isHighlighted,
+            createdAt: new Date(s.createdAt),
+            updatedAt: new Date(s.updatedAt),
+          }));
+        }
+      });
+    }
 
     const getSpecialtyById = computed(() => {
       return (id: string) => specialties.value.find((s) => s.id === id);
@@ -63,6 +90,21 @@ export const useSpecialtyStore = defineStore(
         loading.value = true;
         error.value = null;
 
+        if (useConvexFeatures() && convex) {
+          // Use Convex - reactive subscription will automatically update the list
+          await convex.mutation(api.specialties.mutations.create, {
+            name: payload.name,
+            code: payload.code,
+            codeName: payload.codeName,
+            details: payload.details,
+            hasModule: false,
+            isHighlighted: false,
+          });
+          // No need to manually push - the watch on convexSpecialties handles it
+          return;
+        }
+
+        // Fallback: local-only
         const newSpecialty: Specialty = {
           id: crypto.randomUUID(),
           ...payload,
@@ -89,6 +131,20 @@ export const useSpecialtyStore = defineStore(
         loading.value = true;
         error.value = null;
 
+        if (useConvexFeatures() && convex) {
+          // Use Convex - reactive subscription will automatically update the list
+          await convex.mutation(api.specialties.mutations.update, {
+            id: id as any,
+            name: payload.name,
+            code: payload.code,
+            codeName: payload.codeName,
+            details: payload.details,
+          });
+          // No need to manually update - the watch on convexSpecialties handles it
+          return;
+        }
+
+        // Fallback: local-only
         const index = specialties.value.findIndex((s) => s.id === id);
         if (index === -1) throw new Error("Specialty not found");
 
@@ -111,6 +167,16 @@ export const useSpecialtyStore = defineStore(
         loading.value = true;
         error.value = null;
 
+        if (useConvexFeatures() && convex) {
+          // Use Convex - the reactive subscription will handle updating the local state
+          await convex.mutation(api.specialties.mutations.remove, {
+            id: id as any,
+          });
+          // Don't filter specialties.value - the reactive subscription will handle it
+          return;
+        }
+
+        // Fallback: local-only
         const index = specialties.value.findIndex((s) => s.id === id);
         if (index === -1) throw new Error("Specialty not found");
 
@@ -119,6 +185,32 @@ export const useSpecialtyStore = defineStore(
         error.value =
           e instanceof Error ? e.message : "Failed to delete specialty";
         throw e;
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const loadFromBackend = async () => {
+      if (!useConvexFeatures() || !convex) return;
+
+      loading.value = true;
+      try {
+        const data = await convex.query(api.specialties.queries.list, {});
+        specialties.value = data.map((specialty) => ({
+          id: specialty._id,
+          name: specialty.name,
+          code: specialty.code,
+          codeName: specialty.codeName,
+          details: specialty.details || "",
+          hasModule: specialty.hasModule || false,
+          isHighlighted: specialty.isHighlighted,
+          createdAt: new Date(specialty.createdAt),
+          updatedAt: new Date(specialty.updatedAt),
+        }));
+        error.value = null;
+      } catch (err) {
+        console.error("[specialtyStore] Failed to load from Convex:", err);
+        error.value = "Failed to load specialties";
       } finally {
         loading.value = false;
       }
@@ -149,6 +241,7 @@ export const useSpecialtyStore = defineStore(
       deleteSpecialty,
       clearError,
       reset,
+      loadFromBackend,
     };
   },
   {

@@ -83,6 +83,7 @@ export default async () => {
       __APP_VERSION__: JSON.stringify(process.env.APP_VERSION || "1.0.0"),
     },
     root: SRC_DIR,
+    envDir: path.resolve(__dirname, "./"),
     base: "",
     publicDir: PUBLIC_DIR,
     build: {
@@ -106,6 +107,7 @@ export default async () => {
     resolve: {
       alias: {
         "@": SRC_DIR,
+        "@convex": path.resolve(__dirname, "./convex"),
       },
       extensions: [".js", ".ts", ".jsx", ".tsx", ".json", ".vue"],
     },

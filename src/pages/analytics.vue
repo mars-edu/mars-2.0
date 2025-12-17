@@ -480,8 +480,10 @@ import type { Mark } from "@/types/marks";
 import type { CalendarEvent } from "@/stores/calendarStore";
 import type { Journal } from "@/stores/journalStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";
-import * as XLSX from "xlsx-js-style";
-import { saveAs } from "file-saver";
+import {
+  exportAnalyticsViaConvex,
+  type AnalyticsExportParams,
+} from "@/services/convex-excel-export";
 
 const activeNavItem = ref("analytics");
 
@@ -1391,244 +1393,60 @@ onMounted(async () => {
   });
 });
 
-const buildCourseSheet = (courseLabel: string) => {
-  console.debug("[excel] buildCourseSheet:start", { courseLabel });
-  const courseGroup = reportGroupsByCourse.value.find(
-    (g) => g.course === courseLabel
-  );
-  if (!courseGroup) return null;
-
-  const rows: Array<Array<any>> = [];
-  const merges: XLSX.Range[] = [] as any;
-
-  const headerStyle: XLSX.CellStyle = {
-    font: { bold: true, sz: 11 },
-    alignment: { horizontal: "center", vertical: "center", wrapText: true },
-    fill: { patternType: "solid", fgColor: { rgb: "F3F4F6" } },
-    border: {
-      top: { style: "thin", color: { rgb: "D1D5DB" } },
-      left: { style: "thin", color: { rgb: "D1D5DB" } },
-      right: { style: "thin", color: { rgb: "D1D5DB" } },
-      bottom: { style: "thin", color: { rgb: "D1D5DB" } },
-    },
-  } as any;
-
-  const cellStyle: XLSX.CellStyle = {
-    alignment: { horizontal: "center", vertical: "center", wrapText: true },
-    border: {
-      top: { style: "thin", color: { rgb: "E5E7EB" } },
-      left: { style: "thin", color: { rgb: "E5E7EB" } },
-      right: { style: "thin", color: { rgb: "E5E7EB" } },
-      bottom: { style: "thin", color: { rgb: "E5E7EB" } },
-    },
-  } as any;
-
-  let currentRow = 0;
-
-  rows[currentRow] = [
-    {
-      v: `Курс ${courseLabel}`,
-      s: { ...headerStyle, font: { bold: true, sz: 13 } },
-    },
-  ];
-  merges.push({ s: { r: currentRow, c: 0 }, e: { r: currentRow, c: 10 } });
-  currentRow += 2;
-
-  courseGroup.specialtyGroups.forEach((spec, specIdx) => {
-    console.debug("[excel] specialty:start", { courseLabel, specIdx, spec });
-    rows[currentRow] = [
-      { v: `Специальность: ${spec.specialtyName}`, s: { ...headerStyle } },
-    ];
-    merges.push({ s: { r: currentRow, c: 0 }, e: { r: currentRow, c: 10 } });
-    currentRow += 1;
-
-    const disciplinesSemester = spec.disciplinesSemester;
-    const disciplinesWithoutFinal = spec.disciplinesWithoutFinal;
-    const finalForms = sortedFinalControls.value;
-
-    const firstHeader: any[] = [
-      { v: "№", s: headerStyle },
-      { v: "Ф.И.О.", s: headerStyle },
-    ];
-
-    if (disciplinesSemester.length) {
-      firstHeader.push({ v: "Семестровые дисциплины", s: headerStyle });
-      if (disciplinesSemester.length > 1) {
-        merges.push({
-          s: { r: currentRow, c: firstHeader.length - 1 },
-          e: {
-            r: currentRow,
-            c: firstHeader.length - 1 + disciplinesSemester.length - 1,
-          },
-        });
-      }
-      for (let i = 1; i < disciplinesSemester.length; i++)
-        firstHeader.push({ v: "", s: headerStyle });
-    }
-    if (disciplinesWithoutFinal.length) {
-      firstHeader.push({ v: "Без итогового контроля", s: headerStyle });
-      if (disciplinesWithoutFinal.length > 1) {
-        merges.push({
-          s: { r: currentRow, c: firstHeader.length - 1 },
-          e: {
-            r: currentRow,
-            c: firstHeader.length - 1 + disciplinesWithoutFinal.length - 1,
-          },
-        });
-      }
-      for (let i = 1; i < disciplinesWithoutFinal.length; i++)
-        firstHeader.push({ v: "", s: headerStyle });
-    }
-    finalForms.forEach((form) => {
-      const ds = spec.disciplinesByForm[form.id] ?? [];
-      if (!ds.length) return;
-      firstHeader.push({ v: form.shortName, s: headerStyle } as any);
-      if (ds.length > 1) {
-        merges.push({
-          s: { r: currentRow, c: firstHeader.length - 1 },
-          e: { r: currentRow, c: firstHeader.length - 1 + ds.length - 1 },
-        });
-      }
-      for (let i = 1; i < ds.length; i++)
-        firstHeader.push({ v: "", s: headerStyle });
-    });
-    firstHeader.push({ v: "Ср", s: headerStyle });
-
-    rows[currentRow] = firstHeader;
-    currentRow += 1;
-
-    const secondHeader: any[] = [
-      { v: "", s: headerStyle },
-      { v: "", s: headerStyle },
-      ...disciplinesSemester.map((d) => ({ v: d.title, s: headerStyle })),
-      ...disciplinesWithoutFinal.map((d) => ({ v: d.title, s: headerStyle })),
-    ];
-    finalForms.forEach((form) => {
-      const ds = spec.disciplinesByForm[form.id] ?? [];
-      ds.forEach((d) => secondHeader.push({ v: d.title, s: headerStyle }));
-    });
-    secondHeader.push({ v: "", s: headerStyle });
-    rows[currentRow] = secondHeader;
-    merges.push({ s: { r: currentRow - 1, c: 0 }, e: { r: currentRow, c: 0 } });
-    merges.push({ s: { r: currentRow - 1, c: 1 }, e: { r: currentRow, c: 1 } });
-    merges.push({
-      s: { r: currentRow - 1, c: secondHeader.length - 1 },
-      e: { r: currentRow, c: secondHeader.length - 1 },
-    });
-    currentRow += 1;
-
-    spec.rows.forEach((r) => {
-      // Guard against undefined sections
-      const row: any[] = [
-        { v: r.index, s: cellStyle },
-        {
-          v: r.fullName,
-          s: {
-            ...cellStyle,
-            alignment: { ...cellStyle.alignment, horizontal: "left" },
-          },
-        },
-      ];
-
-      disciplinesSemester.forEach((d) =>
-        row.push({ v: r.semester[d.id] ?? "—", s: cellStyle })
-      );
-      disciplinesWithoutFinal.forEach((d) =>
-        row.push({ v: r.withoutFinal[d.id] ?? "—", s: cellStyle })
-      );
-      finalForms.forEach((form) => {
-        const ds = spec.disciplinesByForm[form.id] ?? [];
-        ds.forEach((d) =>
-          row.push({ v: r.finals[form.id]?.[d.id] ?? "—", s: cellStyle })
-        );
-      });
-      row.push({ v: r.overallAverage ?? "—", s: cellStyle });
-      rows[currentRow] = row;
-      currentRow += 1;
-    });
-
-    currentRow += 1;
-  });
-
-  const safeRows = Array.isArray(rows) && rows.length ? rows : [["Нет данных"]];
-  console.debug("[excel] buildCourseSheet:rowsReady", {
-    courseLabel,
-    rowCount: safeRows.length,
-    merges: merges.length,
-  });
-  let sheet: XLSX.WorkSheet | null = null;
-  try {
-    sheet = XLSX.utils.aoa_to_sheet(safeRows as any);
-  } catch (e) {
-    console.error("[excel] aoa_to_sheet failed", e, {
-      courseLabel,
-      sample: safeRows.slice(0, 3),
-    });
-    return null;
-  }
-  // validate merges
-  const validMerges = merges.filter((m) => {
-    const ok =
-      m &&
-      m.s &&
-      m.e &&
-      Number.isInteger((m as any).s.r) &&
-      Number.isInteger((m as any).s.c) &&
-      Number.isInteger((m as any).e.r) &&
-      Number.isInteger((m as any).e.c) &&
-      (m as any).s.r <= (m as any).e.r &&
-      (m as any).s.c <= (m as any).e.c &&
-      (m as any).s.r >= 0 &&
-      (m as any).s.c >= 0 &&
-      (m as any).e.r >= 0 &&
-      (m as any).e.c >= 0;
-    if (!ok) console.warn("[excel] drop invalid merge", m);
-    return ok;
-  });
-  (sheet as any)["!merges"] = validMerges;
-  (sheet as any)["!cols"] = new Array(
-    safeRows[1]?.length || safeRows[0]?.length || 10
-  )
-    .fill(0)
-    .map((_, i) => ({ wch: i === 1 ? 40 : 10 }));
-  (sheet as any)["!rows"] = safeRows.map(() => ({ hpt: 18 }));
-  return sheet;
-};
-
 const exportToExcel = async () => {
   if (!canGenerateReport.value) return;
   console.debug("[excel] export:start", {
     totalCourses: reportGroupsByCourse.value.length,
   });
-  const wb = XLSX.utils.book_new();
-  reportGroupsByCourse.value.forEach((group, idx) => {
-    try {
-      const sheet = buildCourseSheet(group.course);
-      if (!sheet) {
-        console.warn("[excel] sheet is null, skip", { course: group.course });
-        return;
-      }
-      const name = `Курс_${group.course}`.slice(0, 31) || `Курс_${idx}`;
-      XLSX.utils.book_append_sheet(wb, sheet, name);
-      console.debug("[excel] sheet appended", { name });
-    } catch (e) {
-      console.error("[excel] append failed", e, { course: group.course });
-    }
-  });
+
   const date = new Date();
-  const name = `Отчёт_успеваемость_${date.getFullYear()}-${String(
+  const filename = `Отчёт_успеваемость_${date.getFullYear()}-${String(
     date.getMonth() + 1
   ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}.xlsx`;
+
   try {
-    console.debug("[excel] write:begin");
-    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([wbout], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    saveAs(blob, name);
-    console.debug("[excel] saveAs success", { name, size: blob.size });
+    // Transform data for Convex export
+    const courseGroups = reportGroupsByCourse.value.map((group) => ({
+      course: group.course,
+      specialtyGroups: group.specialtyGroups.map((spec) => ({
+        specialtyName: spec.specialtyName,
+        disciplinesSemester: spec.disciplinesSemester.map((d) => ({
+          id: d.id,
+          title: d.title,
+        })),
+        disciplinesWithoutFinal: spec.disciplinesWithoutFinal.map((d) => ({
+          id: d.id,
+          title: d.title,
+        })),
+        disciplinesByForm: Object.fromEntries(
+          Object.entries(spec.disciplinesByForm).map(([formId, disciplines]) => [
+            formId,
+            (disciplines as { id: string; title: string }[]).map((d) => ({
+              id: d.id,
+              title: d.title,
+            })),
+          ])
+        ),
+        rows: spec.rows.map((r) => ({
+          index: r.index,
+          fullName: r.fullName,
+          semester: r.semester || {},
+          withoutFinal: r.withoutFinal || {},
+          finals: r.finals || {},
+          overallAverage: r.overallAverage,
+        })),
+      })),
+    }));
+
+    const finalForms = sortedFinalControls.value.map((f) => ({
+      id: f.id,
+      shortName: f.shortName,
+    }));
+
+    await exportAnalyticsViaConvex({ courseGroups, finalForms }, filename);
+    console.debug("[excel] Convex export success", { filename });
   } catch (e) {
-    console.error("[excel] finalize failed", e);
+    console.error("[excel] export failed", e);
     f7.dialog.alert("Ошибка при экспорте в Excel. Подробности в консоли.");
   }
 };

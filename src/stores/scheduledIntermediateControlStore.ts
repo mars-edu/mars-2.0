@@ -1,5 +1,8 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
+import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { api } from "@convex/_generated/api";
+import { useConvexQuery } from "convex-vue";
 
 export interface ScheduledIntermediateControl {
   id: string;
@@ -23,6 +26,29 @@ export const useScheduledIntermediateControlStore = defineStore(
     ]);
     const loading = ref(false);
     const error = ref<string | null>(null);
+
+    // Reactive subscription to Convex
+    if (useConvexFeatures() && convex) {
+      const { data: convexControls } = useConvexQuery(
+        api.scheduledControls.queries.listIntermediate,
+        ref({})
+      );
+
+      watch(convexControls, (newData) => {
+        if (newData) {
+          scheduledIntermediateControls.value = newData.map((c) => ({
+            id: c._id,
+            academicYearId: c.academicYearId,
+            intermediateControlId: c.controlId,
+            shortName: c.shortName,
+            startDate: c.startDate,
+            endDate: c.endDate,
+            createdAt: new Date(c.createdAt),
+            updatedAt: new Date(c.updatedAt),
+          }));
+        }
+      });
+    }
 
     const getScheduledIntermediateControlById = computed(() => {
       return (id: string) =>
@@ -53,6 +79,19 @@ export const useScheduledIntermediateControlStore = defineStore(
     ) {
       loading.value = true;
       try {
+        if (useConvexFeatures() && convex) {
+          // Use Convex - the reactive subscription will handle updating the local state
+          await convex.mutation(api.scheduledControls.mutations.createIntermediate, {
+            intermediateControlId: controlData.intermediateControlId,
+            class9Id: "",
+            semesterId: "",
+            date: controlData.startDate,
+          });
+          // Don't push to scheduledIntermediateControls.value - the reactive subscription will handle it
+          error.value = null;
+          return;
+        }
+
         const newControl: ScheduledIntermediateControl = {
           ...controlData,
           id: crypto.randomUUID(),
@@ -81,6 +120,18 @@ export const useScheduledIntermediateControlStore = defineStore(
     ) {
       loading.value = true;
       try {
+        if (useConvexFeatures() && convex) {
+          // Use Convex - the reactive subscription will handle updating the local state
+          await convex.mutation(api.scheduledControls.mutations.updateIntermediate, {
+            id: id as any,
+            intermediateControlId: controlData.intermediateControlId,
+            date: controlData.startDate,
+          });
+          // Don't update scheduledIntermediateControls.value - the reactive subscription will handle it
+          error.value = null;
+          return;
+        }
+
         const index = scheduledIntermediateControls.value.findIndex(
           (c) => c.id === id
         );
@@ -111,6 +162,16 @@ export const useScheduledIntermediateControlStore = defineStore(
     async function deleteScheduledIntermediateControl(id: string) {
       loading.value = true;
       try {
+        if (useConvexFeatures() && convex) {
+          // Use Convex - the reactive subscription will handle updating the local state
+          await convex.mutation(api.scheduledControls.mutations.removeIntermediate, {
+            id: id as any,
+          });
+          // Don't filter scheduledIntermediateControls.value - the reactive subscription will handle it
+          error.value = null;
+          return;
+        }
+        // Fallback: local-only
         scheduledIntermediateControls.value =
           scheduledIntermediateControls.value.filter((c) => c.id !== id);
         error.value = null;
@@ -120,6 +181,31 @@ export const useScheduledIntermediateControlStore = defineStore(
             ? err.message
             : "Failed to delete scheduled intermediate control";
         throw err;
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    async function loadFromBackend() {
+      if (!useConvexFeatures() || !convex) return;
+
+      loading.value = true;
+      try {
+        const data = await convex.query(api.scheduledControls.queries.listIntermediate, {});
+        scheduledIntermediateControls.value = data.map((c) => ({
+          id: c._id,
+          academicYearId: "",
+          intermediateControlId: c.intermediateControlId,
+          shortName: "",
+          startDate: c.date || "",
+          endDate: "",
+          createdAt: new Date(c.createdAt),
+          updatedAt: new Date(c.updatedAt),
+        }));
+        error.value = null;
+      } catch (err) {
+        console.error("[scheduledIntermediateControlStore] Failed to load from Convex:", err);
+        error.value = "Failed to load scheduled intermediate controls";
       } finally {
         loading.value = false;
       }
@@ -151,6 +237,7 @@ export const useScheduledIntermediateControlStore = defineStore(
       deleteScheduledIntermediateControl,
       clearError,
       reset,
+      loadFromBackend,
     };
   },
   {

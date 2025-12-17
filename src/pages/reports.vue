@@ -113,12 +113,14 @@ import { useUserStore } from "@/stores/userStore";
 import { useJournalStore } from "@/stores/journalStore";
 import { useMarksStore } from "@/stores/marksStore";
 import {
-  exportTeacherWorkloadToExcel,
-  type WorkloadEntry,
-  type WorkloadSummaryEntry,
-  type MonthlyDistributionEntry,
-  type TeacherWorkloadExportPayload,
-} from "@/services/teacher-workload-export";
+  exportTeacherWorkloadViaConvex,
+  type WorkloadExportParams,
+} from "@/services/convex-excel-export";
+
+type WorkloadEntry = WorkloadExportParams["entries"][number];
+type WorkloadSummaryEntry = WorkloadExportParams["summaryEntries"][number];
+type MonthlyDistributionEntry = WorkloadExportParams["monthlyDistribution"][number];
+type TeacherWorkloadExportPayload = WorkloadExportParams;
 import {
   generateDailyWorkload,
   generateWorkloadSummary,
@@ -362,10 +364,6 @@ async function generateWorkloadReport() {
       monthlyDistribution: monthlyDistribution,
     };
 
-    const { saveAs } = await import("file-saver");
-
-    const excelData = await exportTeacherWorkloadToExcel(payload);
-
     let periodForFilename = "весь_год";
     let periodForDisplay = "весь учебный год";
 
@@ -381,14 +379,7 @@ async function generateWorkloadReport() {
 
     const filename = `ООД_${teacher?.surname}_${academicYear?.name}_${periodForFilename}.xlsx`;
 
-    const blobBuffer = excelData.buffer.slice(
-      excelData.byteOffset,
-      excelData.byteOffset + excelData.byteLength
-    ) as ArrayBuffer;
-    const blob = new Blob([blobBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    saveAs(blob, filename);
+    await exportTeacherWorkloadViaConvex(payload, filename);
 
     lastGeneratedReport.value = `ООД_${teacher?.surname}_${
       academicYear?.name

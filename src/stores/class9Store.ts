@@ -1,5 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
+import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { api } from "@convex/_generated/api";
 
 export interface DistributionEntry {
   id: string;
@@ -181,6 +183,85 @@ export const useClass9Store = defineStore(
     ) {
       loading.value = true;
       try {
+        if (useConvexFeatures() && convex) {
+          // Use Convex - create parent item
+          const contextItems = getClass9ItemsByContext.value(academicYearId, specialtyIds);
+          const id = await convex.mutation(api.class9Items.mutations.create, {
+            specialtyIds,
+            academicYearId,
+            moduleIndex: data?.moduleIndex || "",
+            moduleName: data?.moduleName || "",
+            learningOutcome: data?.learningOutcome || "",
+            totalCredits: data?.totalCredits || "",
+            totalHours: data?.totalHours || "",
+            theoreticalHours: data?.theoreticalHours || "",
+            labPracticalHours: data?.labPracticalHours || "",
+            field3Value: data?.field3Value || "",
+            srspHours: data?.srspHours || "",
+            srsHours: data?.srsHours || "",
+            trainingPracticeHours: data?.trainingPracticeHours || "",
+            individualHours: data?.individualHours || "",
+            position: contextItems.length,
+          });
+
+          // Create nested distribution entries if provided
+          if (data?.distributionEntries && data.distributionEntries.length > 0) {
+            for (const dist of data.distributionEntries) {
+              await convex.mutation(api.class9Items.mutations.addDistribution, {
+                class9ItemId: id,
+                academicYearId: dist.academicYearId,
+                semesterId: dist.semesterId,
+                hours: dist.hours,
+                intermediateControlId: dist.intermediateControlId,
+                finalControlId: dist.finalControlId,
+                examEnabled: dist.examEnabled,
+                creditEnabled: dist.creditEnabled,
+                controlLessonEnabled: dist.controlLessonEnabled,
+              });
+            }
+          }
+
+          // Load the created item with nested data
+          const created = await convex.query(api.class9Items.queries.getById, { id });
+          if (created) {
+            const mapped: Class9Data = {
+              id: created._id,
+              specialtyIds: created.specialtyIds,
+              academicYearId: created.academicYearId,
+              moduleIndex: created.moduleIndex,
+              moduleName: created.moduleName,
+              learningOutcome: created.learningOutcome,
+              totalCredits: created.totalCredits,
+              totalHours: created.totalHours,
+              theoreticalHours: created.theoreticalHours,
+              labPracticalHours: created.labPracticalHours,
+              field3Value: created.field3Value,
+              srspHours: created.srspHours,
+              srsHours: created.srsHours,
+              trainingPracticeHours: created.trainingPracticeHours,
+              individualHours: created.individualHours,
+              position: created.position,
+              distributionEntries: (created.distributionEntries || []).map((d: any) => ({
+                id: d._id,
+                academicYearId: d.academicYearId,
+                semesterId: d.semesterId,
+                hours: d.hours,
+                intermediateControlId: d.intermediateControlId,
+                finalControlId: d.finalControlId,
+                examEnabled: d.examEnabled,
+                creditEnabled: d.creditEnabled,
+                controlLessonEnabled: d.controlLessonEnabled,
+              })),
+              createdAt: new Date(created.createdAt),
+              updatedAt: new Date(created.updatedAt),
+            };
+            class9Items.value.push(mapped);
+            error.value = null;
+            return mapped;
+          }
+        }
+
+        // Fallback: local-only
         const contextItems = getClass9ItemsByContext.value(
           academicYearId,
           specialtyIds
@@ -277,6 +358,72 @@ export const useClass9Store = defineStore(
     ) {
       loading.value = true;
       try {
+        if (useConvexFeatures() && convex) {
+          // Use Convex - update parent item
+          const updated = await convex.mutation(api.class9Items.mutations.update, {
+            id: id as any,
+            specialtyIds: data.specialtyIds,
+            academicYearId: data.academicYearId,
+            moduleIndex: data.moduleIndex,
+            moduleName: data.moduleName,
+            learningOutcome: data.learningOutcome,
+            totalCredits: data.totalCredits,
+            totalHours: data.totalHours,
+            theoreticalHours: data.theoreticalHours,
+            labPracticalHours: data.labPracticalHours,
+            field3Value: data.field3Value,
+            srspHours: data.srspHours,
+            srsHours: data.srsHours,
+            trainingPracticeHours: data.trainingPracticeHours,
+            individualHours: data.individualHours,
+            position: data.position,
+          });
+
+          // Note: distributionEntries updates handled separately via addDistribution/updateDistribution/removeDistribution
+
+          if (updated) {
+            const mapped: Class9Data = {
+              id: updated._id,
+              specialtyIds: updated.specialtyIds,
+              academicYearId: updated.academicYearId,
+              moduleIndex: updated.moduleIndex,
+              moduleName: updated.moduleName,
+              learningOutcome: updated.learningOutcome,
+              totalCredits: updated.totalCredits,
+              totalHours: updated.totalHours,
+              theoreticalHours: updated.theoreticalHours,
+              labPracticalHours: updated.labPracticalHours,
+              field3Value: updated.field3Value,
+              srspHours: updated.srspHours,
+              srsHours: updated.srsHours,
+              trainingPracticeHours: updated.trainingPracticeHours,
+              individualHours: updated.individualHours,
+              position: updated.position,
+              distributionEntries: (updated.distributionEntries || []).map((d: any) => ({
+                id: d._id,
+                academicYearId: d.academicYearId,
+                semesterId: d.semesterId,
+                hours: d.hours,
+                intermediateControlId: d.intermediateControlId,
+                finalControlId: d.finalControlId,
+                examEnabled: d.examEnabled,
+                creditEnabled: d.creditEnabled,
+                controlLessonEnabled: d.controlLessonEnabled,
+              })),
+              createdAt: new Date(updated.createdAt),
+              updatedAt: new Date(updated.updatedAt),
+            };
+
+            const index = class9Items.value.findIndex((c) => c.id === id);
+            if (index !== -1) {
+              class9Items.value[index] = mapped;
+            }
+            error.value = null;
+            return mapped;
+          }
+        }
+
+        // Fallback: local-only
         const index = class9Items.value.findIndex((c) => c.id === id);
         if (index === -1) {
           throw new Error("Class9 data not found");
@@ -358,6 +505,12 @@ export const useClass9Store = defineStore(
     async function deleteClass9(id: string) {
       loading.value = true;
       try {
+        if (useConvexFeatures() && convex) {
+          // Use Convex - cascade delete handled by mutation
+          await convex.mutation(api.class9Items.mutations.remove, {
+            id: id as any,
+          });
+        }
         class9Items.value = class9Items.value.filter((c) => c.id !== id);
         error.value = null;
       } catch (err) {
@@ -524,6 +677,57 @@ export const useClass9Store = defineStore(
       class9Items.value = [];
     }
 
+    async function loadFromBackend() {
+      if (!useConvexFeatures() || !convex) return;
+
+      loading.value = true;
+      try {
+        const data = await convex.query(api.class9Items.queries.list, {});
+        class9Items.value = data.map((item: any) => ({
+          id: item._id,
+          specialtyIds: item.specialtyIds,
+          academicYearId: item.academicYearId,
+          moduleIndex: item.moduleIndex,
+          moduleName: item.moduleName,
+          learningOutcome: item.learningOutcome,
+          totalCredits: item.totalCredits,
+          totalHours: item.totalHours,
+          theoreticalHours: item.theoreticalHours,
+          labPracticalHours: item.labPracticalHours,
+          field3Value: item.field3Value,
+          srspHours: item.srspHours,
+          srsHours: item.srsHours,
+          trainingPracticeHours: item.trainingPracticeHours,
+          individualHours: item.individualHours,
+          position: item.position,
+          distributionEntries: (item.distributionEntries || []).map((d: any) => ({
+            id: d._id,
+            academicYearId: d.academicYearId,
+            semesterId: d.semesterId,
+            hours: d.hours,
+            intermediateControlId: d.intermediateControlId,
+            finalControlId: d.finalControlId,
+            examEnabled: d.examEnabled,
+            creditEnabled: d.creditEnabled,
+            controlLessonEnabled: d.controlLessonEnabled,
+          })),
+          createdAt: new Date(item.createdAt),
+          updatedAt: new Date(item.updatedAt),
+        }));
+
+        // Run migration functions on loaded data
+        migrateClass9DataToMultipleSpecialties();
+        migrateControlTypesToDynamic();
+
+        error.value = null;
+      } catch (err) {
+        console.error("[class9Store] Failed to load from Convex:", err);
+        error.value = "Failed to load class9 items";
+      } finally {
+        loading.value = false;
+      }
+    }
+
     return {
       class9Items,
       loading,
@@ -551,6 +755,7 @@ export const useClass9Store = defineStore(
       migrateClass9DataToMultipleSpecialties,
       migrateControlTypesToDynamic,
       testMigration,
+      loadFromBackend,
     };
   },
   {

@@ -1,5 +1,8 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
+import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { api } from "@convex/_generated/api";
+import { useConvexQuery } from "convex-vue";
 
 export interface Semester {
   id: string;
@@ -17,6 +20,26 @@ export const useSemesterStore = defineStore(
     const semesters = ref<Semester[]>([...DEFAULT_SEMESTERS]);
     const loading = ref(false);
     const error = ref<string | null>(null);
+
+    // Reactive subscription to Convex
+    if (useConvexFeatures() && convex) {
+      const { data: convexSemesters } = useConvexQuery(
+        api.semesters.queries.list,
+        ref({})
+      );
+
+      watch(convexSemesters, (newData) => {
+        if (newData) {
+          semesters.value = newData.map((s) => ({
+            id: s._id,
+            shortName: s.shortName || s.name,
+            fullName: s.fullName,
+            createdAt: new Date(s.createdAt),
+            updatedAt: new Date(s.updatedAt),
+          }));
+        }
+      });
+    }
 
     const getSemesterById = computed(() => {
       return (id: string) => semesters.value.find((s) => s.id === id);
@@ -43,6 +66,26 @@ export const useSemesterStore = defineStore(
     ) {
       loading.value = true;
       try {
+        if (useConvexFeatures() && convex) {
+          // Use Convex - need to provide a dummy academicYearId since it's required in schema
+          // In a real scenario, this should come from context or be passed as parameter
+          const { useAcademicYearStore } = await import("./academicYearStore");
+          const academicYearStore = useAcademicYearStore();
+          const activeYear = academicYearStore.getActiveAcademicYear;
+
+          // Use Convex - the reactive subscription will handle updating the local state
+          await convex.mutation(api.semesters.mutations.create, {
+            name: semesterData.shortName,
+            shortName: semesterData.shortName,
+            fullName: semesterData.fullName,
+            academicYearId: activeYear?.id as any || "temp",
+          });
+          // Don't push to semesters.value - the reactive subscription will handle it
+          error.value = null;
+          return;
+        }
+
+        // Fallback: local-only
         const newSemester: Semester = {
           ...semesterData,
           id: crypto.randomUUID(),
@@ -69,6 +112,20 @@ export const useSemesterStore = defineStore(
     ) {
       loading.value = true;
       try {
+        if (useConvexFeatures() && convex) {
+          // Use Convex - the reactive subscription will handle updating the local state
+          await convex.mutation(api.semesters.mutations.update, {
+            id: id as any,
+            name: semesterData.shortName,
+            shortName: semesterData.shortName,
+            fullName: semesterData.fullName,
+          });
+          // Don't update semesters.value - the reactive subscription will handle it
+          error.value = null;
+          return;
+        }
+
+        // Fallback: local-only
         const index = semesters.value.findIndex((s) => s.id === id);
         if (index === -1) {
           throw new Error("Semester not found");
@@ -95,12 +152,44 @@ export const useSemesterStore = defineStore(
     async function deleteSemester(id: string) {
       loading.value = true;
       try {
+        if (useConvexFeatures() && convex) {
+          // Use Convex - the reactive subscription will handle updating the local state
+          await convex.mutation(api.semesters.mutations.remove, {
+            id: id as any,
+          });
+          // Don't filter semesters.value - the reactive subscription will handle it
+          error.value = null;
+          return;
+        }
+        // Fallback: local-only
         semesters.value = semesters.value.filter((s) => s.id !== id);
         error.value = null;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to delete semester";
         throw err;
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    async function loadFromBackend() {
+      if (!useConvexFeatures() || !convex) return;
+
+      loading.value = true;
+      try {
+        const data = await convex.query(api.semesters.queries.list, {});
+        semesters.value = data.map((sem) => ({
+          id: sem._id,
+          shortName: sem.shortName || sem.name,
+          fullName: sem.fullName,
+          createdAt: new Date(sem.createdAt),
+          updatedAt: new Date(sem.updatedAt),
+        }));
+        error.value = null;
+      } catch (err) {
+        console.error("[semesterStore] Failed to load from Convex:", err);
+        error.value = "Failed to load semesters";
       } finally {
         loading.value = false;
       }
@@ -130,6 +219,7 @@ export const useSemesterStore = defineStore(
       deleteSemester,
       clearError,
       reset,
+      loadFromBackend,
     };
   },
   {

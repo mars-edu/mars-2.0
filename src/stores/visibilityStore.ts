@@ -15,10 +15,5 @@ export const useVisibilityStore = defineStore(
       setTabActive,
     };
   },
-  {
-    // As requested by the user, disable server sync for this store.
-    serverSync: {
-      enabled: false,
-    },
-  }
+  {}
 );

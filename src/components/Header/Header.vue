@@ -13,10 +13,14 @@
       />
       <div class="avatar-container">
         <img
-          :src="rasulZhangeldinovichProfile"
+          v-if="userStore.currentUser?.avatar"
+          :src="userStore.currentUser.avatar"
           alt="User Avatar"
           class="user-avatar"
         />
+        <div v-else class="user-avatar-placeholder">
+          <i class="icon f7-icons">person_circle_fill</i>
+        </div>
       </div>
     </div>
   </div>
@@ -26,26 +30,24 @@
 import { f7Link } from "framework7-vue";
 import SearchBar from "../SearchBar.vue";
 import LanguageSelector from "../LanguageSelector.vue";
-import rasulZhangeldinovichProfile from "@/assets/rassul-zh-profile.jpg";
 import Logo from "../Logo/Logo.vue";
 import ThemeToggle from "../ThemeToggle.vue";
 import { useThemeStore } from "@/stores/themeStore";
+import { useUserStore } from "@/stores/userStore";
 import { onMounted } from "vue";
 
 console.log("[Header] Component setup initiated");
 
 const themeStore = useThemeStore();
+const userStore = useUserStore();
 
 console.log("[Header] Theme store initialized");
 console.log("[Header] Current theme:", themeStore.currentTheme);
 
 onMounted(() => {
   console.log("[Header] Component mounted");
-  console.log("[Header] Profile image loaded:", !!rasulZhangeldinovichProfile);
-  console.log("[Header] Theme store state:", {
-    currentTheme: themeStore.currentTheme,
-    availableThemes: themeStore.themes,
-  });
+  console.log("[Header] User avatar:", userStore.currentUser?.avatar);
+  console.log("[Header] Current theme:", themeStore.currentTheme);
 });
 </script>
 <style scoped>
@@ -129,6 +131,27 @@ onMounted(() => {
 }
 
 .avatar-container:hover .user-avatar {
+  border-color: hsl(var(--primary));
+}
+
+.user-avatar-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.user-avatar-placeholder i {
+  font-size: 28px;
+}
+
+.avatar-container:hover .user-avatar-placeholder {
   border-color: hsl(var(--primary));
 }
 </style>

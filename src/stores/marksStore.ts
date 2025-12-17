@@ -1,8 +1,11 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import type { Mark, StudentMark, JournalMarks } from "@/types/marks";
 import { useJournalHistoryStore } from "./journalHistoryStore";
 import { trpcClient } from "@/lib/trpcClient";
+import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { api } from "@convex/_generated/api";
+import { useConvexQuery } from "convex-vue";
 
 export const useMarksStore = defineStore(
   "marks",
@@ -21,7 +24,16 @@ export const useMarksStore = defineStore(
         error.value = null;
 
         console.log("[marksStore] Fetching marks from backend for journal:", journalId);
-        const result = await trpcClient.marks.getJournalMarks.query({ journalId });
+
+        let result;
+        if (useConvexFeatures() && convex) {
+          console.log("[marksStore] Using Convex to fetch marks");
+          result = await convex.query(api.marks.queries.getJournalMarks, { journalId });
+        } else {
+          console.log("[marksStore] Using tRPC to fetch marks");
+          result = await trpcClient.marks.getJournalMarks.query({ journalId });
+        }
+
         console.log("[marksStore] Received marks from backend:", {
           journalId,
           marksCount: result.marks.length,
@@ -349,22 +361,41 @@ export const useMarksStore = defineStore(
             );
           }
 
-          // Save to backend via tRPC
+          // Save to backend
           try {
-            await trpcClient.marks.updateMark.mutate({
-              journalId,
-              studentId,
-              columnIndex: markIndex,
-              rowIndex: valueIndex,
-              value,
-              columnType: mark.type,
-              columnDate: mark.isoDate,
-              columnLabel: mark.label,
-              controlType: mark.controlType,
-              controlId: mark.controlId,
-              sessionId: mark.sessionId,
-              scheduledControlId: mark.scheduledControlId,
-            });
+            if (useConvexFeatures() && convex) {
+              console.log("[marksStore] Using Convex to update mark");
+              await convex.mutation(api.marks.mutations.updateMark, {
+                journalId,
+                studentId,
+                columnIndex: markIndex,
+                rowIndex: valueIndex,
+                value: value || undefined,
+                columnType: mark.type,
+                columnDate: mark.isoDate,
+                columnLabel: mark.label,
+                controlType: mark.controlType,
+                controlId: mark.controlId,
+                sessionId: mark.sessionId,
+                scheduledControlId: mark.scheduledControlId,
+              });
+            } else {
+              console.log("[marksStore] Using tRPC to update mark");
+              await trpcClient.marks.updateMark.mutate({
+                journalId,
+                studentId,
+                columnIndex: markIndex,
+                rowIndex: valueIndex,
+                value,
+                columnType: mark.type,
+                columnDate: mark.isoDate,
+                columnLabel: mark.label,
+                controlType: mark.controlType,
+                controlId: mark.controlId,
+                sessionId: mark.sessionId,
+                scheduledControlId: mark.scheduledControlId,
+              });
+            }
           } catch (updateError: any) {
             // If foreign key constraint error, journal needs initialization
             if (updateError?.message?.includes("Foreign key constraint") || 
@@ -423,20 +454,37 @@ export const useMarksStore = defineStore(
               if (initialized) {
                 // Retry the mark update
                 console.log("[marksStore] Retrying mark update after initialization...");
-                await trpcClient.marks.updateMark.mutate({
-                  journalId,
-                  studentId,
-                  columnIndex: markIndex,
-                  rowIndex: valueIndex,
-                  value,
-                  columnType: mark.type,
-                  columnDate: mark.isoDate,
-                  columnLabel: mark.label,
-                  controlType: mark.controlType,
-                  controlId: mark.controlId,
-                  sessionId: mark.sessionId,
-                  scheduledControlId: mark.scheduledControlId,
-                });
+                if (useConvexFeatures() && convex) {
+                  await convex.mutation(api.marks.mutations.updateMark, {
+                    journalId,
+                    studentId,
+                    columnIndex: markIndex,
+                    rowIndex: valueIndex,
+                    value: value || undefined,
+                    columnType: mark.type,
+                    columnDate: mark.isoDate,
+                    columnLabel: mark.label,
+                    controlType: mark.controlType,
+                    controlId: mark.controlId,
+                    sessionId: mark.sessionId,
+                    scheduledControlId: mark.scheduledControlId,
+                  });
+                } else {
+                  await trpcClient.marks.updateMark.mutate({
+                    journalId,
+                    studentId,
+                    columnIndex: markIndex,
+                    rowIndex: valueIndex,
+                    value,
+                    columnType: mark.type,
+                    columnDate: mark.isoDate,
+                    columnLabel: mark.label,
+                    controlType: mark.controlType,
+                    controlId: mark.controlId,
+                    sessionId: mark.sessionId,
+                    scheduledControlId: mark.scheduledControlId,
+                  });
+                }
                 console.log("[marksStore] Mark updated successfully after auto-initialization");
                 return true;
               }
@@ -523,20 +571,37 @@ export const useMarksStore = defineStore(
 
               // Save to backend
               try {
-                await trpcClient.marks.updateMark.mutate({
-                  journalId: parentJournalId,
-                  studentId,
-                  columnIndex: markIndex,
-                  rowIndex: valueIndex,
-                  value,
-                  columnType: mark.type,
-                  columnDate: mark.isoDate,
-                  columnLabel: mark.label,
-                  controlType: mark.controlType,
-                  controlId: mark.controlId,
-                  sessionId: mark.sessionId,
-                  scheduledControlId: mark.scheduledControlId,
-                });
+                if (useConvexFeatures() && convex) {
+                  await convex.mutation(api.marks.mutations.updateMark, {
+                    journalId: parentJournalId,
+                    studentId,
+                    columnIndex: markIndex,
+                    rowIndex: valueIndex,
+                    value: value || undefined,
+                    columnType: mark.type,
+                    columnDate: mark.isoDate,
+                    columnLabel: mark.label,
+                    controlType: mark.controlType,
+                    controlId: mark.controlId,
+                    sessionId: mark.sessionId,
+                    scheduledControlId: mark.scheduledControlId,
+                  });
+                } else {
+                  await trpcClient.marks.updateMark.mutate({
+                    journalId: parentJournalId,
+                    studentId,
+                    columnIndex: markIndex,
+                    rowIndex: valueIndex,
+                    value,
+                    columnType: mark.type,
+                    columnDate: mark.isoDate,
+                    columnLabel: mark.label,
+                    controlType: mark.controlType,
+                    controlId: mark.controlId,
+                    sessionId: mark.sessionId,
+                    scheduledControlId: mark.scheduledControlId,
+                  });
+                }
                 console.log("[marksStore] Successfully synced mark to parent journal");
               } catch (syncError) {
                 console.error("[marksStore] Error saving synced mark to parent journal:", syncError);
@@ -733,9 +798,5 @@ export const useMarksStore = defineStore(
       debugState,
     };
   },
-  {
-    serverSync: {
-      enabled: false, // Disabled - using tRPC instead
-    },
-  }
+  {}
 );

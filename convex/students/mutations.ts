@@ -1,0 +1,103 @@
+import { mutation } from "../_generated/server";
+import { v } from "convex/values";
+import { createTimestamps, updateTimestamp } from "../lib/validators";
+
+/**
+ * Create a student
+ */
+export const create = mutation({
+  args: {
+    firstName: v.string(),
+    surname: v.string(),
+    patronymic: v.string(),
+    specialty: v.string(),
+    language: v.string(),
+    gender: v.union(v.literal("male"), v.literal("female")),
+    base: v.optional(v.number()),
+    academicYearId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const timestamps = createTimestamps();
+    return await ctx.db.insert("students", {
+      ...args,
+      ...timestamps,
+    });
+  },
+});
+
+/**
+ * Update a student
+ */
+export const update = mutation({
+  args: {
+    id: v.id("students"),
+    firstName: v.optional(v.string()),
+    surname: v.optional(v.string()),
+    patronymic: v.optional(v.string()),
+    specialty: v.optional(v.string()),
+    language: v.optional(v.string()),
+    gender: v.optional(v.union(v.literal("male"), v.literal("female"))),
+    base: v.optional(v.number()),
+    academicYearId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { id, ...updates } = args;
+
+    // Filter out undefined values
+    const cleanUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([_, v]) => v !== undefined)
+    );
+
+    await ctx.db.patch(id, {
+      ...cleanUpdates,
+      ...updateTimestamp(),
+    });
+
+    return await ctx.db.get(id);
+  },
+});
+
+/**
+ * Delete a student
+ */
+export const remove = mutation({
+  args: { id: v.id("students") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.id);
+    return { success: true };
+  },
+});
+
+/**
+ * Batch create students
+ */
+export const batchCreate = mutation({
+  args: {
+    students: v.array(
+      v.object({
+        firstName: v.string(),
+        surname: v.string(),
+        patronymic: v.string(),
+        specialty: v.string(),
+        language: v.string(),
+        gender: v.union(v.literal("male"), v.literal("female")),
+        base: v.optional(v.number()),
+        academicYearId: v.optional(v.string()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const timestamps = createTimestamps();
+    const ids: string[] = [];
+
+    for (const student of args.students) {
+      const id = await ctx.db.insert("students", {
+        ...student,
+        ...timestamps,
+      });
+      ids.push(id);
+    }
+
+    return ids;
+  },
+});

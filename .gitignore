@@ -37,3 +37,13 @@ Thumbs.db
 # Production build
 www/
 dist/
+
+.env.local
+convex/_generated
+
+# Playwright
+test-results/
+playwright-report/
+playwright-ct-report/
+playwright/.cache/
+tests/.auth/

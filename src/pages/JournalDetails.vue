@@ -421,7 +421,6 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import StudentListTable from "@/components/StudentListTable.vue";
 import EditStudentButton from "@/components/EditStudentButton.vue";
 import { storeToRefs } from "pinia";
-import { importJournalFromExcel } from "@/services/excel-parser";
 import {
   createImportMapping,
   prepareMarksUpdate,
@@ -429,9 +428,12 @@ import {
 } from "@/services/journal-import-mapper";
 import JournalImportConfirmDialog from "@/components/JournalImportConfirmDialog.vue";
 import {
-  exportJournalToExcel,
-  type JournalStudentRow,
-} from "@/services/journal-export";
+  exportJournalViaConvex,
+  importJournalViaConvex,
+  type JournalExportParams,
+} from "@/services/convex-excel-export";
+
+type JournalStudentRow = JournalExportParams["students"][number];
 import { useStudentStore } from "@/stores/studentStore";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
@@ -530,7 +532,7 @@ const isImportDialogOpened = ref(false);
 const importOverwriteMode = ref(false);
 const importPreparedData = ref<ReturnType<typeof prepareMarksUpdate> | null>(null);
 const importMapping = ref<ReturnType<typeof createImportMapping> | null>(null);
-const importResult = ref<Awaited<ReturnType<typeof importJournalFromExcel>>["result"] | null>(null);
+const importResult = ref<Awaited<ReturnType<typeof importJournalViaConvex>>["result"] | null>(null);
 
 const rupSpecialtyIds = computed(() => {
   const disciplineId = currentJournal.value?.disciplineId;
@@ -629,7 +631,6 @@ const onDownloadClick = async () => {
 
   try {
     f7.preloader.show();
-    const { saveAs } = await import("file-saver");
 
     const snapshot = journalTabRef.value?.getExportSnapshot?.();
     if (!snapshot) {
@@ -701,29 +702,22 @@ const onDownloadClick = async () => {
       .replace(/[^a-zA-Zа-яА-Я0-9_\-\.]/g, "_")
       .concat(".xlsx");
 
-    const buffer = await exportJournalToExcel({
-      groupName: groupTitle,
-      courseLabel: journal.courseNumber?.toString?.() ?? "",
-      specialtyLabel: specialty
-        ? `${specialty.code} - ${specialty.name}`
-        : undefined,
-      academicYearLabel,
-      disciplineTitle,
-      teacherFullName: teacherName,
-      finalControlForm,
-      students: studentRows,
-      calendarEvent: event ?? undefined,
-      lessonDates: snapshot.columns.map((column) => column.label),
-    });
-
-    const blobBuffer = buffer.buffer.slice(
-      buffer.byteOffset,
-      buffer.byteOffset + buffer.byteLength
-    ) as ArrayBuffer;
-    const blob = new Blob([blobBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    saveAs(blob, filename);
+    await exportJournalViaConvex(
+      {
+        groupName: groupTitle,
+        courseLabel: journal.courseNumber?.toString?.() ?? "",
+        specialtyLabel: specialty
+          ? `${specialty.code} - ${specialty.name}`
+          : undefined,
+        academicYearLabel,
+        disciplineTitle,
+        teacherFullName: teacherName,
+        finalControlForm,
+        students: studentRows,
+        lessonDates: snapshot.columns.map((column) => column.label),
+      },
+      filename
+    );
   } catch (error) {
     console.error("Failed to export journal", error);
     const message =
@@ -749,7 +743,7 @@ const onUploadClick = () => {
 
     try {
       f7.preloader.show();
-      const summary = await importJournalFromExcel(file);
+      const summary = await importJournalViaConvex(file);
 
       if (summary.issues.some((issue) => issue.type === "error")) {
         f7.preloader.hide();

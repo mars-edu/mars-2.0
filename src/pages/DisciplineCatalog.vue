@@ -47,8 +47,8 @@
                     v-for="(
                       discipline, index
                     ) in disciplineStore.getAllDisciplines"
-                    :key="discipline.id"
-                    :id="`discipline-item-${discipline.id}`"
+                    :key="discipline._id"
+                    :id="`discipline-item-${discipline._id}`"
                     class="border-b border-border hover:bg-muted/30"
                     :class="{ 'bg-red-100': discipline.isHighlighted }"
                     @click="selectDiscipline(discipline)"
@@ -71,7 +71,7 @@
 
     <EditDisciplineButton
       v-if="selectedDiscipline"
-      :key="`edit-${selectedDiscipline.id}`"
+      :key="`edit-${selectedDiscipline._id}`"
       :discipline="selectedDiscipline"
     />
   </f7-page>
@@ -94,8 +94,8 @@ const selectDiscipline = async (discipline: Discipline) => {
   selectedDiscipline.value = discipline;
   await nextTick();
   f7.popover.open(
-    `#edit-discipline-popover-${discipline.id}`,
-    `#discipline-item-${discipline.id}`
+    `#edit-discipline-popover-${discipline._id}`,
+    `#discipline-item-${discipline._id}`
   );
 };
 </script>

@@ -175,9 +175,5 @@ export const useRupStore = defineStore(
       reset,
     };
   },
-  {
-    serverSync: {
-      enabled: false,
-    },
-  }
+  {}
 );

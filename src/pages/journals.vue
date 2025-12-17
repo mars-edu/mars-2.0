@@ -350,10 +350,12 @@ import { useClass9Store } from "@/stores/class9Store";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
 import {
-  exportJournalToExcel,
-  type JournalStudentRow,
-} from "@/services/journal-export";
-import { importJournalFromExcel } from "@/services/excel-parser";
+  exportJournalViaConvex,
+  importJournalViaConvex,
+  type JournalExportParams,
+} from "@/services/convex-excel-export";
+
+type JournalStudentRow = JournalExportParams["students"][number];
 
 const activeNavItem = ref("journals");
 
@@ -835,22 +837,29 @@ async function downloadSelectedJournals() {
         .replace(/[^a-zA-Zа-яА-Я0-9_\-\.]/g, "_")
         .concat(".xlsx");
 
+      // Export via Convex backend
       exportTasks.push(
-        exportJournalToExcel({
-          groupName: groupTitle,
-          courseLabel: journal.courseNumber.toString(),
-          specialtyLabel: specialty
-            ? `${specialty.code} - ${specialty.name}`
-            : undefined,
-          academicYearLabel,
-          disciplineTitle,
-          teacherFullName: teacherName,
-          finalControlForm,
-          students: studentRows,
-          calendarEvent: event ?? undefined,
-        }).then((buffer) => {
+        (async () => {
+          const { convex } = await import("@/lib/convexClient");
+          const { api } = await import("../../convex/_generated/api");
+          if (!convex) {
+            throw new Error("Convex client not available");
+          }
+          const bufferArray = await convex.action(api.excel.actions.exportJournal, {
+            groupName: groupTitle,
+            courseLabel: journal.courseNumber.toString(),
+            specialtyLabel: specialty
+              ? `${specialty.code} - ${specialty.name}`
+              : undefined,
+            academicYearLabel,
+            disciplineTitle,
+            teacherFullName: teacherName,
+            finalControlForm,
+            students: studentRows,
+          });
+          const buffer = new Uint8Array(bufferArray);
           zip.file(filename, buffer);
-        })
+        })()
       );
     });
 
@@ -901,7 +910,7 @@ function onUploadClick() {
 
     try {
       f7.preloader.show();
-      const summary = await importJournalFromExcel(file);
+      const summary = await importJournalViaConvex(file);
       f7.preloader.hide();
 
       if (summary.issues.some((issue) => issue.type === "error")) {

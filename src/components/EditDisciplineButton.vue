@@ -1,10 +1,10 @@
 <template>
   <div>
     <f7-popover
-      :id="'edit-discipline-popover-' + discipline.id"
+      :id="'edit-discipline-popover-' + discipline._id"
       style="width: 600px !important"
       close-on-escape
-      :target="`#discipline-item-${discipline.id}`"
+      :target="`#discipline-item-${discipline._id}`"
     >
       <div class="discipline-popover bg-card text-card-foreground">
         <PopoverHeader
@@ -89,7 +89,7 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
   discipline: {
-    id: string;
+    _id: string;
     moduleIndex: string;
     moduleName: string;
     learningOutcome: string;
@@ -122,7 +122,7 @@ const validationResult = computed(() => {
 const isFormValid = computed(() => validationResult.value.success);
 
 const closeEditDisciplinePopover = () => {
-  f7.popover.close(`#edit-discipline-popover-${props.discipline.id}`);
+  f7.popover.close(`#edit-discipline-popover-${props.discipline._id}`);
   resetForm();
 };
 
@@ -138,7 +138,7 @@ const handleUpdateDiscipline = async () => {
   }
 
   try {
-    await disciplineStore.updateDiscipline(props.discipline.id, {
+    await disciplineStore.updateDiscipline(props.discipline._id, {
       moduleIndex: moduleIndex.value,
       moduleName: moduleName.value,
       learningOutcome: learningOutcome.value,
@@ -150,7 +150,7 @@ const handleUpdateDiscipline = async () => {
 };
 
 const showDeleteConfirmation = () => {
-  f7.popover.close(`#edit-discipline-popover-${props.discipline.id}`);
+  f7.popover.close(`#edit-discipline-popover-${props.discipline._id}`);
 
   f7.dialog.confirm(
     `<p>Вы уверены, что хотите удалить дисциплину "${props.discipline.moduleName}"?</p>
@@ -158,7 +158,7 @@ const showDeleteConfirmation = () => {
     "Удаление дисциплины",
     async () => {
       try {
-        await disciplineStore.deleteDiscipline(props.discipline.id);
+        await disciplineStore.deleteDiscipline(props.discipline._id);
       } catch (error) {
         console.error("Failed to delete discipline:", error);
         f7.dialog.alert("Произошла ошибка при удалении дисциплины.");

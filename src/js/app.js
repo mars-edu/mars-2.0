@@ -9,10 +9,7 @@ import vAuth from "../directives/auth";
 import "../css/app.css";
 import App from "../app.vue";
 import localforage from "localforage";
-import { PiniaServerSync } from "./plugin/pinia-server-sync";
-import { API_URL } from "../lib/config";
-import { httpToWebSocketUrl } from "../lib/utils";
-import superjson from "superjson";
+import { convexPlugin, convexUrl } from "../lib/convexClient";
 
 Framework7.use(Framework7Vue);
 
@@ -27,23 +24,15 @@ const piniaStorage = localforage.createInstance({
 pinia.use(
   createPersistedState({
     storage: piniaStorage,
-    serializer: {
-      serialize: superjson.stringify,
-      deserialize: superjson.parse,
-    },
-  })
-);
-pinia.use(
-  PiniaServerSync({
-    url: httpToWebSocketUrl(`${API_URL}/ws`),
-    serializer: {
-      serialize: superjson.stringify,
-      deserialize: superjson.parse,
-    },
   })
 );
 
 app.use(pinia);
+
+// Register Convex plugin if URL is configured
+if (convexUrl) {
+  app.use(convexPlugin, { url: convexUrl });
+}
 
 app.directive("auth", vAuth);
 
@@ -58,10 +47,3 @@ window.resetAllPiniaStores = () => {
 
 app.mount("#app");
 
-window.addEventListener("storage", (e) => {
-  if (e.key === "auth_token" && e.newValue) {
-    // Trigger a connection attempt if token appears in another tab
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    PiniaServerSync && typeof PiniaServerSync === "function"; // no-op to keep import
-  }
-});

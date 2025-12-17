@@ -5,6 +5,8 @@ export interface User {
   email: string;
   roles: Role[];
   avatar?: string;
+  theme?: "light" | "dark" | "lavanda";
+  username?: string;
 }
 
 export enum Role {

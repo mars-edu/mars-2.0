@@ -1,8 +1,11 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { useAcademicYearStore } from "./academicYearStore";
+import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { api } from "@convex/_generated/api";
+import { useConvexQuery } from "convex-vue";
 
 export interface AcademicYearSemester {
   id: string;
@@ -24,6 +27,28 @@ export const useAcademicYearSemesterStore = defineStore(
     ]);
     const loading = ref(false);
     const error = ref<string | null>(null);
+
+    // Reactive subscription to Convex
+    if (useConvexFeatures() && convex) {
+      const { data: convexSemesters } = useConvexQuery(
+        api.semesters.queries.list,
+        ref({})
+      );
+
+      watch(convexSemesters, (newData) => {
+        if (newData) {
+          academicYearSemesters.value = newData.map((s) => ({
+            id: s._id,
+            academicYearId: s.academicYearId,
+            semesterNumber: s.number || 1,
+            startDate: s.startDate || "",
+            endDate: s.endDate || "",
+            createdAt: new Date(s.createdAt),
+            updatedAt: new Date(s.updatedAt),
+          }));
+        }
+      });
+    }
 
     const getAcademicYearSemesterById = computed(() => {
       return (id: string) =>
@@ -81,6 +106,21 @@ export const useAcademicYearSemesterStore = defineStore(
     ) {
       loading.value = true;
       try {
+        if (useConvexFeatures() && convex) {
+          // Use Convex - the reactive subscription will handle updating the local state
+          await convex.mutation(api.semesters.mutations.create, {
+            name: `Semester ${semesterData.semesterNumber}`,
+            academicYearId: semesterData.academicYearId as any,
+            number: semesterData.semesterNumber,
+            startDate: semesterData.startDate,
+            endDate: semesterData.endDate,
+            isActive: true,
+          });
+          // Don't push to academicYearSemesters.value - the reactive subscription will handle it
+          error.value = null;
+          return;
+        }
+
         const newSemester: AcademicYearSemester = {
           ...semesterData,
           id: crypto.randomUUID(),
@@ -109,6 +149,21 @@ export const useAcademicYearSemesterStore = defineStore(
     ) {
       loading.value = true;
       try {
+        if (useConvexFeatures() && convex) {
+          // Use Convex - the reactive subscription will handle updating the local state
+          await convex.mutation(api.semesters.mutations.update, {
+            id: id as any,
+            name: semesterData.semesterNumber ? `Semester ${semesterData.semesterNumber}` : undefined,
+            academicYearId: semesterData.academicYearId as any,
+            number: semesterData.semesterNumber,
+            startDate: semesterData.startDate,
+            endDate: semesterData.endDate,
+          });
+          // Don't update academicYearSemesters.value - the reactive subscription will handle it
+          error.value = null;
+          return;
+        }
+
         const index = academicYearSemesters.value.findIndex((s) => s.id === id);
         if (index === -1) {
           throw new Error("Academic year semester not found");
@@ -137,6 +192,16 @@ export const useAcademicYearSemesterStore = defineStore(
     async function deleteAcademicYearSemester(id: string) {
       loading.value = true;
       try {
+        if (useConvexFeatures() && convex) {
+          // Use Convex - the reactive subscription will handle updating the local state
+          await convex.mutation(api.semesters.mutations.remove, {
+            id: id as any,
+          });
+          // Don't filter academicYearSemesters.value - the reactive subscription will handle it
+          error.value = null;
+          return;
+        }
+        // Fallback: local-only
         academicYearSemesters.value = academicYearSemesters.value.filter(
           (s) => s.id !== id
         );
@@ -147,6 +212,32 @@ export const useAcademicYearSemesterStore = defineStore(
             ? err.message
             : "Failed to delete academic year semester";
         throw err;
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    async function loadFromBackend() {
+      if (!useConvexFeatures() || !convex) return;
+
+      loading.value = true;
+      try {
+        const data = await convex.query(api.semesters.queries.list, {});
+        academicYearSemesters.value = data
+          .filter((s) => s.academicYearId) // Only those with academic year
+          .map((s) => ({
+            id: s._id,
+            academicYearId: s.academicYearId as string,
+            semesterNumber: s.number || 1,
+            startDate: s.startDate || "",
+            endDate: s.endDate || "",
+            createdAt: new Date(s.createdAt),
+            updatedAt: new Date(s.updatedAt),
+          }));
+        error.value = null;
+      } catch (err) {
+        console.error("[academicYearSemesterStore] Failed to load from Convex:", err);
+        error.value = "Failed to load academic year semesters";
       } finally {
         loading.value = false;
       }
@@ -178,6 +269,7 @@ export const useAcademicYearSemesterStore = defineStore(
       deleteAcademicYearSemester,
       clearError,
       reset,
+      loadFromBackend,
     };
   },
   {

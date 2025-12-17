@@ -111,8 +111,5 @@ export const useScheduleStore = defineStore(
     persist: {
       paths: ["scheduleData"],
     },
-    serverSync: {
-      enabled: false,
-    },
   }
 );

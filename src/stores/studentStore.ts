@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import Fuse from "fuse.js";
 import { useAcademicYearStore } from "./academicYearStore";
 import { useCourseStore, type Course } from "./courseStore";
@@ -9,6 +9,9 @@ import type {
   AddStudentPayload,
   StudentFilters,
 } from "@/types/student";
+import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { api } from "@convex/_generated/api";
+import { useConvexQuery } from "convex-vue";
 
 export type { Student } from "@/types/student";
 
@@ -27,6 +30,30 @@ export const useStudentStore = defineStore("student", () => {
   });
 
   const academicYearStore = useAcademicYearStore();
+
+  // Reactive subscription to Convex
+  if (useConvexFeatures() && convex) {
+    const { data: convexStudents } = useConvexQuery(
+      api.students.queries.list,
+      ref({})
+    );
+
+    watch(convexStudents, (newData) => {
+      if (newData) {
+        students.value = newData.map((student) => ({
+          id: student._id,
+          firstName: student.firstName,
+          surname: student.surname,
+          patronymic: student.patronymic,
+          specialty: student.specialty,
+          language: student.language,
+          gender: student.gender,
+          base: student.base,
+          academicYearId: student.academicYearId,
+        }));
+      }
+    });
+  }
 
   const getAllStudents = computed(() => students.value);
 
@@ -119,6 +146,23 @@ export const useStudentStore = defineStore("student", () => {
       isLoading.value = true;
       error.value = null;
 
+      if (useConvexFeatures() && convex) {
+        // Use Convex - reactive subscription will automatically update the list
+        await convex.mutation(api.students.mutations.create, {
+          firstName: payload.firstName,
+          surname: payload.surname,
+          patronymic: payload.patronymic,
+          specialty: payload.specialty,
+          language: payload.language,
+          gender: payload.gender,
+          base: payload.base,
+          academicYearId: payload.academicYearId,
+        });
+        // No need to manually push - the watch on convexStudents handles it
+        return;
+      }
+
+      // Fallback: local-only
       const newStudent: Student = {
         id: crypto.randomUUID(),
         ...payload,
@@ -141,6 +185,24 @@ export const useStudentStore = defineStore("student", () => {
       isLoading.value = true;
       error.value = null;
 
+      if (useConvexFeatures() && convex) {
+        // Use Convex - reactive subscription will automatically update the list
+        await convex.mutation(api.students.mutations.update, {
+          id: id as any,
+          firstName: payload.firstName,
+          surname: payload.surname,
+          patronymic: payload.patronymic,
+          specialty: payload.specialty,
+          language: payload.language,
+          gender: payload.gender as any,
+          base: payload.base,
+          academicYearId: payload.academicYearId,
+        });
+        // No need to manually update - the watch on convexStudents handles it
+        return;
+      }
+
+      // Fallback: local-only
       const index = students.value.findIndex((s) => s.id === id);
       if (index === -1) throw new Error("Student not found");
 
@@ -161,6 +223,16 @@ export const useStudentStore = defineStore("student", () => {
       isLoading.value = true;
       error.value = null;
 
+      if (useConvexFeatures() && convex) {
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.students.mutations.remove, {
+          id: id as any,
+        });
+        // Don't filter students.value - the reactive subscription will handle it
+        return;
+      }
+
+      // Fallback: local-only
       const index = students.value.findIndex((s) => s.id === id);
       if (index === -1) throw new Error("Student not found");
 
@@ -168,6 +240,32 @@ export const useStudentStore = defineStore("student", () => {
     } catch (e) {
       error.value = e instanceof Error ? e.message : "Failed to delete student";
       throw e;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const loadFromBackend = async () => {
+    if (!useConvexFeatures() || !convex) return;
+
+    isLoading.value = true;
+    try {
+      const data = await convex.query(api.students.queries.list, {});
+      students.value = data.map((student) => ({
+        id: student._id,
+        firstName: student.firstName,
+        surname: student.surname,
+        patronymic: student.patronymic,
+        specialty: student.specialty,
+        language: student.language,
+        gender: student.gender,
+        base: student.base,
+        academicYearId: student.academicYearId,
+      }));
+      error.value = null;
+    } catch (err) {
+      console.error("[studentStore] Failed to load from Convex:", err);
+      error.value = "Failed to load students";
     } finally {
       isLoading.value = false;
     }
@@ -234,6 +332,7 @@ export const useStudentStore = defineStore("student", () => {
     getError,
     getCourseByStudentId,
     getStudentFullName,
+    loadFromBackend,
   };
 }, {
   persist: true,

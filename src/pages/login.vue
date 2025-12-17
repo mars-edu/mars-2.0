@@ -195,13 +195,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onBeforeMount } from "vue";
+import { ref, reactive, onMounted, onBeforeMount, computed } from "vue";
 import { f7 } from "framework7-vue";
 import AuthService from "../services/auth";
 import Logo from "../components/Logo/Logo.vue";
+import { useUserStore } from "../stores/userStore";
 
 console.log("[LoginPage] Component setup initiated");
 
+const userStore = useUserStore();
 const defaultRedirectTo = "/home";
 
 const props = defineProps({
@@ -209,6 +211,32 @@ const props = defineProps({
     type: String,
     default: defaultRedirectTo,
   },
+});
+
+/**
+ * Get the redirect destination from URL query params or props.
+ * This preserves the intended destination on page refresh.
+ */
+const redirectDestination = computed(() => {
+  // Check URL query params first (set by root route redirect)
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryRedirect = urlParams.get("redirect");
+
+  if (queryRedirect) {
+    console.log("[LoginPage] Redirect from query param:", queryRedirect);
+    return queryRedirect;
+  }
+
+  // Also check browser location pathname in case we're directly refreshing
+  const pathname = window.location.pathname;
+  const publicRoutes = ["/", "/login", "/register", "/restore-password"];
+  if (pathname && !publicRoutes.includes(pathname)) {
+    console.log("[LoginPage] Redirect from pathname:", pathname);
+    return pathname;
+  }
+
+  // Fall back to props or default
+  return props.redirectTo || defaultRedirectTo;
 });
 
 console.log("[LoginPage] Props received:", {
@@ -228,6 +256,15 @@ const errors = reactive({
 
 onBeforeMount(() => {
   console.log("[LoginPage] Component before mount");
+
+  // Redirect authenticated users away from login page
+  if (userStore.isAuthenticated) {
+    const destination = redirectDestination.value;
+    console.log("[LoginPage] User already authenticated, redirecting to:", destination);
+    f7.views.main.router.navigate(destination, {
+      clearPreviousHistory: true,
+    });
+  }
 });
 
 onMounted(() => {
@@ -286,7 +323,7 @@ const handleLogin = async (e: Event) => {
 
     console.log("Login service response received", response);
 
-    const redirectTo = props.redirectTo || defaultRedirectTo;
+    const redirectTo = redirectDestination.value;
     console.log(`Redirect destination: ${redirectTo}`);
 
     if (response.success) {

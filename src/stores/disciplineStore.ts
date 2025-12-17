@@ -1,11 +1,18 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
+import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { api } from "@convex/_generated/api";
+import { useConvexQuery } from "convex-vue";
+import type { Id } from "@convex/_generated/dataModel";
 
 export interface Discipline {
-  id: string;
+  _id: Id<"disciplines">;
+  _creationTime: number;
   moduleIndex: string;
   moduleName: string;
   learningOutcome: string;
+  createdAt: number;
+  updatedAt: number;
   isHighlighted?: boolean;
 }
 
@@ -20,6 +27,20 @@ export const useDisciplineStore = defineStore("discipline", () => {
   const isLoading = ref(false);
   const error = ref<string | null>(null);
 
+  // Reactive subscription to Convex
+  if (useConvexFeatures() && convex) {
+    const { data: convexDisciplines } = useConvexQuery(
+      api.disciplines.queries.list,
+      ref({})
+    );
+
+    watch(convexDisciplines, (newData) => {
+      if (newData) {
+        disciplines.value = newData as Discipline[];
+      }
+    });
+  }
+
   const getAllDisciplines = computed(() => disciplines.value);
 
   const addDiscipline = async (payload: AddDisciplinePayload) => {
@@ -27,13 +48,8 @@ export const useDisciplineStore = defineStore("discipline", () => {
       isLoading.value = true;
       error.value = null;
 
-
-      const newDiscipline: Discipline = {
-        id: crypto.randomUUID(),
-        ...payload,
-      };
-
-      disciplines.value.push(newDiscipline);
+      if (!convex) throw new Error("Convex client not initialized");
+      await convex.mutation(api.disciplines.mutations.create, payload);
     } catch (e) {
       error.value = e instanceof Error ? e.message : "Failed to add discipline";
       throw e;
@@ -50,14 +66,11 @@ export const useDisciplineStore = defineStore("discipline", () => {
       isLoading.value = true;
       error.value = null;
 
-
-      const index = disciplines.value.findIndex((d) => d.id === id);
-      if (index === -1) throw new Error("Discipline not found");
-
-      disciplines.value[index] = {
-        ...disciplines.value[index],
+      if (!convex) throw new Error("Convex client not initialized");
+      await convex.mutation(api.disciplines.mutations.update, {
+        id: id as Id<"disciplines">,
         ...payload,
-      };
+      });
     } catch (e) {
       error.value =
         e instanceof Error ? e.message : "Failed to update discipline";
@@ -72,11 +85,10 @@ export const useDisciplineStore = defineStore("discipline", () => {
       isLoading.value = true;
       error.value = null;
 
-
-      const index = disciplines.value.findIndex((d) => d.id === id);
-      if (index === -1) throw new Error("Discipline not found");
-
-      disciplines.value.splice(index, 1);
+      if (!convex) throw new Error("Convex client not initialized");
+      await convex.mutation(api.disciplines.mutations.remove, {
+        id: id as Id<"disciplines">,
+      });
     } catch (e) {
       error.value =
         e instanceof Error ? e.message : "Failed to delete discipline";

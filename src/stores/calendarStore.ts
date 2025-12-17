@@ -1,8 +1,11 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useClass9Store } from "./class9Store";
 import { useKtpStore } from "./ktpStore";
 import { useAcademicYearSemesterStore } from "./academicYearSemesterStore";
+import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { api } from "@convex/_generated/api";
+import { useConvexQuery } from "convex-vue";
 
 export interface WeeklySchedule {
   weekId: number;
@@ -41,6 +44,39 @@ export const useCalendarStore = defineStore(
     const error = ref<string | null>(null);
     const selectedTeacherId = ref<string | null>(null);
 
+    // Reactive subscription to Convex
+    if (useConvexFeatures() && convex) {
+      const { data: convexEvents } = useConvexQuery(
+        api.calendarEvents.queries.list,
+        ref({})
+      );
+
+      watch(convexEvents, (newData) => {
+        if (newData) {
+          events.value = newData.map((event) => ({
+            id: event._id,
+            class9Id: event.class9Id,
+            ktpId: event.ktpId,
+            teacherId: event.teacherId,
+            startDate: event.startDate,
+            startTime: event.startTime,
+            endDate: event.endDate,
+            endTime: event.endTime,
+            participants: event.participants,
+            color: event.color,
+            semester: event.semester,
+            useCustomPeriod: event.useCustomPeriod,
+            weeklySchedules: event.weeklySchedules,
+            isIndividualJournal: event.isIndividualJournal,
+            mergedJournalIds: event.mergedJournalIds,
+            parentIndividualJournalId: event.parentIndividualJournalId,
+            createdAt: new Date(event.createdAt),
+            updatedAt: new Date(event.updatedAt),
+          }));
+        }
+      });
+    }
+
     const getEventById = computed(() => {
       return (id: string) => events.value.find((e) => e.id === id);
     });
@@ -73,29 +109,81 @@ export const useCalendarStore = defineStore(
     ) {
       loading.value = true;
       try {
-        const newEvent: CalendarEvent = {
-          ...eventData,
-          id: preGeneratedId || crypto.randomUUID(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-
         // Create event-specific KTP and link it
         const ktpStore = useKtpStore();
         const academicYearSemesterStore = useAcademicYearSemesterStore();
         const semester = academicYearSemesterStore.academicYearSemesters.find(
-          (s: any) => s.id === newEvent.semester
+          (s: any) => s.id === eventData.semester
         );
 
-        if (semester && semester.academicYearId) {
-          const ktp = ktpStore.ensureKtpForClass9(
-            newEvent.class9Id,
+        let ktpId = eventData.ktpId;
+        if (semester && semester.academicYearId && !ktpId) {
+          const eventId = preGeneratedId || crypto.randomUUID();
+          const ktp = await ktpStore.ensureKtpForClass9(
+            eventData.class9Id,
             semester.academicYearId,
-            newEvent.semester,
-            newEvent.id // Link KTP to this specific event
+            eventData.semester,
+            eventId // Link KTP to this specific event
           );
-          newEvent.ktpId = ktp.id;
+          ktpId = ktp.id;
         }
+
+        if (useConvexFeatures() && convex) {
+          // Use Convex - the reactive subscription will handle updating the local state
+          const id = await convex.mutation(api.calendarEvents.mutations.create, {
+            class9Id: eventData.class9Id,
+            ktpId,
+            teacherId: eventData.teacherId,
+            startDate: eventData.startDate,
+            startTime: eventData.startTime,
+            endDate: eventData.endDate,
+            endTime: eventData.endTime,
+            participants: eventData.participants,
+            color: eventData.color,
+            semester: eventData.semester,
+            useCustomPeriod: eventData.useCustomPeriod,
+            weeklySchedules: eventData.weeklySchedules,
+            isIndividualJournal: eventData.isIndividualJournal,
+            mergedJournalIds: eventData.mergedJournalIds,
+            parentIndividualJournalId: eventData.parentIndividualJournalId,
+          });
+
+          const created = await convex.query(api.calendarEvents.queries.getById, { id });
+          if (created) {
+            const mapped: CalendarEvent = {
+              id: created._id,
+              class9Id: created.class9Id,
+              ktpId: created.ktpId,
+              teacherId: created.teacherId,
+              startDate: created.startDate,
+              startTime: created.startTime,
+              endDate: created.endDate,
+              endTime: created.endTime,
+              participants: created.participants,
+              color: created.color,
+              semester: created.semester,
+              useCustomPeriod: created.useCustomPeriod,
+              weeklySchedules: created.weeklySchedules,
+              isIndividualJournal: created.isIndividualJournal,
+              mergedJournalIds: created.mergedJournalIds,
+              parentIndividualJournalId: created.parentIndividualJournalId,
+              createdAt: new Date(created.createdAt),
+              updatedAt: new Date(created.updatedAt),
+            };
+            // Don't push to events.value - the reactive subscription will handle it
+            error.value = null;
+            return mapped;
+          }
+        }
+
+        // Fallback: local-only
+        const newEvent: CalendarEvent = {
+          ...eventData,
+          id: preGeneratedId || crypto.randomUUID(),
+          ktpId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
 
         events.value.push(newEvent);
         error.value = null;
@@ -121,13 +209,9 @@ export const useCalendarStore = defineStore(
         }
 
         const originalEvent = events.value[index];
-        const updatedEvent = {
-          ...originalEvent,
-          ...eventData,
-          updatedAt: new Date(),
-        };
 
         // If class9Id changed, create new event-specific KTP
+        let ktpId = eventData.ktpId;
         if (eventData.class9Id && eventData.class9Id !== originalEvent.class9Id) {
           const ktpStore = useKtpStore();
           const academicYearSemesterStore = useAcademicYearSemesterStore();
@@ -137,15 +221,71 @@ export const useCalendarStore = defineStore(
           );
 
           if (semester && semester.academicYearId) {
-            const ktp = ktpStore.ensureKtpForClass9(
+            const ktp = await ktpStore.ensureKtpForClass9(
               eventData.class9Id,
               semester.academicYearId,
               semesterId,
               id // Link KTP to this specific event
             );
-            updatedEvent.ktpId = ktp.id;
+            ktpId = ktp.id;
           }
         }
+
+        if (useConvexFeatures() && convex) {
+          // Use Convex - the reactive subscription will handle updating the local state
+          const updated = await convex.mutation(api.calendarEvents.mutations.update, {
+            id: id as any,
+            class9Id: eventData.class9Id,
+            ktpId,
+            teacherId: eventData.teacherId,
+            startDate: eventData.startDate,
+            startTime: eventData.startTime,
+            endDate: eventData.endDate,
+            endTime: eventData.endTime,
+            participants: eventData.participants,
+            color: eventData.color,
+            semester: eventData.semester,
+            useCustomPeriod: eventData.useCustomPeriod,
+            weeklySchedules: eventData.weeklySchedules,
+            isIndividualJournal: eventData.isIndividualJournal,
+            mergedJournalIds: eventData.mergedJournalIds,
+            parentIndividualJournalId: eventData.parentIndividualJournalId,
+          });
+
+          if (updated) {
+            const mapped: CalendarEvent = {
+              id: updated._id,
+              class9Id: updated.class9Id,
+              ktpId: updated.ktpId,
+              teacherId: updated.teacherId,
+              startDate: updated.startDate,
+              startTime: updated.startTime,
+              endDate: updated.endDate,
+              endTime: updated.endTime,
+              participants: updated.participants,
+              color: updated.color,
+              semester: updated.semester,
+              useCustomPeriod: updated.useCustomPeriod,
+              weeklySchedules: updated.weeklySchedules,
+              isIndividualJournal: updated.isIndividualJournal,
+              mergedJournalIds: updated.mergedJournalIds,
+              parentIndividualJournalId: updated.parentIndividualJournalId,
+              createdAt: new Date(updated.createdAt),
+              updatedAt: new Date(updated.updatedAt),
+            };
+            // Don't update events.value - the reactive subscription will handle it
+            error.value = null;
+            return mapped;
+          }
+        }
+
+        // Fallback: local-only
+        const updatedEvent = {
+          ...originalEvent,
+          ...eventData,
+          ktpId: ktpId || originalEvent.ktpId,
+          updatedAt: new Date(),
+        };
 
         events.value[index] = updatedEvent;
         error.value = null;
@@ -162,12 +302,58 @@ export const useCalendarStore = defineStore(
     async function deleteEvent(id: string) {
       loading.value = true;
       try {
+        if (useConvexFeatures() && convex) {
+          // Use Convex - the reactive subscription will handle updating the local state
+          await convex.mutation(api.calendarEvents.mutations.remove, {
+            id: id as any,
+          });
+          // Don't filter events.value - the reactive subscription will handle it
+          error.value = null;
+          return;
+        }
+
+        // Fallback: local-only
         events.value = events.value.filter((e) => e.id !== id);
         error.value = null;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to delete event";
         throw err;
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    async function loadFromBackend() {
+      if (!useConvexFeatures() || !convex) return;
+
+      loading.value = true;
+      try {
+        const data = await convex.query(api.calendarEvents.queries.list, {});
+        events.value = data.map((event) => ({
+          id: event._id,
+          class9Id: event.class9Id,
+          ktpId: event.ktpId,
+          teacherId: event.teacherId,
+          startDate: event.startDate,
+          startTime: event.startTime,
+          endDate: event.endDate,
+          endTime: event.endTime,
+          participants: event.participants,
+          color: event.color,
+          semester: event.semester,
+          useCustomPeriod: event.useCustomPeriod,
+          weeklySchedules: event.weeklySchedules,
+          isIndividualJournal: event.isIndividualJournal,
+          mergedJournalIds: event.mergedJournalIds,
+          parentIndividualJournalId: event.parentIndividualJournalId,
+          createdAt: new Date(event.createdAt),
+          updatedAt: new Date(event.updatedAt),
+        }));
+        error.value = null;
+      } catch (err) {
+        console.error("[calendarStore] Failed to load from Convex:", err);
+        error.value = "Failed to load calendar events";
       } finally {
         loading.value = false;
       }
@@ -201,6 +387,7 @@ export const useCalendarStore = defineStore(
       addEvent,
       updateEvent,
       deleteEvent,
+      loadFromBackend,
       setSelectedTeacher,
       clearError,
       reset,

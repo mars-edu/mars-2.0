@@ -210,10 +210,9 @@ import DownloadTemplateDialog from "@/components/DownloadTemplateDialog.vue";
 import RupImportDialog from "@/components/RupImportDialog.vue";
 import { storeToRefs } from "pinia";
 import {
-  parseEducationalSchedule,
-  parseEducationalScheduleEnhanced,
-  exportKtpToExcel,
-} from "@/services/excel-parser";
+  parseEducationalScheduleViaConvex,
+  exportKtpToExcelViaConvex,
+} from "@/services/convex-excel-export";
 
 const props = defineProps<{
   ktpId: string | null;
@@ -285,7 +284,7 @@ const downloadRup = async () => {
     ]);
 
     const templatePath = "/rup_templates/Шаблон КТП Марса.xlsx";
-    const data = await exportKtpToExcel(dataRows, templatePath);
+    const data = await exportKtpToExcelViaConvex(dataRows, templatePath);
 
     const blob = new Blob([data], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -348,16 +347,7 @@ const uploadDocument = () => {
         })
         .open();
 
-      let parseResult;
-      try {
-        parseResult = await parseEducationalSchedule(file);
-      } catch (basicError) {
-        console.warn(
-          "Basic parser failed, trying enhanced parser:",
-          basicError
-        );
-        parseResult = await parseEducationalScheduleEnhanced(file);
-      }
+      const parseResult = await parseEducationalScheduleViaConvex(file);
 
       if (!parseResult.lessons.length) {
         throw new Error("В файле не найдено ни одного урока для импорта");

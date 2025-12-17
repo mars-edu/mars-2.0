@@ -15,9 +15,5 @@ export const useTabManagerStore = defineStore(
       setPrimaryTab,
     };
   },
-  {
-    serverSync: {
-      enabled: false,
-    },
-  }
+  {}
 );
