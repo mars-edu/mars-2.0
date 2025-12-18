@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
-import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 
@@ -28,28 +28,23 @@ export const useFinalControlStore = defineStore(
     };
 
     // Reactive subscription to Convex
-    if (useConvexFeatures() && convex) {
-      const { data: convexControls } = useConvexQuery(
-        api.finalControls.queries.list,
-        ref({})
-      );
+    const { data: convexControls } = useConvexQuery(
+      api.finalControls.queries.list,
+      ref({})
+    );
 
-      watch(convexControls, (newData) => {
-        if (newData) {
-          finalControls.value = newData.map((c) => ({
-            id: c._id,
-            name: c.name,
-            shortName: c.shortName,
-            createdAt: new Date(c.createdAt),
-            updatedAt: new Date(c.updatedAt),
-          }));
-          sortFinalControls();
-        }
-      });
-    } else if (finalControls.value.length === 0) {
-      finalControls.value = DEFAULT_FINAL_CONTROLS;
-    }
-    sortFinalControls();
+    watch(convexControls, (newData) => {
+      if (newData) {
+        finalControls.value = newData.map((c) => ({
+          id: c._id,
+          name: c.name,
+          shortName: c.shortName,
+          createdAt: new Date(c.createdAt),
+          updatedAt: new Date(c.updatedAt),
+        }));
+        sortFinalControls();
+      }
+    });
 
     const getFinalControlById = computed(() => {
       return (id: string) => finalControls.value.find((c) => c.id === id);
@@ -69,27 +64,13 @@ export const useFinalControlStore = defineStore(
     ) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.finalControls.mutations.create, {
-            name: controlData.name,
-            shortName: controlData.shortName,
-          });
-          // Don't push to finalControls.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-
-        const newControl: FinalControl = {
-          ...controlData,
-          id: crypto.randomUUID(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        finalControls.value.push(newControl);
-        sortFinalControls();
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.finalControls.mutations.create, {
+          name: controlData.name,
+          shortName: controlData.shortName,
+        });
+        // Don't push to finalControls.value - the reactive subscription will handle it
         error.value = null;
-        return newControl;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to add final control";
@@ -105,33 +86,14 @@ export const useFinalControlStore = defineStore(
     ) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.finalControls.mutations.update, {
-            id: id as any,
-            name: controlData.name,
-            shortName: controlData.shortName,
-          });
-          // Don't update finalControls.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-
-        const index = finalControls.value.findIndex((c) => c.id === id);
-        if (index === -1) {
-          throw new Error("Final control not found");
-        }
-
-        const updatedControl = {
-          ...finalControls.value[index],
-          ...controlData,
-          updatedAt: new Date(),
-        };
-
-        finalControls.value[index] = updatedControl;
-        sortFinalControls();
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.finalControls.mutations.update, {
+          id: id as any,
+          name: controlData.name,
+          shortName: controlData.shortName,
+        });
+        // Don't update finalControls.value - the reactive subscription will handle it
         error.value = null;
-        return updatedControl;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to update final control";
@@ -144,17 +106,11 @@ export const useFinalControlStore = defineStore(
     async function deleteFinalControl(id: string) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.finalControls.mutations.remove, {
-            id: id as any,
-          });
-          // Don't filter finalControls.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-        // Fallback: local-only
-        finalControls.value = finalControls.value.filter((c) => c.id !== id);
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.finalControls.mutations.remove, {
+          id: id as any,
+        });
+        // Don't filter finalControls.value - the reactive subscription will handle it
         error.value = null;
       } catch (err) {
         error.value =
@@ -166,8 +122,6 @@ export const useFinalControlStore = defineStore(
     }
 
     async function loadFromBackend() {
-      if (!useConvexFeatures() || !convex) return;
-
       loading.value = true;
       try {
         const data = await convex.query(api.finalControls.queries.list, {});

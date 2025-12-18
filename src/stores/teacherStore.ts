@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import Fuse from "fuse.js";
 import { httpClient } from "@/lib/http-client";
-import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 
@@ -49,28 +49,26 @@ export const useTeacherStore = defineStore("teacher", () => {
   });
 
   // Reactive subscription to Convex
-  if (useConvexFeatures() && convex) {
-    const { data: convexTeachers } = useConvexQuery(
-      api.teachers.queries.list,
-      ref({})
-    );
+  const { data: convexTeachers } = useConvexQuery(
+    api.teachers.queries.list,
+    ref({})
+  );
 
-    watch(convexTeachers, (newData) => {
-      if (newData) {
-        teachers.value = newData.map((teacher) => ({
-          id: teacher._id,
-          firstName: teacher.firstName,
-          surname: teacher.surname,
-          patronymic: teacher.patronymic,
-          position: teacher.position,
-          employmentYear: teacher.employmentYear,
-          gender: teacher.gender,
-          email: teacher.email,
-          username: teacher.username,
-        }));
-      }
-    });
-  }
+  watch(convexTeachers, (newData) => {
+    if (newData) {
+      teachers.value = newData.map((teacher) => ({
+        id: teacher._id,
+        firstName: teacher.firstName,
+        surname: teacher.surname,
+        patronymic: teacher.patronymic,
+        position: teacher.position,
+        employmentYear: teacher.employmentYear,
+        gender: teacher.gender,
+        email: teacher.email,
+        username: teacher.username,
+      }));
+    }
+  });
 
   const getAllTeachers = computed(() => teachers.value);
 
@@ -141,66 +139,29 @@ export const useTeacherStore = defineStore("teacher", () => {
       isLoading.value = true;
       error.value = null;
 
-      if (useConvexFeatures() && convex) {
-        // Use Convex - reactive subscription will automatically update the list
-        const result = await convex.action(api.auth.mutations.registerTeacher, {
-          firstName: payload.firstName,
-          lastName: payload.surname,
-          middleName: payload.patronymic,
-          position: payload.position,
-          gender: payload.gender,
-          employmentYear: payload.employmentYear,
-        });
-        // No need to manually push - the watch on convexTeachers handles it
-        // Return the credentials for display
-        return {
-          id: result.teacherId,
-          surname: payload.surname,
-          firstName: payload.firstName,
-          patronymic: payload.patronymic,
-          position: payload.position,
-          employmentYear: payload.employmentYear,
-          gender: payload.gender,
-          email: result.email,
-          password: result.password,
-          username: result.username,
-        };
-      }
-
-      // Fallback: use httpClient
-      const response = await httpClient<{
-        success: boolean;
-        email: string;
-        password: string;
-        username: string;
-        teacherId: string;
-      }>("/teachers/register", {
-        method: "POST",
-        body: {
-          firstName: payload.firstName,
-          lastName: payload.surname,
-          middleName: payload.patronymic,
-          position: payload.position,
-          gender: payload.gender,
-          employmentYear: payload.employmentYear,
-        },
+      // Use Convex - reactive subscription will automatically update the list
+      const result = await convex.action(api.auth.mutations.registerTeacher, {
+        firstName: payload.firstName,
+        lastName: payload.surname,
+        middleName: payload.patronymic,
+        position: payload.position,
+        gender: payload.gender,
+        employmentYear: payload.employmentYear,
       });
-
-      const newTeacher: Teacher = {
-        id: response.teacherId,
+      // No need to manually push - the watch on convexTeachers handles it
+      // Return the credentials for display
+      return {
+        id: result.teacherId,
         surname: payload.surname,
         firstName: payload.firstName,
         patronymic: payload.patronymic,
         position: payload.position,
         employmentYear: payload.employmentYear,
         gender: payload.gender,
-        email: response.email,
-        password: response.password,
-        username: response.username,
+        email: result.email,
+        password: result.password,
+        username: result.username,
       };
-
-      teachers.value.push(newTeacher);
-      return newTeacher;
     } catch (e) {
       error.value = e instanceof Error ? e.message : "Failed to add teacher";
       throw e;
@@ -214,30 +175,18 @@ export const useTeacherStore = defineStore("teacher", () => {
       isLoading.value = true;
       error.value = null;
 
-      if (useConvexFeatures() && convex) {
-        // Use Convex - reactive subscription will automatically update the list
-        await convex.mutation(api.teachers.mutations.update, {
-          id: id as any,
-          firstName: payload.firstName,
-          surname: payload.surname,
-          patronymic: payload.patronymic,
-          position: payload.position,
-          employmentYear: payload.employmentYear,
-          gender: payload.gender,
-          email: payload.email,
-        });
-        // No need to manually update - the watch on convexTeachers handles it
-        return;
-      }
-
-      // Fallback: local-only
-      const index = teachers.value.findIndex((s) => s.id === id);
-      if (index === -1) throw new Error("Teacher not found");
-
-      teachers.value[index] = {
-        ...teachers.value[index],
-        ...payload,
-      };
+      // Use Convex - reactive subscription will automatically update the list
+      await convex.mutation(api.teachers.mutations.update, {
+        id: id as any,
+        firstName: payload.firstName,
+        surname: payload.surname,
+        patronymic: payload.patronymic,
+        position: payload.position,
+        employmentYear: payload.employmentYear,
+        gender: payload.gender,
+        email: payload.email,
+      });
+      // No need to manually update - the watch on convexTeachers handles it
     } catch (e) {
       error.value = e instanceof Error ? e.message : "Failed to update teacher";
       throw e;
@@ -251,20 +200,11 @@ export const useTeacherStore = defineStore("teacher", () => {
       isLoading.value = true;
       error.value = null;
 
-      if (useConvexFeatures() && convex) {
-        // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.teachers.mutations.remove, {
-          id: id as any,
-        });
-        // Don't filter teachers.value - the reactive subscription will handle it
-        return;
-      }
-
-      // Fallback: local-only
-      const index = teachers.value.findIndex((s) => s.id === id);
-      if (index === -1) throw new Error("Teacher not found");
-
-      teachers.value.splice(index, 1);
+      // Use Convex - the reactive subscription will handle updating the local state
+      await convex.mutation(api.teachers.mutations.remove, {
+        id: id as any,
+      });
+      // Don't filter teachers.value - the reactive subscription will handle it
     } catch (e) {
       error.value = e instanceof Error ? e.message : "Failed to delete teacher";
       throw e;
@@ -274,8 +214,6 @@ export const useTeacherStore = defineStore("teacher", () => {
   };
 
   const loadFromBackend = async () => {
-    if (!useConvexFeatures() || !convex) return;
-
     isLoading.value = true;
     try {
       const data = await convex.query(api.teachers.queries.list, {});

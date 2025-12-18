@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import type { ParsedLesson } from "@/services/excel-parser";
-import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 
@@ -76,43 +76,31 @@ export const useKtpStore = defineStore(
       eventId?: string,
       name?: string
     ): Promise<Ktp> {
-      if (useConvexFeatures() && convex) {
-        const id = await convex.mutation(api.ktps.mutations.create, {
-          class9Id,
-          academicYearId,
-          semesterId,
-          eventId,
-          name,
-        });
-        const created = await convex.query(api.ktps.queries.getById, { id });
-        if (created) {
-          const mapped: Ktp = {
-            id: created._id,
-            class9Id: created.class9Id,
-            academicYearId: created.academicYearId,
-            semesterId: created.semesterId,
-            eventId: created.eventId,
-            name: created.name,
-            createdAt: new Date(created.createdAt),
-            updatedAt: new Date(created.updatedAt),
-          };
-          ktps.value.push(mapped);
-          return mapped;
-        }
-      }
-
-      const newKtp: Ktp = {
-        id: crypto.randomUUID(),
+      const id = await convex.mutation(api.ktps.mutations.create, {
         class9Id,
         academicYearId,
         semesterId,
         eventId,
         name,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      ktps.value.push(newKtp);
-      return newKtp;
+      });
+      const created = await convex.query(api.ktps.queries.getById, { id });
+      if (created) {
+        const mapped: Ktp = {
+          id: created._id,
+          class9Id: created.class9Id,
+          academicYearId: created.academicYearId,
+          semesterId: created.semesterId,
+          eventId: created.eventId,
+          name: created.name,
+          createdAt: new Date(created.createdAt),
+          updatedAt: new Date(created.updatedAt),
+        };
+        ktps.value.push(mapped);
+        return mapped;
+      }
+
+      // Fallback if query fails
+      throw new Error("Failed to create KTP");
     }
 
     async function ensureKtpForClass9(
@@ -151,63 +139,51 @@ export const useKtpStore = defineStore(
       ktpId: string,
       data: Partial<Omit<KtpDetail, "id" | "ktpId" | "position">>
     ) {
-      if (useConvexFeatures() && convex) {
-        const newPosition = ktpDetails.value.filter(d => d.ktpId === ktpId).length + 1;
-        const id = await convex.mutation(api.ktps.mutations.addDetail, {
-          ktpId: ktpId as any,
-          position: newPosition,
-          theme: data.theme || "",
-          totalHours: data.totalHours,
-          srsp: data.srsp,
-          srs: data.srs,
-          homework: data.homework || "",
-          notes: data.notes || "",
-        });
-        const created = await convex.query(api.ktps.queries.getById, { id: ktpId as any });
-        if (created && created.details) {
-          const newDetail = created.details.find((d: any) => d._id === id);
-          if (newDetail) {
-            const mapped: KtpDetail = {
-              id: newDetail._id,
-              ktpId: newDetail.ktpId,
-              position: newDetail.position,
-              theme: newDetail.theme,
-              totalHours: newDetail.totalHours,
-              srsp: newDetail.srsp,
-              srs: newDetail.srs,
-              homework: newDetail.homework,
-              notes: newDetail.notes,
-            };
-            ktpDetails.value.push(mapped);
-            return;
-          }
+      const newPosition = ktpDetails.value.filter(d => d.ktpId === ktpId).length + 1;
+      const id = await convex.mutation(api.ktps.mutations.addDetail, {
+        ktpId: ktpId as any,
+        position: newPosition,
+        theme: data.theme || "",
+        totalHours: data.totalHours,
+        srsp: data.srsp,
+        srs: data.srs,
+        homework: data.homework || "",
+        notes: data.notes || "",
+      });
+      const created = await convex.query(api.ktps.queries.getById, { id: ktpId as any });
+      if (created && created.details) {
+        const newDetail = created.details.find((d: any) => d._id === id);
+        if (newDetail) {
+          const mapped: KtpDetail = {
+            id: newDetail._id,
+            ktpId: newDetail.ktpId,
+            position: newDetail.position,
+            theme: newDetail.theme,
+            totalHours: newDetail.totalHours,
+            srsp: newDetail.srsp,
+            srs: newDetail.srs,
+            homework: newDetail.homework,
+            notes: newDetail.notes,
+          };
+          ktpDetails.value.push(mapped);
         }
       }
-
-      const newPosition = ktpDetails.value.length + 1;
-      const newItem = {
-        ...createEmptyKtpDetail(ktpId, newPosition),
-        ...data,
-      };
-      ktpDetails.value.push(newItem);
     }
 
     async function updateKtpDetail(
       id: string,
       data: Partial<Omit<KtpDetail, "id" | "ktpId">>
     ) {
-      if (useConvexFeatures() && convex) {
-        await convex.mutation(api.ktps.mutations.updateDetail, {
-          id: id as any,
-          position: data.position,
-          theme: data.theme,
-          totalHours: data.totalHours,
-          srsp: data.srsp,
-          srs: data.srs,
-          homework: data.homework,
-          notes: data.notes,
-        });
-      }
+      await convex.mutation(api.ktps.mutations.updateDetail, {
+        id: id as any,
+        position: data.position,
+        theme: data.theme,
+        totalHours: data.totalHours,
+        srsp: data.srsp,
+        srs: data.srs,
+        homework: data.homework,
+        notes: data.notes,
+      });
 
       const index = ktpDetails.value.findIndex((d) => d.id === id);
       if (index !== -1) {
@@ -216,11 +192,9 @@ export const useKtpStore = defineStore(
     }
 
     async function deleteKtpDetail(id: string) {
-      if (useConvexFeatures() && convex) {
-        await convex.mutation(api.ktps.mutations.removeDetail, {
-          id: id as any,
-        });
-      }
+      await convex.mutation(api.ktps.mutations.removeDetail, {
+        id: id as any,
+      });
 
       ktpDetails.value = ktpDetails.value.filter((d) => d.id !== id);
       ktpDetails.value.forEach((item, index) => {
@@ -249,11 +223,9 @@ export const useKtpStore = defineStore(
     }
 
     async function deleteKtpById(ktpId: string) {
-      if (useConvexFeatures() && convex) {
-        await convex.mutation(api.ktps.mutations.remove, {
-          id: ktpId as any,
-        });
-      }
+      await convex.mutation(api.ktps.mutations.remove, {
+        id: ktpId as any,
+      });
 
       const ktp = ktps.value.find((k) => k.id === ktpId);
       if (!ktp) return { success: true, deleted: 0 };
@@ -302,49 +274,8 @@ export const useKtpStore = defineStore(
       try {
         error.value = null;
 
-        if (useConvexFeatures() && convex) {
-          // Use Convex bulk import
-          const details = lessons.map((lesson, index) => ({
-            position: lesson.lessonNumber || index + 1,
-            theme: lesson.subject || lesson.lessonType || "",
-            totalHours: typeof lesson.hours === "number" ? lesson.hours : null,
-            srsp: null,
-            srs: null,
-            homework: lesson.homework || "",
-            notes: lesson.notes || "",
-          }));
-
-          await convex.mutation(api.ktps.mutations.bulkImportDetails, {
-            ktpId: ktpId as any,
-            details,
-          });
-
-          // Reload the KTP with new details
-          const updated = await convex.query(api.ktps.queries.getById, { id: ktpId as any });
-          if (updated && updated.details) {
-            // Remove old details for this ktpId
-            ktpDetails.value = ktpDetails.value.filter((d) => d.ktpId !== ktpId);
-            // Add new details
-            const mappedDetails = updated.details.map((d: any) => ({
-              id: d._id,
-              ktpId: d.ktpId,
-              position: d.position,
-              theme: d.theme,
-              totalHours: d.totalHours,
-              srsp: d.srsp,
-              srs: d.srs,
-              homework: d.homework,
-              notes: d.notes,
-            }));
-            ktpDetails.value.push(...mappedDetails);
-            return { success: true, imported: mappedDetails.length };
-          }
-        }
-
-        // Fallback: local-only
-        const newDetails: KtpDetail[] = lessons.map((lesson, index) => ({
-          id: crypto.randomUUID(),
-          ktpId,
+        // Use Convex bulk import
+        const details = lessons.map((lesson, index) => ({
           position: lesson.lessonNumber || index + 1,
           theme: lesson.subject || lesson.lessonType || "",
           totalHours: typeof lesson.hours === "number" ? lesson.hours : null,
@@ -354,12 +285,33 @@ export const useKtpStore = defineStore(
           notes: lesson.notes || "",
         }));
 
-        // Remove existing KTP details for this ktpId
-        ktpDetails.value = ktpDetails.value.filter((d) => d.ktpId !== ktpId);
-        ktpDetails.value.push(...newDetails);
-        ktpDetails.value.sort((a, b) => a.position - b.position);
+        await convex.mutation(api.ktps.mutations.bulkImportDetails, {
+          ktpId: ktpId as any,
+          details,
+        });
 
-        return { success: true, imported: newDetails.length };
+        // Reload the KTP with new details
+        const updated = await convex.query(api.ktps.queries.getById, { id: ktpId as any });
+        if (updated && updated.details) {
+          // Remove old details for this ktpId
+          ktpDetails.value = ktpDetails.value.filter((d) => d.ktpId !== ktpId);
+          // Add new details
+          const mappedDetails = updated.details.map((d: any) => ({
+            id: d._id,
+            ktpId: d.ktpId,
+            position: d.position,
+            theme: d.theme,
+            totalHours: d.totalHours,
+            srsp: d.srsp,
+            srs: d.srs,
+            homework: d.homework,
+            notes: d.notes,
+          }));
+          ktpDetails.value.push(...mappedDetails);
+          return { success: true, imported: mappedDetails.length };
+        }
+
+        return { success: false, error: "Failed to reload after import" };
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to import data";
@@ -473,8 +425,6 @@ export const useKtpStore = defineStore(
     });
 
     async function loadFromBackend() {
-      if (!useConvexFeatures() || !convex) return;
-
       loading.value = true;
       try {
         const data = await convex.query(api.ktps.queries.list, {});

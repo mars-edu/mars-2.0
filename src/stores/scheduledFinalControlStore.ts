@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
-import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 
@@ -27,27 +27,25 @@ export const useScheduledFinalControlStore = defineStore(
     const error = ref<string | null>(null);
 
     // Reactive subscription to Convex
-    if (useConvexFeatures() && convex) {
-      const { data: convexControls } = useConvexQuery(
-        api.scheduledControls.queries.listFinal,
-        ref({})
-      );
+    const { data: convexControls } = useConvexQuery(
+      api.scheduledControls.queries.listFinal,
+      ref({})
+    );
 
-      watch(convexControls, (newData) => {
-        if (newData) {
-          scheduledFinalControls.value = newData.map((c) => ({
-            id: c._id,
-            academicYearId: c.academicYearId,
-            finalControlId: c.controlId,
-            shortName: c.shortName,
-            startDate: c.startDate,
-            endDate: c.endDate,
-            createdAt: new Date(c.createdAt),
-            updatedAt: new Date(c.updatedAt),
-          }));
-        }
-      });
-    }
+    watch(convexControls, (newData) => {
+      if (newData) {
+        scheduledFinalControls.value = newData.map((c) => ({
+          id: c._id,
+          academicYearId: c.academicYearId,
+          finalControlId: c.controlId,
+          shortName: c.shortName,
+          startDate: c.startDate,
+          endDate: c.endDate,
+          createdAt: new Date(c.createdAt),
+          updatedAt: new Date(c.updatedAt),
+        }));
+      }
+    });
 
     const getScheduledFinalControlById = computed(() => {
       return (id: string) =>
@@ -75,28 +73,15 @@ export const useScheduledFinalControlStore = defineStore(
     ) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.scheduledControls.mutations.createFinal, {
-            finalControlId: controlData.finalControlId,
-            class9Id: "", // Store doesn't have this, would need to be added or derived
-            semesterId: "", // Store doesn't have this, would need to be added or derived
-            date: controlData.startDate,
-          });
-          // Don't push to scheduledFinalControls.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-
-        const newControl: ScheduledFinalControl = {
-          ...controlData,
-          id: crypto.randomUUID(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        scheduledFinalControls.value.push(newControl);
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.scheduledControls.mutations.createFinal, {
+          finalControlId: controlData.finalControlId,
+          class9Id: "", // Store doesn't have this, would need to be added or derived
+          semesterId: "", // Store doesn't have this, would need to be added or derived
+          date: controlData.startDate,
+        });
+        // Don't push to scheduledFinalControls.value - the reactive subscription will handle it
         error.value = null;
-        return newControl;
       } catch (err) {
         error.value =
           err instanceof Error
@@ -116,34 +101,14 @@ export const useScheduledFinalControlStore = defineStore(
     ) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.scheduledControls.mutations.updateFinal, {
-            id: id as any,
-            finalControlId: controlData.finalControlId,
-            date: controlData.startDate,
-          });
-          // Don't update scheduledFinalControls.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-
-        const index = scheduledFinalControls.value.findIndex(
-          (c) => c.id === id
-        );
-        if (index === -1) {
-          throw new Error("Scheduled final control not found");
-        }
-
-        const updatedControl = {
-          ...scheduledFinalControls.value[index],
-          ...controlData,
-          updatedAt: new Date(),
-        };
-
-        scheduledFinalControls.value[index] = updatedControl;
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.scheduledControls.mutations.updateFinal, {
+          id: id as any,
+          finalControlId: controlData.finalControlId,
+          date: controlData.startDate,
+        });
+        // Don't update scheduledFinalControls.value - the reactive subscription will handle it
         error.value = null;
-        return updatedControl;
       } catch (err) {
         error.value =
           err instanceof Error
@@ -158,19 +123,11 @@ export const useScheduledFinalControlStore = defineStore(
     async function deleteScheduledFinalControl(id: string) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.scheduledControls.mutations.removeFinal, {
-            id: id as any,
-          });
-          // Don't filter scheduledFinalControls.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-        // Fallback: local-only
-        scheduledFinalControls.value = scheduledFinalControls.value.filter(
-          (c) => c.id !== id
-        );
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.scheduledControls.mutations.removeFinal, {
+          id: id as any,
+        });
+        // Don't filter scheduledFinalControls.value - the reactive subscription will handle it
         error.value = null;
       } catch (err) {
         error.value =
@@ -184,8 +141,6 @@ export const useScheduledFinalControlStore = defineStore(
     }
 
     async function loadFromBackend() {
-      if (!useConvexFeatures() || !convex) return;
-
       loading.value = true;
       try {
         const data = await convex.query(api.scheduledControls.queries.listFinal, {});

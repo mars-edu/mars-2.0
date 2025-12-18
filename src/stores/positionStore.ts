@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
-import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 
@@ -22,23 +22,21 @@ export const usePositionStore = defineStore("position", () => {
   const error = ref<string | null>(null);
 
   // Reactive subscription to Convex
-  if (useConvexFeatures() && convex) {
-    const { data: convexPositions } = useConvexQuery(
-      api.positions.queries.list,
-      ref({})
-    );
+  const { data: convexPositions } = useConvexQuery(
+    api.positions.queries.list,
+    ref({})
+  );
 
-    watch(convexPositions, (newData) => {
-      if (newData) {
-        positions.value = newData.map((p) => ({
-          id: p._id,
-          name: p.name,
-          createdAt: new Date(p.createdAt),
-          updatedAt: new Date(p.updatedAt),
-        }));
-      }
-    });
-  }
+  watch(convexPositions, (newData) => {
+    if (newData) {
+      positions.value = newData.map((p) => ({
+        id: p._id,
+        name: p.name,
+        createdAt: new Date(p.createdAt),
+        updatedAt: new Date(p.updatedAt),
+      }));
+    }
+  });
 
   const getAllPositions = computed(() => positions.value);
   const getError = computed(() => error.value);
@@ -46,24 +44,13 @@ export const usePositionStore = defineStore("position", () => {
   async function addPosition(positionData: Omit<Position, "id">) {
     isLoading.value = true;
     try {
-      if (useConvexFeatures() && convex) {
-        // Use Convex - reactive subscription will automatically update the list
-        await convex.mutation(api.positions.mutations.create, {
-          name: positionData.name,
-          shortName: positionData.name, // Using name for both
-        });
-        // No need to manually push - the watch on convexPositions handles it
-        error.value = null;
-        return;
-      }
-
-      const newPosition: Position = {
-        id: crypto.randomUUID(),
-        ...positionData,
-      };
-      positions.value.push(newPosition);
+      // Use Convex - reactive subscription will automatically update the list
+      await convex.mutation(api.positions.mutations.create, {
+        name: positionData.name,
+        shortName: positionData.name, // Using name for both
+      });
+      // No need to manually push - the watch on convexPositions handles it
       error.value = null;
-      return newPosition;
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to add position";
       throw err;
@@ -75,25 +62,13 @@ export const usePositionStore = defineStore("position", () => {
   async function updatePosition(id: string, positionData: Partial<Omit<Position, "id">>) {
     isLoading.value = true;
     try {
-      if (useConvexFeatures() && convex) {
-        // Use Convex - reactive subscription will automatically update the list
-        await convex.mutation(api.positions.mutations.update, {
-          id: id as any,
-          name: positionData.name,
-          shortName: positionData.name,
-        });
-        // No need to manually update - the watch on convexPositions handles it
-        error.value = null;
-        return;
-      }
-
-      const index = positions.value.findIndex((p) => p.id === id);
-      if (index === -1) throw new Error("Position not found");
-
-      positions.value[index] = {
-        ...positions.value[index],
-        ...positionData,
-      };
+      // Use Convex - reactive subscription will automatically update the list
+      await convex.mutation(api.positions.mutations.update, {
+        id: id as any,
+        name: positionData.name,
+        shortName: positionData.name,
+      });
+      // No need to manually update - the watch on convexPositions handles it
       error.value = null;
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to update position";
@@ -106,17 +81,11 @@ export const usePositionStore = defineStore("position", () => {
   async function deletePosition(id: string) {
     isLoading.value = true;
     try {
-      if (useConvexFeatures() && convex) {
-        // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.positions.mutations.remove, {
-          id: id as any,
-        });
-        // Don't filter positions.value - the reactive subscription will handle it
-        error.value = null;
-        return;
-      }
-      // Fallback: local-only
-      positions.value = positions.value.filter((p) => p.id !== id);
+      // Use Convex - the reactive subscription will handle updating the local state
+      await convex.mutation(api.positions.mutations.remove, {
+        id: id as any,
+      });
+      // Don't filter positions.value - the reactive subscription will handle it
       error.value = null;
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to delete position";
@@ -127,8 +96,6 @@ export const usePositionStore = defineStore("position", () => {
   }
 
   async function loadFromBackend() {
-    if (!useConvexFeatures() || !convex) return;
-
     isLoading.value = true;
     try {
       const data = await convex.query(api.positions.queries.list, {});

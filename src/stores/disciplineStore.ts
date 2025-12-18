@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
-import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import type { Id } from "@convex/_generated/dataModel";
@@ -28,18 +28,16 @@ export const useDisciplineStore = defineStore("discipline", () => {
   const error = ref<string | null>(null);
 
   // Reactive subscription to Convex
-  if (useConvexFeatures() && convex) {
-    const { data: convexDisciplines } = useConvexQuery(
-      api.disciplines.queries.list,
-      ref({})
-    );
+  const { data: convexDisciplines } = useConvexQuery(
+    api.disciplines.queries.list,
+    ref({})
+  );
 
-    watch(convexDisciplines, (newData) => {
-      if (newData) {
-        disciplines.value = newData as Discipline[];
-      }
-    });
-  }
+  watch(convexDisciplines, (newData) => {
+    if (newData) {
+      disciplines.value = newData as Discipline[];
+    }
+  });
 
   const getAllDisciplines = computed(() => disciplines.value);
 

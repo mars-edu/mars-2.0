@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 
 export interface DistributionEntry {
@@ -183,100 +183,81 @@ export const useClass9Store = defineStore(
     ) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - create parent item
-          const contextItems = getClass9ItemsByContext.value(academicYearId, specialtyIds);
-          const id = await convex.mutation(api.class9Items.mutations.create, {
-            specialtyIds,
-            academicYearId,
-            moduleIndex: data?.moduleIndex || "",
-            moduleName: data?.moduleName || "",
-            learningOutcome: data?.learningOutcome || "",
-            totalCredits: data?.totalCredits || "",
-            totalHours: data?.totalHours || "",
-            theoreticalHours: data?.theoreticalHours || "",
-            labPracticalHours: data?.labPracticalHours || "",
-            field3Value: data?.field3Value || "",
-            srspHours: data?.srspHours || "",
-            srsHours: data?.srsHours || "",
-            trainingPracticeHours: data?.trainingPracticeHours || "",
-            individualHours: data?.individualHours || "",
-            position: contextItems.length,
-          });
+        // Use Convex - create parent item
+        const contextItems = getClass9ItemsByContext.value(academicYearId, specialtyIds);
+        const id = await convex.mutation(api.class9Items.mutations.create, {
+          specialtyIds,
+          academicYearId,
+          moduleIndex: data?.moduleIndex || "",
+          moduleName: data?.moduleName || "",
+          learningOutcome: data?.learningOutcome || "",
+          totalCredits: data?.totalCredits || "",
+          totalHours: data?.totalHours || "",
+          theoreticalHours: data?.theoreticalHours || "",
+          labPracticalHours: data?.labPracticalHours || "",
+          field3Value: data?.field3Value || "",
+          srspHours: data?.srspHours || "",
+          srsHours: data?.srsHours || "",
+          trainingPracticeHours: data?.trainingPracticeHours || "",
+          individualHours: data?.individualHours || "",
+          position: contextItems.length,
+        });
 
-          // Create nested distribution entries if provided
-          if (data?.distributionEntries && data.distributionEntries.length > 0) {
-            for (const dist of data.distributionEntries) {
-              await convex.mutation(api.class9Items.mutations.addDistribution, {
-                class9ItemId: id,
-                academicYearId: dist.academicYearId,
-                semesterId: dist.semesterId,
-                hours: dist.hours,
-                intermediateControlId: dist.intermediateControlId,
-                finalControlId: dist.finalControlId,
-                examEnabled: dist.examEnabled,
-                creditEnabled: dist.creditEnabled,
-                controlLessonEnabled: dist.controlLessonEnabled,
-              });
-            }
-          }
-
-          // Load the created item with nested data
-          const created = await convex.query(api.class9Items.queries.getById, { id });
-          if (created) {
-            const mapped: Class9Data = {
-              id: created._id,
-              specialtyIds: created.specialtyIds,
-              academicYearId: created.academicYearId,
-              moduleIndex: created.moduleIndex,
-              moduleName: created.moduleName,
-              learningOutcome: created.learningOutcome,
-              totalCredits: created.totalCredits,
-              totalHours: created.totalHours,
-              theoreticalHours: created.theoreticalHours,
-              labPracticalHours: created.labPracticalHours,
-              field3Value: created.field3Value,
-              srspHours: created.srspHours,
-              srsHours: created.srsHours,
-              trainingPracticeHours: created.trainingPracticeHours,
-              individualHours: created.individualHours,
-              position: created.position,
-              distributionEntries: (created.distributionEntries || []).map((d: any) => ({
-                id: d._id,
-                academicYearId: d.academicYearId,
-                semesterId: d.semesterId,
-                hours: d.hours,
-                intermediateControlId: d.intermediateControlId,
-                finalControlId: d.finalControlId,
-                examEnabled: d.examEnabled,
-                creditEnabled: d.creditEnabled,
-                controlLessonEnabled: d.controlLessonEnabled,
-              })),
-              createdAt: new Date(created.createdAt),
-              updatedAt: new Date(created.updatedAt),
-            };
-            class9Items.value.push(mapped);
-            error.value = null;
-            return mapped;
+        // Create nested distribution entries if provided
+        if (data?.distributionEntries && data.distributionEntries.length > 0) {
+          for (const dist of data.distributionEntries) {
+            await convex.mutation(api.class9Items.mutations.addDistribution, {
+              class9ItemId: id,
+              academicYearId: dist.academicYearId,
+              semesterId: dist.semesterId,
+              hours: dist.hours,
+              intermediateControlId: dist.intermediateControlId,
+              finalControlId: dist.finalControlId,
+              examEnabled: dist.examEnabled,
+              creditEnabled: dist.creditEnabled,
+              controlLessonEnabled: dist.controlLessonEnabled,
+            });
           }
         }
 
-        // Fallback: local-only
-        const contextItems = getClass9ItemsByContext.value(
-          academicYearId,
-          specialtyIds
-        );
-        const newClass9: Class9Data = {
-          ...createEmptyClass9Data(academicYearId, specialtyIds),
-          ...data,
-          specialtyIds,
-          academicYearId,
-          position: contextItems.length,
-        };
-
-        class9Items.value.push(newClass9);
-        error.value = null;
-        return newClass9;
+        // Load the created item with nested data
+        const created = await convex.query(api.class9Items.queries.getById, { id });
+        if (created) {
+          const mapped: Class9Data = {
+            id: created._id,
+            specialtyIds: created.specialtyIds,
+            academicYearId: created.academicYearId,
+            moduleIndex: created.moduleIndex,
+            moduleName: created.moduleName,
+            learningOutcome: created.learningOutcome,
+            totalCredits: created.totalCredits,
+            totalHours: created.totalHours,
+            theoreticalHours: created.theoreticalHours,
+            labPracticalHours: created.labPracticalHours,
+            field3Value: created.field3Value,
+            srspHours: created.srspHours,
+            srsHours: created.srsHours,
+            trainingPracticeHours: created.trainingPracticeHours,
+            individualHours: created.individualHours,
+            position: created.position,
+            distributionEntries: (created.distributionEntries || []).map((d: any) => ({
+              id: d._id,
+              academicYearId: d.academicYearId,
+              semesterId: d.semesterId,
+              hours: d.hours,
+              intermediateControlId: d.intermediateControlId,
+              finalControlId: d.finalControlId,
+              examEnabled: d.examEnabled,
+              creditEnabled: d.creditEnabled,
+              controlLessonEnabled: d.controlLessonEnabled,
+            })),
+            createdAt: new Date(created.createdAt),
+            updatedAt: new Date(created.updatedAt),
+          };
+          class9Items.value.push(mapped);
+          error.value = null;
+          return mapped;
+        }
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to add class9 data";
@@ -358,86 +339,68 @@ export const useClass9Store = defineStore(
     ) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - update parent item
-          const updated = await convex.mutation(api.class9Items.mutations.update, {
-            id: id as any,
-            specialtyIds: data.specialtyIds,
-            academicYearId: data.academicYearId,
-            moduleIndex: data.moduleIndex,
-            moduleName: data.moduleName,
-            learningOutcome: data.learningOutcome,
-            totalCredits: data.totalCredits,
-            totalHours: data.totalHours,
-            theoreticalHours: data.theoreticalHours,
-            labPracticalHours: data.labPracticalHours,
-            field3Value: data.field3Value,
-            srspHours: data.srspHours,
-            srsHours: data.srsHours,
-            trainingPracticeHours: data.trainingPracticeHours,
-            individualHours: data.individualHours,
-            position: data.position,
-          });
+        // Use Convex - update parent item
+        const updated = await convex.mutation(api.class9Items.mutations.update, {
+          id: id as any,
+          specialtyIds: data.specialtyIds,
+          academicYearId: data.academicYearId,
+          moduleIndex: data.moduleIndex,
+          moduleName: data.moduleName,
+          learningOutcome: data.learningOutcome,
+          totalCredits: data.totalCredits,
+          totalHours: data.totalHours,
+          theoreticalHours: data.theoreticalHours,
+          labPracticalHours: data.labPracticalHours,
+          field3Value: data.field3Value,
+          srspHours: data.srspHours,
+          srsHours: data.srsHours,
+          trainingPracticeHours: data.trainingPracticeHours,
+          individualHours: data.individualHours,
+          position: data.position,
+        });
 
-          // Note: distributionEntries updates handled separately via addDistribution/updateDistribution/removeDistribution
+        // Note: distributionEntries updates handled separately via addDistribution/updateDistribution/removeDistribution
 
-          if (updated) {
-            const mapped: Class9Data = {
-              id: updated._id,
-              specialtyIds: updated.specialtyIds,
-              academicYearId: updated.academicYearId,
-              moduleIndex: updated.moduleIndex,
-              moduleName: updated.moduleName,
-              learningOutcome: updated.learningOutcome,
-              totalCredits: updated.totalCredits,
-              totalHours: updated.totalHours,
-              theoreticalHours: updated.theoreticalHours,
-              labPracticalHours: updated.labPracticalHours,
-              field3Value: updated.field3Value,
-              srspHours: updated.srspHours,
-              srsHours: updated.srsHours,
-              trainingPracticeHours: updated.trainingPracticeHours,
-              individualHours: updated.individualHours,
-              position: updated.position,
-              distributionEntries: (updated.distributionEntries || []).map((d: any) => ({
-                id: d._id,
-                academicYearId: d.academicYearId,
-                semesterId: d.semesterId,
-                hours: d.hours,
-                intermediateControlId: d.intermediateControlId,
-                finalControlId: d.finalControlId,
-                examEnabled: d.examEnabled,
-                creditEnabled: d.creditEnabled,
-                controlLessonEnabled: d.controlLessonEnabled,
-              })),
-              createdAt: new Date(updated.createdAt),
-              updatedAt: new Date(updated.updatedAt),
-            };
+        if (updated) {
+          const mapped: Class9Data = {
+            id: updated._id,
+            specialtyIds: updated.specialtyIds,
+            academicYearId: updated.academicYearId,
+            moduleIndex: updated.moduleIndex,
+            moduleName: updated.moduleName,
+            learningOutcome: updated.learningOutcome,
+            totalCredits: updated.totalCredits,
+            totalHours: updated.totalHours,
+            theoreticalHours: updated.theoreticalHours,
+            labPracticalHours: updated.labPracticalHours,
+            field3Value: updated.field3Value,
+            srspHours: updated.srspHours,
+            srsHours: updated.srsHours,
+            trainingPracticeHours: updated.trainingPracticeHours,
+            individualHours: updated.individualHours,
+            position: updated.position,
+            distributionEntries: (updated.distributionEntries || []).map((d: any) => ({
+              id: d._id,
+              academicYearId: d.academicYearId,
+              semesterId: d.semesterId,
+              hours: d.hours,
+              intermediateControlId: d.intermediateControlId,
+              finalControlId: d.finalControlId,
+              examEnabled: d.examEnabled,
+              creditEnabled: d.creditEnabled,
+              controlLessonEnabled: d.controlLessonEnabled,
+            })),
+            createdAt: new Date(updated.createdAt),
+            updatedAt: new Date(updated.updatedAt),
+          };
 
-            const index = class9Items.value.findIndex((c) => c.id === id);
-            if (index !== -1) {
-              class9Items.value[index] = mapped;
-            }
-            error.value = null;
-            return mapped;
+          const index = class9Items.value.findIndex((c) => c.id === id);
+          if (index !== -1) {
+            class9Items.value[index] = mapped;
           }
+          error.value = null;
+          return mapped;
         }
-
-        // Fallback: local-only
-        const index = class9Items.value.findIndex((c) => c.id === id);
-        if (index === -1) {
-          throw new Error("Class9 data not found");
-        }
-
-        const updatedClass9 = {
-          ...class9Items.value[index],
-          ...data,
-          updatedAt: new Date(),
-        };
-
-        class9Items.value[index] = updatedClass9;
-        error.value = null;
-        return updatedClass9;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to update class9 data";
@@ -505,13 +468,10 @@ export const useClass9Store = defineStore(
     async function deleteClass9(id: string) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - cascade delete handled by mutation
-          await convex.mutation(api.class9Items.mutations.remove, {
-            id: id as any,
-          });
-        }
-        class9Items.value = class9Items.value.filter((c) => c.id !== id);
+        // Use Convex - cascade delete handled by mutation
+        await convex.mutation(api.class9Items.mutations.remove, {
+          id: id as any,
+        });
         error.value = null;
       } catch (err) {
         error.value =
@@ -678,8 +638,6 @@ export const useClass9Store = defineStore(
     }
 
     async function loadFromBackend() {
-      if (!useConvexFeatures() || !convex) return;
-
       loading.value = true;
       try {
         const data = await convex.query(api.class9Items.queries.list, {});

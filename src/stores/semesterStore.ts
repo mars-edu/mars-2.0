@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
-import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 
@@ -22,24 +22,22 @@ export const useSemesterStore = defineStore(
     const error = ref<string | null>(null);
 
     // Reactive subscription to Convex
-    if (useConvexFeatures() && convex) {
-      const { data: convexSemesters } = useConvexQuery(
-        api.semesters.queries.list,
-        ref({})
-      );
+    const { data: convexSemesters } = useConvexQuery(
+      api.semesters.queries.list,
+      ref({})
+    );
 
-      watch(convexSemesters, (newData) => {
-        if (newData) {
-          semesters.value = newData.map((s) => ({
-            id: s._id,
-            shortName: s.shortName || s.name,
-            fullName: s.fullName,
-            createdAt: new Date(s.createdAt),
-            updatedAt: new Date(s.updatedAt),
-          }));
-        }
-      });
-    }
+    watch(convexSemesters, (newData) => {
+      if (newData) {
+        semesters.value = newData.map((s) => ({
+          id: s._id,
+          shortName: s.shortName || s.name,
+          fullName: s.fullName,
+          createdAt: new Date(s.createdAt),
+          updatedAt: new Date(s.updatedAt),
+        }));
+      }
+    });
 
     const getSemesterById = computed(() => {
       return (id: string) => semesters.value.find((s) => s.id === id);
@@ -66,35 +64,21 @@ export const useSemesterStore = defineStore(
     ) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - need to provide a dummy academicYearId since it's required in schema
-          // In a real scenario, this should come from context or be passed as parameter
-          const { useAcademicYearStore } = await import("./academicYearStore");
-          const academicYearStore = useAcademicYearStore();
-          const activeYear = academicYearStore.getActiveAcademicYear;
+        // Use Convex - need to provide a dummy academicYearId since it's required in schema
+        // In a real scenario, this should come from context or be passed as parameter
+        const { useAcademicYearStore } = await import("./academicYearStore");
+        const academicYearStore = useAcademicYearStore();
+        const activeYear = academicYearStore.getActiveAcademicYear;
 
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.semesters.mutations.create, {
-            name: semesterData.shortName,
-            shortName: semesterData.shortName,
-            fullName: semesterData.fullName,
-            academicYearId: activeYear?.id as any || "temp",
-          });
-          // Don't push to semesters.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-
-        // Fallback: local-only
-        const newSemester: Semester = {
-          ...semesterData,
-          id: crypto.randomUUID(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        semesters.value.push(newSemester);
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.semesters.mutations.create, {
+          name: semesterData.shortName,
+          shortName: semesterData.shortName,
+          fullName: semesterData.fullName,
+          academicYearId: activeYear?.id as any || "temp",
+        });
+        // Don't push to semesters.value - the reactive subscription will handle it
         error.value = null;
-        return newSemester;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to add semester";
@@ -112,34 +96,15 @@ export const useSemesterStore = defineStore(
     ) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.semesters.mutations.update, {
-            id: id as any,
-            name: semesterData.shortName,
-            shortName: semesterData.shortName,
-            fullName: semesterData.fullName,
-          });
-          // Don't update semesters.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-
-        // Fallback: local-only
-        const index = semesters.value.findIndex((s) => s.id === id);
-        if (index === -1) {
-          throw new Error("Semester not found");
-        }
-
-        const updatedSemester = {
-          ...semesters.value[index],
-          ...semesterData,
-          updatedAt: new Date(),
-        };
-
-        semesters.value[index] = updatedSemester;
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.semesters.mutations.update, {
+          id: id as any,
+          name: semesterData.shortName,
+          shortName: semesterData.shortName,
+          fullName: semesterData.fullName,
+        });
+        // Don't update semesters.value - the reactive subscription will handle it
         error.value = null;
-        return updatedSemester;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to update semester";
@@ -152,17 +117,11 @@ export const useSemesterStore = defineStore(
     async function deleteSemester(id: string) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.semesters.mutations.remove, {
-            id: id as any,
-          });
-          // Don't filter semesters.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-        // Fallback: local-only
-        semesters.value = semesters.value.filter((s) => s.id !== id);
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.semesters.mutations.remove, {
+          id: id as any,
+        });
+        // Don't filter semesters.value - the reactive subscription will handle it
         error.value = null;
       } catch (err) {
         error.value =
@@ -174,8 +133,6 @@ export const useSemesterStore = defineStore(
     }
 
     async function loadFromBackend() {
-      if (!useConvexFeatures() || !convex) return;
-
       loading.value = true;
       try {
         const data = await convex.query(api.semesters.queries.list, {});

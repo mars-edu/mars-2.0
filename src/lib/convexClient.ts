@@ -10,20 +10,18 @@ import { ConvexClient } from "convex/browser";
 
 // Get the Convex URL from environment variables
 const CONVEX_URL = import.meta.env.VITE_CONVEX_URL;
-const USE_CONVEX = import.meta.env.VITE_USE_CONVEX;
 
 // DEBUG: Log environment variables on module load
 console.log("=".repeat(60));
 console.log("[ConvexClient] Module loaded with environment:");
-console.log("  VITE_USE_CONVEX:", USE_CONVEX);
 console.log("  VITE_CONVEX_URL:", CONVEX_URL);
-console.log("  Type of VITE_USE_CONVEX:", typeof USE_CONVEX);
-console.log("  Will use Convex:", USE_CONVEX === "true" && !!CONVEX_URL);
+console.log("  Type of VITE_CONVEX_URL:", typeof CONVEX_URL);
 console.log("=".repeat(60));
 
+// Validate that Convex URL is configured
 if (!CONVEX_URL) {
-  console.warn(
-    "[ConvexClient] VITE_CONVEX_URL is not set. Convex features will not be available."
+  throw new Error(
+    "[ConvexClient] VITE_CONVEX_URL is required. Convex is now mandatory for the application to function. Please configure your Convex URL in the environment variables."
   );
 }
 
@@ -42,30 +40,12 @@ export const convexUrl = CONVEX_URL;
  * Direct Convex client instance for use outside of Vue components
  * (e.g., in services, classes, utility functions)
  */
-export const convex = CONVEX_URL ? new ConvexClient(CONVEX_URL) : null;
+export const convex = new ConvexClient(CONVEX_URL);
 
 /**
  * Check if Convex is configured and available
+ * Always returns true now since Convex is mandatory
  */
 export function isConvexAvailable(): boolean {
-  return !!CONVEX_URL;
-}
-
-/**
- * Feature flag to control Convex usage during migration
- */
-export function useConvexFeatures(): boolean {
-  const viteUseConvex = import.meta.env.VITE_USE_CONVEX;
-  const available = isConvexAvailable();
-  const result = viteUseConvex === "true" && available;
-
-  // Debug logging
-  console.log("[ConvexClient] Feature check:", {
-    VITE_USE_CONVEX: viteUseConvex,
-    VITE_CONVEX_URL: CONVEX_URL,
-    isAvailable: available,
-    willUseConvex: result
-  });
-
-  return result;
+  return true;
 }

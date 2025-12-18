@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
-import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 
@@ -25,27 +25,25 @@ export const useSessionStore = defineStore(
     const error = ref<string | null>(null);
 
     // Reactive subscription to Convex
-    if (useConvexFeatures() && convex) {
-      const { data: convexSessions } = useConvexQuery(
-        api.sessions.queries.list,
-        ref({})
-      );
+    const { data: convexSessions } = useConvexQuery(
+      api.sessions.queries.list,
+      ref({})
+    );
 
-      watch(convexSessions, (newData) => {
-        if (newData) {
-          sessions.value = newData.map((s) => ({
-            id: s._id,
-            shortName: s.shortName,
-            fullName: s.fullName,
-            startDate: s.startDate,
-            endDate: s.endDate,
-            academicYearId: s.academicYearId,
-            createdAt: new Date(s.createdAt),
-            updatedAt: new Date(s.updatedAt),
-          }));
-        }
-      });
-    }
+    watch(convexSessions, (newData) => {
+      if (newData) {
+        sessions.value = newData.map((s) => ({
+          id: s._id,
+          shortName: s.shortName,
+          fullName: s.fullName,
+          startDate: s.startDate,
+          endDate: s.endDate,
+          academicYearId: s.academicYearId,
+          createdAt: new Date(s.createdAt),
+          updatedAt: new Date(s.updatedAt),
+        }));
+      }
+    });
 
     const getSessionById = computed(() => {
       return (id: string) => sessions.value.find((s) => s.id === id);
@@ -70,29 +68,16 @@ export const useSessionStore = defineStore(
     ) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.sessions.mutations.create, {
-            shortName: sessionData.shortName,
-            fullName: sessionData.fullName,
-            academicYearId: sessionData.academicYearId,
-            startDate: sessionData.startDate,
-            endDate: sessionData.endDate,
-          });
-          // Don't push to sessions.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-
-        const newSession: Session = {
-          ...sessionData,
-          id: crypto.randomUUID(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        sessions.value.push(newSession);
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.sessions.mutations.create, {
+          shortName: sessionData.shortName,
+          fullName: sessionData.fullName,
+          academicYearId: sessionData.academicYearId,
+          startDate: sessionData.startDate,
+          endDate: sessionData.endDate,
+        });
+        // Don't push to sessions.value - the reactive subscription will handle it
         error.value = null;
-        return newSession;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to add session";
@@ -108,35 +93,17 @@ export const useSessionStore = defineStore(
     ) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.sessions.mutations.update, {
-            id: id as any,
-            shortName: sessionData.shortName,
-            fullName: sessionData.fullName,
-            academicYearId: sessionData.academicYearId,
-            startDate: sessionData.startDate,
-            endDate: sessionData.endDate,
-          });
-          // Don't update sessions.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-
-        const index = sessions.value.findIndex((s) => s.id === id);
-        if (index === -1) {
-          throw new Error("Session not found");
-        }
-
-        const updatedSession = {
-          ...sessions.value[index],
-          ...sessionData,
-          updatedAt: new Date(),
-        };
-
-        sessions.value[index] = updatedSession;
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.sessions.mutations.update, {
+          id: id as any,
+          shortName: sessionData.shortName,
+          fullName: sessionData.fullName,
+          academicYearId: sessionData.academicYearId,
+          startDate: sessionData.startDate,
+          endDate: sessionData.endDate,
+        });
+        // Don't update sessions.value - the reactive subscription will handle it
         error.value = null;
-        return updatedSession;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to update session";
@@ -149,17 +116,11 @@ export const useSessionStore = defineStore(
     async function deleteSession(id: string) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.sessions.mutations.remove, {
-            id: id as any,
-          });
-          // Don't filter sessions.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-        // Fallback: local-only
-        sessions.value = sessions.value.filter((s) => s.id !== id);
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.sessions.mutations.remove, {
+          id: id as any,
+        });
+        // Don't filter sessions.value - the reactive subscription will handle it
         error.value = null;
       } catch (err) {
         error.value =
@@ -171,8 +132,6 @@ export const useSessionStore = defineStore(
     }
 
     async function loadFromBackend() {
-      if (!useConvexFeatures() || !convex) return;
-
       loading.value = true;
       try {
         const data = await convex.query(api.sessions.queries.list, {});

@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
-import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 
@@ -31,28 +31,26 @@ export const useSpecialtyStore = defineStore(
     const error = ref<string | null>(null);
 
     // Reactive subscription to Convex
-    if (useConvexFeatures() && convex) {
-      const { data: convexSpecialties } = useConvexQuery(
-        api.specialties.queries.list,
-        ref({})
-      );
+    const { data: convexSpecialties } = useConvexQuery(
+      api.specialties.queries.list,
+      ref({})
+    );
 
-      watch(convexSpecialties, (newData) => {
-        if (newData) {
-          specialties.value = newData.map((s) => ({
-            id: s._id,
-            name: s.name,
-            codeName: s.codeName,
-            code: s.code,
-            hasModule: s.hasModule || false,
-            details: s.details || "",
-            isHighlighted: s.isHighlighted,
-            createdAt: new Date(s.createdAt),
-            updatedAt: new Date(s.updatedAt),
-          }));
-        }
-      });
-    }
+    watch(convexSpecialties, (newData) => {
+      if (newData) {
+        specialties.value = newData.map((s) => ({
+          id: s._id,
+          name: s.name,
+          codeName: s.codeName,
+          code: s.code,
+          hasModule: s.hasModule || false,
+          details: s.details || "",
+          isHighlighted: s.isHighlighted,
+          createdAt: new Date(s.createdAt),
+          updatedAt: new Date(s.updatedAt),
+        }));
+      }
+    });
 
     const getSpecialtyById = computed(() => {
       return (id: string) => specialties.value.find((s) => s.id === id);
@@ -90,30 +88,16 @@ export const useSpecialtyStore = defineStore(
         loading.value = true;
         error.value = null;
 
-        if (useConvexFeatures() && convex) {
-          // Use Convex - reactive subscription will automatically update the list
-          await convex.mutation(api.specialties.mutations.create, {
-            name: payload.name,
-            code: payload.code,
-            codeName: payload.codeName,
-            details: payload.details,
-            hasModule: false,
-            isHighlighted: false,
-          });
-          // No need to manually push - the watch on convexSpecialties handles it
-          return;
-        }
-
-        // Fallback: local-only
-        const newSpecialty: Specialty = {
-          id: crypto.randomUUID(),
-          ...payload,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+        // Use Convex - reactive subscription will automatically update the list
+        await convex.mutation(api.specialties.mutations.create, {
+          name: payload.name,
+          code: payload.code,
+          codeName: payload.codeName,
+          details: payload.details,
           hasModule: false,
-        };
-
-        specialties.value.push(newSpecialty);
+          isHighlighted: false,
+        });
+        // No need to manually push - the watch on convexSpecialties handles it
       } catch (e) {
         error.value =
           e instanceof Error ? e.message : "Failed to add specialty";
@@ -131,28 +115,15 @@ export const useSpecialtyStore = defineStore(
         loading.value = true;
         error.value = null;
 
-        if (useConvexFeatures() && convex) {
-          // Use Convex - reactive subscription will automatically update the list
-          await convex.mutation(api.specialties.mutations.update, {
-            id: id as any,
-            name: payload.name,
-            code: payload.code,
-            codeName: payload.codeName,
-            details: payload.details,
-          });
-          // No need to manually update - the watch on convexSpecialties handles it
-          return;
-        }
-
-        // Fallback: local-only
-        const index = specialties.value.findIndex((s) => s.id === id);
-        if (index === -1) throw new Error("Specialty not found");
-
-        specialties.value[index] = {
-          ...specialties.value[index],
-          ...payload,
-          updatedAt: new Date(),
-        };
+        // Use Convex - reactive subscription will automatically update the list
+        await convex.mutation(api.specialties.mutations.update, {
+          id: id as any,
+          name: payload.name,
+          code: payload.code,
+          codeName: payload.codeName,
+          details: payload.details,
+        });
+        // No need to manually update - the watch on convexSpecialties handles it
       } catch (e) {
         error.value =
           e instanceof Error ? e.message : "Failed to update specialty";
@@ -167,20 +138,11 @@ export const useSpecialtyStore = defineStore(
         loading.value = true;
         error.value = null;
 
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.specialties.mutations.remove, {
-            id: id as any,
-          });
-          // Don't filter specialties.value - the reactive subscription will handle it
-          return;
-        }
-
-        // Fallback: local-only
-        const index = specialties.value.findIndex((s) => s.id === id);
-        if (index === -1) throw new Error("Specialty not found");
-
-        specialties.value.splice(index, 1);
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.specialties.mutations.remove, {
+          id: id as any,
+        });
+        // Don't filter specialties.value - the reactive subscription will handle it
       } catch (e) {
         error.value =
           e instanceof Error ? e.message : "Failed to delete specialty";
@@ -191,8 +153,6 @@ export const useSpecialtyStore = defineStore(
     };
 
     const loadFromBackend = async () => {
-      if (!useConvexFeatures() || !convex) return;
-
       loading.value = true;
       try {
         const data = await convex.query(api.specialties.queries.list, {});

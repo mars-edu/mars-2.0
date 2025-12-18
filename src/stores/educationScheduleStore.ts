@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import { useAcademicYearStore } from "./academicYearStore";
-import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 
@@ -29,29 +29,25 @@ export const useEducationScheduleStore = defineStore(
     };
 
     // Reactive subscription to Convex
-    if (useConvexFeatures() && convex) {
-      const { data: convexSchedules } = useConvexQuery(
-        api.educationSchedules.queries.list,
-        ref({})
-      );
+    const { data: convexSchedules } = useConvexQuery(
+      api.educationSchedules.queries.list,
+      ref({})
+    );
 
-      watch(convexSchedules, (newData) => {
-        if (newData) {
-          schedules.value = newData.map((s) => ({
-            id: s._id,
-            lessonNumber: s.lessonNumber,
-            startTime: s.startTime,
-            endTime: s.endTime,
-            academicYearId: s.academicYearId,
-            createdAt: new Date(s.createdAt),
-            updatedAt: new Date(s.updatedAt),
-          }));
-          sortSchedules();
-        }
-      });
-    } else {
-      sortSchedules();
-    }
+    watch(convexSchedules, (newData) => {
+      if (newData) {
+        schedules.value = newData.map((s) => ({
+          id: s._id,
+          lessonNumber: s.lessonNumber,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          academicYearId: s.academicYearId,
+          createdAt: new Date(s.createdAt),
+          updatedAt: new Date(s.updatedAt),
+        }));
+        sortSchedules();
+      }
+    });
 
     const getScheduleById = computed(() => {
       return (id: string) => schedules.value.find((s) => s.id === id);

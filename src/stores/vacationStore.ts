@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
-import { convex, useConvexFeatures } from "@/lib/convexClient";
+import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 
@@ -25,27 +25,25 @@ export const useVacationStore = defineStore(
     const error = ref<string | null>(null);
 
     // Reactive subscription to Convex
-    if (useConvexFeatures() && convex) {
-      const { data: convexVacations } = useConvexQuery(
-        api.vacations.queries.list,
-        ref({})
-      );
+    const { data: convexVacations } = useConvexQuery(
+      api.vacations.queries.list,
+      ref({})
+    );
 
-      watch(convexVacations, (newData) => {
-        if (newData) {
-          vacations.value = newData.map((v) => ({
-            id: v._id,
-            shortName: v.shortName,
-            fullName: v.fullName,
-            startDate: v.startDate,
-            endDate: v.endDate,
-            academicYearId: v.academicYearId,
-            createdAt: new Date(v.createdAt),
-            updatedAt: new Date(v.updatedAt),
-          }));
-        }
-      });
-    }
+    watch(convexVacations, (newData) => {
+      if (newData) {
+        vacations.value = newData.map((v) => ({
+          id: v._id,
+          shortName: v.shortName,
+          fullName: v.fullName,
+          startDate: v.startDate,
+          endDate: v.endDate,
+          academicYearId: v.academicYearId,
+          createdAt: new Date(v.createdAt),
+          updatedAt: new Date(v.updatedAt),
+        }));
+      }
+    });
 
     const getVacationById = computed(() => {
       return (id: string) => vacations.value.find((v) => v.id === id);
@@ -70,28 +68,15 @@ export const useVacationStore = defineStore(
     ) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.vacations.mutations.create, {
-            name: vacationData.shortName,
-            academicYearId: vacationData.academicYearId,
-            startDate: vacationData.startDate,
-            endDate: vacationData.endDate,
-          });
-          // Don't push to vacations.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-
-        const newVacation: Vacation = {
-          ...vacationData,
-          id: crypto.randomUUID(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        vacations.value.push(newVacation);
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.vacations.mutations.create, {
+          name: vacationData.shortName,
+          academicYearId: vacationData.academicYearId,
+          startDate: vacationData.startDate,
+          endDate: vacationData.endDate,
+        });
+        // Don't push to vacations.value - the reactive subscription will handle it
         error.value = null;
-        return newVacation;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to add vacation";
@@ -107,34 +92,16 @@ export const useVacationStore = defineStore(
     ) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.vacations.mutations.update, {
-            id: id as any,
-            name: vacationData.shortName,
-            academicYearId: vacationData.academicYearId,
-            startDate: vacationData.startDate,
-            endDate: vacationData.endDate,
-          });
-          // Don't update vacations.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-
-        const index = vacations.value.findIndex((v) => v.id === id);
-        if (index === -1) {
-          throw new Error("Vacation not found");
-        }
-
-        const updatedVacation = {
-          ...vacations.value[index],
-          ...vacationData,
-          updatedAt: new Date(),
-        };
-
-        vacations.value[index] = updatedVacation;
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.vacations.mutations.update, {
+          id: id as any,
+          name: vacationData.shortName,
+          academicYearId: vacationData.academicYearId,
+          startDate: vacationData.startDate,
+          endDate: vacationData.endDate,
+        });
+        // Don't update vacations.value - the reactive subscription will handle it
         error.value = null;
-        return updatedVacation;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to update vacation";
@@ -147,17 +114,11 @@ export const useVacationStore = defineStore(
     async function deleteVacation(id: string) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.vacations.mutations.remove, {
-            id: id as any,
-          });
-          // Don't filter vacations.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-        // Fallback: local-only
-        vacations.value = vacations.value.filter((v) => v.id !== id);
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.vacations.mutations.remove, {
+          id: id as any,
+        });
+        // Don't filter vacations.value - the reactive subscription will handle it
         error.value = null;
       } catch (err) {
         error.value =
@@ -169,8 +130,6 @@ export const useVacationStore = defineStore(
     }
 
     async function loadFromBackend() {
-      if (!useConvexFeatures() || !convex) return;
-
       loading.value = true;
       try {
         const data = await convex.query(api.vacations.queries.list, {});
