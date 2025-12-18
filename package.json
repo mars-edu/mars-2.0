@@ -11,6 +11,8 @@
     "dev:convex": "npx convex dev",
     "dev:all": "npm run dev:convex & npm run dev",
     "build": "cross-env NODE_ENV=production vite build",
+    "build:convex": "npx convex deploy",
+    "build:all": "npm run build:convex && npm run build",
     "postinstall": "cpy --flat ./node_modules/framework7-icons/fonts/*.* ./src/fonts/ && cpy --flat ./node_modules/material-icons/iconfont/*.* ./src/fonts/",
     "preview": "npm run build && cross-env NODE_ENV=production vite preview",
     "test": "jest --runInBand",
