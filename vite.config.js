@@ -70,9 +70,17 @@ export default async () => {
           },
         },
       }),
-      webfontDownload([
-        "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-      ]),
+      webfontDownload(
+        [
+          "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+        ],
+        {
+          injectAsStyleTag: true,
+          minifyCss: true,
+          embedFonts: false,
+          async: true,
+        }
+      ),
       ViteImageOptimizer({}),
       visualizer(),
       buildInfoPlugin(),
@@ -94,15 +102,40 @@ export default async () => {
         treeshake: true,
         output: {
           advancedChunks: {
+            minSize: 20000, // 20KB minimum chunk size
             groups: [
               {
                 name: "framework7",
                 test: /node_modules\/(framework7|framework7-vue|framework7-icons)/,
+                priority: 10,
+              },
+              {
+                name: "vue-vendor",
+                test: /node_modules\/(vue|pinia)/,
+                priority: 20,
+              },
+              {
+                name: "convex",
+                test: /node_modules\/convex/,
+                priority: 15,
               },
             ],
           },
         },
       },
+      // Enable compression and optimization
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+          pure_funcs: ['console.log', 'console.info'],
+        },
+      },
+      // Enable source maps for debugging but with smaller size
+      sourcemap: false,
+      // Optimize chunk size
+      chunkSizeWarningLimit: 1000,
     },
     resolve: {
       alias: {
