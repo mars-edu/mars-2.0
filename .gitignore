@@ -47,3 +47,5 @@ playwright-report/
 playwright-ct-report/
 playwright/.cache/
 tests/.auth/
+
+stats.html
