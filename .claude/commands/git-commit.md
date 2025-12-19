@@ -14,8 +14,8 @@ allowed-tools:
 3. Write a conventional commit message based on the diff:
   - Use format: `type(scope): description`
   - Types: feat, fix, docs, style, refactor, test, chore
-  - Keep the first line under 72 characters
-  - Add a blank line and bullet points for details if needed
+  - Keep the message under 72 characters
+  - Generate only a single-line commit message (no multi-line messages)
 4. Stage all changes with `git add -A`
 5. Commit with the conventional commit message
 6. Push to the remote branch. If the branch has no upstream, set it with `git push -u origin <branch>`
