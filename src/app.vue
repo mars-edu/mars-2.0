@@ -140,12 +140,31 @@ onMounted(() => {
   initVisibilityDetector();
   console.log("[App] Component mounted");
 
+  // Normalize URLs with trailing slashes
+  // This runs before Framework7 processes the route
+  if (window.location.pathname.length > 1 && window.location.pathname.endsWith('/')) {
+    const normalizedPath = window.location.pathname.slice(0, -1);
+    const newUrl = normalizedPath + window.location.search + window.location.hash;
+    console.log(`[App] Normalizing URL from ${window.location.pathname} to ${normalizedPath}`);
+    window.history.replaceState(null, '', newUrl);
+  }
+
   f7ready(() => {
     console.log("[F7] Framework7 ready");
     themeStore.initTheme();
 
     if (f7 && f7.views && f7.views.main) {
       console.log("[Router] Main view router initialized");
+
+      // Add popstate listener to normalize URLs on browser back/forward
+      window.addEventListener('popstate', () => {
+        if (window.location.pathname.length > 1 && window.location.pathname.endsWith('/')) {
+          const normalizedPath = window.location.pathname.slice(0, -1);
+          console.log(`[App] Normalizing URL on popstate from ${window.location.pathname} to ${normalizedPath}`);
+          f7.views.main.router.navigate(normalizedPath, { reloadCurrent: true });
+        }
+      });
+
       // Route guards in routes.ts will handle authentication
     }
   });
