@@ -20,6 +20,7 @@ export type MessageKey =
   | "auth_token_validation_error"
   | "auth_unauthorized"
   | "auth_no_token"
+  | "invalid_token"
   | "server_error"
   | "not_found"
   | "forbidden"
@@ -42,6 +43,7 @@ export const messages: Record<MessageKey, string> = {
   auth_token_validation_error: "Произошла ошибка при проверке сессии",
   auth_unauthorized: "Требуется аутентификация",
   auth_no_token: "Токен не предоставлен",
+  invalid_token: "Недействительный или истекший токен",
   server_error: "Произошла неожиданная ошибка сервера",
   not_found: "Ресурс не найден",
   forbidden: "Доступ запрещен",

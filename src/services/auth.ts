@@ -1,39 +1,81 @@
 import { useUserStore } from "../stores/userStore";
-import { Role, type User } from "../types/user";
+import { type User } from "../types/user";
 import { convex } from "../lib/convexClient";
 import { api } from "@convex/_generated/api";
-import { t, type MessageKey } from "../utils/messages";
-import { ConvexError } from "convex/values";
+import { t } from "../utils/messages";
+import { getErrorMessage } from "../utils/errorHandler";
+import type {
+  LoginCredentials,
+  RegisterData,
+  LoginResponse,
+  ConvexAuthResponse,
+  ConvexValidationResponse,
+} from "../types/auth";
 
-console.log("[AuthService] Service module loaded");
+// Constants
+const AUTH_TOKEN_KEY = "auth_token";
 
 /**
- * Extract error message from a Convex error
- * @param error - The error object
- * @returns A user-friendly error message
+ * Session Manager handles token and user session storage
  */
-function getErrorMessage(error: any): string {
-  // Check if it's a ConvexError with a code
-  if (error?.data?.code) {
-    const code = error.data.code as MessageKey;
-    return t(code);
+class SessionManager {
+  /**
+   * Store authentication token
+   */
+  static setToken(token: string, remember: boolean = true): void {
+    if (remember) {
+      localStorage.setItem(AUTH_TOKEN_KEY, token);
+    } else {
+      sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+    }
   }
 
-  // Fallback to error message or default
-  return error?.message || t("server_error");
+  /**
+   * Retrieve stored authentication token
+   */
+  static getToken(): string | null {
+    return localStorage.getItem(AUTH_TOKEN_KEY) || sessionStorage.getItem(AUTH_TOKEN_KEY);
+  }
+
+  /**
+   * Remove stored authentication token
+   */
+  static clearToken(): void {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    sessionStorage.removeItem(AUTH_TOKEN_KEY);
+  }
+
+  /**
+   * Setup user session with token and user data
+   */
+  static setupSession(user: User, token: string, remember: boolean = true): void {
+    const userStore = useUserStore();
+    userStore.setUser(user);
+    userStore.setToken(token);
+    this.setToken(token, remember);
+  }
+
+  /**
+   * Clear user session
+   */
+  static clearSession(): void {
+    this.clearToken();
+    const userStore = useUserStore();
+    userStore.logout();
+  }
 }
 
-interface LoginCredentials {
-  username: string;
-  password: string;
-  remember?: boolean;
-}
-
-interface LoginResponse {
-  success: boolean;
-  user?: User;
-  token?: string;
-  message?: string;
+/**
+ * Type guard to validate User object
+ */
+function isValidUser(user: unknown): user is User {
+  if (!user || typeof user !== "object") return false;
+  const u = user as any;
+  return (
+    typeof u.id === "string" &&
+    typeof u.username === "string" &&
+    Array.isArray(u.roles)
+  );
 }
 
 export default class AuthService {
@@ -41,48 +83,31 @@ export default class AuthService {
    * Authenticate user with provided credentials
    */
   static async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    console.log("[AuthService] Login attempt initiated");
-    console.log("[AuthService] Login credentials:", {
-      username: credentials.username,
-      password: credentials.password ? "[HIDDEN]" : "",
-      remember: credentials.remember,
-    });
-
     try {
-      // Use Convex for authentication
-      console.log("[AuthService] Using Convex auth.login");
       const result = await convex.action(api.auth.mutations.login, {
         username: credentials.username,
         password: credentials.password,
-      });
+      }) as ConvexAuthResponse;
 
-      console.log("[AuthService] Convex response received:", {
-        hasUser: !!result.user,
-        hasToken: !!result.token,
-      });
-
-      // Normalize Convex response to match tRPC format
-      const response: LoginResponse = {
-        success: true,
-        user: result.user as User,
-        token: result.token,
-      };
-
-      if (response.user && response.token) {
-        console.log("[AuthService] Login successful, setting up user session");
-        const userStore = useUserStore();
-        userStore.setUser(response.user);
-
-        // Always store token for Convex (remember me functionality)
-        console.log("[AuthService] Storing token in localStorage");
-        userStore.setToken(response.token);
-        localStorage.setItem("auth_token", response.token);
+      if (!isValidUser(result.user)) {
+        return {
+          success: false,
+          message: t("server_error"),
+        };
       }
 
-      console.log("[AuthService] Returning login response");
-      return response;
-    } catch (error: any) {
-      console.error("[AuthService] Login error occurred:", error);
+      const user = result.user;
+      const token = result.token;
+
+      SessionManager.setupSession(user, token, credentials.remember ?? true);
+
+      return {
+        success: true,
+        user,
+        token,
+      };
+    } catch (error) {
+      console.error("[AuthService] Login failed:", error);
       return {
         success: false,
         message: getErrorMessage(error),
@@ -94,34 +119,32 @@ export default class AuthService {
    * Validate stored token and load user data
    */
   static async validateToken(token: string): Promise<LoginResponse> {
-    console.log("[AuthService] Token validation initiated");
-    console.log("[AuthService] Token length:", token.length);
-
     try {
-      // Use Convex for token validation
-      console.log("[AuthService] Using Convex auth.validateToken");
-      const result = await convex.action(api.auth.mutations.validateTokenAction, { token });
+      const result = await convex.action(
+        api.auth.mutations.validateTokenAction,
+        { token }
+      ) as ConvexValidationResponse;
 
-      console.log("[AuthService] Convex validation response:", {
-        valid: result.valid,
-        hasUser: !!result.user,
-      });
-
-      // Normalize Convex response to match tRPC format
-      const response: LoginResponse = {
-        success: result.valid,
-        user: result.user as User | undefined,
-      };
-
-      if (response.success && response.user) {
-        console.log("[AuthService] Token is valid, user data received");
-      } else {
-        console.log("[AuthService] Token validation failed");
+      if (!result.valid || !result.user) {
+        return {
+          success: false,
+          message: t("invalid_token"),
+        };
       }
 
-      return response;
-    } catch (error: any) {
-      console.error("[AuthService] Token validation error:", error);
+      if (!isValidUser(result.user)) {
+        return {
+          success: false,
+          message: t("server_error"),
+        };
+      }
+
+      return {
+        success: true,
+        user: result.user,
+      };
+    } catch (error) {
+      console.error("[AuthService] Token validation failed:", error);
       return {
         success: false,
         message: getErrorMessage(error),
@@ -132,70 +155,43 @@ export default class AuthService {
   /**
    * Logout the current user
    */
-  static async logout(): Promise<void> {
-    console.log("[AuthService] Logout initiated");
-
-    try {
-      // Note: With JWT, logout is primarily client-side
-      // Convex logout is handled server-side automatically
-    } catch (error) {
-      console.error("[AuthService] Logout error:", error);
-    }
-
-    localStorage.removeItem("auth_token");
-    const userStore = useUserStore();
-    userStore.logout();
-    console.log("[AuthService] Logout completed");
+  static logout(): void {
+    SessionManager.clearSession();
   }
 
   /**
    * Register a new user
    */
-  static async register(userData: {
-    firstName: string;
-    lastName: string;
-    middleName?: string;
-    iin?: string;
-    email: string;
-    password: string;
-  }): Promise<LoginResponse> {
-    console.log("[AuthService] Registration attempt initiated");
-
+  static async register(userData: RegisterData): Promise<LoginResponse> {
     try {
-      // Use Convex for registration
-      console.log("[AuthService] Using Convex auth.register");
       const result = await convex.action(api.auth.mutations.register, {
         firstName: userData.firstName,
         lastName: userData.lastName,
-        username: userData.email, // Use email as username
+        username: userData.email,
         email: userData.email,
         password: userData.password,
-        roles: ["STUDENT"], // Default role for self-registration
-      });
+        roles: ["STUDENT"],
+      }) as ConvexAuthResponse;
 
-      console.log("[AuthService] Convex registration response received:", {
-        hasUser: !!result.user,
-        hasToken: !!result.token,
-      });
-
-      // Normalize Convex response to match tRPC format
-      const response: LoginResponse = {
-        success: true,
-        user: result.user as User,
-        token: result.token,
-      };
-
-      if (response.user && response.token) {
-        console.log("[AuthService] Registration successful, setting up user session");
-        const userStore = useUserStore();
-        userStore.setUser(response.user);
-        userStore.setToken(response.token);
-        localStorage.setItem("auth_token", response.token);
+      if (!isValidUser(result.user)) {
+        return {
+          success: false,
+          message: t("server_error"),
+        };
       }
 
-      return response;
-    } catch (error: any) {
-      console.error("[AuthService] Registration error occurred:", error);
+      const user = result.user;
+      const token = result.token;
+
+      SessionManager.setupSession(user, token, true);
+
+      return {
+        success: true,
+        user,
+        token,
+      };
+    } catch (error) {
+      console.error("[AuthService] Registration failed:", error);
       return {
         success: false,
         message: getErrorMessage(error),
