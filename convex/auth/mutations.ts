@@ -1,5 +1,5 @@
 import { mutation, action, internalMutation, internalQuery } from "../_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { createTimestamps } from "../lib/validators";
 import { api, internal } from "../_generated/api";
 import {
@@ -94,7 +94,7 @@ export const register = action({
       { username: args.username }
     );
     if (!isUsernameAvailable) {
-      throw new Error("Username already taken");
+      throw new ConvexError({ code: "auth_username_taken" });
     }
 
     // Check if email is available
@@ -103,7 +103,7 @@ export const register = action({
       { email: args.email }
     );
     if (!isEmailAvailable) {
-      throw new Error("Email already registered");
+      throw new ConvexError({ code: "auth_email_taken" });
     }
 
     // Hash password
@@ -122,7 +122,7 @@ export const register = action({
     // Generate token
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
-      throw new Error("JWT_SECRET not configured");
+      throw new ConvexError({ code: "server_error" });
     }
 
     const token = await generateToken(
@@ -173,19 +173,19 @@ export const login = action({
     );
 
     if (!user) {
-      throw new Error("Invalid credentials");
+      throw new ConvexError({ code: "auth_invalid_credentials" });
     }
 
     // Verify password
     const isValidPassword = verifyPassword(args.password, user.passwordHash);
     if (!isValidPassword) {
-      throw new Error("Invalid credentials");
+      throw new ConvexError({ code: "auth_invalid_credentials" });
     }
 
     // Generate token
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
-      throw new Error("JWT_SECRET not configured");
+      throw new ConvexError({ code: "server_error" });
     }
 
     const token = await generateToken(
@@ -221,7 +221,7 @@ export const validateTokenAction = action({
   }> => {
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
-      throw new Error("JWT_SECRET not configured");
+      throw new ConvexError({ code: "server_error" });
     }
 
     try {
@@ -236,7 +236,7 @@ export const validateTokenAction = action({
 
       if (!user) {
         console.log("[validateTokenAction] User not found:", payload.userId);
-        throw new Error("User not found");
+        throw new ConvexError({ code: "auth_token_invalid" });
       }
 
       console.log("[validateTokenAction] Token valid, user found");

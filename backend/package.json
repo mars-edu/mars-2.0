@@ -13,6 +13,7 @@
     "prisma:migrate:remote": "wrangler d1 migrations apply mars-db --remote",
     "prisma:studio": "prisma studio",
     "seed": "wrangler d1 execute mars-db --local --file=./prisma/migrations/seed.sql",
+    "export:users": "ts-node scripts/export-users-to-convex.ts",
     "prepare": "husky",
     "pre-commit": "lint-staged",
     "prisma:create-migration": "bash ./scripts/create-sql-migration.sh"

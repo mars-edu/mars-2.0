@@ -2,8 +2,26 @@ import { useUserStore } from "../stores/userStore";
 import { Role, type User } from "../types/user";
 import { convex } from "../lib/convexClient";
 import { api } from "@convex/_generated/api";
+import { t, type MessageKey } from "../utils/messages";
+import { ConvexError } from "convex/values";
 
 console.log("[AuthService] Service module loaded");
+
+/**
+ * Extract error message from a Convex error
+ * @param error - The error object
+ * @returns A user-friendly error message
+ */
+function getErrorMessage(error: any): string {
+  // Check if it's a ConvexError with a code
+  if (error?.data?.code) {
+    const code = error.data.code as MessageKey;
+    return t(code);
+  }
+
+  // Fallback to error message or default
+  return error?.message || t("server_error");
+}
 
 interface LoginCredentials {
   username: string;
@@ -67,7 +85,7 @@ export default class AuthService {
       console.error("[AuthService] Login error occurred:", error);
       return {
         success: false,
-        message: error?.message || "Произошла ошибка при входе. Попробуйте позже.",
+        message: getErrorMessage(error),
       };
     }
   }
@@ -106,7 +124,7 @@ export default class AuthService {
       console.error("[AuthService] Token validation error:", error);
       return {
         success: false,
-        message: error?.message || "Произошла ошибка при проверке сессии",
+        message: getErrorMessage(error),
       };
     }
   }
@@ -180,7 +198,7 @@ export default class AuthService {
       console.error("[AuthService] Registration error occurred:", error);
       return {
         success: false,
-        message: error?.message || "Произошла ошибка при регистрации. Попробуйте позже.",
+        message: getErrorMessage(error),
       };
     }
   }

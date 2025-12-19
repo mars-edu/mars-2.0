@@ -3,6 +3,8 @@
   "auth_username_required": "Требуется имя пользователя",
   "auth_password_required": "Требуется пароль",
   "auth_invalid_credentials": "Неверные учетные данные",
+  "auth_username_taken": "Имя пользователя уже занято",
+  "auth_email_taken": "Email уже зарегистрирован",
   "auth_login_error": "Произошла ошибка при входе",
   "auth_firstname_required": "Требуется имя",
   "auth_lastname_required": "Требуется фамилия",

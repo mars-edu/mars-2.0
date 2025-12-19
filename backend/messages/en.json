@@ -3,6 +3,8 @@
   "auth_username_required": "Username is required",
   "auth_password_required": "Password is required",
   "auth_invalid_credentials": "Invalid credentials",
+  "auth_username_taken": "Username already taken",
+  "auth_email_taken": "Email already registered",
   "auth_login_error": "An error occurred during login",
   "auth_firstname_required": "First name is required",
   "auth_lastname_required": "Last name is required",

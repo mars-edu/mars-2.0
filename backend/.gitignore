@@ -177,3 +177,6 @@ dist
 *.db
 
 .wrangler/
+
+# Exported data files
+exports/

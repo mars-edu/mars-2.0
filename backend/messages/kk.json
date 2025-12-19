@@ -3,6 +3,8 @@
   "auth_username_required": "Пайдаланушы аты қажет",
   "auth_password_required": "Құпия сөз қажет",
   "auth_invalid_credentials": "Жарамсыз тіркелгі деректері",
+  "auth_username_taken": "Пайдаланушы аты бұрыннан бар",
+  "auth_email_taken": "Email бұрыннан тіркелген",
   "auth_login_error": "Кіру кезінде қате орын алды",
   "auth_firstname_required": "Аты қажет",
   "auth_lastname_required": "Тегі қажет",
