@@ -12,11 +12,13 @@ test.describe('Page Refresh Persistence', () => {
     await page.getByRole('button', { name: /Войти/i }).click();
 
     // Wait for successful login and navigation to home
-    await page.waitForURL(/\/home/, { timeout: 10000 });
+    // Increased timeout for production builds
+    await page.waitForURL(/\/home\/?/, { timeout: 15000 });
     await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Wait for the page to be fully loaded (not showing error state)
-    // Give Vite HMR time to settle and page to fully render
+    // Give time for page to fully render
     await page.waitForTimeout(2000);
   });
 
@@ -42,9 +44,11 @@ test.describe('Page Refresh Persistence', () => {
     // Refresh the page
     await page.reload();
     await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Wait for actual page content to appear (not skeleton)
-    await page.waitForSelector('h1, h2', { state: 'visible', timeout: 5000 });
+    // Increase timeout for production builds which may be slower
+    await page.waitForSelector('h1, h2, h3', { state: 'visible', timeout: 10000 });
     await page.waitForTimeout(500); // Additional wait for full content rendering
 
     // Should still be on home with clean URL

@@ -7,8 +7,8 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI || process.env.HEADED ? 1 : undefined,
   reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
-    ['json', { outputFile: 'test-results/results.json' }],
+    ['html', { outputFolder: 'playwright-report-dev' }],
+    ['json', { outputFile: 'test-results/results-dev.json' }],
     ['list']
   ],
 
@@ -31,36 +31,9 @@ export default defineConfig({
 
   projects: [
     {
-      name: 'chromium',
+      name: 'chromium-dev',
       use: { ...devices['Desktop Chrome'] },
     },
-    {
-      name: 'chromium-throttled',
-      use: {
-        ...devices['Desktop Chrome'],
-        // Enable CPU throttling (4x slowdown) and network throttling (Slow 3G)
-        contextOptions: {
-          // This will be used in tests to apply throttling
-        },
-      },
-    },
-    // Uncomment browsers below after installing with: npx playwright install firefox webkit
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    // },
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
   ],
 
   webServer: {
@@ -68,5 +41,8 @@ export default defineConfig({
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
+    env: {
+      PLAYWRIGHT_BASE_URL: 'http://localhost:5173',
+    },
   },
 });

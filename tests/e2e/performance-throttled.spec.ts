@@ -4,7 +4,7 @@ test.describe('Performance with Throttling', () => {
   // Set longer timeout for throttled tests
   test.setTimeout(90000); // 90 seconds
 
-  test('should load home page with CPU and network throttling', async () => {
+  test('should load home page with CPU and network throttling', async ({ baseURL }) => {
     // Launch browser with CDP access
     const browser = await chromium.launch();
     const context = await browser.newContext();
@@ -26,7 +26,7 @@ test.describe('Performance with Throttling', () => {
     });
 
     const startTime = Date.now();
-    await page.goto('http://localhost:5173/', { timeout: 60000 });
+    await page.goto(baseURL + '/', { timeout: 60000 });
     await page.waitForLoadState('networkidle', { timeout: 60000 });
     const loadTime = Date.now() - startTime;
 
@@ -38,7 +38,7 @@ test.describe('Performance with Throttling', () => {
     await browser.close();
   });
 
-  test('should measure Core Web Vitals with throttling', async () => {
+  test('should measure Core Web Vitals with throttling', async ({ baseURL }) => {
     const browser = await chromium.launch();
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -56,7 +56,7 @@ test.describe('Performance with Throttling', () => {
       latency: 150,                                 // 150ms RTT
     });
 
-    await page.goto('http://localhost:5173/', { timeout: 60000 });
+    await page.goto(baseURL + '/', { timeout: 60000 });
     await page.waitForLoadState('networkidle', { timeout: 60000 });
 
     // Measure paint timing using Performance API
@@ -87,7 +87,10 @@ test.describe('Performance with Throttling', () => {
     await browser.close();
   });
 
-  test('should test different throttling profiles', async () => {
+  test('should test different throttling profiles', async ({ baseURL }) => {
+    // This test runs 3 profiles sequentially, needs more time
+    test.setTimeout(180000); // 3 minutes for 3 profiles
+
     const profiles = [
       {
         name: 'Slow 4G',
@@ -133,7 +136,7 @@ test.describe('Performance with Throttling', () => {
       });
 
       const startTime = Date.now();
-      await page.goto('http://localhost:5173/', { timeout: 60000 });
+      await page.goto(baseURL + '/', { timeout: 60000 });
       await page.waitForLoadState('networkidle', { timeout: 60000 });
       const loadTime = Date.now() - startTime;
 
@@ -161,7 +164,7 @@ test.describe('Performance with Throttling', () => {
     });
   });
 
-  test('should identify render-blocking resources with throttling', async () => {
+  test('should identify render-blocking resources with throttling', async ({ baseURL }) => {
     const browser = await chromium.launch();
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -191,13 +194,13 @@ test.describe('Performance with Throttling', () => {
       if (!response) return;
 
       const url = request.url();
-      if (url.includes('localhost:5173')) {
+      if (url.includes(baseURL.replace('http://', ''))) {
         try {
           const buffer = await response.body();
           const timing = request.timing();
 
           resources.push({
-            url: url.replace('http://localhost:5173', ''),
+            url: url.replace(baseURL, ''),
             type: request.resourceType(),
             size: buffer.length,
             duration: timing.responseEnd,
@@ -208,7 +211,7 @@ test.describe('Performance with Throttling', () => {
       }
     });
 
-    await page.goto('http://localhost:5173/', { timeout: 60000 });
+    await page.goto(baseURL + '/', { timeout: 60000 });
     await page.waitForLoadState('networkidle', { timeout: 60000 });
 
     // Sort by duration

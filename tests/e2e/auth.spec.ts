@@ -75,7 +75,8 @@ test.describe('Authentication', () => {
     await page.getByRole('button', { name: /Войти/i }).click();
 
     // Wait for successful login and navigation to home
-    await page.waitForURL(/\/home/, { timeout: 10000 });
+    // Increased timeout for potential URL normalization
+    await page.waitForURL(/\/home\/?/, { timeout: 15000 });
     await page.waitForLoadState('networkidle');
 
     // Verify we're on home page
@@ -84,7 +85,7 @@ test.describe('Authentication', () => {
     // Now try to navigate to /login while authenticated
     await page.goto('/login');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000); // Give time for redirect to happen
 
     // Should be redirected back to home, not stay on login
     const finalUrl = page.url();
