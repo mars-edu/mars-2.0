@@ -54,6 +54,7 @@
     "dayjs": "^1.11.19",
     "dom7": "^4.0.6",
     "es-toolkit": "^1.43.0",
+    "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "framework7": "^9.0.2",
     "framework7-icons": "^5.0.5",
