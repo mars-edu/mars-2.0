@@ -16,14 +16,14 @@ import { convex } from "@/lib/convexClient";
 export type {
   JournalStudentRow,
   JournalExportPayload,
-} from "../../convex/excel/journalExport";
+} from "@/lib/excel/journalExport";
 
 export type {
   WorkloadEntry,
   WorkloadSummaryEntry,
   MonthlyDistributionEntry,
   TeacherWorkloadExportPayload,
-} from "../../convex/excel/workloadExport";
+} from "@/lib/excel/workloadExport";
 
 export type {
   DisciplineInfo,
@@ -32,7 +32,7 @@ export type {
   SpecialtyGroup,
   CourseGroup,
   AnalyticsExportPayload,
-} from "../../convex/excel/analyticsExport";
+} from "@/lib/excel/analyticsExport";
 
 // ============================================================================
 // Helper Functions
