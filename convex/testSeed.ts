@@ -138,22 +138,21 @@ export const seedTestData: any = action({
 /**
  * Public action to reset and seed all test data
  */
-export const resetAndSeed = action({
+export const resetAndSeed: any = action({
   args: {},
-  handler: async (ctx) => {
+  handler: async (ctx): Promise<{ success: boolean; message: string; userIds: string[] }> => {
     console.log("[TestSeed] Resetting and seeding test data...");
 
     // Clear existing test data
     await ctx.runMutation(internal.testSeed.clearTestDataInternal, {});
 
     // Seed test users
-    const result = await ctx.runMutation(internal.testSeed.seedTestUsersInternal, {});
+    const result: { success: boolean; message: string; userIds: string[] } = await ctx.runMutation(internal.testSeed.seedTestUsersInternal, {});
 
     console.log("[TestSeed] Reset and seed completed successfully");
     return {
-      success: true,
-      message: "Test data reset and seeded successfully",
-      ...result
+      ...result,
+      message: "Test data reset and seeded successfully"
     };
   },
 });
