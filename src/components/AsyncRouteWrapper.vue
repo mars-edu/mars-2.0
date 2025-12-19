@@ -1,11 +1,15 @@
 <template>
-  <Suspense @pending="handlePending">
+  <Suspense>
     <template #default>
       <component :is="asyncComponent" v-bind="$attrs" />
     </template>
 
     <template #fallback>
-      <PageSkeleton v-if="!isError" />
+      <f7-page v-if="!isError">
+        <div class="display-flex justify-content-center align-items-center" style="min-height: 100vh">
+          <!-- Empty fallback - no skeleton -->
+        </div>
+      </f7-page>
       <f7-page v-else>
         <div
           class="display-flex justify-content-center align-items-center"
@@ -21,7 +25,6 @@
 <script setup lang="ts">
 import { ref, onErrorCaptured } from "vue";
 import { f7Page } from "framework7-vue";
-import PageSkeleton from "./PageSkeleton.vue";
 import ErrorDisplay from "./ErrorDisplay.vue";
 
 const isError = ref(false);
@@ -36,11 +39,8 @@ defineProps<{
   asyncComponent: (() => Promise<any>) | Object;
 }>();
 
-const handlePending = () => {
-  isError.value = false;
-};
-
 onErrorCaptured((error, instance, info) => {
+  console.error('[AsyncRouteWrapper] Error loading component:', error);
   isError.value = true;
   return true;
 });

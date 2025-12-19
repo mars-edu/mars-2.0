@@ -1,5 +1,8 @@
 <template>
-  <f7-page class="flex flex-col h-screen bg-background text-foreground">
+  <f7-page
+    class="flex flex-col h-screen bg-background text-foreground"
+    data-skeleton-page
+  >
     <!-- Header Skeleton -->
     <div class="hidden md:block flex-shrink-0 border-b border-border p-4">
       <div class="flex items-center justify-between">

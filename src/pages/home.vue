@@ -1,5 +1,10 @@
 <template>
-  <f7-page name="home" class="flex flex-col h-screen">
+  <f7-page
+    name="home"
+    class="flex flex-col h-screen"
+    :data-page-id="`home-${pageId}`"
+    data-page-name="home"
+  >
     <Header class="hidden md:block flex-shrink-0" />
 
     <!-- Desktop Layout -->
@@ -138,6 +143,9 @@ import ScheduleCard from "@/components/Cards/ScheduleCard.vue";
 import AcademicWeekCard from "@/components/Cards/AcademicWeekCard.vue";
 
 console.log("[HomePage] Component setup initiated");
+
+// Unique page ID that changes on each mount to track navigation
+const pageId = ref(Date.now());
 
 const activeNavItem = ref("home");
 

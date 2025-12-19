@@ -151,3 +151,15 @@ body {
 :focus-visible {
   outline: none;
 }
+
+/* Hide Framework7's [object Promise] text without affecting child components */
+.view-main {
+  font-size: 0;
+  line-height: 0;
+}
+
+/* Restore font size for all actual child elements */
+.view-main .page {
+  font-size: 1rem;
+  line-height: 1.5;
+}

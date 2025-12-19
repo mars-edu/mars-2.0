@@ -40,6 +40,9 @@ test.describe('Accessibility', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
+    // Wait for page to fully load
+    await page.waitForTimeout(500);
+
     // Tab through interactive elements
     await page.keyboard.press('Tab');
     const focusedElement = await page.evaluate(() => document.activeElement?.tagName);

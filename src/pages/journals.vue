@@ -2,6 +2,8 @@
   <f7-page
     name="journals"
     class="journals-page flex flex-col h-screen bg-background text-foreground"
+    :data-page-id="`journals-${pageId}`"
+    data-page-name="journals"
   >
     <Header class="hidden md:block flex-shrink-0 border-b border-border" />
 
@@ -356,6 +358,9 @@ import {
 } from "@/services/convex-excel-export";
 
 type JournalStudentRow = JournalExportParams["students"][number];
+
+// Unique page ID that changes on each mount to track navigation
+const pageId = ref(Date.now());
 
 const activeNavItem = ref("journals");
 

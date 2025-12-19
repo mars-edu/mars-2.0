@@ -10,6 +10,54 @@ type RouteConfig = Router.RouteParameters & {
 };
 
 /**
+ * Route guard for public routes (login, register, etc).
+ * Redirects authenticated users to home page.
+ */
+function createGuestGuard() {
+  return (ctx: Router.RouteCallbackCtx) => {
+    const userStore = useUserStore();
+    const hasToken = localStorage.getItem("auth_token");
+
+    console.log("[Routes] Guest guard check:", {
+      path: ctx.to.url,
+      isAuthenticated: userStore.isAuthenticated,
+      hasToken: !!hasToken,
+    });
+
+    // If already authenticated, redirect to home
+    if (userStore.isAuthenticated) {
+      console.log("[Routes] User already authenticated, redirecting to home");
+      ctx.router.navigate("/home", { reloadCurrent: true, clearPreviousHistory: true });
+      ctx.reject();
+      return;
+    }
+
+    // If we have a token but user store isn't authenticated yet, initialize it
+    if (hasToken && !userStore.isAuthenticated) {
+      console.log("[Routes] Token found, initializing user store...");
+      userStore.initialize().then(() => {
+        console.log("[Routes] User store initialized, authenticated:", userStore.isAuthenticated);
+
+        if (userStore.isAuthenticated) {
+          // User is authenticated, redirect to home
+          console.log("[Routes] Redirecting authenticated user to home");
+          ctx.router.navigate("/home", { reloadCurrent: true, clearPreviousHistory: true });
+          ctx.reject();
+          return;
+        }
+
+        // Token was invalid or user not authenticated, allow access to login
+        ctx.resolve();
+      });
+      return;
+    }
+
+    // No token and not authenticated, allow access
+    ctx.resolve();
+  };
+}
+
+/**
  * Route guard for protected routes.
  * Checks authentication and role-based access.
  * Preserves the intended destination URL on redirect to login.
@@ -202,10 +250,11 @@ const routes: RouteConfig[] = [
       roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
     },
   },
-  // Public routes - no auth required
+  // Public routes - no auth required, but redirect if already authenticated
   {
     path: "/login",
     asyncComponent: () => import("../pages/suspense/LoginPage.vue"),
+    beforeEnter: [createGuestGuard()],
   },
   {
     path: "/register",
@@ -217,7 +266,7 @@ const routes: RouteConfig[] = [
   },
   {
     path: "(.*)",
-    component: NotFoundPage,
+    asyncComponent: NotFoundPage,
   },
 ];
 

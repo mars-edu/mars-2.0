@@ -1,5 +1,10 @@
 <template>
-  <f7-page name="login" class="flex flex-col min-h-screen bg-background">
+  <f7-page
+    name="login"
+    class="flex flex-col min-h-screen bg-background"
+    :data-page-id="`login-${pageId}`"
+    data-page-name="login"
+  >
     <div class="hidden md:flex h-full">
       <div
         class="w-1/2 bg-gradient-to-br from-red-500 to-red-700 flex flex-col items-center justify-center p-12 relative overflow-hidden"
@@ -203,6 +208,9 @@ import { useUserStore } from "../stores/userStore";
 
 console.log("[LoginPage] Component setup initiated");
 
+// Unique page ID that changes on each mount to track navigation
+const pageId = ref(Date.now());
+
 const userStore = useUserStore();
 const defaultRedirectTo = "/home";
 
@@ -256,15 +264,6 @@ const errors = reactive({
 
 onBeforeMount(() => {
   console.log("[LoginPage] Component before mount");
-
-  // Redirect authenticated users away from login page
-  if (userStore.isAuthenticated) {
-    const destination = redirectDestination.value;
-    console.log("[LoginPage] User already authenticated, redirecting to:", destination);
-    f7.views.main.router.navigate(destination, {
-      clearPreviousHistory: true,
-    });
-  }
 });
 
 onMounted(() => {

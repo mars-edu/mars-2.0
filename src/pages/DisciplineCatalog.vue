@@ -2,6 +2,8 @@
   <f7-page
     name="discipline-catalog"
     class="flex flex-col h-screen bg-background text-foreground"
+    :data-page-id="`discipline-catalog-${pageId}`"
+    data-page-name="discipline-catalog"
   >
     <Header class="hidden md:block flex-shrink-0 border-b border-border" />
 
@@ -85,6 +87,9 @@ import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddDisciplineButton from "@/components/AddDisciplineButton.vue";
 import EditDisciplineButton from "@/components/EditDisciplineButton.vue";
 import { useDisciplineStore, type Discipline } from "@/stores/disciplineStore";
+
+// Unique page ID that changes on each mount to track navigation
+const pageId = ref(Date.now());
 
 const activeNavItem = ref("discipline-catalog");
 const disciplineStore = useDisciplineStore();

@@ -18,6 +18,7 @@ export default defineSchema({
   users: defineTable({
     firstName: v.string(),
     lastName: v.string(),
+    middleName: v.optional(v.string()), // Middle name/patronymic
     username: v.string(),
     email: v.string(),
     passwordHash: v.string(), // bcrypt hash

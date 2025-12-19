@@ -111,6 +111,14 @@ export default async () => {
       },
       extensions: [".js", ".ts", ".jsx", ".tsx", ".json", ".vue"],
     },
+    optimizeDeps: {
+      include: [
+        "dayjs",
+        "dayjs/plugin/isBetween",
+        "dayjs/plugin/customParseFormat",
+        "dayjs/locale/ru",
+      ],
+    },
     server: {
       host: true,
       allowedHosts: ["*"],

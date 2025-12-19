@@ -63,4 +63,32 @@ test.describe('Authentication', () => {
       await expect(page).toHaveURL(/restore-password/);
     }
   });
+
+  test('should redirect to home when accessing login page while already authenticated', async ({ page }) => {
+    // First, login
+    await page.goto('/login');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    await page.getByRole('textbox', { name: /ФИО/i }).fill('Килаш Расул Жангелдыулы');
+    await page.getByRole('textbox', { name: /Пароль/i }).fill('teachertest');
+    await page.getByRole('button', { name: /Войти/i }).click();
+
+    // Wait for successful login and navigation to home
+    await page.waitForURL(/\/home/, { timeout: 10000 });
+    await page.waitForLoadState('networkidle');
+
+    // Verify we're on home page
+    expect(page.url()).toMatch(/\/home\/?$/);
+
+    // Now try to navigate to /login while authenticated
+    await page.goto('/login');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // Should be redirected back to home, not stay on login
+    const finalUrl = page.url();
+    expect(finalUrl).toMatch(/\/home\/?$/);
+    expect(finalUrl).not.toContain('/login');
+  });
 });
