@@ -176,9 +176,9 @@ const seedTestUsersInternal = internalMutation({
  */
 export const seedBasicData = action({
   args: {},
-  handler: async (ctx) => {
+  handler: async (ctx): Promise<{ success: boolean; message: string; baseIds: string[] }> => {
     console.log("[TestSeed] Starting basic data seed (bases)...");
-    const result = await ctx.runMutation(internal.testSeed.seedBasicDataInternal, {});
+    const result: { success: boolean; message: string; baseIds: string[] } = await ctx.runMutation(internal.testSeed.seedBasicDataInternal, {});
     console.log("[TestSeed] Basic data seed completed:", result);
     return result;
   },
