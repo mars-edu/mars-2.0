@@ -41,11 +41,3 @@ export const convexUrl = CONVEX_URL;
  * (e.g., in services, classes, utility functions)
  */
 export const convex = new ConvexClient(CONVEX_URL);
-
-/**
- * Check if Convex is configured and available
- * Always returns true now since Convex is mandatory
- */
-export function isConvexAvailable(): boolean {
-  return true;
-}

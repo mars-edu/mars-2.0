@@ -46,7 +46,6 @@ export const useDisciplineStore = defineStore("discipline", () => {
       isLoading.value = true;
       error.value = null;
 
-      if (!convex) throw new Error("Convex client not initialized");
       await convex.mutation(api.disciplines.mutations.create, payload);
     } catch (e) {
       error.value = e instanceof Error ? e.message : "Failed to add discipline";
@@ -64,7 +63,6 @@ export const useDisciplineStore = defineStore("discipline", () => {
       isLoading.value = true;
       error.value = null;
 
-      if (!convex) throw new Error("Convex client not initialized");
       await convex.mutation(api.disciplines.mutations.update, {
         id: id as Id<"disciplines">,
         ...payload,
@@ -83,7 +81,6 @@ export const useDisciplineStore = defineStore("discipline", () => {
       isLoading.value = true;
       error.value = null;
 
-      if (!convex) throw new Error("Convex client not initialized");
       await convex.mutation(api.disciplines.mutations.remove, {
         id: id as Id<"disciplines">,
       });

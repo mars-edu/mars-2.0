@@ -75,29 +75,16 @@ export const useEducationScheduleStore = defineStore(
     ) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.educationSchedules.mutations.create, {
-            name: `Lesson ${scheduleData.lessonNumber}`,
-            startTime: scheduleData.startTime,
-            endTime: scheduleData.endTime,
-            order: scheduleData.lessonNumber,
-          });
-          // Don't push to schedules.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-
-        const newSchedule: EducationSchedule = {
-          ...scheduleData,
-          id: crypto.randomUUID(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        schedules.value.push(newSchedule);
-        sortSchedules();
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.educationSchedules.mutations.create, {
+          name: `Lesson ${scheduleData.lessonNumber}`,
+          startTime: scheduleData.startTime,
+          endTime: scheduleData.endTime,
+          order: scheduleData.lessonNumber,
+        });
+        // Don't push to schedules.value - the reactive subscription will handle it
         error.value = null;
-        return newSchedule;
+        return;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to add schedule";
@@ -115,35 +102,17 @@ export const useEducationScheduleStore = defineStore(
     ) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.educationSchedules.mutations.update, {
-            id: id as any,
-            name: scheduleData.lessonNumber ? `Lesson ${scheduleData.lessonNumber}` : undefined,
-            startTime: scheduleData.startTime,
-            endTime: scheduleData.endTime,
-            order: scheduleData.lessonNumber,
-          });
-          // Don't update schedules.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-
-        const index = schedules.value.findIndex((s) => s.id === id);
-        if (index === -1) {
-          throw new Error("Schedule not found");
-        }
-
-        const updatedSchedule = {
-          ...schedules.value[index],
-          ...scheduleData,
-          updatedAt: new Date(),
-        };
-
-        schedules.value[index] = updatedSchedule;
-        sortSchedules();
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.educationSchedules.mutations.update, {
+          id: id as any,
+          name: scheduleData.lessonNumber ? `Lesson ${scheduleData.lessonNumber}` : undefined,
+          startTime: scheduleData.startTime,
+          endTime: scheduleData.endTime,
+          order: scheduleData.lessonNumber,
+        });
+        // Don't update schedules.value - the reactive subscription will handle it
         error.value = null;
-        return updatedSchedule;
+        return;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to update schedule";
@@ -156,18 +125,13 @@ export const useEducationScheduleStore = defineStore(
     async function deleteSchedule(id: string) {
       loading.value = true;
       try {
-        if (useConvexFeatures() && convex) {
-          // Use Convex - the reactive subscription will handle updating the local state
-          await convex.mutation(api.educationSchedules.mutations.remove, {
-            id: id as any,
-          });
-          // Don't filter schedules.value - the reactive subscription will handle it
-          error.value = null;
-          return;
-        }
-        // Fallback: local-only
-        schedules.value = schedules.value.filter((s) => s.id !== id);
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.educationSchedules.mutations.remove, {
+          id: id as any,
+        });
+        // Don't filter schedules.value - the reactive subscription will handle it
         error.value = null;
+        return;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to delete schedule";
@@ -178,7 +142,6 @@ export const useEducationScheduleStore = defineStore(
     }
 
     async function loadFromBackend() {
-      if (!useConvexFeatures() || !convex) return;
 
       loading.value = true;
       try {

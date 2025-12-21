@@ -16,7 +16,6 @@ import {
   getCachedData,
   isOffline,
 } from "@/lib/offlineSync";
-import { useConvexFeatures } from "@/lib/convexClient";
 
 /**
  * Wrapper for Convex queries with offline caching
@@ -48,23 +47,11 @@ export function useConvexQuery<T>(
 
   // Check if query should be enabled
   const shouldQuery = computed(() => {
-    return useConvexFeatures() && (options?.enabled?.value ?? true) && isOnline.value;
+    return (options?.enabled?.value ?? true) && isOnline.value;
   });
 
-  // Convex query - only call when features are enabled
-  let convexQuery: { data: Ref<T | undefined>; isPending: Ref<boolean>; error: Ref<any> };
-
-  if (useConvexFeatures()) {
-    // Call useQuery (convex-vue) with reactive args
-    convexQuery = useQuery(queryRef, args) as any;
-  } else {
-    // Fallback when Convex is disabled
-    convexQuery = {
-      data: ref(undefined),
-      isPending: ref(false),
-      error: ref(null),
-    };
-  }
+  // Convex query
+  const convexQuery = useQuery(queryRef, args) as any;
 
   // Combined data (Convex data or cached data)
   const data = computed<T | null>(() => {
@@ -76,7 +63,6 @@ export function useConvexQuery<T>(
 
   // Loading state
   const loading = computed(() => {
-    if (!useConvexFeatures()) return false;
     return shouldQuery.value && convexQuery.isPending.value;
   });
 
@@ -135,10 +121,8 @@ export function useConvexMutation<Args extends Record<string, any>, Result>(
   const loading = ref(false);
   const error = ref<Error | null>(null);
 
-  // Convex mutation - get the mutate function from convex-vue
-  const convexMutationResult = useConvexFeatures()
-    ? useMutation(mutationRef)
-    : null;
+  // Convex mutation
+  const convexMutationResult = useMutation(mutationRef);
 
   /**
    * Execute the mutation (online) or queue it (offline)
