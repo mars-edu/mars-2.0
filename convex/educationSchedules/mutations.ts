@@ -11,6 +11,7 @@ export const create = mutation({
     startTime: v.string(),
     endTime: v.string(),
     order: v.number(),
+    academicYearId: v.string(),
   },
   handler: async (ctx, args) => {
     const timestamps = createTimestamps();

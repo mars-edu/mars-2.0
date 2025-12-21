@@ -81,6 +81,7 @@ export const useEducationScheduleStore = defineStore(
           startTime: scheduleData.startTime,
           endTime: scheduleData.endTime,
           order: scheduleData.lessonNumber,
+          academicYearId: scheduleData.academicYearId,
         });
         // Don't push to schedules.value - the reactive subscription will handle it
         error.value = null;
@@ -151,7 +152,7 @@ export const useEducationScheduleStore = defineStore(
           lessonNumber: s.order,
           startTime: s.startTime,
           endTime: s.endTime,
-          academicYearId: "", // Will need to be set per context
+          academicYearId: s.academicYearId,
           createdAt: new Date(s.createdAt),
           updatedAt: new Date(s.updatedAt),
         }));

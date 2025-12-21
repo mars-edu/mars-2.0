@@ -34,3 +34,16 @@ export const listSorted = query({
       .collect();
   },
 });
+
+/**
+ * Get education schedules by academic year ID
+ */
+export const listByAcademicYear = query({
+  args: { academicYearId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("educationSchedules")
+      .withIndex("by_academicYear", (q) => q.eq("academicYearId", args.academicYearId))
+      .collect();
+  },
+});

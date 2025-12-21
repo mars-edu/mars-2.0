@@ -484,9 +484,12 @@ export default defineSchema({
     startTime: v.string(),
     endTime: v.string(),
     order: v.number(),
+    academicYearId: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_order", ["order"]),
+  })
+    .index("by_order", ["order"])
+    .index("by_academicYear", ["academicYearId"]),
 
   /**
    * Vacation periods
