@@ -171,6 +171,12 @@ onBeforeUnmount(() => {
 });
 
 const openAddSchedulePopover = () => {
+  // Reset form values before opening
+  lessonNumber.value = "";
+  startTime.value = "";
+  endTime.value = "";
+  formError.value = "";
+
   f7.popover.open(
     "#add-education-schedule-popover",
     "#add-education-schedule-button"
@@ -214,8 +220,6 @@ const handleSaveSchedule = async () => {
 
 const resetForm = () => {
   lessonNumber.value = "";
-  startTime.value = "";
-  endTime.value = "";
   formError.value = "";
   educationScheduleStore.clearError();
 };

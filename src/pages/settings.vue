@@ -49,59 +49,6 @@
           </div>
 
           <Accordion v-model:expanded-items="expandedAccordions">
-            <!-- Courses Section -->
-            <AccordionItem id="courses" :default-expanded="false">
-              <template #title>Курсы:</template>
-              <template #actions>
-                <AddCourseButton />
-              </template>
-              <div v-if="courseStore.isLoading" class="p-4 flex justify-center">
-                <f7-preloader></f7-preloader>
-              </div>
-              <div
-                v-else-if="courseStore.getError"
-                class="p-4 text-destructive"
-              >
-                {{ courseStore.getError }}
-              </div>
-              <div v-else-if="courses.length === 0">
-                <NoData
-                  title="Нет курсов"
-                  description="Курсы не добавлены в систему"
-                  :icon="{ ios: 'f7:book', md: 'material:menu_book' }"
-                />
-              </div>
-              <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
-                <div
-                  v-for="course in courses"
-                  :key="course.id"
-                  class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
-                  :id="`course-item-${course.id}`"
-                >
-                  <span class="font-medium">
-                    {{ course.number }}
-                  </span>
-                  <button
-                    class="p-1 hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="openEditCourse(course)"
-                    aria-label="Edit Course"
-                    type="button"
-                  >
-                    <f7-icon
-                      ios="f7:pencil"
-                      md="material:edit"
-                      size="18px"
-                      class="text-primary"
-                    />
-                  </button>
-                </div>
-                <EditCourseButton
-                  v-if="selectedCourseId"
-                  :course-id="selectedCourseId"
-                />
-              </div>
-            </AccordionItem>
-
             <!-- Semesters Section -->
             <AccordionItem id="semesters" :default-expanded="false">
               <template #title>Семестры:</template>
@@ -152,6 +99,59 @@
                 <EditSemesterButton
                   v-if="selectedSemesterId"
                   :semester-id="selectedSemesterId"
+                />
+              </div>
+            </AccordionItem>
+
+            <!-- Courses Section -->
+            <AccordionItem id="courses" :default-expanded="false">
+              <template #title>Курсы:</template>
+              <template #actions>
+                <AddCourseButton />
+              </template>
+              <div v-if="courseStore.isLoading" class="p-4 flex justify-center">
+                <f7-preloader></f7-preloader>
+              </div>
+              <div
+                v-else-if="courseStore.getError"
+                class="p-4 text-destructive"
+              >
+                {{ courseStore.getError }}
+              </div>
+              <div v-else-if="courses.length === 0">
+                <NoData
+                  title="Нет курсов"
+                  description="Курсы не добавлены в систему"
+                  :icon="{ ios: 'f7:book', md: 'material:menu_book' }"
+                />
+              </div>
+              <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
+                <div
+                  v-for="course in courses"
+                  :key="course.id"
+                  class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                  :id="`course-item-${course.id}`"
+                >
+                  <span class="font-medium">
+                    {{ course.number }}
+                  </span>
+                  <button
+                    class="p-1 hover:bg-primary/10 rounded-md transition-colors"
+                    @click.stop="openEditCourse(course)"
+                    aria-label="Edit Course"
+                    type="button"
+                  >
+                    <f7-icon
+                      ios="f7:pencil"
+                      md="material:edit"
+                      size="18px"
+                      class="text-primary"
+                    />
+                  </button>
+                </div>
+                <EditCourseButton
+                  v-if="selectedCourseId"
+                  :course-id="selectedCourseId"
                 />
               </div>
             </AccordionItem>
@@ -402,7 +402,7 @@ const expandedAccordions = ref<string[]>([]);
 const expandedControlAccordions = ref<string[]>([]);
 
 // Accordion IDs for expand/collapse all functionality
-const accordionIds = ref(["courses", "semesters", "languages", "controls"]);
+const accordionIds = ref(["semesters", "courses", "languages", "controls"]);
 
 // State for selected ids
 const selectedCourseId = ref<string | null>(null);

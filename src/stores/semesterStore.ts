@@ -59,23 +59,17 @@ export const useSemesterStore = defineStore(
     async function addSemester(
       semesterData: Omit<
         Semester,
-        "id" | "createdAt" | "updatedAt" | "academicYearId"
-      >
+        "id" | "createdAt" | "updatedAt"
+      > & { academicYearId: string }
     ) {
       loading.value = true;
       try {
-        // Use Convex - need to provide a dummy academicYearId since it's required in schema
-        // In a real scenario, this should come from context or be passed as parameter
-        const { useAcademicYearStore } = await import("./academicYearStore");
-        const academicYearStore = useAcademicYearStore();
-        const activeYear = academicYearStore.getActiveAcademicYear;
-
         // Use Convex - the reactive subscription will handle updating the local state
         await convex.mutation(api.semesters.mutations.create, {
           name: semesterData.shortName,
           shortName: semesterData.shortName,
           fullName: semesterData.fullName,
-          academicYearId: activeYear?.id as any || "temp",
+          academicYearId: semesterData.academicYearId as any,
         });
         // Don't push to semesters.value - the reactive subscription will handle it
         error.value = null;

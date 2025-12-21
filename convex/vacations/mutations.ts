@@ -7,7 +7,8 @@ import { createTimestamps, updateTimestamp } from "../lib/validators";
  */
 export const create = mutation({
   args: {
-    name: v.string(),
+    shortName: v.string(),
+    fullName: v.string(),
     academicYearId: v.string(),
     startDate: v.string(),
     endDate: v.string(),
@@ -28,7 +29,8 @@ export const create = mutation({
 export const update = mutation({
   args: {
     id: v.id("vacations"),
-    name: v.optional(v.string()),
+    shortName: v.optional(v.string()),
+    fullName: v.optional(v.string()),
     academicYearId: v.optional(v.string()),
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),

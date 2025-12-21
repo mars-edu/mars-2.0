@@ -70,7 +70,8 @@ export const useVacationStore = defineStore(
       try {
         // Use Convex - the reactive subscription will handle updating the local state
         await convex.mutation(api.vacations.mutations.create, {
-          name: vacationData.shortName,
+          shortName: vacationData.shortName,
+          fullName: vacationData.fullName,
           academicYearId: vacationData.academicYearId,
           startDate: vacationData.startDate,
           endDate: vacationData.endDate,
@@ -95,7 +96,8 @@ export const useVacationStore = defineStore(
         // Use Convex - the reactive subscription will handle updating the local state
         await convex.mutation(api.vacations.mutations.update, {
           id: id as any,
-          name: vacationData.shortName,
+          shortName: vacationData.shortName,
+          fullName: vacationData.fullName,
           academicYearId: vacationData.academicYearId,
           startDate: vacationData.startDate,
           endDate: vacationData.endDate,
@@ -135,8 +137,8 @@ export const useVacationStore = defineStore(
         const data = await convex.query(api.vacations.queries.list, {});
         vacations.value = data.map((v) => ({
           id: v._id,
-          shortName: v.name,
-          fullName: v.name,
+          shortName: v.shortName,
+          fullName: v.fullName,
           startDate: v.startDate,
           endDate: v.endDate,
           academicYearId: v.academicYearId,

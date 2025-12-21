@@ -42,6 +42,8 @@
             label="Семестры"
             placeholder="Выберите семестры"
             :multiple="true"
+            @before-open="closeParentPopover"
+            @after-close="openParentPopover"
           />
 
           <div class="pt-4 border-t border-border">
@@ -108,6 +110,17 @@ const isFormValid = computed(() => validationResult.value.success);
 const closeEditCoursePopover = () => {
   f7.popover.close(`#edit-settings-course-popover-${props.courseId}`);
   resetForm();
+};
+
+const closeParentPopover = () => {
+  f7.popover.close(`#edit-settings-course-popover-${props.courseId}`);
+};
+
+const openParentPopover = () => {
+  f7.popover.open(
+    `#edit-settings-course-popover-${props.courseId}`,
+    `#course-item-${props.courseId}`
+  );
 };
 
 const handleUpdateCourse = async () => {

@@ -55,6 +55,7 @@ import { ref, computed } from "vue";
 import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useSemesterStore } from "@/stores/semesterStore";
+import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{ prefix?: string }>();
@@ -64,6 +65,7 @@ const buttonId = computed(() => `add-${computedPrefix.value}-button`);
 const popoverId = computed(() => `add-${computedPrefix.value}-popover`);
 
 const semesterStore = useSemesterStore();
+const academicYearStore = useAcademicYearStore();
 
 const shortName = ref("");
 const formError = ref("");
@@ -101,8 +103,15 @@ const handleSaveSemester = async () => {
   }
 
   try {
+    const activeAcademicYear = academicYearStore.getActiveAcademicYear;
+    if (!activeAcademicYear) {
+      formError.value = "Пожалуйста, выберите активный учебный год";
+      return;
+    }
+
     await semesterStore.addSemester({
       shortName: shortName.value,
+      academicYearId: activeAcademicYear.id,
     });
     closeAddSemesterPopover();
   } catch (error) {

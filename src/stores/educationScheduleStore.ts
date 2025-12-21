@@ -38,7 +38,7 @@ export const useEducationScheduleStore = defineStore(
       if (newData) {
         schedules.value = newData.map((s) => ({
           id: s._id,
-          lessonNumber: s.lessonNumber,
+          lessonNumber: s.order,
           startTime: s.startTime,
           endTime: s.endTime,
           academicYearId: s.academicYearId,

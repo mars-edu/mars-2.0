@@ -234,7 +234,7 @@
                   :key="schedule.id"
                   class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
                   :id="`schedule-item-${schedule.id}`"
-                  @click.stop="openEditSchedule(schedule)"
+                  @click.stop="openEditSchedule(schedule, $event)"
                 >
                   <span class="font-medium">
                     {{ schedule.lessonNumber }}.
@@ -244,7 +244,7 @@
                   </span>
                   <button
                     class="p-1 hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="openEditSchedule(schedule)"
+                    @click.stop="openEditSchedule(schedule, $event)"
                     aria-label="Edit Schedule"
                     type="button"
                   >
@@ -258,7 +258,9 @@
                 </div>
                 <EditEducationScheduleButton
                   v-if="selectedSchedule"
+                  :key="selectedSchedule.id"
                   :schedule="selectedSchedule"
+                  @close="selectedScheduleId = null"
                 />
               </div>
             </AccordionItem>
@@ -531,7 +533,12 @@ const selectedVacation = ref<Vacation | null>(null);
 const selectedScheduledFinalControl = ref<ScheduledFinalControl | null>(null);
 const selectedScheduledIntermediateControl =
   ref<ScheduledIntermediateControl | null>(null);
-const selectedSchedule = ref<EducationSchedule | null>(null);
+const selectedScheduleId = ref<string | null>(null);
+const selectedSchedule = computed(() =>
+  selectedScheduleId.value
+    ? schedules.value.find((s) => s.id === selectedScheduleId.value) ?? null
+    : null
+);
 
 // Accordion IDs for expand/collapse all functionality
 const accordionIds = [
@@ -600,13 +607,12 @@ const scheduledIntermediateControls = computed(() => {
   );
 });
 
-const openEditSchedule = async (schedule: EducationSchedule) => {
-  selectedSchedule.value = schedule;
-  await nextTick();
-  const targetEl = document.getElementById(`schedule-item-${schedule.id}`);
-  if (targetEl) {
-    f7.popover.open(`#edit-schedule-popover-${schedule.id}`, targetEl);
-  }
+const openEditSchedule = (schedule: EducationSchedule, event?: MouseEvent) => {
+  // Guard against synthetic events during Vue's DOM patching
+  if (event && !event.isTrusted) return;
+
+  // Just set the ID - the EditEducationScheduleButton component will open the popover on mount
+  selectedScheduleId.value = schedule.id;
 };
 
 const handleSetActiveAcademicYear = (academicYear: AcademicYear) => {

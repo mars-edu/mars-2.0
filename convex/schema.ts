@@ -496,7 +496,8 @@ export default defineSchema({
    * Migrated from: vacationStore.ts
    */
   vacations: defineTable({
-    name: v.string(),
+    shortName: v.string(),
+    fullName: v.string(),
     academicYearId: v.string(), // Reference to academicYears
     startDate: v.string(), // ISO date
     endDate: v.string(), // ISO date
