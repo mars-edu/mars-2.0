@@ -41,6 +41,55 @@ const clearTestDataInternal = internalMutation({
 });
 
 /**
+ * Seed basic data like bases (internal)
+ */
+const seedBasicDataInternal = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    console.log("[TestSeed] Seeding basic data (bases)...");
+
+    const defaultBases = [
+      { value: 9, name: "9" },
+      { value: 11, name: "11" },
+    ];
+
+    const createdBases = [];
+
+    for (const baseData of defaultBases) {
+      // Check if base already exists
+      const existingBase = await ctx.db
+        .query("bases")
+        .filter((q) => q.eq(q.field("value"), baseData.value))
+        .first();
+
+      if (existingBase) {
+        console.log(`[TestSeed] Base already exists: ${baseData.value}`);
+        createdBases.push(existingBase._id);
+        continue;
+      }
+
+      // Create base
+      const baseId = await ctx.db.insert("bases", {
+        value: baseData.value,
+        name: baseData.name,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+
+      console.log(`[TestSeed] Created base: ${baseData.value} (${baseId})`);
+      createdBases.push(baseId);
+    }
+
+    console.log(`[TestSeed] Seeded ${createdBases.length} bases`);
+    return {
+      success: true,
+      message: `Seeded ${createdBases.length} bases`,
+      baseIds: createdBases.map(id => id.toString())
+    };
+  },
+});
+
+/**
  * Seed test user accounts (internal)
  */
 const seedTestUsersInternal = internalMutation({
@@ -123,12 +172,30 @@ const seedTestUsersInternal = internalMutation({
 });
 
 /**
+ * Public action to seed basic data (bases) - useful for production initialization
+ */
+export const seedBasicData = action({
+  args: {},
+  handler: async (ctx) => {
+    console.log("[TestSeed] Starting basic data seed (bases)...");
+    const result = await ctx.runMutation(internal.testSeed.seedBasicDataInternal, {});
+    console.log("[TestSeed] Basic data seed completed:", result);
+    return result;
+  },
+});
+
+/**
  * Public action to seed test users (can be called from CLI)
  */
 export const seedTestData: any = action({
   args: {},
   handler: async (ctx) => {
     console.log("[TestSeed] Starting test data seed...");
+
+    // First seed basic data (bases)
+    await ctx.runMutation(internal.testSeed.seedBasicDataInternal, {});
+
+    // Then seed test users
     const result = await ctx.runMutation(internal.testSeed.seedTestUsersInternal, {});
     console.log("[TestSeed] Seed completed:", result);
     return result;
@@ -145,6 +212,9 @@ export const resetAndSeed: any = action({
 
     // Clear existing test data
     await ctx.runMutation(internal.testSeed.clearTestDataInternal, {});
+
+    // Seed basic data (bases) first
+    await ctx.runMutation(internal.testSeed.seedBasicDataInternal, {});
 
     // Seed test users
     const result: { success: boolean; message: string; userIds: string[] } = await ctx.runMutation(internal.testSeed.seedTestUsersInternal, {});
@@ -184,4 +254,4 @@ export const getTestCredentials = action({
 });
 
 // Export internal mutations for use by actions
-export { clearTestDataInternal, seedTestUsersInternal };
+export { clearTestDataInternal, seedTestUsersInternal, seedBasicDataInternal };

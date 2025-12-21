@@ -43,7 +43,7 @@ export const useBaseStore = defineStore(
     );
 
     watch(convexBases, (newData) => {
-      if (newData) {
+      if (newData && newData.length > 0) {
         bases.value = newData.map((b) => ({
           id: b._id,
           value: b.value.toString(),
@@ -52,6 +52,8 @@ export const useBaseStore = defineStore(
           updatedAt: new Date(b.updatedAt),
         }));
       }
+      // If newData is empty or null, keep the default bases
+      // This ensures the dropdown always has options even if DB is not seeded yet
     });
 
     const getBaseById = computed(() => {

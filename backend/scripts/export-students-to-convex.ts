@@ -1,0 +1,501 @@
+#!/usr/bin/env ts-node
+
+/**
+ * Export students from production Cloudflare D1 (PiniaState) to Convex-ready JSON
+ *
+ * NOTE: Students are stored in PiniaState table as JSON blob, not in a dedicated table
+ *
+ * Usage:
+ *   cd backend
+ *   npm run export:students
+ *
+ * Or directly:
+ *   npx ts-node scripts/export-students-to-convex.ts
+ *
+ * Prerequisites:
+ *   - Wrangler must be authenticated: npx wrangler login
+ *
+ * Output:
+ *   - backend/exports/convex-students-export.json
+ *
+ * Import to Convex:
+ *   cd ..
+ *   npx convex import --table students backend/exports/convex-students-export.json
+ */
+
+import { execSync } from "child_process";
+import { writeFileSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+
+// ES module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// ============================================================================
+// Type Definitions
+// ============================================================================
+
+/**
+ * Student data stored in D1 PiniaState JSON blob
+ */
+interface D1StudentRow {
+  id: string;
+  firstName: string;
+  surname: string;
+  patronymic: string;
+  specialty: string;
+  language: string;
+  gender: "male" | "female";
+  base?: number;
+  academicYearId?: string;
+}
+
+/**
+ * PiniaState structure for students
+ */
+interface D1StudentPiniaState {
+  json: {
+    students: D1StudentRow[];
+  };
+}
+
+/**
+ * D1 query response wrapper
+ */
+interface D1QueryResponse {
+  results: Array<{ state: string }>;
+  success: boolean;
+  meta?: {
+    served_by?: string;
+    duration?: number;
+    changes?: number;
+    last_row_id?: number;
+    changed_db?: boolean;
+    size_after?: number;
+    rows_read?: number;
+    rows_written?: number;
+  };
+}
+
+/**
+ * Convex student record (matches convex/schema.ts)
+ */
+interface ConvexStudent {
+  firstName: string;
+  surname: string;
+  patronymic: string;
+  specialty: string;
+  language: string;
+  gender: "male" | "female";
+  base?: number;
+  academicYearId?: string;
+  createdAt: number; // milliseconds since epoch
+  updatedAt: number; // milliseconds since epoch
+}
+
+type ValidLanguage = "ru" | "kk";
+type ValidGender = "male" | "female";
+type ValidBase = 9 | 11;
+
+// ============================================================================
+// Configuration
+// ============================================================================
+
+const CONFIG = {
+  databaseName: "mars-db",
+  accountId: "1baf07e2bf54af133428fea840266f45", // From wrangler.toml
+  outputFile: join(__dirname, "..", "exports", "convex-students-export.json"),
+  validLanguages: ["ru", "kk"] as const,
+  validGenders: ["male", "female"] as const,
+  validBases: [9, 11] as const,
+};
+
+// ============================================================================
+// SQL Query
+// ============================================================================
+
+const STUDENTS_QUERY = `
+SELECT state
+FROM PiniaState
+WHERE storeId = 'student'
+`.trim();
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Check if wrangler is authenticated
+ * Throws error if not authenticated
+ */
+function checkWranglerAuth(): void {
+  try {
+    const result = execSync("npx wrangler whoami", {
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+
+    if (result.includes("You are logged in")) {
+      console.log("✓ Authenticated with Wrangler");
+    } else {
+      throw new Error("Wrangler authentication check failed");
+    }
+  } catch (error: any) {
+    console.error("✗ Wrangler authentication failed");
+    console.error("\nPlease re-authenticate with:");
+    console.error("  npx wrangler login");
+    console.error("\nOr use API token authentication:");
+    console.error("  export CLOUDFLARE_API_TOKEN=your_token");
+    console.error("  export CLOUDFLARE_ACCOUNT_ID=your_account_id\n");
+    throw new Error("Not authenticated with Wrangler");
+  }
+}
+
+/**
+ * Query D1 database and return student rows from PiniaState
+ */
+function queryD1Students(): D1StudentRow[] {
+  try {
+    // Execute query via wrangler with account ID
+    const command = `npx wrangler d1 execute ${CONFIG.databaseName} --remote --json --command="${STUDENTS_QUERY.replace(/"/g, '\\"')}"`;
+
+    const output = execSync(command, {
+      encoding: "utf-8",
+      maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large results
+      env: {
+        ...process.env,
+        CLOUDFLARE_ACCOUNT_ID: CONFIG.accountId, // Set account ID
+      },
+    });
+
+    // Debug: log raw output
+    if (process.env.DEBUG) {
+      console.log("Raw wrangler output:", output);
+    }
+
+    // Parse JSON response - wrangler returns an array with response object inside
+    const parsed = JSON.parse(output);
+    const response: D1QueryResponse = Array.isArray(parsed) ? parsed[0] : parsed;
+
+    if (!response.success) {
+      throw new Error("D1 query failed");
+    }
+
+    if (!Array.isArray(response.results)) {
+      throw new Error("Invalid response format from D1");
+    }
+
+    if (response.results.length === 0) {
+      throw new Error("No PiniaState record found for storeId='student'");
+    }
+
+    // Parse the JSON blob from state column
+    const stateJson = response.results[0].state;
+    if (!stateJson) {
+      throw new Error("PiniaState 'state' column is empty");
+    }
+
+    let piniaState: D1StudentPiniaState;
+    try {
+      piniaState = JSON.parse(stateJson);
+    } catch (error) {
+      throw new Error("Failed to parse PiniaState JSON blob");
+    }
+
+    // Validate structure
+    if (!piniaState.json || !Array.isArray(piniaState.json.students)) {
+      throw new Error("Invalid PiniaState structure: expected json.students array");
+    }
+
+    const students = piniaState.json.students;
+    console.log(`✓ Found ${students.length} students in PiniaState`);
+
+    if (students.length === 0) {
+      console.warn("⚠ Warning: No students found in PiniaState");
+    }
+
+    return students;
+  } catch (error: any) {
+    console.error("✗ Failed to query D1 database");
+
+    // Show the actual error output
+    if (error.stderr) {
+      console.error("\nWrangler error output:");
+      console.error(error.stderr.toString());
+    }
+
+    if (error.stdout) {
+      console.error("\nWrangler stdout:");
+      console.error(error.stdout.toString());
+    }
+
+    // Check for authentication errors
+    if (error.stdout?.includes("Authentication error") || error.stdout?.includes("code: 10000")) {
+      console.error("\n⚠ Authentication error detected!");
+      console.error("\nPlease re-authenticate with:");
+      console.error("  npx wrangler login");
+      console.error("\nIf that doesn't work, try using API token authentication:");
+      console.error("  1. Get your API token from: https://dash.cloudflare.com/profile/api-tokens");
+      console.error("  2. Create a token with 'D1 Edit' permissions");
+      console.error("  3. Set environment variables:");
+      console.error("     export CLOUDFLARE_API_TOKEN=your_token");
+      console.error("     export CLOUDFLARE_ACCOUNT_ID=1baf07e2bf54af133428fea840266f45");
+      console.error("  4. Run the script again");
+    }
+
+    if (error.message.includes("JSON") || error.message.includes("PiniaState")) {
+      console.error("\nError details:", error.message);
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * Transform D1 student row to Convex format
+ */
+function transformStudent(d1Student: D1StudentRow): ConvexStudent {
+  const now = Date.now();
+
+  return {
+    firstName: d1Student.firstName,
+    surname: d1Student.surname,
+    patronymic: d1Student.patronymic,
+    specialty: d1Student.specialty,
+    language: d1Student.language,
+    gender: d1Student.gender,
+    base: d1Student.base,
+    academicYearId: d1Student.academicYearId,
+    createdAt: now, // No source timestamp - use current time
+    updatedAt: now, // No source timestamp - use current time
+  };
+}
+
+/**
+ * Validate transformed students for common issues
+ */
+function validateStudents(students: ConvexStudent[]): void {
+  const seen = new Set<string>();
+  const duplicates: string[] = [];
+
+  // Track statistics
+  const stats = {
+    invalidGender: 0,
+    invalidLanguage: 0,
+    invalidBase: 0,
+    shortPatronymic: 0,
+    missingSpecialty: 0,
+  };
+
+  for (const student of students) {
+    const fullName = `${student.surname} ${student.firstName} ${student.patronymic}`;
+
+    // Duplicate detection (by full name + specialty + academicYear)
+    const key = `${student.surname}|${student.firstName}|${student.patronymic}|${student.specialty}|${student.academicYearId || ""}`;
+    if (seen.has(key)) {
+      duplicates.push(fullName);
+    } else {
+      seen.add(key);
+    }
+
+    // Gender validation
+    if (!CONFIG.validGenders.includes(student.gender as any)) {
+      console.warn(`  ⚠ Invalid gender '${student.gender}' for ${fullName}`);
+      stats.invalidGender++;
+    }
+
+    // Language validation
+    if (!CONFIG.validLanguages.includes(student.language as any)) {
+      console.warn(`  ⚠ Invalid language '${student.language}' for ${fullName}`);
+      stats.invalidLanguage++;
+    }
+
+    // Base validation (if present)
+    if (student.base !== undefined && !CONFIG.validBases.includes(student.base as any)) {
+      console.warn(`  ⚠ Invalid base '${student.base}' for ${fullName}`);
+      stats.invalidBase++;
+    }
+
+    // Check for single-character patronymic
+    if (student.patronymic.length === 1) {
+      stats.shortPatronymic++;
+    }
+
+    // Check for empty specialty
+    if (!student.specialty || student.specialty.trim() === "") {
+      console.warn(`  ⚠ Missing specialty for ${fullName}`);
+      stats.missingSpecialty++;
+    }
+  }
+
+  // Report validation results
+  if (duplicates.length > 0) {
+    console.warn(`  ⚠ Found ${duplicates.length} potential duplicate(s)`);
+  } else {
+    console.log("✓ No duplicate students detected");
+  }
+
+  if (stats.shortPatronymic > 0) {
+    console.warn(`  ⚠ ${stats.shortPatronymic} student(s) have single-character patronymic`);
+  }
+
+  if (stats.invalidGender > 0) {
+    console.warn(`  ⚠ ${stats.invalidGender} student(s) have invalid gender values`);
+  }
+
+  if (stats.invalidLanguage > 0) {
+    console.warn(`  ⚠ ${stats.invalidLanguage} student(s) have invalid language values`);
+  }
+
+  if (stats.invalidBase > 0) {
+    console.warn(`  ⚠ ${stats.invalidBase} student(s) have invalid base values`);
+  }
+
+  if (stats.missingSpecialty > 0) {
+    console.warn(`  ⚠ ${stats.missingSpecialty} student(s) have missing specialty`);
+  }
+
+  console.log("✓ All required fields validated");
+}
+
+/**
+ * Write students array to JSON file
+ */
+function writeJsonFile(students: ConvexStudent[]): void {
+  try {
+    const json = JSON.stringify(students, null, 2);
+    writeFileSync(CONFIG.outputFile, json, "utf-8");
+
+    const fileSizeKB = (json.length / 1024).toFixed(1);
+    console.log(`✓ Wrote ${CONFIG.outputFile} (${fileSizeKB} KB)`);
+  } catch (error: any) {
+    console.error("✗ Failed to write file");
+    throw error;
+  }
+}
+
+/**
+ * Print summary statistics
+ */
+function printSummary(students: ConvexStudent[]): void {
+  // Count by gender
+  const byGender = students.reduce(
+    (acc, s) => {
+      acc[s.gender] = (acc[s.gender] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
+  // Count by language
+  const byLanguage = students.reduce(
+    (acc, s) => {
+      acc[s.language] = (acc[s.language] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
+  // Count by base
+  const byBase = students.reduce(
+    (acc, s) => {
+      if (s.base !== undefined) {
+        const key = String(s.base);
+        acc[key] = (acc[key] || 0) + 1;
+      }
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
+  // Count by academic year
+  const byYear = students.reduce(
+    (acc, s) => {
+      const year = s.academicYearId || "unknown";
+      acc[year] = (acc[year] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
+  console.log(`\n  Total students exported: ${students.length}`);
+
+  console.log(`\n  By Gender:`);
+  console.log(`    Male: ${byGender.male || 0}`);
+  console.log(`    Female: ${byGender.female || 0}`);
+
+  console.log(`\n  By Language:`);
+  console.log(`    Russian (ru): ${byLanguage.ru || 0}`);
+  console.log(`    Kazakh (kk): ${byLanguage.kk || 0}`);
+
+  console.log(`\n  By Base:`);
+  console.log(`    9-year: ${byBase["9"] || 0}`);
+  console.log(`    11-year: ${byBase["11"] || 0}`);
+  console.log(`    Not specified: ${students.length - (byBase["9"] || 0) - (byBase["11"] || 0)}`);
+
+  console.log(`\n  By Academic Year:`);
+  Object.entries(byYear)
+    .sort(([a], [b]) => {
+      // Sort numerically if both are numbers, otherwise alphabetically
+      const numA = parseInt(a);
+      const numB = parseInt(b);
+      if (!isNaN(numA) && !isNaN(numB)) {
+        return numA - numB;
+      }
+      return a.localeCompare(b);
+    })
+    .forEach(([year, count]) => {
+      console.log(`    Year ${year}: ${count}`);
+    });
+
+  console.log("\n✓ Export complete!");
+  console.log("\nImport to Convex with:");
+  console.log(`  cd .. && npx convex import --table students backend/exports/convex-students-export.json\n`);
+}
+
+// ============================================================================
+// Main Execution
+// ============================================================================
+
+async function main() {
+  console.log("D1 to Convex Student Export Script\n");
+  console.log("===================================\n");
+
+  try {
+    // Step 1: Check authentication
+    console.log("[1/6] Checking Wrangler authentication...");
+    checkWranglerAuth();
+
+    // Step 2: Query D1
+    console.log("\n[2/6] Querying production D1 database (PiniaState)...");
+    const d1Students = queryD1Students();
+
+    // Step 3: Transform data
+    console.log("\n[3/6] Transforming student data...");
+    const convexStudents = d1Students.map(transformStudent);
+    console.log(`✓ Transformed ${convexStudents.length} students`);
+
+    // Step 4: Validate
+    console.log("\n[4/6] Validating data...");
+    validateStudents(convexStudents);
+
+    // Step 5: Write file
+    console.log("\n[5/6] Writing to file...");
+    writeJsonFile(convexStudents);
+
+    // Step 6: Summary
+    console.log("\n[6/6] Summary:");
+    printSummary(convexStudents);
+
+    process.exit(0);
+  } catch (error: any) {
+    console.error("\n✗ Export failed:", error.message);
+    process.exit(1);
+  }
+}
+
+// Execute if run directly (ES module check)
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}

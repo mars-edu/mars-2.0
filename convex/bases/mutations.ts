@@ -56,3 +56,49 @@ export const remove = mutation({
     return { success: true };
   },
 });
+
+/**
+ * Seed default bases (9 and 11)
+ * This is idempotent - only creates bases if they don't exist
+ */
+export const seedBases = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const defaultBases = [
+      { value: 9, name: "9" },
+      { value: 11, name: "11" },
+    ];
+
+    const createdBases = [];
+
+    for (const baseData of defaultBases) {
+      // Check if base already exists
+      const existingBase = await ctx.db
+        .query("bases")
+        .filter((q) => q.eq(q.field("value"), baseData.value))
+        .first();
+
+      if (existingBase) {
+        console.log(`[SeedBases] Base already exists: ${baseData.value}`);
+        createdBases.push(existingBase._id);
+        continue;
+      }
+
+      // Create base
+      const timestamps = createTimestamps();
+      const baseId = await ctx.db.insert("bases", {
+        ...baseData,
+        ...timestamps,
+      });
+
+      console.log(`[SeedBases] Created base: ${baseData.value} (${baseId})`);
+      createdBases.push(baseId);
+    }
+
+    return {
+      success: true,
+      message: `Seeded ${createdBases.length} bases`,
+      baseIds: createdBases,
+    };
+  },
+});
