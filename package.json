@@ -11,7 +11,7 @@
     "dev:convex": "npx convex dev",
     "dev:all": "npm run dev:convex & npm run dev",
     "build": "cross-env NODE_ENV=production vite build",
-    "build:convex": "npx convex codegen && ./scripts/run-migrations.sh && npx convex deploy --cmd 'npm run build'",
+    "build:convex": "npx convex codegen && npx convex deploy --cmd 'npm run build' && ./scripts/run-migrations.sh",
     "migrate": "./scripts/run-migrations.sh",
     "postinstall": "cpy --flat ./node_modules/framework7-icons/fonts/*.* ./src/fonts/ && cpy --flat ./node_modules/material-icons/iconfont/*.* ./src/fonts/",
     "preview": "npm run build && cross-env NODE_ENV=production vite preview",
