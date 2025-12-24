@@ -396,3 +396,78 @@ export const listUsers = internalQuery({
     return await ctx.db.query("users").collect();
   },
 });
+
+/**
+ * Internal mutation to delete education schedules without academicYearId
+ */
+export const deleteEducationSchedulesWithoutAcademicYear = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    console.log("[Migration] Starting cleanup of education schedules...");
+
+    // Query all education schedules
+    const allSchedules = await ctx.db.query("educationSchedules").collect();
+
+    // Filter for documents without academicYearId
+    const invalidSchedules = allSchedules.filter(
+      (schedule) => !schedule.academicYearId || schedule.academicYearId === ""
+    );
+
+    console.log(`[Migration] Found ${invalidSchedules.length} invalid schedules`);
+
+    // Delete each invalid document
+    const deletedIds: string[] = [];
+    for (const schedule of invalidSchedules) {
+      await ctx.db.delete(schedule._id);
+      deletedIds.push(schedule._id);
+      console.log(`[Migration] Deleted schedule: ${schedule._id}`);
+    }
+
+    // Count remaining valid documents
+    const remainingSchedules = await ctx.db.query("educationSchedules").collect();
+
+    console.log(
+      `[Migration] Cleanup complete: ${invalidSchedules.length} deleted, ${remainingSchedules.length} remaining`
+    );
+
+    return {
+      deleted: invalidSchedules.length,
+      deletedIds,
+      remaining: remainingSchedules.length,
+    };
+  },
+});
+
+/**
+ * Public action to clean up education schedules without academicYearId
+ * Run via CLI: npx convex run migration:cleanupEducationSchedules
+ */
+export const cleanupEducationSchedules = action({
+  args: {},
+  handler: async (ctx): Promise<{
+    success: boolean;
+    deleted: number;
+    deletedIds: string[];
+    remaining: number;
+    message: string;
+  }> => {
+    console.log("[Migration] Starting education schedules cleanup action...");
+
+    const result = await ctx.runMutation(
+      internal.migration.actions.deleteEducationSchedulesWithoutAcademicYear,
+      {}
+    );
+
+    const message = `Deleted ${result.deleted} education schedules without academicYearId. ${result.remaining} valid schedules remain.`;
+
+    console.log(`[Migration] ${message}`);
+
+    return {
+      success: true,
+      deleted: result.deleted,
+      deletedIds: result.deletedIds,
+      remaining: result.remaining,
+      message,
+    };
+  },
+});

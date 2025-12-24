@@ -1,4 +1,61 @@
-# Mars
+# MARS 2.0
+
+Education Management System built with Vue 3, Convex, and Framework7.
+
+## 📚 Documentation
+
+**Comprehensive documentation is available in the [`/docs`](./docs) folder.**
+
+- [Documentation Index](./docs/README.md) - Start here for guides and architecture overview
+- [Migrations Guide](./docs/MIGRATIONS.md) - Database migration system documentation
+
+## 🚀 Quick Start
+
+```bash
+# Install dependencies
+npm install
+
+# Start development (Convex + Frontend)
+npm run dev:all
+
+# Or start separately
+npm run dev:convex  # Convex backend
+npm run dev         # Frontend only
+```
+
+## 📦 Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm start` | Start development (alias for dev:all) |
+| `npm run dev:all` | Start Convex + Frontend dev servers |
+| `npm run dev` | Start frontend dev server only |
+| `npm run dev:convex` | Start Convex dev server only |
+| `npm run build` | Build frontend for production |
+| `npm run build:convex` | Deploy Convex backend (includes migrations) |
+| `npm run migrate` | Run database migrations |
+| `npm run test` | Run unit tests |
+| `npm run test:e2e` | Run E2E tests |
+| `npm run preview` | Preview production build |
+
+## 🏗️ Tech Stack
+
+- **Frontend**: Vue 3, TypeScript, Framework7, Pinia
+- **Backend**: Convex (real-time database + serverless functions)
+- **Build Tool**: Vite
+- **Testing**: Jest, Playwright
+
+## 📁 Project Structure
+
+```
+mars-2.0/
+├── convex/          # Convex backend (schema, queries, mutations, actions)
+├── src/             # Vue 3 frontend application
+├── docs/            # Documentation
+├── scripts/         # Build and utility scripts
+├── backend/         # Legacy backend (being phased out)
+└── .claude/         # Claude Code configuration
+```
 
 ## Framework7 CLI Options
 
