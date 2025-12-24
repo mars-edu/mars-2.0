@@ -484,7 +484,7 @@ export default defineSchema({
     startTime: v.string(),
     endTime: v.string(),
     order: v.number(),
-    academicYearId: v.optional(v.string()), // TODO: Make required after migration runs
+    academicYearId: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
