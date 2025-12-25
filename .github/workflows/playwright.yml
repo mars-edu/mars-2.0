@@ -32,7 +32,9 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Generate Convex client
-        run: echo "no" | npx convex dev --local --once
+        run: CI=true npx convex dev --local --once
+        env:
+          CI: true
 
       - name: Run Playwright tests
         run: npm run test:e2e
