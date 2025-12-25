@@ -4,6 +4,9 @@
 
 /**
  * Get common authentication headers for API requests
+ *
+ * Note: Currently unused as the app uses Convex.
+ * Kept for potential future HTTP/fetch requests.
  */
 export const getAuthHeaders = (): Record<string, string> => {
   const token = localStorage.getItem("auth_token");

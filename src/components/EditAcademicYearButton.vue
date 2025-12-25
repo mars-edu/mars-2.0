@@ -1,10 +1,11 @@
 <template>
   <div>
     <f7-popover
-      v-if="academicYear"
+      v-show="academicYear"
       :id="'edit-academic-year-popover-' + academicYear.id"
       style="width: 600px !important"
-      close-on-escape
+      :close-on-escape="true"
+      :close-by-backdrop-click="true"
       :target="`#academic-year-item-${academicYear.id}`"
     >
       <div class="academic-year-popover bg-card text-card-foreground">

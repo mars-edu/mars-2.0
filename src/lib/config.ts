@@ -1,9 +1,8 @@
 /**
  * Centralized API configuration
  *
- * NOTE: This is LEGACY configuration for the old Cloudflare Workers backend.
- * When VITE_USE_CONVEX=true (default), this is NOT used.
- * Only used when falling back to tRPC/WebSocket backend.
+ * LEGACY - NO LONGER USED. Application uses Convex exclusively.
+ * This file is kept for reference only.
  */
 
 const DEFAULT_API_URL = "https://mars-backend.robanokssamit-1ba.workers.dev/api";

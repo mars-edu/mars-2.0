@@ -20,19 +20,6 @@ export const useSyncStore = defineStore("sync", {
     syncingList(state): SyncEntry[] {
       return Object.values(state.syncingById);
     },
-    trpcSyncingList(state): SyncEntry[] {
-      return Object.values(state.syncingById).filter((entry) =>
-        entry.storeId.startsWith("trpc:")
-      );
-    },
-    isTrpcSyncing(state): boolean {
-      return (
-        state.mounted &&
-        Object.values(state.syncingById).some((entry) =>
-          entry.storeId.startsWith("trpc:")
-        )
-      );
-    },
   },
   actions: {
     startSync(storeId: string, timeoutMs = 8000, label?: string) {

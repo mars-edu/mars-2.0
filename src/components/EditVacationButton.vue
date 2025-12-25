@@ -1,7 +1,7 @@
 <template>
   <div>
     <f7-popover
-      v-if="vacation"
+      v-show="vacation"
       :id="'edit-vacation-popover-' + vacation.id"
       style="width: 600px !important"
       close-on-escape

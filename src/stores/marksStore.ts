@@ -2,7 +2,6 @@ import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import type { Mark, StudentMark, JournalMarks } from "@/types/marks";
 import { useJournalHistoryStore } from "./journalHistoryStore";
-import { trpcClient } from "@/lib/trpcClient";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
@@ -107,13 +106,13 @@ export const useMarksStore = defineStore(
           studentCount: students.length
         });
         
-        await trpcClient.marks.initializeJournal.mutate({
-          journalId,
+        await convex.mutation(api.marks.mutations.initializeJournal, {
+          calendarEventId: journalId,
           disciplineId,
           groupName,
-          academicYear,
-          semester,
-          students,
+          academicYearId: academicYear,
+          semesterId: semester,
+          studentIds: students,
         });
         
         initializedJournals.value.add(journalId);

@@ -1,7 +1,7 @@
 <template>
   <div>
     <f7-popover
-      v-if="student"
+      v-show="student"
       :id="'edit-student-popover-' + student.id"
       style="width: 600px !important"
       close-on-escape

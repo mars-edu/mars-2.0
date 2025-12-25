@@ -452,7 +452,6 @@ import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore
 import { useClass9Store, type Class9Data } from "@/stores/class9Store";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";
-import { trpcClient } from "@/lib/trpcClient";
 import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermediateControlStore";
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
 import { storeToRefs } from "pinia";
