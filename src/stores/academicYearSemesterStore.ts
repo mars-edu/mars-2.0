@@ -104,6 +104,26 @@ export const useAcademicYearSemesterStore = defineStore(
     ) {
       loading.value = true;
       try {
+        // Validate that dates are not empty
+        if (!semesterData.startDate || !semesterData.endDate) {
+          error.value = "Даты начала и окончания семестра обязательны";
+          throw new Error(error.value);
+        }
+
+        // Validate that dates are valid
+        const startDate = new Date(semesterData.startDate);
+        const endDate = new Date(semesterData.endDate);
+
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          error.value = "Указаны некорректные даты";
+          throw new Error(error.value);
+        }
+
+        if (endDate <= startDate) {
+          error.value = "Дата окончания должна быть позже даты начала";
+          throw new Error(error.value);
+        }
+
         // Use Convex - the reactive subscription will handle updating the local state
         await convex.mutation(api.semesters.mutations.create, {
           name: `Semester ${semesterData.semesterNumber}`,
@@ -134,6 +154,47 @@ export const useAcademicYearSemesterStore = defineStore(
     ) {
       loading.value = true;
       try {
+        // Validate dates if they're being updated
+        if (semesterData.startDate !== undefined || semesterData.endDate !== undefined) {
+          // If either date is being updated, validate both
+          if (semesterData.startDate !== undefined && !semesterData.startDate) {
+            error.value = "Дата начала семестра обязательна";
+            throw new Error(error.value);
+          }
+
+          if (semesterData.endDate !== undefined && !semesterData.endDate) {
+            error.value = "Дата окончания семестра обязательна";
+            throw new Error(error.value);
+          }
+
+          // Validate date values if provided
+          if (semesterData.startDate) {
+            const startDate = new Date(semesterData.startDate);
+            if (isNaN(startDate.getTime())) {
+              error.value = "Дата начала указана некорректно";
+              throw new Error(error.value);
+            }
+          }
+
+          if (semesterData.endDate) {
+            const endDate = new Date(semesterData.endDate);
+            if (isNaN(endDate.getTime())) {
+              error.value = "Дата окончания указана некорректно";
+              throw new Error(error.value);
+            }
+          }
+
+          // Validate date order if both are provided
+          if (semesterData.startDate && semesterData.endDate) {
+            const startDate = new Date(semesterData.startDate);
+            const endDate = new Date(semesterData.endDate);
+            if (endDate <= startDate) {
+              error.value = "Дата окончания должна быть позже даты начала";
+              throw new Error(error.value);
+            }
+          }
+        }
+
         // Use Convex - the reactive subscription will handle updating the local state
         await convex.mutation(api.semesters.mutations.update, {
           id: id as any,

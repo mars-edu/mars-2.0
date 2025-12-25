@@ -10,7 +10,7 @@
       <div class="semester-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать семестр учебного года"
-          :disabled="!isFormValid || academicYearSemesterStore.isLoading"
+          :disabled="academicYearSemesterStore.isLoading"
           :is-loading="academicYearSemesterStore.isLoading"
           :on-cancel="closeEditAcademicYearSemesterPopover"
           :on-save="handleUpdateAcademicYearSemester"
@@ -84,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watchEffect } from "vue";
+import { ref, computed, watchEffect, watch } from "vue";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
@@ -113,8 +113,21 @@ const formError = ref("");
 watchEffect(() => {
   if (academicYearSemester.value) {
     selectedSemesterNumber.value = academicYearSemester.value.semesterNumber;
-    startDate.value = [new Date(academicYearSemester.value.startDate)];
-    endDate.value = [new Date(academicYearSemester.value.endDate)];
+
+    // Safely parse dates, defaulting to empty array if invalid
+    if (academicYearSemester.value.startDate) {
+      const parsedStartDate = new Date(academicYearSemester.value.startDate);
+      startDate.value = !isNaN(parsedStartDate.getTime()) ? [parsedStartDate] : [];
+    } else {
+      startDate.value = [];
+    }
+
+    if (academicYearSemester.value.endDate) {
+      const parsedEndDate = new Date(academicYearSemester.value.endDate);
+      endDate.value = !isNaN(parsedEndDate.getTime()) ? [parsedEndDate] : [];
+    } else {
+      endDate.value = [];
+    }
   }
 });
 
@@ -124,13 +137,27 @@ const academicYearSemesterSchema = z
       .number()
       .min(1, "Номер семестра должен быть больше 0")
       .max(8, "Номер семестра не может быть больше 8"),
-    startDate: z.array(z.date()).min(1, "Пожалуйста, укажите дату начала"),
-    endDate: z.array(z.date()).min(1, "Пожалуйста, укажите дату окончания"),
+    startDate: z
+      .array(z.date())
+      .min(1, "Пожалуйста, укажите дату начала")
+      .refine(
+        (dates) => dates.length > 0 && !isNaN(dates[0].getTime()),
+        "Дата начала указана некорректно"
+      ),
+    endDate: z
+      .array(z.date())
+      .min(1, "Пожалуйста, укажите дату окончания")
+      .refine(
+        (dates) => dates.length > 0 && !isNaN(dates[0].getTime()),
+        "Дата окончания указана некорректно"
+      ),
   })
   .refine(
     (data) =>
       data.startDate.length > 0 &&
       data.endDate.length > 0 &&
+      !isNaN(data.startDate[0].getTime()) &&
+      !isNaN(data.endDate[0].getTime()) &&
       data.endDate[0] > data.startDate[0],
     {
       message: "Дата окончания должна быть позже даты начала",
@@ -148,6 +175,13 @@ const validationResult = computed(() => {
 
 const isFormValid = computed(() => validationResult.value.success);
 
+// Clear error when form becomes valid
+watch(isFormValid, (newValid) => {
+  if (newValid && formError.value) {
+    formError.value = "";
+  }
+});
+
 const closeEditAcademicYearSemesterPopover = () => {
   if (!academicYearSemester.value) return;
   f7.popover.close(
@@ -157,6 +191,11 @@ const closeEditAcademicYearSemesterPopover = () => {
 };
 
 const handleUpdateAcademicYearSemester = async () => {
+  // Clear previous errors
+  formError.value = "";
+  academicYearSemesterStore.clearError();
+
+  // Validate form
   if (!isFormValid.value || !academicYearSemester.value) {
     if (!validationResult.value.success) {
       const issues = validationResult.value.error.issues;
@@ -179,6 +218,7 @@ const handleUpdateAcademicYearSemester = async () => {
     closeEditAcademicYearSemesterPopover();
   } catch (error) {
     console.error("Failed to update academic year semester:", error);
+    // Error from store will be displayed automatically
   }
 };
 
@@ -211,8 +251,22 @@ const showDeleteConfirmation = () => {
 const resetForm = () => {
   if (!academicYearSemester.value) return;
   selectedSemesterNumber.value = academicYearSemester.value.semesterNumber;
-  startDate.value = [new Date(academicYearSemester.value.startDate)];
-  endDate.value = [new Date(academicYearSemester.value.endDate)];
+
+  // Safely parse dates, defaulting to empty array if invalid
+  if (academicYearSemester.value.startDate) {
+    const parsedStartDate = new Date(academicYearSemester.value.startDate);
+    startDate.value = !isNaN(parsedStartDate.getTime()) ? [parsedStartDate] : [];
+  } else {
+    startDate.value = [];
+  }
+
+  if (academicYearSemester.value.endDate) {
+    const parsedEndDate = new Date(academicYearSemester.value.endDate);
+    endDate.value = !isNaN(parsedEndDate.getTime()) ? [parsedEndDate] : [];
+  } else {
+    endDate.value = [];
+  }
+
   formError.value = "";
   academicYearSemesterStore.clearError();
 };

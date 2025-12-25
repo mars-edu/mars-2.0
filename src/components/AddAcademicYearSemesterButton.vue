@@ -19,7 +19,7 @@
       <div class="semester-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Добавить семестр к учебному году"
-          :disabled="!isFormValid || academicYearSemesterStore.isLoading"
+          :disabled="academicYearSemesterStore.isLoading"
           :is-loading="academicYearSemesterStore.isLoading"
           :on-cancel="closeAddAcademicYearSemesterPopover"
           :on-save="handleSaveAcademicYearSemester"
@@ -77,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
@@ -102,13 +102,27 @@ const academicYearSemesterSchema = z
       .number()
       .min(1, "Номер семестра должен быть больше 0")
       .max(8, "Номер семестра не может быть больше 8"),
-    startDate: z.array(z.date()).min(1, "Пожалуйста, укажите дату начала"),
-    endDate: z.array(z.date()).min(1, "Пожалуйста, укажите дату окончания"),
+    startDate: z
+      .array(z.date())
+      .min(1, "Пожалуйста, укажите дату начала")
+      .refine(
+        (dates) => dates.length > 0 && !isNaN(dates[0].getTime()),
+        "Дата начала указана некорректно"
+      ),
+    endDate: z
+      .array(z.date())
+      .min(1, "Пожалуйста, укажите дату окончания")
+      .refine(
+        (dates) => dates.length > 0 && !isNaN(dates[0].getTime()),
+        "Дата окончания указана некорректно"
+      ),
   })
   .refine(
     (data) =>
       data.startDate.length > 0 &&
       data.endDate.length > 0 &&
+      !isNaN(data.startDate[0].getTime()) &&
+      !isNaN(data.endDate[0].getTime()) &&
       data.endDate[0] > data.startDate[0],
     {
       message: "Дата окончания должна быть позже даты начала",
@@ -126,6 +140,13 @@ const validationResult = computed(() => {
 
 const isFormValid = computed(() => validationResult.value.success);
 
+// Clear error when form becomes valid
+watch(isFormValid, (newValid) => {
+  if (newValid && formError.value) {
+    formError.value = "";
+  }
+});
+
 const openAddAcademicYearSemesterPopover = () => {
   f7.popover.open(
     "#add-academic-year-semester-popover",
@@ -139,6 +160,11 @@ const closeAddAcademicYearSemesterPopover = () => {
 };
 
 const handleSaveAcademicYearSemester = async () => {
+  // Clear previous errors
+  formError.value = "";
+  academicYearSemesterStore.clearError();
+
+  // Validate form
   if (!isFormValid.value) {
     if (!validationResult.value.success) {
       const issues = validationResult.value.error.issues;
@@ -165,6 +191,7 @@ const handleSaveAcademicYearSemester = async () => {
     closeAddAcademicYearSemesterPopover();
   } catch (error) {
     console.error("Failed to add academic year semester:", error);
+    // Error from store will be displayed automatically
   }
 };
 

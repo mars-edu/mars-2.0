@@ -107,8 +107,20 @@ const semesterData = computed(() => {
     return null;
   }
 
+  // Check if dates are empty or invalid
+  if (!activeSemester.startDate || !activeSemester.endDate) {
+    // Semester exists but dates not configured - return null to show error state
+    return null;
+  }
+
   const startDate = new Date(activeSemester.startDate);
   const endDate = new Date(activeSemester.endDate);
+
+  // Validate that dates are valid
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    // Invalid dates - return null to show error state
+    return null;
+  }
 
   // Calculate total weeks in the semester (using consistent day-based calculation)
   const startOfSemester = new Date(
