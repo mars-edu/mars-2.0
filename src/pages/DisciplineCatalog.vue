@@ -24,12 +24,6 @@
                 class="border border-border rounded-lg !bg-white"
                 clear-button
               ></f7-input>
-              <f7-input
-                type="text"
-                placeholder="2024-2025"
-                class="border border-border rounded-lg w-32 text-center !bg-white"
-                readonly
-              ></f7-input>
             </div>
           </div>
 
