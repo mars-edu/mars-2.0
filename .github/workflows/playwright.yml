@@ -32,9 +32,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Generate Convex client
-        run: npx convex codegen
-        env:
-          CONVEX_DEPLOYMENT: dev:happy-animal-123
+        run: npx convex dev --local --once
 
       - name: Run Playwright tests
         run: npm run test:e2e
