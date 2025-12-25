@@ -33,6 +33,8 @@ jobs:
 
       - name: Generate Convex client
         run: npx convex codegen
+        env:
+          CONVEX_DEPLOYMENT: dev:happy-animal-123
 
       - name: Run Playwright tests
         run: npm run test:e2e
