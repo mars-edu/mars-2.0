@@ -304,7 +304,7 @@ export const registerTeacher = action({
     const passwordHash = hashPassword(password);
 
     // Generate email
-    const email = `${username}@mars.edu.kz`;
+    const email = `${username}@iam-mars.kz`;
 
     // Create user
     const userId = await ctx.runMutation(internal.auth.mutations.createUserInternal, {
@@ -331,6 +331,14 @@ export const registerTeacher = action({
       ...timestamps,
     });
 
+    // Log initial password creation in history
+    await ctx.runMutation(internal.passwordHistory.mutations.logPasswordChange, {
+      userId,
+      changeType: "initial",
+      teacherId,
+      notes: `Initial password created for new teacher account`,
+    });
+
     return {
       success: true,
       teacherId,
@@ -339,6 +347,71 @@ export const registerTeacher = action({
       email,
       password, // Return password for initial setup
     };
+  },
+});
+
+/**
+ * Regenerate password for a teacher
+ */
+export const regenerateTeacherPassword = action({
+  args: {
+    username: v.string(),
+  },
+  handler: async (ctx, args): Promise<{
+    success: boolean;
+    password: string;
+  }> => {
+    // Get user by username
+    const user = await ctx.runQuery(
+      internal.auth.mutations.getUserWithPasswordInternal,
+      { username: args.username }
+    );
+
+    if (!user) {
+      throw new ConvexError({ code: "user_not_found" });
+    }
+
+    // Verify user is a teacher
+    if (!user.roles.includes("TEACHER")) {
+      throw new ConvexError({ code: "unauthorized" });
+    }
+
+    // Generate new password
+    const newPassword = generateRandomPassword();
+    const passwordHash = hashPassword(newPassword);
+
+    // Update user password
+    await ctx.runMutation(internal.auth.mutations.updatePasswordInternal, {
+      userId: user._id,
+      passwordHash,
+    });
+
+    // Log password change in history
+    await ctx.runMutation(internal.passwordHistory.mutations.logPasswordChange, {
+      userId: user._id,
+      changeType: "regenerated",
+      notes: `Password regenerated for teacher via admin panel`,
+    });
+
+    return {
+      success: true,
+      password: newPassword,
+    };
+  },
+});
+
+/**
+ * Internal mutation to update user password
+ */
+export const updatePasswordInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    passwordHash: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.userId, {
+      passwordHash: args.passwordHash,
+    });
   },
 });
 

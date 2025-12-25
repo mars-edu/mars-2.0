@@ -280,6 +280,10 @@ export const useStudentStore = defineStore("student", () => {
     return `${student.surname} ${student.firstName} ${student.patronymic}`;
   };
 
+  const getStudentById = (id: string): Student | undefined => {
+    return students.value.find((s) => s.id === id);
+  };
+
   return {
     students,
     isLoading,
@@ -296,6 +300,7 @@ export const useStudentStore = defineStore("student", () => {
     getError,
     getCourseByStudentId,
     getStudentFullName,
+    getStudentById,
     loadFromBackend,
   };
 }, {

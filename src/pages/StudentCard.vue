@@ -5,7 +5,7 @@
   >
     <Header class="hidden md:block flex-shrink-0 border-b border-border" />
 
-    <div class="flex flex-1 overflow-hidden">
+    <f7-page-content class="flex flex-1 overflow-hidden">
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <div
@@ -97,7 +97,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </f7-page-content>
 
     <template #fixed>
       <AddStudentButton />
@@ -113,7 +113,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick } from "vue";
-import { f7Page, f7 } from "framework7-vue";
+import { f7Page, f7PageContent, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddStudentButton from "@/components/AddStudentButton.vue";

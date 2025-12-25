@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import Fuse from "fuse.js";
-import { httpClient } from "@/lib/http-client";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
@@ -88,6 +87,10 @@ export const useTeacherStore = defineStore("teacher", () => {
     }
     if (!teacher) return typeof idOrTeacher === "string" ? idOrTeacher : "";
     return `${teacher.surname} ${teacher.firstName} ${teacher.patronymic}`;
+  };
+
+  const getTeacherById = (id: string): Teacher | undefined => {
+    return teachers.value.find((t) => t.id === id);
   };
 
   const filteredTeachers = computed(() => {
@@ -271,6 +274,7 @@ export const useTeacherStore = defineStore("teacher", () => {
     reset,
     getError,
     getTeacherFullName,
+    getTeacherById,
     loadFromBackend,
   };
 });

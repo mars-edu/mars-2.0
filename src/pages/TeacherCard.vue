@@ -88,30 +88,32 @@
                     <td class="px-4 py-3">{{ teacher.position }}</td>
                     <td class="px-4 py-3">{{ teacher.employmentYear }}</td>
                     <td class="px-4 py-3">
-                      <button
-                        v-if="!teacher.email"
-                        @click.stop="generateCredentials(teacher)"
-                        :disabled="generatingForId === teacher.id"
-                        class="px-3 py-1 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
-                      >
-                        {{
-                          generatingForId === teacher.id
-                            ? "Генерация..."
-                            : "Создать учётную запись"
-                        }}
-                      </button>
-                      <button
-                        v-else
-                        @click.stop="regeneratePassword(teacher)"
-                        :disabled="generatingForId === teacher.id"
-                        class="px-2 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
-                      >
-                        {{
-                          generatingForId === teacher.id
-                            ? "Генерация..."
-                            : "🔄 Обновить пароль"
-                        }}
-                      </button>
+                      <div class="flex gap-2 items-center justify-center">
+                        <button
+                          v-if="!teacher.email"
+                          @click.stop="generateCredentials(teacher)"
+                          :disabled="generatingForId === teacher.id"
+                          class="px-3 py-1 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        >
+                          {{
+                            generatingForId === teacher.id
+                              ? "Генерация..."
+                              : "Создать учётную запись"
+                          }}
+                        </button>
+                        <button
+                          v-else
+                          @click.stop="openActionsMenu(teacher, $event)"
+                          class="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                          :id="`teacher-actions-${teacher.id}`"
+                        >
+                          <f7-icon
+                            ios="f7:ellipsis_vertical"
+                            md="material:more_vert"
+                            size="20px"
+                          ></f7-icon>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 </tbody>
@@ -131,23 +133,32 @@
       :key="`edit-${selectedTeacherId}`"
       :teacher-id="selectedTeacherId"
     />
+
+    <PasswordHistoryPopup
+      v-if="selectedTeacherForHistory"
+      :key="`history-${selectedTeacherForHistory.id}`"
+      :teacher-id="selectedTeacherForHistory.id"
+      :user-id="selectedTeacherForHistory.userId"
+    />
   </f7-page>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick } from "vue";
-import { f7Page, f7Input, f7 } from "framework7-vue";
+import { f7Page, f7Input, f7, f7Icon } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddTeacherButton from "@/components/AddTeacherButton.vue";
 import EditTeacherButton from "@/components/EditTeacherButton.vue";
+import PasswordHistoryPopup from "@/components/PasswordHistoryPopup.vue";
 import Select from "@/components/ui/Select.vue";
 import { useTeacherStore, type Teacher } from "@/stores/teacherStore";
 import { getGenderOptions } from "@/lib/utils";
 import { usePositionStore } from "@/stores/positionStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
-import { httpClient } from "@/lib/http-client";
+import { convex } from "@/lib/convexClient";
+import { api } from "@convex/_generated/api";
 
 const activeNavItem = ref("teacher-card");
 const teacherStore = useTeacherStore();
@@ -163,6 +174,7 @@ const selectedEmploymentYear = ref("");
 const selectedGender = ref("");
 const searchTerm = ref("");
 const selectedTeacherId = ref<string | null>(null);
+const selectedTeacherForHistory = ref<Teacher | null>(null);
 const generatingForId = ref<string | null>(null);
 
 onMounted(() => {
@@ -219,22 +231,13 @@ const generateCredentials = async (teacher: Teacher) => {
   try {
     generatingForId.value = teacher.id;
 
-    const response = await httpClient<{
-      success: boolean;
-      email: string;
-      password: string;
-      username: string;
-      teacherId: string;
-    }>("/teachers/register", {
-      method: "POST",
-      body: {
-        firstName: teacher.firstName,
-        lastName: teacher.surname,
-        middleName: teacher.patronymic,
-        position: teacher.position,
-        gender: teacher.gender,
-        employmentYear: teacher.employmentYear,
-      },
+    const response = await convex.action(api.auth.mutations.registerTeacher, {
+      firstName: teacher.firstName,
+      lastName: teacher.surname,
+      middleName: teacher.patronymic,
+      position: teacher.position,
+      gender: teacher.gender,
+      employmentYear: teacher.employmentYear,
     });
 
     const teacherIndex = teacherStore.teachers.findIndex(
@@ -273,14 +276,8 @@ const regeneratePassword = async (teacher: Teacher) => {
   try {
     generatingForId.value = teacher.id;
 
-    const response = await httpClient<{
-      success: boolean;
-      password: string;
-    }>("/teachers/regenerate-password", {
-      method: "POST",
-      body: {
-        userId: teacher.username,
-      },
+    const response = await convex.action(api.auth.mutations.regenerateTeacherPassword, {
+      username: teacher.username,
     });
 
     const teacherIndex = teacherStore.teachers.findIndex(
@@ -309,10 +306,65 @@ const regeneratePassword = async (teacher: Teacher) => {
     generatingForId.value = null;
   }
 };
+
+const showPasswordHistory = async (teacher: Teacher) => {
+  if (!teacher.userId) {
+    f7.dialog.alert(
+      "Невозможно показать историю: учётная запись не связана с пользователем",
+      "Ошибка"
+    );
+    return;
+  }
+
+  selectedTeacherForHistory.value = teacher;
+  await nextTick();
+  f7.popup.open(`#password-history-popup-${teacher.id}`);
+};
+
+const openActionsMenu = (teacher: Teacher, event: Event) => {
+  const target = event.currentTarget as HTMLElement;
+
+  const buttons = [
+    {
+      text: '<div class="flex items-center gap-3"><i class="f7-icons">arrow_clockwise</i><span>Обновить пароль</span></div>',
+      onClick: () => {
+        regeneratePassword(teacher);
+      },
+    },
+    {
+      text: '<div class="flex items-center gap-3"><i class="f7-icons">clock</i><span>История изменений</span></div>',
+      onClick: () => {
+        showPasswordHistory(teacher);
+      },
+    },
+  ];
+
+  const actions = f7.actions.create({
+    buttons: [buttons, [{ text: "Отмена", bold: true }]],
+    targetEl: target,
+  });
+
+  actions.open();
+};
 </script>
 
 <style lang="postcss">
 .teacher-card-filters .smart-select-list-container {
   @apply !bg-white;
+}
+
+/* Remove gray space in action sheet */
+:global(.actions-modal .actions-group) {
+  margin: 0 !important;
+}
+
+:global(.actions-modal) {
+  background: transparent !important;
+}
+
+:global(.actions-modal .actions-button) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 </style>
