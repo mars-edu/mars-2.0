@@ -37,7 +37,7 @@ jobs:
           CONVEX_AGENT_MODE: anonymous
 
       - name: Execute convex server
-        run: npx convex dev &
+        run: npm run dev:all &
         env:
           CONVEX_AGENT_MODE: anonymous
 
