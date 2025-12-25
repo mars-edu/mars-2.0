@@ -1,6 +1,7 @@
 <template>
   <div>
     <f7-popover
+      v-if="control"
       :id="'edit-scheduled-final-control-popover-' + control.id"
       style="width: 600px !important"
       close-on-escape
@@ -107,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, watchEffect } from "vue";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT, DATE_PICKER_PARAMS } from "@/constants/calendar";
 import { f7, f7Input, f7Icon, f7Popover } from "framework7-vue";
@@ -118,16 +119,31 @@ import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlSto
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import type { ScheduledFinalControl } from "@/stores/scheduledFinalControlStore";
 
-const props = defineProps<{ control: ScheduledFinalControl }>();
+const props = defineProps<{ controlId: string }>();
 
 const scheduledFinalControlStore = useScheduledFinalControlStore();
 const finalControlStore = useFinalControlStore();
 
-const selectedControlId = ref(props.control.finalControlId);
-const shortName = ref(props.control.shortName);
-const startDate = ref<Date[]>([new Date(props.control.startDate)]);
-const endDate = ref<Date[]>([new Date(props.control.endDate)]);
+// Get control from store by ID - always fresh data
+const control = computed(() =>
+  scheduledFinalControlStore.getScheduledFinalControlById(props.controlId)
+);
+
+const selectedControlId = ref("");
+const shortName = ref("");
+const startDate = ref<Date[]>([new Date()]);
+const endDate = ref<Date[]>([new Date()]);
 const formError = ref("");
+
+// Update form fields whenever control data changes
+watchEffect(() => {
+  if (control.value) {
+    selectedControlId.value = control.value.finalControlId;
+    shortName.value = control.value.shortName;
+    startDate.value = [new Date(control.value.startDate)];
+    endDate.value = [new Date(control.value.endDate)];
+  }
+});
 
 const controlOptions = computed(() =>
   finalControlStore.sortedFinalControls.map((control) => ({
@@ -177,12 +193,13 @@ const validationResult = computed(() => {
 const isFormValid = computed(() => validationResult.value.success);
 
 const closePopover = () => {
-  f7.popover.close(`#edit-scheduled-final-control-popover-${props.control.id}`);
+  if (!control.value) return;
+  f7.popover.close(`#edit-scheduled-final-control-popover-${control.value.id}`);
   scheduledFinalControlStore.clearError();
 };
 
 const handleUpdateControl = async () => {
-  if (!isFormValid.value) {
+  if (!isFormValid.value || !control.value) {
     if (!validationResult.value.success) {
       formError.value = validationResult.value.error.issues[0].message;
     }
@@ -191,7 +208,7 @@ const handleUpdateControl = async () => {
 
   try {
     await scheduledFinalControlStore.updateScheduledFinalControl(
-      props.control.id,
+      control.value.id,
       {
         finalControlId: selectedControlId.value,
         shortName: shortName.value,
@@ -206,14 +223,16 @@ const handleUpdateControl = async () => {
 };
 
 const confirmDelete = () => {
-  f7.popover.close(`#edit-scheduled-final-control-popover-${props.control.id}`);
+  if (!control.value) return;
+  f7.popover.close(`#edit-scheduled-final-control-popover-${control.value.id}`);
   f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить итоговый контроль "${props.control.shortName}"?</p><p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
+    `<p>Вы уверены, что хотите удалить итоговый контроль "${control.value.shortName}"?</p><p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление итогового контроля",
     async () => {
+      if (!control.value) return;
       try {
         await scheduledFinalControlStore.deleteScheduledFinalControl(
-          props.control.id
+          control.value.id
         );
       } catch (error) {
         console.error("Failed to delete scheduled final control:", error);

@@ -1,6 +1,7 @@
 <template>
   <div>
     <f7-popover
+      v-if="teacher"
       :id="'edit-teacher-popover-' + teacher.id"
       style="width: 600px !important"
       close-on-escape
@@ -125,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watchEffect } from "vue";
 import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useTeacherStore } from "@/stores/teacherStore";
@@ -134,23 +135,37 @@ import { storeToRefs } from "pinia";
 import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import Button from "@/components/ui/Button.vue";
-import type { Teacher } from "@/stores/teacherStore";
 
 const props = defineProps<{
-  teacher: Teacher;
+  teacherId: string;
 }>();
 
 const teacherStore = useTeacherStore();
 const academicYearStore = useAcademicYearStore();
 const { academicYearsAsNumbers } = storeToRefs(academicYearStore);
 
-const surname = ref(props.teacher.surname);
-const firstName = ref(props.teacher.firstName);
-const patronymic = ref(props.teacher.patronymic);
-const position = ref(props.teacher.position);
-const employmentYear = ref(props.teacher.employmentYear.toString());
-const gender = ref<"male" | "female">(props.teacher.gender);
+// Get teacher from store by ID - always fresh data
+const teacher = computed(() => teacherStore.getTeacherById(props.teacherId));
+
+const surname = ref("");
+const firstName = ref("");
+const patronymic = ref("");
+const position = ref("");
+const employmentYear = ref("");
+const gender = ref<"male" | "female">("male");
 const formError = ref("");
+
+// Update form fields whenever teacher data changes
+watchEffect(() => {
+  if (teacher.value) {
+    surname.value = teacher.value.surname;
+    firstName.value = teacher.value.firstName;
+    patronymic.value = teacher.value.patronymic;
+    position.value = teacher.value.position;
+    employmentYear.value = teacher.value.employmentYear.toString();
+    gender.value = teacher.value.gender;
+  }
+});
 
 const employmentYearOptions = computed(() =>
   academicYearsAsNumbers.value.map((y) => ({
@@ -184,12 +199,13 @@ const validationResult = computed(() => {
 const isFormValid = computed(() => validationResult.value.success);
 
 const closeEditTeacherPopover = () => {
-  f7.popover.close(`#edit-teacher-popover-${props.teacher.id}`);
+  if (!teacher.value) return;
+  f7.popover.close(`#edit-teacher-popover-${teacher.value.id}`);
   resetForm();
 };
 
 const handleUpdateTeacher = async () => {
-  if (!isFormValid.value) {
+  if (!isFormValid.value || !teacher.value) {
     if (!validationResult.value.success) {
       const issues = validationResult.value.error.issues;
       if (issues.length > 0) {
@@ -200,7 +216,7 @@ const handleUpdateTeacher = async () => {
   }
 
   try {
-    await teacherStore.updateTeacher(props.teacher.id, {
+    await teacherStore.updateTeacher(teacher.value.id, {
       surname: surname.value,
       firstName: firstName.value,
       patronymic: patronymic.value,
@@ -217,14 +233,16 @@ const handleUpdateTeacher = async () => {
 };
 
 const showDeleteConfirmation = () => {
+  if (!teacher.value) return;
   f7.dialog.confirm(
     `Вы уверены, что хотите удалить преподавателя ${teacherStore.getTeacherFullName(
-      props.teacher.id
+      teacher.value.id
     )}?`,
     "Подтверждение",
     async () => {
+      if (!teacher.value) return;
       try {
-        await teacherStore.deleteTeacher(props.teacher.id);
+        await teacherStore.deleteTeacher(teacher.value.id);
         closeEditTeacherPopover();
       } catch (error) {
         if (error instanceof Error) {
@@ -236,12 +254,13 @@ const showDeleteConfirmation = () => {
 };
 
 const resetForm = () => {
-  surname.value = props.teacher.surname;
-  firstName.value = props.teacher.firstName;
-  patronymic.value = props.teacher.patronymic;
-  position.value = props.teacher.position;
-  employmentYear.value = props.teacher.employmentYear.toString();
-  gender.value = props.teacher.gender;
+  if (!teacher.value) return;
+  surname.value = teacher.value.surname;
+  firstName.value = teacher.value.firstName;
+  patronymic.value = teacher.value.patronymic;
+  position.value = teacher.value.position;
+  employmentYear.value = teacher.value.employmentYear.toString();
+  gender.value = teacher.value.gender;
   formError.value = "";
   teacherStore.clearError();
 };

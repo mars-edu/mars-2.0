@@ -41,6 +41,10 @@ export const useDisciplineStore = defineStore("discipline", () => {
 
   const getAllDisciplines = computed(() => disciplines.value);
 
+  const getDisciplineById = computed(() => {
+    return (id: string) => disciplines.value.find((d) => d._id === id);
+  });
+
   const addDiscipline = async (payload: AddDisciplinePayload) => {
     try {
       isLoading.value = true;
@@ -109,6 +113,7 @@ export const useDisciplineStore = defineStore("discipline", () => {
     disciplines,
     isLoading,
     getAllDisciplines,
+    getDisciplineById,
     addDiscipline,
     updateDiscipline,
     deleteDiscipline,

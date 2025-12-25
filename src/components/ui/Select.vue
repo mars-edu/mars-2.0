@@ -63,14 +63,9 @@
         </template>
       </f7-list-item>
     </f7-list>
-    <f7-input
-      v-else
-      type="text"
-      outline
-      class="mt-2"
-      disabled
-      :placeholder="!hasOptions ? 'Нет данных' : placeholder || ' '"
-    />
+    <f7-list v-else :class="f7ListClasses">
+      <f7-list-item :title="placeholder || ' '" after="Нет данных" />
+    </f7-list>
     <SearchableSelectPopup
       v-if="props.searchable || props.multiple"
       ref="searchablePopupRef"
@@ -262,7 +257,10 @@ const isOptionSelected = (option: SelectOption) => {
 
 /* Generalize styles */
 .smart-select-list-container .item-content {
-  @apply p-2 overflow-auto;
+  overflow: auto;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 !important;
 }
 
 .smart-select-list-container .item-content .item-inner .item-title {
@@ -274,6 +272,7 @@ const isOptionSelected = (option: SelectOption) => {
   border: 1px solid transparent;
   background-color: hsl(var(--card));
   color: hsl(var(--card-foreground));
+  padding-right: 0.75rem;
   --f7-list-item-padding-horizontal: 0px;
   --f7-list-item-padding-vertical: 0px;
   --f7-list-item-min-height: auto;
@@ -285,75 +284,58 @@ const isOptionSelected = (option: SelectOption) => {
   background-color: hsl(var(--card));
 }
 
-.smart-select-list-container .f7-list-item {
+.smart-select-list-container li {
   background-color: transparent;
 }
 
-/* Adjust min-height for consistency */
-.smart-select-list-container .f7-list-item .item-content {
-  /* padding: 0; */ /* Removed to allow generalized p-2 */
-  min-height: 44px;
-}
-
-.smart-select-list-container .f7-list-item .item-content .item-inner {
-  padding: 0.625rem 0.875rem;
-  padding-right: 32px;
+.smart-select-list-container .item-content .item-inner {
+  padding: 0.625rem 0.75rem;
+  padding-right: 2rem;
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.5rem;
   border-bottom: none;
   position: relative;
   color: hsl(var(--card-foreground));
 }
 
-.smart-select-list-container .f7-list-item .item-content .item-inner::after {
+.smart-select-list-container .item-content .item-inner::after {
   content: "";
   position: absolute;
-  right: 12px;
+  right: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  width: 10px;
-  height: 10px;
+  width: 0.625rem;
+  height: 0.625rem;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: center;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
-.smart-select-list-container
-  .f7-list-item
-  .item-content
-  .item-inner
-  .item-title {
+.smart-select-list-container .item-title {
   white-space: nowrap;
   opacity: 1;
   flex-shrink: 0;
-  margin-right: 0.5rem;
+  font-size: 0.875rem;
   font-weight: 500;
-  color: hsl(var(--card-foreground));
+  line-height: 1.25rem;
+  color: hsl(var(--muted-foreground));
 }
 
-.smart-select-list-container
-  .f7-list-item
-  .item-content
-  .item-inner
-  .item-after {
+.smart-select-list-container .item-after {
   flex-grow: 1;
   flex-shrink: 1;
   text-align: right;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: hsl(var(--muted-foreground));
-}
-
-.smart-select-list-container
-  .f7-list-item:not(.item-smart-select-value)
-  .item-content
-  .item-inner
-  .item-after {
-  display: none;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.25rem;
+  color: hsl(var(--card-foreground));
 }
 
 .smart-select-list-container:focus-within {
@@ -363,18 +345,6 @@ const isOptionSelected = (option: SelectOption) => {
 
 .smart-select-list-container:hover {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.smart-select-list-container .item-after {
-  white-space: nowrap;
-  word-break: break-word;
-  max-width: 100%;
-}
-
-/* Normalize text line-height to keep equal height for placeholder vs value */
-.smart-select-list-container .item-title,
-.smart-select-list-container .item-after {
-  line-height: 1.25rem; /* Tailwind text-sm default */
 }
 
 .popover .list {

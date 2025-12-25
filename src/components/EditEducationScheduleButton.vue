@@ -1,6 +1,7 @@
 <template>
   <div>
     <f7-popover
+      v-if="schedule"
       :id="'edit-schedule-popover-' + schedule.id"
       style="width: 600px !important"
       close-on-escape
@@ -90,7 +91,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watchEffect } from "vue";
 import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
@@ -98,7 +99,7 @@ import type { EducationSchedule } from "@/stores/educationScheduleStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
-  schedule: EducationSchedule;
+  scheduleId: string;
 }>();
 
 const emit = defineEmits<{
@@ -107,10 +108,22 @@ const emit = defineEmits<{
 
 const educationScheduleStore = useEducationScheduleStore();
 
-const lessonNumber = ref(props.schedule.lessonNumber.toString());
-const startTime = ref(props.schedule.startTime);
-const endTime = ref(props.schedule.endTime);
+// Get schedule from store by ID - always fresh data
+const schedule = computed(() => educationScheduleStore.getScheduleById(props.scheduleId));
+
+const lessonNumber = ref("");
+const startTime = ref("");
+const endTime = ref("");
 const formError = ref("");
+
+// Update form fields whenever schedule data changes
+watchEffect(() => {
+  if (schedule.value) {
+    lessonNumber.value = schedule.value.lessonNumber.toString();
+    startTime.value = schedule.value.startTime;
+    endTime.value = schedule.value.endTime;
+  }
+});
 
 let startTimePicker: any = null;
 let endTimePicker: any = null;
@@ -175,19 +188,20 @@ const createPicker = (inputEl: string, valueRef: any) => {
 };
 
 onMounted(() => {
+  if (!schedule.value) return;
   startTimePicker = createPicker(
-    `#schedule-start-time-${props.schedule.id}`,
+    `#schedule-start-time-${schedule.value.id}`,
     startTime
   );
   endTimePicker = createPicker(
-    `#schedule-end-time-${props.schedule.id}`,
+    `#schedule-end-time-${schedule.value.id}`,
     endTime
   );
 
   // Open the popover after the component is mounted
-  const targetEl = document.getElementById(`schedule-item-${props.schedule.id}`);
+  const targetEl = document.getElementById(`schedule-item-${schedule.value.id}`);
   if (targetEl) {
-    f7.popover.open(`#edit-schedule-popover-${props.schedule.id}`, targetEl);
+    f7.popover.open(`#edit-schedule-popover-${schedule.value.id}`, targetEl);
   }
 });
 
@@ -197,13 +211,14 @@ onBeforeUnmount(() => {
 });
 
 const closeEditSchedulePopover = () => {
-  f7.popover.close(`#edit-schedule-popover-${props.schedule.id}`);
+  if (!schedule.value) return;
+  f7.popover.close(`#edit-schedule-popover-${schedule.value.id}`);
   resetForm();
   emit("close");
 };
 
 const handleUpdateSchedule = async () => {
-  if (!isFormValid.value) {
+  if (!isFormValid.value || !schedule.value) {
     if (!validationResult.value.success) {
       const issues = validationResult.value.error.issues;
       if (issues.length > 0) {
@@ -214,7 +229,7 @@ const handleUpdateSchedule = async () => {
   }
 
   try {
-    await educationScheduleStore.updateSchedule(props.schedule.id, {
+    await educationScheduleStore.updateSchedule(schedule.value.id, {
       lessonNumber: Number(lessonNumber.value),
       startTime: startTime.value,
       endTime: endTime.value,
@@ -226,16 +241,18 @@ const handleUpdateSchedule = async () => {
 };
 
 const showDeleteConfirmation = () => {
-  f7.popover.close(`#edit-schedule-popover-${props.schedule.id}`);
+  if (!schedule.value) return;
+  f7.popover.close(`#edit-schedule-popover-${schedule.value.id}`);
   emit("close");
 
   f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить расписание для урока "${props.schedule.lessonNumber}"?</p>
+    `<p>Вы уверены, что хотите удалить расписание для урока "${schedule.value.lessonNumber}"?</p>
      <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление",
     async () => {
+      if (!schedule.value) return;
       try {
-        await educationScheduleStore.deleteSchedule(props.schedule.id);
+        await educationScheduleStore.deleteSchedule(schedule.value.id);
       } catch (error) {
         console.error("Failed to delete schedule:", error);
         f7.dialog.alert("Произошла ошибка при удалении.");
@@ -245,9 +262,10 @@ const showDeleteConfirmation = () => {
 };
 
 const resetForm = () => {
-  lessonNumber.value = props.schedule.lessonNumber.toString();
-  startTime.value = props.schedule.startTime;
-  endTime.value = props.schedule.endTime;
+  if (!schedule.value) return;
+  lessonNumber.value = schedule.value.lessonNumber.toString();
+  startTime.value = schedule.value.startTime;
+  endTime.value = schedule.value.endTime;
   formError.value = "";
   educationScheduleStore.clearError();
 };

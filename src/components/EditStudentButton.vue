@@ -1,6 +1,7 @@
 <template>
   <div>
     <f7-popover
+      v-if="student"
       :id="'edit-student-popover-' + student.id"
       style="width: 600px !important"
       close-on-escape
@@ -146,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watchEffect } from "vue";
 import { f7, f7Popover, f7Input, f7Button, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useStudentStore } from "@/stores/studentStore";
@@ -159,17 +160,7 @@ import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
-  student: {
-    id: string;
-    surname: string;
-    firstName: string;
-    patronymic: string;
-    specialty: string;
-    language: string;
-    base?: number;
-    gender: "male" | "female";
-    academicYearId?: string;
-  };
+  studentId: string;
 }>();
 
 const studentStore = useStudentStore();
@@ -182,15 +173,32 @@ const { languageOptions } = storeToRefs(languageStore);
 const { baseOptions } = storeToRefs(baseStore);
 const { academicYearOptions } = storeToRefs(academicYearStore);
 
-const surname = ref(props.student.surname);
-const firstName = ref(props.student.firstName);
-const patronymic = ref(props.student.patronymic);
-const specialty = ref(props.student.specialty);
-const language = ref(props.student.language);
-const base = ref((props.student.base ?? 9).toString());
-const gender = ref<"male" | "female">(props.student.gender);
-const academicYear = ref(props.student.academicYearId || "");
+// Get student from store by ID - always fresh data
+const student = computed(() => studentStore.getStudentById(props.studentId));
+
+const surname = ref("");
+const firstName = ref("");
+const patronymic = ref("");
+const specialty = ref("");
+const language = ref("");
+const base = ref("9");
+const gender = ref<"male" | "female">("male");
+const academicYear = ref("");
 const formError = ref("");
+
+// Update form fields whenever student data changes
+watchEffect(() => {
+  if (student.value) {
+    surname.value = student.value.surname;
+    firstName.value = student.value.firstName;
+    patronymic.value = student.value.patronymic;
+    specialty.value = student.value.specialty;
+    language.value = student.value.language;
+    base.value = (student.value.base ?? 9).toString();
+    gender.value = student.value.gender;
+    academicYear.value = student.value.academicYearId || "";
+  }
+});
 
 const studentSchema = z.object({
   surname: z.string().min(1, "Пожалуйста, введите фамилию студента"),
@@ -221,12 +229,13 @@ const validationResult = computed(() => {
 const isFormValid = computed(() => validationResult.value.success);
 
 const closeEditStudentPopover = () => {
-  f7.popover.close(`#edit-student-popover-${props.student.id}`);
+  if (!student.value) return;
+  f7.popover.close(`#edit-student-popover-${student.value.id}`);
   resetForm();
 };
 
 const handleUpdateStudent = async () => {
-  if (!isFormValid.value) {
+  if (!isFormValid.value || !student.value) {
     if (!validationResult.value.success) {
       const issues = validationResult.value.error.issues;
       if (issues.length > 0) {
@@ -237,7 +246,7 @@ const handleUpdateStudent = async () => {
   }
 
   try {
-    await studentStore.updateStudent(props.student.id, {
+    await studentStore.updateStudent(student.value.id, {
       surname: surname.value,
       firstName: firstName.value,
       patronymic: patronymic.value,
@@ -258,15 +267,17 @@ const handleUpdateStudent = async () => {
 };
 
 const showDeleteConfirmation = () => {
-  f7.popover.close(`#edit-student-popover-${props.student.id}`);
+  if (!student.value) return;
+  f7.popover.close(`#edit-student-popover-${student.value.id}`);
 
   f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить студента \"${props.student.surname} ${props.student.firstName} ${props.student.patronymic}\"?</p>
+    `<p>Вы уверены, что хотите удалить студента \"${student.value.surname} ${student.value.firstName} ${student.value.patronymic}\"?</p>
      <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление студента",
     async () => {
+      if (!student.value) return;
       try {
-        await studentStore.deleteStudent(props.student.id);
+        await studentStore.deleteStudent(student.value.id);
       } catch (error) {
         f7.dialog.alert("Произошла ошибка при удалении студента.");
       }
@@ -275,14 +286,15 @@ const showDeleteConfirmation = () => {
 };
 
 const resetForm = () => {
-  surname.value = props.student.surname;
-  firstName.value = props.student.firstName;
-  patronymic.value = props.student.patronymic;
-  specialty.value = props.student.specialty;
-  language.value = props.student.language;
-  base.value = (props.student.base ?? 9).toString();
-  gender.value = props.student.gender;
-  academicYear.value = props.student.academicYearId || "";
+  if (!student.value) return;
+  surname.value = student.value.surname;
+  firstName.value = student.value.firstName;
+  patronymic.value = student.value.patronymic;
+  specialty.value = student.value.specialty;
+  language.value = student.value.language;
+  base.value = (student.value.base ?? 9).toString();
+  gender.value = student.value.gender;
+  academicYear.value = student.value.academicYearId || "";
   formError.value = "";
   studentStore.clearError();
 };

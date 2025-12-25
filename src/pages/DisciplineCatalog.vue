@@ -18,6 +18,7 @@
             <h1 class="text-xl font-semibold">Каталог дисциплин</h1>
             <div class="flex gap-2">
               <f7-input
+                v-model:value="searchQuery"
                 type="text"
                 placeholder="Поиск..."
                 class="border border-border rounded-lg !bg-white"
@@ -46,9 +47,7 @@
                 </thead>
                 <tbody>
                   <tr
-                    v-for="(
-                      discipline, index
-                    ) in disciplineStore.getAllDisciplines"
+                    v-for="(discipline, index) in filteredDisciplines"
                     :key="discipline._id"
                     :id="`discipline-item-${discipline._id}`"
                     class="border-b border-border hover:bg-muted/30"
@@ -72,15 +71,15 @@
     </template>
 
     <EditDisciplineButton
-      v-if="selectedDiscipline"
-      :key="`edit-${selectedDiscipline._id}`"
-      :discipline="selectedDiscipline"
+      v-if="selectedDisciplineId"
+      :key="`edit-${selectedDisciplineId}`"
+      :discipline-id="selectedDisciplineId"
     />
   </f7-page>
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from "vue";
+import { ref, computed, nextTick } from "vue";
 import { f7Page, f7Input, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -93,10 +92,25 @@ const pageId = ref(Date.now());
 
 const activeNavItem = ref("discipline-catalog");
 const disciplineStore = useDisciplineStore();
-const selectedDiscipline = ref<Discipline | null>(null);
+const selectedDisciplineId = ref<string | null>(null);
+const searchQuery = ref("");
+
+const filteredDisciplines = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return disciplineStore.getAllDisciplines;
+  }
+
+  const query = searchQuery.value.toLowerCase().trim();
+  return disciplineStore.getAllDisciplines.filter((discipline) => {
+    return (
+      discipline.moduleName?.toLowerCase().includes(query) ||
+      discipline.learningOutcome?.toLowerCase().includes(query)
+    );
+  });
+});
 
 const selectDiscipline = async (discipline: Discipline) => {
-  selectedDiscipline.value = discipline;
+  selectedDisciplineId.value = discipline._id;
   await nextTick();
   f7.popover.open(
     `#edit-discipline-popover-${discipline._id}`,

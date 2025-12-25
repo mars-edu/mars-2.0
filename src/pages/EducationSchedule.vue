@@ -113,8 +113,8 @@
                   </button>
                 </div>
                 <EditAcademicYearButton
-                  v-if="selectedAcademicYear"
-                  :academic-year="selectedAcademicYear"
+                  v-if="selectedAcademicYearId"
+                  :academic-year-id="selectedAcademicYearId"
                 />
               </div>
             </AccordionItem>
@@ -195,8 +195,8 @@
                   </button>
                 </div>
                 <EditAcademicYearSemesterButton
-                  v-if="selectedAcademicYearSemester"
-                  :academic-year-semester="selectedAcademicYearSemester"
+                  v-if="selectedAcademicYearSemesterId"
+                  :academic-year-semester-id="selectedAcademicYearSemesterId"
                 />
               </div>
             </AccordionItem>
@@ -257,9 +257,9 @@
                   </button>
                 </div>
                 <EditEducationScheduleButton
-                  v-if="selectedSchedule"
-                  :key="selectedSchedule.id"
-                  :schedule="selectedSchedule"
+                  v-if="selectedScheduleId"
+                  :key="selectedScheduleId"
+                  :schedule-id="selectedScheduleId"
                   @close="selectedScheduleId = null"
                 />
               </div>
@@ -317,8 +317,8 @@
                   </button>
                 </div>
                 <EditVacationButton
-                  v-if="selectedVacation"
-                  :vacation="selectedVacation"
+                  v-if="selectedVacationId"
+                  :vacation-id="selectedVacationId"
                 />
               </div>
             </AccordionItem>
@@ -390,8 +390,8 @@
                       </button>
                     </div>
                     <EditScheduledFinalControlButton
-                      v-if="selectedScheduledFinalControl"
-                      :control="selectedScheduledFinalControl"
+                      v-if="selectedScheduledFinalControlId"
+                      :control-id="selectedScheduledFinalControlId"
                     />
                   </div>
                 </AccordionItem>
@@ -464,8 +464,8 @@
                       </button>
                     </div>
                     <EditScheduledIntermediateControlButton
-                      v-if="selectedScheduledIntermediateControl"
-                      :control="selectedScheduledIntermediateControl"
+                      v-if="selectedScheduledIntermediateControlId"
+                      :control-id="selectedScheduledIntermediateControlId"
                     />
                   </div>
                 </AccordionItem>
@@ -527,12 +527,11 @@ const scheduledFinalControlStore = useScheduledFinalControlStore();
 const scheduledIntermediateControlStore =
   useScheduledIntermediateControlStore();
 
-const selectedAcademicYear = ref<AcademicYear | null>(null);
-const selectedAcademicYearSemester = ref<AcademicYearSemester | null>(null);
-const selectedVacation = ref<Vacation | null>(null);
-const selectedScheduledFinalControl = ref<ScheduledFinalControl | null>(null);
-const selectedScheduledIntermediateControl =
-  ref<ScheduledIntermediateControl | null>(null);
+const selectedAcademicYearId = ref<string | null>(null);
+const selectedAcademicYearSemesterId = ref<string | null>(null);
+const selectedVacationId = ref<string | null>(null);
+const selectedScheduledFinalControlId = ref<string | null>(null);
+const selectedScheduledIntermediateControlId = ref<string | null>(null);
 const selectedScheduleId = ref<string | null>(null);
 const selectedSchedule = computed(() =>
   selectedScheduleId.value
@@ -620,7 +619,7 @@ const handleSetActiveAcademicYear = (academicYear: AcademicYear) => {
 };
 
 const openEditAcademicYear = async (academicYear: AcademicYear) => {
-  selectedAcademicYear.value = academicYear;
+  selectedAcademicYearId.value = academicYear.id;
   await nextTick();
   const targetEl = document.getElementById(
     `academic-year-item-${academicYear.id}`
@@ -633,7 +632,7 @@ const openEditAcademicYear = async (academicYear: AcademicYear) => {
 const openEditAcademicYearSemester = async (
   academicYearSemester: AcademicYearSemester
 ) => {
-  selectedAcademicYearSemester.value = academicYearSemester;
+  selectedAcademicYearSemesterId.value = academicYearSemester.id;
   await nextTick();
   const targetEl = document.getElementById(
     `academic-year-semester-item-${academicYearSemester.id}`
@@ -647,7 +646,7 @@ const openEditAcademicYearSemester = async (
 };
 
 const openEditVacation = async (vacation: Vacation) => {
-  selectedVacation.value = vacation;
+  selectedVacationId.value = vacation.id;
   await nextTick();
   const targetEl = document.getElementById(`vacation-item-${vacation.id}`);
   if (targetEl) {
@@ -658,7 +657,7 @@ const openEditVacation = async (vacation: Vacation) => {
 const openEditScheduledFinalControl = async (
   control: ScheduledFinalControl
 ) => {
-  selectedScheduledFinalControl.value = control;
+  selectedScheduledFinalControlId.value = control.id;
   await nextTick();
   const targetEl = document.getElementById(
     `scheduled-final-control-item-${control.id}`
@@ -674,7 +673,7 @@ const openEditScheduledFinalControl = async (
 const openEditScheduledIntermediateControl = async (
   control: ScheduledIntermediateControl
 ) => {
-  selectedScheduledIntermediateControl.value = control;
+  selectedScheduledIntermediateControlId.value = control.id;
   await nextTick();
   const targetEl = document.getElementById(
     `scheduled-intermediate-control-item-${control.id}`

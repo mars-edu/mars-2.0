@@ -127,9 +127,9 @@
     </template>
 
     <EditTeacherButton
-      v-if="selectedTeacher"
-      :key="`edit-${selectedTeacher.id}`"
-      :teacher="selectedTeacher"
+      v-if="selectedTeacherId"
+      :key="`edit-${selectedTeacherId}`"
+      :teacher-id="selectedTeacherId"
     />
   </f7-page>
 </template>
@@ -162,7 +162,7 @@ const selectedPosition = ref("");
 const selectedEmploymentYear = ref("");
 const selectedGender = ref("");
 const searchTerm = ref("");
-const selectedTeacher = ref<Teacher | null>(null);
+const selectedTeacherId = ref<string | null>(null);
 const generatingForId = ref<string | null>(null);
 
 onMounted(() => {
@@ -171,7 +171,7 @@ onMounted(() => {
   selectedEmploymentYear.value = "";
   selectedGender.value = "";
   searchTerm.value = "";
-  selectedTeacher.value = null;
+  selectedTeacherId.value = null;
 });
 
 const positionOptions = computed(() =>
@@ -207,7 +207,7 @@ watch(searchTerm, (newValue) => {
 });
 
 const selectTeacher = async (teacher: Teacher) => {
-  selectedTeacher.value = teacher;
+  selectedTeacherId.value = teacher.id;
   await nextTick();
   f7.popover.open(
     `#edit-teacher-popover-${teacher.id}`,

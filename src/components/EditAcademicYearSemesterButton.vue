@@ -1,6 +1,7 @@
 <template>
   <div>
     <f7-popover
+      v-if="academicYearSemester"
       :id="'edit-academic-year-semester-popover-' + academicYearSemester.id"
       style="width: 600px !important"
       close-on-escape
@@ -83,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watchEffect } from "vue";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
@@ -94,16 +95,28 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import Input from "@/components/ui/Input.vue";
 import { DATE_PICKER_PARAMS } from "@/constants/calendar";
 
-const props = defineProps<{ academicYearSemester: AcademicYearSemester }>();
+const props = defineProps<{ academicYearSemesterId: string }>();
 
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 
-const selectedSemesterNumber = ref<number | string>(
-  props.academicYearSemester.semesterNumber
+// Get academic year semester from store by ID - always fresh data
+const academicYearSemester = computed(() =>
+  academicYearSemesterStore.getAcademicYearSemesterById(props.academicYearSemesterId)
 );
-const startDate = ref<Date[]>([new Date(props.academicYearSemester.startDate)]);
-const endDate = ref<Date[]>([new Date(props.academicYearSemester.endDate)]);
+
+const selectedSemesterNumber = ref<number | string>(1);
+const startDate = ref<Date[]>([new Date()]);
+const endDate = ref<Date[]>([new Date()]);
 const formError = ref("");
+
+// Update form fields whenever academic year semester data changes
+watchEffect(() => {
+  if (academicYearSemester.value) {
+    selectedSemesterNumber.value = academicYearSemester.value.semesterNumber;
+    startDate.value = [new Date(academicYearSemester.value.startDate)];
+    endDate.value = [new Date(academicYearSemester.value.endDate)];
+  }
+});
 
 const academicYearSemesterSchema = z
   .object({
@@ -136,14 +149,15 @@ const validationResult = computed(() => {
 const isFormValid = computed(() => validationResult.value.success);
 
 const closeEditAcademicYearSemesterPopover = () => {
+  if (!academicYearSemester.value) return;
   f7.popover.close(
-    `#edit-academic-year-semester-popover-${props.academicYearSemester.id}`
+    `#edit-academic-year-semester-popover-${academicYearSemester.value.id}`
   );
   resetForm();
 };
 
 const handleUpdateAcademicYearSemester = async () => {
-  if (!isFormValid.value) {
+  if (!isFormValid.value || !academicYearSemester.value) {
     if (!validationResult.value.success) {
       const issues = validationResult.value.error.issues;
       if (issues.length > 0) {
@@ -155,7 +169,7 @@ const handleUpdateAcademicYearSemester = async () => {
 
   try {
     await academicYearSemesterStore.updateAcademicYearSemester(
-      props.academicYearSemester.id,
+      academicYearSemester.value.id,
       {
         semesterNumber: Number(selectedSemesterNumber.value),
         startDate: dayjs(startDate.value[0]).format(DATE_STORAGE_FORMAT),
@@ -169,20 +183,22 @@ const handleUpdateAcademicYearSemester = async () => {
 };
 
 const showDeleteConfirmation = () => {
+  if (!academicYearSemester.value) return;
   f7.popover.close(
-    `#edit-academic-year-semester-popover-${props.academicYearSemester.id}`
+    `#edit-academic-year-semester-popover-${academicYearSemester.value.id}`
   );
 
-  const semesterName = `семестр ${props.academicYearSemester.semesterNumber}`;
+  const semesterName = `семестр ${academicYearSemester.value.semesterNumber}`;
 
   f7.dialog.confirm(
     `<p>Вы уверены, что хотите удалить "${semesterName}" из учебного года?</p>
      <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление семестра",
     async () => {
+      if (!academicYearSemester.value) return;
       try {
         await academicYearSemesterStore.deleteAcademicYearSemester(
-          props.academicYearSemester.id
+          academicYearSemester.value.id
         );
       } catch (error) {
         console.error("Failed to delete academic year semester:", error);
@@ -193,9 +209,10 @@ const showDeleteConfirmation = () => {
 };
 
 const resetForm = () => {
-  selectedSemesterNumber.value = props.academicYearSemester.semesterNumber;
-  startDate.value = [new Date(props.academicYearSemester.startDate)];
-  endDate.value = [new Date(props.academicYearSemester.endDate)];
+  if (!academicYearSemester.value) return;
+  selectedSemesterNumber.value = academicYearSemester.value.semesterNumber;
+  startDate.value = [new Date(academicYearSemester.value.startDate)];
+  endDate.value = [new Date(academicYearSemester.value.endDate)];
   formError.value = "";
   academicYearSemesterStore.clearError();
 };

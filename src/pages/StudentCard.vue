@@ -104,9 +104,9 @@
     </template>
 
     <EditStudentButton
-      v-if="selectedStudent"
-      :key="`edit-${selectedStudent.id}`"
-      :student="selectedStudent"
+      v-if="selectedStudentId"
+      :key="`edit-${selectedStudentId}`"
+      :student-id="selectedStudentId"
     />
   </f7-page>
 </template>
@@ -144,7 +144,7 @@ const selectedGender = ref("");
 const selectedBase = ref("");
 const selectedAcademicYear = ref("");
 const searchTerm = ref("");
-const selectedStudent = ref<Student | null>(null);
+const selectedStudentId = ref<string | null>(null);
 
 onMounted(() => {
   studentStore.clearFilters();
@@ -154,7 +154,7 @@ onMounted(() => {
   selectedBase.value = "";
   selectedAcademicYear.value = "";
   searchTerm.value = "";
-  selectedStudent.value = null;
+  selectedStudentId.value = null;
 });
 
 const genderOptions = computed(() => getGenderOptions());
@@ -180,7 +180,7 @@ watch(searchTerm, (newValue) => {
 });
 
 const selectStudent = async (student: Student) => {
-  selectedStudent.value = student;
+  selectedStudentId.value = student.id;
   await nextTick();
   f7.popover.open(
     `#edit-student-popover-${student.id}`,

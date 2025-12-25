@@ -383,8 +383,8 @@
     <!-- Student Edit Popover -->
     <div id="student-edit-trigger" style="display: none;"></div>
     <EditStudentButton
-      v-if="selectedStudentForEdit"
-      :student="selectedStudentForEdit"
+      v-if="selectedStudentForEditId"
+      :student-id="selectedStudentForEditId"
     />
   </f7-page>
 </template>
@@ -521,7 +521,7 @@ const isKtpPopupOpened = ref(false);
 const ktpParentId = ref<string | null>(null);
 
 // Student edit state
-const selectedStudentForEdit = ref<any>(null);
+const selectedStudentForEditId = ref<string | null>(null);
 
 // RUP Popup state
 const isRupPopupOpened = ref(false);
@@ -958,7 +958,7 @@ const saveJournalSettings = () => {
 
 // Handle student click from StudentListTable
 const handleStudentClick = (student: any) => {
-  selectedStudentForEdit.value = student;
+  selectedStudentForEditId.value = student.id;
   nextTick(() => {
     f7.popover.open(`#edit-student-popover-${student.id}`, `#student-edit-trigger`);
   });

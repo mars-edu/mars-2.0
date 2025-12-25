@@ -1,6 +1,7 @@
 <template>
   <div>
     <f7-popover
+      v-if="academicYear"
       :id="'edit-academic-year-popover-' + academicYear.id"
       style="width: 600px !important"
       close-on-escape
@@ -94,31 +95,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watchEffect } from "vue";
 import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
-  academicYear: {
-    id: string;
-    name: string;
-    startYear: number;
-    endYear: number;
-    isActive: boolean;
-  };
+  academicYearId: string;
 }>();
-
-console.log("EditAcademicYearButton props:", props.academicYear);
 
 const academicYearStore = useAcademicYearStore();
 
-const academicYearName = ref(props.academicYear.name);
-const startYear = ref<number>(props.academicYear.startYear);
-const endYear = ref<number>(props.academicYear.endYear);
-const isActive = ref(props.academicYear.isActive);
+// Get academic year from store by ID - always fresh data
+const academicYear = computed(() => academicYearStore.getAcademicYearById(props.academicYearId));
+
+const academicYearName = ref("");
+const startYear = ref<number>(0);
+const endYear = ref<number>(0);
+const isActive = ref(false);
 const formError = ref("");
+
+// Update form fields whenever academic year data changes
+watchEffect(() => {
+  if (academicYear.value) {
+    academicYearName.value = academicYear.value.name;
+    startYear.value = academicYear.value.startYear;
+    endYear.value = academicYear.value.endYear;
+    isActive.value = academicYear.value.isActive;
+  }
+});
 
 const academicYearSchema = z
   .object({
@@ -150,12 +156,13 @@ const validationResult = computed(() => {
 const isFormValid = computed(() => validationResult.value.success);
 
 const closeEditAcademicYearPopover = () => {
-  f7.popover.close(`#edit-academic-year-popover-${props.academicYear.id}`);
+  if (!academicYear.value) return;
+  f7.popover.close(`#edit-academic-year-popover-${academicYear.value.id}`);
   resetForm();
 };
 
 const handleUpdateAcademicYear = async () => {
-  if (!isFormValid.value) {
+  if (!isFormValid.value || !academicYear.value) {
     if (!validationResult.value.success) {
       const issues = validationResult.value.error.issues;
       if (issues.length > 0) {
@@ -166,7 +173,7 @@ const handleUpdateAcademicYear = async () => {
   }
 
   try {
-    await academicYearStore.updateAcademicYear(props.academicYear.id, {
+    await academicYearStore.updateAcademicYear(academicYear.value.id, {
       name: academicYearName.value,
       startYear: Number(startYear.value),
       endYear: Number(endYear.value),
@@ -179,20 +186,22 @@ const handleUpdateAcademicYear = async () => {
 };
 
 const showDeleteConfirmation = () => {
-  if (props.academicYear.isActive) {
+  if (!academicYear.value) return;
+  if (academicYear.value.isActive) {
     f7.dialog.alert("Нельзя удалить активный учебный год.");
     return;
   }
 
-  f7.popover.close(`#edit-academic-year-popover-${props.academicYear.id}`);
+  f7.popover.close(`#edit-academic-year-popover-${academicYear.value.id}`);
 
   f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить учебный год "${props.academicYear.name}"?</p>
+    `<p>Вы уверены, что хотите удалить учебный год "${academicYear.value.name}"?</p>
      <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление учебного года",
     async () => {
+      if (!academicYear.value) return;
       try {
-        await academicYearStore.deleteAcademicYear(props.academicYear.id);
+        await academicYearStore.deleteAcademicYear(academicYear.value.id);
       } catch (error) {
         console.error("Failed to delete academic year:", error);
         f7.dialog.alert("Произошла ошибка при удалении учебного года.");
@@ -202,10 +211,11 @@ const showDeleteConfirmation = () => {
 };
 
 const resetForm = () => {
-  academicYearName.value = props.academicYear.name;
-  startYear.value = props.academicYear.startYear;
-  endYear.value = props.academicYear.endYear;
-  isActive.value = props.academicYear.isActive;
+  if (!academicYear.value) return;
+  academicYearName.value = academicYear.value.name;
+  startYear.value = academicYear.value.startYear;
+  endYear.value = academicYear.value.endYear;
+  isActive.value = academicYear.value.isActive;
   formError.value = "";
   academicYearStore.clearError();
 };

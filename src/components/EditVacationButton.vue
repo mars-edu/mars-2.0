@@ -1,6 +1,7 @@
 <template>
   <div>
     <f7-popover
+      v-if="vacation"
       :id="'edit-vacation-popover-' + vacation.id"
       style="width: 600px !important"
       close-on-escape
@@ -108,7 +109,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watchEffect } from "vue";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { f7, f7Input, f7Icon, f7Popover } from "framework7-vue";
@@ -118,15 +119,28 @@ import { useVacationStore } from "@/stores/vacationStore";
 import type { Vacation } from "@/stores/vacationStore";
 import { DATE_PICKER_PARAMS } from "@/constants/calendar";
 
-const props = defineProps<{ vacation: Vacation }>();
+const props = defineProps<{ vacationId: string }>();
 
 const vacationStore = useVacationStore();
 
-const shortName = ref(props.vacation.shortName);
-const fullName = ref(props.vacation.fullName);
-const startDate = ref<Date[]>([new Date(props.vacation.startDate)]);
-const endDate = ref<Date[]>([new Date(props.vacation.endDate)]);
+// Get vacation from store by ID - always fresh data
+const vacation = computed(() => vacationStore.getVacationById(props.vacationId));
+
+const shortName = ref("");
+const fullName = ref("");
+const startDate = ref<Date[]>([new Date()]);
+const endDate = ref<Date[]>([new Date()]);
 const formError = ref("");
+
+// Update form fields whenever vacation data changes
+watchEffect(() => {
+  if (vacation.value) {
+    shortName.value = vacation.value.shortName;
+    fullName.value = vacation.value.fullName;
+    startDate.value = [new Date(vacation.value.startDate)];
+    endDate.value = [new Date(vacation.value.endDate)];
+  }
+});
 
 const vacationSchema = z
   .object({
@@ -158,12 +172,13 @@ const validationResult = computed(() => {
 const isFormValid = computed(() => validationResult.value.success);
 
 const closePopover = () => {
-  f7.popover.close(`#edit-vacation-popover-${props.vacation.id}`);
+  if (!vacation.value) return;
+  f7.popover.close(`#edit-vacation-popover-${vacation.value.id}`);
   vacationStore.clearError();
 };
 
 const handleUpdateVacation = async () => {
-  if (!isFormValid.value) {
+  if (!isFormValid.value || !vacation.value) {
     if (!validationResult.value.success) {
       formError.value = validationResult.value.error.issues[0].message;
     }
@@ -171,7 +186,7 @@ const handleUpdateVacation = async () => {
   }
 
   try {
-    await vacationStore.updateVacation(props.vacation.id, {
+    await vacationStore.updateVacation(vacation.value.id, {
       shortName: shortName.value,
       fullName: fullName.value,
       startDate: dayjs(startDate.value[0]).format(DATE_STORAGE_FORMAT),
@@ -184,13 +199,15 @@ const handleUpdateVacation = async () => {
 };
 
 const confirmDelete = () => {
-  f7.popover.close(`#edit-vacation-popover-${props.vacation.id}`);
+  if (!vacation.value) return;
+  f7.popover.close(`#edit-vacation-popover-${vacation.value.id}`);
   f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить каникулы "${props.vacation.shortName}"?</p><p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
+    `<p>Вы уверены, что хотите удалить каникулы "${vacation.value.shortName}"?</p><p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление каникул",
     async () => {
+      if (!vacation.value) return;
       try {
-        await vacationStore.deleteVacation(props.vacation.id);
+        await vacationStore.deleteVacation(vacation.value.id);
       } catch (error) {
         console.error("Failed to delete vacation:", error);
         f7.dialog.alert("Произошла ошибка при удалении каникул.");

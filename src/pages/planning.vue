@@ -75,10 +75,10 @@
   </f7-page>
 
   <EditEventPopover
-    v-if="selectedEvent"
-    :event="selectedEvent"
+    v-if="selectedEventId"
+    :event-id="selectedEventId"
     @updated="handleEventUpdated"
-    @cancel="selectedEvent = null"
+    @cancel="selectedEventId = null"
   />
 
   <JournalPreviewPopover
@@ -112,6 +112,7 @@ const calendarContainer = ref<HTMLElement | null>(null);
 const activeNavItem = ref("calendar");
 
 const selectedEvent = ref<StoreCalendarEvent | null>(null);
+const selectedEventId = ref<string | null>(null);
 const calendarStore = useCalendarStore();
 const userStore = useUserStore();
 const teacherStore = useTeacherStore();
@@ -237,6 +238,7 @@ const handleEventClick = async (
 
 const handleEventUpdated = async (updatedEvent: any) => {
   selectedEvent.value = null;
+  selectedEventId.value = null;
 };
 
 const goToJournalDetails = (id: number | string) => {
@@ -244,8 +246,11 @@ const goToJournalDetails = (id: number | string) => {
 };
 
 const openEditPopoverFromPreview = async () => {
-  await nextTick();
   if (selectedEvent.value) {
+    selectedEventId.value = selectedEvent.value.id;
+  }
+  await nextTick();
+  if (selectedEventId.value) {
     f7.popover.open("#edit-event-popover");
   }
 };

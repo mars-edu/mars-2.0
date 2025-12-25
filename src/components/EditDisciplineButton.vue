@@ -1,6 +1,7 @@
 <template>
   <div>
     <f7-popover
+      v-if="discipline"
       :id="'edit-discipline-popover-' + discipline._id"
       style="width: 600px !important"
       close-on-escape
@@ -81,27 +82,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watchEffect } from "vue";
 import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useDisciplineStore } from "@/stores/disciplineStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
-  discipline: {
-    _id: string;
-    moduleIndex: string;
-    moduleName: string;
-    learningOutcome: string;
-  };
+  disciplineId: string;
 }>();
 
 const disciplineStore = useDisciplineStore();
 
-const moduleIndex = ref(props.discipline.moduleIndex);
-const moduleName = ref(props.discipline.moduleName);
-const learningOutcome = ref(props.discipline.learningOutcome);
+// Get discipline from store by ID - always fresh data
+const discipline = computed(() => disciplineStore.getDisciplineById(props.disciplineId));
+
+const moduleIndex = ref("");
+const moduleName = ref("");
+const learningOutcome = ref("");
 const formError = ref("");
+
+// Update form fields whenever discipline data changes
+watchEffect(() => {
+  if (discipline.value) {
+    moduleIndex.value = discipline.value.moduleIndex;
+    moduleName.value = discipline.value.moduleName;
+    learningOutcome.value = discipline.value.learningOutcome;
+  }
+});
 
 const disciplineSchema = z.object({
   moduleIndex: z.string().min(1, "Пожалуйста, введите индекс модуля"),
@@ -122,12 +130,13 @@ const validationResult = computed(() => {
 const isFormValid = computed(() => validationResult.value.success);
 
 const closeEditDisciplinePopover = () => {
-  f7.popover.close(`#edit-discipline-popover-${props.discipline._id}`);
+  if (!discipline.value) return;
+  f7.popover.close(`#edit-discipline-popover-${discipline.value._id}`);
   resetForm();
 };
 
 const handleUpdateDiscipline = async () => {
-  if (!isFormValid.value) {
+  if (!isFormValid.value || !discipline.value) {
     if (!validationResult.value.success) {
       const issues = validationResult.value.error.issues;
       if (issues.length > 0) {
@@ -138,7 +147,7 @@ const handleUpdateDiscipline = async () => {
   }
 
   try {
-    await disciplineStore.updateDiscipline(props.discipline._id, {
+    await disciplineStore.updateDiscipline(discipline.value._id, {
       moduleIndex: moduleIndex.value,
       moduleName: moduleName.value,
       learningOutcome: learningOutcome.value,
@@ -150,15 +159,17 @@ const handleUpdateDiscipline = async () => {
 };
 
 const showDeleteConfirmation = () => {
-  f7.popover.close(`#edit-discipline-popover-${props.discipline._id}`);
+  if (!discipline.value) return;
+  f7.popover.close(`#edit-discipline-popover-${discipline.value._id}`);
 
   f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить дисциплину "${props.discipline.moduleName}"?</p>
+    `<p>Вы уверены, что хотите удалить дисциплину "${discipline.value.moduleName}"?</p>
      <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление дисциплины",
     async () => {
+      if (!discipline.value) return;
       try {
-        await disciplineStore.deleteDiscipline(props.discipline._id);
+        await disciplineStore.deleteDiscipline(discipline.value._id);
       } catch (error) {
         console.error("Failed to delete discipline:", error);
         f7.dialog.alert("Произошла ошибка при удалении дисциплины.");
@@ -168,9 +179,10 @@ const showDeleteConfirmation = () => {
 };
 
 const resetForm = () => {
-  moduleIndex.value = props.discipline.moduleIndex;
-  moduleName.value = props.discipline.moduleName;
-  learningOutcome.value = props.discipline.learningOutcome;
+  if (!discipline.value) return;
+  moduleIndex.value = discipline.value.moduleIndex;
+  moduleName.value = discipline.value.moduleName;
+  learningOutcome.value = discipline.value.learningOutcome;
   formError.value = "";
   disciplineStore.clearError();
 };

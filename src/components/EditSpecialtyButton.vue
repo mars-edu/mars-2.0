@@ -1,6 +1,7 @@
 <template>
   <div>
     <f7-popover
+      v-if="specialty"
       :id="'edit-specialty-popover-' + specialty.id"
       style="width: 600px !important"
       close-on-escape
@@ -93,28 +94,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watchEffect } from "vue";
 import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
-  specialty: {
-    id: string;
-    code: string;
-    name: string;
-    details: string;
-    codeName: string;
-  };
+  specialtyId: string;
 }>();
 
 const specialtyStore = useSpecialtyStore();
 
-const specialtyCode = ref(props.specialty.code);
-const specialtyName = ref(props.specialty.name);
-const specialtyDetails = ref(props.specialty.details);
-const specialtyCodeName = ref(props.specialty.codeName);
+// Get specialty from store by ID - always fresh data
+const specialty = computed(() => specialtyStore.getSpecialtyById(props.specialtyId));
+
+const specialtyCode = ref("");
+const specialtyName = ref("");
+const specialtyDetails = ref("");
+const specialtyCodeName = ref("");
+
+// Update form fields whenever specialty data changes
+watchEffect(() => {
+  if (specialty.value) {
+    specialtyCode.value = specialty.value.code;
+    specialtyName.value = specialty.value.name;
+    specialtyDetails.value = specialty.value.details;
+    specialtyCodeName.value = specialty.value.codeName;
+  }
+});
 
 const specialtySchema = z.object({
   code: z.string().min(1, "Пожалуйста, введите шифр специальности"),
@@ -142,16 +150,17 @@ const formError = computed(() => {
 const isFormValid = computed(() => validationResult.value.success);
 
 const closeEditSpecialtyPopover = () => {
-  f7.popover.close(`#edit-specialty-popover-${props.specialty.id}`);
+  if (!specialty.value) return;
+  f7.popover.close(`#edit-specialty-popover-${specialty.value.id}`);
   resetForm();
 };
 
 const handleUpdateSpecialty = async () => {
-  if (!isFormValid.value) {
+  if (!isFormValid.value || !specialty.value) {
     return;
   }
   try {
-    await specialtyStore.updateSpecialty(props.specialty.id, {
+    await specialtyStore.updateSpecialty(specialty.value.id, {
       code: specialtyCode.value,
       name: specialtyName.value,
       details: specialtyDetails.value,
@@ -164,15 +173,17 @@ const handleUpdateSpecialty = async () => {
 };
 
 const showDeleteConfirmation = () => {
-  f7.popover.close(`#edit-specialty-popover-${props.specialty.id}`);
+  if (!specialty.value) return;
+  f7.popover.close(`#edit-specialty-popover-${specialty.value.id}`);
 
   f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить специальность "${props.specialty.name}"?</p>
+    `<p>Вы уверены, что хотите удалить специальность "${specialty.value.name}"?</p>
      <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление специальности",
     async () => {
+      if (!specialty.value) return;
       try {
-        await specialtyStore.deleteSpecialty(props.specialty.id);
+        await specialtyStore.deleteSpecialty(specialty.value.id);
       } catch (error) {
         console.error("Failed to delete specialty:", error);
         f7.dialog.alert("Произошла ошибка при удалении специальности.");
@@ -182,10 +193,11 @@ const showDeleteConfirmation = () => {
 };
 
 const resetForm = () => {
-  specialtyCode.value = props.specialty.code;
-  specialtyName.value = props.specialty.name;
-  specialtyDetails.value = props.specialty.details;
-  specialtyCodeName.value = props.specialty.codeName;
+  if (!specialty.value) return;
+  specialtyCode.value = specialty.value.code;
+  specialtyName.value = specialty.value.name;
+  specialtyDetails.value = specialty.value.details;
+  specialtyCodeName.value = specialty.value.codeName;
   specialtyStore.clearError();
 };
 

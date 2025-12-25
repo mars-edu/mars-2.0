@@ -1,6 +1,7 @@
 <template>
   <div>
     <f7-popover
+      v-if="control"
       :id="'edit-scheduled-intermediate-control-popover-' + control.id"
       style="width: 600px !important"
       close-on-escape
@@ -109,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, watchEffect } from "vue";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT, DATE_PICKER_PARAMS } from "@/constants/calendar";
 import { f7, f7Input, f7Icon, f7Popover } from "framework7-vue";
@@ -120,17 +121,32 @@ import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermed
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import type { ScheduledIntermediateControl } from "@/stores/scheduledIntermediateControlStore";
 
-const props = defineProps<{ control: ScheduledIntermediateControl }>();
+const props = defineProps<{ controlId: string }>();
 
 const scheduledIntermediateControlStore =
   useScheduledIntermediateControlStore();
 const intermediateControlStore = useIntermediateControlStore();
 
-const selectedControlId = ref(props.control.intermediateControlId);
-const shortName = ref(props.control.shortName);
-const startDate = ref<Date[]>([new Date(props.control.startDate)]);
-const endDate = ref<Date[]>([new Date(props.control.endDate)]);
+// Get control from store by ID - always fresh data
+const control = computed(() =>
+  scheduledIntermediateControlStore.getScheduledIntermediateControlById(props.controlId)
+);
+
+const selectedControlId = ref("");
+const shortName = ref("");
+const startDate = ref<Date[]>([new Date()]);
+const endDate = ref<Date[]>([new Date()]);
 const formError = ref("");
+
+// Update form fields whenever control data changes
+watchEffect(() => {
+  if (control.value) {
+    selectedControlId.value = control.value.intermediateControlId;
+    shortName.value = control.value.shortName;
+    startDate.value = [new Date(control.value.startDate)];
+    endDate.value = [new Date(control.value.endDate)];
+  }
+});
 
 const controlOptions = computed(() =>
   intermediateControlStore.sortedIntermediateControls.map((control) => ({
@@ -180,14 +196,15 @@ const validationResult = computed(() => {
 const isFormValid = computed(() => validationResult.value.success);
 
 const closePopover = () => {
+  if (!control.value) return;
   f7.popover.close(
-    `#edit-scheduled-intermediate-control-popover-${props.control.id}`
+    `#edit-scheduled-intermediate-control-popover-${control.value.id}`
   );
   scheduledIntermediateControlStore.clearError();
 };
 
 const handleUpdateControl = async () => {
-  if (!isFormValid.value) {
+  if (!isFormValid.value || !control.value) {
     if (!validationResult.value.success) {
       formError.value = validationResult.value.error.issues[0].message;
     }
@@ -196,7 +213,7 @@ const handleUpdateControl = async () => {
 
   try {
     await scheduledIntermediateControlStore.updateScheduledIntermediateControl(
-      props.control.id,
+      control.value.id,
       {
         intermediateControlId: selectedControlId.value,
         shortName: shortName.value,
@@ -211,16 +228,18 @@ const handleUpdateControl = async () => {
 };
 
 const confirmDelete = () => {
+  if (!control.value) return;
   f7.popover.close(
-    `#edit-scheduled-intermediate-control-popover-${props.control.id}`
+    `#edit-scheduled-intermediate-control-popover-${control.value.id}`
   );
   f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить промежуточный контроль "${props.control.shortName}"?</p><p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
+    `<p>Вы уверены, что хотите удалить промежуточный контроль "${control.value.shortName}"?</p><p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление промежуточного контроля",
     async () => {
+      if (!control.value) return;
       try {
         await scheduledIntermediateControlStore.deleteScheduledIntermediateControl(
-          props.control.id
+          control.value.id
         );
       } catch (error) {
         console.error(

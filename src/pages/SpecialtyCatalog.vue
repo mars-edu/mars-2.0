@@ -70,9 +70,9 @@
     </template>
 
     <EditSpecialtyButton
-      v-if="selectedSpecialty"
-      :key="`edit-${selectedSpecialty.id}`"
-      :specialty="selectedSpecialty"
+      v-if="selectedSpecialtyId"
+      :key="`edit-${selectedSpecialtyId}`"
+      :specialty-id="selectedSpecialtyId"
     />
   </f7-page>
 </template>
@@ -91,7 +91,7 @@ import Fuse from "fuse.js";
 const activeNavItem = ref("specialty-catalog");
 const specialtyStore = useSpecialtyStore();
 const { specialties } = storeToRefs(specialtyStore);
-const selectedSpecialty = ref<Specialty | null>(null);
+const selectedSpecialtyId = ref<string | null>(null);
 const searchTerm = ref("");
 
 const filteredSpecialties = computed(() => {
@@ -105,7 +105,7 @@ const filteredSpecialties = computed(() => {
 });
 
 const selectSpecialty = async (specialty: Specialty) => {
-  selectedSpecialty.value = specialty;
+  selectedSpecialtyId.value = specialty.id;
   await nextTick();
   f7.popover.open(
     `#edit-specialty-popover-${specialty.id}`,

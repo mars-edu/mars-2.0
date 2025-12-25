@@ -22,8 +22,9 @@
       <EventForm
         :parent-popover-id="'#edit-event-popover'"
         mode="edit"
-        :event-id="props.event.id"
+        :event-id="props.eventId"
         class="overflow-y-auto"
+        v-if="event"
         :start-date="dayjs(startDate[0]).format(DATE_UI_FORMAT)"
         :end-date="dayjs(endDate[0]).format(DATE_UI_FORMAT)"
         :semester="semester"
@@ -58,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watchEffect } from "vue";
 import { f7 } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import EventForm from "./EventForm.vue";
@@ -79,7 +80,7 @@ dayjs.locale("ru");
 dayjs.extend(customParseFormat);
 import { WEEK_DAYS, DATE_UI_FORMAT } from "@/constants/calendar";
 
-const props = defineProps<{ event: CalendarEvent }>();
+const props = defineProps<{ eventId: string }>();
 
 const emit = defineEmits<{
   (e: "updated", event: CalendarEvent): void;
@@ -87,6 +88,9 @@ const emit = defineEmits<{
 }>();
 
 const calendarStore = useCalendarStore();
+
+// Get event from store by ID - always fresh data
+const event = computed(() => calendarStore.getEventById(props.eventId));
 const class9Store = useClass9Store();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const selectedItemsStore = useSelectedItemsStore();
@@ -110,9 +114,9 @@ const { getActiveAcademicYearSemester } = storeToRefs(
   academicYearSemesterStore
 );
 
-const class9Id = ref(props.event.class9Id);
-const useCustomPeriod = ref(props.event.useCustomPeriod || false);
-const semester = ref(props.event.semester || "");
+const class9Id = ref("");
+const useCustomPeriod = ref(false);
+const semester = ref("");
 
 // Convert date string to Date array for datepicker
 const formatDateArray = (date: any): Date[] => {
@@ -145,10 +149,10 @@ const formatDateArray = (date: any): Date[] => {
   return parsed.isValid() ? [parsed.toDate()] : [new Date()];
 };
 
-const startDate = ref<Date[]>(formatDateArray(props.event.startDate));
-const endDate = ref<Date[]>(formatDateArray(props.event.endDate));
-const participants = ref<string[]>([...props.event.participants]);
-const eventColor = ref({ hex: props.event.color || "#3F51B5" });
+const startDate = ref<Date[]>([new Date()]);
+const endDate = ref<Date[]>([new Date()]);
+const participants = ref<string[]>([]);
+const eventColor = ref({ hex: "#3F51B5" });
 
 const formError = ref<string | null>(null);
 const isFormValid = ref(false);
@@ -159,25 +163,38 @@ const selectedWeekDays = ref<
     startId: string;
     endId: string;
   }[]
->(
-  props.event.weeklySchedules?.map((ws) => {
-    const schedules = getActiveYearSchedules.value;
-    const startId =
-      ws.startId ||
-      schedules.find((s) => s.startTime === ws.startTime)?.id ||
-      "";
-    const endId =
-      ws.endId || schedules.find((s) => s.endTime === ws.endTime)?.id || "";
-    return {
-      weekId: ws.weekId,
-      russianWeekDay: WEEK_DAYS.find((d) => d.weekId === ws.weekId)?.name || "",
-      startId,
-      endId,
-    };
-  }) || []
-);
+>([]);
+
+// Update form fields whenever event data changes
+watchEffect(() => {
+  if (event.value) {
+    class9Id.value = event.value.class9Id;
+    useCustomPeriod.value = event.value.useCustomPeriod || false;
+    semester.value = event.value.semester || "";
+    startDate.value = formatDateArray(event.value.startDate);
+    endDate.value = formatDateArray(event.value.endDate);
+    participants.value = [...event.value.participants];
+    eventColor.value = { hex: event.value.color || "#3F51B5" };
+    selectedWeekDays.value = event.value.weeklySchedules?.map((ws) => {
+      const schedules = getActiveYearSchedules.value;
+      const startId =
+        ws.startId ||
+        schedules.find((s) => s.startTime === ws.startTime)?.id ||
+        "";
+      const endId =
+        ws.endId || schedules.find((s) => s.endTime === ws.endTime)?.id || "";
+      return {
+        weekId: ws.weekId,
+        russianWeekDay: WEEK_DAYS.find((d) => d.weekId === ws.weekId)?.name || "",
+        startId,
+        endId,
+      };
+    }) || [];
+  }
+});
 
 const handleUpdateEvent = async () => {
+  if (!event.value) return;
   try {
     formError.value = null;
 
@@ -196,10 +213,10 @@ const handleUpdateEvent = async () => {
         "",
     };
 
-    await calendarStore.updateEvent(props.event.id, updateData);
+    await calendarStore.updateEvent(event.value.id, updateData);
 
     const emitData = {
-      ...props.event,
+      ...event.value,
       class9Id: class9Id.value,
       startDate: dayjs(startDate.value[0]).format(DATE_UI_FORMAT),
       endDate: dayjs(endDate.value[0]).format(DATE_UI_FORMAT),
@@ -222,16 +239,18 @@ const handleUpdateEvent = async () => {
 };
 
 const showDeleteConfirmation = () => {
+  if (!event.value) return;
   f7.popover.close("#edit-event-popover");
-  const eventTitle = calendarStore.getEventTitle(props.event);
+  const eventTitle = calendarStore.getEventTitle(event.value);
   f7.dialog.confirm(
     `<p>Вы уверены, что хотите удалить событие \"${eventTitle}\"?</p>
      <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление события",
     async () => {
+      if (!event.value) return;
       try {
-        await calendarStore.deleteEvent(props.event.id);
-        emit("updated", props.event);
+        await calendarStore.deleteEvent(event.value.id);
+        emit("updated", event.value);
       } catch (error) {
         f7.dialog.alert(
           "Произошла ошибка при удалении события.",

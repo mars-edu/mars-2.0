@@ -1,6 +1,7 @@
 <template>
   <div>
     <f7-popover
+      v-if="session"
       :id="'edit-session-popover-' + session.id"
       style="width: 600px !important"
       close-on-escape
@@ -105,7 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watchEffect } from "vue";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { f7, f7Input, f7Icon, f7Popover } from "framework7-vue";
@@ -115,15 +116,28 @@ import { useSessionStore } from "@/stores/sessionStore";
 import type { Session } from "@/stores/sessionStore";
 import { DATE_PICKER_PARAMS } from "@/constants/calendar";
 
-const props = defineProps<{ session: Session }>();
+const props = defineProps<{ sessionId: string }>();
 
 const sessionStore = useSessionStore();
 
-const shortName = ref(props.session.shortName);
-const fullName = ref(props.session.fullName);
-const startDate = ref<Date[]>([new Date(props.session.startDate)]);
-const endDate = ref<Date[]>([new Date(props.session.endDate)]);
+// Get session from store by ID - always fresh data
+const session = computed(() => sessionStore.getSessionById(props.sessionId));
+
+const shortName = ref("");
+const fullName = ref("");
+const startDate = ref<Date[]>([new Date()]);
+const endDate = ref<Date[]>([new Date()]);
 const formError = ref("");
+
+// Update form fields whenever session data changes
+watchEffect(() => {
+  if (session.value) {
+    shortName.value = session.value.shortName;
+    fullName.value = session.value.fullName;
+    startDate.value = [new Date(session.value.startDate)];
+    endDate.value = [new Date(session.value.endDate)];
+  }
+});
 
 const sessionSchema = z
   .object({
@@ -155,12 +169,13 @@ const validationResult = computed(() => {
 const isFormValid = computed(() => validationResult.value.success);
 
 const closePopover = () => {
-  f7.popover.close(`#edit-session-popover-${props.session.id}`);
+  if (!session.value) return;
+  f7.popover.close(`#edit-session-popover-${session.value.id}`);
   sessionStore.clearError();
 };
 
 const handleUpdateSession = async () => {
-  if (!isFormValid.value) {
+  if (!isFormValid.value || !session.value) {
     if (!validationResult.value.success) {
       formError.value = validationResult.value.error.issues[0].message;
     }
@@ -168,7 +183,7 @@ const handleUpdateSession = async () => {
   }
 
   try {
-    await sessionStore.updateSession(props.session.id, {
+    await sessionStore.updateSession(session.value.id, {
       shortName: shortName.value,
       fullName: fullName.value,
       startDate: dayjs(startDate.value[0]).format(DATE_STORAGE_FORMAT),
@@ -181,13 +196,15 @@ const handleUpdateSession = async () => {
 };
 
 const confirmDelete = () => {
-  f7.popover.close(`#edit-session-popover-${props.session.id}`);
+  if (!session.value) return;
+  f7.popover.close(`#edit-session-popover-${session.value.id}`);
   f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить сессию "${props.session.shortName}"?</p><p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
+    `<p>Вы уверены, что хотите удалить сессию "${session.value.shortName}"?</p><p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление сессии",
     async () => {
+      if (!session.value) return;
       try {
-        await sessionStore.deleteSession(props.session.id);
+        await sessionStore.deleteSession(session.value.id);
       } catch (error) {
         console.error("Failed to delete session:", error);
         f7.dialog.alert("Произошла ошибка при удалении сессии.");
