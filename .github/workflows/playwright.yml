@@ -36,6 +36,11 @@ jobs:
         env:
           CONVEX_AGENT_MODE: anonymous
 
+      - name: Execute convex server
+        run: npx convex dev &
+        env:
+          CONVEX_AGENT_MODE: anonymous
+
       - name: Run Playwright tests
         run: npm run test:e2e
         env:
