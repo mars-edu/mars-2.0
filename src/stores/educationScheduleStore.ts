@@ -172,36 +172,13 @@ export const useEducationScheduleStore = defineStore(
     ) {
       loading.value = true;
       try {
-        const sourceSchedules = schedules.value.filter(
-          (s) => s.academicYearId === sourceAcademicYearId
-        );
-
-        if (sourceSchedules.length === 0) {
-          throw new Error("No schedules found in source academic year");
-        }
-
-        const existingTargetSchedules = schedules.value.filter(
-          (s) => s.academicYearId === targetAcademicYearId
-        );
-
-        if (existingTargetSchedules.length > 0) {
-          schedules.value = schedules.value.filter(
-            (s) => s.academicYearId !== targetAcademicYearId
-          );
-        }
-
-        const copiedSchedules = sourceSchedules.map((schedule) => ({
-          ...schedule,
-          id: crypto.randomUUID(),
-          academicYearId: targetAcademicYearId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }));
-
-        schedules.value.push(...copiedSchedules);
-        sortSchedules();
+        // Use Convex - the reactive subscription will handle updating the local state
+        await convex.mutation(api.educationSchedules.mutations.copySchedulesFromYear, {
+          sourceAcademicYearId,
+          targetAcademicYearId,
+        });
         error.value = null;
-        return copiedSchedules;
+        return;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to copy schedules";

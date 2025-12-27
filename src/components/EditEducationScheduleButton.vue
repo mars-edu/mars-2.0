@@ -102,10 +102,6 @@ const props = defineProps<{
   scheduleId: string;
 }>();
 
-const emit = defineEmits<{
-  (e: "close"): void;
-}>();
-
 const educationScheduleStore = useEducationScheduleStore();
 
 // Get schedule from store by ID - always fresh data
@@ -197,12 +193,6 @@ onMounted(() => {
     `#schedule-end-time-${schedule.value.id}`,
     endTime
   );
-
-  // Open the popover after the component is mounted
-  const targetEl = document.getElementById(`schedule-item-${schedule.value.id}`);
-  if (targetEl) {
-    f7.popover.open(`#edit-schedule-popover-${schedule.value.id}`, targetEl);
-  }
 });
 
 onBeforeUnmount(() => {
@@ -214,7 +204,6 @@ const closeEditSchedulePopover = () => {
   if (!schedule.value) return;
   f7.popover.close(`#edit-schedule-popover-${schedule.value.id}`);
   resetForm();
-  emit("close");
 };
 
 const handleUpdateSchedule = async () => {
@@ -243,7 +232,6 @@ const handleUpdateSchedule = async () => {
 const showDeleteConfirmation = () => {
   if (!schedule.value) return;
   f7.popover.close(`#edit-schedule-popover-${schedule.value.id}`);
-  emit("close");
 
   f7.dialog.confirm(
     `<p>Вы уверены, что хотите удалить расписание для урока "${schedule.value.lessonNumber}"?</p>

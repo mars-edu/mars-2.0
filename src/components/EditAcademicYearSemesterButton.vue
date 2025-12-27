@@ -1,7 +1,7 @@
 <template>
   <div>
     <f7-popover
-      v-show="academicYearSemester"
+      v-if="academicYearSemester"
       :id="'edit-academic-year-semester-popover-' + academicYearSemester.id"
       style="width: 600px !important"
       close-on-escape

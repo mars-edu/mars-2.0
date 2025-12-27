@@ -74,7 +74,7 @@
           <div
             v-for="(stepData, index) in steps"
             :key="index"
-            v-show="currentStep === index + 1"
+            v-if="currentStep === index + 1"
           >
             <!-- Specialty selection for first step -->
             <div v-if="index === 0" class="mb-6">

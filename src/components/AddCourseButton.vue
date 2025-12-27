@@ -31,10 +31,19 @@
         />
 
         <div
-          v-if="formError || courseStore.getError"
+          v-if="formError || courseStore.getError || duplicateSemesters.length > 0"
           class="px-4 pt-2 text-destructive text-sm"
         >
-          {{ formError || courseStore.getError }}
+          <div v-if="formError">{{ formError }}</div>
+          <div v-if="courseStore.getError">{{ courseStore.getError }}</div>
+          <div v-if="duplicateSemesters.length > 0">
+            <div class="font-semibold">Следующие семестры уже используются:</div>
+            <ul class="list-disc list-inside mt-1">
+              <li v-for="(dup, index) in duplicateSemesters" :key="index">
+                {{ dup }}
+              </li>
+            </ul>
+          </div>
         </div>
 
         <div class="p-4 space-y-4">
@@ -86,6 +95,34 @@ const courseNumber = ref("");
 const selectedSemesters = ref<string[]>([]);
 const formError = ref("");
 
+// Helper to get semesters used by other courses
+const usedSemesters = computed(() => {
+  const used = new Map<string, string>(); // semesterId -> courseNumber
+  courseStore.courses.forEach((course) => {
+    course.semesters?.forEach((semesterId) => {
+      used.set(semesterId, course.number);
+    });
+  });
+  return used;
+});
+
+// Helper to find duplicate semester selections
+const duplicateSemesters = computed(() => {
+  const duplicates: string[] = [];
+  selectedSemesters.value.forEach((semesterId) => {
+    if (usedSemesters.value.has(semesterId)) {
+      const semester = semesterStore.sortedSemesters.find(
+        (s) => s.id === semesterId
+      );
+      if (semester) {
+        const courseNumber = usedSemesters.value.get(semesterId);
+        duplicates.push(`${semester.shortName} (уже используется курсом ${courseNumber})`);
+      }
+    }
+  });
+  return duplicates;
+});
+
 const courseSchema = z.object({
   number: z.string().min(1, "Пожалуйста, введите номер курса"),
   semesters: z.array(z.string()).optional(),
@@ -98,7 +135,9 @@ const validationResult = computed(() => {
   });
 });
 
-const isFormValid = computed(() => validationResult.value.success);
+const isFormValid = computed(() => {
+  return validationResult.value.success && duplicateSemesters.value.length === 0;
+});
 
 const openAddCoursePopover = () => {
   f7.popover.open(

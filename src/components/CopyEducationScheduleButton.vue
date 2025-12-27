@@ -2,11 +2,12 @@
   <div>
     <button
       id="copy-education-schedule-button"
-      class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-blue-500 hover:bg-blue-600 rounded-full transition-colors"
+      class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-blue-500 hover:bg-blue-600 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       aria-label="Копировать расписание"
       type="button"
       @click.stop="openCopySchedulePopover"
       :disabled="!hasOtherYearsWithSchedules"
+      :title="hasOtherYearsWithSchedules ? 'Копировать расписание из другого учебного года' : 'Нет доступных учебных годов с расписанием для копирования'"
     >
       <f7-icon
         ios="f7:doc_on_doc"
@@ -152,7 +153,18 @@ const pluralizeSchedule = (count: number): string => {
 };
 
 const openCopySchedulePopover = () => {
-  if (!hasOtherYearsWithSchedules.value) return;
+  console.log("[CopyEducationScheduleButton] openCopySchedulePopover called");
+  console.log("[CopyEducationScheduleButton] hasOtherYearsWithSchedules:", hasOtherYearsWithSchedules.value);
+  console.log("[CopyEducationScheduleButton] availableYearsWithSchedules:", availableYearsWithSchedules.value);
+  console.log("[CopyEducationScheduleButton] activeAcademicYear:", activeAcademicYear.value);
+  console.log("[CopyEducationScheduleButton] allAcademicYears:", academicYearStore.getSortedAcademicYears);
+
+  if (!hasOtherYearsWithSchedules.value) {
+    console.log("[CopyEducationScheduleButton] No other years with schedules, not opening popover");
+    return;
+  }
+
+  console.log("[CopyEducationScheduleButton] Opening popover...");
   f7.popover.open(
     "#copy-education-schedule-popover",
     "#copy-education-schedule-button"

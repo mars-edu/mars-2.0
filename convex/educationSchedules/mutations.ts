@@ -61,3 +61,59 @@ export const remove = mutation({
     return { success: true };
   },
 });
+
+/**
+ * Copy education schedules from one academic year to another
+ * Deletes all existing schedules in the target year before copying
+ */
+export const copySchedulesFromYear = mutation({
+  args: {
+    sourceAcademicYearId: v.string(),
+    targetAcademicYearId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { sourceAcademicYearId, targetAcademicYearId } = args;
+
+    // Get source schedules
+    const sourceSchedules = await ctx.db
+      .query("educationSchedules")
+      .filter((q) => q.eq(q.field("academicYearId"), sourceAcademicYearId))
+      .collect();
+
+    if (sourceSchedules.length === 0) {
+      throw new Error("No schedules found in source academic year");
+    }
+
+    // Delete existing schedules in target year
+    const existingTargetSchedules = await ctx.db
+      .query("educationSchedules")
+      .filter((q) => q.eq(q.field("academicYearId"), targetAcademicYearId))
+      .collect();
+
+    for (const schedule of existingTargetSchedules) {
+      await ctx.db.delete(schedule._id);
+    }
+
+    // Copy schedules to target year
+    const timestamps = createTimestamps();
+    const copiedScheduleIds = [];
+
+    for (const schedule of sourceSchedules) {
+      const newId = await ctx.db.insert("educationSchedules", {
+        name: schedule.name,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        order: schedule.order,
+        academicYearId: targetAcademicYearId,
+        ...timestamps,
+      });
+      copiedScheduleIds.push(newId);
+    }
+
+    return {
+      success: true,
+      copiedCount: copiedScheduleIds.length,
+      ids: copiedScheduleIds,
+    };
+  },
+});

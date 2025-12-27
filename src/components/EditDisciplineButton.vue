@@ -1,7 +1,7 @@
 <template>
   <div>
     <f7-popover
-      v-show="discipline"
+      v-if="discipline"
       :id="'edit-discipline-popover-' + discipline._id"
       style="width: 600px !important"
       close-on-escape

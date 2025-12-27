@@ -59,7 +59,7 @@
               id="schedule-start-time"
               type="text"
               readonly
-              :value="startTime"
+              v-model:value="startTime"
               placeholder="Введите время начала"
             ></f7-input>
           </div>
@@ -72,7 +72,7 @@
               id="schedule-end-time"
               type="text"
               readonly
-              :value="endTime"
+              v-model:value="endTime"
               placeholder="Введите время окончания"
             ></f7-input>
           </div>
@@ -156,6 +156,13 @@ const createPicker = (inputEl: string, valueRef: any) => {
       change: (picker: any, value: any) => {
         valueRef.value = `${value[0]}:${value[1]}`;
       },
+      close: (picker: any) => {
+        // Ensure value is set even if user didn't change anything
+        const currentValue = picker.getValue();
+        if (currentValue && currentValue.length >= 2) {
+          valueRef.value = `${currentValue[0]}:${currentValue[1]}`;
+        }
+      },
     },
   });
 };
@@ -171,10 +178,10 @@ onBeforeUnmount(() => {
 });
 
 const openAddSchedulePopover = () => {
-  // Reset form values before opening
+  // Reset form values with defaults
   lessonNumber.value = "";
-  startTime.value = "";
-  endTime.value = "";
+  startTime.value = "08:30";
+  endTime.value = "08:30";
   formError.value = "";
 
   f7.popover.open(
