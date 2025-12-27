@@ -30,7 +30,7 @@
 
     <!-- Search Results -->
     <div
-      v-show="isActive && (searchQuery || showEmptyState)"
+      v-if="isActive && (searchQuery || showEmptyState)"
       class="absolute left-0 right-0 top-full mt-2 bg-white/95 backdrop-blur rounded-xl shadow-lg overflow-hidden z-50"
     >
       <!-- No Results State -->

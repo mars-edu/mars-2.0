@@ -1,0 +1,41 @@
+--- a/node_modules/framework7/components/popover/popover-class.js
++++ b/node_modules/framework7/components/popover/popover-class.js
+@@ -105,11 +105,11 @@ class Popover extends Modal {
+       if ($target.closest(popover.el).length === 0) {
+-        if (popover.params.closeByBackdropClick && popover.params.backdrop && popover.backdropEl && popover.backdropEl === target && touchStartTarget === target) {
++        if (popover.params && popover.params.closeByBackdropClick && popover.params.backdrop && popover.backdropEl && popover.backdropEl === target && touchStartTarget === target) {
+           popover.close();
+-        } else if (popover.params.closeByOutsideClick && touchStartTarget === target) {
++        } else if (popover.params && popover.params.closeByOutsideClick && touchStartTarget === target) {
+           const isAnotherPopoverBackdrop = $target.hasClass('popover-backdrop-unique') && target.f7PopoverRef !== popover || $target.hasClass('popover-backdrop') && target !== popover.backdropEl;
+           const isAnotherPopoverTarget = target.closest('.popover') && target.closest('.popover') !== popover.$el[0];
+           if (!isAnotherPopoverBackdrop && !isAnotherPopoverTarget) {
+             popover.close();
+           }
+         }
+       }
+@@ -118,7 +118,7 @@ class Popover extends Modal {
+     function onKeyDown(e) {
+       const keyCode = e.keyCode;
+-      if (keyCode === 27 && popover.params.closeOnEscape) {
++      if (keyCode === 27 && popover.params && popover.params.closeOnEscape) {
+         popover.close();
+       }
+     }
+@@ -131,7 +131,7 @@ class Popover extends Modal {
+     });
+     popover.on('popoverOpened', () => {
+-      if (popover.params.closeByOutsideClick || popover.params.closeByBackdropClick) {
++      if (popover.params && (popover.params.closeByOutsideClick || popover.params.closeByBackdropClick)) {
+         app.on('touchstart', handleTouchStart);
+         app.on('click', handleClick);
+       }
+     });
+@@ -136,7 +136,7 @@ class Popover extends Modal {
+     popover.on('popoverClose', () => {
+-      if (popover.params.closeByOutsideClick || popover.params.closeByBackdropClick) {
++      if (popover.params && (popover.params.closeByOutsideClick || popover.params.closeByBackdropClick)) {
+         app.off('touchstart', handleTouchStart);
+         app.off('click', handleClick);
+       }
+     });

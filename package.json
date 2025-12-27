@@ -13,7 +13,7 @@
     "build": "cross-env NODE_ENV=production vite build",
     "build:convex": "npx convex codegen && npx convex deploy --cmd 'npm run build' && ./scripts/run-migrations.sh",
     "migrate": "./scripts/run-migrations.sh",
-    "postinstall": "cpy --flat ./node_modules/framework7-icons/fonts/*.* ./src/fonts/ && cpy --flat ./node_modules/material-icons/iconfont/*.* ./src/fonts/",
+    "postinstall": "./scripts/postinstall.sh",
     "preview": "npm run build && cross-env NODE_ENV=production vite preview",
     "test": "jest --runInBand",
     "test:e2e": "playwright test",
