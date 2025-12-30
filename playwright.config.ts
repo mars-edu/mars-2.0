@@ -33,6 +33,12 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      testIgnore: '**/performance-throttled.spec.ts',
+    },
+    {
+      name: 'chromium-throttled',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: '**/performance-throttled.spec.ts',
     },
     // Uncomment browsers below after installing with: npx playwright install firefox webkit
     // {

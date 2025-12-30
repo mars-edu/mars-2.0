@@ -1,8 +1,6 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Page Navigation Tracking', () => {
-  test.skip(!!process.env.CI, 'CI environment too slow - tests pass locally');
-
   test.beforeEach(async ({ page }) => {
     // Login with real Convex authentication
     await page.goto('/login');

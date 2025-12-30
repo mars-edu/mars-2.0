@@ -1,8 +1,6 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Page Refresh Persistence', () => {
-  test.skip(!!process.env.CI, 'CI environment too slow - auth works locally');
-
   test.beforeEach(async ({ page }) => {
     // Login with real Convex authentication
     await page.goto('/login');
