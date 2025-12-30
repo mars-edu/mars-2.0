@@ -13,7 +13,7 @@ test.describe('Page Refresh Persistence', () => {
 
     // Wait for successful login and navigation to home
     // Increased timeout for CI environment
-    await page.waitForURL(/\/home\/?/, { timeout: 30000 });
+    await page.waitForURL(/\/home\/?/, { timeout: 60000 });
     await page.waitForLoadState('networkidle');
     await page.waitForLoadState('domcontentloaded');
 

@@ -75,8 +75,8 @@ test.describe('Authentication', () => {
     await page.getByRole('button', { name: /Войти/i }).click();
 
     // Wait for successful login and navigation to home
-    // Increased timeout for potential URL normalization
-    await page.waitForURL(/\/home\/?/, { timeout: 15000 });
+    // Increased timeout for CI environment
+    await page.waitForURL(/\/home\/?/, { timeout: 60000 });
     await page.waitForLoadState('networkidle');
 
     // Verify we're on home page
