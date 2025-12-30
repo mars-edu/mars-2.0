@@ -150,6 +150,7 @@ export default async () => {
         "dayjs/plugin/isBetween",
         "dayjs/plugin/customParseFormat",
         "dayjs/locale/ru",
+        "vue-advanced-cropper",
       ],
     },
     server: {
