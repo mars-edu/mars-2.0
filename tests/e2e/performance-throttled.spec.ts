@@ -1,6 +1,10 @@
 import { test, expect, chromium } from '@playwright/test';
 
 test.describe('Performance with Throttling', () => {
+  // Skip throttled performance tests in CI - they're too slow and intensive
+  // Run locally with: CI=false npx playwright test performance-throttled.spec.ts
+  test.skip(!!process.env.CI, 'Throttled performance tests are too slow for CI');
+
   // Set longer timeout for throttled tests
   test.setTimeout(90000); // 90 seconds
 

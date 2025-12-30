@@ -34,16 +34,6 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-    {
-      name: 'chromium-throttled',
-      use: {
-        ...devices['Desktop Chrome'],
-        // Enable CPU throttling (4x slowdown) and network throttling (Slow 3G)
-        contextOptions: {
-          // This will be used in tests to apply throttling
-        },
-      },
-    },
     // Uncomment browsers below after installing with: npx playwright install firefox webkit
     // {
     //   name: 'firefox',
