@@ -12,6 +12,7 @@ export const getUser = query({
       _creationTime: v.number(),
       firstName: v.string(),
       lastName: v.string(),
+      middleName: v.optional(v.string()),
       username: v.string(),
       email: v.string(),
       roles: v.array(

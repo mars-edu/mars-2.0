@@ -64,7 +64,6 @@ test.describe('Authentication', () => {
     }
   });
 
-  test.skip(!!process.env.CI, 'Skipped in CI - requires auth persistence fix');
   test('should redirect to home when accessing login page while already authenticated', async ({ page }) => {
     // First, login
     await page.goto('/login');

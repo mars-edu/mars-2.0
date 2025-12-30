@@ -1,9 +1,6 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Page Navigation Tracking', () => {
-  // Skip in CI - tests are flaky due to timing issues with data-page-id generation
-  test.skip(!!process.env.CI, 'Skipped in CI - flaky due to timing issues');
-
   test.beforeEach(async ({ page }) => {
     // Login with real Convex authentication
     await page.goto('/login');
