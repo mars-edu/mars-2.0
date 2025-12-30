@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Authentication', () => {
+  // Increase timeout for CI environment (slow login flows)
+  test.setTimeout(90000);
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');

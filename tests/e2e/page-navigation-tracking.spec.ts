@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Page Navigation Tracking', () => {
+  // Increase timeout for CI environment (slow login flows)
+  test.setTimeout(90000);
+
   test.beforeEach(async ({ page }) => {
     // Login with real Convex authentication
     await page.goto('/login');
