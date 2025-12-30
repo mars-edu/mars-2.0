@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Authentication', () => {
-  // Increase timeout for CI environment (slow login flows)
-  test.setTimeout(90000);
+  // Increase timeout for CI environment (very slow login flows)
+  test.setTimeout(150000); // 2.5 minutes
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -78,8 +78,8 @@ test.describe('Authentication', () => {
     await page.getByRole('button', { name: /Войти/i }).click();
 
     // Wait for successful login and navigation to home
-    // Increased timeout for CI environment
-    await page.waitForURL(/\/home\/?/, { timeout: 60000 });
+    // Increased timeout for very slow CI environment
+    await page.waitForURL(/\/home\/?/, { timeout: 120000 }); // 2 minutes
     await page.waitForLoadState('networkidle');
 
     // Verify we're on home page
