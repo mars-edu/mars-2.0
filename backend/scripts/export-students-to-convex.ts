@@ -23,10 +23,14 @@
  *   npx convex import --table students backend/exports/convex-students-export.json
  */
 
-import { execSync } from "child_process";
-import { writeFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import {
+  checkWranglerAuth,
+  parsePiniaState,
+  runD1Query,
+  writeJsonFile as writeJsonFileToDisk,
+} from "./lib/d1.ts";
 
 // ES module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -55,27 +59,7 @@ interface D1StudentRow {
  * PiniaState structure for students
  */
 interface D1StudentPiniaState {
-  json: {
-    students: D1StudentRow[];
-  };
-}
-
-/**
- * D1 query response wrapper
- */
-interface D1QueryResponse {
-  results: Array<{ state: string }>;
-  success: boolean;
-  meta?: {
-    served_by?: string;
-    duration?: number;
-    changes?: number;
-    last_row_id?: number;
-    changed_db?: boolean;
-    size_after?: number;
-    rows_read?: number;
-    rows_written?: number;
-  };
+  students: D1StudentRow[];
 }
 
 /**
@@ -126,130 +110,39 @@ WHERE storeId = 'student'
 // ============================================================================
 
 /**
- * Check if wrangler is authenticated
- * Throws error if not authenticated
- */
-function checkWranglerAuth(): void {
-  try {
-    const result = execSync("npx wrangler whoami", {
-      encoding: "utf-8",
-      stdio: ["pipe", "pipe", "pipe"],
-    });
-
-    if (result.includes("You are logged in")) {
-      console.log("✓ Authenticated with Wrangler");
-    } else {
-      throw new Error("Wrangler authentication check failed");
-    }
-  } catch (error: any) {
-    console.error("✗ Wrangler authentication failed");
-    console.error("\nPlease re-authenticate with:");
-    console.error("  npx wrangler login");
-    console.error("\nOr use API token authentication:");
-    console.error("  export CLOUDFLARE_API_TOKEN=your_token");
-    console.error("  export CLOUDFLARE_ACCOUNT_ID=your_account_id\n");
-    throw new Error("Not authenticated with Wrangler");
-  }
-}
-
-/**
  * Query D1 database and return student rows from PiniaState
  */
 function queryD1Students(): D1StudentRow[] {
-  try {
-    // Execute query via wrangler with account ID
-    const command = `npx wrangler d1 execute ${CONFIG.databaseName} --remote --json --command="${STUDENTS_QUERY.replace(/"/g, '\\"')}"`;
+  const response = runD1Query<{ state: string }>({
+    databaseName: CONFIG.databaseName,
+    accountId: CONFIG.accountId,
+    query: STUDENTS_QUERY,
+  });
 
-    const output = execSync(command, {
-      encoding: "utf-8",
-      maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large results
-      env: {
-        ...process.env,
-        CLOUDFLARE_ACCOUNT_ID: CONFIG.accountId, // Set account ID
-      },
-    });
-
-    // Debug: log raw output
-    if (process.env.DEBUG) {
-      console.log("Raw wrangler output:", output);
-    }
-
-    // Parse JSON response - wrangler returns an array with response object inside
-    const parsed = JSON.parse(output);
-    const response: D1QueryResponse = Array.isArray(parsed) ? parsed[0] : parsed;
-
-    if (!response.success) {
-      throw new Error("D1 query failed");
-    }
-
-    if (!Array.isArray(response.results)) {
-      throw new Error("Invalid response format from D1");
-    }
-
-    if (response.results.length === 0) {
-      throw new Error("No PiniaState record found for storeId='student'");
-    }
-
-    // Parse the JSON blob from state column
-    const stateJson = response.results[0].state;
-    if (!stateJson) {
-      throw new Error("PiniaState 'state' column is empty");
-    }
-
-    let piniaState: D1StudentPiniaState;
-    try {
-      piniaState = JSON.parse(stateJson);
-    } catch (error) {
-      throw new Error("Failed to parse PiniaState JSON blob");
-    }
-
-    // Validate structure
-    if (!piniaState.json || !Array.isArray(piniaState.json.students)) {
-      throw new Error("Invalid PiniaState structure: expected json.students array");
-    }
-
-    const students = piniaState.json.students;
-    console.log(`✓ Found ${students.length} students in PiniaState`);
-
-    if (students.length === 0) {
-      console.warn("⚠ Warning: No students found in PiniaState");
-    }
-
-    return students;
-  } catch (error: any) {
-    console.error("✗ Failed to query D1 database");
-
-    // Show the actual error output
-    if (error.stderr) {
-      console.error("\nWrangler error output:");
-      console.error(error.stderr.toString());
-    }
-
-    if (error.stdout) {
-      console.error("\nWrangler stdout:");
-      console.error(error.stdout.toString());
-    }
-
-    // Check for authentication errors
-    if (error.stdout?.includes("Authentication error") || error.stdout?.includes("code: 10000")) {
-      console.error("\n⚠ Authentication error detected!");
-      console.error("\nPlease re-authenticate with:");
-      console.error("  npx wrangler login");
-      console.error("\nIf that doesn't work, try using API token authentication:");
-      console.error("  1. Get your API token from: https://dash.cloudflare.com/profile/api-tokens");
-      console.error("  2. Create a token with 'D1 Edit' permissions");
-      console.error("  3. Set environment variables:");
-      console.error("     export CLOUDFLARE_API_TOKEN=your_token");
-      console.error("     export CLOUDFLARE_ACCOUNT_ID=1baf07e2bf54af133428fea840266f45");
-      console.error("  4. Run the script again");
-    }
-
-    if (error.message.includes("JSON") || error.message.includes("PiniaState")) {
-      console.error("\nError details:", error.message);
-    }
-
-    throw error;
+  if (response.results.length === 0) {
+    throw new Error("No PiniaState record found for storeId='student'");
   }
+
+  // Parse the JSON blob from state column
+  const stateJson = response.results[0].state;
+  if (!stateJson) {
+    throw new Error("PiniaState 'state' column is empty");
+  }
+
+  const piniaState = parsePiniaState<D1StudentPiniaState>(stateJson);
+
+  if (!piniaState.students || !Array.isArray(piniaState.students)) {
+    throw new Error("Invalid PiniaState structure: expected students array");
+  }
+
+  const students = piniaState.students;
+  console.log(`✓ Found ${students.length} students in PiniaState`);
+
+  if (students.length === 0) {
+    console.warn("⚠ Warning: No students found in PiniaState");
+  }
+
+  return students;
 }
 
 /**
@@ -364,10 +257,7 @@ function validateStudents(students: ConvexStudent[]): void {
  */
 function writeJsonFile(students: ConvexStudent[]): void {
   try {
-    const json = JSON.stringify(students, null, 2);
-    writeFileSync(CONFIG.outputFile, json, "utf-8");
-
-    const fileSizeKB = (json.length / 1024).toFixed(1);
+    const fileSizeKB = writeJsonFileToDisk(CONFIG.outputFile, students);
     console.log(`✓ Wrote ${CONFIG.outputFile} (${fileSizeKB} KB)`);
   } catch (error: any) {
     console.error("✗ Failed to write file");

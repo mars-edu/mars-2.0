@@ -21,10 +21,13 @@
  *   npx convex import --table users backend/exports/convex-users-export.json
  */
 
-import { execSync } from "child_process";
-import { writeFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import {
+  checkWranglerAuth,
+  runD1Query,
+  writeJsonFile as writeJsonFileToDisk,
+} from "./lib/d1.ts";
 
 // ES module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -47,24 +50,6 @@ interface D1UserRow {
   createdAt: string; // ISO 8601 format
   updatedAt: string; // ISO 8601 format
   roles: string | null; // Pipe-delimited: "ADMIN|TEACHER" or null
-}
-
-/**
- * D1 query response wrapper
- */
-interface D1QueryResponse {
-  results: D1UserRow[];
-  success: boolean;
-  meta?: {
-    served_by?: string;
-    duration?: number;
-    changes?: number;
-    last_row_id?: number;
-    changed_db?: boolean;
-    size_after?: number;
-    rows_read?: number;
-    rows_written?: number;
-  };
 }
 
 /**
@@ -121,107 +106,22 @@ ORDER BY u.createdAt ASC
 // ============================================================================
 
 /**
- * Check if wrangler is authenticated
- * Throws error if not authenticated
- */
-function checkWranglerAuth(): void {
-  try {
-    const result = execSync("npx wrangler whoami", {
-      encoding: "utf-8",
-      stdio: ["pipe", "pipe", "pipe"],
-    });
-
-    if (result.includes("You are logged in")) {
-      console.log("✓ Authenticated with Wrangler");
-    } else {
-      throw new Error("Wrangler authentication check failed");
-    }
-  } catch (error: any) {
-    console.error("✗ Wrangler authentication failed");
-    console.error("\nPlease re-authenticate with:");
-    console.error("  npx wrangler login");
-    console.error("\nOr use API token authentication:");
-    console.error("  export CLOUDFLARE_API_TOKEN=your_token");
-    console.error("  export CLOUDFLARE_ACCOUNT_ID=your_account_id\n");
-    throw new Error("Not authenticated with Wrangler");
-  }
-}
-
-/**
  * Query D1 database and return user rows
  */
 function queryD1Users(): D1UserRow[] {
-  try {
-    // Execute query via wrangler with account ID
-    const command = `npx wrangler d1 execute ${CONFIG.databaseName} --remote --json --command="${USERS_QUERY.replace(/"/g, '\\"')}"`;
+  const response = runD1Query<D1UserRow>({
+    databaseName: CONFIG.databaseName,
+    accountId: CONFIG.accountId,
+    query: USERS_QUERY,
+  });
 
-    const output = execSync(command, {
-      encoding: "utf-8",
-      maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large results
-      env: {
-        ...process.env,
-        CLOUDFLARE_ACCOUNT_ID: CONFIG.accountId, // Set account ID
-      },
-    });
+  console.log(`✓ Found ${response.results.length} users`);
 
-    // Debug: log raw output
-    if (process.env.DEBUG) {
-      console.log("Raw wrangler output:", output);
-    }
-
-    // Parse JSON response - wrangler returns an array with response object inside
-    const parsed = JSON.parse(output);
-    const response: D1QueryResponse = Array.isArray(parsed) ? parsed[0] : parsed;
-
-    if (!response.success) {
-      throw new Error("D1 query failed");
-    }
-
-    if (!Array.isArray(response.results)) {
-      throw new Error("Invalid response format from D1");
-    }
-
-    console.log(`✓ Found ${response.results.length} users`);
-
-    if (response.results.length === 0) {
-      console.warn("⚠ Warning: No users found in database");
-    }
-
-    return response.results;
-  } catch (error: any) {
-    console.error("✗ Failed to query D1 database");
-
-    // Show the actual error output
-    if (error.stderr) {
-      console.error("\nWrangler error output:");
-      console.error(error.stderr.toString());
-    }
-
-    if (error.stdout) {
-      console.error("\nWrangler stdout:");
-      console.error(error.stdout.toString());
-    }
-
-    // Check for authentication errors
-    if (error.stdout?.includes("Authentication error") || error.stdout?.includes("code: 10000")) {
-      console.error("\n⚠ Authentication error detected!");
-      console.error("\nPlease re-authenticate with:");
-      console.error("  npx wrangler login");
-      console.error("\nIf that doesn't work, try using API token authentication:");
-      console.error("  1. Get your API token from: https://dash.cloudflare.com/profile/api-tokens");
-      console.error("  2. Create a token with 'D1 Edit' permissions");
-      console.error("  3. Set environment variables:");
-      console.error("     export CLOUDFLARE_API_TOKEN=your_token");
-      console.error("     export CLOUDFLARE_ACCOUNT_ID=1baf07e2bf54af133428fea840266f45");
-      console.error("  4. Run the script again");
-    }
-
-    if (error.message.includes("JSON")) {
-      console.error("\nError parsing JSON response from wrangler");
-    }
-
-    throw error;
+  if (response.results.length === 0) {
+    console.warn("⚠ Warning: No users found in database");
   }
+
+  return response.results;
 }
 
 /**
@@ -353,10 +253,7 @@ function validateUsers(users: ConvexUser[]): void {
  */
 function writeJsonFile(users: ConvexUser[]): void {
   try {
-    const json = JSON.stringify(users, null, 2);
-    writeFileSync(CONFIG.outputFile, json, "utf-8");
-
-    const fileSizeKB = (json.length / 1024).toFixed(1);
+    const fileSizeKB = writeJsonFileToDisk(CONFIG.outputFile, users);
     console.log(`✓ Wrote ${CONFIG.outputFile} (${fileSizeKB} KB)`);
   } catch (error: any) {
     console.error("✗ Failed to write file");

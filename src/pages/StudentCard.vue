@@ -37,6 +37,14 @@
             class="flex flex-wrap gap-x-4 gap-y-2 items-center student-card-filters"
           >
             <Select
+              v-model="selectedSpecialty"
+              :options="specialtyOptions"
+              placeholder="Специальность:"
+              name="specialty"
+              class="min-w-[220px]"
+            />
+
+            <Select
               v-model="selectedGender"
               :options="genderOptions"
               placeholder="Пол:"
@@ -67,7 +75,7 @@
                 </thead>
                 <tbody>
                   <tr
-                    v-for="(student, index) in filteredStudents"
+                    v-for="(student, index) in paginatedFilteredStudents"
                     :key="student.id"
                     :id="`student-item-${student.id}`"
                     class="border-b border-border hover:bg-muted/30"
@@ -93,6 +101,22 @@
                   </tr>
                 </tbody>
               </table>
+            </div>
+            <div class="flex items-center justify-center py-3">
+              <f7-button
+                v-if="!paginationDone"
+                fill
+                small
+                :loading="paginationLoading"
+                :disabled="paginationLoading"
+                class="bg-primary text-primary-foreground"
+                @click="loadMoreStudents"
+              >
+                Загрузить еще
+              </f7-button>
+              <span v-else class="text-sm text-muted-foreground">
+                Все записи загружены
+              </span>
             </div>
           </div>
         </div>
@@ -135,7 +159,9 @@ const academicYearStore = useAcademicYearStore();
 const baseStore = useBaseStore();
 
 const { academicYearOptions } = storeToRefs(academicYearStore);
-const { filteredStudents } = storeToRefs(studentStore);
+const { paginatedFilteredStudents, paginationDone, paginationLoading } =
+  storeToRefs(studentStore);
+const { specialtyOptions: storeSpecialtyOptions } = storeToRefs(specialtyStore);
 const { baseOptions: storeBaseOptions } = storeToRefs(baseStore);
 
 const selectedSpecialty = ref("");
@@ -145,34 +171,60 @@ const selectedBase = ref("");
 const selectedAcademicYear = ref("");
 const searchTerm = ref("");
 const selectedStudentId = ref<string | null>(null);
+const isInitializing = ref(true);
 
-onMounted(() => {
-  studentStore.clearFilters();
-  selectedSpecialty.value = "";
-  selectedLanguage.value = "";
-  selectedGender.value = "";
-  selectedBase.value = "";
-  selectedAcademicYear.value = "";
-  searchTerm.value = "";
-  selectedStudentId.value = null;
+onMounted(async () => {
+  try {
+    studentStore.clearFilters();
+    selectedSpecialty.value = "";
+    selectedLanguage.value = "";
+    selectedGender.value = "";
+    selectedBase.value = "";
+    selectedAcademicYear.value = "";
+    searchTerm.value = "";
+    selectedStudentId.value = null;
+    await studentStore.refreshPagination();
+  } finally {
+    isInitializing.value = false;
+  }
 });
 
 const genderOptions = computed(() => getGenderOptions());
+
+const specialtyOptions = computed(() =>
+  withAllOption(storeSpecialtyOptions.value)
+);
 
 const baseOptions = computed(() => storeBaseOptions.value);
 
 selectedAcademicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
 
+watch(selectedSpecialty, (newValue) => {
+  studentStore.setFilter("specialty", newValue);
+  if (!isInitializing.value) {
+    studentStore.refreshPagination();
+  }
+});
+
 watch(selectedGender, (newValue) => {
   studentStore.setFilter("gender", newValue);
+  if (!isInitializing.value) {
+    studentStore.refreshPagination();
+  }
 });
 
 watch(selectedBase, (newValue) => {
   studentStore.setFilter("base", newValue);
+  if (!isInitializing.value) {
+    studentStore.refreshPagination();
+  }
 });
 
 watch(selectedAcademicYear, (newValue) => {
   studentStore.setFilter("academicYearId", newValue);
+  if (!isInitializing.value) {
+    studentStore.refreshPagination();
+  }
 });
 
 watch(searchTerm, (newValue) => {
@@ -191,6 +243,10 @@ const selectStudent = async (student: Student) => {
 const handleSearchInput = (event: Event) => {
   const target = event.target as HTMLInputElement;
   searchTerm.value = target.value;
+};
+
+const loadMoreStudents = async () => {
+  await studentStore.loadNextPage();
 };
 </script>
 

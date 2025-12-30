@@ -6,6 +6,7 @@ import { useConvexQuery } from "convex-vue";
 
 export interface Specialty {
   id: string;
+  legacyId?: string;
   name: string;
   codeName: string;
   code: string;
@@ -40,6 +41,7 @@ export const useSpecialtyStore = defineStore(
       if (newData) {
         specialties.value = newData.map((s) => ({
           id: s._id,
+          legacyId: s.legacyId,
           name: s.name,
           codeName: s.codeName,
           code: s.code,
@@ -53,11 +55,15 @@ export const useSpecialtyStore = defineStore(
     });
 
     const getSpecialtyById = computed(() => {
-      return (id: string) => specialties.value.find((s) => s.id === id);
+      return (id: string) =>
+        specialties.value.find((s) => s.id === id || s.legacyId === id);
     });
 
     const getSpecialtyByCode = computed(() => {
-      return (code: string) => specialties.value.find((s) => s.code === code);
+      return (code: string) =>
+        specialties.value.find(
+          (s) => s.code === code || s.id === code || s.legacyId === code
+        );
     });
 
     const specialtyOptions = computed(() =>
@@ -158,6 +164,7 @@ export const useSpecialtyStore = defineStore(
         const data = await convex.query(api.specialties.queries.list, {});
         specialties.value = data.map((specialty) => ({
           id: specialty._id,
+          legacyId: specialty.legacyId,
           name: specialty.name,
           code: specialty.code,
           codeName: specialty.codeName,

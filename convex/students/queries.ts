@@ -1,3 +1,4 @@
+import { paginationOptsValidator } from "convex/server";
 import { query } from "../_generated/server";
 import { v } from "convex/values";
 
@@ -8,6 +9,57 @@ export const list = query({
   args: {},
   handler: async (ctx) => {
     return await ctx.db.query("students").collect();
+  },
+});
+
+/**
+ * Get students with pagination and optional filters
+ */
+export const listPaginated = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+    specialty: v.optional(v.string()),
+    specialtyLegacyId: v.optional(v.string()),
+    language: v.optional(v.string()),
+    gender: v.optional(v.string()),
+    base: v.optional(v.number()),
+    academicYearId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    let query = ctx.db.query("students").order("asc");
+
+    if (args.specialty || args.specialtyLegacyId) {
+      query = query.filter((q) => {
+        const field = q.field("specialty");
+        if (
+          args.specialty &&
+          args.specialtyLegacyId &&
+          args.specialty !== args.specialtyLegacyId
+        ) {
+          return q.or(
+            q.eq(field, args.specialty),
+            q.eq(field, args.specialtyLegacyId)
+          );
+        }
+        return q.eq(field, args.specialty ?? args.specialtyLegacyId!);
+      });
+    }
+    if (args.language) {
+      query = query.filter((q) => q.eq(q.field("language"), args.language));
+    }
+    if (args.gender) {
+      query = query.filter((q) => q.eq(q.field("gender"), args.gender));
+    }
+    if (args.base !== undefined) {
+      query = query.filter((q) => q.eq(q.field("base"), args.base));
+    }
+    if (args.academicYearId) {
+      query = query.filter((q) =>
+        q.eq(q.field("academicYearId"), args.academicYearId)
+      );
+    }
+
+    return await query.paginate(args.paginationOpts);
   },
 });
 
