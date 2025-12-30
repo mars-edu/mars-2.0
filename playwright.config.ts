@@ -5,7 +5,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 4 : process.env.HEADED ? 1 : undefined,
+  workers: process.env.CI ? 1 : process.env.HEADED ? 1 : undefined, // Reduce to 1 in CI to avoid parallel login issues
   reporter: [
     ['html', { outputFolder: 'playwright-report' }],
     ['json', { outputFile: 'test-results/results.json' }],
