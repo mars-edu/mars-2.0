@@ -8,6 +8,7 @@ export interface Semester {
   id: string;
   shortName: string;
   fullName?: string;
+  number?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +34,7 @@ export const useSemesterStore = defineStore(
           id: s._id,
           shortName: s.shortName || s.name,
           fullName: s.fullName,
+          number: s.number,
           createdAt: new Date(s.createdAt),
           updatedAt: new Date(s.updatedAt),
         }));
@@ -134,6 +136,7 @@ export const useSemesterStore = defineStore(
           id: sem._id,
           shortName: sem.shortName || sem.name,
           fullName: sem.fullName,
+          number: sem.number,
           createdAt: new Date(sem.createdAt),
           updatedAt: new Date(sem.updatedAt),
         }));

@@ -24,13 +24,11 @@
         </div>
 
         <div class="p-4 space-y-4">
-          <Input
-            v-model="selectedSemesterNumber"
-            label="Номер семестра"
-            placeholder="Введите номер семестра"
-            type="number"
-            required
-            :clear-button="true"
+          <Select
+            v-model="selectedSemesterId"
+            :options="semesterOptions"
+            label="Семестр"
+            placeholder="Выберите семестр"
           />
 
           <div class="grid grid-cols-2 gap-4">
@@ -90,29 +88,43 @@ import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
+import { useSemesterStore } from "@/stores/semesterStore";
 import type { AcademicYearSemester } from "@/stores/academicYearSemesterStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import Input from "@/components/ui/Input.vue";
+import Select from "@/components/ui/Select.vue";
 import { DATE_PICKER_PARAMS } from "@/constants/calendar";
 
 const props = defineProps<{ academicYearSemesterId: string }>();
 
 const academicYearSemesterStore = useAcademicYearSemesterStore();
+const semesterStore = useSemesterStore();
 
 // Get academic year semester from store by ID - always fresh data
 const academicYearSemester = computed(() =>
   academicYearSemesterStore.getAcademicYearSemesterById(props.academicYearSemesterId)
 );
 
-const selectedSemesterNumber = ref<number | string>(1);
+const selectedSemesterId = ref<string | number>("");
 const startDate = ref<Date[]>([new Date()]);
 const endDate = ref<Date[]>([new Date()]);
 const formError = ref("");
 
+const semesterOptions = computed(() => {
+  return semesterStore.sortedSemesters.map((semester) => ({
+    value: semester.id,
+    text: `${semester.shortName}${semester.fullName ? ` (${semester.fullName})` : ""}`,
+  }));
+});
+
 // Update form fields whenever academic year semester data changes
 watchEffect(() => {
   if (academicYearSemester.value) {
-    selectedSemesterNumber.value = academicYearSemester.value.semesterNumber;
+    // Find semester by matching the number field
+    const matchingSemester = semesterStore.sortedSemesters.find(
+      (s) => s.number === academicYearSemester.value?.semesterNumber
+    );
+    selectedSemesterId.value = matchingSemester?.id || "";
 
     // Safely parse dates, defaulting to empty array if invalid
     if (academicYearSemester.value.startDate) {
@@ -133,10 +145,9 @@ watchEffect(() => {
 
 const academicYearSemesterSchema = z
   .object({
-    semesterNumber: z
-      .number()
-      .min(1, "Номер семестра должен быть больше 0")
-      .max(8, "Номер семестра не может быть больше 8"),
+    semesterId: z
+      .string()
+      .min(1, "Пожалуйста, выберите семестр"),
     startDate: z
       .array(z.date())
       .min(1, "Пожалуйста, укажите дату начала")
@@ -167,7 +178,7 @@ const academicYearSemesterSchema = z
 
 const validationResult = computed(() => {
   return academicYearSemesterSchema.safeParse({
-    semesterNumber: Number(selectedSemesterNumber.value),
+    semesterId: String(selectedSemesterId.value),
     startDate: startDate.value,
     endDate: endDate.value,
   });
@@ -207,10 +218,17 @@ const handleUpdateAcademicYearSemester = async () => {
   }
 
   try {
+    // Get the selected semester to extract its number
+    const selectedSemester = semesterStore.getSemesterById(String(selectedSemesterId.value));
+    if (!selectedSemester || selectedSemester.number === undefined) {
+      formError.value = "Выбранный семестр не найден или не имеет номера";
+      return;
+    }
+
     await academicYearSemesterStore.updateAcademicYearSemester(
       academicYearSemester.value.id,
       {
-        semesterNumber: Number(selectedSemesterNumber.value),
+        semesterNumber: selectedSemester.number,
         startDate: dayjs(startDate.value[0]).format(DATE_STORAGE_FORMAT),
         endDate: dayjs(endDate.value[0]).format(DATE_STORAGE_FORMAT),
       }
@@ -250,7 +268,12 @@ const showDeleteConfirmation = () => {
 
 const resetForm = () => {
   if (!academicYearSemester.value) return;
-  selectedSemesterNumber.value = academicYearSemester.value.semesterNumber;
+
+  // Reset to current semester by matching number
+  const matchingSemester = semesterStore.sortedSemesters.find(
+    (s) => s.number === academicYearSemester.value?.semesterNumber
+  );
+  selectedSemesterId.value = matchingSemester?.id || "";
 
   // Safely parse dates, defaulting to empty array if invalid
   if (academicYearSemester.value.startDate) {

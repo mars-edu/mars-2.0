@@ -38,7 +38,7 @@ export const useScheduledIntermediateControlStore = defineStore(
         scheduledIntermediateControls.value = newData.map((c) => ({
           id: c._id,
           academicYearId: c.academicYearId,
-          intermediateControlId: c.controlId,
+          intermediateControlId: c.intermediateControlId,
           shortName: c.shortName,
           startDate: c.startDate,
           endDate: c.endDate,
@@ -80,9 +80,10 @@ export const useScheduledIntermediateControlStore = defineStore(
         // Use Convex - the reactive subscription will handle updating the local state
         await convex.mutation(api.scheduledControls.mutations.createIntermediate, {
           intermediateControlId: controlData.intermediateControlId,
-          class9Id: "",
-          semesterId: "",
-          date: controlData.startDate,
+          academicYearId: controlData.academicYearId,
+          shortName: controlData.shortName,
+          startDate: controlData.startDate,
+          endDate: controlData.endDate,
         });
         // Don't push to scheduledIntermediateControls.value - the reactive subscription will handle it
         error.value = null;
@@ -109,7 +110,10 @@ export const useScheduledIntermediateControlStore = defineStore(
         await convex.mutation(api.scheduledControls.mutations.updateIntermediate, {
           id: id as any,
           intermediateControlId: controlData.intermediateControlId,
-          date: controlData.startDate,
+          academicYearId: controlData.academicYearId,
+          shortName: controlData.shortName,
+          startDate: controlData.startDate,
+          endDate: controlData.endDate,
         });
         // Don't update scheduledIntermediateControls.value - the reactive subscription will handle it
         error.value = null;
@@ -150,11 +154,11 @@ export const useScheduledIntermediateControlStore = defineStore(
         const data = await convex.query(api.scheduledControls.queries.listIntermediate, {});
         scheduledIntermediateControls.value = data.map((c) => ({
           id: c._id,
-          academicYearId: "",
+          academicYearId: c.academicYearId,
           intermediateControlId: c.intermediateControlId,
-          shortName: "",
-          startDate: c.date || "",
-          endDate: "",
+          shortName: c.shortName,
+          startDate: c.startDate,
+          endDate: c.endDate,
           createdAt: new Date(c.createdAt),
           updatedAt: new Date(c.updatedAt),
         }));

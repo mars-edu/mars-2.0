@@ -37,7 +37,7 @@ export const useScheduledFinalControlStore = defineStore(
         scheduledFinalControls.value = newData.map((c) => ({
           id: c._id,
           academicYearId: c.academicYearId,
-          finalControlId: c.controlId,
+          finalControlId: c.finalControlId,
           shortName: c.shortName,
           startDate: c.startDate,
           endDate: c.endDate,
@@ -76,9 +76,10 @@ export const useScheduledFinalControlStore = defineStore(
         // Use Convex - the reactive subscription will handle updating the local state
         await convex.mutation(api.scheduledControls.mutations.createFinal, {
           finalControlId: controlData.finalControlId,
-          class9Id: "", // Store doesn't have this, would need to be added or derived
-          semesterId: "", // Store doesn't have this, would need to be added or derived
-          date: controlData.startDate,
+          academicYearId: controlData.academicYearId,
+          shortName: controlData.shortName,
+          startDate: controlData.startDate,
+          endDate: controlData.endDate,
         });
         // Don't push to scheduledFinalControls.value - the reactive subscription will handle it
         error.value = null;
@@ -105,7 +106,10 @@ export const useScheduledFinalControlStore = defineStore(
         await convex.mutation(api.scheduledControls.mutations.updateFinal, {
           id: id as any,
           finalControlId: controlData.finalControlId,
-          date: controlData.startDate,
+          academicYearId: controlData.academicYearId,
+          shortName: controlData.shortName,
+          startDate: controlData.startDate,
+          endDate: controlData.endDate,
         });
         // Don't update scheduledFinalControls.value - the reactive subscription will handle it
         error.value = null;
@@ -146,11 +150,11 @@ export const useScheduledFinalControlStore = defineStore(
         const data = await convex.query(api.scheduledControls.queries.listFinal, {});
         scheduledFinalControls.value = data.map((c) => ({
           id: c._id,
-          academicYearId: "", // Schema doesn't have this, would need mapping
+          academicYearId: c.academicYearId,
           finalControlId: c.finalControlId,
-          shortName: "", // Schema doesn't have this
-          startDate: c.date || "",
-          endDate: "", // Schema doesn't have this
+          shortName: c.shortName,
+          startDate: c.startDate,
+          endDate: c.endDate,
           createdAt: new Date(c.createdAt),
           updatedAt: new Date(c.updatedAt),
         }));
