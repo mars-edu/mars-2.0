@@ -10,7 +10,7 @@
     "dev": "cross-env NODE_ENV=development vite",
     "dev:convex": "npx convex dev",
     "dev:all": "npm run dev:convex & npm run dev",
-    "build": "cross-env NODE_ENV=production vite build",
+    "build": "npm run build:convex && cross-env NODE_ENV=production vite build",
     "build:convex": "npx convex codegen && npx convex deploy --cmd 'npm run build' && ./scripts/run-migrations.sh",
     "migrate": "./scripts/run-migrations.sh",
     "postinstall": "./scripts/postinstall.sh",
