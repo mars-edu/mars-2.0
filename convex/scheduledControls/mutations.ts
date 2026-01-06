@@ -8,8 +8,12 @@ import { createTimestamps, updateTimestamp } from "../lib/validators";
 export const createFinal = mutation({
   args: {
     finalControlId: v.string(),
-    class9Id: v.string(),
-    semesterId: v.string(),
+    academicYearId: v.optional(v.string()),
+    shortName: v.optional(v.string()),
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    class9Id: v.optional(v.string()),
+    semesterId: v.optional(v.string()),
     date: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -28,8 +32,12 @@ export const createFinal = mutation({
 export const createIntermediate = mutation({
   args: {
     intermediateControlId: v.string(),
-    class9Id: v.string(),
-    semesterId: v.string(),
+    academicYearId: v.optional(v.string()),
+    shortName: v.optional(v.string()),
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    class9Id: v.optional(v.string()),
+    semesterId: v.optional(v.string()),
     date: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -49,6 +57,10 @@ export const updateFinal = mutation({
   args: {
     id: v.id("scheduledFinalControls"),
     finalControlId: v.optional(v.string()),
+    academicYearId: v.optional(v.string()),
+    shortName: v.optional(v.string()),
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
     class9Id: v.optional(v.string()),
     semesterId: v.optional(v.string()),
     date: v.optional(v.string()),
@@ -77,6 +89,10 @@ export const updateIntermediate = mutation({
   args: {
     id: v.id("scheduledIntermediateControls"),
     intermediateControlId: v.optional(v.string()),
+    academicYearId: v.optional(v.string()),
+    shortName: v.optional(v.string()),
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
     class9Id: v.optional(v.string()),
     semesterId: v.optional(v.string()),
     date: v.optional(v.string()),

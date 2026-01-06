@@ -471,3 +471,116 @@ export const cleanupEducationSchedules = action({
     };
   },
 });
+
+/**
+ * Internal mutation to delete all scheduled controls without required fields
+ */
+export const deleteScheduledControlsWithoutRequiredFields = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    console.log("[Migration] Starting cleanup of scheduled controls...");
+
+    // Delete all scheduled final controls
+    const allFinalControls = await ctx.db.query("scheduledFinalControls").collect();
+    const finalControlsToDelete = allFinalControls.filter(
+      (control) =>
+        !control.academicYearId ||
+        !control.shortName ||
+        !control.startDate ||
+        !control.endDate
+    );
+
+    console.log(
+      `[Migration] Found ${finalControlsToDelete.length} invalid final controls to delete`
+    );
+
+    const deletedFinalIds: string[] = [];
+    for (const control of finalControlsToDelete) {
+      await ctx.db.delete(control._id);
+      deletedFinalIds.push(control._id);
+      console.log(`[Migration] Deleted final control: ${control._id}`);
+    }
+
+    // Delete all scheduled intermediate controls
+    const allIntermediateControls = await ctx.db.query("scheduledIntermediateControls").collect();
+    const intermediateControlsToDelete = allIntermediateControls.filter(
+      (control) =>
+        !control.academicYearId ||
+        !control.shortName ||
+        !control.startDate ||
+        !control.endDate
+    );
+
+    console.log(
+      `[Migration] Found ${intermediateControlsToDelete.length} invalid intermediate controls to delete`
+    );
+
+    const deletedIntermediateIds: string[] = [];
+    for (const control of intermediateControlsToDelete) {
+      await ctx.db.delete(control._id);
+      deletedIntermediateIds.push(control._id);
+      console.log(`[Migration] Deleted intermediate control: ${control._id}`);
+    }
+
+    // Count remaining valid documents
+    const remainingFinalControls = await ctx.db.query("scheduledFinalControls").collect();
+    const remainingIntermediateControls = await ctx.db.query("scheduledIntermediateControls").collect();
+
+    console.log(
+      `[Migration] Cleanup complete: ${deletedFinalIds.length} final controls deleted, ${remainingFinalControls.length} remaining`
+    );
+    console.log(
+      `[Migration] Cleanup complete: ${deletedIntermediateIds.length} intermediate controls deleted, ${remainingIntermediateControls.length} remaining`
+    );
+
+    return {
+      deletedFinal: deletedFinalIds.length,
+      deletedIntermediates: deletedIntermediateIds.length,
+      deletedFinalIds,
+      deletedIntermediateIds,
+      remainingFinal: remainingFinalControls.length,
+      remainingIntermediate: remainingIntermediateControls.length,
+    };
+  },
+});
+
+/**
+ * Public action to clean up scheduled controls without required fields
+ * Run via CLI: npx convex run migration:cleanupScheduledControls
+ *
+ * This migration:
+ * 1. Deletes all scheduled final controls without academicYearId, shortName, startDate, or endDate
+ * 2. Deletes all scheduled intermediate controls without academicYearId, shortName, startDate, or endDate
+ * 3. Makes those fields required in the schema for new data
+ */
+export const cleanupScheduledControls = action({
+  args: {},
+  handler: async (ctx): Promise<{
+    success: boolean;
+    deletedFinal: number;
+    deletedIntermediate: number;
+    remainingFinal: number;
+    remainingIntermediate: number;
+    message: string;
+  }> => {
+    console.log("[Migration] Starting scheduled controls cleanup action...");
+
+    const result = await ctx.runMutation(
+      internal.migration.actions.deleteScheduledControlsWithoutRequiredFields,
+      {}
+    );
+
+    const message = `Deleted ${result.deletedFinal} final controls and ${result.deletedIntermediates} intermediate controls. ${result.remainingFinal} final controls and ${result.remainingIntermediate} intermediate controls remain.`;
+
+    console.log(`[Migration] ${message}`);
+
+    return {
+      success: true,
+      deletedFinal: result.deletedFinal,
+      deletedIntermediate: result.deletedIntermediates,
+      remainingFinal: result.remainingFinal,
+      remainingIntermediate: result.remainingIntermediate,
+      message,
+    };
+  },
+});
