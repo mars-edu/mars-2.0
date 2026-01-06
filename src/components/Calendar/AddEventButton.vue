@@ -179,7 +179,11 @@ const handleAddEvent = async () => {
       startDate: dayjs(startDate.value[0]).format(DATE_UI_FORMAT),
       endDate: dayjs(endDate.value[0]).format(DATE_UI_FORMAT),
       participants: participants.value,
-      weeklySchedules: selectedWeekDays.value,
+      weeklySchedules: selectedWeekDays.value.map(({ weekId, startId, endId }) => ({
+        weekId,
+        startId,
+        endId,
+      })),
       color: eventColor.value.hex,
       useCustomPeriod: useCustomPeriod.value,
       semester: semester.value,
@@ -191,10 +195,14 @@ const handleAddEvent = async () => {
     });
     const newEvent = await calendarStore.addEvent(eventData, tempEventId.value);
 
-    console.log("✅ handleAddEvent success", newEvent);
-    emit("event-added", newEvent);
-    closeAddEventPopover();
-    resetForm();
+    if (newEvent) {
+      console.log("✅ handleAddEvent success", newEvent);
+      emit("event-added", newEvent);
+      closeAddEventPopover();
+      resetForm();
+    } else {
+      throw new Error("Failed to create event");
+    }
   } catch (error) {
     console.error("❌ handleAddEvent error", error);
     formError.value = "Ошибка при добавлении события.";

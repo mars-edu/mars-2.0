@@ -204,7 +204,11 @@ const handleUpdateEvent = async () => {
       startDate: dayjs(startDate.value[0]).format(DATE_UI_FORMAT),
       endDate: dayjs(endDate.value[0]).format(DATE_UI_FORMAT),
       participants: participants.value,
-      weeklySchedules: selectedWeekDays.value,
+      weeklySchedules: selectedWeekDays.value.map(({ weekId, startId, endId }) => ({
+        weekId,
+        startId,
+        endId,
+      })),
       color: eventColor.value.hex,
       useCustomPeriod: useCustomPeriod.value,
       semester:
@@ -221,7 +225,11 @@ const handleUpdateEvent = async () => {
       startDate: dayjs(startDate.value[0]).format(DATE_UI_FORMAT),
       endDate: dayjs(endDate.value[0]).format(DATE_UI_FORMAT),
       participants: participants.value,
-      weeklySchedules: selectedWeekDays.value,
+      weeklySchedules: selectedWeekDays.value.map(({ weekId, startId, endId }) => ({
+        weekId,
+        startId,
+        endId,
+      })),
       color: eventColor.value.hex,
       useCustomPeriod: useCustomPeriod.value,
       semester:

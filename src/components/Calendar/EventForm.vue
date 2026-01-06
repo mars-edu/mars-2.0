@@ -1185,8 +1185,6 @@ watch(
       newSemesterDates,
       propsStartDate: props.startDate,
       propsEndDate: props.endDate,
-      startDateModelValue: startDateModel.value,
-      endDateModelValue: endDateModel.value,
     });
 
     if (!newUseCustomPeriod && newSemesterDates) {
@@ -1198,8 +1196,6 @@ watch(
         nextEnd,
         propsStartDate: props.startDate,
         propsEndDate: props.endDate,
-        startDateModelLength: startDateModel.value?.length,
-        endDateModelLength: endDateModel.value?.length,
       });
 
       // Only update if the current values are different from the new values
