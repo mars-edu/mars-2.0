@@ -147,7 +147,7 @@ const routes: RouteConfig[] = [
     },
   },
   {
-    path: "/planning/:year/:month",
+    path: "/planning",
     asyncComponent: () => import("../pages/suspense/PlanningPage.vue"),
     beforeEnter: [createAuthGuard([Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT])],
     options: {

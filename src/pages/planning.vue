@@ -194,12 +194,6 @@ const onPageMounted = () => {
 
 onMounted(() => {
   f7ready(() => {
-    const currentRoute = f7.views.main.router.currentRoute;
-    if (currentRoute.params) {
-      setYear(currentRoute.params.year || "2025");
-      setMonth(parseInt(currentRoute.params.month || "2") - 1);
-    }
-
     if (userStore.isTeacher && userStore.currentUser?.id) {
       calendarStore.setSelectedTeacher(userStore.currentUser.id);
     }

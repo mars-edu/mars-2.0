@@ -25,10 +25,6 @@ export function useRBAC() {
   };
 
   const getNavigationItems = computed(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
-
     const items: NavigationItem[] = [
       {
         id: "home",
@@ -56,7 +52,7 @@ export function useRBAC() {
         label: "Планирование",
         icon: "calendar_fill",
         roles: [Role.ADMIN, Role.TEACHER],
-        route: `/planning/${currentYear}/${currentMonth}/`,
+        route: "/planning",
       },
       {
         id: "journals",

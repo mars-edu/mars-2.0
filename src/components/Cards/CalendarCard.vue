@@ -194,11 +194,7 @@ const controlIconClass = computed(() => {
 
 
 const navigateToPlanning = () => {
-  const year = currentDate.value.getFullYear();
-  const month = currentDate.value.getMonth() + 1; 
-
-  f7.views.main.router.navigate(`/planning/${year}/${month}/`);
-  
+  f7.views.main.router.navigate("/planning");
 };
 
 

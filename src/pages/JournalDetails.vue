@@ -454,10 +454,7 @@ const activeTab = ref("journal");
 const handleBackClick = () => {
   const from = f7.views.main.router.currentRoute.query.from as string;
   if (from === "schedule") {
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
-    f7.views.main.router.navigate(`/planning/${currentYear}/${currentMonth}/`);
+    f7.views.main.router.navigate("/planning");
   } else {
     f7.views.main.router.navigate("/journals/");
   }
