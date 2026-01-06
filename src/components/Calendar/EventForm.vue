@@ -181,7 +181,7 @@
       :opened="isKtpPopupOpen"
       :ktp-id="currentKtpId"
       :module-title="currentKtpTitle"
-      @update:opened="(v:boolean)=>{ isKtpPopupOpen=v }"
+      @update:opened="handleKtpPopupClosed"
     />
 
     <slot />
@@ -1069,9 +1069,15 @@ const onSelectedWeekDayChanged = () => {
 
 const studentPopup = ref<{ open: (p: string[]) => void } | null>(null);
 const isKtpPopupOpen = ref(false);
+const currentKtpIdRef = ref<string | null>(null);
 
-// Computed property for KTP ID that ensures KTP exists
+// Computed property for KTP ID that finds existing KTP
 const currentKtpId = computed(() => {
+  // Return the ref value if already set
+  if (currentKtpIdRef.value) {
+    return currentKtpIdRef.value;
+  }
+
   const activeSemester = getActiveAcademicYearSemester.value as any;
   const academicYearId = activeSemester?.academicYearId;
   const semesterId = activeSemester?.id || props.semester;
@@ -1080,16 +1086,15 @@ const currentKtpId = computed(() => {
     return null;
   }
 
-  // Ensure KTP exists (will create if it doesn't exist)
-  // Pass eventId to create event-specific KTP (if eventId exists)
-  const ktp = ktpStore.ensureKtpForClass9(
+  // Try to find existing KTP (synchronous)
+  const existingKtp = ktpStore.findKtpByClass9Id(
     class9IdModel.value,
     academicYearId,
     semesterId,
     props.eventId // Event-specific KTP if eventId is provided
   );
 
-  return ktp.id;
+  return existingKtp?.id || null;
 });
 
 // Computed property for KTP module title
@@ -1127,7 +1132,17 @@ const handleStudentPopupClose = () => {
   openParentPopover();
 };
 
-const openKtpPopup = () => {
+const handleKtpPopupClosed = (isOpen: boolean) => {
+  console.log("🔄 handleKtpPopupClosed called", { isOpen });
+  isKtpPopupOpen.value = isOpen;
+
+  // Re-open parent event dialog when KTP popup closes
+  if (!isOpen) {
+    openParentPopover();
+  }
+};
+
+const openKtpPopup = async () => {
   if (!class9IdModel.value) {
     f7.dialog.alert(
       "Пожалуйста, сначала выберите результат обучения/дисциплину",
@@ -1136,12 +1151,43 @@ const openKtpPopup = () => {
     return;
   }
 
-  console.log("🔄 openKtpPopup called", {
-    class9IdModel: class9IdModel.value,
-    ktpId: currentKtpId.value,
-  });
+  const activeSemester = getActiveAcademicYearSemester.value as any;
+  const academicYearId = activeSemester?.academicYearId;
+  const semesterId = activeSemester?.id || props.semester;
 
-  isKtpPopupOpen.value = true;
+  if (!academicYearId || !semesterId) {
+    f7.dialog.alert(
+      "Не удалось определить семестр",
+      "Ошибка"
+    );
+    return;
+  }
+
+  // Ensure KTP exists before opening
+  try {
+    const ktp = await ktpStore.ensureKtpForClass9(
+      class9IdModel.value,
+      academicYearId,
+      semesterId,
+      props.eventId
+    );
+    currentKtpIdRef.value = ktp.id;
+
+    console.log("🔄 openKtpPopup called", {
+      class9IdModel: class9IdModel.value,
+      ktpId: ktp.id,
+    });
+
+    // Close parent event dialog before opening KTP popup
+    closeParentPopover();
+    isKtpPopupOpen.value = true;
+  } catch (error) {
+    console.error("Failed to ensure KTP:", error);
+    f7.dialog.alert(
+      "Не удалось создать КТП",
+      "Ошибка"
+    );
+  }
 };
 
 const openParentPopover = () => {

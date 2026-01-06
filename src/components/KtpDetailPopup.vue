@@ -8,7 +8,7 @@
         height: calc(100dvh - 50px) !important;
       "
       close-on-escape
-      @popover:closed="$emit('update:opened', false)"
+      @popover:closed="handlePopoverClosed"
     >
       <div class="ktp-detail-popover bg-card text-card-foreground">
         <div class="fixed-header">
@@ -73,6 +73,7 @@ const class9Store = useClass9Store();
 const { loading } = storeToRefs(ktpStore);
 const { deleteKtpById } = ktpStore;
 const popupBodyRef = ref<InstanceType<typeof KtpDetailPopupBody> | null>(null);
+const isClosingProgrammatically = ref(false);
 
 // Computed property to get the module name for the header
 const computedModuleTitle = computed(() => {
@@ -93,6 +94,15 @@ const displayTitle = computed(() => {
 
 const handleClose = () => {
   emit("update:opened", false);
+};
+
+const handlePopoverClosed = () => {
+  // Only emit if not closing programmatically from watch
+  if (!isClosingProgrammatically.value) {
+    emit("update:opened", false);
+  }
+  // Reset the flag
+  isClosingProgrammatically.value = false;
 };
 
 function handleDeleteAll() {
@@ -133,13 +143,23 @@ watch(ktpId, (newKtpId) => {
   }
 });
 
-watch(opened, (isOpened) => {
-  if (isOpened) {
+watch(opened, (isOpened, wasOpened) => {
+  console.log("🔄 KtpDetailPopup opened watch triggered", { isOpened, wasOpened, ktpId: ktpId.value });
+  if (isOpened && !wasOpened) {
+    // Only open if transitioning from closed to open
     if (ktpId.value) {
       ktpStore.fetchDetailsForKtp(ktpId.value);
     }
-    f7.popover.open("#ktp-detail-popover");
-  } else {
+    // Use nextTick to ensure the DOM is ready before opening
+    import('vue').then(({ nextTick }) => {
+      nextTick(() => {
+        f7.popover.open("#ktp-detail-popover");
+      });
+    });
+  } else if (!isOpened && wasOpened) {
+    // Only close if transitioning from open to closed
+    // Set flag to prevent double emission
+    isClosingProgrammatically.value = true;
     f7.popover.close("#ktp-detail-popover");
   }
 });
