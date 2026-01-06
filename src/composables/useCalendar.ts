@@ -27,10 +27,11 @@ export interface CalendarDay {
 }
 
 export function useCalendar() {
-  const year = ref("2025");
-  const monthIndex = ref(1); // February (0-indexed)
+  const now = new Date();
+  const year = ref(now.getFullYear().toString());
+  const monthIndex = ref(now.getMonth());
   const activeTab = ref("month");
-  const todayDate = ref(new Date().getDate().toString());
+  const todayDate = ref(now.getDate().toString());
 
   const calendarStore = useCalendarStore();
   const educationScheduleStore = useEducationScheduleStore();
