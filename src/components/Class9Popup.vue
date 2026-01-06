@@ -71,9 +71,11 @@
 
       <div class="scrollable-content">
         <div class="p-4">
-          <div
+          <template
             v-for="(stepData, index) in steps"
             :key="index"
+          >
+          <div
             v-if="currentStep === index + 1"
           >
             <!-- Specialty selection for first step -->
@@ -316,6 +318,7 @@
               </div>
             </div>
           </div>
+          </template>
         </div>
       </div>
     </div>

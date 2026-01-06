@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
+import { useConvexQuery } from "convex-vue";
 
 export interface DistributionEntry {
   id: string;
@@ -40,15 +41,51 @@ export interface Class9Data {
 export const useClass9Store = defineStore(
   "class9",
   () => {
-    const class9Items = ref<Class9Data[]>([]);
     const loading = ref(false);
     const error = ref<string | null>(null);
-    const migrationCompleted = ref(false);
-    const controlMigrationCompleted = ref(false);
 
-    // Run migrations on store initialization
-    migrateClass9DataToMultipleSpecialties();
-    migrateControlTypesToDynamic();
+    // Reactive Convex query for real-time sync
+    const { data: convexClass9Items } = useConvexQuery(
+      api.class9Items.queries.list,
+      ref({})
+    );
+
+    // Transform Convex data to our Class9Data format
+    const class9Items = computed(() => {
+      if (!convexClass9Items.value) return [];
+
+      return convexClass9Items.value.map((item: any) => ({
+        id: item._id,
+        specialtyIds: item.specialtyIds,
+        academicYearId: item.academicYearId,
+        moduleIndex: item.moduleIndex,
+        moduleName: item.moduleName,
+        learningOutcome: item.learningOutcome,
+        totalCredits: item.totalCredits,
+        totalHours: item.totalHours,
+        theoreticalHours: item.theoreticalHours,
+        labPracticalHours: item.labPracticalHours,
+        field3Value: item.field3Value,
+        srspHours: item.srspHours,
+        srsHours: item.srsHours,
+        trainingPracticeHours: item.trainingPracticeHours,
+        individualHours: item.individualHours,
+        position: item.position,
+        distributionEntries: (item.distributionEntries || []).map((d: any) => ({
+          id: d._id,
+          academicYearId: d.academicYearId,
+          semesterId: d.semesterId,
+          hours: d.hours,
+          intermediateControlId: d.intermediateControlId,
+          finalControlId: d.finalControlId,
+          examEnabled: d.examEnabled,
+          creditEnabled: d.creditEnabled,
+          controlLessonEnabled: d.controlLessonEnabled,
+        })),
+        createdAt: new Date(item.createdAt),
+        updatedAt: new Date(item.updatedAt),
+      }));
+    });
 
     const getClass9ById = computed(() => {
       return (id: string) => class9Items.value.find((c) => c.id === id);
@@ -220,44 +257,9 @@ export const useClass9Store = defineStore(
           }
         }
 
-        // Load the created item with nested data
-        const created = await convex.query(api.class9Items.queries.getById, { id });
-        if (created) {
-          const mapped: Class9Data = {
-            id: created._id,
-            specialtyIds: created.specialtyIds,
-            academicYearId: created.academicYearId,
-            moduleIndex: created.moduleIndex,
-            moduleName: created.moduleName,
-            learningOutcome: created.learningOutcome,
-            totalCredits: created.totalCredits,
-            totalHours: created.totalHours,
-            theoreticalHours: created.theoreticalHours,
-            labPracticalHours: created.labPracticalHours,
-            field3Value: created.field3Value,
-            srspHours: created.srspHours,
-            srsHours: created.srsHours,
-            trainingPracticeHours: created.trainingPracticeHours,
-            individualHours: created.individualHours,
-            position: created.position,
-            distributionEntries: (created.distributionEntries || []).map((d: any) => ({
-              id: d._id,
-              academicYearId: d.academicYearId,
-              semesterId: d.semesterId,
-              hours: d.hours,
-              intermediateControlId: d.intermediateControlId,
-              finalControlId: d.finalControlId,
-              examEnabled: d.examEnabled,
-              creditEnabled: d.creditEnabled,
-              controlLessonEnabled: d.controlLessonEnabled,
-            })),
-            createdAt: new Date(created.createdAt),
-            updatedAt: new Date(created.updatedAt),
-          };
-          class9Items.value.push(mapped);
-          error.value = null;
-          return mapped;
-        }
+        // The reactive query will automatically update class9Items
+        error.value = null;
+        return id;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to add class9 data";
@@ -291,25 +293,33 @@ export const useClass9Store = defineStore(
           throw new Error("Existing item not found");
         }
 
+        // Create a new item in Convex based on the existing one
         const contextItems = getClass9ItemsByContext.value(
           academicYearId,
           specialtyIds
         );
 
-        const linkedClass9: Class9Data = {
-          ...existingItem,
-          id: crypto.randomUUID(),
+        const id = await convex.mutation(api.class9Items.mutations.create, {
           specialtyIds,
           academicYearId,
+          moduleIndex: existingItem.moduleIndex,
+          moduleName: existingItem.moduleName,
+          learningOutcome: existingItem.learningOutcome,
+          totalCredits: existingItem.totalCredits,
+          totalHours: customData?.totalHours || existingItem.totalHours,
+          theoreticalHours: customData?.theoreticalHours || existingItem.theoreticalHours,
+          labPracticalHours: customData?.labPracticalHours || existingItem.labPracticalHours,
+          field3Value: existingItem.field3Value,
+          srspHours: customData?.srspHours || existingItem.srspHours,
+          srsHours: customData?.srsHours || existingItem.srsHours,
+          trainingPracticeHours: customData?.trainingPracticeHours || existingItem.trainingPracticeHours,
+          individualHours: customData?.individualHours || existingItem.individualHours,
           position: contextItems.length,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          ...customData,
-        };
+        });
 
-        class9Items.value.push(linkedClass9);
+        // The reactive query will automatically update class9Items
         error.value = null;
-        return linkedClass9;
+        return id;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to link class9 data";
@@ -322,7 +332,28 @@ export const useClass9Store = defineStore(
     async function addClass9Items(items: Class9Data[]) {
       loading.value = true;
       try {
-        class9Items.value.push(...items);
+        // Create all items in Convex
+        for (const item of items) {
+          await convex.mutation(api.class9Items.mutations.create, {
+            specialtyIds: item.specialtyIds,
+            academicYearId: item.academicYearId,
+            moduleIndex: item.moduleIndex,
+            moduleName: item.moduleName,
+            learningOutcome: item.learningOutcome,
+            totalCredits: item.totalCredits,
+            totalHours: item.totalHours,
+            theoreticalHours: item.theoreticalHours,
+            labPracticalHours: item.labPracticalHours,
+            field3Value: item.field3Value,
+            srspHours: item.srspHours,
+            srsHours: item.srsHours,
+            trainingPracticeHours: item.trainingPracticeHours,
+            individualHours: item.individualHours,
+            position: item.position,
+          });
+        }
+
+        // The reactive query will automatically update class9Items
         error.value = null;
       } catch (err) {
         error.value =
@@ -430,39 +461,93 @@ export const useClass9Store = defineStore(
       });
     }
 
-    function duplicateClass9Item(itemToDuplicate: Class9Data) {
-      const duplicatedItem: Class9Data = JSON.parse(
-        JSON.stringify(itemToDuplicate)
-      );
-      duplicatedItem.id = crypto.randomUUID();
-      duplicatedItem.moduleName = itemToDuplicate.moduleName;
-      duplicatedItem.createdAt = new Date();
-      duplicatedItem.updatedAt = new Date();
-
-      const originalItem = class9Items.value.find(
-        (item) => item.id === itemToDuplicate.id
-      );
-      if (!originalItem) {
-        console.error("Original item not found for duplication");
-        return;
-      }
-
-      const insertionPosition = originalItem.position + 1;
-
-      const itemsInContext = class9Items.value.filter(
-        (c) =>
-          c.academicYearId === itemToDuplicate.academicYearId &&
-          c.specialtyIds.some((id) => itemToDuplicate.specialtyIds.includes(id))
-      );
-
-      itemsInContext.forEach((item) => {
-        if (item.position >= insertionPosition) {
-          item.position++;
+    async function duplicateClass9Item(itemToDuplicate: Class9Data) {
+      loading.value = true;
+      try {
+        const originalItem = class9Items.value.find(
+          (item) => item.id === itemToDuplicate.id
+        );
+        if (!originalItem) {
+          console.error("Original item not found for duplication");
+          throw new Error("Original item not found");
         }
-      });
 
-      duplicatedItem.position = insertionPosition;
-      class9Items.value.push(duplicatedItem);
+        const insertionPosition = originalItem.position + 1;
+
+        // Update positions of items that come after
+        const itemsInContext = class9Items.value.filter(
+          (c) =>
+            c.academicYearId === itemToDuplicate.academicYearId &&
+            c.specialtyIds.some((id) => itemToDuplicate.specialtyIds.includes(id)) &&
+            c.position >= insertionPosition
+        );
+
+        // Update positions in Convex
+        for (const item of itemsInContext) {
+          await convex.mutation(api.class9Items.mutations.update, {
+            id: item.id as any,
+            specialtyIds: item.specialtyIds,
+            academicYearId: item.academicYearId,
+            moduleIndex: item.moduleIndex,
+            moduleName: item.moduleName,
+            learningOutcome: item.learningOutcome,
+            totalCredits: item.totalCredits,
+            totalHours: item.totalHours,
+            theoreticalHours: item.theoreticalHours,
+            labPracticalHours: item.labPracticalHours,
+            field3Value: item.field3Value,
+            srspHours: item.srspHours,
+            srsHours: item.srsHours,
+            trainingPracticeHours: item.trainingPracticeHours,
+            individualHours: item.individualHours,
+            position: item.position + 1,
+          });
+        }
+
+        // Create the duplicated item in Convex
+        const id = await convex.mutation(api.class9Items.mutations.create, {
+          specialtyIds: itemToDuplicate.specialtyIds,
+          academicYearId: itemToDuplicate.academicYearId,
+          moduleIndex: itemToDuplicate.moduleIndex,
+          moduleName: itemToDuplicate.moduleName,
+          learningOutcome: itemToDuplicate.learningOutcome,
+          totalCredits: itemToDuplicate.totalCredits,
+          totalHours: itemToDuplicate.totalHours,
+          theoreticalHours: itemToDuplicate.theoreticalHours,
+          labPracticalHours: itemToDuplicate.labPracticalHours,
+          field3Value: itemToDuplicate.field3Value,
+          srspHours: itemToDuplicate.srspHours,
+          srsHours: itemToDuplicate.srsHours,
+          trainingPracticeHours: itemToDuplicate.trainingPracticeHours,
+          individualHours: itemToDuplicate.individualHours,
+          position: insertionPosition,
+        });
+
+        // Duplicate distribution entries
+        for (const dist of itemToDuplicate.distributionEntries) {
+          await convex.mutation(api.class9Items.mutations.addDistribution, {
+            class9ItemId: id,
+            academicYearId: dist.academicYearId,
+            semesterId: dist.semesterId,
+            hours: dist.hours,
+            intermediateControlId: dist.intermediateControlId,
+            finalControlId: dist.finalControlId,
+            examEnabled: dist.examEnabled,
+            creditEnabled: dist.creditEnabled,
+            controlLessonEnabled: dist.controlLessonEnabled,
+          });
+        }
+
+        // The reactive query will automatically update class9Items
+        error.value = null;
+        return id;
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to duplicate class9 item";
+        throw err;
+      } finally {
+        loading.value = false;
+      }
     }
 
     async function deleteClass9(id: string) {
@@ -487,211 +572,16 @@ export const useClass9Store = defineStore(
     }
 
     function reset() {
-      class9Items.value = [];
+      // Note: class9Items is now a computed property, so we can't reset it directly
+      // The data will automatically sync from Convex
       loading.value = false;
       error.value = null;
-    }
-
-    function forceMigrateData() {
-      migrationCompleted.value = false;
-      migrateClass9DataToMultipleSpecialties();
-    }
-
-    // Migration method to convert old specialtyId format to new specialtyIds array format
-    function migrateClass9DataToMultipleSpecialties() {
-      if (migrationCompleted.value) {
-        return; // Migration already completed
-      }
-
-      let hasChanges = false;
-      const migratedItems = class9Items.value.map((item) => {
-        // Check if item has old format (specialtyId as string and no specialtyIds array)
-        if (
-          "specialtyId" in item &&
-          typeof (item as any).specialtyId === "string" &&
-          !("specialtyIds" in item)
-        ) {
-          const oldItem = item as any;
-          hasChanges = true;
-
-          // Convert to new format
-          return {
-            ...oldItem,
-            specialtyIds: [oldItem.specialtyId], // Convert single ID to array
-          } as Class9Data;
-        }
-
-        // Item already has new format or no specialty data
-        return item;
-      });
-
-      if (hasChanges) {
-        class9Items.value = migratedItems;
-        console.log(
-          `🔄 Migrated ${migratedItems.length} Class9 items from single specialty to multiple specialties format`
-        );
-      }
-
-      migrationCompleted.value = true;
-    }
-
-    function migrateControlTypesToDynamic() {
-      if (controlMigrationCompleted.value) {
-        return;
-      }
-
-      let hasChanges = false;
-      class9Items.value.forEach((item) => {
-        item.distributionEntries.forEach((entry) => {
-          const anyEntry = entry as any;
-          if (
-            typeof anyEntry.examEnabled === "boolean" ||
-            typeof anyEntry.creditEnabled === "boolean" ||
-            typeof anyEntry.controlLessonEnabled === "boolean"
-          ) {
-            if (!entry.finalControlId) {
-              hasChanges = true;
-            }
-          }
-        });
-      });
-
-      if (hasChanges) {
-        console.log(
-          `🔄 Migrated Class9 distribution entries to support dynamic control types. Old boolean flags preserved for backward compatibility.`
-        );
-      }
-
-      controlMigrationCompleted.value = true;
-    }
-
-    // Test migration method (for development purposes)
-    function testMigration() {
-      console.log("🧪 Testing migration...");
-
-      // Create test data with old format
-      const testItems: Class9Data[] = [
-        {
-          id: "test-1",
-          specialtyId: "old-specialty-1", // Old format
-          academicYearId: "year-1",
-          moduleIndex: "1",
-          moduleName: "Test Module 1",
-          learningOutcome: "Test Outcome 1",
-          totalCredits: "5",
-          totalHours: "100",
-          theoreticalHours: "50",
-          labPracticalHours: "30",
-          field3Value: "10",
-          srspHours: "5",
-          srsHours: "5",
-          trainingPracticeHours: "0",
-          individualHours: "0",
-          distributionEntries: [],
-          position: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        } as any, // Type assertion to bypass TypeScript for testing
-        {
-          id: "test-2",
-          specialtyIds: ["new-specialty-1", "new-specialty-2"], // Already new format
-          academicYearId: "year-1",
-          moduleIndex: "2",
-          moduleName: "Test Module 2",
-          learningOutcome: "Test Outcome 2",
-          totalCredits: "3",
-          totalHours: "60",
-          theoreticalHours: "30",
-          labPracticalHours: "20",
-          field3Value: "5",
-          srspHours: "3",
-          srsHours: "2",
-          trainingPracticeHours: "0",
-          individualHours: "0",
-          distributionEntries: [],
-          position: 1,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ];
-
-      class9Items.value = testItems;
-
-      // Run migration
-      migrateClass9DataToMultipleSpecialties();
-
-      // Check results
-      const migratedItem1 = class9Items.value.find(
-        (item) => item.id === "test-1"
-      );
-      const migratedItem2 = class9Items.value.find(
-        (item) => item.id === "test-2"
-      );
-
-      console.log("✅ Migration test results:");
-      console.log("Test item 1 specialtyIds:", migratedItem1?.specialtyIds);
-      console.log("Test item 2 specialtyIds:", migratedItem2?.specialtyIds);
-      console.log("Migration completed:", migrationCompleted.value);
-
-      // Reset test data
-      class9Items.value = [];
-    }
-
-    async function loadFromBackend() {
-      loading.value = true;
-      try {
-        const data = await convex.query(api.class9Items.queries.list, {});
-        class9Items.value = data.map((item: any) => ({
-          id: item._id,
-          specialtyIds: item.specialtyIds,
-          academicYearId: item.academicYearId,
-          moduleIndex: item.moduleIndex,
-          moduleName: item.moduleName,
-          learningOutcome: item.learningOutcome,
-          totalCredits: item.totalCredits,
-          totalHours: item.totalHours,
-          theoreticalHours: item.theoreticalHours,
-          labPracticalHours: item.labPracticalHours,
-          field3Value: item.field3Value,
-          srspHours: item.srspHours,
-          srsHours: item.srsHours,
-          trainingPracticeHours: item.trainingPracticeHours,
-          individualHours: item.individualHours,
-          position: item.position,
-          distributionEntries: (item.distributionEntries || []).map((d: any) => ({
-            id: d._id,
-            academicYearId: d.academicYearId,
-            semesterId: d.semesterId,
-            hours: d.hours,
-            intermediateControlId: d.intermediateControlId,
-            finalControlId: d.finalControlId,
-            examEnabled: d.examEnabled,
-            creditEnabled: d.creditEnabled,
-            controlLessonEnabled: d.controlLessonEnabled,
-          })),
-          createdAt: new Date(item.createdAt),
-          updatedAt: new Date(item.updatedAt),
-        }));
-
-        // Run migration functions on loaded data
-        migrateClass9DataToMultipleSpecialties();
-        migrateControlTypesToDynamic();
-
-        error.value = null;
-      } catch (err) {
-        console.error("[class9Store] Failed to load from Convex:", err);
-        error.value = "Failed to load class9 items";
-      } finally {
-        loading.value = false;
-      }
     }
 
     return {
       class9Items,
       loading,
       error,
-      migrationCompleted,
-      controlMigrationCompleted,
       getClass9ById,
       getClass9ItemsByContext,
       getAllClass9Items,
@@ -709,11 +599,6 @@ export const useClass9Store = defineStore(
       deleteClass9,
       clearError,
       reset,
-      forceMigrateData,
-      migrateClass9DataToMultipleSpecialties,
-      migrateControlTypesToDynamic,
-      testMigration,
-      loadFromBackend,
     };
   },
   {
