@@ -114,6 +114,7 @@ export const addDistribution = mutation({
 
     return await ctx.db.insert("distributionEntries", {
       ...args,
+      semesterId: args.semesterId as any,
       ...timestamps,
     });
   },

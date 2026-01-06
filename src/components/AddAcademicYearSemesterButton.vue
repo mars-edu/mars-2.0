@@ -189,16 +189,16 @@ const handleSaveAcademicYearSemester = async () => {
       return;
     }
 
-    // Get the selected semester to extract its number
+    // Get the selected semester definition
     const selectedSemester = semesterStore.getSemesterById(String(selectedSemesterId.value));
-    if (!selectedSemester || selectedSemester.number === undefined) {
-      formError.value = "Выбранный семестр не найден или не имеет номера";
+    if (!selectedSemester) {
+      formError.value = "Выбранный семестр не найден";
       return;
     }
 
     await academicYearSemesterStore.addAcademicYearSemester({
       academicYearId: activeAcademicYear.id,
-      semesterNumber: selectedSemester.number,
+      semesterDefinitionId: selectedSemester.id,
       startDate: dayjs(startDate.value[0]).format(DATE_STORAGE_FORMAT),
       endDate: dayjs(endDate.value[0]).format(DATE_STORAGE_FORMAT),
     });

@@ -19,6 +19,7 @@ export const create = mutation({
 
     return await ctx.db.insert("sessions", {
       ...args,
+      semesterId: args.semesterId as any,
       ...timestamps,
     });
   },

@@ -265,6 +265,7 @@ export const initializeJournal = mutation({
       // Create new journal
       const journalId = await ctx.db.insert("journals", {
         ...journalData,
+        semesterId: journalData.semesterId as any,
         ...timestamps,
       });
       journal = await ctx.db.get(journalId);

@@ -120,11 +120,8 @@ const semesterOptions = computed(() => {
 // Update form fields whenever academic year semester data changes
 watchEffect(() => {
   if (academicYearSemester.value) {
-    // Find semester by matching the number field
-    const matchingSemester = semesterStore.sortedSemesters.find(
-      (s) => s.number === academicYearSemester.value?.semesterNumber
-    );
-    selectedSemesterId.value = matchingSemester?.id || "";
+    // Set semester selection using the semesterDefinitionId
+    selectedSemesterId.value = academicYearSemester.value.semesterDefinitionId || "";
 
     // Safely parse dates, defaulting to empty array if invalid
     if (academicYearSemester.value.startDate) {
@@ -218,17 +215,17 @@ const handleUpdateAcademicYearSemester = async () => {
   }
 
   try {
-    // Get the selected semester to extract its number
+    // Get the selected semester definition
     const selectedSemester = semesterStore.getSemesterById(String(selectedSemesterId.value));
-    if (!selectedSemester || selectedSemester.number === undefined) {
-      formError.value = "Выбранный семестр не найден или не имеет номера";
+    if (!selectedSemester) {
+      formError.value = "Выбранный семестр не найден";
       return;
     }
 
     await academicYearSemesterStore.updateAcademicYearSemester(
       academicYearSemester.value.id,
       {
-        semesterNumber: selectedSemester.number,
+        semesterDefinitionId: selectedSemester.id,
         startDate: dayjs(startDate.value[0]).format(DATE_STORAGE_FORMAT),
         endDate: dayjs(endDate.value[0]).format(DATE_STORAGE_FORMAT),
       }
@@ -269,11 +266,8 @@ const showDeleteConfirmation = () => {
 const resetForm = () => {
   if (!academicYearSemester.value) return;
 
-  // Reset to current semester by matching number
-  const matchingSemester = semesterStore.sortedSemesters.find(
-    (s) => s.number === academicYearSemester.value?.semesterNumber
-  );
-  selectedSemesterId.value = matchingSemester?.id || "";
+  // Reset to current semester using semesterDefinitionId
+  selectedSemesterId.value = academicYearSemester.value.semesterDefinitionId || "";
 
   // Safely parse dates, defaulting to empty array if invalid
   if (academicYearSemester.value.startDate) {

@@ -21,6 +21,7 @@ export const createFinal = mutation({
 
     return await ctx.db.insert("scheduledFinalControls", {
       ...args,
+      semesterId: args.semesterId as any,
       ...timestamps,
     });
   },
@@ -45,6 +46,7 @@ export const createIntermediate = mutation({
 
     return await ctx.db.insert("scheduledIntermediateControls", {
       ...args,
+      semesterId: args.semesterId as any,
       ...timestamps,
     });
   },

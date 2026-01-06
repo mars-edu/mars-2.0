@@ -133,7 +133,7 @@ export const getByAcademicYearAndSemester = query({
     const ktps = await ctx.db
       .query("ktps")
       .withIndex("by_academicYear_semester", (q) =>
-        q.eq("academicYearId", args.academicYearId).eq("semesterId", args.semesterId)
+        q.eq("academicYearId", args.academicYearId).eq("semesterId", args.semesterId as any)
       )
       .collect();
 

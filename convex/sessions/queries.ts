@@ -42,7 +42,7 @@ export const getBySemester = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("sessions")
-      .withIndex("by_semester", (q) => q.eq("semesterId", args.semesterId))
+      .withIndex("by_semester", (q) => q.eq("semesterId", args.semesterId as any))
       .collect();
   },
 });

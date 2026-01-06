@@ -21,6 +21,7 @@ export const create = mutation({
     const timestamps = createTimestamps();
     return await ctx.db.insert("journals", {
       ...args,
+      semesterId: args.semesterId as any,
       ...timestamps,
     });
   },

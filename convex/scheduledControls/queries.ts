@@ -75,7 +75,7 @@ export const getFinalBySemester = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("scheduledFinalControls")
-      .withIndex("by_semester", (q) => q.eq("semesterId", args.semesterId))
+      .withIndex("by_semester", (q) => q.eq("semesterId", args.semesterId as any))
       .collect();
   },
 });
@@ -88,7 +88,7 @@ export const getIntermediateBySemester = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("scheduledIntermediateControls")
-      .withIndex("by_semester", (q) => q.eq("semesterId", args.semesterId))
+      .withIndex("by_semester", (q) => q.eq("semesterId", args.semesterId as any))
       .collect();
   },
 });

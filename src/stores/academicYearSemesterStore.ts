@@ -10,7 +10,9 @@ import { useConvexQuery } from "convex-vue";
 export interface AcademicYearSemester {
   id: string;
   academicYearId: string;
-  semesterNumber: number;
+  semesterDefinitionId: string;
+  semesterNumber: number; // Derived from semesterDefinition
+  semesterName: string; // Derived from semesterDefinition
   startDate: string;
   endDate: string;
   createdAt: Date;
@@ -30,7 +32,7 @@ export const useAcademicYearSemesterStore = defineStore(
 
     // Reactive subscription to Convex
     const { data: convexSemesters } = useConvexQuery(
-      api.semesters.queries.list,
+      api.academicYearSemesters.queries.list,
       ref({})
     );
 
@@ -39,9 +41,11 @@ export const useAcademicYearSemesterStore = defineStore(
         academicYearSemesters.value = newData.map((s) => ({
           id: s._id,
           academicYearId: s.academicYearId,
-          semesterNumber: s.number || 1,
-          startDate: s.startDate || "",
-          endDate: s.endDate || "",
+          semesterDefinitionId: s.semesterDefinitionId,
+          semesterNumber: s.semesterDefinition?.number || 1,
+          semesterName: s.semesterDefinition?.shortName || "",
+          startDate: s.startDate,
+          endDate: s.endDate,
           createdAt: new Date(s.createdAt),
           updatedAt: new Date(s.updatedAt),
         }));
@@ -99,9 +103,12 @@ export const useAcademicYearSemesterStore = defineStore(
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
-    async function addAcademicYearSemester(
-      semesterData: Omit<AcademicYearSemester, "id" | "createdAt" | "updatedAt">
-    ) {
+    async function addAcademicYearSemester(semesterData: {
+      academicYearId: string;
+      semesterDefinitionId: string;
+      startDate: string;
+      endDate: string;
+    }) {
       loading.value = true;
       try {
         // Validate that dates are not empty
@@ -125,13 +132,11 @@ export const useAcademicYearSemesterStore = defineStore(
         }
 
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.semesters.mutations.create, {
-          name: `Semester ${semesterData.semesterNumber}`,
+        await convex.mutation(api.academicYearSemesters.mutations.create, {
           academicYearId: semesterData.academicYearId as any,
-          number: semesterData.semesterNumber,
+          semesterDefinitionId: semesterData.semesterDefinitionId as any,
           startDate: semesterData.startDate,
           endDate: semesterData.endDate,
-          isActive: true,
         });
         // Don't push to academicYearSemesters.value - the reactive subscription will handle it
         error.value = null;
@@ -148,9 +153,11 @@ export const useAcademicYearSemesterStore = defineStore(
 
     async function updateAcademicYearSemester(
       id: string,
-      semesterData: Partial<
-        Omit<AcademicYearSemester, "id" | "createdAt" | "updatedAt">
-      >
+      semesterData: {
+        semesterDefinitionId?: string;
+        startDate?: string;
+        endDate?: string;
+      }
     ) {
       loading.value = true;
       try {
@@ -196,11 +203,9 @@ export const useAcademicYearSemesterStore = defineStore(
         }
 
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.semesters.mutations.update, {
+        await convex.mutation(api.academicYearSemesters.mutations.update, {
           id: id as any,
-          name: semesterData.semesterNumber ? `Semester ${semesterData.semesterNumber}` : undefined,
-          academicYearId: semesterData.academicYearId as any,
-          number: semesterData.semesterNumber,
+          semesterDefinitionId: semesterData.semesterDefinitionId as any,
           startDate: semesterData.startDate,
           endDate: semesterData.endDate,
         });
@@ -221,7 +226,7 @@ export const useAcademicYearSemesterStore = defineStore(
       loading.value = true;
       try {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.semesters.mutations.remove, {
+        await convex.mutation(api.academicYearSemesters.mutations.remove, {
           id: id as any,
         });
         // Don't filter academicYearSemesters.value - the reactive subscription will handle it

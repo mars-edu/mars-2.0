@@ -58,23 +58,34 @@ export default defineSchema({
     .index("by_startYear", ["startYear"]),
 
   /**
-   * Semesters within academic years
-   * Migrated from: semesterStore.ts, academicYearSemesterStore.ts
+   * Global semester definitions (settings)
+   * Migrated from: semesterStore.ts
+   * These are the semester templates (e.g., "Semester 1", "Semester 2")
    */
-  semesters: defineTable({
+  semesterDefinitions: defineTable({
     name: v.string(),
-    shortName: v.optional(v.string()),
+    shortName: v.string(),
     fullName: v.optional(v.string()),
-    number: v.optional(v.number()),
+    number: v.number(), // Semester number (1-8)
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_number", ["number"]),
+
+  /**
+   * Academic year semester instances
+   * Migrated from: academicYearSemesterStore.ts
+   * These are actual semester periods within specific academic years
+   */
+  academicYearSemesters: defineTable({
     academicYearId: v.id("academicYears"),
-    startDate: v.optional(v.string()), // ISO date
-    endDate: v.optional(v.string()), // ISO date
-    isActive: v.optional(v.boolean()),
+    semesterDefinitionId: v.id("semesterDefinitions"),
+    startDate: v.string(), // ISO date
+    endDate: v.string(), // ISO date
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_academicYear", ["academicYearId"])
-    .index("by_active", ["isActive"]),
+    .index("by_semesterDefinition", ["semesterDefinitionId"]),
 
   /**
    * Specialties/Programs offered
@@ -230,7 +241,7 @@ export default defineSchema({
   distributionEntries: defineTable({
     class9ItemId: v.id("class9Items"),
     academicYearId: v.string(),
-    semesterId: v.string(),
+    semesterId: v.id("academicYearSemesters"),
     hours: v.string(),
     intermediateControlId: v.optional(v.string()),
     finalControlId: v.optional(v.string()),
@@ -280,7 +291,7 @@ export default defineSchema({
     startDate: v.string(), // ISO date (REQUIRED)
     endDate: v.string(), // ISO date (REQUIRED)
     class9Id: v.optional(v.string()), // Reference to class9Items
-    semesterId: v.optional(v.string()),
+    semesterId: v.optional(v.id("academicYearSemesters")),
     date: v.optional(v.string()), // ISO date (legacy)
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -300,7 +311,7 @@ export default defineSchema({
     startDate: v.string(), // ISO date (REQUIRED)
     endDate: v.string(), // ISO date (REQUIRED)
     class9Id: v.optional(v.string()), // Reference to class9Items
-    semesterId: v.optional(v.string()),
+    semesterId: v.optional(v.id("academicYearSemesters")),
     date: v.optional(v.string()), // ISO date (legacy)
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -362,7 +373,7 @@ export default defineSchema({
   ktps: defineTable({
     class9Id: v.string(), // Reference to class9Items
     academicYearId: v.string(),
-    semesterId: v.string(),
+    semesterId: v.id("academicYearSemesters"),
     eventId: v.optional(v.string()), // Reference to calendarEvents
     name: v.optional(v.string()),
     createdAt: v.number(),
@@ -404,7 +415,7 @@ export default defineSchema({
     disciplineId: v.string(), // Reference to class9Items
     groupName: v.optional(v.string()),
     academicYearId: v.string(),
-    semesterId: v.string(),
+    semesterId: v.id("academicYearSemesters"),
     isMixedGroup: v.optional(v.boolean()),
     isIndividualJournal: v.optional(v.boolean()),
     mergedJournalIds: v.optional(v.array(v.string())),
@@ -524,7 +535,7 @@ export default defineSchema({
     shortName: v.string(),
     fullName: v.string(),
     academicYearId: v.string(),
-    semesterId: v.optional(v.string()),
+    semesterId: v.optional(v.id("academicYearSemesters")),
     startDate: v.string(),
     endDate: v.string(),
     createdAt: v.number(),
@@ -616,7 +627,7 @@ export default defineSchema({
   rupEntries: defineTable({
     academicYearId: v.string(),
     specialtyId: v.string(),
-    semesterId: v.string(),
+    semesterId: v.id("academicYearSemesters"),
     disciplineName: v.string(),
     totalHours: v.optional(v.number()),
     lectureHours: v.optional(v.number()),

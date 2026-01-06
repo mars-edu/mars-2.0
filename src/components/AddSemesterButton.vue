@@ -34,6 +34,18 @@
 
         <div class="p-4 space-y-4">
           <div class="space-y-2">
+            <label class="text-sm text-foreground" for="semester-number">
+              Номер семестра <span class="text-destructive ml-1">*</span>
+            </label>
+            <f7-input
+              id="semester-number"
+              type="number"
+              v-model:value="semesterNumber"
+              placeholder="Например: 1"
+              min="1"
+            />
+          </div>
+          <div class="space-y-2">
             <label class="text-sm text-foreground" for="semester-short-name">
               Название семестра <span class="text-destructive ml-1">*</span>
             </label>
@@ -67,15 +79,18 @@ const popoverId = computed(() => `add-${computedPrefix.value}-popover`);
 const semesterStore = useSemesterStore();
 const academicYearStore = useAcademicYearStore();
 
+const semesterNumber = ref<number | string>("");
 const shortName = ref("");
 const formError = ref("");
 
 const semesterSchema = z.object({
+  number: z.coerce.number().min(1, "Пожалуйста, введите номер семестра"),
   shortName: z.string().min(1, "Пожалуйста, введите название семестра"),
 });
 
 const validationResult = computed(() => {
   return semesterSchema.safeParse({
+    number: semesterNumber.value,
     shortName: shortName.value,
   });
 });
@@ -110,6 +125,7 @@ const handleSaveSemester = async () => {
     }
 
     await semesterStore.addSemester({
+      number: Number(semesterNumber.value),
       shortName: shortName.value,
       academicYearId: activeAcademicYear.id,
     });
@@ -120,6 +136,7 @@ const handleSaveSemester = async () => {
 };
 
 const resetForm = () => {
+  semesterNumber.value = "";
   shortName.value = "";
   formError.value = "";
   semesterStore.clearError();
