@@ -2,12 +2,25 @@ import { query } from "../_generated/server";
 import { v } from "convex/values";
 
 /**
- * Get all academic year semesters
+ * Get all academic year semesters with their semester definitions
  */
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("academicYearSemesters").collect();
+    const semesters = await ctx.db.query("academicYearSemesters").collect();
+
+    // Fetch semester definitions for each semester
+    const semestersWithDefinitions = await Promise.all(
+      semesters.map(async (semester) => {
+        const definition = await ctx.db.get(semester.semesterDefinitionId);
+        return {
+          ...semester,
+          semesterDefinition: definition,
+        };
+      })
+    );
+
+    return semestersWithDefinitions;
   },
 });
 
