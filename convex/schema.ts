@@ -272,17 +272,13 @@ export default defineSchema({
   /**
    * Scheduled intermediate controls for specific class9 items
    * Migrated from: scheduledIntermediateControlStore.ts
-   *
-   * NOTE: Fields academicYearId, shortName, startDate, endDate are optional for backward compatibility
-   * with existing records. Run the migration cleanupScheduledControls to delete invalid records.
-   * After migration completes, these fields can be made required.
    */
   scheduledIntermediateControls: defineTable({
     intermediateControlId: v.string(), // Reference to intermediateControls
-    academicYearId: v.optional(v.string()), // Reference to academicYears
-    shortName: v.optional(v.string()), // Control name/title
-    startDate: v.optional(v.string()), // ISO date
-    endDate: v.optional(v.string()), // ISO date
+    academicYearId: v.string(), // Reference to academicYears (REQUIRED)
+    shortName: v.string(), // Control name/title (REQUIRED)
+    startDate: v.string(), // ISO date (REQUIRED)
+    endDate: v.string(), // ISO date (REQUIRED)
     class9Id: v.optional(v.string()), // Reference to class9Items
     semesterId: v.optional(v.string()),
     date: v.optional(v.string()), // ISO date (legacy)
@@ -296,17 +292,13 @@ export default defineSchema({
   /**
    * Scheduled final controls for specific class9 items
    * Migrated from: scheduledFinalControlStore.ts
-   *
-   * NOTE: Fields academicYearId, shortName, startDate, endDate are optional for backward compatibility
-   * with existing records. Run the migration cleanupScheduledControls to delete invalid records.
-   * After migration completes, these fields can be made required.
    */
   scheduledFinalControls: defineTable({
     finalControlId: v.string(), // Reference to finalControls
-    academicYearId: v.optional(v.string()), // Reference to academicYears
-    shortName: v.optional(v.string()), // Control name/title
-    startDate: v.optional(v.string()), // ISO date
-    endDate: v.optional(v.string()), // ISO date
+    academicYearId: v.string(), // Reference to academicYears (REQUIRED)
+    shortName: v.string(), // Control name/title (REQUIRED)
+    startDate: v.string(), // ISO date (REQUIRED)
+    endDate: v.string(), // ISO date (REQUIRED)
     class9Id: v.optional(v.string()), // Reference to class9Items
     semesterId: v.optional(v.string()),
     date: v.optional(v.string()), // ISO date (legacy)

@@ -8,10 +8,10 @@ import { createTimestamps, updateTimestamp } from "../lib/validators";
 export const createFinal = mutation({
   args: {
     finalControlId: v.string(),
-    academicYearId: v.optional(v.string()),
-    shortName: v.optional(v.string()),
-    startDate: v.optional(v.string()),
-    endDate: v.optional(v.string()),
+    academicYearId: v.string(),
+    shortName: v.string(),
+    startDate: v.string(),
+    endDate: v.string(),
     class9Id: v.optional(v.string()),
     semesterId: v.optional(v.string()),
     date: v.optional(v.string()),
@@ -32,10 +32,10 @@ export const createFinal = mutation({
 export const createIntermediate = mutation({
   args: {
     intermediateControlId: v.string(),
-    academicYearId: v.optional(v.string()),
-    shortName: v.optional(v.string()),
-    startDate: v.optional(v.string()),
-    endDate: v.optional(v.string()),
+    academicYearId: v.string(),
+    shortName: v.string(),
+    startDate: v.string(),
+    endDate: v.string(),
     class9Id: v.optional(v.string()),
     semesterId: v.optional(v.string()),
     date: v.optional(v.string()),
