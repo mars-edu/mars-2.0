@@ -25,6 +25,7 @@
 
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { readFileSync } from "fs";
 import {
   checkWranglerAuth,
   parsePiniaState,
@@ -90,6 +91,7 @@ const CONFIG = {
   databaseName: "mars-db",
   accountId: "1baf07e2bf54af133428fea840266f45", // From wrangler.toml
   outputFile: join(__dirname, "..", "exports", "convex-students-export.json"),
+  academicYearIdMapFile: join(__dirname, "..", "exports", "academic-year-id-map.json"),
   validLanguages: ["ru", "kk"] as const,
   validGenders: ["male", "female"] as const,
   validBases: [9, 11] as const,
@@ -108,6 +110,24 @@ WHERE storeId = 'student'
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+/**
+ * Load academic year ID mapping from file
+ */
+function loadAcademicYearIdMap(): Map<string, string> {
+  try {
+    const mapJson = readFileSync(CONFIG.academicYearIdMapFile, "utf-8");
+    const mapObj = JSON.parse(mapJson) as Record<string, string>;
+    const map = new Map<string, string>(Object.entries(mapObj));
+    console.log(`✓ Loaded academic year ID mapping (${map.size} entries)`);
+    return map;
+  } catch (error) {
+    console.warn("⚠ Warning: Could not load academic year ID mapping");
+    console.warn("  Run: npm run export:academic-year-id-map");
+    console.warn("  Students will keep their original academicYearId values");
+    return new Map<string, string>();
+  }
+}
 
 /**
  * Query D1 database and return student rows from PiniaState
@@ -148,8 +168,14 @@ function queryD1Students(): D1StudentRow[] {
 /**
  * Transform D1 student row to Convex format
  */
-function transformStudent(d1Student: D1StudentRow): ConvexStudent {
+function transformStudent(d1Student: D1StudentRow, academicYearIdMap: Map<string, string>): ConvexStudent {
   const now = Date.now();
+
+  // Map D1 academic year ID to Convex ID
+  let academicYearId = d1Student.academicYearId;
+  if (academicYearId && academicYearIdMap.has(academicYearId)) {
+    academicYearId = academicYearIdMap.get(academicYearId);
+  }
 
   return {
     firstName: d1Student.firstName,
@@ -159,7 +185,7 @@ function transformStudent(d1Student: D1StudentRow): ConvexStudent {
     language: d1Student.language,
     gender: d1Student.gender,
     base: d1Student.base,
-    academicYearId: d1Student.academicYearId,
+    academicYearId: academicYearId,
     createdAt: now, // No source timestamp - use current time
     updatedAt: now, // No source timestamp - use current time
   };
@@ -354,28 +380,32 @@ async function main() {
 
   try {
     // Step 1: Check authentication
-    console.log("[1/6] Checking Wrangler authentication...");
+    console.log("[1/7] Checking Wrangler authentication...");
     checkWranglerAuth();
 
-    // Step 2: Query D1
-    console.log("\n[2/6] Querying production D1 database (PiniaState)...");
+    // Step 2: Load academic year ID mapping
+    console.log("\n[2/7] Loading academic year ID mapping...");
+    const academicYearIdMap = loadAcademicYearIdMap();
+
+    // Step 3: Query D1
+    console.log("\n[3/7] Querying production D1 database (PiniaState)...");
     const d1Students = queryD1Students();
 
-    // Step 3: Transform data
-    console.log("\n[3/6] Transforming student data...");
-    const convexStudents = d1Students.map(transformStudent);
+    // Step 4: Transform data
+    console.log("\n[4/7] Transforming student data...");
+    const convexStudents = d1Students.map(s => transformStudent(s, academicYearIdMap));
     console.log(`✓ Transformed ${convexStudents.length} students`);
 
-    // Step 4: Validate
-    console.log("\n[4/6] Validating data...");
+    // Step 5: Validate
+    console.log("\n[5/7] Validating data...");
     validateStudents(convexStudents);
 
-    // Step 5: Write file
-    console.log("\n[5/6] Writing to file...");
+    // Step 6: Write file
+    console.log("\n[6/7] Writing to file...");
     writeJsonFile(convexStudents);
 
-    // Step 6: Summary
-    console.log("\n[6/6] Summary:");
+    // Step 7: Summary
+    console.log("\n[7/7] Summary:");
     printSummary(convexStudents);
 
     process.exit(0);

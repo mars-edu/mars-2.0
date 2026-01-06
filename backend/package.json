@@ -18,6 +18,7 @@
     "export:specialties": "ts-node scripts/export-specialties-to-convex.ts",
     "export:disciplines": "ts-node scripts/export-disciplines-to-convex.ts",
     "export:academic-years": "ts-node scripts/export-academic-years-to-convex.ts",
+    "export:academic-year-id-map": "ts-node scripts/create-academic-year-id-map.ts",
     "export:education-schedules": "ts-node scripts/export-education-schedules-to-convex.ts",
     "export:courses": "ts-node scripts/export-courses-to-convex.ts",
     "export:semesters": "ts-node scripts/export-semesters-to-convex.ts",

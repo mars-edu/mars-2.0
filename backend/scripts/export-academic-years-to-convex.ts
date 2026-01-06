@@ -62,6 +62,10 @@ interface ConvexAcademicYear {
   updatedAt: number;
 }
 
+interface ConvexAcademicYearWithLegacyId extends ConvexAcademicYear {
+  legacyId: string; // D1 ID for mapping purposes
+}
+
 // ============================================================================
 // Configuration
 // ============================================================================
@@ -147,7 +151,7 @@ function queryD1AcademicYears(): D1AcademicYearRow[] {
   return years;
 }
 
-function transformAcademicYear(d1Year: D1AcademicYearRow): ConvexAcademicYear {
+function transformAcademicYear(d1Year: D1AcademicYearRow): ConvexAcademicYearWithLegacyId {
   const startYear = normalizeNumber(d1Year.startYear) ?? 0;
   const endYear = normalizeNumber(d1Year.endYear) ?? startYear;
   const name =
@@ -157,6 +161,8 @@ function transformAcademicYear(d1Year: D1AcademicYearRow): ConvexAcademicYear {
   const createdAt = toEpochMillis(d1Year.createdAt) ?? Date.now();
   const updatedAt = toEpochMillis(d1Year.updatedAt) ?? createdAt;
 
+  const legacyId = normalizeString(d1Year.id) || `legacy-${startYear}`;
+
   return {
     name,
     startYear,
@@ -164,10 +170,11 @@ function transformAcademicYear(d1Year: D1AcademicYearRow): ConvexAcademicYear {
     isActive: Boolean(d1Year.isActive),
     createdAt,
     updatedAt,
+    legacyId,
   };
 }
 
-function validateAcademicYears(years: ConvexAcademicYear[]): void {
+function validateAcademicYears(years: ConvexAcademicYearWithLegacyId[]): void {
   const stats = {
     missingName: 0,
     missingStart: 0,
@@ -201,7 +208,7 @@ function validateAcademicYears(years: ConvexAcademicYear[]): void {
   console.log("✓ All required fields validated");
 }
 
-function writeJsonFile(years: ConvexAcademicYear[]): void {
+function writeJsonFile(years: ConvexAcademicYearWithLegacyId[]): void {
   try {
     const fileSizeKB = writeJsonFileToDisk(CONFIG.outputFile, years);
     console.log(`✓ Wrote ${CONFIG.outputFile} (${fileSizeKB} KB)`);
@@ -211,7 +218,7 @@ function writeJsonFile(years: ConvexAcademicYear[]): void {
   }
 }
 
-function printSummary(years: ConvexAcademicYear[]): void {
+function printSummary(years: ConvexAcademicYearWithLegacyId[]): void {
   const active = years.filter((y) => y.isActive).length;
   console.log(`\n  Total academic years exported: ${years.length}`);
   console.log(`  Active years: ${active}`);

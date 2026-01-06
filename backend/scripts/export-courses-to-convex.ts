@@ -5,15 +5,25 @@
  *
  * NOTE: Courses are stored in PiniaState table as JSON blob
  *
+ * IMPORTANT: Academic year semesters must be exported and imported to Convex FIRST, since courses
+ * reference semester IDs. This script will map D1 semester IDs to Convex academicYearSemester IDs.
+ *
+ * Prerequisites:
+ *   - Wrangler must be authenticated: npx wrangler login
+ *   - Academic year semesters must be imported to Convex first:
+ *     1. Export and import academic years if not already done
+ *     2. Export and import semester definitions if not already done
+ *     3. cd backend
+ *     4. npm run export:academic-year-semesters
+ *     5. cd ..
+ *     6. npx convex import --table academicYearSemesters backend/exports/convex-academic-year-semesters-export.json
+ *
  * Usage:
  *   cd backend
  *   npm run export:courses
  *
  * Or directly:
  *   npx ts-node scripts/export-courses-to-convex.ts
- *
- * Prerequisites:
- *   - Wrangler must be authenticated: npx wrangler login
  *
  * Output:
  *   - backend/exports/convex-courses-export.json
@@ -31,6 +41,7 @@ import {
   runD1Query,
   writeJsonFile as writeJsonFileToDisk,
 } from "./lib/d1.ts";
+import { buildSemesterIdMap } from "./lib/semesterMap.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -140,10 +151,18 @@ function queryD1Courses(): D1CourseRow[] {
   return courses;
 }
 
-function transformCourse(d1Course: D1CourseRow): ConvexCourse {
+function transformCourse(
+  d1Course: D1CourseRow,
+  semesterIdMap: Map<string, string>
+): ConvexCourse {
   const number = normalizeString(d1Course.number);
   const name = normalizeString(d1Course.admissionYear) || normalizeString(d1Course.name);
-  const semesters = normalizeStringArray(d1Course.semesters);
+
+  // Map D1 semester IDs to Convex semester IDs
+  const d1Semesters = normalizeStringArray(d1Course.semesters);
+  const semesters = d1Semesters
+    ?.map((d1SemesterId) => semesterIdMap.get(d1SemesterId))
+    .filter((id): id is string => id !== undefined);
 
   const createdAt = toEpochMillis(d1Course.createdAt) ?? Date.now();
   const updatedAt = toEpochMillis(d1Course.updatedAt) ?? createdAt;
@@ -151,7 +170,7 @@ function transformCourse(d1Course: D1CourseRow): ConvexCourse {
   return {
     number,
     name: name ? name : undefined,
-    semesters,
+    semesters: semesters && semesters.length > 0 ? semesters : undefined,
     createdAt,
     updatedAt,
   };
@@ -220,20 +239,30 @@ async function main() {
   console.log("==================================\n");
 
   try {
-    console.log("[1/5] Checking Wrangler authentication...");
+    console.log("[1/6] Checking Wrangler authentication...");
     checkWranglerAuth();
 
-    console.log("\n[2/5] Querying production D1 database (PiniaState)...");
+    console.log("\n[2/6] Loading semester ID mappings...");
+    const semesterIdMap = buildSemesterIdMap(CONFIG);
+    if (semesterIdMap.size === 0) {
+      console.warn("⚠ No semester mappings available. Semester references will be lost.");
+      console.warn("  Please import academicYearSemesters first with:");
+      console.warn("  npx convex import --table academicYearSemesters backend/exports/convex-academic-year-semesters-export.json");
+    }
+
+    console.log("\n[3/6] Querying production D1 database (PiniaState)...");
     const d1Courses = queryD1Courses();
 
-    console.log("\n[3/5] Transforming course data...");
-    const convexCourses = d1Courses.map(transformCourse);
+    console.log("\n[4/6] Transforming course data...");
+    const convexCourses = d1Courses.map((course) =>
+      transformCourse(course, semesterIdMap)
+    );
     console.log(`✓ Transformed ${convexCourses.length} courses`);
 
-    console.log("\n[4/5] Validating data...");
+    console.log("\n[5/6] Validating data...");
     validateCourses(convexCourses);
 
-    console.log("\n[5/5] Writing to file...");
+    console.log("\n[6/6] Writing to file...");
     writeJsonFile(convexCourses);
     printSummary(convexCourses);
 
