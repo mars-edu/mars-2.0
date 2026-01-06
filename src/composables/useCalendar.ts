@@ -84,7 +84,7 @@ export function useCalendar() {
         return isEventOnDate(event as any, targetDate);
       })
       .map((event) => {
-        let time = event.startTime || "All day";
+        let time = event.startTime || "...";
         if (event.weeklySchedules && event.weeklySchedules.length > 0) {
           const ws = event.weeklySchedules.find(
             (w) => w.weekId === weekIdOfCurrent
