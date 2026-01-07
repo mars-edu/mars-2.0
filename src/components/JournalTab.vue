@@ -2476,10 +2476,22 @@ const getStudentFinalGrade = (studentId: string): string => {
     .map((mark: any, index: number) => ({ mark, index }))
     .filter(({ mark }) => mark?.type === "session" && mark?.controlType === "intermediate");
 
+  // Find all final control columns (Экзамен/Зачет/etc.)
+  const finalControlColumns = canonical
+    .map((mark: any, index: number) => ({ mark, index }))
+    .filter(({ mark }) => mark?.type === "session" && mark?.controlType === "final");
+
   console.log("[getStudentFinalGrade] Debug info:", {
     studentId,
     intermediateControlColumnsCount: intermediateControlColumns.length,
     intermediateControlColumns: intermediateControlColumns.map(({ mark, index }) => ({
+      index,
+      label: mark?.label,
+      controlType: mark?.controlType,
+      type: mark?.type,
+    })),
+    finalControlColumnsCount: finalControlColumns.length,
+    finalControlColumns: finalControlColumns.map(({ mark, index }) => ({
       index,
       label: mark?.label,
       controlType: mark?.controlType,
@@ -2551,13 +2563,70 @@ const getStudentFinalGrade = (studentId: string): string => {
     return "—";
   }
 
-  // Calculate average of РК grades only
-  const average = rkGrades.reduce((sum, grade) => sum + grade, 0) / rkGrades.length;
-  console.log("[getStudentFinalGrade] Calculated final grade:", {
+  // 1) (РК1 + РК2) / 2 = итоговая (если нет экзамена/зачета)
+  // 2) Если есть итоговый контроль (экзамен/зачет):
+  //    итог = avg(РК) * 0.6 + оценка_экзамена * 0.4
+  const rkAverage = rkGrades.reduce((sum, grade) => sum + grade, 0) / rkGrades.length;
+
+  if (finalControlColumns.length === 0) {
+    console.log("[getStudentFinalGrade] Calculated final grade (no final control):", {
+      rkGrades,
+      rkAverage: rkAverage.toFixed(1),
+    });
+    return rkAverage.toFixed(1);
+  }
+
+  const finalGrades: number[] = [];
+  for (const { mark, index: canonicalIndex } of finalControlColumns) {
+    const storeColIndex = getStoreIndexForCanonicalIndex(canonicalIndex);
+
+    console.log("[getStudentFinalGrade] Checking final control column:", {
+      canonicalIndex,
+      storeColIndex,
+      label: mark?.label,
+    });
+
+    if (storeColIndex == null || storeColIndex < 0) continue;
+    if (storeColIndex >= studentMarks.length) continue;
+
+    const markValues = studentMarks[storeColIndex].values;
+    const finalValue = markValues?.[0];
+
+    if (finalValue === null || finalValue === "" || finalValue === undefined) {
+      continue;
+    }
+
+    const numericValue = Number(finalValue);
+    if (isNaN(numericValue)) {
+      console.log("[getStudentFinalGrade] Final control value is not a number, skipping:", {
+        finalValue,
+      });
+      continue;
+    }
+
+    finalGrades.push(numericValue);
+  }
+
+  if (finalGrades.length === 0) {
+    console.log("[getStudentFinalGrade] Final control exists but has no numeric grade, returning —", {
+      finalControlColumnsCount: finalControlColumns.length,
+    });
+    return "—";
+  }
+
+  const finalControlAverage =
+    finalGrades.reduce((sum, grade) => sum + grade, 0) / finalGrades.length;
+  const weighted = rkAverage * 0.6 + finalControlAverage * 0.4;
+
+  console.log("[getStudentFinalGrade] Calculated final grade (with final control):", {
     rkGrades,
-    average: average.toFixed(1),
+    rkAverage: rkAverage.toFixed(3),
+    finalGrades,
+    finalControlAverage: finalControlAverage.toFixed(3),
+    weighted: weighted.toFixed(1),
   });
-  return average.toFixed(1);
+
+  return weighted.toFixed(1);
 };
 
 const getScoreBadgeClass = (score: string): string => {
