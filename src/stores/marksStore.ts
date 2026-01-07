@@ -75,7 +75,7 @@ export const useMarksStore = defineStore(
           semester?.academicYearId ||
           String(class9Store.getClass9ById(journalInfo.disciplineId)?.academicYearId || "");
 
-        if (!semesterId || !academicYearId) return null;
+        if (!semesterId || semesterId === "" || !academicYearId || academicYearId === "") return null;
 
         const ok = await initializeJournalBackend(
           calendarEventId,
@@ -514,7 +514,7 @@ export const useMarksStore = defineStore(
                       ?.academicYearId || ""
                   );
 
-              if (!semesterId || !academicYear) {
+              if (!semesterId || semesterId === "" || !academicYear || academicYear === "") {
                 console.error(
                   "[marksStore] Cannot auto-initialize - missing semesterId/academicYearId:",
                   { semesterId, academicYear }
