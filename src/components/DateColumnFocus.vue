@@ -97,6 +97,7 @@
 import { ref, watch, nextTick, computed } from "vue";
 import MarkCell from "@/components/ui/MarkCell.vue";
 import EditableMarkCell from "./ui/EditableMarkCell.vue";
+import { useMarksStore } from "@/stores/marksStore";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { f7 } from "framework7-vue";
@@ -119,26 +120,37 @@ const props = defineProps({
     type: Number,
     required: true,
   },
+  journalId: {
+    type: String,
+    required: true,
+  },
 });
 
-const emit = defineEmits(["close", "update-students"]);
+const emit = defineEmits(["close"]);
+
+const marksStore = useMarksStore();
 
 const focusContainer = ref<HTMLDivElement | null>(null);
-const localStudents = ref<any[]>([]);
 const editingCell = ref<{ studentIndex: number; markIndex: number } | null>(
   null
 );
 const editedValue = ref("");
 
-watch(
-  () => props.students,
-  (newStudents) => {
-    if (newStudents) {
-      localStudents.value = JSON.parse(JSON.stringify(newStudents));
-    }
-  },
-  { immediate: true, deep: true }
-);
+// Use computed to get fresh data from store instead of copying
+const localStudents = computed(() => {
+  if (!props.students || !props.journalId) return [];
+
+  return props.students.map((student) => {
+    const studentId = student.studentId || student.id?.toString();
+    const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
+
+    return {
+      ...student,
+      marks: studentMarks || student.marks || [],
+      studentId: studentId,
+    };
+  });
+});
 
 watch(
   () => props.visible,
@@ -154,19 +166,34 @@ watch(
 );
 
 const getMark = (studentIndex: number, markIndex: number) => {
-  const mark =
-    localStudents.value[studentIndex].marks[props.selectedDateIndex].values[
-      markIndex
-    ];
+  const student = localStudents.value[studentIndex];
+  if (!student) return "";
+  const mark = student.marks[props.selectedDateIndex]?.values[markIndex];
   if (mark === null) return "";
   return String(mark ?? "");
 };
 
+// Direct mark update function - immediate save like FloatingJournalRow
+const updateMark = async (studentIndex: number, markIndex: number, value: string | null) => {
+  const student = localStudents.value[studentIndex];
+  if (!student || !props.journalId) return;
+
+  const studentId = student.studentId;
+
+  // Update in store directly
+  await marksStore.updateStudentMark(
+    props.journalId,
+    studentId,
+    props.selectedDateIndex,
+    markIndex,
+    value
+  );
+};
+
 const setMark = (studentIndex: number, markIndex: number, value: string) => {
   const newValue = value === "+" || value === "" ? null : value;
-  localStudents.value[studentIndex].marks[props.selectedDateIndex].values[
-    markIndex
-  ] = newValue;
+  // Direct store update - no debounce
+  updateMark(studentIndex, markIndex, newValue);
 };
 
 // Utility function to check if a date is in the future
@@ -287,7 +314,7 @@ const handleClose = () => {
   if (editingCell.value) {
     confirmEdit();
   }
-  emit("update-students", localStudents.value);
+  // No need to emit updates - they're already saved directly to the store
   emit("close");
 };
 </script>

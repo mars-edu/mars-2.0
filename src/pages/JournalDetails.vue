@@ -264,8 +264,8 @@
       :students="students"
       :column-header="focusedColumnHeader"
       :selected-date-index="focusedDateIndex"
+      :journal-id="journalId"
       @close="isDateFocusVisible = false"
-      @update-students="updateStudents"
     />
     <KtpDetailPopup v-model:opened="isKtpPopupOpened" :ktp-id="ktpParentId" />
     
@@ -578,12 +578,6 @@ const showFloatingRow = (student: any, index: number) => {
 
 const hideFloatingRow = () => {
   selectedStudent.value = null;
-};
-
-const updateStudents = (updatedStudents: any[]) => {
-  if (journalTabRef.value) {
-    journalTabRef.value.updateStudents(updatedStudents);
-  }
 };
 
 const updateStudent = (updatedStudent: any) => {
