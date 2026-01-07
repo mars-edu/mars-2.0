@@ -2204,6 +2204,14 @@ const computeAllSessionGrades = async (opts?: {
     return;
   }
 
+  // IMPORTANT: Intermediate controls (РК1, РК2) should ONLY be computed manually
+  // when the user clicks the "Расчитать" button (force: true)
+  // Automatic computation should NOT compute intermediate controls
+  if (!force) {
+    console.warn("[computeAllSessionGrades] Not forced - skipping automatic computation of intermediate controls");
+    return;
+  }
+
   const canonical = canonicalTemplate.value;
   if (!Array.isArray(canonical) || canonical.length === 0) {
     console.warn("[computeAllSessionGrades] No canonical template, exiting");
