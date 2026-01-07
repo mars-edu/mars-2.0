@@ -1720,16 +1720,18 @@ const editCell = (
   const storeColIndex = getStoreIndexForCanonicalIndex(colIndex);
   if (!studentMarks || storeColIndex == null || storeColIndex < 0) return;
 
-  const markType = studentMarks[storeColIndex].type;
+  const mark = studentMarks[storeColIndex];
+  const markType = mark.type;
   const calculationType =
     props.journalSettings?.calculationType ||
     localJournalSettings.value.calculationType;
-  if (markType === "session" && calculationType === "calculated") {
+  // Only block editing for intermediate controls when in calculated mode
+  // Final controls (like Экзамен) can always be edited manually
+  if (markType === "session" && mark.controlType === "intermediate" && calculationType === "calculated") {
     return;
   }
 
   // Check if this is a future date
-  const mark = studentMarks[storeColIndex];
   if (mark.type === "date" && mark.isoDate && isFutureDate(mark.isoDate)) {
     f7.toast.create({
       text: 'Нельзя выставлять оценки за будущие даты',
