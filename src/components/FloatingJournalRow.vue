@@ -3,7 +3,7 @@
     <div
       v-if="student"
       ref="floatingRowRef"
-      class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[99999] p-4"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99999] p-4"
       tabindex="-1"
       @click.self="handleClose"
       @keydown.esc.prevent="handleClose"
