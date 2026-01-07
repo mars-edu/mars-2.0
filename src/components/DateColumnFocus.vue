@@ -8,13 +8,13 @@
       ref="focusContainer"
       tabindex="-1"
     >
-      <div class="bg-mars-muted rounded-xl shadow-lg p-4 w-full max-w-md">
+      <div class="bg-mars-muted rounded-xl shadow-lg p-4 w-full max-w-md max-h-[90vh] flex flex-col">
         <div
-          class="bg-card rounded-lg p-2"
+          class="bg-card rounded-lg p-2 overflow-y-auto"
           :class="{ 'bg-gray-100': isColumnFutureDate }"
         >
           <table class="w-full">
-            <thead>
+            <thead class="sticky top-0 bg-card z-10">
               <tr class="bg-muted/50">
                 <th class="p-2 text-left w-12 rounded-tl-lg">№</th>
                 <th class="p-2 text-left">Обучающийся</th>
