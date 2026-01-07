@@ -2225,7 +2225,11 @@ const computeAllSessionGrades = async (opts?: {
 
   const sessionColumns = canonical
     .map((mark, canonicalIndex) => ({ mark, canonicalIndex }))
-    .filter(({ mark }) => mark?.type === "session" && matchesLabel(mark.label));
+    .filter(({ mark }) =>
+      mark?.type === "session" &&
+      mark?.controlType === "intermediate" &&
+      matchesLabel(mark.label)
+    );
 
   console.log("[computeAllSessionGrades] Found session columns:", {
     totalCanonical: canonical.length,
