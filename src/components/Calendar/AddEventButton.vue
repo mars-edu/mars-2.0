@@ -36,30 +36,21 @@
             :parent-popover-id="'#add-event-popover'"
             mode="add"
             :event-id="tempEventId"
+            :semester="semesterId"
+            :semester-dates="semesterDates"
+            :total-planned-hours="totalPlannedHours"
+            :semester-planned-hours="semesterPlannedHours"
+            :selected-hours="selectedHours"
+            :hours-exceeded-error="hoursExceededError"
+            :date-validation-error="dateValidationError"
             class="overflow-y-auto"
-            :start-date="dayjs(startDate[0]).format(DATE_UI_FORMAT)"
-            :end-date="dayjs(endDate[0]).format(DATE_UI_FORMAT)"
             v-model:class9Id="class9Id"
             v-model:useCustomPeriod="useCustomPeriod"
+            v-model:startDate="customStartDate"
+            v-model:endDate="customEndDate"
             v-model:participants="participants"
-            v-model:color="eventColor.hex"
+            v-model:color="eventColor"
             v-model:selectedWeekDays="selectedWeekDays"
-            @update:startDate="(v:string) => {
-              console.log('📥 AddEventButton received update:startDate:', v);
-              startDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()];
-            }"
-            @update:endDate="(v:string) => {
-              console.log('📥 AddEventButton received update:endDate:', v);
-              endDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()];
-            }"
-            @update:valid="(v:boolean)=>{
-              console.log('📥 AddEventButton received update:valid:', v);
-              isFormValid=v
-            }"
-            @update:semester="(v:string)=>{
-              console.log('📥 AddEventButton received update:semester (id):', v);
-              semester=v
-            }"
           />
         </div>
       </div>
@@ -68,20 +59,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import { f7 } from "framework7-vue";
+import { storeToRefs } from "pinia";
 import PopoverHeader from "../ui/PopoverHeader.vue";
 import EventForm from "./EventForm.vue";
 import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
-import dayjs from "dayjs";
-import "dayjs/locale/ru";
-import customParseFormat from "dayjs/plugin/customParseFormat";
-
-dayjs.locale("ru");
-dayjs.extend(customParseFormat);
-import { useRupStore } from "@/stores/rupStore";
 import { useUserStore } from "@/stores/userStore";
-import { DATE_UI_FORMAT } from "@/constants/calendar";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
+import { useEventFormDerived, type WeekDaySchedule } from "./useEventFormDerived";
 
 const emit = defineEmits<{
   (e: "event-added", event: CalendarEvent): void;
@@ -89,8 +75,9 @@ const emit = defineEmits<{
 }>();
 
 const calendarStore = useCalendarStore();
-const rupStore = useRupStore();
 const userStore = useUserStore();
+const academicYearSemesterStore = useAcademicYearSemesterStore();
+const { getActiveAcademicYearSemester } = storeToRefs(academicYearSemesterStore);
 
 const effectiveTeacherId = computed(() => {
   if (userStore.isAdmin) {
@@ -103,100 +90,84 @@ const effectiveTeacherId = computed(() => {
 });
 
 const class9Id = ref("");
-const useCustomPeriod = ref(false);
-const startDate = ref<Date[]>([new Date()]);
-const endDate = ref<Date[]>([new Date()]);
+const useCustomPeriodRaw = ref(false);
+const customStartDate = ref("");
+const customEndDate = ref("");
 const participants = ref<string[]>([]);
 const formError = ref<string | null>(null);
-const eventColor = ref({ hex: "#3F51B5" });
-const semester = ref("");
+const eventColor = ref("#3F51B5");
 const tempEventId = ref<string>(""); // Pre-generated event ID for creating KTP before saving
 
-const selectedWeekDays = ref<
-  {
-    weekId: number;
-    russianWeekDay: string;
-    startId: string;
-    endId: string;
-  }[]
->([]);
+const selectedWeekDays = ref<WeekDaySchedule[]>([]);
 
-const isFormValid = ref(false);
+const semesterId = computed(() => getActiveAcademicYearSemester.value?.id || "");
 
-// Add watchers to track changes
-watch(class9Id, (newVal, oldVal) => {
-  console.log("🔄 AddEventButton class9Id changed:", { oldVal, newVal });
-});
-
-watch(useCustomPeriod, (newVal, oldVal) => {
-  console.log("🔄 AddEventButton useCustomPeriod changed:", { oldVal, newVal });
-});
-
-watch(startDate, (newVal, oldVal) => {
-  console.log("🔄 AddEventButton startDate changed:", { oldVal, newVal });
-});
-
-watch(endDate, (newVal, oldVal) => {
-  console.log("🔄 AddEventButton endDate changed:", { oldVal, newVal });
-});
-
-watch(participants, (newVal, oldVal) => {
-  console.log("🔄 AddEventButton participants changed:", { oldVal, newVal });
-});
-
-watch(
+const {
+  semesterDates,
+  effectiveStartDate,
+  effectiveEndDate,
+  dateValidationError,
+  totalPlannedHours,
+  semesterPlannedHours,
+  selectedHours,
+  hoursExceededError,
+  isValid: isFormValid,
+} = useEventFormDerived({
+  class9Id,
+  useCustomPeriod: useCustomPeriodRaw,
+  customStartDate,
+  customEndDate,
   selectedWeekDays,
-  (newVal, oldVal) => {
-    console.log("🔄 AddEventButton selectedWeekDays changed:", {
-      oldVal,
-      newVal,
-    });
-  },
-  { deep: true }
-);
+  semesterId,
+});
 
-watch(eventColor, (newVal, oldVal) => {
-  console.log("🔄 AddEventButton eventColor changed:", { oldVal, newVal });
+const useCustomPeriod = computed({
+  get: () => useCustomPeriodRaw.value,
+  set: (v: boolean) => {
+    useCustomPeriodRaw.value = v;
+    if (v) {
+      if (!customStartDate.value && semesterDates.value?.startDate) {
+        customStartDate.value = semesterDates.value.startDate;
+      }
+      if (!customEndDate.value && semesterDates.value?.endDate) {
+        customEndDate.value = semesterDates.value.endDate;
+      }
+    }
+  },
 });
 
 const handleAddEvent = async () => {
   try {
-    console.log("🔄 handleAddEvent called", {
-      class9Id: class9Id.value,
-      startDate: startDate.value,
-      endDate: endDate.value,
-      participants: participants.value,
-      selectedWeekDays: selectedWeekDays.value,
-      eventColor: eventColor.value.hex,
-      useCustomPeriod: useCustomPeriod.value,
-    });
-
     formError.value = null;
+
+    if (!semesterId.value) {
+      formError.value = "Не удалось определить семестр.";
+      return;
+    }
+    if (!effectiveStartDate.value || !effectiveEndDate.value) {
+      formError.value = "Не удалось определить период.";
+      return;
+    }
 
     const eventData: Omit<CalendarEvent, "id" | "createdAt" | "updatedAt"> = {
       class9Id: class9Id.value,
       teacherId: effectiveTeacherId.value,
-      startDate: dayjs(startDate.value[0]).format(DATE_UI_FORMAT),
-      endDate: dayjs(endDate.value[0]).format(DATE_UI_FORMAT),
+      startDate: effectiveStartDate.value,
+      endDate: effectiveEndDate.value,
       participants: participants.value,
       weeklySchedules: selectedWeekDays.value.map(({ weekId, startId, endId }) => ({
         weekId,
         startId,
         endId,
       })),
-      color: eventColor.value.hex,
+      color: eventColor.value,
       useCustomPeriod: useCustomPeriod.value,
-      semester: semester.value,
+      semester: semesterId.value,
     };
 
-    console.log("📤 handleAddEvent calling calendarStore.addEvent", {
-      eventData,
-      tempEventId: tempEventId.value,
-    });
     const newEvent = await calendarStore.addEvent(eventData, tempEventId.value);
 
     if (newEvent) {
-      console.log("✅ handleAddEvent success", newEvent);
       emit("event-added", newEvent);
       closeAddEventPopover();
       resetForm();
@@ -211,21 +182,19 @@ const handleAddEvent = async () => {
 
 const resetForm = () => {
   class9Id.value = "";
-  useCustomPeriod.value = false;
-  startDate.value = [new Date()];
-  endDate.value = [new Date()];
+  useCustomPeriodRaw.value = false;
+  customStartDate.value = "";
+  customEndDate.value = "";
   participants.value = [];
   selectedWeekDays.value = [];
   formError.value = null;
-  eventColor.value = { hex: "#3F51B5" };
-  semester.value = "";
+  eventColor.value = "#3F51B5";
   tempEventId.value = ""; // Reset temporary event ID
 };
 
 const openAddEventPopover = () => {
   // Generate temporary event ID for KTP creation
   tempEventId.value = crypto.randomUUID();
-  console.log("🆔 Generated temporary event ID:", tempEventId.value);
   f7.popover.open("#add-event-popover");
 };
 

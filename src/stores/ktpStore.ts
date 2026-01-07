@@ -110,6 +110,9 @@ export const useKtpStore = defineStore(
       eventId?: string,
       name?: string
     ): Promise<Ktp> {
+      if (!semesterId) {
+        throw new Error("semesterId is required to create a KTP");
+      }
       const existing = findKtpByClass9Id(class9Id, academicYearId, semesterId, eventId);
       return existing || await createKtp(class9Id, academicYearId, semesterId, eventId, name);
     }
@@ -144,9 +147,9 @@ export const useKtpStore = defineStore(
         ktpId: ktpId as any,
         position: newPosition,
         theme: data.theme || "",
-        totalHours: data.totalHours,
-        srsp: data.srsp,
-        srs: data.srs,
+        totalHours: data.totalHours ?? undefined,
+        srsp: data.srsp ?? undefined,
+        srs: data.srs ?? undefined,
         homework: data.homework || "",
         notes: data.notes || "",
       });
@@ -178,9 +181,9 @@ export const useKtpStore = defineStore(
         id: id as any,
         position: data.position,
         theme: data.theme,
-        totalHours: data.totalHours,
-        srsp: data.srsp,
-        srs: data.srs,
+        totalHours: data.totalHours ?? undefined,
+        srsp: data.srsp ?? undefined,
+        srs: data.srs ?? undefined,
         homework: data.homework,
         notes: data.notes,
       });
@@ -278,9 +281,9 @@ export const useKtpStore = defineStore(
         const details = lessons.map((lesson, index) => ({
           position: lesson.lessonNumber || index + 1,
           theme: lesson.subject || lesson.lessonType || "",
-          totalHours: typeof lesson.hours === "number" ? lesson.hours : null,
-          srsp: null,
-          srs: null,
+          totalHours: typeof lesson.hours === "number" ? lesson.hours : undefined,
+          srsp: undefined,
+          srs: undefined,
           homework: lesson.homework || "",
           notes: lesson.notes || "",
         }));
@@ -327,57 +330,69 @@ export const useKtpStore = defineStore(
     });
 
     // Convenience wrappers by class9Id for existing components
-    function fetchDetailsForClass9(
+    async function fetchDetailsForClass9(
       class9Id: string,
       academicYearId?: string,
       semesterId?: string
     ) {
-      const ktp = ensureKtpForClass9(
+      if (!academicYearId || !semesterId) {
+        throw new Error("academicYearId and semesterId are required");
+      }
+      const ktp = await ensureKtpForClass9(
         class9Id,
-        academicYearId || "",
-        semesterId || ""
+        academicYearId,
+        semesterId
       );
       return fetchDetailsForKtp(ktp.id);
     }
 
-    function addKtpDetailForClass9(
+    async function addKtpDetailForClass9(
       class9Id: string,
       data: Partial<Omit<KtpDetail, "id" | "ktpId" | "position">>,
       academicYearId?: string,
       semesterId?: string
     ) {
-      const ktp = ensureKtpForClass9(
+      if (!academicYearId || !semesterId) {
+        throw new Error("academicYearId and semesterId are required");
+      }
+      const ktp = await ensureKtpForClass9(
         class9Id,
-        academicYearId || "",
-        semesterId || ""
+        academicYearId,
+        semesterId
       );
       return addKtpDetail(ktp.id, data);
     }
 
-    function reorderKtpDetailsForClass9(
+    async function reorderKtpDetailsForClass9(
       class9Id: string,
       reorderedIds: string[],
       academicYearId?: string,
       semesterId?: string
     ) {
-      const ktp = ensureKtpForClass9(
+      if (!academicYearId || !semesterId) {
+        throw new Error("academicYearId and semesterId are required");
+      }
+      const ktp = await ensureKtpForClass9(
         class9Id,
-        academicYearId || "",
-        semesterId || ""
+        academicYearId,
+        semesterId
       );
       return reorderKtpDetails(ktp.id, reorderedIds);
     }
 
-    function bulkImportKtpDetailsForClass9(
+    async function bulkImportKtpDetailsForClass9(
       class9Id: string,
       lessons: ParsedLesson[],
       academicYearId?: string,
       semesterId?: string
     ) {
-      const ktp = ensureKtpForClass9(
+      if (!academicYearId || !semesterId) {
+        throw new Error("academicYearId and semesterId are required");
+      }
+      const ktp = await ensureKtpForClass9(
         class9Id,
-        academicYearId || "",
-        semesterId || ""
+        academicYearId,
+        semesterId
       );
       return bulkImportKtpDetails(ktp.id, lessons);
     }
@@ -388,11 +403,15 @@ export const useKtpStore = defineStore(
         academicYearId?: string,
         semesterId?: string
       ) => {
-        const ktp = ensureKtpForClass9(
+        if (!academicYearId || !semesterId) {
+          throw new Error("academicYearId and semesterId are required");
+        }
+        const ktp = findKtpByClass9Id(
           class9Id,
-          academicYearId || "",
-          semesterId || ""
+          academicYearId,
+          semesterId
         );
+        if (!ktp) return [];
         return getDetailsByKtpId.value(ktp.id);
       };
     });

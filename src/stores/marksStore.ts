@@ -10,9 +10,90 @@ export const useMarksStore = defineStore(
   "marks",
   () => {
     const journalMarks = ref<Record<string, JournalMarks>>({});
+    const backendJournalIdByCalendarEventId = ref<Record<string, string>>({});
     const loading = ref(false);
     const error = ref<string | null>(null);
     const initializedJournals = ref<Set<string>>(new Set());
+
+    const cacheBackendJournalId = (calendarEventId: string, journalId: string) => {
+      backendJournalIdByCalendarEventId.value = {
+        ...backendJournalIdByCalendarEventId.value,
+        [calendarEventId]: journalId,
+      };
+    };
+
+    const resolveBackendJournalId = async (
+      calendarEventId: string
+    ): Promise<string | null> => {
+      if (!calendarEventId) return null;
+      const cached = backendJournalIdByCalendarEventId.value[calendarEventId];
+      if (cached) return cached;
+
+      try {
+        const journal = await convex.query(api.journals.queries.getByCalendarEvent, {
+          calendarEventId,
+        });
+        const journalId = (journal as any)?._id ? String((journal as any)._id) : null;
+        if (journalId) {
+          cacheBackendJournalId(calendarEventId, journalId);
+          return journalId;
+        }
+      } catch (err) {
+        console.warn("[marksStore] Failed to resolve backend journal ID:", err);
+      }
+
+      return null;
+    };
+
+    const ensureBackendJournalId = async (
+      calendarEventId: string
+    ): Promise<string | null> => {
+      const existing = await resolveBackendJournalId(calendarEventId);
+      if (existing) return existing;
+
+      try {
+        const { useJournalStore } = await import("./journalStore");
+        const { useCalendarStore } = await import("./calendarStore");
+        const { useClass9Store } = await import("./class9Store");
+        const { useAcademicYearSemesterStore } = await import("./academicYearSemesterStore");
+
+        const journalStore = useJournalStore();
+        const calendarStore = useCalendarStore();
+        const class9Store = useClass9Store();
+        const academicYearSemesterStore = useAcademicYearSemesterStore();
+
+        const journalInfo = journalStore.getJournalById(calendarEventId);
+        const event = calendarStore.getEventById(calendarEventId);
+
+        if (!journalInfo) return null;
+
+        const semesterId = event?.semester ? String(event.semester) : null;
+        const semester = semesterId
+          ? academicYearSemesterStore.getAcademicYearSemesterById(semesterId)
+          : null;
+        const academicYearId =
+          semester?.academicYearId ||
+          String(class9Store.getClass9ById(journalInfo.disciplineId)?.academicYearId || "");
+
+        if (!semesterId || !academicYearId) return null;
+
+        const ok = await initializeJournalBackend(
+          calendarEventId,
+          journalInfo.disciplineId,
+          journalInfo.group,
+          academicYearId,
+          semesterId,
+          journalInfo.students
+        );
+
+        if (!ok) return null;
+      } catch (err) {
+        console.warn("[marksStore] Failed to ensure backend journal:", err);
+        return null;
+      }
+
+      return await resolveBackendJournalId(calendarEventId);
+    };
 
     // No more queue or debounce logic - direct API calls
 
@@ -24,7 +105,16 @@ export const useMarksStore = defineStore(
 
         console.log("[marksStore] Fetching marks from backend for journal:", journalId);
 
-        const result = await convex.query(api.marks.queries.getJournalMarks, { journalId });
+        const backendJournalId = await ensureBackendJournalId(journalId);
+        if (!backendJournalId) {
+          console.warn("[marksStore] Backend journal not found; cannot load marks:", journalId);
+          loading.value = false;
+          return false;
+        }
+
+        const result = await convex.query(api.marks.queries.getJournalMarks, {
+          journalId: backendJournalId as any,
+        });
 
         console.log("[marksStore] Received marks from backend:", {
           journalId,
@@ -106,7 +196,7 @@ export const useMarksStore = defineStore(
           studentCount: students.length
         });
         
-        await convex.mutation(api.marks.mutations.initializeJournal, {
+        const journal = await convex.mutation(api.marks.mutations.initializeJournal, {
           calendarEventId: journalId,
           disciplineId,
           groupName,
@@ -114,6 +204,13 @@ export const useMarksStore = defineStore(
           semesterId: semester,
           studentIds: students,
         });
+        
+        const backendJournalId = (journal as any)?._id
+          ? String((journal as any)._id)
+          : null;
+        if (backendJournalId) {
+          cacheBackendJournalId(journalId, backendJournalId);
+        }
         
         initializedJournals.value.add(journalId);
         console.log("[marksStore] Journal initialized successfully");
@@ -355,9 +452,18 @@ export const useMarksStore = defineStore(
 
           // Save to backend
           try {
+            const backendJournalId = await ensureBackendJournalId(journalId);
+            if (!backendJournalId) {
+              console.warn(
+                "[marksStore] Skipping backend update; journal not initialized:",
+                journalId
+              );
+              return true;
+            }
+
             console.log("[marksStore] Using Convex to update mark");
             await convex.mutation(api.marks.mutations.updateMark, {
-              journalId,
+              journalId: backendJournalId as any,
               studentId,
               columnIndex: markIndex,
               rowIndex: valueIndex,
@@ -372,18 +478,22 @@ export const useMarksStore = defineStore(
             });
           } catch (updateError: any) {
             // If foreign key constraint error, journal needs initialization
-            if (updateError?.message?.includes("Foreign key constraint") || 
-                updateError?.message?.includes("does not exist")) {
+            if (
+              updateError?.message?.includes("Foreign key constraint") ||
+              updateError?.message?.includes("does not exist")
+            ) {
               console.warn("[marksStore] Journal not initialized in backend, attempting auto-initialization...");
               
               // Try to get journal info from other stores
               const { useJournalStore } = await import("./journalStore");
               const { useCalendarStore } = await import("./calendarStore");
               const { useClass9Store } = await import("./class9Store");
+              const { useAcademicYearSemesterStore } = await import("./academicYearSemesterStore");
               
               const journalStore = useJournalStore();
               const calendarStore = useCalendarStore();
               const class9Store = useClass9Store();
+              const academicYearSemesterStore = useAcademicYearSemesterStore();
               
               const journalInfo = journalStore.getJournalById(journalId);
               const event = calendarStore.getEventById(journalId);
@@ -393,18 +503,23 @@ export const useMarksStore = defineStore(
                 throw updateError;
               }
               
-              // Get academic year and semester from the event or class9
-              let academicYear = "2024-2025"; // fallback
-              let semesterId = "1"; // fallback
-              
-              if (event?.semester) {
-                semesterId = String(event.semester);
-              }
-              
-              // Try to get academic year from the discipline
-              const class9Item = class9Store.getClass9ById(journalInfo.disciplineId);
-              if (class9Item?.academicYearId) {
-                academicYear = String(class9Item.academicYearId);
+              const semesterId = event?.semester ? String(event.semester) : null;
+              const semester = semesterId
+                ? academicYearSemesterStore.getAcademicYearSemesterById(semesterId)
+                : null;
+              const academicYear = semester?.academicYearId
+                ? String(semester.academicYearId)
+                : String(
+                    class9Store.getClass9ById(journalInfo.disciplineId)
+                      ?.academicYearId || ""
+                  );
+
+              if (!semesterId || !academicYear) {
+                console.error(
+                  "[marksStore] Cannot auto-initialize - missing semesterId/academicYearId:",
+                  { semesterId, academicYear }
+                );
+                throw updateError;
               }
               
               console.log("[marksStore] Auto-initializing journal with:", {
@@ -426,10 +541,14 @@ export const useMarksStore = defineStore(
               );
               
               if (initialized) {
+                const backendJournalId = await resolveBackendJournalId(journalId);
+                if (!backendJournalId) {
+                  throw updateError;
+                }
                 // Retry the mark update
                 console.log("[marksStore] Retrying mark update after initialization...");
                 await convex.mutation(api.marks.mutations.updateMark, {
-                  journalId,
+                  journalId: backendJournalId as any,
                   studentId,
                   columnIndex: markIndex,
                   rowIndex: valueIndex,
@@ -526,15 +645,23 @@ export const useMarksStore = defineStore(
               parentStudentMark.marks[markIndex].values[valueIndex] = value;
               parentJournal.lastUpdated = new Date().toISOString();
 
-              // Save to backend
-              try {
-                await convex.mutation(api.marks.mutations.updateMark, {
-                  journalId: parentJournalId,
-                  studentId,
-                  columnIndex: markIndex,
-                  rowIndex: valueIndex,
-                  value: value || undefined,
-                  columnType: mark.type,
+            // Save to backend
+            try {
+              const backendParentJournalId = await ensureBackendJournalId(parentJournalId);
+              if (!backendParentJournalId) {
+                console.warn(
+                  "[marksStore] Skipping backend sync; parent journal not initialized:",
+                  parentJournalId
+                );
+                continue;
+              }
+              await convex.mutation(api.marks.mutations.updateMark, {
+                journalId: backendParentJournalId as any,
+                studentId,
+                columnIndex: markIndex,
+                rowIndex: valueIndex,
+                value: value || undefined,
+                columnType: mark.type,
                   columnDate: mark.isoDate,
                   columnLabel: mark.label,
                   controlType: mark.controlType,

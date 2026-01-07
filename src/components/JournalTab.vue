@@ -407,7 +407,7 @@
     <!-- Recalculate Popover -->
     <f7-popover
       id="recalc-popover"
-      style="width: 260px !important"
+      style="width: 300px !important"
       close-on-escape
       target="#recalc-button"
     >
@@ -416,8 +416,23 @@
           Выберите расчёт
         </div>
         <div class="p-2 space-y-2">
+          <template v-if="intermediateControlsForRecalc.length > 0">
+            <f7-button
+              v-for="control in intermediateControlsForRecalc"
+              :key="control.id"
+              small
+              fill
+              @click="recalcIntermediateControl(control.label)"
+              class="w-full"
+            >
+              {{ control.label }}
+            </f7-button>
+          </template>
+          <div v-else class="text-xs text-gray-500 px-1 py-2">
+            Нет промежуточных контролей
+          </div>
           <f7-button small fill @click="recalcSessions" class="w-full">
-            Сессии
+            Итоговые
           </f7-button>
         </div>
       </div>
@@ -1270,9 +1285,28 @@ const generateDates = () => {
     const insertAfterDatePos = computeInsertAfter(start, end, lastDatePos);
     const controlKey = `${type}:${controlId}`;
     const previousMax = lastAssignedDatePosByControlKey.get(controlKey) ?? -1;
+
+    console.log(`[registerScheduledControl] Registering ${type} control:`, {
+      type,
+      controlId,
+      label: rawControl.shortName || 'unlabeled',
+      startDate: rawControl.startDate,
+      endDate: rawControl.endDate,
+      parsedStart: start?.format('YYYY-MM-DD'),
+      parsedEnd: end?.format('YYYY-MM-DD'),
+      insertAfterDatePos,
+      previousMax,
+      dateMetaLength: dateMeta.length,
+    });
+
     let sessionDateIndices = collectSessionDateIndices(start, end)
       .filter((idx) => idx > previousMax)
       .filter((idx) => insertAfterDatePos < 0 || idx <= insertAfterDatePos);
+
+    console.log(`[registerScheduledControl] After collectSessionDateIndices:`, {
+      sessionDateIndices,
+      length: sessionDateIndices.length,
+    });
 
     if (!sessionDateIndices.length && insertAfterDatePos >= 0) {
       sessionDateIndices = dateMeta
@@ -1281,6 +1315,9 @@ const generateDates = () => {
             meta.datePos > previousMax && meta.datePos <= insertAfterDatePos
         )
         .map((meta) => meta.datePos);
+      console.log(`[registerScheduledControl] Fallback 1 - using dateMeta filter:`, {
+        sessionDateIndices,
+      });
     }
 
     if (!sessionDateIndices.length) {
@@ -1291,10 +1328,16 @@ const generateDates = () => {
             (insertAfterDatePos < 0 || meta.datePos <= insertAfterDatePos)
         )
         .map((meta) => meta.datePos);
+      console.log(`[registerScheduledControl] Fallback 2 - broader dateMeta filter:`, {
+        sessionDateIndices,
+      });
     }
 
     if (!sessionDateIndices.length && insertAfterDatePos >= 0) {
       sessionDateIndices = [insertAfterDatePos];
+      console.log(`[registerScheduledControl] Fallback 3 - using insertAfterDatePos:`, {
+        sessionDateIndices,
+      });
     }
 
     if (!sessionDateIndices.length && dateMeta.length) {
@@ -1302,7 +1345,19 @@ const generateDates = () => {
       sessionDateIndices = nextMeta
         ? [nextMeta.datePos]
         : [dateMeta[dateMeta.length - 1].datePos];
+      console.log(`[registerScheduledControl] Fallback 4 - using last resort:`, {
+        sessionDateIndices,
+        nextMeta: nextMeta?.datePos,
+        lastDatePos: dateMeta[dateMeta.length - 1]?.datePos,
+      });
     }
+
+    console.log(`[registerScheduledControl] Final sessionDateIndices:`, {
+      type,
+      label: rawControl.shortName,
+      sessionDateIndices,
+      length: sessionDateIndices.length,
+    });
 
     if (sessionDateIndices.length) {
       lastAssignedDatePosByControlKey.set(
@@ -1781,6 +1836,24 @@ const ktpViewPopoverOpened = ref(false);
 const ktpViewPopoverTarget = ref("");
 const selectedKtpDetail = ref<KtpDetail | null>(null);
 
+const effectiveSemesterIdForKtp = computed(() => {
+  const eventSemester = currentEvent.value?.semester;
+  if (eventSemester != null && String(eventSemester).length) {
+    return String(eventSemester);
+  }
+  const activeSemester = academicYearSemesterStore.getActiveAcademicYearSemester as any;
+  return activeSemester?.id ? String(activeSemester.id) : null;
+});
+
+const effectiveAcademicYearIdForKtp = computed(() => {
+  const semesterId = effectiveSemesterIdForKtp.value;
+  const semester =
+    semesterId && typeof getAcademicYearSemesterById.value === "function"
+      ? getAcademicYearSemesterById.value(semesterId)
+      : null;
+  return semester?.academicYearId || currentClass9.value?.academicYearId || null;
+});
+
 const localJournalSettings = ref({
   calculationType: props.journalSettings?.calculationType || "calculated",
   calculationMethod:
@@ -1806,6 +1879,10 @@ const getKtpForHeader = (headerIndex: number): KtpDetail | null => {
   const class9Id = currentJournal.value?.disciplineId;
   if (!class9Id) return null;
 
+  const academicYearId = effectiveAcademicYearIdForKtp.value;
+  const semesterId = effectiveSemesterIdForKtp.value;
+  if (!academicYearId || !semesterId) return null;
+
   // Find dayIndex - position of this date among all date columns
   let dayIndex = 0;
   for (let i = 0; i < visibleHeaders.value.length; i++) {
@@ -1815,7 +1892,11 @@ const getKtpForHeader = (headerIndex: number): KtpDetail | null => {
   }
 
   // Get KTP details for the discipline
-  const details = ktpStore.getDetailsByClass9Id(class9Id);
+  const details = ktpStore.getDetailsByClass9Id(
+    class9Id,
+    academicYearId,
+    semesterId
+  );
   const detail = details[dayIndex];
 
   // Check that KTP exists AND theme is not empty
@@ -1867,7 +1948,15 @@ const onPaperclipClick = async (
   // Get KTP details using class9Id from currentJournal
   try {
     const class9Id = currentJournal.value.disciplineId;
-    const details = ktpStore.getDetailsByClass9Id(class9Id);
+    const academicYearId = effectiveAcademicYearIdForKtp.value;
+    const semesterId = effectiveSemesterIdForKtp.value;
+    if (!academicYearId || !semesterId) return;
+
+    const details = ktpStore.getDetailsByClass9Id(
+      class9Id,
+      academicYearId,
+      semesterId
+    );
 
     // Select the detail based on day index (0-based)
     const detailForDate = details[dayIndex] || null;
@@ -1898,6 +1987,58 @@ const recalcSessions = async () => {
   f7.popover.close("#recalc-popover");
 };
 
+// Get all intermediate controls for the recalc popover
+const intermediateControlsForRecalc = computed(() => {
+  const canonical = canonicalTemplate.value || [];
+
+  console.log("[JournalTab] intermediateControlsForRecalc - canonical template:", {
+    totalColumns: canonical.length,
+    sessionColumns: canonical.filter((m: any) => m?.type === "session"),
+    allSessionDetails: canonical
+      .filter((m: any) => m?.type === "session")
+      .map((m: any) => ({
+        type: m.type,
+        controlType: m.controlType,
+        label: m.label,
+        sessionId: m.sessionId,
+        scheduledControlId: m.scheduledControlId,
+      })),
+  });
+
+  const controls = canonical
+    .filter((mark: any) => {
+      const isIntermediate = mark?.type === "session" && mark?.controlType === "intermediate";
+      console.log("[JournalTab] checking mark:", {
+        type: mark?.type,
+        controlType: mark?.controlType,
+        label: mark?.label,
+        isIntermediate,
+      });
+      return isIntermediate;
+    })
+    .map((mark: any, index: number) => ({
+      id: mark.scheduledControlId || mark.sessionId || `intermediate-${index}`,
+      label: mark.label || "ПК",
+    }));
+
+  console.log("[JournalTab] intermediateControlsForRecalc - filtered controls:", controls);
+
+  // Remove duplicates based on label
+  const unique = controls.filter(
+    (control, index, self) =>
+      index === self.findIndex((c) => c.label === control.label)
+  );
+
+  console.log("[JournalTab] intermediateControlsForRecalc - unique controls:", unique);
+
+  return unique;
+});
+
+const recalcIntermediateControl = async (label: string) => {
+  await computeAllSessionGrades({ force: true, labels: [label] });
+  f7.popover.close("#recalc-popover");
+};
+
 const getStoreIndexForDatePosition = (datePos: number): number | null => {
   const canonical = canonicalTemplate.value as any[] | undefined;
   if (!canonical || datePos < 0) return null;
@@ -1919,15 +2060,51 @@ const computeDayAverage = (
 ): number | null => {
   if (!studentId || !props.journalId) return null;
   const storeColIndex = getStoreIndexForDatePosition(datePos);
-  if (storeColIndex == null || storeColIndex < 0) return null;
+
+  console.log("[computeDayAverage] Processing:", {
+    studentId,
+    datePos,
+    storeColIndex,
+  });
+
+  if (storeColIndex == null || storeColIndex < 0) {
+    console.warn("[computeDayAverage] Invalid store column index:", storeColIndex);
+    return null;
+  }
   const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
-  if (!studentMarks || storeColIndex >= studentMarks.length) return null;
+  if (!studentMarks || storeColIndex >= studentMarks.length) {
+    console.warn("[computeDayAverage] No student marks or column out of bounds:", {
+      hasMarks: !!studentMarks,
+      storeColIndex,
+      marksLength: studentMarks?.length,
+    });
+    return null;
+  }
   const values = studentMarks[storeColIndex]?.values || [];
   const nums = values
     .map((v) =>
       v !== null && v !== "" && !isNaN(Number(v)) ? Number(v) : null
     )
     .filter((v): v is number => v !== null);
+
+  console.log("[computeDayAverage] Result:", {
+    datePos,
+    storeColIndex,
+    rawValues: values,
+    valuesDetailed: values.map((v, i) => ({
+      index: i,
+      value: v,
+      type: typeof v,
+      isNull: v === null,
+      isEmpty: v === "",
+      isNumeric: !isNaN(Number(v)),
+      asNumber: Number(v)
+    })),
+    nums,
+    numsLength: nums.length,
+    avg: nums.length > 0 ? nums.reduce((s, v) => s + v, 0) / nums.length : null,
+  });
+
   if (nums.length === 0) return null;
   const avg = nums.reduce((s, v) => s + v, 0) / nums.length;
   return avg;
@@ -1938,15 +2115,33 @@ const computeSessionGradeForStudent = (
   sessionDateIndices: number[],
   method: "only-assigned" | "all-days"
 ): string | null => {
-  if (sessionDateIndices.length === 0) return null;
+  console.log("[computeSessionGradeForStudent] Called with:", {
+    studentId,
+    sessionDateIndices,
+    method,
+    sessionDateIndicesLength: sessionDateIndices.length,
+  });
+
+  if (sessionDateIndices.length === 0) {
+    console.warn("[computeSessionGradeForStudent] sessionDateIndices is empty, returning null");
+    return null;
+  }
 
   if (method === "all-days") {
     const totalDays = sessionDateIndices.length;
     if (totalDays === 0) return null;
     let sum = 0;
+    const dayAverages: Array<{ idx: number; avg: number | null }> = [];
     sessionDateIndices.forEach((idx) => {
       const dayAvg = computeDayAverage(studentId, idx);
+      dayAverages.push({ idx, avg: dayAvg });
       sum += dayAvg ?? 0;
+    });
+    console.log("[computeSessionGradeForStudent] all-days method:", {
+      totalDays,
+      dayAverages,
+      sum,
+      grade: (sum / totalDays).toFixed(1),
     });
     const grade = sum / totalDays;
     return grade.toFixed(1);
@@ -1955,14 +2150,28 @@ const computeSessionGradeForStudent = (
   // only-assigned
   let sum = 0;
   let count = 0;
+  const dayAverages: Array<{ idx: number; avg: number | null }> = [];
   sessionDateIndices.forEach((idx) => {
     const dayAvg = computeDayAverage(studentId, idx);
+    dayAverages.push({ idx, avg: dayAvg });
     if (dayAvg !== null) {
       sum += dayAvg;
       count += 1;
     }
   });
-  if (count === 0) return null;
+
+  console.log("[computeSessionGradeForStudent] only-assigned method:", {
+    sessionDateIndices,
+    dayAverages,
+    sum,
+    count,
+    grade: count > 0 ? (sum / count).toFixed(1) : null,
+  });
+
+  if (count === 0) {
+    console.warn("[computeSessionGradeForStudent] No valid marks found in date range, returning null");
+    return null;
+  }
   const grade = sum / count;
   return grade.toFixed(1);
 };
@@ -1977,11 +2186,27 @@ const computeAllSessionGrades = async (opts?: {
     localJournalSettings.value.calculationType ||
     "calculated";
 
-  if (!props.journalId) return;
-  if (!force && calculationType !== "calculated") return;
+  console.log("[computeAllSessionGrades] Starting calculation:", {
+    force,
+    calculationType,
+    hasLabels: !!opts?.labels,
+    labels: opts?.labels,
+  });
+
+  if (!props.journalId) {
+    console.warn("[computeAllSessionGrades] No journal ID, exiting");
+    return;
+  }
+  if (!force && calculationType !== "calculated") {
+    console.warn("[computeAllSessionGrades] Not forced and calculationType is not 'calculated', exiting");
+    return;
+  }
 
   const canonical = canonicalTemplate.value;
-  if (!Array.isArray(canonical) || canonical.length === 0) return;
+  if (!Array.isArray(canonical) || canonical.length === 0) {
+    console.warn("[computeAllSessionGrades] No canonical template, exiting");
+    return;
+  }
 
   const matchesLabel = (label: string | undefined) => {
     if (!opts?.labels || opts.labels.length === 0) return true;
@@ -1996,14 +2221,38 @@ const computeAllSessionGrades = async (opts?: {
     localJournalSettings.value.calculationMethod ||
     "only-assigned";
 
+  console.log("[computeAllSessionGrades] Using calculation method:", calculationMethod);
+
   const sessionColumns = canonical
     .map((mark, canonicalIndex) => ({ mark, canonicalIndex }))
     .filter(({ mark }) => mark?.type === "session" && matchesLabel(mark.label));
 
-  if (sessionColumns.length === 0) return;
+  console.log("[computeAllSessionGrades] Found session columns:", {
+    totalCanonical: canonical.length,
+    sessionColumnsCount: sessionColumns.length,
+    sessionColumns: sessionColumns.map(({ mark, canonicalIndex }) => ({
+      canonicalIndex,
+      type: mark?.type,
+      label: mark?.label,
+      controlType: mark?.controlType,
+      sessionDateIndices: mark?.sessionDateIndices,
+    })),
+  });
+
+  if (sessionColumns.length === 0) {
+    console.warn("[computeAllSessionGrades] No session columns found, exiting");
+    return;
+  }
 
   const students = marksStore.getJournalStudentMarks(props.journalId);
-  if (!Array.isArray(students) || students.length === 0) return;
+  if (!Array.isArray(students) || students.length === 0) {
+    console.warn("[computeAllSessionGrades] No students found, exiting");
+    return;
+  }
+
+  console.log("[computeAllSessionGrades] Processing students:", {
+    studentsCount: students.length,
+  });
 
   // Collect all update promises to await them together
   const updatePromises: Promise<boolean>[] = [];
@@ -2014,7 +2263,22 @@ const computeAllSessionGrades = async (opts?: {
       ? sessionMark.sessionDateIndices
       : [];
     const storeIndex = getStoreIndexForCanonicalIndex(canonicalIndex);
-    if (storeIndex == null || storeIndex < 0) return;
+
+    console.log("[computeAllSessionGrades] Processing session column:", {
+      canonicalIndex,
+      label: mark?.label,
+      controlType: mark?.controlType,
+      dateIndices,
+      storeIndex,
+    });
+
+    if (storeIndex == null || storeIndex < 0) {
+      console.warn("[computeAllSessionGrades] Invalid store index for column, skipping:", {
+        canonicalIndex,
+        storeIndex,
+      });
+      return;
+    }
 
     students.forEach((studentMark) => {
       const grade = computeSessionGradeForStudent(
@@ -2025,6 +2289,16 @@ const computeAllSessionGrades = async (opts?: {
 
       const existingValue =
         studentMark.marks?.[storeIndex]?.values?.[0] ?? null;
+
+      console.log("[computeAllSessionGrades] Student grade computed:", {
+        studentId: studentMark.studentId,
+        canonicalIndex,
+        label: mark?.label,
+        grade,
+        existingValue,
+        willUpdate: existingValue !== grade,
+      });
+
       if (existingValue === grade) return;
 
       // Queue the update and collect the promise
@@ -2041,6 +2315,10 @@ const computeAllSessionGrades = async (opts?: {
 
   // Wait for all session grade updates to complete before returning
   await Promise.all(updatePromises);
+
+  console.log("[computeAllSessionGrades] Completed:", {
+    totalUpdates: updatePromises.length,
+  });
 };
 
 /**
@@ -2060,7 +2338,7 @@ const areAllControlsCalculated = (studentId: string): boolean => {
   }
 
   // Filter only intermediate and final controls
-  const controlColumns = canonical.filter((col: Mark) => {
+  const controlColumns = canonical.filter((col): col is Mark => {
     return (
       col.type === "session" &&
       (col.controlType === "intermediate" || col.controlType === "final")

@@ -25,18 +25,20 @@
         :event-id="props.eventId"
         class="overflow-y-auto"
         v-if="event"
-        :start-date="dayjs(startDate[0]).format(DATE_UI_FORMAT)"
-        :end-date="dayjs(endDate[0]).format(DATE_UI_FORMAT)"
-        :semester="semester"
+        :semester="effectiveSemesterId"
+        :semester-dates="semesterDates"
+        :total-planned-hours="totalPlannedHours"
+        :semester-planned-hours="semesterPlannedHours"
+        :selected-hours="selectedHours"
+        :hours-exceeded-error="hoursExceededError"
+        :date-validation-error="dateValidationError"
         v-model:class9Id="class9Id"
         v-model:useCustomPeriod="useCustomPeriod"
+        v-model:startDate="customStartDate"
+        v-model:endDate="customEndDate"
         v-model:participants="participants"
-        v-model:color="eventColor.hex"
+        v-model:color="eventColor"
         v-model:selectedWeekDays="selectedWeekDays"
-        @update:startDate="(v:string) => startDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()]"
-        @update:endDate="(v:string) => endDate = [dayjs(v, DATE_UI_FORMAT, true).toDate()]"
-        @update:valid="(v:boolean)=>{ isFormValid=v }"
-        @update:semester="(v:string)=>{ if (!semester) semester = v }"
       >
         <div class="pt-4 border-t border-border">
           <button
@@ -65,20 +67,12 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import EventForm from "./EventForm.vue";
 import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
 import { useClass9Store } from "@/stores/class9Store";
-import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
-import { useSemesterStore } from "@/stores/semesterStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useUserStore } from "@/stores/userStore";
 import { storeToRefs } from "pinia";
-import dayjs from "dayjs";
-import "dayjs/locale/ru";
-import customParseFormat from "dayjs/plugin/customParseFormat";
-
-// Set Russian locale for consistent date parsing
-dayjs.locale("ru");
-dayjs.extend(customParseFormat);
 import { WEEK_DAYS, DATE_UI_FORMAT } from "@/constants/calendar";
+import { useEventFormDerived, type WeekDaySchedule } from "./useEventFormDerived";
 
 const props = defineProps<{ eventId: string }>();
 
@@ -93,9 +87,7 @@ const calendarStore = useCalendarStore();
 const event = computed(() => calendarStore.getEventById(props.eventId));
 const class9Store = useClass9Store();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
-const selectedItemsStore = useSelectedItemsStore();
 const educationScheduleStore = useEducationScheduleStore();
-const semesterStore = useSemesterStore();
 const userStore = useUserStore();
 
 const effectiveTeacherId = computed(() => {
@@ -109,72 +101,70 @@ const effectiveTeacherId = computed(() => {
 });
 
 const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
-const { selectedClass9Item } = storeToRefs(selectedItemsStore);
 const { getActiveAcademicYearSemester } = storeToRefs(
   academicYearSemesterStore
 );
 
 const class9Id = ref("");
-const useCustomPeriod = ref(false);
 const semester = ref("");
+const useCustomPeriodRaw = ref(false);
+const customStartDate = ref("");
+const customEndDate = ref("");
 
-// Convert date string to Date array for datepicker
-const formatDateArray = (date: any): Date[] => {
-  if (!date) {
-    return [new Date()];
-  }
-
-  // Handle arrays
-  if (Array.isArray(date)) {
-    return formatDateArray(date[0]);
-  }
-
-  // Convert to string and parse
-  const dateStr = String(date);
-  let parsed;
-
-  // Handle ISO format
-  if (dateStr.includes("T")) {
-    parsed = dayjs(dateStr);
-  }
-  // Handle DD/MM/YYYY format with strict parsing
-  else if (dateStr.includes("/")) {
-    parsed = dayjs(dateStr, DATE_UI_FORMAT, true);
-  }
-  // Try general parsing
-  else {
-    parsed = dayjs(dateStr);
-  }
-
-  return parsed.isValid() ? [parsed.toDate()] : [new Date()];
-};
-
-const startDate = ref<Date[]>([new Date()]);
-const endDate = ref<Date[]>([new Date()]);
 const participants = ref<string[]>([]);
-const eventColor = ref({ hex: "#3F51B5" });
+const eventColor = ref("#3F51B5");
 
 const formError = ref<string | null>(null);
-const isFormValid = ref(false);
-const selectedWeekDays = ref<
-  {
-    weekId: number;
-    russianWeekDay: string;
-    startId: string;
-    endId: string;
-  }[]
->([]);
+const selectedWeekDays = ref<WeekDaySchedule[]>([]);
+
+const effectiveSemesterId = computed(() => {
+  return semester.value || (getActiveAcademicYearSemester.value as any)?.id || "";
+});
+
+const {
+  semesterDates,
+  effectiveStartDate,
+  effectiveEndDate,
+  dateValidationError,
+  totalPlannedHours,
+  semesterPlannedHours,
+  selectedHours,
+  hoursExceededError,
+  isValid: isFormValid,
+} = useEventFormDerived({
+  class9Id,
+  useCustomPeriod: useCustomPeriodRaw,
+  customStartDate,
+  customEndDate,
+  selectedWeekDays,
+  semesterId: effectiveSemesterId,
+});
+
+const useCustomPeriod = computed({
+  get: () => useCustomPeriodRaw.value,
+  set: (v: boolean) => {
+    useCustomPeriodRaw.value = v;
+    if (v) {
+      if (!customStartDate.value && semesterDates.value?.startDate) {
+        customStartDate.value = semesterDates.value.startDate;
+      }
+      if (!customEndDate.value && semesterDates.value?.endDate) {
+        customEndDate.value = semesterDates.value.endDate;
+      }
+    }
+  },
+});
 
 // Update form fields whenever event data changes
 watchEffect(() => {
   if (event.value) {
     class9Id.value = event.value.class9Id;
-    useCustomPeriod.value = event.value.useCustomPeriod || false;
+    useCustomPeriodRaw.value = event.value.useCustomPeriod || false;
     semester.value = event.value.semester || "";
-    startDate.value = formatDateArray(event.value.startDate);
-    endDate.value = formatDateArray(event.value.endDate);
+    customStartDate.value = event.value.startDate || "";
+    customEndDate.value = event.value.endDate || "";
     participants.value = [...event.value.participants];
-    eventColor.value = { hex: event.value.color || "#3F51B5" };
+    eventColor.value = event.value.color || "#3F51B5";
     selectedWeekDays.value = event.value.weeklySchedules?.map((ws) => {
       const schedules = getActiveYearSchedules.value;
       const startId =
@@ -198,23 +188,29 @@ const handleUpdateEvent = async () => {
   try {
     formError.value = null;
 
+    if (!effectiveSemesterId.value) {
+      formError.value = "Не удалось определить семестр.";
+      return;
+    }
+    if (!effectiveStartDate.value || !effectiveEndDate.value) {
+      formError.value = "Не удалось определить период.";
+      return;
+    }
+
     const updateData = {
       class9Id: class9Id.value,
       teacherId: effectiveTeacherId.value,
-      startDate: dayjs(startDate.value[0]).format(DATE_UI_FORMAT),
-      endDate: dayjs(endDate.value[0]).format(DATE_UI_FORMAT),
+      startDate: effectiveStartDate.value,
+      endDate: effectiveEndDate.value,
       participants: participants.value,
       weeklySchedules: selectedWeekDays.value.map(({ weekId, startId, endId }) => ({
         weekId,
         startId,
         endId,
       })),
-      color: eventColor.value.hex,
+      color: eventColor.value,
       useCustomPeriod: useCustomPeriod.value,
-      semester:
-        semester.value ||
-        (getActiveAcademicYearSemester.value as any)?.id ||
-        "",
+      semester: effectiveSemesterId.value,
     };
 
     await calendarStore.updateEvent(event.value.id, updateData);
@@ -222,20 +218,17 @@ const handleUpdateEvent = async () => {
     const emitData = {
       ...event.value,
       class9Id: class9Id.value,
-      startDate: dayjs(startDate.value[0]).format(DATE_UI_FORMAT),
-      endDate: dayjs(endDate.value[0]).format(DATE_UI_FORMAT),
+      startDate: effectiveStartDate.value,
+      endDate: effectiveEndDate.value,
       participants: participants.value,
       weeklySchedules: selectedWeekDays.value.map(({ weekId, startId, endId }) => ({
         weekId,
         startId,
         endId,
       })),
-      color: eventColor.value.hex,
+      color: eventColor.value,
       useCustomPeriod: useCustomPeriod.value,
-      semester:
-        semester.value ||
-        (getActiveAcademicYearSemester.value as any)?.id ||
-        "",
+      semester: effectiveSemesterId.value,
     };
 
     emit("updated", emitData);

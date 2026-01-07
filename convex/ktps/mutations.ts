@@ -9,7 +9,7 @@ export const create = mutation({
   args: {
     class9Id: v.string(),
     academicYearId: v.string(),
-    semesterId: v.string(),
+    semesterId: v.id("academicYearSemesters"),
     eventId: v.optional(v.string()),
     name: v.optional(v.string()),
   },
@@ -18,7 +18,6 @@ export const create = mutation({
 
     return await ctx.db.insert("ktps", {
       ...args,
-      semesterId: args.semesterId as any,
       ...timestamps,
     });
   },
@@ -32,7 +31,7 @@ export const update = mutation({
     id: v.id("ktps"),
     class9Id: v.optional(v.string()),
     academicYearId: v.optional(v.string()),
-    semesterId: v.optional(v.string()),
+    semesterId: v.optional(v.id("academicYearSemesters")),
     eventId: v.optional(v.string()),
     name: v.optional(v.string()),
   },

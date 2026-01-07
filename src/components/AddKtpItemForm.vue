@@ -112,6 +112,11 @@ const handleSave = async () => {
     return;
   }
 
+  if (!props.selectedAcademicYearId || !props.selectedSemesterId) {
+    formError.value = "Не удалось определить учебный год или семестр.";
+    return;
+  }
+
   try {
     const selectedItem = class9Store.getClass9ById(class9Id.value);
     if (!selectedItem) {
@@ -119,10 +124,10 @@ const handleSave = async () => {
       return;
     }
 
-    const ktp = ktpStore.ensureKtpForClass9(
+    const ktp = await ktpStore.ensureKtpForClass9(
       class9Id.value,
-      props.selectedAcademicYearId || "",
-      props.selectedSemesterId || ""
+      props.selectedAcademicYearId,
+      props.selectedSemesterId
     );
 
     f7.toast
