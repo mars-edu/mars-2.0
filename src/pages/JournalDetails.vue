@@ -559,13 +559,15 @@ const journalSettings = ref({
 });
 
 // Load journal settings from the event
+// Watch both the journal AND the events array to handle race conditions
 watch(
-  () => currentJournal.value,
-  (journal) => {
-    if (journal) {
-      const event = calendarStore.getEventById.value?.(journal.id);
+  () => [currentJournal.value, calendarStore.events] as const,
+  ([journal, events]) => {
+    if (journal && events.length > 0) {
+      const event = calendarStore.getEventById(journal.id);
       console.log("[JournalDetails] Loading journal settings:", {
         journalId: journal.id,
+        eventsCount: events.length,
         event,
         hasSettings: !!event?.journalSettings,
         settings: event?.journalSettings,

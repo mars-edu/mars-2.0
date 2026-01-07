@@ -73,17 +73,36 @@ export const update = mutation({
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
 
+    console.log("[Convex] calendarEvents.update called:", {
+      id,
+      hasJournalSettings: !!updates.journalSettings,
+      journalSettings: updates.journalSettings,
+      allUpdates: updates,
+    });
+
     // Filter out undefined values
     const cleanUpdates = Object.fromEntries(
       Object.entries(updates).filter(([_, v]) => v !== undefined)
     );
+
+    console.log("[Convex] cleanUpdates after filtering:", {
+      hasJournalSettings: !!cleanUpdates.journalSettings,
+      journalSettings: cleanUpdates.journalSettings,
+    });
 
     await ctx.db.patch(id, {
       ...cleanUpdates,
       ...updateTimestamp(),
     });
 
-    return await ctx.db.get(id);
+    const result = await ctx.db.get(id);
+
+    console.log("[Convex] After patch, result:", {
+      hasJournalSettings: !!result?.journalSettings,
+      journalSettings: result?.journalSettings,
+    });
+
+    return result;
   },
 });
 

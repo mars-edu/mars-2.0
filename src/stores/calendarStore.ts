@@ -58,27 +58,41 @@ export const useCalendarStore = defineStore(
 
     watch(convexEvents, (newData) => {
       if (newData) {
-        events.value = newData.map((event) => ({
-          id: event._id,
-          class9Id: event.class9Id,
-          ktpId: event.ktpId,
-          teacherId: event.teacherId,
-          startDate: event.startDate,
-          startTime: event.startTime,
-          endDate: event.endDate,
-          endTime: event.endTime,
-          participants: event.participants,
-          color: event.color,
-          semester: event.semester,
-          useCustomPeriod: event.useCustomPeriod,
-          weeklySchedules: event.weeklySchedules,
-          isIndividualJournal: event.isIndividualJournal,
-          mergedJournalIds: event.mergedJournalIds,
-          parentIndividualJournalId: event.parentIndividualJournalId,
-          journalSettings: event.journalSettings,
-          createdAt: new Date(event.createdAt),
-          updatedAt: new Date(event.updatedAt),
-        }));
+        console.log("[calendarStore] Reactive subscription update:", {
+          eventsCount: newData.length,
+          firstEventSettings: newData[0]?.journalSettings,
+          firstEventKeys: newData[0] ? Object.keys(newData[0]) : [],
+          firstEventFull: newData[0],
+        });
+        events.value = newData.map((event) => {
+          console.log("[calendarStore] Mapping event:", {
+            id: event._id,
+            hasJournalSettings: 'journalSettings' in event,
+            journalSettings: event.journalSettings,
+            eventKeys: Object.keys(event),
+          });
+          return {
+            id: event._id,
+            class9Id: event.class9Id,
+            ktpId: event.ktpId,
+            teacherId: event.teacherId,
+            startDate: event.startDate,
+            startTime: event.startTime,
+            endDate: event.endDate,
+            endTime: event.endTime,
+            participants: event.participants,
+            color: event.color,
+            semester: event.semester,
+            useCustomPeriod: event.useCustomPeriod,
+            weeklySchedules: event.weeklySchedules,
+            isIndividualJournal: event.isIndividualJournal,
+            mergedJournalIds: event.mergedJournalIds,
+            parentIndividualJournalId: event.parentIndividualJournalId,
+            journalSettings: event.journalSettings,
+            createdAt: new Date(event.createdAt),
+            updatedAt: new Date(event.updatedAt),
+          };
+        });
       }
     });
 
@@ -202,6 +216,13 @@ export const useCalendarStore = defineStore(
 
         const originalEvent = events.value[index];
 
+        console.log("[calendarStore] updateEvent called:", {
+          id,
+          eventData,
+          hasJournalSettings: !!eventData.journalSettings,
+          journalSettings: eventData.journalSettings,
+        });
+
         // If class9Id changed, create new event-specific KTP
         let ktpId = eventData.ktpId;
         if (eventData.class9Id && eventData.class9Id !== originalEvent.class9Id) {
@@ -242,6 +263,12 @@ export const useCalendarStore = defineStore(
           mergedJournalIds: eventData.mergedJournalIds,
           parentIndividualJournalId: eventData.parentIndividualJournalId,
           journalSettings: eventData.journalSettings,
+        });
+
+        console.log("[calendarStore] Convex mutation result:", {
+          updated,
+          hasJournalSettings: !!updated?.journalSettings,
+          journalSettings: updated?.journalSettings,
         });
 
         if (updated) {
