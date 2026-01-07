@@ -581,8 +581,9 @@ const hideFloatingRow = () => {
 };
 
 const updateStudents = (updatedStudents: any[]) => {
-  // This function receives updates from the JournalTab component
-  // You can add any additional logic here if needed
+  if (journalTabRef.value) {
+    journalTabRef.value.updateStudents(updatedStudents);
+  }
 };
 
 const updateStudent = (updatedStudent: any) => {
