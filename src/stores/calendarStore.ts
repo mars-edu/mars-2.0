@@ -150,6 +150,7 @@ export const useCalendarStore = defineStore(
           isIndividualJournal: eventData.isIndividualJournal,
           mergedJournalIds: eventData.mergedJournalIds,
           parentIndividualJournalId: eventData.parentIndividualJournalId,
+          journalSettings: eventData.journalSettings,
         });
 
         const created = await convex.query(api.calendarEvents.queries.getById, { id });
@@ -171,6 +172,7 @@ export const useCalendarStore = defineStore(
             isIndividualJournal: created.isIndividualJournal,
             mergedJournalIds: created.mergedJournalIds,
             parentIndividualJournalId: created.parentIndividualJournalId,
+            journalSettings: created.journalSettings,
             createdAt: new Date(created.createdAt),
             updatedAt: new Date(created.updatedAt),
           };
@@ -316,6 +318,7 @@ export const useCalendarStore = defineStore(
           isIndividualJournal: event.isIndividualJournal,
           mergedJournalIds: event.mergedJournalIds,
           parentIndividualJournalId: event.parentIndividualJournalId,
+          journalSettings: event.journalSettings,
           createdAt: new Date(event.createdAt),
           updatedAt: new Date(event.updatedAt),
         }));

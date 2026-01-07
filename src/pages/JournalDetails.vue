@@ -563,7 +563,13 @@ watch(
   () => currentJournal.value,
   (journal) => {
     if (journal) {
-      const event = calendarStore.getEventById(journal.id);
+      const event = calendarStore.getEventById.value?.(journal.id);
+      console.log("[JournalDetails] Loading journal settings:", {
+        journalId: journal.id,
+        event,
+        hasSettings: !!event?.journalSettings,
+        settings: event?.journalSettings,
+      });
       if (event?.journalSettings) {
         journalSettings.value = { ...event.journalSettings };
       } else {
@@ -968,13 +974,20 @@ const saveJournalSettings = async () => {
     return;
   }
 
+  console.log("[JournalDetails] Saving journal settings:", {
+    journalId: currentJournal.value.id,
+    settings: journalSettings.value,
+  });
+
   try {
     f7.preloader.show();
 
     // Update the calendar event with new journal settings
-    await calendarStore.updateEvent(currentJournal.value.id, {
+    const result = await calendarStore.updateEvent(currentJournal.value.id, {
       journalSettings: journalSettings.value,
     });
+
+    console.log("[JournalDetails] Journal settings saved successfully:", result);
 
     f7.preloader.hide();
     closeJournalSettings();
@@ -986,7 +999,7 @@ const saveJournalSettings = async () => {
     }).open();
   } catch (error) {
     f7.preloader.hide();
-    console.error("Failed to save journal settings:", error);
+    console.error("[JournalDetails] Failed to save journal settings:", error);
     f7.dialog.alert("Не удалось сохранить настройки");
   }
 };
