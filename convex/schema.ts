@@ -356,6 +356,12 @@ export default defineSchema({
     isIndividualJournal: v.optional(v.boolean()),
     mergedJournalIds: v.optional(v.array(v.string())),
     parentIndividualJournalId: v.optional(v.string()),
+    journalSettings: v.optional(
+      v.object({
+        calculationType: v.union(v.literal("calculated"), v.literal("manual")),
+        calculationMethod: v.union(v.literal("only-assigned"), v.literal("all-days")),
+      })
+    ),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

@@ -558,6 +558,26 @@ const journalSettings = ref({
   calculationMethod: "only-assigned" as "only-assigned" | "all-days",
 });
 
+// Load journal settings from the event
+watch(
+  () => currentJournal.value,
+  (journal) => {
+    if (journal) {
+      const event = calendarStore.getEventById(journal.id);
+      if (event?.journalSettings) {
+        journalSettings.value = { ...event.journalSettings };
+      } else {
+        // Default settings if not set
+        journalSettings.value = {
+          calculationType: "calculated",
+          calculationMethod: "only-assigned",
+        };
+      }
+    }
+  },
+  { immediate: true }
+);
+
 // Debug copy state
 const debugCopied = ref(false);
 
@@ -942,10 +962,33 @@ const closeJournalSettings = () => {
   f7.popover.close("#journal-settings-popover");
 };
 
-const saveJournalSettings = () => {
-  // TODO: Implement saving journal settings to backend/store
-  console.log("Saving journal settings:", journalSettings.value);
-  closeJournalSettings();
+const saveJournalSettings = async () => {
+  if (!currentJournal.value) {
+    f7.dialog.alert("Журнал не найден");
+    return;
+  }
+
+  try {
+    f7.preloader.show();
+
+    // Update the calendar event with new journal settings
+    await calendarStore.updateEvent(currentJournal.value.id, {
+      journalSettings: journalSettings.value,
+    });
+
+    f7.preloader.hide();
+    closeJournalSettings();
+
+    f7.toast.create({
+      text: "Настройки сохранены",
+      position: "center",
+      closeTimeout: 2000,
+    }).open();
+  } catch (error) {
+    f7.preloader.hide();
+    console.error("Failed to save journal settings:", error);
+    f7.dialog.alert("Не удалось сохранить настройки");
+  }
 };
 
 // Handle student click from StudentListTable

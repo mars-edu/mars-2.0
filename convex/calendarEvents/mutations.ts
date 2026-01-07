@@ -10,6 +10,11 @@ const weeklyScheduleValidator = v.object({
   endId: v.optional(v.string()),
 });
 
+const journalSettingsValidator = v.object({
+  calculationType: v.union(v.literal("calculated"), v.literal("manual")),
+  calculationMethod: v.union(v.literal("only-assigned"), v.literal("all-days")),
+});
+
 /**
  * Create a calendar event
  */
@@ -30,6 +35,7 @@ export const create = mutation({
     isIndividualJournal: v.optional(v.boolean()),
     mergedJournalIds: v.optional(v.array(v.string())),
     parentIndividualJournalId: v.optional(v.string()),
+    journalSettings: v.optional(journalSettingsValidator),
   },
   handler: async (ctx, args) => {
     const timestamps = createTimestamps();
@@ -62,6 +68,7 @@ export const update = mutation({
     isIndividualJournal: v.optional(v.boolean()),
     mergedJournalIds: v.optional(v.array(v.string())),
     parentIndividualJournalId: v.optional(v.string()),
+    journalSettings: v.optional(journalSettingsValidator),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;

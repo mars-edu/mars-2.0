@@ -15,6 +15,11 @@ export interface WeeklySchedule {
   endId?: string;
 }
 
+export interface JournalSettings {
+  calculationType: "calculated" | "manual";
+  calculationMethod: "only-assigned" | "all-days";
+}
+
 export interface CalendarEvent {
   id: string;
   class9Id: string;
@@ -32,6 +37,7 @@ export interface CalendarEvent {
   isIndividualJournal?: boolean;
   mergedJournalIds?: string[];
   parentIndividualJournalId?: string;
+  journalSettings?: JournalSettings;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -69,6 +75,7 @@ export const useCalendarStore = defineStore(
           isIndividualJournal: event.isIndividualJournal,
           mergedJournalIds: event.mergedJournalIds,
           parentIndividualJournalId: event.parentIndividualJournalId,
+          journalSettings: event.journalSettings,
           createdAt: new Date(event.createdAt),
           updatedAt: new Date(event.updatedAt),
         }));
@@ -232,6 +239,7 @@ export const useCalendarStore = defineStore(
           isIndividualJournal: eventData.isIndividualJournal,
           mergedJournalIds: eventData.mergedJournalIds,
           parentIndividualJournalId: eventData.parentIndividualJournalId,
+          journalSettings: eventData.journalSettings,
         });
 
         if (updated) {
@@ -252,6 +260,7 @@ export const useCalendarStore = defineStore(
             isIndividualJournal: updated.isIndividualJournal,
             mergedJournalIds: updated.mergedJournalIds,
             parentIndividualJournalId: updated.parentIndividualJournalId,
+            journalSettings: updated.journalSettings,
             createdAt: new Date(updated.createdAt),
             updatedAt: new Date(updated.updatedAt),
           };
