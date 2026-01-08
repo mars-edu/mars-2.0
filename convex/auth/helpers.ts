@@ -30,7 +30,7 @@ export function verifyPassword(password: string, hash: string): boolean {
 export async function generateToken(
   payload: { userId: string; roles: string[] },
   secret: string,
-  expiresIn: string = "24h"
+  expiresIn: string = "28d"
 ): Promise<string> {
   const secretKey = new TextEncoder().encode(secret);
 
