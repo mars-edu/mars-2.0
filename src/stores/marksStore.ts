@@ -1,10 +1,10 @@
 import { defineStore } from "pinia";
-import { ref, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import type { Mark, StudentMark, JournalMarks } from "@/types/marks";
-import { useJournalHistoryStore } from "./journalHistoryStore";
+import { useUserStore } from "./userStore";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
-import { useConvexQuery } from "convex-vue";
+import type { Id } from "@convex/_generated/dataModel";
 
 export const useMarksStore = defineStore(
   "marks",
@@ -119,7 +119,7 @@ export const useMarksStore = defineStore(
         console.log("[marksStore] Received marks from backend:", {
           journalId,
           marksCount: result.marks.length,
-          studentCount: result.journal?.students?.length || 0
+          studentCount: result.students.length,
         });
 
         // Get existing journal marks (which should have the template already)
@@ -141,7 +141,7 @@ export const useMarksStore = defineStore(
           if (!studentMap.has(mark.columnIndex)) {
             studentMap.set(mark.columnIndex, new Map());
           }
-          studentMap.get(mark.columnIndex)!.set(mark.rowIndex, mark.value);
+          studentMap.get(mark.columnIndex)!.set(mark.rowIndex, mark.value ?? null);
         });
 
         // Merge backend marks into the existing template
@@ -425,30 +425,14 @@ export const useMarksStore = defineStore(
           valueIndex >= 0 &&
           valueIndex < studentMark.marks[markIndex].values.length
         ) {
-          const oldValue = studentMark.marks[markIndex].values[valueIndex];
           const mark = studentMark.marks[markIndex];
+          const userStore = useUserStore();
+          const rawUserId = userStore.currentUser?.id;
+          const userId = rawUserId ? (rawUserId as Id<"users">) : undefined;
 
           // Optimistic update - update UI immediately
           studentMark.marks[markIndex].values[valueIndex] = value;
           journal.lastUpdated = new Date().toISOString();
-
-          // Record history locally
-          if (oldValue !== value) {
-            const historyStore = useJournalHistoryStore();
-            const columnLabel = mark.label || mark.date || `Column ${markIndex}`;
-            const columnDate = mark.isoDate;
-
-            historyStore.addRecord(
-              journalId,
-              studentId,
-              markIndex,
-              valueIndex,
-              oldValue,
-              value,
-              columnLabel,
-              columnDate
-            );
-          }
 
           // Save to backend
           try {
@@ -475,6 +459,7 @@ export const useMarksStore = defineStore(
               controlId: mark.controlId,
               sessionId: mark.sessionId,
               scheduledControlId: mark.scheduledControlId,
+              userId,
             });
           } catch (updateError: any) {
             // If foreign key constraint error, journal needs initialization
@@ -560,6 +545,7 @@ export const useMarksStore = defineStore(
                   controlId: mark.controlId,
                   sessionId: mark.sessionId,
                   scheduledControlId: mark.scheduledControlId,
+                  userId,
                 });
                 console.log("[marksStore] Mark updated successfully after auto-initialization");
                 return true;
@@ -655,6 +641,9 @@ export const useMarksStore = defineStore(
                 );
                 continue;
               }
+              const userStore = useUserStore();
+              const rawUserId = userStore.currentUser?.id;
+              const userId = rawUserId ? (rawUserId as Id<"users">) : undefined;
               await convex.mutation(api.marks.mutations.updateMark, {
                 journalId: backendParentJournalId as any,
                 studentId,
@@ -668,6 +657,7 @@ export const useMarksStore = defineStore(
                   controlId: mark.controlId,
                   sessionId: mark.sessionId,
                   scheduledControlId: mark.scheduledControlId,
+                  userId,
                 });
                 console.log("[marksStore] Successfully synced mark to parent journal");
               } catch (syncError) {
@@ -839,11 +829,6 @@ export const useMarksStore = defineStore(
       };
     });
 
-    // Debug method to log current state
-    const debugState = () => {
-      // Logging removed
-    };
-
     return {
       journalMarks,
       loading,
@@ -862,7 +847,6 @@ export const useMarksStore = defineStore(
       deleteStudentMarks,
       clearAllMarks,
       getJournalStats,
-      debugState,
     };
   },
   {}

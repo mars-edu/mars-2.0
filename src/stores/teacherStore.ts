@@ -7,6 +7,7 @@ import { useConvexQuery } from "convex-vue";
 
 export interface Teacher {
   id: string;
+  userId?: string;
   surname: string;
   firstName: string;
   patronymic: string;
@@ -57,6 +58,7 @@ export const useTeacherStore = defineStore("teacher", () => {
     if (newData) {
       teachers.value = newData.map((teacher) => ({
         id: teacher._id,
+        userId: teacher.userId,
         firstName: teacher.firstName,
         surname: teacher.surname,
         patronymic: teacher.patronymic,
@@ -91,6 +93,15 @@ export const useTeacherStore = defineStore("teacher", () => {
 
   const getTeacherById = (id: string): Teacher | undefined => {
     return teachers.value.find((t) => t.id === id);
+  };
+
+  const getTeacherByUserId = (userId: string): Teacher | undefined => {
+    return teachers.value.find((t) => t.userId === userId);
+  };
+
+  const getTeacherFullNameByUserId = (userId: string): string => {
+    const teacher = getTeacherByUserId(userId);
+    return teacher ? getTeacherFullName(teacher) : "";
   };
 
   const filteredTeachers = computed(() => {
@@ -155,6 +166,7 @@ export const useTeacherStore = defineStore("teacher", () => {
       // Return the credentials for display
       return {
         id: result.teacherId,
+        userId: result.userId,
         surname: payload.surname,
         firstName: payload.firstName,
         patronymic: payload.patronymic,
@@ -222,6 +234,7 @@ export const useTeacherStore = defineStore("teacher", () => {
       const data = await convex.query(api.teachers.queries.list, {});
       teachers.value = data.map((teacher) => ({
         id: teacher._id,
+        userId: teacher.userId,
         firstName: teacher.firstName,
         surname: teacher.surname,
         patronymic: teacher.patronymic,
@@ -275,6 +288,8 @@ export const useTeacherStore = defineStore("teacher", () => {
     getError,
     getTeacherFullName,
     getTeacherById,
+    getTeacherByUserId,
+    getTeacherFullNameByUserId,
     loadFromBackend,
   };
 });

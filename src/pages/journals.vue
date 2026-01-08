@@ -91,6 +91,20 @@
                 <f7-button
                   small
                   default
+                  @click="exitSelectionMode"
+                  class="bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex-1 sm:flex-none"
+                >
+                  <f7-icon
+                    ios="f7:xmark"
+                    md="material:close"
+                    size="16px"
+                    class="mr-2"
+                  />
+                  Отмена
+                </f7-button>
+                <f7-button
+                  small
+                  default
                   @click="selectAll"
                   class="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex-1 sm:flex-none"
                 >
@@ -119,17 +133,32 @@
                 <f7-button
                   small
                   default
-                  @click="onDownloadClick"
-                  class="bg-primary text-white hover:bg-primary-dark transition-colors flex-1 sm:flex-none"
+                  @click="onSelectionDone"
+                  :class="selectionDoneButtonClass"
                   :disabled="selectedJournalIds.size === 0"
                 >
                   <f7-icon
-                    ios="f7:checkmark"
-                    md="material:check"
+                    v-if="selectionAction === 'download'"
+                    ios="f7:arrow_down_to_line"
+                    md="material:file_download"
                     size="16px"
                     class="mr-2"
                   />
-                  Готово ({{ selectedJournalIds.size }})
+                  <f7-icon
+                    v-else-if="selectionAction === 'close'"
+                    ios="f7:xmark_circle"
+                    md="material:cancel"
+                    size="16px"
+                    class="mr-2"
+                  />
+                  <f7-icon
+                    v-else
+                    ios="f7:lock_open"
+                    md="material:lock_open"
+                    size="16px"
+                    class="mr-2"
+                  />
+                  {{ selectionDoneText }} ({{ selectedJournalIds.size }})
                 </f7-button>
               </template>
               <template v-else>
@@ -147,6 +176,20 @@
                     class="mr-2"
                   />
                   Настройки
+                </f7-button>
+                <f7-button
+                  small
+                  default
+                  @click="onOpenJournalClick"
+                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
+                >
+                  <f7-icon
+                    ios="f7:lock_open"
+                    md="material:lock_open"
+                    size="16px"
+                    class="mr-2"
+                  />
+                  Открыть журнал
                 </f7-button>
                 <f7-button
                   small
@@ -351,6 +394,7 @@ import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useClass9Store } from "@/stores/class9Store";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
+import { useJournalOpenClose } from "@/composables/useJournalOpenClose";
 import {
   exportJournalViaConvex,
   importJournalViaConvex,
@@ -367,6 +411,7 @@ const activeNavItem = ref("journals");
 const journalStore = useJournalStore();
 const userStore = useUserStore();
 const calendarStore = useCalendarStore();
+const { confirmCloseJournals, confirmOpenJournals } = useJournalOpenClose();
 const teacherStore = useTeacherStore();
 const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
@@ -725,8 +770,35 @@ const groupOptions = ref([{ value: "pi-1-21", text: "ПИ-1-21" }]);
 const selectedRole = ref("");
 const roleOptions = ref([{ value: "student", text: "Студент" }]);
 
+type SelectionAction = "download" | "close" | "open";
+
 const isSelectionMode = ref(false);
+const selectionAction = ref<SelectionAction>("download");
 const selectedJournalIds = ref(new Set<string>());
+
+const selectionDoneText = computed(() => {
+  if (selectionAction.value === "close") return "Закрыть";
+  if (selectionAction.value === "open") return "Открыть";
+  return "Скачать";
+});
+
+const selectionDoneButtonClass = computed(() => {
+  const base = "text-white transition-colors flex-1 sm:flex-none";
+  if (selectionAction.value === "close") return `bg-red-500 hover:bg-red-600 ${base}`;
+  if (selectionAction.value === "open") return `bg-green-500 hover:bg-green-600 ${base}`;
+  return `bg-primary hover:bg-primary-dark ${base}`;
+});
+
+function startSelectionMode(action: SelectionAction) {
+  selectionAction.value = action;
+  isSelectionMode.value = true;
+  selectedJournalIds.value.clear();
+}
+
+function exitSelectionMode() {
+  isSelectionMode.value = false;
+  selectedJournalIds.value.clear();
+}
 
 function selectAll() {
   const allJournalIds: string[] = [];
@@ -874,8 +946,7 @@ async function downloadSelectedJournals() {
     const date = new Date().toISOString().split("T")[0];
     saveAs(content, `journals-${date}.zip`);
 
-    isSelectionMode.value = false;
-    selectedJournalIds.value.clear();
+    exitSelectionMode();
   } catch (error) {
     console.error("Failed to export journals", error);
     f7.dialog.alert("Не удалось сформировать журналы. Попробуйте еще раз.");
@@ -886,20 +957,63 @@ function onSettingsClick() {
   f7.dialog.alert("Откроются настройки журнала");
 }
 
+function onOpenJournalClick() {
+  startSelectionMode("open");
+}
+
 function onCloseJournalClick() {
-  f7.dialog.alert("Журнал будет закрыт");
+  startSelectionMode("close");
 }
 
 function onDownloadClick() {
-  if (!isSelectionMode.value) {
-    isSelectionMode.value = true;
-  } else {
-    if (selectedJournalIds.value.size > 0) {
-      downloadSelectedJournals();
-    } else {
-      f7.dialog.alert("Выберите хотя бы один журнал");
-    }
+  startSelectionMode("download");
+}
+
+function onSelectionDone() {
+  if (selectedJournalIds.value.size === 0) {
+    f7.dialog.alert("Выберите хотя бы один журнал");
+    return;
   }
+
+  const ids = Array.from(selectedJournalIds.value);
+
+  if (selectionAction.value === "download") {
+    void downloadSelectedJournals();
+    return;
+  }
+
+  if (selectionAction.value === "close") {
+    confirmCloseJournals(ids, {
+      context: "Journals",
+      onSuccess: exitSelectionMode,
+      onNoop: () => {
+        f7.toast
+          .create({
+            text: "Выбранные журналы уже закрыты",
+            position: "center",
+            closeTimeout: 2000,
+          })
+          .open();
+        exitSelectionMode();
+      },
+    });
+    return;
+  }
+
+  confirmOpenJournals(ids, {
+    context: "Journals",
+    onSuccess: exitSelectionMode,
+    onNoop: () => {
+      f7.toast
+        .create({
+          text: "Выбранные журналы уже открыты",
+          position: "center",
+          closeTimeout: 2000,
+        })
+        .open();
+      exitSelectionMode();
+    },
+  });
 }
 
 function onUploadClick() {

@@ -37,6 +37,7 @@ export interface CalendarEvent {
   isIndividualJournal?: boolean;
   mergedJournalIds?: string[];
   parentIndividualJournalId?: string;
+  isClosed?: boolean;
   journalSettings?: JournalSettings;
   createdAt: Date;
   updatedAt: Date;
@@ -88,6 +89,7 @@ export const useCalendarStore = defineStore(
             isIndividualJournal: event.isIndividualJournal,
             mergedJournalIds: event.mergedJournalIds,
             parentIndividualJournalId: event.parentIndividualJournalId,
+            isClosed: event.isClosed,
             journalSettings: event.journalSettings,
             createdAt: new Date(event.createdAt),
             updatedAt: new Date(event.updatedAt),
@@ -164,6 +166,7 @@ export const useCalendarStore = defineStore(
           isIndividualJournal: eventData.isIndividualJournal,
           mergedJournalIds: eventData.mergedJournalIds,
           parentIndividualJournalId: eventData.parentIndividualJournalId,
+          isClosed: eventData.isClosed,
           journalSettings: eventData.journalSettings,
         });
 
@@ -186,6 +189,7 @@ export const useCalendarStore = defineStore(
             isIndividualJournal: created.isIndividualJournal,
             mergedJournalIds: created.mergedJournalIds,
             parentIndividualJournalId: created.parentIndividualJournalId,
+            isClosed: created.isClosed,
             journalSettings: created.journalSettings,
             createdAt: new Date(created.createdAt),
             updatedAt: new Date(created.updatedAt),
@@ -262,6 +266,7 @@ export const useCalendarStore = defineStore(
           isIndividualJournal: eventData.isIndividualJournal,
           mergedJournalIds: eventData.mergedJournalIds,
           parentIndividualJournalId: eventData.parentIndividualJournalId,
+          isClosed: eventData.isClosed,
           journalSettings: eventData.journalSettings,
         });
 
@@ -289,6 +294,7 @@ export const useCalendarStore = defineStore(
             isIndividualJournal: updated.isIndividualJournal,
             mergedJournalIds: updated.mergedJournalIds,
             parentIndividualJournalId: updated.parentIndividualJournalId,
+            isClosed: updated.isClosed,
             journalSettings: updated.journalSettings,
             createdAt: new Date(updated.createdAt),
             updatedAt: new Date(updated.updatedAt),
@@ -345,6 +351,7 @@ export const useCalendarStore = defineStore(
           isIndividualJournal: event.isIndividualJournal,
           mergedJournalIds: event.mergedJournalIds,
           parentIndividualJournalId: event.parentIndividualJournalId,
+          isClosed: event.isClosed,
           journalSettings: event.journalSettings,
           createdAt: new Date(event.createdAt),
           updatedAt: new Date(event.updatedAt),

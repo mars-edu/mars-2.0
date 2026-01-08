@@ -35,6 +35,7 @@ export const create = mutation({
     isIndividualJournal: v.optional(v.boolean()),
     mergedJournalIds: v.optional(v.array(v.string())),
     parentIndividualJournalId: v.optional(v.string()),
+    isClosed: v.optional(v.boolean()),
     journalSettings: v.optional(journalSettingsValidator),
   },
   handler: async (ctx, args) => {
@@ -68,6 +69,7 @@ export const update = mutation({
     isIndividualJournal: v.optional(v.boolean()),
     mergedJournalIds: v.optional(v.array(v.string())),
     parentIndividualJournalId: v.optional(v.string()),
+    isClosed: v.optional(v.boolean()),
     journalSettings: v.optional(journalSettingsValidator),
   },
   handler: async (ctx, args) => {

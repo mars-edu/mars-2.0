@@ -114,6 +114,8 @@
                   ref="journalTabRef"
                   :journal-id="journalId"
                   :journal-settings="journalSettings"
+                  @close-journal="handleCloseJournal"
+                  @open-journal="handleOpenJournal"
                   @download="onDownloadClick"
                   @upload="onUploadClick"
                   @show-floating-row="showFloatingRow"
@@ -390,7 +392,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch } from "vue";
+import { ref, computed, nextTick, watch } from "vue";
 import {
   f7Page,
   f7,
@@ -427,6 +429,7 @@ import {
   applyUpdatesToMarks,
 } from "@/services/journal-import-mapper";
 import JournalImportConfirmDialog from "@/components/JournalImportConfirmDialog.vue";
+import { useJournalOpenClose } from "@/composables/useJournalOpenClose";
 import {
   exportJournalViaConvex,
   importJournalViaConvex,
@@ -451,6 +454,8 @@ const journalId = computed(() => {
 const activeNavItem = ref("journal-details");
 const activeTab = ref("journal");
 
+const { confirmCloseJournal, confirmOpenJournal } = useJournalOpenClose();
+
 const handleBackClick = () => {
   const from = f7.views.main.router.currentRoute.query.from as string;
   if (from === "schedule") {
@@ -458,6 +463,18 @@ const handleBackClick = () => {
   } else {
     f7.views.main.router.navigate("/journals/");
   }
+};
+
+const handleCloseJournal = () => {
+  confirmCloseJournal(journalId.value, {
+    context: "JournalDetails",
+    onNoop: handleBackClick,
+    onSuccess: handleBackClick,
+  });
+};
+
+const handleOpenJournal = () => {
+  confirmOpenJournal(journalId.value, { context: "JournalDetails" });
 };
 
 const academicYearStore = useAcademicYearStore();
@@ -611,6 +628,23 @@ const hideFloatingRow = () => {
 const updateStudent = (updatedStudent: any) => {
   if (journalTabRef.value) {
     journalTabRef.value.updateStudent(updatedStudent);
+  }
+};
+
+const updateStudents = (updatedStudents: any[]) => {
+  if (!Array.isArray(updatedStudents) || updatedStudents.length === 0) return;
+
+  if (selectedStudent.value) {
+    const selectedId = String(
+      selectedStudent.value.studentId ?? selectedStudent.value.id ?? ""
+    );
+    const nextIndex = updatedStudents.findIndex(
+      (student) => String(student?.studentId ?? student?.id ?? "") === selectedId
+    );
+    if (nextIndex >= 0) {
+      selectedStudent.value = updatedStudents[nextIndex];
+      selectedStudentIndex.value = nextIndex;
+    }
   }
 };
 
@@ -1226,10 +1260,6 @@ const debugInfo = computed(() => {
     sessionHeadersCount: sessionHeaders.length,
     headersSummary,
   };
-});
-
-onMounted(() => {
-  // Semester debug info removed
 });
 </script>
 

@@ -1,5 +1,12 @@
 <template>
   <div>
+    <div
+      v-if="isViewOnly"
+      class="mb-3 p-3 bg-gray-50 border border-gray-200 text-gray-700 rounded-md text-sm"
+      role="status"
+    >
+      Журнал закрыт. Доступен только просмотр.
+    </div>
     <div class="mb-3 flex flex-wrap gap-2 items-center justify-end">
       <f7-button
         small
@@ -20,6 +27,7 @@
         small
         default
         @click="onSettingsClick"
+        :disabled="isViewOnly"
         class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
       >
         <f7-icon
@@ -46,6 +54,7 @@
         История
       </f7-button>
       <f7-button
+        v-if="!isViewOnly"
         small
         default
         @click="onCloseJournalClick"
@@ -58,6 +67,21 @@
           class="mr-2"
         />
         Закрыть журнал
+      </f7-button>
+      <f7-button
+        v-else
+        small
+        default
+        @click="onOpenJournalClick"
+        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
+      >
+        <f7-icon
+          ios="f7:lock_open"
+          md="material:lock_open"
+          size="16px"
+          class="mr-2"
+        />
+        Открыть журнал
       </f7-button>
       <f7-button
         small
@@ -77,6 +101,7 @@
         small
         default
         @click="onUploadClick"
+        :disabled="isViewOnly"
         class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
       >
         <f7-icon
@@ -101,6 +126,7 @@
         small
         default
         @click.stop="onRecalcClick"
+        :disabled="isViewOnly"
         class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
       >
         Рассчитать
@@ -531,6 +557,7 @@ const emit = defineEmits<{
   "open-rup": [];
   "open-settings": [];
   "close-journal": [];
+  "open-journal": [];
   download: [];
   upload: [];
   share: [];
@@ -596,6 +623,18 @@ const currentEvent = computed(() => {
   if (!props.journalId) return null;
   return calendarStore.getEventById(props.journalId);
 });
+
+const isViewOnly = computed(() => !!currentEvent.value?.isClosed);
+
+const notifyViewOnly = () => {
+  f7.toast
+    .create({
+      text: "Журнал закрыт. Редактирование недоступно.",
+      position: "center",
+      closeTimeout: 2000,
+    })
+    .open();
+};
 
 const currentClass9 = computed(() => {
   const class9Id =
@@ -1622,6 +1661,10 @@ const updateMark = async (
   markIndex: number,
   value: string | null
 ) => {
+  if (isViewOnly.value) {
+    notifyViewOnly();
+    return;
+  }
   userEditInProgress.value = true;
 
   const studentId = getStudentIdByIndex(studentIndex);
@@ -1678,6 +1721,10 @@ const handleCellClick = (
   colIndex: number,
   markIndex: number
 ) => {
+  if (isViewOnly.value) {
+    notifyViewOnly();
+    return;
+  }
   const currentMark = getMark(studentIndex, colIndex, markIndex);
   const hasExistingValue = currentMark !== "" && currentMark !== null;
 
@@ -1712,6 +1759,10 @@ const editCell = (
   colIndex: number,
   markIndex: number
 ) => {
+  if (isViewOnly.value) {
+    notifyViewOnly();
+    return;
+  }
   const studentId = getStudentIdByIndex(studentIndex);
   if (!studentId || !props.journalId) return;
   if (colIndex < 0) return;
@@ -1746,6 +1797,11 @@ const editCell = (
 };
 
 const confirmEdit = () => {
+  if (isViewOnly.value) {
+    notifyViewOnly();
+    editingCell.value = null;
+    return;
+  }
   if (!editingCell.value) return;
   const { studentIndex, colIndex, markIndex } = editingCell.value;
   setMark(studentIndex, colIndex, markIndex, editedValue.value);
@@ -1757,6 +1813,11 @@ const cancelEdit = () => {
 };
 
 const navigate = async (direction: "up" | "down" | "left" | "right") => {
+  if (isViewOnly.value) {
+    notifyViewOnly();
+    editingCell.value = null;
+    return;
+  }
   if (!editingCell.value) return;
 
   const {
@@ -1867,6 +1928,11 @@ const closeJournalSettings = () => {
 };
 
 const saveJournalSettings = () => {
+  if (isViewOnly.value) {
+    notifyViewOnly();
+    closeJournalSettings();
+    return;
+  }
   emit("save-journal-settings", localJournalSettings.value);
   closeJournalSettings();
 };
@@ -1976,15 +2042,36 @@ const onSettingsClick = () => emit("open-settings");
 const onHistoryClick = () => {
   f7.popover.open('#journal-history-popover', '#journal-history-button');
 };
-const onCloseJournalClick = () => emit("close-journal");
+const onCloseJournalClick = () => {
+  if (isViewOnly.value) {
+    notifyViewOnly();
+    return;
+  }
+  emit("close-journal");
+};
+const onOpenJournalClick = () => emit("open-journal");
 const onDownloadClick = () => emit("download");
-const onUploadClick = () => emit("upload");
+const onUploadClick = () => {
+  if (isViewOnly.value) {
+    notifyViewOnly();
+    return;
+  }
+  emit("upload");
+};
 const onShareClick = () => emit("share");
 const onRecalcClick = () => {
+  if (isViewOnly.value) {
+    notifyViewOnly();
+    return;
+  }
   f7.popover.open("#recalc-popover", "#recalc-button");
 };
 
 const recalcSessions = async () => {
+  if (isViewOnly.value) {
+    notifyViewOnly();
+    return;
+  }
   await computeAllSessionGrades({ force: true });
   f7.popover.close("#recalc-popover");
 };
@@ -2037,6 +2124,10 @@ const intermediateControlsForRecalc = computed(() => {
 });
 
 const recalcIntermediateControl = async (label: string) => {
+  if (isViewOnly.value) {
+    notifyViewOnly();
+    return;
+  }
   await computeAllSessionGrades({ force: true, labels: [label] });
   f7.popover.close("#recalc-popover");
 };
