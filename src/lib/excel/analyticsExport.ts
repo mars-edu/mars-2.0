@@ -4,7 +4,8 @@
  * Migrated from xlsx-js-style to ExcelJS
  */
 
-import * as ExcelJS from "exceljs";
+import * as Excel from "exceljs/dist/exceljs.min.js";
+import type * as ExcelJS from "exceljs";
 
 // ============================================================================
 // Type Definitions
@@ -349,7 +350,7 @@ function buildCourseSheet(
 export async function exportAnalyticsToExcel(
   payload: AnalyticsExportPayload
 ): Promise<Uint8Array> {
-  const workbook = new ExcelJS.Workbook();
+  const workbook: ExcelJS.Workbook = new Excel.Workbook();
 
   workbook.creator = "MARS 2.0";
   workbook.created = new Date();

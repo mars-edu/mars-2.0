@@ -3,7 +3,8 @@
  * Generates teacher workload report Excel files (3 forms)
  */
 
-import * as ExcelJS from "exceljs";
+import * as Excel from "exceljs/dist/exceljs.min.js";
+import type * as ExcelJS from "exceljs";
 import {
   TIMES_BOLD_FONT,
   GRAY_FILL,
@@ -601,7 +602,7 @@ function createForm3Sheet(workbook: ExcelJS.Workbook): void {
 }
 
 function generateWorkbookTemplate(): ExcelJS.Workbook {
-  const workbook = new ExcelJS.Workbook();
+  const workbook: ExcelJS.Workbook = new Excel.Workbook();
 
   workbook.creator = "MARS 2.0";
   workbook.created = new Date();

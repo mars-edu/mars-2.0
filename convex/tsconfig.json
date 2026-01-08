@@ -13,6 +13,6 @@
     "isolatedModules": true,
     "jsx": "preserve"
   },
-  "include": ["./**/*"],
+  "include": ["./**/*", "../src/types/exceljs-dist.d.ts"],
   "exclude": ["node_modules"]
 }

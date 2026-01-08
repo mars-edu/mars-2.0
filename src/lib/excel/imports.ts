@@ -3,7 +3,8 @@
  * Parses uploaded Excel files for journal and KTP imports
  */
 
-import * as ExcelJS from "exceljs";
+import * as Excel from "exceljs/dist/exceljs.min.js";
+import type * as ExcelJS from "exceljs";
 
 // ============================================================================
 // Type Definitions
@@ -291,7 +292,7 @@ export async function importJournalFromBuffer(
   const issues: JournalImportValidationIssue[] = [];
 
   try {
-    const workbook = new ExcelJS.Workbook();
+    const workbook: ExcelJS.Workbook = new Excel.Workbook();
     await workbook.xlsx.load(buffer);
 
     const sheet = workbook.worksheets[0];
@@ -411,7 +412,7 @@ export async function parseEducationalScheduleFromBuffer(
   buffer: ArrayBuffer,
   fileName: string
 ): Promise<ParseResult> {
-  const workbook = new ExcelJS.Workbook();
+  const workbook: ExcelJS.Workbook = new Excel.Workbook();
   await workbook.xlsx.load(buffer);
 
   const sheet = workbook.worksheets[0];
@@ -505,7 +506,7 @@ export async function exportKtpToExcelFromTemplate(
   dataRows: (string | number | null)[][],
   templateBuffer: ArrayBuffer
 ): Promise<Uint8Array> {
-  const workbook = new ExcelJS.Workbook();
+  const workbook: ExcelJS.Workbook = new Excel.Workbook();
   await workbook.xlsx.load(templateBuffer);
 
   const sheet = workbook.worksheets[0];

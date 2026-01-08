@@ -423,20 +423,9 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import StudentListTable from "@/components/StudentListTable.vue";
 import EditStudentButton from "@/components/EditStudentButton.vue";
 import { storeToRefs } from "pinia";
-import {
-  createImportMapping,
-  prepareMarksUpdate,
-  applyUpdatesToMarks,
-} from "@/services/journal-import-mapper";
 import JournalImportConfirmDialog from "@/components/JournalImportConfirmDialog.vue";
 import { useJournalOpenClose } from "@/composables/useJournalOpenClose";
-import {
-  exportJournalViaConvex,
-  importJournalViaConvex,
-  type JournalExportParams,
-} from "@/services/convex-excel-export";
-
-type JournalStudentRow = JournalExportParams["students"][number];
+import { useJournalExportImport } from "@/composables/useJournalExportImport";
 import { useStudentStore } from "@/stores/studentStore";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
@@ -541,13 +530,6 @@ const selectedStudentForEditId = ref<string | null>(null);
 const isRupPopupOpened = ref(false);
 const rupInitialData = ref<any>(null);
 
-// Import dialog state
-const isImportDialogOpened = ref(false);
-const importOverwriteMode = ref(false);
-const importPreparedData = ref<ReturnType<typeof prepareMarksUpdate> | null>(null);
-const importMapping = ref<ReturnType<typeof createImportMapping> | null>(null);
-const importResult = ref<Awaited<ReturnType<typeof importJournalViaConvex>>["result"] | null>(null);
-
 const rupSpecialtyIds = computed(() => {
   const disciplineId = currentJournal.value?.disciplineId;
   if (!disciplineId) return [];
@@ -605,6 +587,19 @@ watch(
 
 // Debug copy state
 const debugCopied = ref(false);
+
+// Export/Import composable
+const {
+  isImportDialogOpened,
+  importOverwriteMode,
+  importPreparedData,
+  importMapping,
+  importResult,
+  onDownloadClick,
+  onUploadClick,
+  onImportConfirm,
+  onImportCancel,
+} = useJournalExportImport(journalId, currentJournal, journalTabRef);
 
 const openDateFocus = (
   header: { type: string; label: string },
@@ -675,272 +670,6 @@ const copyDebugInfo = async () => {
     f7.dialog.alert("Не удалось скопировать информацию в буфер обмена");
   }
 };
-
-const onDownloadClick = async () => {
-  const journal = currentJournal.value;
-  if (!journal) {
-    f7.dialog.alert("Журнал не найден");
-    return;
-  }
-
-  try {
-    f7.preloader.show();
-
-    const snapshot = journalTabRef.value?.getExportSnapshot?.();
-    if (!snapshot) {
-      f7.preloader.hide();
-      f7.dialog.alert("Данные журнала ещё загружаются. Повторите попытку позже.");
-      return;
-    }
-
-    const event = calendarStore.getEventById(journal.id);
-
-    const studentRows: JournalStudentRow[] = snapshot.students.map(
-      (row) => ({
-        id: row.studentId,
-        fullName: row.fullName,
-        attendance: [...row.attendance],
-        finalGrade:
-          row.finalSummary && row.finalSummary !== "—"
-            ? row.finalSummary
-            : undefined,
-      })
-    );
-
-    const primaryStudentId = journal.students?.[0];
-    const primaryStudent = primaryStudentId
-      ? studentStoreStudents.value.find((s) => s.id === primaryStudentId)
-      : undefined;
-    const specialty = primaryStudent?.specialty
-      ? specialtyStore.getSpecialtyByCode(primaryStudent.specialty)
-      : undefined;
-
-    const academicYearId = selectedItemsStore.selectedAcademicYearId;
-    const academicYear = academicYearId
-      ? academicYearStore.getAcademicYearById(academicYearId)
-      : academicYearStore.getActiveAcademicYear;
-
-    const academicYearLabel = academicYear
-      ? `${academicYear.startYear}/${academicYear.endYear}`
-      : "";
-
-    const teacherName = event?.teacherId
-      ? teacherStore.getTeacherFullName(event.teacherId)
-      : "";
-
-    const disciplineTitle = journalStore.getDisciplineTitle(journal);
-    const groupTitle = journalStore.getJournalTitle(journal);
-
-    // Get final control form from distribution entry
-    let finalControlForm: string | null = null;
-    const class9Item = class9Store.class9Items.find((c) => c.id === journal.disciplineId);
-    if (class9Item && academicYear) {
-      const semesters = academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(academicYear.id);
-      const semester = semesters.find((s) => s.semesterNumber === (event?.semester ?? 1));
-      if (semester) {
-        const distributionEntry = class9Item.distributionEntries.find(
-          (entry) => entry.academicYearId === academicYear.id && entry.semesterId === semester.id
-        );
-        if (distributionEntry?.finalControlId) {
-          // distributionEntry.finalControlId is ScheduledFinalControl.id, not FinalControl.id
-          const scheduledControl = scheduledFinalControlStore.getScheduledFinalControlById(distributionEntry.finalControlId);
-          if (scheduledControl) {
-            const finalControl = finalControlStore.getFinalControlById(scheduledControl.finalControlId);
-            finalControlForm = finalControl?.name ?? null;
-          }
-        }
-      }
-    }
-
-    const filename = `${disciplineTitle}_${groupTitle}`
-      .replace(/[^a-zA-Zа-яА-Я0-9_\-\.]/g, "_")
-      .concat(".xlsx");
-
-    await exportJournalViaConvex(
-      {
-        groupName: groupTitle,
-        courseLabel: journal.courseNumber?.toString?.() ?? "",
-        specialtyLabel: specialty
-          ? `${specialty.code} - ${specialty.name}`
-          : undefined,
-        academicYearLabel,
-        disciplineTitle,
-        teacherFullName: teacherName,
-        finalControlForm,
-        students: studentRows,
-        lessonDates: snapshot.columns.map((column) => column.label),
-      },
-      filename
-    );
-  } catch (error) {
-    console.error("Failed to export journal", error);
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Не удалось экспортировать журнал";
-    f7.dialog.alert(message);
-  } finally {
-    f7.preloader.hide();
-  }
-};
-
-const onUploadClick = () => {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = ".xlsx,.xls";
-  input.multiple = false;
-
-  input.onchange = async (event) => {
-    const target = event.target as HTMLInputElement;
-    const file = target.files?.[0];
-    if (!file) return;
-
-    try {
-      f7.preloader.show();
-      const summary = await importJournalViaConvex(file);
-
-      if (summary.issues.some((issue) => issue.type === "error")) {
-        f7.preloader.hide();
-        const errorText = summary.issues
-          .filter((issue) => issue.type === "error")
-          .map((issue) => `• ${issue.message}`)
-          .join("\n");
-        f7.dialog.alert(errorText || "Не удалось импортировать журнал");
-        return;
-      }
-
-      const result = summary.result;
-      if (!result) {
-        f7.preloader.hide();
-        f7.dialog.alert("Файл обработан, но данные журнала не получены");
-        return;
-      }
-
-      // Get journal data
-      if (!journalId.value || !currentJournal.value) {
-        f7.preloader.hide();
-        f7.dialog.alert("Журнал не найден");
-        return;
-      }
-
-      const journalMarks = marksStore.getJournalMarks(journalId.value);
-      if (!journalMarks || journalMarks.studentMarks.length === 0) {
-        f7.preloader.hide();
-        f7.dialog.alert("Журнал пуст. Сначала инициализируйте журнал с датами и студентами.");
-        return;
-      }
-
-      // Get first student's marks as template
-      const firstStudentMarks = journalMarks.studentMarks[0].marks;
-      const studentIds = journalMarks.studentMarks.map((sm) => sm.studentId);
-
-      // Create mapping
-      const mapping = createImportMapping(
-        result,
-        studentIds,
-        firstStudentMarks,
-        (id: string) => {
-          const student = studentStore.students.find((s) => s.id === id);
-          if (!student) return null;
-          return {
-            fullName: `${student.surname} ${student.firstName} ${student.patronymic}`.trim(),
-          };
-        }
-      );
-
-      // Prepare updates with default overwrite mode (false)
-      const prepared = prepareMarksUpdate(result, mapping, false);
-
-      f7.preloader.hide();
-
-      // Store for dialog
-      importResult.value = result;
-      importMapping.value = mapping;
-      importPreparedData.value = prepared;
-      importOverwriteMode.value = false;
-
-      // Show confirmation dialog
-      isImportDialogOpened.value = true;
-      nextTick(() => {
-        f7.popover.open("#journal-import-confirm-popover");
-      });
-    } catch (error) {
-      f7.preloader.hide();
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Не удалось импортировать журнал";
-      f7.dialog.alert(message);
-    }
-  };
-
-  input.click();
-};
-
-// Handle import confirmation
-const onImportConfirm = async () => {
-  if (!importPreparedData.value || !importMapping.value || !journalId.value) {
-    f7.dialog.alert("Ошибка: данные для импорта не подготовлены");
-    return;
-  }
-
-  try {
-    f7.preloader.show();
-    f7.popover.close("#journal-import-confirm-popover");
-
-    // Apply updates to marks store
-    await applyUpdatesToMarks(
-      journalId.value,
-      importPreparedData.value,
-      marksStore.getStudentMarks,
-      marksStore.updateStudentMark
-    );
-
-    f7.preloader.hide();
-
-    // Show success message
-    const stats = importPreparedData.value.stats;
-    f7.toast
-      .create({
-        text: `Импорт завершен! Обновлено ${stats.totalUpdates} значений для ${stats.matchedStudents} студентов.`,
-        closeTimeout: 3000,
-        position: "center",
-      })
-      .open();
-
-    // Clear import data
-    isImportDialogOpened.value = false;
-    importPreparedData.value = null;
-    importMapping.value = null;
-    importResult.value = null;
-  } catch (error) {
-    f7.preloader.hide();
-    const message =
-      error instanceof Error ? error.message : "Не удалось применить импорт";
-    f7.dialog.alert(message);
-  }
-};
-
-// Handle import cancel
-const onImportCancel = () => {
-  isImportDialogOpened.value = false;
-  importPreparedData.value = null;
-  importMapping.value = null;
-  importResult.value = null;
-  f7.popover.close("#journal-import-confirm-popover");
-};
-
-// Watch overwrite mode changes and recalculate
-watch(importOverwriteMode, (newMode) => {
-  if (!importMapping.value || !importResult.value) return;
-
-  // Recalculate prepared data with new overwrite mode
-  importPreparedData.value = prepareMarksUpdate(
-    importResult.value,
-    importMapping.value,
-    newMode
-  );
-});
 
 const onOpenKtpDetails = (
   header: { type: string; label: string },

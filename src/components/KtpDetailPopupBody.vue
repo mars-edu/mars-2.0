@@ -286,7 +286,7 @@ const downloadRup = async () => {
     const templatePath = "/rup_templates/Шаблон КТП Марса.xlsx";
     const data = await exportKtpToExcelViaConvex(dataRows, templatePath);
 
-    const blob = new Blob([data], {
+    const blob = new Blob([data] as any, {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
     const url = URL.createObjectURL(blob);
@@ -353,7 +353,7 @@ const uploadDocument = () => {
         throw new Error("В файле не найдено ни одного урока для импорта");
       }
 
-      const importResult = ktpStore.bulkImportKtpDetails(
+      const importResult = await ktpStore.bulkImportKtpDetails(
         props.ktpId,
         parseResult.lessons
       );
@@ -522,14 +522,6 @@ const onThemesImported = (count: number) => {
   }
 };
 
-// Expose methods that parent might need
-defineExpose({
-  fetchDetails: () => {
-    if (props.ktpId) {
-      ktpStore.fetchDetailsForKtp(props.ktpId);
-    }
-  },
-});
 </script>
 
 <style scoped>

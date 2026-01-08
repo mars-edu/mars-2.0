@@ -3,7 +3,8 @@
  * Generates attendance journal Excel files
  */
 
-import * as ExcelJS from "exceljs";
+import * as Excel from "exceljs/dist/exceljs.min.js";
+import type * as ExcelJS from "exceljs";
 import {
   ARIAL_FONT,
   ARIAL_BOLD_FONT,
@@ -110,7 +111,7 @@ export function calculateColumnLayout(dateColumnsCount: number): JournalColumnLa
 // ============================================================================
 
 function generateJournalTemplate(dateColumnsCount: number = 10): ExcelJS.Workbook {
-  const workbook = new ExcelJS.Workbook();
+  const workbook: ExcelJS.Workbook = new Excel.Workbook();
 
   workbook.creator = "MARS 2.0";
   workbook.created = new Date();
