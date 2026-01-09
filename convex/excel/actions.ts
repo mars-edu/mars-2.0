@@ -83,7 +83,7 @@ export const exportJournal = action({
     };
 
     const buffer = await exportJournalToExcel(payload);
-    const storageId = await ctx.storage.store(new Blob([buffer.buffer]));
+    const storageId = await ctx.storage.store(new Blob([new Uint8Array(buffer)]));
     return storageId;
   },
 });
@@ -157,7 +157,7 @@ export const exportTeacherWorkload = action({
     };
 
     const buffer = await exportTeacherWorkloadToExcel(payload);
-    const storageId = await ctx.storage.store(new Blob([buffer.buffer]));
+    const storageId = await ctx.storage.store(new Blob([new Uint8Array(buffer)]));
     return storageId;
   },
 });
@@ -229,7 +229,7 @@ export const exportAnalytics = action({
     };
 
     const buffer = await exportAnalyticsToExcel(payload);
-    const storageId = await ctx.storage.store(new Blob([buffer.buffer]));
+    const storageId = await ctx.storage.store(new Blob([new Uint8Array(buffer)]));
     return storageId;
   },
 });
@@ -277,7 +277,7 @@ export const exportKtpToExcel = action({
   handler: async (ctx, args): Promise<string> => {
     const templateBuf = new Uint8Array(args.templateBuffer).buffer;
     const buffer = await exportKtpToExcelFromTemplate(args.dataRows, templateBuf);
-    const storageId = await ctx.storage.store(new Blob([buffer.buffer]));
+    const storageId = await ctx.storage.store(new Blob([new Uint8Array(buffer)]));
     return storageId;
   },
 });
