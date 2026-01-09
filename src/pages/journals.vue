@@ -396,6 +396,7 @@ import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
 import type { Id } from "@convex/_generated/dataModel";
 import { useJournalOpenClose } from "@/composables/useJournalOpenClose";
+import { saveAs } from "file-saver";
 import {
   exportJournalViaConvex,
   importJournalViaConvex,
@@ -953,14 +954,11 @@ async function downloadSelectedJournals() {
       throw new Error("Failed to get download URL");
     }
 
-    // Download the file
+    // Download the file using file-saver
     const date = new Date().toISOString().split("T")[0];
-    const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.download = `journals-${date}.zip`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const response = await fetch(downloadUrl);
+    const blob = await response.blob();
+    saveAs(blob, `journals-${date}.zip`);
 
     f7.preloader.hide();
     exitSelectionMode();
