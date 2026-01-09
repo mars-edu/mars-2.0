@@ -6,8 +6,11 @@ function env(name: string, fallback: string) {
 
 async function loginViaUi(page: any, username: string, password: string) {
   await page.goto("/login");
-  await page.getByPlaceholder("Введите ФИО").fill(username);
-  await page.getByPlaceholder("Введите пароль").fill(password);
+  const usernameInput = page.locator('input[placeholder="Введите ФИО"]:visible');
+  const passwordInput = page.locator('input[placeholder="Введите пароль"]:visible');
+  await expect(usernameInput.first()).toBeVisible({ timeout: 30_000 });
+  await usernameInput.first().fill(username);
+  await passwordInput.first().fill(password);
   await page.getByRole("button", { name: "Войти" }).click();
   await page.waitForURL(/\/home\/?/, { timeout: 120_000 });
 }
