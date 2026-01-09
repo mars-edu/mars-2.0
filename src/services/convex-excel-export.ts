@@ -47,21 +47,6 @@ export type {
 } from "./convex-excel-export.types";
 
 // ============================================================================
-// Helper Functions
-// ============================================================================
-
-/**
- * Convert number array from Convex to Uint8Array and save as file
- */
-function downloadExcel(buffer: number[], filename: string): void {
-  const uint8Array = new Uint8Array(buffer);
-  const blob = new Blob([uint8Array], {
-    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  });
-  saveAs(blob, filename);
-}
-
-// ============================================================================
 // Export Functions
 // ============================================================================
 
@@ -72,8 +57,16 @@ export async function exportJournalViaConvex(
   payload: JournalExportParams,
   filename: string
 ): Promise<void> {
-  const buffer = await convex.action(api.excel.actions.exportJournal, payload);
-  downloadExcel(buffer, filename);
+  const storageId = await convex.action(api.excel.actions.exportJournal, payload);
+  const url = await convex.query(api.files.queries.getFileUrl, { storageId });
+
+  if (!url) {
+    throw new Error("Failed to get file URL from storage");
+  }
+
+  const response = await fetch(url);
+  const blob = await response.blob();
+  saveAs(blob, filename);
 }
 
 /**
@@ -83,11 +76,19 @@ export async function exportTeacherWorkloadViaConvex(
   payload: WorkloadExportParams,
   filename: string
 ): Promise<void> {
-  const buffer = await convex.action(
+  const storageId = await convex.action(
     api.excel.actions.exportTeacherWorkload,
     payload
   );
-  downloadExcel(buffer, filename);
+  const url = await convex.query(api.files.queries.getFileUrl, { storageId });
+
+  if (!url) {
+    throw new Error("Failed to get file URL from storage");
+  }
+
+  const response = await fetch(url);
+  const blob = await response.blob();
+  saveAs(blob, filename);
 }
 
 /**
@@ -97,8 +98,16 @@ export async function exportAnalyticsViaConvex(
   payload: AnalyticsExportParams,
   filename: string
 ): Promise<void> {
-  const buffer = await convex.action(api.excel.actions.exportAnalytics, payload);
-  downloadExcel(buffer, filename);
+  const storageId = await convex.action(api.excel.actions.exportAnalytics, payload);
+  const url = await convex.query(api.files.queries.getFileUrl, { storageId });
+
+  if (!url) {
+    throw new Error("Failed to get file URL from storage");
+  }
+
+  const response = await fetch(url);
+  const blob = await response.blob();
+  saveAs(blob, filename);
 }
 
 // ============================================================================
@@ -153,10 +162,19 @@ export async function exportKtpToExcelViaConvex(
   const templateBuffer = await response.arrayBuffer();
   const templateArray = Array.from(new Uint8Array(templateBuffer));
 
-  const result = await convex.action(api.excel.actions.exportKtpToExcel, {
+  const storageId = await convex.action(api.excel.actions.exportKtpToExcel, {
     dataRows,
     templateBuffer: templateArray,
   });
 
-  return new Uint8Array(result);
+  const url = await convex.query(api.files.queries.getFileUrl, { storageId });
+
+  if (!url) {
+    throw new Error("Failed to get file URL from storage");
+  }
+
+  const fileResponse = await fetch(url);
+  const blob = await fileResponse.blob();
+  const arrayBuffer = await blob.arrayBuffer();
+  return new Uint8Array(arrayBuffer);
 }

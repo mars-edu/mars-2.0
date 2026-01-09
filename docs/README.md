@@ -55,6 +55,8 @@ npm run test:e2e:dev
 npm run test:e2e:prod
 ```
 
+E2E tests expect a reachable Convex backend (`VITE_CONVEX_URL`).
+
 #### Building & Deploying
 ```bash
 # Build and deploy Convex backend (includes migrations)

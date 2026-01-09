@@ -69,8 +69,7 @@ export const exportJournal = action({
     ),
     lessonDates: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, args): Promise<number[]> => {
-    void ctx;
+  handler: async (ctx, args): Promise<string> => {
     const payload: JournalExportPayload = {
       groupName: args.groupName,
       courseLabel: args.courseLabel,
@@ -84,7 +83,8 @@ export const exportJournal = action({
     };
 
     const buffer = await exportJournalToExcel(payload);
-    return Array.from(buffer);
+    const storageId = await ctx.storage.store(new Blob([buffer]));
+    return storageId;
   },
 });
 
@@ -145,8 +145,7 @@ export const exportTeacherWorkload = action({
       })
     ),
   },
-  handler: async (ctx, args): Promise<number[]> => {
-    void ctx;
+  handler: async (ctx, args): Promise<string> => {
     const payload: TeacherWorkloadExportPayload = {
       institutionName: args.institutionName,
       teacherFullName: args.teacherFullName,
@@ -158,7 +157,8 @@ export const exportTeacherWorkload = action({
     };
 
     const buffer = await exportTeacherWorkloadToExcel(payload);
-    return Array.from(buffer);
+    const storageId = await ctx.storage.store(new Blob([buffer]));
+    return storageId;
   },
 });
 
@@ -222,15 +222,15 @@ export const exportAnalytics = action({
       })
     ),
   },
-  handler: async (ctx, args): Promise<number[]> => {
-    void ctx;
+  handler: async (ctx, args): Promise<string> => {
     const payload: AnalyticsExportPayload = {
       courseGroups: args.courseGroups as CourseGroup[],
       finalForms: args.finalForms as FinalControlForm[],
     };
 
     const buffer = await exportAnalyticsToExcel(payload);
-    return Array.from(buffer);
+    const storageId = await ctx.storage.store(new Blob([buffer]));
+    return storageId;
   },
 });
 
@@ -274,11 +274,11 @@ export const exportKtpToExcel = action({
     dataRows: v.array(v.array(v.union(v.string(), v.number(), v.null()))),
     templateBuffer: v.array(v.number()),
   },
-  handler: async (ctx, args): Promise<number[]> => {
-    void ctx;
+  handler: async (ctx, args): Promise<string> => {
     const templateBuf = new Uint8Array(args.templateBuffer).buffer;
     const buffer = await exportKtpToExcelFromTemplate(args.dataRows, templateBuf);
-    return Array.from(buffer);
+    const storageId = await ctx.storage.store(new Blob([buffer]));
+    return storageId;
   },
 });
 
