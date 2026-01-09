@@ -391,15 +391,18 @@ import { useCalendarStore } from "@/stores/calendarStore";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
-import { useClass9Store } from "@/stores/class9Store";
+import { useClass9Store, type DistributionEntry } from "@/stores/class9Store";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
+import type { Id } from "@convex/_generated/dataModel";
 import { useJournalOpenClose } from "@/composables/useJournalOpenClose";
 import {
   exportJournalViaConvex,
   importJournalViaConvex,
   type JournalExportParams,
 } from "@/services/convex-excel-export";
+import { convex } from "@/lib/convexClient";
+import { api } from "../../convex/_generated/api";
 
 type JournalStudentRow = JournalExportParams["students"][number];
 
@@ -830,12 +833,18 @@ function toggleJournalSelection(id: string) {
 
 async function downloadSelectedJournals() {
   try {
-    const JSZip = (await import("jszip")).default;
-    const { saveAs } = await import("file-saver");
-
-    const zip = new JSZip();
-
-    const exportTasks: Promise<void>[] = [];
+    const journalsData: Array<{
+      filename: string;
+      groupName: string;
+      courseLabel: string;
+      specialtyLabel?: string;
+      academicYearLabel?: string;
+      disciplineTitle: string;
+      teacherFullName?: string;
+      finalControlForm?: string | null;
+      students: JournalStudentRow[];
+      lessonDates?: string[];
+    }> = [];
 
     selectedJournalIds.value.forEach((journalId) => {
       let journal: Journal | null = null;
@@ -897,7 +906,7 @@ async function downloadSelectedJournals() {
         const semester = semesters.find((s) => s.semesterNumber === (event?.semester ?? 1));
         if (semester) {
           const distributionEntry = class9Item.distributionEntries.find(
-            (entry) => entry.academicYearId === academicYear.id && entry.semesterId === semester.id
+            (entry: DistributionEntry) => entry.academicYearId === academicYear.id && entry.semesterId === semester.id
           );
           if (distributionEntry?.finalControlId) {
             // distributionEntry.finalControlId is ScheduledFinalControl.id, not FinalControl.id
@@ -914,40 +923,49 @@ async function downloadSelectedJournals() {
         .replace(/[^a-zA-Zа-яА-Я0-9_\-\.]/g, "_")
         .concat(".xlsx");
 
-      // Export via Convex backend
-      exportTasks.push(
-        (async () => {
-          const { convex } = await import("@/lib/convexClient");
-          const { api } = await import("../../convex/_generated/api");
-          if (!convex) {
-            throw new Error("Convex client not available");
-          }
-          const bufferArray = await convex.action(api.excel.actions.exportJournal, {
-            groupName: groupTitle,
-            courseLabel: journal.courseNumber.toString(),
-            specialtyLabel: specialty
-              ? `${specialty.code} - ${specialty.name}`
-              : undefined,
-            academicYearLabel,
-            disciplineTitle,
-            teacherFullName: teacherName,
-            finalControlForm,
-            students: studentRows,
-          });
-          const buffer = new Uint8Array(bufferArray);
-          zip.file(filename, buffer);
-        })()
-      );
+      journalsData.push({
+        filename,
+        groupName: groupTitle,
+        courseLabel: journal.courseNumber.toString(),
+        specialtyLabel: specialty
+          ? `${specialty.code} - ${specialty.name}`
+          : undefined,
+        academicYearLabel,
+        disciplineTitle,
+        teacherFullName: teacherName,
+        finalControlForm,
+        students: studentRows,
+      });
     });
 
-    await Promise.all(exportTasks);
+    // Call backend to generate zip file
+    f7.preloader.show();
+    const storageId = await convex.action(api.excel.actions.exportJournalsZip, {
+      journals: journalsData,
+    });
 
-    const content = await zip.generateAsync({ type: "blob" });
+    // Get download URL from storage
+    const downloadUrl = await convex.query(api.files.queries.getFileUrl, {
+      storageId: storageId as Id<"_storage">,
+    });
+
+    if (!downloadUrl) {
+      throw new Error("Failed to get download URL");
+    }
+
+    // Download the file
     const date = new Date().toISOString().split("T")[0];
-    saveAs(content, `journals-${date}.zip`);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = `journals-${date}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
+    f7.preloader.hide();
     exitSelectionMode();
   } catch (error) {
+    f7.preloader.hide();
     console.error("Failed to export journals", error);
     f7.dialog.alert("Не удалось сформировать журналы. Попробуйте еще раз.");
   }

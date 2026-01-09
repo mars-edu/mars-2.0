@@ -298,3 +298,73 @@ export const exportKtpToExcel = action({
   },
 });
 
+// ============================================================================
+// Bulk Journal Export to Zip Action
+// ============================================================================
+
+export const exportJournalsZip = action({
+  args: {
+    journals: v.array(
+      v.object({
+        filename: v.string(),
+        groupName: v.string(),
+        courseLabel: v.string(),
+        specialtyLabel: v.optional(v.string()),
+        academicYearLabel: v.optional(v.string()),
+        disciplineTitle: v.string(),
+        teacherFullName: v.optional(v.string()),
+        finalControlForm: v.optional(v.union(v.string(), v.null())),
+        students: v.array(
+          v.object({
+            id: v.string(),
+            fullName: v.string(),
+            attendance: v.optional(
+              v.array(v.union(v.string(), v.number(), v.null()))
+            ),
+            date: v.optional(v.union(v.string(), v.null())),
+            hours: v.optional(v.union(v.number(), v.string(), v.null())),
+            topic: v.optional(v.union(v.string(), v.null())),
+            finalGrade: v.optional(v.union(v.string(), v.number(), v.null())),
+          })
+        ),
+        lessonDates: v.optional(v.array(v.string())),
+      })
+    ),
+  },
+  handler: async (ctx, args): Promise<string> => {
+    // Import JSZip dynamically
+    const JSZip = (await import("jszip")).default;
+    const zip = new JSZip();
+
+    // Generate Excel files for each journal and add to zip
+    for (const journalData of args.journals) {
+      const payload: JournalExportPayload = {
+        groupName: journalData.groupName,
+        courseLabel: journalData.courseLabel,
+        specialtyLabel: journalData.specialtyLabel,
+        academicYearLabel: journalData.academicYearLabel,
+        disciplineTitle: journalData.disciplineTitle,
+        teacherFullName: journalData.teacherFullName,
+        finalControlForm: journalData.finalControlForm,
+        students: journalData.students as JournalStudentRow[],
+        lessonDates: journalData.lessonDates,
+      };
+
+      const buffer = await exportJournalToExcel(payload);
+      zip.file(journalData.filename, buffer);
+    }
+
+    // Generate the zip file
+    const zipBuffer = await zip.generateAsync({ type: "arraybuffer" });
+
+    // Store in Convex storage
+    const storageId = await ctx.storage.store(
+      new Blob([zipBuffer], {
+        type: 'application/zip'
+      })
+    );
+
+    return storageId;
+  },
+});
+
