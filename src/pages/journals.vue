@@ -394,6 +394,7 @@ import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useClass9Store, type DistributionEntry } from "@/stores/class9Store";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
+import { useMarksStore } from "@/stores/marksStore";
 import type { Id } from "@convex/_generated/dataModel";
 import { useJournalOpenClose } from "@/composables/useJournalOpenClose";
 import { saveAs } from "file-saver";
@@ -422,6 +423,7 @@ const specialtyStore = useSpecialtyStore();
 const class9Store = useClass9Store();
 const finalControlStore = useFinalControlStore();
 const scheduledFinalControlStore = useScheduledFinalControlStore();
+const marksStore = useMarksStore();
 const { journalsByCourse, mixedGroupJournals, individualJournals } = storeToRefs(journalStore);
 const { students } = storeToRefs(studentStore);
 
@@ -834,6 +836,8 @@ function toggleJournalSelection(id: string) {
 
 async function downloadSelectedJournals() {
   try {
+    f7.preloader.show();
+
     const journalsData: Array<{
       filename: string;
       groupName: string;
@@ -847,7 +851,8 @@ async function downloadSelectedJournals() {
       lessonDates?: string[];
     }> = [];
 
-    selectedJournalIds.value.forEach((journalId) => {
+    // Process journals sequentially to load marks for each
+    for (const journalId of selectedJournalIds.value) {
       let journal: Journal | null = null;
 
       for (const courseNumber in journalsByCourse.value) {
@@ -864,15 +869,79 @@ async function downloadSelectedJournals() {
         journal = mixedGroupJournals.value.find((j) => j.id === journalId) ?? null;
       }
 
-      if (!journal) return;
+      if (!journal) {
+        journal = individualJournals.value.find((j) => j.id === journalId) ?? null;
+      }
+
+      if (!journal) continue;
 
       const event = calendarStore.getEventById(journal.id);
 
+      // Load marks for this journal from backend
+      await marksStore.loadJournalMarks(journalId);
+      const journalMarks = marksStore.getJournalMarks(journalId);
+
+      // Get marks structure from first student to determine columns (export ALL columns like JournalDetails)
+      const firstStudentMarks = journalMarks?.studentMarks?.[0]?.marks || [];
+
+      // Build lessonDates from ALL columns (dates get formatted, sessions get their label)
+      const lessonDates: string[] = firstStudentMarks.map((mark) => {
+        if (mark.type === "date" && mark.isoDate) {
+          // Format date as DD.MM.YYYY for export
+          const parts = mark.isoDate.split("-");
+          if (parts.length === 3) {
+            return `${parts[2]}.${parts[1]}.${parts[0]}`;
+          }
+          return mark.isoDate;
+        }
+        // For session columns, use label (e.g., "РК1", "РК2", "Экз")
+        return mark.label || "";
+      });
+
+      // Build student rows with attendance data for ALL columns
       const studentRows: JournalStudentRow[] = (journal.students || []).map(
-        (studentId) => ({
-          id: studentId,
-          fullName: studentStore.getStudentFullName(studentId),
-        })
+        (studentId) => {
+          const studentMarks = marksStore.getStudentMarks(journalId, studentId) || [];
+
+          // Build attendance array from ALL marks (dates + sessions)
+          const attendance: (string | number | null)[] = firstStudentMarks.map((_, markIndex) => {
+            const mark = studentMarks[markIndex];
+            if (!mark) return "";
+
+            if (mark.type === "date") {
+              // Combine all values for the date (multiple lessons per day)
+              const combined = (mark.values || [])
+                .map((value) =>
+                  value === null || value === "" ? "" : String(value).trim()
+                )
+                .filter((value) => value.length > 0);
+              return combined.join(" / ");
+            }
+
+            // For session marks, just get the first value
+            const value = mark.values?.[0];
+            return value == null || value === "" ? "" : String(value);
+          });
+
+          // Get final grade from session marks (look for final control type)
+          let finalGrade: string | undefined;
+          const finalMark = studentMarks.find(
+            (m) => m.type === "session" && m.controlType === "final"
+          );
+          if (finalMark && finalMark.values?.[0]) {
+            const val = finalMark.values[0];
+            if (val !== null && val !== "") {
+              finalGrade = String(val);
+            }
+          }
+
+          return {
+            id: studentId,
+            fullName: studentStore.getStudentFullName(studentId),
+            attendance,
+            finalGrade,
+          };
+        }
       );
 
       const primaryStudentId = journal.students?.[0];
@@ -936,11 +1005,11 @@ async function downloadSelectedJournals() {
         teacherFullName: teacherName,
         finalControlForm,
         students: studentRows,
+        lessonDates,
       });
-    });
+    }
 
     // Call backend to generate zip file
-    f7.preloader.show();
     const storageId = await convex.action(api.excel.actions.exportJournalsZip, {
       journals: journalsData,
     });
