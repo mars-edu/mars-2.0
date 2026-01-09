@@ -402,7 +402,7 @@ import {
   type JournalExportParams,
 } from "@/services/convex-excel-export";
 import { convex } from "@/lib/convexClient";
-import { api } from "../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 
 type JournalStudentRow = JournalExportParams["students"][number];
 
