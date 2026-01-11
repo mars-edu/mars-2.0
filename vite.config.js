@@ -92,7 +92,8 @@ export default async () => {
     },
     root: SRC_DIR,
     envDir: path.resolve(__dirname, "./"),
-    base: "",
+    // Must be absolute to support clean-URL deep-link reloads in production (e.g. /journals/:id).
+    base: "/",
     publicDir: PUBLIC_DIR,
     build: {
       outDir: BUILD_DIR,
