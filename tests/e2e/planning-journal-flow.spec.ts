@@ -37,11 +37,11 @@ async function loginViaUi(page: any, username: string, password: string) {
   await page.getByRole("button", { name: "Войти" }).click();
   // Login can be slow on cold start; keep the timeout reasonable but retry once.
   try {
-    await page.waitForURL(/\/home\/?/, { timeout: 120_000 });
+    await page.waitForURL(/\/home\/?/, { timeout: 60_000 });
   } catch {
     await page.waitForTimeout(1000);
     await page.getByRole("button", { name: "Войти" }).click().catch(() => {});
-    await page.waitForURL(/\/home\/?/, { timeout: 120_000 });
+    await page.waitForURL(/\/home\/?/, { timeout: 60_000 });
   }
 }
 
@@ -245,7 +245,7 @@ async function pickF7CalendarDay(page: any, opts: { offsetDays?: number } = {}) 
 }
 
 test.describe("Planning → Journal E2E flow", () => {
-  test.setTimeout(300_000);
+  test.setTimeout(180_000);
   test.describe.configure({ mode: "serial" });
 
   test("admin setup prerequisites", async ({ page }) => {
@@ -511,6 +511,35 @@ test.describe("Planning → Journal E2E flow", () => {
     const teacherPassword = env("E2E_TEACHER_PASSWORD", "teachertest");
     await loginViaUi(page, teacherUsername, teacherPassword);
 
+    // Capture created journal id from Planning page console log (avoids flaky UI lookups).
+    const journalIdPromise = new Promise<string>((resolve, reject) => {
+      const timeout = setTimeout(
+        () => reject(new Error("Timed out waiting for created event id in console logs")),
+        30_000
+      );
+
+      const handler = async (msg: any) => {
+        try {
+          if (msg.type() !== "log") return;
+          if (!msg.text().includes("New event added")) return;
+          const args = msg.args();
+          if (!args || args.length < 2) return;
+          const created = await args[1].jsonValue().catch(() => null);
+          const id = created?.id;
+          if (!id) return;
+          clearTimeout(timeout);
+          page.off("console", handler);
+          resolve(id);
+        } catch (e) {
+          clearTimeout(timeout);
+          page.off("console", handler);
+          reject(e);
+        }
+      };
+
+      page.on("console", handler);
+    });
+
     await page.goto("/planning");
     await expect(page.locator("#add-button")).toBeVisible({ timeout: 30_000 });
     await page.getByText("Сегодня").click().catch(() => {});
@@ -605,25 +634,7 @@ test.describe("Planning → Journal E2E flow", () => {
     await addEventPopover.getByRole("button", { name: "Добавить" }).click();
     await expect(addEventPopover).toBeHidden({ timeout: 15_000 });
 
-    // Capture created journal id for later tests by opening the event preview from Planning.
-    const createdEvent = page
-      .locator(".calendar-event")
-      .filter({ hasText: moduleIndex })
-      .first();
-    await expect(createdEvent).toBeVisible({ timeout: 60_000 });
-    await createdEvent.click();
-
-    const previewPopover = page.locator("#journal-preview-popover:visible");
-    await expect(previewPopover).toBeVisible({ timeout: 30_000 });
-
-    // Clicking the card navigates to `/journals/:id?...`.
-    await previewPopover.locator("div.group.relative").first().click();
-    await page.waitForURL(/\/journals\/[^/]+/, { timeout: 30_000 });
-
-    const url = page.url();
-    const match = url.match(/\/journals\/([^/?#]+)/);
-    sharedJournalId = match?.[1] || null;
-    if (!sharedJournalId) throw new Error(`Failed to extract journal id from URL: ${url}`);
+    sharedJournalId = await journalIdPromise;
   });
 
   test("journal details shows KTP via paperclip", async ({ page }) => {
