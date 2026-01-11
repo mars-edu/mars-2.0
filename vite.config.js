@@ -127,11 +127,11 @@ export default async () => {
       // Enable compression and optimization
       minify: 'terser',
       terserOptions: {
-        // compress: {
-        //   drop_console: true,
-        //   drop_debugger: true,
-        //   pure_funcs: ['console.log', 'console.info'],
-        // },
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+          pure_funcs: ['console.log', 'console.info'],
+        },
       },
       // Enable source maps for debugging but with smaller size
       sourcemap: false,
