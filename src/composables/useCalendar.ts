@@ -2,7 +2,6 @@ import { computed, ref } from "vue";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useJournalStore } from "@/stores/journalStore";
-import { storeToRefs } from "pinia";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import isBetween from "dayjs/plugin/isBetween";
@@ -36,7 +35,6 @@ export function useCalendar() {
   const calendarStore = useCalendarStore();
   const educationScheduleStore = useEducationScheduleStore();
   const journalStore = useJournalStore();
-  const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
 
   const setYear = (newYear: string) => {
     year.value = newYear;
@@ -85,17 +83,25 @@ export function useCalendar() {
       })
       .map((event) => {
         let time = event.startTime || "...";
-        if (event.weeklySchedules && event.weeklySchedules.length > 0) {
-          const ws = event.weeklySchedules.find(
-            (w) => w.weekId === weekIdOfCurrent
-          );
+
+        // Prefer weekly schedule slots if present. Use direct ID lookup instead of
+        // "active year" schedules to avoid showing "..." while active year loads.
+        if (Array.isArray(event.weeklySchedules) && event.weeklySchedules.length > 0) {
+          const ws = event.weeklySchedules.find((w) => w.weekId === weekIdOfCurrent);
           if (ws) {
-            if ((ws as any).startId) {
-              const schedules = getActiveYearSchedules.value || [];
-              const found = schedules.find((s) => s.id === (ws as any).startId);
-              if (found) time = found.startTime;
-            } else if ((ws as any).startTime) {
-              time = (ws as any).startTime;
+            const start =
+              (ws as any).startTime ||
+              ((ws as any).startId
+                ? educationScheduleStore.getScheduleById((ws as any).startId)?.startTime
+                : "");
+            const end =
+              (ws as any).endTime ||
+              ((ws as any).endId
+                ? educationScheduleStore.getScheduleById((ws as any).endId)?.endTime
+                : "");
+
+            if (start || end) {
+              time = [start, end].filter(Boolean).join("-");
             }
           }
         }
