@@ -512,13 +512,21 @@ test.describe("Planning → Journal E2E flow", () => {
       timeout: 30_000,
     });
 
-    await page.locator("#journal-settings-button").click();
-    await expect(settingsPopover).toBeVisible();
-    await expect(
-      settingsPopover.locator('input[name="calculation-type"][value="manual"]')
-    ).toBeChecked();
-    await settingsPopover.getByRole("button", { name: "Сохранить" }).click();
-    await expect(settingsPopover).toBeHidden();
+	    await page.locator("#journal-settings-button").click();
+	    const settingsPopoverAfterReload = page
+	      .locator("#journal-settings-popover:visible")
+	      .first();
+	    await expect(settingsPopoverAfterReload).toBeVisible({ timeout: 30_000 });
+
+	    const manualRadio = settingsPopoverAfterReload.locator(
+	      'input[name="calculation-type"][value="manual"]'
+	    );
+	    await expect
+	      .poll(async () => await manualRadio.isChecked(), { timeout: 30_000 })
+	      .toBeTruthy();
+
+	    await settingsPopoverAfterReload.getByRole("button", { name: "Сохранить" }).click();
+	    await expect(settingsPopoverAfterReload).toBeHidden();
 
     // Back to planning.
     await page.goto("/planning");
