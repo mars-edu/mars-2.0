@@ -70,6 +70,7 @@
             </f7-button>
 
             <f7-button
+              id="add-ktp-detail-button"
               small
               text-color="white"
               class="!h-8 !min-h-8 !text-xs bg-sun"
@@ -82,6 +83,25 @@
               ></f7-icon>
               Добавить
             </f7-button>
+
+            <!-- NOTE: bulk-delete disabled by request; delete is done per-theme via edit popover. -->
+            <!--
+            <f7-button
+              id="clear-ktp-themes-button"
+              small
+              text-color="white"
+              class="!h-8 !min-h-8 !text-xs bg-destructive"
+              :disabled="ktpDetails.length === 0"
+              @click="clearAllThemes"
+            >
+              <f7-icon
+                ios="f7:trash"
+                md="material:delete"
+                class="!text-sm mr-1"
+              ></f7-icon>
+              Очистить темы
+            </f7-button>
+            -->
 
             <div class="separator-vertical"></div>
 
@@ -103,10 +123,11 @@
 
         <div class="border border-border rounded-lg overflow-hidden">
           <div
-            class="grid grid-cols-[40px_minmax(0,_1fr)_100px_80px_80px_120px_160px] gap-4 px-4 py-2 bg-muted/50 text-sm text-muted-foreground"
+            class="grid grid-cols-[40px_minmax(0,_1fr)_100px_100px_80px_80px_120px_160px] gap-4 px-4 py-2 bg-muted/50 text-sm text-muted-foreground"
           >
             <div class="font-medium text-center">№</div>
             <div class="font-medium">Темы занятий</div>
+            <div class="font-medium text-center">Дата</div>
             <div class="font-medium text-center">Всего часов</div>
             <div class="font-medium text-center">СРСП</div>
             <div class="font-medium text-center">СРС</div>
@@ -128,7 +149,7 @@
               ></div>
               <div
                 :id="`ktp-detail-item-${item.id}`"
-                class="grid grid-cols-[40px_minmax(0,_1fr)_100px_80px_80px_120px_160px] gap-4 px-4 py-3 items-start cursor-pointer hover:bg-muted/50 transition-colors"
+                class="grid grid-cols-[40px_minmax(0,_1fr)_100px_100px_80px_80px_120px_160px] gap-4 px-4 py-3 items-start cursor-pointer hover:bg-muted/50 transition-colors"
                 :class="{
                   'is-dragging': dragSourceId === item.id,
                   'is-drag-over':
@@ -160,6 +181,9 @@
                 </div>
                 <div class="text-sm">{{ item.theme }}</div>
                 <div class="text-center text-sm">
+                  {{ getLessonDateByIndex(idx) }}
+                </div>
+                <div class="text-center text-sm">
                   {{ item.totalHours ?? "—" }}
                 </div>
                 <div class="text-center text-sm">
@@ -186,7 +210,6 @@
     <KtpDetailFormPopover
       v-if="ktpId"
       v-model:opened="isFormPopoverOpen"
-      :target="formPopoverTarget"
       :ktp-id="ktpId"
       :detail-to-edit="editingDetail"
     />
@@ -205,6 +228,10 @@
 import { ref, computed } from "vue";
 import { f7, f7Icon, f7Button } from "framework7-vue";
 import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
+import { useCalendarStore } from "@/stores/calendarStore";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
+import { useClass9Store } from "@/stores/class9Store";
+import { getEventDays } from "@/utils/eventDate";
 import KtpDetailFormPopover from "@/components/KtpDetailFormPopover.vue";
 import DownloadTemplateDialog from "@/components/DownloadTemplateDialog.vue";
 import RupImportDialog from "@/components/RupImportDialog.vue";
@@ -219,6 +246,9 @@ const props = defineProps<{
 }>();
 
 const ktpStore = useKtpStore();
+const calendarStore = useCalendarStore();
+const academicYearSemesterStore = useAcademicYearSemesterStore();
+const class9Store = useClass9Store();
 const { loading } = storeToRefs(ktpStore);
 const selectedDetailId = ref("ktp-detail-3");
 
@@ -227,6 +257,51 @@ const ktpDetails = computed(() => {
   if (!props.ktpId) return [];
   return ktpStore.getDetailsByKtpId(props.ktpId);
 });
+
+const linkedEvent = computed(() => {
+  if (!props.ktpId) return null;
+  const ktp = ktpStore.ktps.find((k: any) => k.id === props.ktpId);
+  const byEventId = ktp?.eventId
+    ? calendarStore.events.find((e: any) => e.id === ktp.eventId)
+    : null;
+  return byEventId || calendarStore.events.find((e: any) => e.ktpId === props.ktpId) || null;
+});
+
+const learningOutcome = computed(() => {
+  const event = linkedEvent.value as any;
+  if (!event?.class9Id) return null;
+  const class9Item = class9Store.getClass9ById(event.class9Id);
+  return class9Item?.learningOutcome || null;
+});
+
+const lessonDates = computed(() => {
+  const event = linkedEvent.value as any;
+  if (!event) return [];
+
+  const getSemesterById = (id: string) => {
+    const fn = (academicYearSemesterStore as any).getAcademicYearSemesterById;
+    if (typeof fn === "function") return fn(id);
+    if (fn && typeof fn.value === "function") return fn.value(id);
+    return academicYearSemesterStore.academicYearSemesters.find(
+      (s: any) => s.id === id
+    );
+  };
+
+  const semester = event.semester ? getSemesterById(String(event.semester)) : null;
+  const semesterInfo = semester
+    ? { startDate: semester.startDate, endDate: semester.endDate }
+    : undefined;
+
+  try {
+    const days = getEventDays(event, semesterInfo);
+    return days.map((d) => d.day.format("DD.MM.YYYY"));
+  } catch (e) {
+    console.error("[KtpDetailPopupBody] Failed to compute lesson dates:", e);
+    return [];
+  }
+});
+
+const getLessonDateByIndex = (idx: number) => lessonDates.value[idx] || "—";
 
 // Computed properties for hour calculations
 const plannedHoursFromKtp = computed(() => {
@@ -249,7 +324,6 @@ const semesterPlannedHours = computed(() => {
 
 const isFormPopoverOpen = ref(false);
 const editingDetail = ref<KtpDetail | null>(null);
-const formPopoverTarget = ref("");
 const isImporting = ref(false);
 const isRupImportDialogOpen = ref(false);
 const dragSourceId = ref<string | null>(null);
@@ -272,29 +346,20 @@ const downloadRup = async () => {
     return;
   }
 
+  f7.preloader.show();
   try {
+    // Template columns: № занятия, Тема, Часы, Тип занятий, Домашнее задание, Примечание
     const dataRows = ktpDetails.value.map((item) => [
       item.position,
       item.theme,
       item.totalHours ?? null,
-      item.srsp ?? null,
-      item.srs ?? null,
+      null, // Тип занятий (lesson type) - not available in KTP details
       item.homework ?? null,
       item.notes ?? null,
     ]);
 
     const templatePath = "/rup_templates/Шаблон КТП Марса.xlsx";
-    const data = await exportKtpToExcelViaConvex(dataRows, templatePath);
-
-    const blob = new Blob([data] as any, {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "РУП.xlsx";
-    a.click();
-    URL.revokeObjectURL(url);
+    await exportKtpToExcelViaConvex(dataRows, templatePath, learningOutcome.value);
 
     f7.toast
       .create({
@@ -312,6 +377,8 @@ const downloadRup = async () => {
         cssClass: "color-red",
       })
       .open();
+  } finally {
+    f7.preloader.hide();
   }
 };
 
@@ -336,16 +403,10 @@ const uploadDocument = () => {
       return;
     }
 
+    f7.preloader.show();
     try {
       isImporting.value = true;
       ktpStore.error = null;
-
-      f7.toast
-        .create({
-          text: `Загрузка файла ${file.name}...`,
-          closeTimeout: 2000,
-        })
-        .open();
 
       const parseResult = await parseEducationalScheduleViaConvex(file);
 
@@ -389,6 +450,7 @@ const uploadDocument = () => {
       ktpStore.error = errorMessage;
     } finally {
       isImporting.value = false;
+      f7.preloader.hide();
     }
   };
 
@@ -407,14 +469,14 @@ const addManually = () => {
 
 const openAddPopover = () => {
   editingDetail.value = null;
-  formPopoverTarget.value = "#add-ktp-detail-fab";
   isFormPopoverOpen.value = true;
 };
+
+// const clearAllThemes = () => { ... } // disabled (see template note)
 
 const openEditPopover = (detail: KtpDetail) => {
   editingDetail.value = detail;
   selectedDetailId.value = detail.id;
-  formPopoverTarget.value = `#ktp-detail-item-${detail.id}`;
   isFormPopoverOpen.value = true;
 };
 

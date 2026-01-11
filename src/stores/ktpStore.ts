@@ -205,6 +205,13 @@ export const useKtpStore = defineStore(
       });
     }
 
+    async function clearKtpDetails(ktpId: string) {
+      await convex.mutation(api.ktps.mutations.clearDetails, {
+        ktpId: ktpId as any,
+      });
+      ktpDetails.value = ktpDetails.value.filter((d) => d.ktpId !== ktpId);
+    }
+
     function deleteKtpByClass9Id(
       class9Id: string,
       academicYearId?: string,
@@ -507,6 +514,7 @@ export const useKtpStore = defineStore(
       deleteKtpDetail,
       deleteKtpByClass9Id,
       deleteKtpById,
+      clearKtpDetails,
       reorderKtpDetails,
       bulkImportKtpDetails,
       getDetailsByKtpId,

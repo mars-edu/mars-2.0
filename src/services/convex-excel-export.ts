@@ -10,6 +10,7 @@
 
 import { saveAs } from "file-saver";
 import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 import { convex } from "@/lib/convexClient";
 import type { JournalImportSummary } from "@/lib/excel/imports";
 import type {
@@ -137,12 +138,22 @@ export async function importJournalViaConvex(
 export async function parseEducationalScheduleViaConvex(
   file: File
 ): Promise<any> {
-  const arrayBuffer = await file.arrayBuffer();
-  const uint8Array = new Uint8Array(arrayBuffer);
-  const numberArray = Array.from(uint8Array);
+  // Upload file to Convex storage first
+  const uploadUrl = await convex.mutation(api.files.mutations.generateUploadUrl);
+  const uploadResponse = await fetch(uploadUrl, {
+    method: "POST",
+    headers: { "Content-Type": file.type || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+    body: file,
+  });
+
+  if (!uploadResponse.ok) {
+    throw new Error(`File upload failed: ${uploadResponse.statusText}`);
+  }
+
+  const { storageId: fileStorageId } = await uploadResponse.json() as { storageId: Id<"_storage"> };
 
   const result = await convex.action(api.excel.actions.parseEducationalSchedule, {
-    fileBuffer: numberArray,
+    fileStorageId,
     fileName: file.name,
   });
 
@@ -154,17 +165,33 @@ export async function parseEducationalScheduleViaConvex(
  */
 export async function exportKtpToExcelViaConvex(
   dataRows: (string | number | null)[][],
-  templateUrl: string
-): Promise<Uint8Array> {
+  templateUrl: string,
+  learningOutcome?: string | null
+): Promise<void> {
   // Fetch template
   const response = await fetch(templateUrl);
   if (!response.ok) throw new Error("Failed to load template");
-  const templateBuffer = await response.arrayBuffer();
-  const templateArray = Array.from(new Uint8Array(templateBuffer));
+  const templateBlob = await response.blob();
 
-  const storageId = await convex.action(api.excel.actions.exportKtpToExcel, {
+  // Upload template to Convex storage
+  const uploadUrl = await convex.mutation(api.files.mutations.generateUploadUrl);
+  const uploadResponse = await fetch(uploadUrl, {
+    method: "POST",
+    headers: { "Content-Type": templateBlob.type || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+    body: templateBlob,
+  });
+
+  if (!uploadResponse.ok) {
+    throw new Error(`Template upload failed: ${uploadResponse.statusText}`);
+  }
+
+  const { storageId: templateStorageId } = await uploadResponse.json() as { storageId: Id<"_storage"> };
+
+  // Call the export action with the template storage ID
+  const { storageId, filename } = await convex.action(api.excel.actions.exportKtpToExcel, {
     dataRows,
-    templateBuffer: templateArray,
+    templateStorageId,
+    learningOutcome: learningOutcome || undefined,
   });
 
   const url = await convex.query(api.files.queries.getFileUrl, { storageId });
@@ -175,6 +202,5 @@ export async function exportKtpToExcelViaConvex(
 
   const fileResponse = await fetch(url);
   const blob = await fileResponse.blob();
-  const arrayBuffer = await blob.arrayBuffer();
-  return new Uint8Array(arrayBuffer);
+  saveAs(blob, filename);
 }

@@ -545,6 +545,7 @@ interface Props {
     calculationType: "calculated" | "manual";
     calculationMethod: "only-assigned" | "all-days";
   };
+  ktpId?: string | null;
 }
 
 const props = defineProps<Props>();
@@ -1951,6 +1952,9 @@ const getKtpForHeader = (headerIndex: number): KtpDetail | null => {
   const semesterId = effectiveSemesterIdForKtp.value;
   if (!academicYearId || !semesterId) return null;
 
+  const ktpId = props.ktpId || null;
+  if (!ktpId) return null;
+
   // Find dayIndex - position of this date among all date columns
   let dayIndex = 0;
   for (let i = 0; i < visibleHeaders.value.length; i++) {
@@ -1959,12 +1963,7 @@ const getKtpForHeader = (headerIndex: number): KtpDetail | null => {
     if (h.type === "date") dayIndex++;
   }
 
-  // Get KTP details for the discipline
-  const details = ktpStore.getDetailsByClass9Id(
-    class9Id,
-    academicYearId,
-    semesterId
-  );
+  const details = ktpStore.getDetailsByKtpId(ktpId);
   const detail = details[dayIndex];
 
   // Check that KTP exists AND theme is not empty
@@ -2013,18 +2012,12 @@ const onPaperclipClick = async (
   const dayData = days[dayIndex];
   if (!dayData) return;
 
-  // Get KTP details using class9Id from currentJournal
+  // Get KTP details using the ensured event-linked KTP.
   try {
-    const class9Id = currentJournal.value.disciplineId;
-    const academicYearId = effectiveAcademicYearIdForKtp.value;
-    const semesterId = effectiveSemesterIdForKtp.value;
-    if (!academicYearId || !semesterId) return;
+    const ktpId = props.ktpId || null;
+    if (!ktpId) return;
 
-    const details = ktpStore.getDetailsByClass9Id(
-      class9Id,
-      academicYearId,
-      semesterId
-    );
+    const details = ktpStore.getDetailsByKtpId(ktpId);
 
     // Select the detail based on day index (0-based)
     const detailForDate = details[dayIndex] || null;

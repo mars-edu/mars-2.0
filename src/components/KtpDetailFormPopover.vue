@@ -1,11 +1,11 @@
 <template>
   <f7-popover
+    id="ktp-detail-form-popover"
     :opened="opened"
     @popover:closed="$emit('update:opened', false)"
-    class="popover-center-page"
-    style="width: 600px !important"
+    style="width: 600px !important; max-width: calc(100vw - 32px) !important"
     close-on-escape
-    :target-el="target"
+    :arrow="false"
   >
     <div class="bg-card text-card-foreground">
       <PopoverHeader
@@ -120,7 +120,6 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
   opened: boolean;
-  target: string;
   ktpId: string;
   detailToEdit: KtpDetail | null;
 }>();
@@ -141,28 +140,52 @@ const formData = reactive({
   notes: "",
 });
 
+const resetForm = () => {
+  formData.theme = "";
+  formData.totalHours = null;
+  formData.srsp = null;
+  formData.srs = null;
+  formData.homework = "";
+  formData.notes = "";
+  formError.value = "";
+};
+
+const loadDetailData = (detail: KtpDetail) => {
+  formData.theme = detail.theme;
+  formData.totalHours = detail.totalHours;
+  formData.srsp = detail.srsp;
+  formData.srs = detail.srs;
+  formData.homework = detail.homework;
+  formData.notes = detail.notes || "";
+  formError.value = "";
+};
+
+// Reset form when popover opens
+watch(
+  () => props.opened,
+  (isOpen) => {
+    if (isOpen) {
+      if (props.detailToEdit) {
+        loadDetailData(props.detailToEdit);
+      } else {
+        resetForm();
+      }
+    }
+  }
+);
+
+// Also handle when detailToEdit changes while popover is open
 watch(
   () => props.detailToEdit,
   (newDetail) => {
-    if (newDetail) {
-      formData.theme = newDetail.theme;
-      formData.totalHours = newDetail.totalHours;
-      formData.srsp = newDetail.srsp;
-      formData.srs = newDetail.srs;
-      formData.homework = newDetail.homework;
-      formData.notes = newDetail.notes || "";
-    } else {
-      // Reset for "add" mode
-      formData.theme = "";
-      formData.totalHours = null;
-      formData.srsp = null;
-      formData.srs = null;
-      formData.homework = "";
-      formData.notes = "";
+    if (props.opened) {
+      if (newDetail) {
+        loadDetailData(newDetail);
+      } else {
+        resetForm();
+      }
     }
-    formError.value = "";
-  },
-  { immediate: true }
+  }
 );
 
 const formSchema = z.object({
@@ -223,10 +246,10 @@ const showDeleteConfirmation = () => {
 </script>
 
 <style>
-.popover.popover-center-page {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+#ktp-detail-form-popover {
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
   border-radius: 0.5rem;
   overflow: hidden;
 }

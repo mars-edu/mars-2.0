@@ -1,19 +1,23 @@
 <template>
   <div
-    class="text-xs p-2 rounded-md truncate border-l-2 transition-shadow duration-200 hover:shadow-md cursor-pointer calendar-event"
+    class="text-xs p-2 rounded-md border-l-2 transition-shadow duration-200 hover:shadow-md cursor-pointer calendar-event overflow-hidden"
     :style="eventStyles"
     :class="{
       'ring-2': isSelected,
     }"
     @click="handleClick"
   >
-    <div class="font-medium" :style="{ color: textColor }">
+    <div class="font-medium calendar-event-title" :style="{ color: textColor }">
       {{ event.title }}
     </div>
-    <div class="text-opacity-80" :style="{ color: textColor }">
+    <div class="text-opacity-80 truncate" :style="{ color: textColor }">
       {{ event.time }}
     </div>
-    <div v-if="event.group" class="text-opacity-70 text-[10px] mt-0.5" :style="{ color: textColor }">
+    <div
+      v-if="event.group"
+      class="text-opacity-70 text-[10px] mt-0.5 truncate"
+      :style="{ color: textColor }"
+    >
       {{ event.group }}
     </div>
   </div>
@@ -97,5 +101,13 @@ const handleClick = (evt: MouseEvent) => {
 <style scoped>
 .calendar-event:hover {
   background-color: var(--hover-bg);
+}
+
+.calendar-event-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
 }
 </style>

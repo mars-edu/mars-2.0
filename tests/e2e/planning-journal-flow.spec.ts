@@ -5,6 +5,27 @@ function env(name: string, fallback: string) {
 }
 
 let sharedJournalTitle: string | null = null;
+let sharedJournalId: string | null = null;
+let sharedScenario:
+  | {
+      tag: string;
+      specialtyCode: string;
+      specialtyName: string;
+      specialtyDetails: string;
+      specialtyCodeName: string;
+      moduleIndex: string;
+      moduleName: string;
+      learningOutcome: string;
+      semesterShortName: string;
+      journalTitle: string;
+      studentOneName: string;
+      studentTwoName: string;
+      ktpTheme1: string;
+      ktpTheme2: string;
+      ktpHomework: string;
+      ktpNotes: string;
+    }
+  | null = null;
 
 async function loginViaUi(page: any, username: string, password: string) {
   await page.goto("/login");
@@ -14,13 +35,22 @@ async function loginViaUi(page: any, username: string, password: string) {
   await usernameInput.first().fill(username);
   await passwordInput.first().fill(password);
   await page.getByRole("button", { name: "Войти" }).click();
-  await page.waitForURL(/\/home\/?/, { timeout: 120_000 });
+  // Login can be slow on cold start; keep the timeout reasonable but retry once.
+  try {
+    await page.waitForURL(/\/home\/?/, { timeout: 120_000 });
+  } catch {
+    await page.waitForTimeout(1000);
+    await page.getByRole("button", { name: "Войти" }).click().catch(() => {});
+    await page.waitForURL(/\/home\/?/, { timeout: 120_000 });
+  }
 }
 
 async function logoutViaSidebar(page: any) {
   const sidebar = page.locator("aside");
   await expect(sidebar).toBeVisible({ timeout: 30_000 });
-  const logoutItem = sidebar.locator('[title*="Выйти"], [title*="Logout"]').first();
+  const logoutItem = sidebar
+    .locator('[title*="Выйти"], [title*="Logout"]')
+    .first();
   if ((await logoutItem.count()) > 0) {
     await logoutItem.click();
   } else {
@@ -55,13 +85,13 @@ async function fillField(page: any, selector: string, value: string) {
   await root.fill(value);
 }
 
-async function fillLocator(locator: any, value: string) {
-  const editable = locator.locator('input, textarea, [contenteditable="true"]');
-  if ((await editable.count()) > 0) {
-    await editable.first().fill(value);
-    return;
-  }
-  await locator.fill(value);
+function splitFullName(fullName: string) {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  return {
+    surname: parts[0] || fullName,
+    firstName: parts[1] || "Test",
+    patronymic: parts.slice(2).join(" ") || "User",
+  };
 }
 
 async function clickSaveAndWaitForClose(popover: any) {
@@ -92,7 +122,27 @@ async function selectFirstRealOption(selectLocator: any) {
   await selectLocator.selectOption({ index: 1 }, { force: true });
 }
 
-async function openSelectByLabel(page: any, container: any, labelText: string | RegExp) {
+async function selectOptionByLabelWhenReady(selectLocator: any, label: string) {
+  await expect(selectLocator).toHaveCount(1, { timeout: 15_000 });
+  await expect
+    .poll(async () => {
+      const options = selectLocator.locator("option");
+      const count = await options.count();
+      for (let i = 0; i < count; i++) {
+        const text = ((await options.nth(i).innerText()) || "").trim();
+        if (text === label) return true;
+      }
+      return false;
+    }, { timeout: 30_000 })
+    .toBeTruthy();
+  await selectLocator.selectOption({ label }, { force: true });
+}
+
+async function openSelectByLabel(
+  page: any,
+  container: any,
+  labelText: string | RegExp
+) {
   const label = container.locator("label", { hasText: labelText }).first();
   await expect(label).toBeVisible({ timeout: 15_000 });
   const forId = await label.getAttribute("for");
@@ -195,17 +245,14 @@ async function pickF7CalendarDay(page: any, opts: { offsetDays?: number } = {}) 
 }
 
 test.describe("Planning → Journal E2E flow", () => {
-  // Convex-backed flows can be slow on cold start.
   test.setTimeout(300_000);
   test.describe.configure({ mode: "serial" });
 
-  test("create event in Planning, open Journal, persist settings, go back", async ({
-    page,
-  }) => {
+  test("admin setup prerequisites", async ({ page }) => {
     page.setDefaultTimeout(20_000);
     page.setDefaultNavigationTimeout(60_000);
 
-    const tag = `E2E-${Date.now()}`;
+    const tag = `E2E-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
     const specialtyCode = tag;
     const specialtyName = `${tag} Specialty`;
     const specialtyDetails = `${tag} Details`;
@@ -215,31 +262,45 @@ test.describe("Planning → Journal E2E flow", () => {
     const learningOutcome = `${tag} Outcome`;
     const semesterShortName = `${tag} S1`;
     const journalTitle = `${moduleIndex} ${learningOutcome}`;
-    sharedJournalTitle = journalTitle;
+    const studentOneName = `${tag} Student One`;
+    const studentTwoName = `${tag} Student Two`;
+    const ktpTheme1 = `${tag} Theme 1`;
+    const ktpTheme2 = `${tag} Theme 2`;
+    const ktpHomework = `${tag} Homework`;
+    const ktpNotes = `${tag} Notes`;
+
+    sharedScenario = {
+      tag,
+      specialtyCode,
+      specialtyName,
+      specialtyDetails,
+      specialtyCodeName,
+      moduleIndex,
+      moduleName,
+      learningOutcome,
+      semesterShortName,
+      journalTitle,
+      studentOneName,
+      studentTwoName,
+      ktpTheme1,
+      ktpTheme2,
+      ktpHomework,
+      ktpNotes,
+    };
 
     const adminUsername = env("E2E_ADMIN_USERNAME", "Админ Тестовый");
     const adminPassword = env("E2E_ADMIN_PASSWORD", "admintest");
-    const teacherUsername = env("E2E_TEACHER_USERNAME", "Килаш Расул Жангелдыулы");
-    const teacherPassword = env("E2E_TEACHER_PASSWORD", "teachertest");
-
-    // -----------------------------
-    // UI setup as Admin
-    // -----------------------------
     await loginViaUi(page, adminUsername, adminPassword);
 
-    // Ensure at least one academic year exists and at least one semester is defined for it.
     await page.goto("/education-schedule");
     await expect(page.getByText("График образовательного процесса:")).toBeVisible({
       timeout: 30_000,
     });
 
-    let activeAcademicYearName = "";
-    let activeAcademicYearStartYear = "";
-    let activeAcademicYearRange = "";
-
-    // If there are no academic years at all, create one and mark active.
+    // Academic year
     await openIfCollapsed(page, /^Учебный год:/);
-    const hasAnyAcademicYear = (await page.locator('[id^="academic-year-item-"]').count()) > 0;
+    const hasAnyAcademicYear =
+      (await page.locator('[id^="academic-year-item-"]').count()) > 0;
     if (!hasAnyAcademicYear) {
       await page.locator("#add-academic-year-button").click();
       await expect(page.locator("#add-academic-year-popover")).toBeVisible();
@@ -251,64 +312,55 @@ test.describe("Planning → Journal E2E flow", () => {
       await fillField(page, "#end-year", String(endYear));
       await page.locator("#is-active").check();
       await clickSaveAndWaitForClose(ayPopover);
-      await expect(page.locator('[id^="academic-year-item-"]').first()).toBeVisible({ timeout: 30_000 });
+      await expect(page.locator('[id^="academic-year-item-"]').first()).toBeVisible({
+        timeout: 30_000,
+      });
     }
 
-    // Ensure there is an active academic year (required by many "settings" flows).
-    const firstAcademicYearItem = page.locator('[id^="academic-year-item-"]').first();
+    // Ensure active year is selected
+    const firstAcademicYearItem = page
+      .locator('[id^="academic-year-item-"]')
+      .first();
     await firstAcademicYearItem.click();
     await expect(firstAcademicYearItem.getByText("Активный")).toBeVisible({
       timeout: 30_000,
     });
 
-    const activeYearItem = page
-      .locator('[id^="academic-year-item-"]')
-      .filter({ hasText: "Активный" })
-      .first();
-    if ((await activeYearItem.count()) > 0) {
-      activeAcademicYearName = (await activeYearItem.locator("span.font-medium").first().innerText()).trim();
-      activeAcademicYearStartYear = activeAcademicYearName.match(/\b(20\d{2})\b/)?.[1] || "";
-      activeAcademicYearRange = activeAcademicYearName.match(/\b(20\d{2}-20\d{2})\b/)?.[1] || "";
-    }
-
-    // If there are no academic-year semesters for the active year, create one (requires at least one semester definition).
+    // Academic-year semester + semester definition
     await openIfCollapsed(page, /^Семестры:/);
     const hasAnyAcademicYearSemester =
       (await page.locator('[id^="academic-year-semester-item-"]').count()) > 0;
 
     if (!hasAnyAcademicYearSemester) {
-      // Ensure at least one global semester definition exists.
       await navigateViaSidebar(page, "Настройки", "/settings", /\/settings\/?/);
-      await expect(
-        page.locator('div.bg-card span:has-text("Настройки")').first()
-      ).toBeVisible({ timeout: 30_000 });
+      await expect(page.locator('div.bg-card span:has-text("Настройки")').first()).toBeVisible({
+        timeout: 30_000,
+      });
       await openIfCollapsed(page, /^Семестры:$/);
       const alreadyHasThisSemester =
         (await page.getByText(semesterShortName).count()) > 0;
-	      if (!alreadyHasThisSemester) {
-	        await page.locator("#add-semester-button").click();
-	        const semesterPopover = page.locator("#add-semester-popover");
-	        await expect(semesterPopover).toBeVisible();
-	        await fillField(page, "#semester-number", "1");
-	        await fillField(page, "#semester-short-name", semesterShortName);
-	        await clickSaveAndWaitForClose(semesterPopover);
-	      }
+      if (!alreadyHasThisSemester) {
+        await page.locator("#add-semester-button").click();
+        const semesterPopover = page.locator("#add-semester-popover");
+        await expect(semesterPopover).toBeVisible();
+        await fillField(page, "#semester-number", "1");
+        await fillField(page, "#semester-short-name", semesterShortName);
+        await clickSaveAndWaitForClose(semesterPopover);
+      }
 
-      // Add academic-year semester instance (dates via Framework7 datepicker).
       await page.goto("/education-schedule");
       await openIfCollapsed(page, /^Семестры:/);
       await page.locator("#add-academic-year-semester-button").click();
-	      const aysPopover = page.locator("#add-academic-year-semester-popover");
-	      await expect(aysPopover).toBeVisible();
+      const aysPopover = page.locator("#add-academic-year-semester-popover");
+      await expect(aysPopover).toBeVisible();
 
-	      // Pick semester definition (if we created one, it will be selectable by its short name).
-	      await aysPopover
-	        .locator("select")
-	        .first()
-	        .selectOption({ label: semesterShortName }, { force: true });
+      await aysPopover
+        .locator("select")
+        .first()
+        .selectOption({ label: semesterShortName }, { force: true });
 
-	      await page.locator("#start-date").click();
-	      await pickF7CalendarDay(page, { offsetDays: 0 });
+      await page.locator("#start-date").click();
+      await pickF7CalendarDay(page, { offsetDays: 0 });
       await page.locator("#end-date").click();
       await pickF7CalendarDay(page, { offsetDays: 7 });
 
@@ -319,113 +371,146 @@ test.describe("Planning → Journal E2E flow", () => {
       });
     }
 
-    // Ensure there is at least one schedule slot for the active year.
+    // Education schedule slot
     await openIfCollapsed(page, /^Расписание звонков:/);
-    const hasAnyScheduleSlot = (await page.locator('[id^="schedule-item-"]').count()) > 0;
-	    if (!hasAnyScheduleSlot) {
-	      await page.locator("#add-education-schedule-button").click();
-	      const schedulePopover = page.locator("#add-education-schedule-popover");
-	      await expect(schedulePopover).toBeVisible();
-	      await fillField(page, "#schedule-lesson-number", "1");
-	      await schedulePopover.getByRole("button", { name: "Сохранить" }).click();
-	      await expect(schedulePopover).toBeHidden({ timeout: 30_000 });
-	      await expect(page.locator('[id^="schedule-item-"]').first()).toBeVisible({
-	        timeout: 30_000,
-	      });
-	    }
+    const hasAnyScheduleSlot =
+      (await page.locator('[id^="schedule-item-"]').count()) > 0;
+    if (!hasAnyScheduleSlot) {
+      await page.locator("#add-education-schedule-button").click();
+      const schedulePopover = page.locator("#add-education-schedule-popover");
+      await expect(schedulePopover).toBeVisible();
+      await fillField(page, "#schedule-lesson-number", "1");
+      await schedulePopover.getByRole("button", { name: "Сохранить" }).click();
+      await expect(schedulePopover).toBeHidden({ timeout: 30_000 });
+      await expect(page.locator('[id^="schedule-item-"]').first()).toBeVisible({
+        timeout: 30_000,
+      });
+    }
 
-    // Create specialty.
+    // Specialty
     await page.goto("/specialty-catalog");
-    await expect(
-      page.getByRole("heading", { name: "Каталог специальностей" })
-    ).toBeVisible({ timeout: 30_000 });
-	    await page.locator("#add-specialty-button").click();
-	    const addSpecialtyPopover = page.locator("#add-specialty-popover");
-	    await expect(addSpecialtyPopover).toBeVisible();
-	    await fillField(page, "#specialty-code", specialtyCode);
-	    await fillField(page, "#specialty-name", specialtyName);
-	    await fillField(page, "#specialty-details", specialtyDetails);
-	    await fillField(page, "#specialty-code-name", specialtyCodeName);
-	    await addSpecialtyPopover.getByRole("button", { name: "Сохранить" }).click();
-	    await expect(addSpecialtyPopover).toBeHidden({ timeout: 30_000 });
+    await expect(page.getByRole("heading", { name: "Каталог специальностей" })).toBeVisible({
+      timeout: 30_000,
+    });
+    await page.locator("#add-specialty-button").click();
+    const addSpecialtyPopover = page.locator("#add-specialty-popover");
+    await expect(addSpecialtyPopover).toBeVisible();
+    await fillField(page, "#specialty-code", specialtyCode);
+    await fillField(page, "#specialty-name", specialtyName);
+    await fillField(page, "#specialty-details", specialtyDetails);
+    await fillField(page, "#specialty-code-name", specialtyCodeName);
+    await addSpecialtyPopover.getByRole("button", { name: "Сохранить" }).click();
+    await expect(addSpecialtyPopover).toBeHidden({ timeout: 30_000 });
 
-    // Create a student for that specialty.
+    const specialtyOptionLabel = `${specialtyName} - ${specialtyDetails}`;
+
+    // Students
     await page.goto("/student-card");
-    await expect(
-      page.getByRole("heading", { name: "Картотека обучающихся" })
-    ).toBeVisible({ timeout: 30_000 });
-	    await page.locator("#add-student-button").click();
-	    const addStudentPopover = page.locator("#add-student-popover");
-	    await expect(addStudentPopover).toBeVisible();
-	    await fillField(page, "#student-surname", tag);
-	    await fillField(page, "#student-firstname", "Student");
-	    await fillField(page, "#student-patronymic", "One");
+    await expect(page.getByRole("heading", { name: "Картотека обучающихся" })).toBeVisible({
+      timeout: 30_000,
+    });
 
-	    const academicYearLabel = activeAcademicYearStartYear || new Date().getFullYear().toString();
-	    await addStudentPopover
-	      .locator("#student-academic-year-add select")
-	      .first()
-	      .selectOption({ label: academicYearLabel }, { force: true });
-	    await addStudentPopover
-	      .locator("#student-specialty-add select")
-	      .first()
-	      .selectOption({ label: `${specialtyName} - ${specialtyDetails}` }, { force: true });
-	    await addStudentPopover
-	      .locator("#student-language-add select")
-	      .first()
-	      .selectOption({ label: "Русский" }, { force: true });
-	    await addStudentPopover
-	      .locator("#student-base-add select")
-	      .first()
-	      .selectOption({ label: "9" }, { force: true });
+    await page.locator("#add-student-button").click();
+    const addStudentPopover = page.locator("#add-student-popover");
+    await expect(addStudentPopover).toBeVisible();
+    const s1 = splitFullName(studentOneName);
+    await fillField(page, "#student-surname", s1.surname);
+    await fillField(page, "#student-firstname", s1.firstName);
+    await fillField(page, "#student-patronymic", s1.patronymic);
+    await selectFirstRealOption(addStudentPopover.locator("#student-academic-year-add select"));
+    await selectOptionByLabelWhenReady(
+      addStudentPopover.locator("#student-specialty-add select"),
+      specialtyOptionLabel
+    );
+    await selectFirstRealOption(addStudentPopover.locator("#student-language-add select"));
+    await selectFirstRealOption(addStudentPopover.locator("#student-base-add select"));
+    await addStudentPopover.locator('button:has-text("Мужской"), a:has-text("Мужской")').first().click();
+    await addStudentPopover.getByRole("button", { name: "Сохранить" }).click();
+    await expect(addStudentPopover).toBeHidden({ timeout: 30_000 });
 
-	    await addStudentPopover
-	      .locator("a, button")
-	      .filter({ hasText: /^Мужской$/ })
-	      .first()
-	      .click();
-	    await addStudentPopover.getByRole("button", { name: "Сохранить" }).click();
-	    await expect(addStudentPopover).toBeHidden({ timeout: 30_000 });
+    await page.locator("#add-student-button").click();
+    const addStudentPopover2 = page.locator("#add-student-popover");
+    await expect(addStudentPopover2).toBeVisible();
+    const s2 = splitFullName(studentTwoName);
+    await fillField(page, "#student-surname", s2.surname);
+    await fillField(page, "#student-firstname", s2.firstName);
+    await fillField(page, "#student-patronymic", s2.patronymic);
+    await selectFirstRealOption(addStudentPopover2.locator("#student-academic-year-add select"));
+    await selectOptionByLabelWhenReady(
+      addStudentPopover2.locator("#student-specialty-add select"),
+      specialtyOptionLabel
+    );
+    await selectFirstRealOption(addStudentPopover2.locator("#student-language-add select"));
+    await selectFirstRealOption(addStudentPopover2.locator("#student-base-add select"));
+    await addStudentPopover2.locator('button:has-text("Мужской"), a:has-text("Мужской")').first().click();
+    await addStudentPopover2.getByRole("button", { name: "Сохранить" }).click();
+    await expect(addStudentPopover2).toBeHidden({ timeout: 30_000 });
 
-    // Create a RUP/Class9 item with a semester distribution entry so planning UI has planned hours context.
+    // Class9 item (RUP → add working plan → base 9 → Class9Popup)
     await page.goto("/rup");
-    await expect(page.getByText("Рабочие учебные планы:")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Рабочие учебные планы:")).toBeVisible({
+      timeout: 30_000,
+    });
 
-    // Select specialty by codeName (displayed as a pill in the specialties section).
-    await page.getByText(specialtyCodeName).first().click();
+    // Select our specialty (uses codeName in UI, which we set to `tag`).
+    await expect(page.getByText(tag).first()).toBeVisible({ timeout: 30_000 });
+    await page.getByText(tag).first().click();
 
+    await expect(page.locator("#add-working-plan-button")).toBeVisible({
+      timeout: 30_000,
+    });
     await page.locator("#add-working-plan-button").click();
-    await page.getByText("На базе 9 класса").click();
-	    const class9Popover = page.locator("#class9-popover");
-	    await expect(class9Popover).toBeVisible({ timeout: 30_000 });
+    const workingPlanPopover = page.locator("#add-working-plan-popover");
+    await expect(workingPlanPopover).toBeVisible({ timeout: 30_000 });
+    await workingPlanPopover.getByText("На базе 9 класса").click();
 
-	    await fillField(page, "#module-index-0", moduleIndex);
-	    await fillField(page, "#module-name-0", moduleName);
-	    await fillField(page, "#learning-outcome-0", learningOutcome);
-	    await fillField(page, "#total-credits-0", "1");
-	    await fillField(page, "#total-hours-0", "8");
-	    await fillField(page, "#theoretical-hours-0", "4");
-	    await fillField(page, "#lab-practical-hours-0", "4");
-	    await fillField(page, "#field3-value-0", "0");
-	    await fillField(page, "#srsp-hours-0", "0");
-	    await fillField(page, "#srs-hours-0", "0");
-	    await fillField(page, "#training-practice-hours-0", "0");
-	    await fillField(page, "#individual-hours-0", "0");
+    const class9Popover = page.locator("#class9-popover");
+    await expect(class9Popover).toBeVisible({ timeout: 30_000 });
 
-        // Distribution entries are optional (schema allows 0), and the Smart Select UI here is flaky in E2E.
-        // Keep this flow focused on planning + journal, so skip distribution setup.
+    await fillField(page, "#module-index-0", moduleIndex);
+    await fillField(page, "#module-name-0", moduleName);
+    await fillField(page, "#learning-outcome-0", learningOutcome);
 
-	    await class9Popover.getByRole("button", { name: "Сохранить" }).click();
-	    await expect(class9Popover).toBeHidden({ timeout: 30_000 });
+    // Numeric fields must be valid numbers (Class9Popup validation uses String(value)).
+    await fillField(page, "#total-credits-0", "0");
+    await fillField(page, "#total-hours-0", "0");
+    await fillField(page, "#theoretical-hours-0", "0");
+    await fillField(page, "#lab-practical-hours-0", "0");
+    await fillField(page, "#field3-value-0", "0");
+    await fillField(page, "#srsp-hours-0", "0");
+    await fillField(page, "#srs-hours-0", "0");
+    await fillField(page, "#training-practice-hours-0", "0");
+    await fillField(page, "#individual-hours-0", "0");
+
+    await class9Popover.getByRole("button", { name: "Сохранить" }).click();
+    await expect(class9Popover).toBeHidden({ timeout: 30_000 });
 
     await logoutViaSidebar(page);
+  });
 
-    // -----------------------------
-    // Actual flow as Teacher
-    // -----------------------------
+  test("teacher creates event + KTP themes (and deletes one)", async ({ page }) => {
+    page.setDefaultTimeout(20_000);
+    page.setDefaultNavigationTimeout(60_000);
+
+    if (!sharedScenario) throw new Error("Missing shared scenario from admin setup");
+    const {
+      moduleIndex,
+      moduleName,
+      learningOutcome,
+      journalTitle,
+      studentOneName,
+      ktpTheme1,
+      ktpTheme2,
+      ktpHomework,
+      ktpNotes,
+    } = sharedScenario;
+
+    sharedJournalTitle = journalTitle;
+
+    const teacherUsername = env("E2E_TEACHER_USERNAME", "Килаш Расул Жангелдыулы");
+    const teacherPassword = env("E2E_TEACHER_PASSWORD", "teachertest");
     await loginViaUi(page, teacherUsername, teacherPassword);
 
-    // Go to planning and open the add-event flow.
     await page.goto("/planning");
     await expect(page.locator("#add-button")).toBeVisible({ timeout: 30_000 });
     await page.getByText("Сегодня").click().catch(() => {});
@@ -434,26 +519,24 @@ test.describe("Planning → Journal E2E flow", () => {
     const addEventPopover = page.locator("#add-event-popover");
     await expect(addEventPopover).toBeVisible();
 
-    // Select discipline/outcome (Class9 item).
     await addEventPopover.locator("#event-class9-generic").click();
-	    const selectPopup = page
-	      .locator(".select-search-popup:visible")
-	      .filter({ hasText: "Результат обучения/дисциплина" })
-	      .first();
-	    await expect(selectPopup).toBeVisible({ timeout: 30_000 });
+    const selectPopup = page
+      .locator(".select-search-popup:visible")
+      .filter({ hasText: "Результат обучения/дисциплина" })
+      .first();
+    await expect(selectPopup).toBeVisible({ timeout: 30_000 });
 
-	    const class9OptionText = `${moduleIndex} ${moduleName} - ${learningOutcome}`;
-	    await expect
-	      .poll(async () => (await selectPopup.getByText(class9OptionText).count()) > 0, {
-	        timeout: 60_000,
-	      })
-	      .toBeTruthy();
-	    await selectPopup.locator('input[placeholder="Поиск..."]:visible').first().fill(moduleIndex);
-	    await selectPopup.getByText(class9OptionText).first().click();
-	    await selectPopup.getByRole("button", { name: "Выбрать" }).click();
+    const class9OptionText = `${moduleIndex} ${moduleName} - ${learningOutcome}`;
+    await expect
+      .poll(async () => (await selectPopup.getByText(class9OptionText).count()) > 0, {
+        timeout: 60_000,
+      })
+      .toBeTruthy();
+    await selectPopup.locator('input[placeholder="Поиск..."]:visible').first().fill(moduleIndex);
+    await selectPopup.getByText(class9OptionText).first().click();
+    await selectPopup.getByRole("button", { name: "Выбрать" }).click();
     await expect(selectPopup).toBeHidden();
 
-    // Ensure the created event is visible in the current calendar view by setting a custom period around today.
     await addEventPopover
       .locator("#use-custom-period, #use-custom-period-edit")
       .first()
@@ -464,40 +547,138 @@ test.describe("Planning → Journal E2E flow", () => {
     await dateInputs.nth(1).click();
     await pickF7CalendarDay(page, { offsetDays: 1 });
 
-    // Select participants (students) so a journal is created from the event.
     await addEventPopover.locator("#event-form-participants").click();
     const studentPopup = page.locator("#student-selection-popup");
     await expect(studentPopup).toBeVisible();
-    await studentPopup.getByText(`${tag} Student One`).click();
+    await studentPopup.getByText(studentOneName).click();
     await studentPopup.getByRole("button", { name: "Сохранить" }).click();
     await expect(studentPopup).toBeHidden();
 
-    // Create event.
+    await addEventPopover.locator("#event-form-ktp").click();
+    const ktpDetailPopover = page.locator("#ktp-detail-popover:visible");
+    await expect(ktpDetailPopover).toBeVisible({ timeout: 30_000 });
+
+    await ktpDetailPopover.locator("#add-ktp-detail-button").click();
+    const ktpCreatePopover = page.locator(".popover.popover-center-page:visible");
+    await expect(ktpCreatePopover.getByText("Создать")).toBeVisible({ timeout: 30_000 });
+
+    await fillField(page, "#ktp-theme", ktpTheme1);
+    await fillField(page, "#ktp-total-hours", "2");
+    await fillField(page, "#ktp-homework", ktpHomework);
+    await fillField(page, "#ktp-notes", ktpNotes);
+
+    await ktpCreatePopover.getByRole("button", { name: "Сохранить" }).click();
+    await expect(ktpCreatePopover).toBeHidden({ timeout: 30_000 });
+    await expect(ktpDetailPopover.getByText(ktpTheme1)).toBeVisible({ timeout: 30_000 });
+
+    await ktpDetailPopover.locator("#add-ktp-detail-button").click();
+    const ktpCreatePopover2 = page.locator(".popover.popover-center-page:visible");
+    await expect(ktpCreatePopover2.getByText("Создать")).toBeVisible({ timeout: 30_000 });
+
+    await fillField(page, "#ktp-theme", ktpTheme2);
+    await fillField(page, "#ktp-total-hours", "1");
+    await fillField(page, "#ktp-homework", ktpHomework);
+    await fillField(page, "#ktp-notes", ktpNotes);
+
+    await ktpCreatePopover2.getByRole("button", { name: "Сохранить" }).click();
+    await expect(ktpCreatePopover2).toBeHidden({ timeout: 30_000 });
+    await expect(ktpDetailPopover.getByText(ktpTheme2)).toBeVisible({ timeout: 30_000 });
+
+    await ktpDetailPopover.getByText(ktpTheme2).first().click();
+    const ktpEditPopover = page.locator(".popover.popover-center-page:visible");
+    await expect(ktpEditPopover.getByText("Редактировать")).toBeVisible({
+      timeout: 30_000,
+    });
+    await ktpEditPopover.getByText("Удалить запись").click();
+
+    const confirmDialog = page.locator(".dialog:visible").first();
+    await expect(confirmDialog).toBeVisible({ timeout: 30_000 });
+    await expect(confirmDialog).toContainText(/удаление темы/i);
+    await confirmDialog.getByRole("button", { name: /хорошо/i }).click();
+
+    await expect(ktpDetailPopover.getByText(ktpTheme2)).toBeHidden({ timeout: 30_000 });
+    await expect(ktpDetailPopover.getByText(ktpTheme1)).toBeVisible({ timeout: 30_000 });
+
+    await ktpDetailPopover.getByRole("button", { name: "Закрыть" }).click();
+    await expect(ktpDetailPopover).toBeHidden({ timeout: 30_000 });
+
     await addEventPopover.getByRole("button", { name: "Добавить" }).click();
     await expect(addEventPopover).toBeHidden({ timeout: 15_000 });
 
-    // Open the created journal from Journals list (more reliable than relying on month-grid rendering).
-    await page.goto("/journals");
-    const journalsPage = page.locator('[data-page-name="journals"]');
-    await expect(journalsPage.getByRole("heading", { name: "Журналы" })).toBeVisible({
-      timeout: 30_000,
-    });
-
-    const journalCard = journalsPage
-      .locator("div.group.relative")
-      .filter({ hasText: journalTitle })
+    // Capture created journal id for later tests by opening the event preview from Planning.
+    const createdEvent = page
+      .locator(".calendar-event")
+      .filter({ hasText: moduleIndex })
       .first();
-    await expect
-      .poll(async () => (await journalCard.count()) > 0, { timeout: 60_000 })
-      .toBeTruthy();
-    await journalCard.click();
+    await expect(createdEvent).toBeVisible({ timeout: 60_000 });
+    await createdEvent.click();
 
-    await page.waitForURL(/\/journals\/[^/]+\?from=journals/, { timeout: 30_000 });
+    const previewPopover = page.locator("#journal-preview-popover:visible");
+    await expect(previewPopover).toBeVisible({ timeout: 30_000 });
+
+    // Clicking the card navigates to `/journals/:id?...`.
+    await previewPopover.locator("div.group.relative").first().click();
+    await page.waitForURL(/\/journals\/[^/]+/, { timeout: 30_000 });
+
+    const url = page.url();
+    const match = url.match(/\/journals\/([^/?#]+)/);
+    sharedJournalId = match?.[1] || null;
+    if (!sharedJournalId) throw new Error(`Failed to extract journal id from URL: ${url}`);
+  });
+
+  test("journal details shows KTP via paperclip", async ({ page }) => {
+    page.setDefaultTimeout(20_000);
+    page.setDefaultNavigationTimeout(60_000);
+
+    if (!sharedScenario || !sharedJournalId) {
+      throw new Error("Missing shared journal title from previous test run");
+    }
+
+    const teacherUsername = env("E2E_TEACHER_USERNAME", "Килаш Расул Жангелдыулы");
+    const teacherPassword = env("E2E_TEACHER_PASSWORD", "teachertest");
+    await loginViaUi(page, teacherUsername, teacherPassword);
+
+    await page.goto(`/journals/${sharedJournalId}?from=journals`);
+    await page.waitForURL(/\/journals\/[^/]+/, { timeout: 30_000 });
     await expect(page.locator("#journal-settings-button")).toBeVisible({
       timeout: 30_000,
     });
 
-    // Change journal settings and verify they persist after refresh.
+    const paperclipIcons = page.locator('[id^="paperclip-"]');
+    await expect
+      .poll(async () => (await paperclipIcons.count()) > 0, { timeout: 60_000 })
+      .toBeTruthy();
+    await paperclipIcons.first().click();
+
+    const ktpViewPopover = page.locator(".popover.popover-center-page:visible");
+    await expect(ktpViewPopover.getByText("Просмотр темы занятия")).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(ktpViewPopover.getByText(sharedScenario.ktpTheme1)).toBeVisible({
+      timeout: 30_000,
+    });
+    await ktpViewPopover.getByRole("button", { name: "Закрыть" }).click();
+    await expect(ktpViewPopover).toBeHidden({ timeout: 30_000 });
+  });
+
+  test("journal settings persist after reload", async ({ page }) => {
+    page.setDefaultTimeout(20_000);
+    page.setDefaultNavigationTimeout(60_000);
+
+    if (!sharedJournalId) {
+      throw new Error("Missing shared journal title from previous test run");
+    }
+
+    const teacherUsername = env("E2E_TEACHER_USERNAME", "Килаш Расул Жангелдыулы");
+    const teacherPassword = env("E2E_TEACHER_PASSWORD", "teachertest");
+    await loginViaUi(page, teacherUsername, teacherPassword);
+
+    await page.goto(`/journals/${sharedJournalId}?from=journals`);
+    await page.waitForURL(/\/journals\/[^/]+/, { timeout: 30_000 });
+    await expect(page.locator("#journal-settings-button")).toBeVisible({
+      timeout: 30_000,
+    });
+
     await page.locator("#journal-settings-button").click();
     const settingsPopover = page.locator("#journal-settings-popover:visible").first();
     await expect(settingsPopover).toBeVisible({ timeout: 30_000 });
@@ -512,25 +693,21 @@ test.describe("Planning → Journal E2E flow", () => {
       timeout: 30_000,
     });
 
-	    await page.locator("#journal-settings-button").click();
-	    const settingsPopoverAfterReload = page
-	      .locator("#journal-settings-popover:visible")
-	      .first();
-	    await expect(settingsPopoverAfterReload).toBeVisible({ timeout: 30_000 });
+    await page.locator("#journal-settings-button").click();
+    const settingsPopoverAfterReload = page
+      .locator("#journal-settings-popover:visible")
+      .first();
+    await expect(settingsPopoverAfterReload).toBeVisible({ timeout: 30_000 });
 
-	    const manualRadio = settingsPopoverAfterReload.locator(
-	      'input[name="calculation-type"][value="manual"]'
-	    );
-	    await expect
-	      .poll(async () => await manualRadio.isChecked(), { timeout: 30_000 })
-	      .toBeTruthy();
+    const manualRadio = settingsPopoverAfterReload.locator(
+      'input[name="calculation-type"][value="manual"]'
+    );
+    await expect
+      .poll(async () => await manualRadio.isChecked(), { timeout: 30_000 })
+      .toBeTruthy();
 
-	    await settingsPopoverAfterReload.getByRole("button", { name: "Сохранить" }).click();
-	    await expect(settingsPopoverAfterReload).toBeHidden();
-
-    // Back to planning.
-    await page.goto("/planning");
-    await expect(page.locator("#add-button")).toBeVisible({ timeout: 30_000 });
+    await settingsPopoverAfterReload.getByRole("button", { name: "Сохранить" }).click();
+    await expect(settingsPopoverAfterReload).toBeHidden();
   });
 
   test("journal details loads after reload", async ({ page }) => {
@@ -540,25 +717,13 @@ test.describe("Planning → Journal E2E flow", () => {
     const teacherUsername = env("E2E_TEACHER_USERNAME", "Килаш Расул Жангелдыулы");
     const teacherPassword = env("E2E_TEACHER_PASSWORD", "teachertest");
 
-    if (!sharedJournalTitle) {
+    if (!sharedJournalId) {
       throw new Error("Missing shared journal title from previous test run");
     }
 
     await loginViaUi(page, teacherUsername, teacherPassword);
 
-    await page.goto("/journals");
-    const journalsPage = page.locator('[data-page-name="journals"]');
-    await expect(journalsPage.getByRole("heading", { name: "Журналы" })).toBeVisible({
-      timeout: 30_000,
-    });
-
-    const journalCard = journalsPage
-      .locator("div.group.relative")
-      .filter({ hasText: sharedJournalTitle })
-      .first();
-    await expect(journalCard).toBeVisible({ timeout: 60_000 });
-    await journalCard.click();
-
+    await page.goto(`/journals/${sharedJournalId}?from=journals`);
     await page.waitForURL(/\/journals\/[^/]+/, { timeout: 30_000 });
     await expect(page.locator("#tab-journal")).toBeVisible({ timeout: 30_000 });
     await expect(page.locator("#journal-settings-button")).toBeVisible({

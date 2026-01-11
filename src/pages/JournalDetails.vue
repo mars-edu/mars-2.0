@@ -21,8 +21,9 @@
             @back="handleBackClick"
           />
 
-          <!-- Debug Information Panel -->
+          <!-- Debug Information Panel (dev mode only) -->
           <JournalDebugPanel
+            v-if="isDev"
             :journal-id="journalId"
             :discipline-id="currentJournal?.disciplineId"
             :group="currentJournal?.group"
@@ -113,6 +114,7 @@
                 <JournalTab
                   ref="journalTabRef"
                   :journal-id="journalId"
+                  :ktp-id="ktpIdForJournal"
                   :journal-settings="journalSettings"
                   @close-journal="handleCloseJournal"
                   @open-journal="handleOpenJournal"
@@ -436,6 +438,8 @@ import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermediateControlStore";
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
 
+const isDev = import.meta.env.DEV;
+
 const journalId = computed(() => {
   return f7.views.main.router.currentRoute.params.id as string;
 });
@@ -542,12 +546,81 @@ const rupAcademicYearId = computed(() => {
     academicYearStore.getActiveAcademicYear?.id || "";
 });
 
-// Get the proper KTP ID for the journal's discipline
-const ktpIdForJournal = computed(() => {
-  const disciplineId = currentJournal.value?.disciplineId;
-  if (!disciplineId) return null;
-  return ktpStore.getKtpIdForClass9(disciplineId);
+const ensuredKtpId = ref<string | null>(null);
+const isEnsuringKtp = ref(false);
+const loadedForKtpId = ref<string | null>(null);
+
+const ktpIdForJournal = computed(() => ensuredKtpId.value);
+
+const getSemesterById = (id: string) => {
+  const fn = (academicYearSemesterStore as any).getAcademicYearSemesterById;
+  if (typeof fn === "function") return fn(id);
+  return academicYearSemesterStore.academicYearSemesters.find(
+    (s: any) => s.id === id
+  );
+};
+
+async function ensureKtpDataLoaded(ktpId: string) {
+  if (loadedForKtpId.value === ktpId) return;
+  await ktpStore.loadFromBackend();
+  loadedForKtpId.value = ktpId;
+}
+
+const currentEvent = computed(() => {
+  if (!journalId.value) return null;
+  return calendarStore.getEventById(journalId.value) || null;
 });
+
+watch(
+  () => [
+    journalId.value,
+    currentEvent.value?.id,
+    currentEvent.value?.ktpId,
+    currentEvent.value?.class9Id,
+    currentEvent.value?.semester,
+    academicYearSemesterStore.academicYearSemesters.length,
+  ] as const,
+  async ([_jid, _eventId, eventKtpId, eventClass9Id, eventSemesterId]) => {
+    ensuredKtpId.value = eventKtpId || null;
+    if (!journalId.value || !currentEvent.value) return;
+    if (isEnsuringKtp.value) return;
+
+    // If already linked, just ensure store data is present.
+    if (eventKtpId) {
+      try {
+        await ensureKtpDataLoaded(eventKtpId);
+      } catch (e) {
+        console.error("[JournalDetails] load KTP failed:", e);
+      }
+      return;
+    }
+
+    // Otherwise, create/link an event-specific KTP.
+    const semester = eventSemesterId ? getSemesterById(eventSemesterId) : null;
+    const academicYearId = semester?.academicYearId;
+    if (!academicYearId || !eventClass9Id || !eventSemesterId) return;
+
+    isEnsuringKtp.value = true;
+    try {
+      const event = currentEvent.value;
+      if (!event) return;
+      const ktp = await ktpStore.ensureKtpForClass9(
+        event.class9Id,
+        academicYearId,
+        event.semester,
+        event.id
+      );
+      ensuredKtpId.value = ktp.id;
+      await calendarStore.updateEvent(event.id, { ktpId: ktp.id });
+      await ensureKtpDataLoaded(ktp.id);
+    } catch (e) {
+      console.error("[JournalDetails] ensure KTP failed:", e);
+    } finally {
+      isEnsuringKtp.value = false;
+    }
+  },
+  { immediate: true }
+);
 
 const journalTabRef = ref<InstanceType<typeof JournalTab> | null>(null);
 

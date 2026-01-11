@@ -1,6 +1,7 @@
 <template>
   <f7-popover
     id="rup-import-popover"
+    :opened="opened"
     :arrow="false"
     style="
       width: calc(100vw - 60px) !important;
@@ -319,16 +320,6 @@ watch([selectedAcademicYear, selectedSemester], () => {
   selectedRupId.value = null;
 });
 
-watch(
-  () => props.opened,
-  (isOpened) => {
-    if (isOpened) {
-      f7.popover.open("#rup-import-popover");
-    } else {
-      f7.popover.close("#rup-import-popover");
-    }
-  }
-);
 </script>
 
 <style scoped>

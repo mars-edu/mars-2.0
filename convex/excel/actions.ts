@@ -267,12 +267,15 @@ export const importJournal = action({
 
 export const parseEducationalSchedule = action({
   args: {
-    fileBuffer: v.array(v.number()),
+    fileStorageId: v.id("_storage"),
     fileName: v.string(),
   },
   handler: async (ctx, args): Promise<ParseResult> => {
-    void ctx;
-    const buffer = new Uint8Array(args.fileBuffer).buffer;
+    const fileBlob = await ctx.storage.get(args.fileStorageId);
+    if (!fileBlob) {
+      throw new Error("File not found in storage");
+    }
+    const buffer = await fileBlob.arrayBuffer();
     return await parseEducationalScheduleFromBuffer(buffer, args.fileName);
   },
 });
@@ -284,17 +287,30 @@ export const parseEducationalSchedule = action({
 export const exportKtpToExcel = action({
   args: {
     dataRows: v.array(v.array(v.union(v.string(), v.number(), v.null()))),
-    templateBuffer: v.array(v.number()),
+    templateStorageId: v.id("_storage"),
+    learningOutcome: v.optional(v.string()),
   },
-  handler: async (ctx, args): Promise<string> => {
-    const templateBuf = new Uint8Array(args.templateBuffer).buffer;
+  handler: async (ctx, args): Promise<{ storageId: string; filename: string }> => {
+    // Get the template file from storage
+    const templateBlob = await ctx.storage.get(args.templateStorageId);
+    if (!templateBlob) {
+      throw new Error("Template file not found in storage");
+    }
+    const templateBuf = await templateBlob.arrayBuffer();
+
     const buffer = await exportKtpToExcelFromTemplate(args.dataRows, templateBuf);
     const storageId = await ctx.storage.store(
       new Blob([new Uint8Array(buffer)], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       })
     );
-    return storageId;
+
+    // Generate filename based on learning outcome
+    const filename = args.learningOutcome
+      ? `РУП_${args.learningOutcome}.xlsx`
+      : "РУП.xlsx";
+
+    return { storageId, filename };
   },
 });
 

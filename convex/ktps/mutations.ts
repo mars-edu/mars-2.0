@@ -141,6 +141,29 @@ export const removeDetail = mutation({
 });
 
 /**
+ * Delete all ktp details (keeps the ktp record)
+ */
+export const clearDetails = mutation({
+  args: { ktpId: v.id("ktps") },
+  handler: async (ctx, args) => {
+    const details = await ctx.db
+      .query("ktpDetails")
+      .withIndex("by_ktpId", (q) => q.eq("ktpId", args.ktpId))
+      .collect();
+
+    for (const detail of details) {
+      await ctx.db.delete(detail._id);
+    }
+
+    await ctx.db.patch(args.ktpId, {
+      ...updateTimestamp(),
+    });
+
+    return { success: true, deleted: details.length };
+  },
+});
+
+/**
  * Bulk import ktp details
  */
 export const bulkImportDetails = mutation({
