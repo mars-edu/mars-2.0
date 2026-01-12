@@ -1,7 +1,53 @@
 import { test, expect } from "@playwright/test";
+import fs from "node:fs";
+import path from "node:path";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@convex/_generated/api";
 
 function env(name: string, fallback: string) {
   return process.env[name] || fallback;
+}
+
+function readDotEnvFile(filePath: string): Record<string, string> {
+  try {
+    const raw = fs.readFileSync(filePath, "utf8");
+    const out: Record<string, string> = {};
+    for (const line of raw.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eq = trimmed.indexOf("=");
+      if (eq < 0) continue;
+      const key = trimmed.slice(0, eq).trim();
+      let val = trimmed.slice(eq + 1).trim();
+      if (
+        (val.startsWith('"') && val.endsWith('"')) ||
+        (val.startsWith("'") && val.endsWith("'"))
+      ) {
+        val = val.slice(1, -1);
+      }
+      out[key] = val;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+function resolveConvexUrl(): string {
+  if (process.env.VITE_CONVEX_URL) return process.env.VITE_CONVEX_URL;
+  const repoRoot = path.resolve(__dirname, "../..");
+  const files = [".env.local", ".env.test.local", ".env", ".env.test"];
+  for (const f of files) {
+    const vars = readDotEnvFile(path.join(repoRoot, f));
+    if (vars.VITE_CONVEX_URL) return vars.VITE_CONVEX_URL;
+  }
+  throw new Error("VITE_CONVEX_URL is not set (env or .env files)");
+}
+
+let convexClient: ConvexHttpClient | null = null;
+function convex(): ConvexHttpClient {
+  if (!convexClient) convexClient = new ConvexHttpClient(resolveConvexUrl());
+  return convexClient;
 }
 
 let sharedJournalTitle: string | null = null;
@@ -511,35 +557,6 @@ test.describe("Planning → Journal E2E flow", () => {
     const teacherPassword = env("E2E_TEACHER_PASSWORD", "teachertest");
     await loginViaUi(page, teacherUsername, teacherPassword);
 
-    // Capture created journal id from Planning page console log (avoids flaky UI lookups).
-    const journalIdPromise = new Promise<string>((resolve, reject) => {
-      const timeout = setTimeout(
-        () => reject(new Error("Timed out waiting for created event id in console logs")),
-        30_000
-      );
-
-      const handler = async (msg: any) => {
-        try {
-          if (msg.type() !== "log") return;
-          if (!msg.text().includes("New event added")) return;
-          const args = msg.args();
-          if (!args || args.length < 2) return;
-          const created = await args[1].jsonValue().catch(() => null);
-          const id = created?.id;
-          if (!id) return;
-          clearTimeout(timeout);
-          page.off("console", handler);
-          resolve(id);
-        } catch (e) {
-          clearTimeout(timeout);
-          page.off("console", handler);
-          reject(e);
-        }
-      };
-
-      page.on("console", handler);
-    });
-
     await page.goto("/planning");
     await expect(page.locator("#add-button")).toBeVisible({ timeout: 30_000 });
     await page.getByText("Сегодня").click().catch(() => {});
@@ -588,7 +605,8 @@ test.describe("Planning → Journal E2E flow", () => {
     await expect(ktpDetailPopover).toBeVisible({ timeout: 30_000 });
 
     await ktpDetailPopover.locator("#add-ktp-detail-button").click();
-    const ktpCreatePopover = page.locator(".popover.popover-center-page:visible");
+    const ktpCreatePopover = page.locator("#ktp-detail-form-popover:visible");
+    await expect(ktpCreatePopover).toBeVisible({ timeout: 30_000 });
     await expect(ktpCreatePopover.getByText("Создать")).toBeVisible({ timeout: 30_000 });
 
     await fillField(page, "#ktp-theme", ktpTheme1);
@@ -601,7 +619,8 @@ test.describe("Planning → Journal E2E flow", () => {
     await expect(ktpDetailPopover.getByText(ktpTheme1)).toBeVisible({ timeout: 30_000 });
 
     await ktpDetailPopover.locator("#add-ktp-detail-button").click();
-    const ktpCreatePopover2 = page.locator(".popover.popover-center-page:visible");
+    const ktpCreatePopover2 = page.locator("#ktp-detail-form-popover:visible");
+    await expect(ktpCreatePopover2).toBeVisible({ timeout: 30_000 });
     await expect(ktpCreatePopover2.getByText("Создать")).toBeVisible({ timeout: 30_000 });
 
     await fillField(page, "#ktp-theme", ktpTheme2);
@@ -614,10 +633,9 @@ test.describe("Planning → Journal E2E flow", () => {
     await expect(ktpDetailPopover.getByText(ktpTheme2)).toBeVisible({ timeout: 30_000 });
 
     await ktpDetailPopover.getByText(ktpTheme2).first().click();
-    const ktpEditPopover = page.locator(".popover.popover-center-page:visible");
-    await expect(ktpEditPopover.getByText("Редактировать")).toBeVisible({
-      timeout: 30_000,
-    });
+    const ktpEditPopover = page.locator("#ktp-detail-form-popover:visible");
+    await expect(ktpEditPopover).toBeVisible({ timeout: 30_000 });
+    await expect(ktpEditPopover.getByText("Редактировать")).toBeVisible({ timeout: 30_000 });
     await ktpEditPopover.getByText("Удалить запись").click();
 
     const confirmDialog = page.locator(".dialog:visible").first();
@@ -634,7 +652,43 @@ test.describe("Planning → Journal E2E flow", () => {
     await addEventPopover.getByRole("button", { name: "Добавить" }).click();
     await expect(addEventPopover).toBeHidden({ timeout: 15_000 });
 
-    sharedJournalId = await journalIdPromise;
+    // Determine created calendar event id (journal id) via Convex queries (works in dev+prod).
+    const http = convex();
+    await expect
+      .poll(async () => {
+        const items: any[] = await http.query(api.class9Items.queries.list, {});
+        const found = items.find(
+          (i) => i.moduleIndex === moduleIndex && i.learningOutcome === learningOutcome
+        );
+        return found?._id || null;
+      }, { timeout: 30_000 })
+      .toBeTruthy();
+
+    // `expect.poll(...).toBeTruthy()` doesn't return the value; query again to retrieve it.
+    const items: any[] = await http.query(api.class9Items.queries.list, {});
+    const foundClass9 = items.find(
+      (i) => i.moduleIndex === moduleIndex && i.learningOutcome === learningOutcome
+    );
+    const foundClass9Id: string | null = foundClass9?._id || null;
+    if (!foundClass9Id) throw new Error("Failed to find created class9 item via Convex");
+
+    await expect
+      .poll(async () => {
+        const events: any[] = await http.query(api.calendarEvents.queries.getByClass9Id, {
+          class9Id: foundClass9Id,
+        });
+        if (!events.length) return null;
+        const newest = [...events].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
+        return newest?._id || null;
+      }, { timeout: 30_000 })
+      .toBeTruthy();
+
+    const events: any[] = await http.query(api.calendarEvents.queries.getByClass9Id, {
+      class9Id: foundClass9Id,
+    });
+    const newest = [...events].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
+    sharedJournalId = newest?._id || null;
+    if (!sharedJournalId) throw new Error("Failed to determine created calendar event id");
   });
 
   test("journal details shows KTP via paperclip", async ({ page }) => {
@@ -676,7 +730,7 @@ test.describe("Planning → Journal E2E flow", () => {
     page.setDefaultTimeout(20_000);
     page.setDefaultNavigationTimeout(60_000);
 
-    if (!sharedJournalId) {
+    if (!sharedScenario || !sharedJournalId) {
       throw new Error("Missing shared journal title from previous test run");
     }
 
@@ -690,14 +744,38 @@ test.describe("Planning → Journal E2E flow", () => {
       timeout: 30_000,
     });
 
+    // Wait for journal data to hydrate (otherwise saving shows "Журнал не найден").
+    await expect(page.getByText(sharedScenario.tag).first()).toBeVisible({ timeout: 60_000 });
+
     await page.locator("#journal-settings-button").click();
     const settingsPopover = page.locator("#journal-settings-popover:visible").first();
     await expect(settingsPopover).toBeVisible({ timeout: 30_000 });
 
-    await settingsPopover.getByText("Выставляемая").click();
+    const manualRadio = settingsPopover.locator(
+      'input[name="calculation-type"][value="manual"]'
+    );
+    await manualRadio.check({ force: true });
     await settingsPopover.getByRole("button", { name: "Сохранить" }).click();
-    await expect(settingsPopover).toBeHidden();
-    await expect(page.getByText("Настройки сохранены")).toBeVisible({ timeout: 30_000 });
+
+    // Wait for either success toast or failure dialog.
+    const successToast = page.locator(".toast:visible .toast-text", {
+      hasText: "Настройки сохранены",
+    });
+    const failureDialog = page.locator(".dialog:visible").filter({
+      hasText: /журнал не найден/i,
+    });
+    await Promise.race([
+      successToast.waitFor({ state: "visible", timeout: 30_000 }),
+      failureDialog.waitFor({ state: "visible", timeout: 30_000 }).then(async () => {
+        const txt = (await failureDialog.innerText()).trim();
+        throw new Error(`Journal settings save failed: ${txt}`);
+      }),
+    ]);
+
+    await page.keyboard.press("Escape").catch(() => {});
+    await expect(page.locator("#journal-settings-popover:visible")).toHaveCount(0, {
+      timeout: 30_000,
+    });
 
     await page.reload();
     await expect(page.locator("#journal-settings-button")).toBeVisible({
@@ -710,11 +788,11 @@ test.describe("Planning → Journal E2E flow", () => {
       .first();
     await expect(settingsPopoverAfterReload).toBeVisible({ timeout: 30_000 });
 
-    const manualRadio = settingsPopoverAfterReload.locator(
+    const manualRadioAfterReload = settingsPopoverAfterReload.locator(
       'input[name="calculation-type"][value="manual"]'
     );
     await expect
-      .poll(async () => await manualRadio.isChecked(), { timeout: 30_000 })
+      .poll(async () => await manualRadioAfterReload.isChecked(), { timeout: 30_000 })
       .toBeTruthy();
 
     await settingsPopoverAfterReload.getByRole("button", { name: "Сохранить" }).click();
