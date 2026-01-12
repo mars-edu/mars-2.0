@@ -48,19 +48,32 @@
 <script setup lang="ts">
 import { f7, f7Popover, f7Icon } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import { saveAs } from "file-saver";
 
 const handleClose = () => {
   f7.popover.close("#download-template-popover");
 };
 
-const openExcel = () => {
-  window.open("/rup_templates/Шаблон КТП Марса.xlsx", "_blank");
-  f7.popover.close("#download-template-popover");
+const openExcel = async () => {
+  try {
+    const response = await fetch("/rup_templates/Шаблон КТП Марса.xlsx");
+    const blob = await response.blob();
+    saveAs(blob, "Шаблон КТП Марса.xlsx");
+    f7.popover.close("#download-template-popover");
+  } catch (error) {
+    console.error("Error downloading Excel template:", error);
+  }
 };
 
-const openWord = () => {
-  window.open("/rup_templates/Шаблон КТП Мрас.docx", "_blank");
-  f7.popover.close("#download-template-popover");
+const openWord = async () => {
+  try {
+    const response = await fetch("/rup_templates/Шаблон КТП Мрас.docx");
+    const blob = await response.blob();
+    saveAs(blob, "Шаблон КТП Мрас.docx");
+    f7.popover.close("#download-template-popover");
+  } catch (error) {
+    console.error("Error downloading Word template:", error);
+  }
 };
 </script>
 
