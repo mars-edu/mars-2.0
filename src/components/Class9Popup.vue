@@ -601,9 +601,7 @@ async function submit() {
         await class9Store.addClass9(
           props.academicYearId,
           selectedSpecialtyIds.value,
-          {
-            ...step,
-          }
+          { ...step }
         );
       }
     }

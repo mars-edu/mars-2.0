@@ -60,7 +60,8 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm run dev',
+    // Bind to localhost for sandboxed environments where listening on 0.0.0.0 is not permitted.
+    command: 'npm run dev -- --host 127.0.0.1 --port 5173',
     url: 'http://localhost:5173',
     reuseExistingServer: true,
     timeout: 120000,

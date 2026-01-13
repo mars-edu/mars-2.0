@@ -248,8 +248,8 @@ export const useClass9Store = defineStore(
               academicYearId: dist.academicYearId,
               semesterId: dist.semesterId,
               hours: dist.hours,
-              intermediateControlId: dist.intermediateControlId,
-              finalControlId: dist.finalControlId,
+              intermediateControlId: dist.intermediateControlId ?? undefined,
+              finalControlId: dist.finalControlId ?? undefined,
               examEnabled: dist.examEnabled,
               creditEnabled: dist.creditEnabled,
               controlLessonEnabled: dist.controlLessonEnabled,
@@ -370,8 +370,8 @@ export const useClass9Store = defineStore(
     ) {
       loading.value = true;
       try {
-        // Use Convex - update parent item
-        const updated = await convex.mutation(api.class9Items.mutations.update, {
+        // Use Convex - update parent item with distribution entries
+        const updated = await convex.mutation(api.class9Items.mutations.updateWithDistributions, {
           id: id as any,
           specialtyIds: data.specialtyIds,
           academicYearId: data.academicYearId,
@@ -388,50 +388,22 @@ export const useClass9Store = defineStore(
           trainingPracticeHours: data.trainingPracticeHours,
           individualHours: data.individualHours,
           position: data.position,
+          distributionEntries: (data.distributionEntries || []).map((d) => ({
+            id: d.id,
+            academicYearId: d.academicYearId,
+            semesterId: d.semesterId,
+            hours: d.hours,
+            intermediateControlId: d.intermediateControlId,
+            finalControlId: d.finalControlId,
+            examEnabled: d.examEnabled,
+            creditEnabled: d.creditEnabled,
+            controlLessonEnabled: d.controlLessonEnabled,
+          })),
         });
 
-        // Note: distributionEntries updates handled separately via addDistribution/updateDistribution/removeDistribution
-
-        if (updated) {
-          const mapped: Class9Data = {
-            id: updated._id,
-            specialtyIds: updated.specialtyIds,
-            academicYearId: updated.academicYearId,
-            moduleIndex: updated.moduleIndex,
-            moduleName: updated.moduleName,
-            learningOutcome: updated.learningOutcome,
-            totalCredits: updated.totalCredits,
-            totalHours: updated.totalHours,
-            theoreticalHours: updated.theoreticalHours,
-            labPracticalHours: updated.labPracticalHours,
-            field3Value: updated.field3Value,
-            srspHours: updated.srspHours,
-            srsHours: updated.srsHours,
-            trainingPracticeHours: updated.trainingPracticeHours,
-            individualHours: updated.individualHours,
-            position: updated.position,
-            distributionEntries: (updated.distributionEntries || []).map((d: any) => ({
-              id: d._id,
-              academicYearId: d.academicYearId,
-              semesterId: d.semesterId,
-              hours: d.hours,
-              intermediateControlId: d.intermediateControlId,
-              finalControlId: d.finalControlId,
-              examEnabled: d.examEnabled,
-              creditEnabled: d.creditEnabled,
-              controlLessonEnabled: d.controlLessonEnabled,
-            })),
-            createdAt: new Date(updated.createdAt),
-            updatedAt: new Date(updated.updatedAt),
-          };
-
-          const index = class9Items.value.findIndex((c) => c.id === id);
-          if (index !== -1) {
-            class9Items.value[index] = mapped;
-          }
-          error.value = null;
-          return mapped;
-        }
+        // The reactive query will automatically update class9Items with fresh data
+        error.value = null;
+        return updated;
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to update class9 data";
@@ -478,7 +450,7 @@ export const useClass9Store = defineStore(
         const itemsInContext = class9Items.value.filter(
           (c) =>
             c.academicYearId === itemToDuplicate.academicYearId &&
-            c.specialtyIds.some((id) => itemToDuplicate.specialtyIds.includes(id)) &&
+            c.specialtyIds.some((sid: string) => itemToDuplicate.specialtyIds.includes(sid)) &&
             c.position >= insertionPosition
         );
 
@@ -530,8 +502,8 @@ export const useClass9Store = defineStore(
             academicYearId: dist.academicYearId,
             semesterId: dist.semesterId,
             hours: dist.hours,
-            intermediateControlId: dist.intermediateControlId,
-            finalControlId: dist.finalControlId,
+            intermediateControlId: dist.intermediateControlId ?? undefined,
+            finalControlId: dist.finalControlId ?? undefined,
             examEnabled: dist.examEnabled,
             creditEnabled: dist.creditEnabled,
             controlLessonEnabled: dist.controlLessonEnabled,

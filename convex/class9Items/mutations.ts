@@ -162,3 +162,104 @@ export const removeDistribution = mutation({
     return { success: true };
   },
 });
+
+/**
+ * Update a class9 item with its distribution entries (full sync)
+ */
+export const updateWithDistributions = mutation({
+  args: {
+    id: v.id("class9Items"),
+    specialtyIds: v.optional(v.array(v.string())),
+    academicYearId: v.optional(v.string()),
+    moduleIndex: v.optional(v.string()),
+    moduleName: v.optional(v.string()),
+    learningOutcome: v.optional(v.string()),
+    totalCredits: v.optional(v.string()),
+    totalHours: v.optional(v.string()),
+    theoreticalHours: v.optional(v.string()),
+    labPracticalHours: v.optional(v.string()),
+    field3Value: v.optional(v.string()),
+    srspHours: v.optional(v.string()),
+    srsHours: v.optional(v.string()),
+    trainingPracticeHours: v.optional(v.string()),
+    individualHours: v.optional(v.string()),
+    position: v.optional(v.number()),
+    distributionEntries: v.array(
+      v.object({
+        id: v.string(),
+        academicYearId: v.string(),
+        semesterId: v.string(),
+        hours: v.string(),
+        intermediateControlId: v.optional(v.union(v.string(), v.null())),
+        finalControlId: v.optional(v.union(v.string(), v.null())),
+        examEnabled: v.optional(v.boolean()),
+        creditEnabled: v.optional(v.boolean()),
+        controlLessonEnabled: v.optional(v.boolean()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const { id, distributionEntries, ...updates } = args;
+
+    // Update the main class9 item
+    const cleanUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([_, v]) => v !== undefined)
+    );
+
+    await ctx.db.patch(id, {
+      ...cleanUpdates,
+      ...updateTimestamp(),
+    });
+
+    // Get existing distribution entries
+    const existingDistributions = await ctx.db
+      .query("distributionEntries")
+      .withIndex("by_class9Item", (q) => q.eq("class9ItemId", id))
+      .collect();
+
+    const existingIds = new Set(existingDistributions.map((d) => d._id));
+    const currentIds = new Set(distributionEntries.map((d) => d.id));
+
+    // Delete entries that no longer exist
+    for (const existing of existingDistributions) {
+      if (!currentIds.has(existing._id)) {
+        await ctx.db.delete(existing._id);
+      }
+    }
+
+    // Add or update entries
+    const timestamps = createTimestamps();
+    for (const entry of distributionEntries) {
+      if (!existingIds.has(entry.id as any)) {
+        // New entry - add it
+        await ctx.db.insert("distributionEntries", {
+          class9ItemId: id,
+          academicYearId: entry.academicYearId,
+          semesterId: entry.semesterId as any,
+          hours: entry.hours,
+          intermediateControlId: entry.intermediateControlId ?? undefined,
+          finalControlId: entry.finalControlId ?? undefined,
+          examEnabled: entry.examEnabled,
+          creditEnabled: entry.creditEnabled,
+          controlLessonEnabled: entry.controlLessonEnabled,
+          ...timestamps,
+        });
+      } else {
+        // Existing entry - update it
+        await ctx.db.patch(entry.id as any, {
+          academicYearId: entry.academicYearId,
+          semesterId: entry.semesterId as any,
+          hours: entry.hours,
+          intermediateControlId: entry.intermediateControlId ?? undefined,
+          finalControlId: entry.finalControlId ?? undefined,
+          examEnabled: entry.examEnabled,
+          creditEnabled: entry.creditEnabled,
+          controlLessonEnabled: entry.controlLessonEnabled,
+          ...updateTimestamp(),
+        });
+      }
+    }
+
+    return await ctx.db.get(id);
+  },
+});

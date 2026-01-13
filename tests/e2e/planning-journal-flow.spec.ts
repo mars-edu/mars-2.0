@@ -198,6 +198,46 @@ async function openSelectByLabel(
   await trigger.click({ force: true });
 }
 
+async function fillInputByLabel(
+  page: any,
+  container: any,
+  labelText: string | RegExp,
+  value: string
+) {
+  const label = container.locator("label", { hasText: labelText }).first();
+  await expect(label).toBeVisible({ timeout: 15_000 });
+  const forId = await label.getAttribute("for");
+  if (!forId) throw new Error(`Input label "${labelText}" has no 'for' attribute`);
+  const root = page.locator(`#${forId}`);
+  await expect(root).toBeVisible({ timeout: 30_000 });
+  const editable = root.locator('input, textarea, [contenteditable="true"]');
+  if ((await editable.count()) > 0) {
+    await editable.first().fill(value);
+    return;
+  }
+  await root.fill(value);
+}
+
+async function expectInputValueByLabel(
+  page: any,
+  container: any,
+  labelText: string | RegExp,
+  value: string | RegExp
+) {
+  const label = container.locator("label", { hasText: labelText }).first();
+  await expect(label).toBeVisible({ timeout: 15_000 });
+  const forId = await label.getAttribute("for");
+  if (!forId) throw new Error(`Input label "${labelText}" has no 'for' attribute`);
+  const root = page.locator(`#${forId}`);
+  await expect(root).toBeVisible({ timeout: 30_000 });
+  const editable = root.locator('input, textarea, [contenteditable="true"]');
+  if ((await editable.count()) > 0) {
+    await expect(editable.first()).toHaveValue(value as any);
+    return;
+  }
+  await expect(root).toHaveValue(value as any);
+}
+
 async function openIfCollapsed(page: any, sectionTitle: RegExp) {
   const title = page.getByText(sectionTitle).first();
   await title.scrollIntoViewIfNeeded();
@@ -528,8 +568,71 @@ test.describe("Planning → Journal E2E flow", () => {
     await fillField(page, "#training-practice-hours-0", "0");
     await fillField(page, "#individual-hours-0", "0");
 
+    // Distribution entries: keep "Форма контроля" as "Не выбрано" (unselected),
+    // but set required semester + some hours for a few rows.
+    await class9Popover.locator(".add-distribution-btn").click();
+    await class9Popover.locator(".add-distribution-btn").click();
+    await expect(class9Popover.locator(".remove-entry-btn")).toHaveCount(2, {
+      timeout: 30_000,
+    });
+
+    const entry0 = class9Popover
+      .locator(".remove-entry-btn")
+      .nth(0)
+      .locator('xpath=ancestor::div[contains(@class,"border-input")][1]');
+    const entry1 = class9Popover
+      .locator(".remove-entry-btn")
+      .nth(1)
+      .locator('xpath=ancestor::div[contains(@class,"border-input")][1]');
+
+    for (const [entry, hours] of [
+      [entry0, "11"],
+      [entry1, "22"],
+    ] as const) {
+      await openSelectByLabel(page, entry, /^Семестр$/);
+      await clickOptionInOpenPicker(page, /Семестр\s*1/);
+      await fillInputByLabel(page, entry, /^Объем часов$/, hours);
+
+      // Make the "not selected" state explicit to cover the persistence case.
+      await entry.getByText("Выберите форму контроля").first().click({ force: true });
+      await clickOptionInOpenPicker(page, /^Не выбрано$/);
+      await expect(entry.locator(".item-after").filter({ hasText: "Не выбрано" })).toBeVisible();
+    }
+
     await class9Popover.getByRole("button", { name: "Сохранить" }).click();
     await expect(class9Popover).toBeHidden({ timeout: 30_000 });
+
+    // Re-open created RUP item for edit and ensure distribution entries are preserved,
+    // including "Форма контроля" being not selected.
+    await expect(page.getByText(moduleIndex).first()).toBeVisible({ timeout: 30_000 });
+    await page.getByText(moduleIndex).first().click();
+
+    const class9EditPopover = page.locator("#class9-popover");
+    await expect(class9EditPopover).toBeVisible({ timeout: 30_000 });
+    await expect(class9EditPopover.locator(".remove-entry-btn")).toHaveCount(2, {
+      timeout: 30_000,
+    });
+
+    const reopened0 = class9EditPopover
+      .locator(".remove-entry-btn")
+      .nth(0)
+      .locator('xpath=ancestor::div[contains(@class,"border-input")][1]');
+    const reopened1 = class9EditPopover
+      .locator(".remove-entry-btn")
+      .nth(1)
+      .locator('xpath=ancestor::div[contains(@class,"border-input")][1]');
+
+    for (const [entry, hours] of [
+      [reopened0, "11"],
+      [reopened1, "22"],
+    ] as const) {
+      await expect(entry.locator(".item-after").filter({ hasText: "Семестр 1" })).toBeVisible();
+      await expectInputValueByLabel(page, entry, /^Объем часов$/, hours);
+      await expect(entry.locator(".item-after").filter({ hasText: "Не выбрано" })).toBeVisible();
+    }
+
+    await class9EditPopover.getByRole("button", { name: "Отменить" }).click();
+    await expect(class9EditPopover).toBeHidden({ timeout: 30_000 });
 
     await logoutViaSidebar(page);
   });
