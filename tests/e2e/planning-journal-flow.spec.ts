@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
+import * as ExcelJS from "exceljs";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@convex/_generated/api";
 
@@ -81,13 +82,60 @@ async function loginViaUi(page: any, username: string, password: string) {
   await usernameInput.first().fill(username);
   await passwordInput.first().fill(password);
   await page.getByRole("button", { name: "Войти" }).click();
+  const toastText = page.locator(".toast:visible .toast-text").first();
   // Login can be slow on cold start; keep the timeout reasonable but retry once.
   try {
-    await page.waitForURL(/\/home\/?/, { timeout: 60_000 });
+    await Promise.race([
+      page.waitForFunction(
+        () =>
+          !!(
+            window.localStorage.getItem("auth_token") ||
+            window.sessionStorage.getItem("auth_token")
+          ),
+        null,
+        { timeout: 120_000 }
+      ),
+      page.waitForURL(/\/home\/?/, { timeout: 120_000 }),
+      page.waitForURL(/\/education-schedule\/?/, { timeout: 120_000 }),
+      page.waitForURL(/\/planning\/?/, { timeout: 120_000 }),
+      page.waitForURL(/\/journals\/?/, { timeout: 120_000 }),
+      page.waitForFunction(() => !window.location.pathname.includes("/login"), null, {
+        timeout: 120_000,
+      }),
+      toastText.waitFor({ state: "visible", timeout: 30_000 }).then(async () => {
+        const msg = (await toastText.innerText()).trim();
+        throw new Error(
+          `Login failed for "${username}": ${msg || "(no message)"} (set E2E_* env vars if needed)`
+        );
+      }),
+    ]);
   } catch {
     await page.waitForTimeout(1000);
     await page.getByRole("button", { name: "Войти" }).click().catch(() => {});
-    await page.waitForURL(/\/home\/?/, { timeout: 60_000 });
+    await Promise.race([
+      page.waitForFunction(
+        () =>
+          !!(
+            window.localStorage.getItem("auth_token") ||
+            window.sessionStorage.getItem("auth_token")
+          ),
+        null,
+        { timeout: 120_000 }
+      ),
+      page.waitForURL(/\/home\/?/, { timeout: 120_000 }),
+      page.waitForURL(/\/education-schedule\/?/, { timeout: 120_000 }),
+      page.waitForURL(/\/planning\/?/, { timeout: 120_000 }),
+      page.waitForURL(/\/journals\/?/, { timeout: 120_000 }),
+      page.waitForFunction(() => !window.location.pathname.includes("/login"), null, {
+        timeout: 120_000,
+      }),
+      toastText.waitFor({ state: "visible", timeout: 30_000 }).then(async () => {
+        const msg = (await toastText.innerText()).trim();
+        throw new Error(
+          `Login failed for "${username}": ${msg || "(no message)"} (set E2E_* env vars if needed)`
+        );
+      }),
+    ]);
   }
 }
 
@@ -795,6 +843,66 @@ test.describe("Planning → Journal E2E flow", () => {
     const newest = [...events].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
     sharedJournalId = newest?._id || null;
     if (!sharedJournalId) throw new Error("Failed to determine created calendar event id");
+  });
+
+  test("reports export downloads workload xlsx with data", async ({ page }, testInfo) => {
+    page.setDefaultTimeout(20_000);
+    page.setDefaultNavigationTimeout(60_000);
+
+    if (!sharedScenario) throw new Error("Missing shared scenario from admin setup");
+
+    const teacherUsername = env("E2E_TEACHER_USERNAME", "Килаш Расул Жангелдыулы");
+    const teacherPassword = env("E2E_TEACHER_PASSWORD", "teachertest");
+    await loginViaUi(page, teacherUsername, teacherPassword);
+
+    await page.goto("/reports");
+    await page.waitForURL(/\/reports\/?/, { timeout: 30_000 });
+
+    const generateBtn = page.getByRole("button", {
+      name: /Сгенерировать отчет ООД \(Формы 1-3\)/i,
+    });
+    await expect(generateBtn).toBeVisible({ timeout: 30_000 });
+
+    await expect
+      .poll(async () => await generateBtn.isEnabled(), { timeout: 60_000 })
+      .toBeTruthy();
+
+    const downloadPromise = page.waitForEvent("download", { timeout: 120_000 });
+    await generateBtn.click();
+
+    const download = await downloadPromise;
+    const savedPath = testInfo.outputPath(
+      `workload-export-${Date.now()}-${Math.random().toString(16).slice(2)}.xlsx`
+    );
+    await download.saveAs(savedPath);
+
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(savedPath);
+
+    const form1 = workbook.getWorksheet("форма 1");
+    expect(form1).toBeTruthy();
+
+    // First data row starts at row 10 in this template.
+    expect(form1!.getCell("B10").value).toBe(1);
+    expect(form1!.getCell("C10").text).toContain(sharedScenario.moduleIndex);
+    expect(form1!.getCell("D10").text).toContain(sharedScenario.moduleName);
+    expect(form1!.getCell("E10").text.trim().length).toBeGreaterThan(0);
+
+    // At least one day cell should have hours in the month section (F..AJ).
+    let hasAnyDayHours = false;
+    for (let col = 6; col <= 36; col++) {
+      const v = form1!.getRow(10).getCell(col).value;
+      if (typeof v === "number" && v > 0) {
+        hasAnyDayHours = true;
+        break;
+      }
+    }
+    expect(hasAnyDayHours).toBe(true);
+
+    // Month total column is AK.
+    const monthTotal = form1!.getCell("AK10").value;
+    expect(typeof monthTotal).toBe("number");
+    expect(monthTotal as number).toBeGreaterThan(0);
   });
 
   test("journal details shows KTP via paperclip", async ({ page }) => {

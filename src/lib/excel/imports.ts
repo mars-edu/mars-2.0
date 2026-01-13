@@ -575,7 +575,7 @@ export async function parseKtpDocxFromBuffer(
     throw new Error("No tables found in the Word document");
   }
 
-  const rows = tableHtml.match(/<tr[\s\S]*?<\/tr>/gi) || [];
+  const rows = tableHtml!.match(/<tr[\s\S]*?<\/tr>/gi) || [];
   if (rows.length < 2) {
     throw new Error("No data rows found in the Word table");
   }

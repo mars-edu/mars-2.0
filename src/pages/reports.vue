@@ -87,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watchEffect } from "vue";
 import { f7Page, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -98,6 +98,7 @@ import { useCalendarStore } from "@/stores/calendarStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useClass9Store } from "@/stores/class9Store";
 import { useStudentStore } from "@/stores/studentStore";
+import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useUserStore } from "@/stores/userStore";
 import { useJournalStore } from "@/stores/journalStore";
 import { useMarksStore } from "@/stores/marksStore";
@@ -124,6 +125,7 @@ const calendarStore = useCalendarStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const class9Store = useClass9Store();
 const studentStore = useStudentStore();
+const specialtyStore = useSpecialtyStore();
 const journalStore = useJournalStore();
 const marksStore = useMarksStore();
 
@@ -142,6 +144,21 @@ const teacherOptions = computed(() =>
     text: teacherStore.getTeacherFullName(teacher),
   }))
 );
+
+const selectedTeacher = computed(() => {
+  const id = selectedTeacherId.value;
+  if (!id) return undefined;
+  return (
+    teachers.value.find((t) => t.id === id) ??
+    teachers.value.find((t) => t.userId === id)
+  );
+});
+
+const selectedTeacherUserId = computed(() => {
+  if (selectedTeacher.value?.userId) return selectedTeacher.value.userId;
+  if (userStore.isTeacher) return userStore.currentUser?.id;
+  return undefined;
+});
 
 const academicYearOptions = computed(() =>
   academicYears.value.map((year) => ({
@@ -190,16 +207,24 @@ async function generateWorkloadReport() {
   isGenerating.value = true;
 
   try {
-    const teacher = teachers.value.find(
-      (t) => t.id === selectedTeacherId.value
-    );
+    const teacher = selectedTeacher.value;
     const academicYear = selectedAcademicYearId.value
       ? academicYears.value.find((y) => y.id === selectedAcademicYearId.value)
       : academicYears.value.find((y) => y.isActive);
 
+    if (!academicYear) {
+      throw new Error("Academic year is not selected and no active year found");
+    }
+
     // Filter events by teacher
-    const teacherEvents = calendarStore.events.filter(
-      (e) => e.teacherId === selectedTeacherId.value
+    const teacherIdCandidates = new Set<string>();
+    teacherIdCandidates.add(selectedTeacherId.value);
+    if (selectedTeacherUserId.value) teacherIdCandidates.add(selectedTeacherUserId.value);
+    if (teacher?.id) teacherIdCandidates.add(teacher.id);
+    if (teacher?.userId) teacherIdCandidates.add(teacher.userId);
+
+    const teacherEvents = calendarStore.events.filter((e) =>
+      teacherIdCandidates.has(e.teacherId || "")
     );
 
     // Get period date range for filtering
@@ -217,10 +242,19 @@ async function generateWorkloadReport() {
     }
 
     // Enrich students with course information
-    const enrichedStudents = studentStore.students.map((student) => ({
-      ...student,
-      course: studentStore.getCourseByStudentId(student.id),
-    }));
+    const enrichedStudents = studentStore.students.map((student) => {
+      const specialty = specialtyStore.getSpecialtyById(student.specialty);
+      const specialtyLabel =
+        specialty?.codeName?.trim() ||
+        specialty?.code?.trim() ||
+        specialty?.name?.trim() ||
+        student.specialty;
+      return {
+        ...student,
+        course: studentStore.getCourseByStudentId(student.id) ?? 1,
+        specialty: specialtyLabel,
+      };
+    });
 
     // Get all class9 items
     const class9Items = class9Store.class9Items;
@@ -318,12 +352,7 @@ async function generateWorkloadReport() {
     );
 
     const monthlyDistribution: MonthlyDistributionEntry[] =
-      generateMonthlyDistribution(
-        teacherEvents,
-        class9Items,
-        enrichedStudents,
-        academicYear!
-      );
+      generateMonthlyDistribution(teacherEvents, class9Items, enrichedStudents, academicYear);
 
     let periodLabel = "за весь учебный год";
     if (selectedPeriod.value !== "full_year") {
@@ -345,7 +374,7 @@ async function generateWorkloadReport() {
     const payload: TeacherWorkloadExportPayload = {
       institutionName:
         `"Музыкалық колледж  - дарынды балаларға арналған музыкалық мектеп - интернат" Кешені ММ/ ГУ "Комплекс "Музыкальный колледж - музыкальная школа - интернат для одарённых детей"`,
-      teacherFullName: teacher ? getTeacherFullName(teacher) : "Не указан",
+      teacherFullName: teacher ? getTeacherFullName(teacher) : userStore.fullName || "Не указан",
       academicYear: academicYear
         ? `${academicYear.startYear}/${academicYear.endYear}`
         : "2024/2025",
@@ -376,7 +405,7 @@ async function generateWorkloadReport() {
 
     await exportTeacherWorkloadViaConvex(payload, filename);
 
-    lastGeneratedReport.value = `ООД_${teacher?.surname}_${
+    lastGeneratedReport.value = `ООД_${teacher?.surname || "teacher"}_${
       academicYear?.name
     }_${periodForDisplay} - ${new Date().toLocaleString()}`;
   } catch (error) {
@@ -396,8 +425,21 @@ onMounted(() => {
   }
 
   if (userStore.isTeacher && userStore.currentUser?.id) {
-    selectedTeacherId.value = userStore.currentUser.id;
+    const teacher = teacherStore.getTeacherByUserId(userStore.currentUser.id);
+    selectedTeacherId.value = teacher?.id || userStore.currentUser.id;
   }
+});
+
+watchEffect(() => {
+  if (!userStore.isTeacher || userStore.isAdmin) return;
+  const userId = userStore.currentUser?.id;
+  if (!userId) return;
+  const teacher = teacherStore.getTeacherByUserId(userId);
+  if (teacher?.id) {
+    if (selectedTeacherId.value !== teacher.id) selectedTeacherId.value = teacher.id;
+    return;
+  }
+  if (!selectedTeacherId.value) selectedTeacherId.value = userId;
 });
 </script>
 
