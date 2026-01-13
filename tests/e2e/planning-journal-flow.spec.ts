@@ -595,7 +595,7 @@ test.describe("Planning → Journal E2E flow", () => {
 
       // Make the "not selected" state explicit to cover the persistence case.
       await entry.getByText("Выберите форму контроля").first().click({ force: true });
-      await clickOptionInOpenPicker(page, /^Не выбрано$/);
+      await clickOptionInOpenPicker(page, "Не выбрано");
       await expect(entry.locator(".item-after").filter({ hasText: "Не выбрано" })).toBeVisible();
     }
 
@@ -604,8 +604,11 @@ test.describe("Planning → Journal E2E flow", () => {
 
     // Re-open created RUP item for edit and ensure distribution entries are preserved,
     // including "Форма контроля" being not selected.
-    await expect(page.getByText(moduleIndex).first()).toBeVisible({ timeout: 30_000 });
-    await page.getByText(moduleIndex).first().click();
+    const class9Table = page.locator(".class9-table");
+    await expect(class9Table.getByText(moduleName).first()).toBeVisible({
+      timeout: 30_000,
+    });
+    await class9Table.getByText(moduleName).first().click();
 
     const class9EditPopover = page.locator("#class9-popover");
     await expect(class9EditPopover).toBeVisible({ timeout: 30_000 });
