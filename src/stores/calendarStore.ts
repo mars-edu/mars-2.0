@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { useClass9Store } from "./class9Store";
 import { useKtpStore } from "./ktpStore";
 import { useAcademicYearSemesterStore } from "./academicYearSemesterStore";
+import { useTeacherStore } from "./teacherStore";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
@@ -51,10 +52,24 @@ export const useCalendarStore = defineStore(
     const error = ref<string | null>(null);
     const selectedTeacherId = ref<string | null>(null);
 
-    // Reactive subscription to Convex
+    const teacherStore = useTeacherStore();
+
+    // Reactive query args that update when selectedTeacherId changes
+    const queryArgs = computed(() => {
+      if (!selectedTeacherId.value) {
+        return {};
+      }
+      const teacher = teacherStore.getTeacherById(selectedTeacherId.value);
+      return {
+        teacherId: selectedTeacherId.value,
+        teacherUserId: teacher?.userId,
+      };
+    });
+
+    // Reactive subscription to Convex with teacher filter
     const { data: convexEvents } = useConvexQuery(
       api.calendarEvents.queries.list,
-      ref({})
+      queryArgs
     );
 
     watch(convexEvents, (newData) => {
@@ -102,14 +117,8 @@ export const useCalendarStore = defineStore(
       return (id: string) => events.value.find((e) => e.id === id);
     });
 
-    const filteredEvents = computed(() => {
-      if (!selectedTeacherId.value) {
-        return events.value;
-      }
-      return events.value.filter(
-        (e) => e.teacherId === selectedTeacherId.value
-      );
-    });
+    // Events are already filtered at the backend level via queryArgs
+    const filteredEvents = computed(() => events.value);
 
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);

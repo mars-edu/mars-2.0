@@ -2,11 +2,25 @@ import { query } from "../_generated/server";
 import { v } from "convex/values";
 
 /**
- * Get all calendar events
+ * Get all calendar events, optionally filtered by teacher
  */
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    teacherId: v.optional(v.string()),
+    teacherUserId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // If teacherId is provided, filter by teacher
+    if (args.teacherId || args.teacherUserId) {
+      const allEvents = await ctx.db.query("calendarEvents").collect();
+      // Filter by either teacherId (teacher record ID) or teacherUserId (user ID)
+      // because events may store either depending on who created them
+      return allEvents.filter(
+        (event) =>
+          event.teacherId === args.teacherId ||
+          event.teacherId === args.teacherUserId
+      );
+    }
     return await ctx.db.query("calendarEvents").collect();
   },
 });
