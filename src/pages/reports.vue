@@ -13,17 +13,6 @@
       >
         <div class="flex flex-col gap-4">
           <div
-            class="flex flex-col md:flex-row md:items-center justify-between gap-3"
-          >
-            <div>
-              <h1 class="text-2xl font-semibold">Отчеты</h1>
-              <p class="text-sm text-muted-foreground">
-                Управление и просмотр отчетов
-              </p>
-            </div>
-          </div>
-
-          <div
             class="bg-card text-card-foreground rounded-xl p-4 md:p-5 shadow-md"
           >
             <h2 class="text-lg font-semibold mb-4">

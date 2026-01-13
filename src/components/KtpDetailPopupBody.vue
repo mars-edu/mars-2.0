@@ -240,6 +240,7 @@ import {
   parseEducationalScheduleViaConvex,
   exportKtpToExcelViaConvex,
 } from "@/services/convex-excel-export";
+import { parseKtpFromDocxTemplate } from "@/services/docx-ktp-import";
 
 const props = defineProps<{
   ktpId: string | null;
@@ -385,7 +386,7 @@ const downloadRup = async () => {
 const uploadDocument = () => {
   const input = document.createElement("input");
   input.type = "file";
-  input.accept = ".xlsx,.xls";
+  input.accept = ".xlsx,.xls,.docx";
   input.style.display = "none";
 
   input.onchange = async (event) => {
@@ -408,7 +409,14 @@ const uploadDocument = () => {
       isImporting.value = true;
       ktpStore.error = null;
 
-      const parseResult = await parseEducationalScheduleViaConvex(file);
+      const isDocx =
+        file.name.toLowerCase().endsWith(".docx") ||
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+      const parseResult = isDocx
+        ? await parseKtpFromDocxTemplate(file)
+        : await parseEducationalScheduleViaConvex(file);
 
       if (!parseResult.lessons.length) {
         throw new Error("В файле не найдено ни одного урока для импорта");
@@ -433,7 +441,7 @@ const uploadDocument = () => {
         throw new Error(importResult.error || "Ошибка импорта данных");
       }
     } catch (error) {
-      console.error("Error processing Excel file:", error);
+      console.error("Error processing import file:", error);
       const errorMessage =
         error instanceof Error
           ? error.message
