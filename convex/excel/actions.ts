@@ -10,6 +10,7 @@
 "use node";
 
 import { action } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
 import { v } from "convex/values";
 
 import {
@@ -37,6 +38,7 @@ import {
   exportKtpToExcelFromTemplate,
   importJournalFromBuffer,
   parseEducationalScheduleFromBuffer,
+  parseKtpDocxFromBuffer,
   type JournalImportSummary,
   type ParseResult,
 } from "../../src/lib/excel/imports";
@@ -69,7 +71,7 @@ export const exportJournal = action({
     ),
     lessonDates: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, args): Promise<string> => {
+  handler: async (ctx, args): Promise<Id<"_storage">> => {
     const payload: JournalExportPayload = {
       groupName: args.groupName,
       courseLabel: args.courseLabel,
@@ -149,7 +151,7 @@ export const exportTeacherWorkload = action({
       })
     ),
   },
-  handler: async (ctx, args): Promise<string> => {
+  handler: async (ctx, args): Promise<Id<"_storage">> => {
     const payload: TeacherWorkloadExportPayload = {
       institutionName: args.institutionName,
       teacherFullName: args.teacherFullName,
@@ -230,7 +232,7 @@ export const exportAnalytics = action({
       })
     ),
   },
-  handler: async (ctx, args): Promise<string> => {
+  handler: async (ctx, args): Promise<Id<"_storage">> => {
     const payload: AnalyticsExportPayload = {
       courseGroups: args.courseGroups as CourseGroup[],
       finalForms: args.finalForms as FinalControlForm[],
@@ -281,6 +283,25 @@ export const parseEducationalSchedule = action({
 });
 
 // ============================================================================
+// KTP DOCX Parse Action
+// ============================================================================
+
+export const parseKtpDocxTemplate = action({
+  args: {
+    fileStorageId: v.id("_storage"),
+    fileName: v.string(),
+  },
+  handler: async (ctx, args): Promise<ParseResult> => {
+    const fileBlob = await ctx.storage.get(args.fileStorageId);
+    if (!fileBlob) {
+      throw new Error("File not found in storage");
+    }
+    const buffer = await fileBlob.arrayBuffer();
+    return await parseKtpDocxFromBuffer(buffer, args.fileName);
+  },
+});
+
+// ============================================================================
 // KTP Export Action
 // ============================================================================
 
@@ -290,7 +311,10 @@ export const exportKtpToExcel = action({
     templateStorageId: v.id("_storage"),
     learningOutcome: v.optional(v.string()),
   },
-  handler: async (ctx, args): Promise<{ storageId: string; filename: string }> => {
+  handler: async (
+    ctx,
+    args
+  ): Promise<{ storageId: Id<"_storage">; filename: string }> => {
     // Get the template file from storage
     const templateBlob = await ctx.storage.get(args.templateStorageId);
     if (!templateBlob) {
@@ -347,7 +371,7 @@ export const exportJournalsZip = action({
       })
     ),
   },
-  handler: async (ctx, args): Promise<string> => {
+  handler: async (ctx, args): Promise<Id<"_storage">> => {
     // Import JSZip dynamically
     const JSZip = (await import("jszip")).default;
     const zip = new JSZip();
@@ -383,4 +407,3 @@ export const exportJournalsZip = action({
     return storageId;
   },
 });
-

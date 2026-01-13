@@ -6,15 +6,8 @@
 import * as Excel from "exceljs/dist/exceljs.min.js";
 import type * as ExcelJS from "exceljs";
 import {
-  TIMES_BOLD_FONT,
   GRAY_FILL,
-  applyDataCellStyle,
-  applyTotalCellStyle,
-  collectColumnTemplates,
-  setCell,
-  updateCellWithText,
   detectDataStartRow,
-  getColumnRange,
   getCell,
 } from "./_utils";
 
@@ -88,6 +81,46 @@ const THIN_BORDER = {
   left: { style: "thin" as const },
 };
 
+const TIMES_NEW_ROMAN = "Times New Roman";
+
+function applyTimesCellStyle(
+  cell: ExcelJS.Cell,
+  options: {
+    size: number;
+    bold?: boolean;
+    underline?: boolean;
+    horizontal?: ExcelJS.Alignment["horizontal"];
+    vertical?: ExcelJS.Alignment["vertical"];
+    wrapText?: boolean;
+    indent?: number;
+    border?: Partial<ExcelJS.Borders>;
+    fill?: ExcelJS.Fill;
+  }
+): void {
+  cell.font = {
+    name: TIMES_NEW_ROMAN,
+    size: options.size,
+    color: THEME_BLACK,
+    bold: options.bold,
+    underline: options.underline,
+  };
+
+  const alignment: Partial<ExcelJS.Alignment> = {};
+  if (options.horizontal) alignment.horizontal = options.horizontal;
+  if (options.vertical) alignment.vertical = options.vertical;
+  if (options.wrapText !== undefined) alignment.wrapText = options.wrapText;
+  if (options.indent !== undefined) alignment.indent = options.indent;
+  if (Object.keys(alignment).length > 0) {
+    cell.alignment = alignment;
+  }
+
+  cell.border = (options.border || THIN_BORDER) as Partial<ExcelJS.Borders>;
+
+  if (options.fill) {
+    cell.fill = options.fill;
+  }
+}
+
 // ============================================================================
 // Template Generators
 // ============================================================================
@@ -115,7 +148,6 @@ function createForm1Sheet(workbook: ExcelJS.Workbook): void {
   });
 
   // Set column widths
-  sheet.getColumn(1).width = 2;
   sheet.getColumn(2).width = 5.88495575221239;
   sheet.getColumn(3).width = 11.5575221238938;
   sheet.getColumn(4).width = 58.6637168141593;
@@ -147,7 +179,7 @@ function createForm1Sheet(workbook: ExcelJS.Workbook): void {
   // Row 2: Ministry
   const b2 = sheet.getCell("B2");
   b2.value =
-    " Қазақстан Республикасы Оқу-ағарту министрлігі/Министерство просвещения Республики Казахстан";
+    "Қазақстан Республикасы Оқу-ағарту министрлігі/Министерство просвещения Республики Казахстан";
   b2.font = titleFont;
   b2.alignment = { horizontal: "center", vertical: "middle" };
   sheet.mergeCells("B2:AK2");
@@ -170,23 +202,25 @@ function createForm1Sheet(workbook: ExcelJS.Workbook): void {
 
   // Row 5: Academic year
   const b5 = sheet.getCell("B5");
-  b5.value = "2024-2025 оқу жылы/ за 2024-2025 учебный год";
+  b5.value = "2024/2025 оқу жылы/ за 2024/2025 учебный год";
   b5.font = titleFont;
   b5.alignment = { horizontal: "center", vertical: "middle" };
   sheet.mergeCells("B5:AK5");
 
   // Row 6: Teacher name
   const b6 = sheet.getCell("B6");
-  b6.value = "Килаш";
+  b6.value =
+    "Педагогтің тегі, аты, әкесінің аты /Фамилия, имя, отчество педагога  Килаш";
   b6.font = titleFont;
   b6.alignment = { horizontal: "center", vertical: "middle" };
   sheet.mergeCells("B6:AK6");
 
-  // Row 7: Month
+  // Row 7: Teacher name suffix
   const r7 = sheet.getCell("R7");
-  r7.value = "сентябрь";
-  r7.font = titleFont;
-  r7.alignment = { horizontal: "center", vertical: "middle" };
+  r7.value = "толық/полностью";
+  r7.font = { name: TIMES_NEW_ROMAN, size: 11, color: THEME_BLACK };
+  r7.alignment = { horizontal: "center" };
+  r7.border = { bottom: { style: "thin" as const } };
   sheet.mergeCells("R7:U7");
 
   // Header row (Row 8-9)
@@ -227,9 +261,23 @@ function createForm1Sheet(workbook: ExcelJS.Workbook): void {
   sheet.mergeCells("E8:E9");
 
   const f8 = sheet.getCell("F8");
-  f8.value = { richText: [{ text: "Айдың күні/\nЧисло месяца" }] };
-  f8.font = headerFont;
-  f8.alignment = headerAlignment;
+  f8.value = {
+    richText: [
+      { text: "____________айы/Месяц " },
+      {
+        text: "сентябрь",
+        font: {
+          bold: true,
+          underline: true,
+          size: 12,
+          color: { indexed: 8 } as any,
+          name: TIMES_NEW_ROMAN,
+        },
+      },
+    ],
+  };
+  f8.font = { name: TIMES_NEW_ROMAN, size: 12, color: THEME_BLACK };
+  f8.alignment = { horizontal: "left", vertical: "distributed" };
   f8.border = THIN_BORDER;
   sheet.mergeCells("F8:AJ8");
 
@@ -308,9 +356,17 @@ function createForm2Sheet(workbook: ExcelJS.Workbook): void {
     pageSetup: {
       paperSize: 9,
       orientation: "portrait",
-      fitToPage: true,
+      fitToPage: false,
       fitToWidth: 1,
-      fitToHeight: 0,
+      fitToHeight: 1,
+      margins: {
+        left: 0.7,
+        right: 0.7,
+        top: 0.75,
+        bottom: 0.75,
+        header: 0.3,
+        footer: 0.3,
+      },
     },
     properties: {
       defaultRowHeight: 15,
@@ -318,35 +374,29 @@ function createForm2Sheet(workbook: ExcelJS.Workbook): void {
   });
 
   // Set column widths
-  sheet.getColumn(1).width = 2;
-  sheet.getColumn(2).width = 22;
-  sheet.getColumn(3).width = 40;
-  sheet.getColumn(4).width = 12;
-  sheet.getColumn(5).width = 12;
-  sheet.getColumn(6).width = 12;
-  sheet.getColumn(7).width = 12;
-  sheet.getColumn(8).width = 12;
-  sheet.getColumn(9).width = 12;
-  sheet.getColumn(10).width = 12;
-  sheet.getColumn(11).width = 12;
-  sheet.getColumn(12).width = 18;
+  sheet.getColumn(2).width = 20.1061946902655; // B
+  sheet.getColumn(3).width = 39.8849557522124; // C
+  sheet.getColumn(12).width = 29.1061946902655; // L
 
-  const titleFont = { name: "Times New Roman", size: 11, bold: true, color: THEME_BLACK };
-  sheet.getRow(1).height = 30;
+  const titleFont = {
+    name: TIMES_NEW_ROMAN,
+    size: 14,
+    bold: true,
+    color: { argb: "FF444444" },
+  };
+
   const b1 = sheet.getCell("B1");
   b1.value =
     "Педагог сағаттарының жылдық есебіне қосымша мәліметтер/Дополнительные сведения к годовому учету часов педагога";
   b1.font = titleFont;
-  b1.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+  b1.alignment = { horizontal: "center", wrapText: true };
   sheet.mergeCells("B1:L1");
 
-  sheet.getRow(2).height = 15;
-
-  const headerFont = { name: "Times New Roman", size: 10, bold: true, color: THEME_BLACK };
-  sheet.getRow(3).height = 60;
-  sheet.getRow(4).height = 35;
-  sheet.getRow(5).height = 30;
-  sheet.getRow(6).height = 20;
+  const headerFont = { name: TIMES_NEW_ROMAN, size: 10, bold: true, color: THEME_BLACK };
+  sheet.getRow(3).height = 21.75;
+  sheet.getRow(4).height = 27.75;
+  sheet.getRow(5).height = 25.55;
+  sheet.getRow(6).height = 14.15;
 
   const b3 = sheet.getCell("B3");
   b3.value = "Оқу тобының №, студенттің аты-жөні/             № учебной группы/ ФИО студента";
@@ -437,34 +487,36 @@ function createForm3Sheet(workbook: ExcelJS.Workbook): void {
     pageSetup: {
       paperSize: 9,
       orientation: "portrait",
-      fitToPage: true,
+      fitToPage: false,
       fitToWidth: 1,
-      fitToHeight: 0,
+      fitToHeight: 1,
+      margins: {
+        left: 0.7,
+        right: 0.7,
+        top: 0.75,
+        bottom: 0.75,
+        header: 0.3,
+        footer: 0.3,
+      },
     },
     properties: {
       defaultRowHeight: 15,
     },
   });
 
-  const columnWidths = [
-    { col: 1, width: 2 },
-    { col: 2, width: 35 },
-    { col: 3, width: 15 },
-    { col: 4, width: 14 },
-    { col: 5, width: 14 },
-    { col: 6, width: 16 },
-    { col: 7, width: 14 },
-    { col: 8, width: 14 },
-    { col: 9, width: 14 },
-    { col: 10, width: 14 },
-    { col: 11, width: 13 },
-    { col: 12, width: 14 },
-    { col: 13, width: 15 },
-  ];
-
-  columnWidths.forEach(({ col, width }) => {
-    sheet.getColumn(col).width = width;
-  });
+  // Match template column widths (column A keeps default width).
+  sheet.getColumn(2).width = 34.6637168141593; // B
+  sheet.getColumn(3).width = 11.3362831858407; // C
+  sheet.getColumn(4).width = 11.4424778761062; // D
+  sheet.getColumn(5).width = 11.3362831858407; // E
+  sheet.getColumn(6).width = 12.4424778761062; // F
+  sheet.getColumn(7).width = 11.4424778761062; // G
+  sheet.getColumn(8).width = 11.6637168141593; // H
+  sheet.getColumn(9).width = 13.4424778761062; // I
+  sheet.getColumn(10).width = 11.8849557522124; // J
+  sheet.getColumn(11).width = 12; // K
+  sheet.getColumn(12).width = 11.6637168141593; // L
+  sheet.getColumn(13).width = 14.6637168141593; // M
 
   sheet.getRow(2).height = 21.75;
   sheet.getRow(3).height = 18;
@@ -476,10 +528,11 @@ function createForm3Sheet(workbook: ExcelJS.Workbook): void {
   sheet.getRow(10).height = 18.75;
   sheet.getRow(11).height = 27.75;
   sheet.getRow(12).height = 30;
-  sheet.getRow(15).height = 35;
+  sheet.getRow(13).height = 19.5;
+  sheet.getRow(15).height = 30.5;
 
-  const titleFont = { name: "Times New Roman", size: 11, bold: true, color: THEME_BLACK };
-  const normalFont = { name: "Times New Roman", size: 10, color: THEME_BLACK };
+  const titleFont = { name: TIMES_NEW_ROMAN, size: 11, bold: true, color: THEME_BLACK };
+  const normalFont = { name: TIMES_NEW_ROMAN, size: 10, color: THEME_BLACK };
 
   const b2 = sheet.getCell("B2");
   b2.value =
@@ -516,7 +569,7 @@ function createForm3Sheet(workbook: ExcelJS.Workbook): void {
 
   const b7 = sheet.getCell("B7");
   b7.value =
-    "2024-2025 оқу жылында педагог берген сағаттарды және (немесе) кредиттерді жылдық есепке алу/Годовой учет часов и (или) кредитов, проведенных педагогом  в 2024-2025 учебном году";
+    "2024/2025 оқу жылында педагог берген сағаттарды және (немесе) кредиттерді жылдық есепке алу/Годовой учет часов и (или) кредитов, проведенных педагогом  в 2024/2025 учебном году";
   b7.font = titleFont;
   b7.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
   sheet.mergeCells("B7:K7");
@@ -525,7 +578,7 @@ function createForm3Sheet(workbook: ExcelJS.Workbook): void {
 
   const b9 = sheet.getCell("B9");
   b9.value =
-    "Педагогтің тегі, аты, әкесінің аты (болған жағдайда) (толық)/Фамилия, имя, отчество (при его наличии) педагога (полностью)\nКилаш";
+    "Педагогтің тегі, аты, әкесінің аты (болған жағдайда) (толық)/Фамилия, имя, отчество Қилаш";
   b9.font = normalFont;
   b9.alignment = { horizontal: "left", vertical: "top", wrapText: true };
   sheet.mergeCells("B9:L9");
@@ -545,7 +598,7 @@ function createForm3Sheet(workbook: ExcelJS.Workbook): void {
 
   const b12 = sheet.getCell("B12");
   b12.value =
-    "ООД 07 История Казахстана, ООД  10 Всемирная история, БМ 4 Применение основ социально-гуманитарных наук в профессиональной деятельности";
+    "ООД 07 История Казахстана, ООД 10 Всемирная история, БМ 4 Применение основ социальных наук для социализации и адаптации в обществе и трудовом коллективе, Ф 2 Казахстанское право, Ф 4 Краеведение";
   b12.font = normalFont;
   b12.alignment = { horizontal: "left", vertical: "top", wrapText: true };
   sheet.mergeCells("B12:K12");
@@ -623,86 +676,98 @@ async function populateForm1(
   worksheet: ExcelJS.Worksheet,
   payload: TeacherWorkloadExportPayload
 ): Promise<void> {
-  const form1HeaderRow = detectDataStartRow(worksheet, ["№ п/п"], 20);
-  const form1DataRow = form1HeaderRow + 2;
-  const form1ColRange = getColumnRange(worksheet);
+  // Convert detected 1-based Excel row number to 0-based index for getCell/setCell utilities.
+  const headerRow0 = detectDataStartRow(worksheet, ["№ п/п"], 20) - 1;
+  const dataStartRow0 = headerRow0 + 2; // header row + day numbers row
 
-  const form1Templates = collectColumnTemplates(
-    worksheet,
-    form1HeaderRow,
-    form1ColRange.start,
-    form1ColRange.end
-  );
-
-  const clearEnd = form1DataRow + Math.max(payload.entries.length, 1);
-
-  for (let r = form1DataRow; r < clearEnd; r++) {
-    for (let c = form1ColRange.start; c <= form1ColRange.end; c++) {
-      setCell(worksheet, r, c, null, form1Templates);
-    }
-  }
-
-  const COL_OFFSET = 1;
+  const COL_OFFSET = 1; // Column B (0-based)
 
   payload.entries.forEach((entry, index) => {
-    const row = form1DataRow + index;
+    const row0 = dataStartRow0 + index;
 
-    const rowNumCell = getCell(worksheet, row, COL_OFFSET + 0);
+    const combinedSubjectName = entry.moduleIndex
+      ? `${entry.moduleIndex} ${entry.subjectName}`.trim()
+      : entry.subjectName;
+
+    const rowNumCell = getCell(worksheet, row0, COL_OFFSET + 0);
     rowNumCell.value = entry.rowNumber;
-    applyDataCellStyle(rowNumCell, { numFmt: "0" });
+    applyTimesCellStyle(rowNumCell, { size: 11, horizontal: "center" });
 
-    const moduleCell = getCell(worksheet, row, COL_OFFSET + 1);
+    const moduleCell = getCell(worksheet, row0, COL_OFFSET + 1);
     moduleCell.value = entry.moduleIndex;
-    applyDataCellStyle(moduleCell);
-
-    const subjectCell = getCell(worksheet, row, COL_OFFSET + 2);
-    subjectCell.value = entry.subjectName;
-    applyDataCellStyle(subjectCell, { horizontal: "left" });
-
-    const groupCell = getCell(worksheet, row, COL_OFFSET + 3);
-    groupCell.value = entry.groupName;
-    applyDataCellStyle(groupCell);
-
-    entry.dailyHours.forEach((hours, dayIndex) => {
-      const col = COL_OFFSET + 4 + dayIndex;
-      const cell = getCell(worksheet, row, col);
-      cell.value = hours;
-      applyDataCellStyle(cell, { numFmt: "0.0" });
+    applyTimesCellStyle(moduleCell, {
+      size: 11,
+      horizontal: "center",
+      vertical: "middle",
     });
 
-    const monthTotalCol = COL_OFFSET + 4 + entry.dailyHours.length;
+    const subjectCell = getCell(worksheet, row0, COL_OFFSET + 2);
+    subjectCell.value = entry.subjectName;
+    applyTimesCellStyle(subjectCell, {
+      size: 9,
+      horizontal: "left",
+      vertical: "middle",
+      wrapText: true,
+    });
 
-    const totalCell = getCell(worksheet, row, monthTotalCol);
+    const groupCell = getCell(worksheet, row0, COL_OFFSET + 3);
+    groupCell.value = entry.groupName;
+    applyTimesCellStyle(groupCell, { size: 11 });
+
+    entry.dailyHours.forEach((hours, dayIndex) => {
+      const col0 = COL_OFFSET + 4 + dayIndex; // F..AJ
+      const cell = getCell(worksheet, row0, col0);
+      cell.value = hours;
+      applyTimesCellStyle(cell, {
+        size: 11,
+        horizontal: "center",
+        vertical: "middle",
+      });
+    });
+
+    const monthTotalCol0 = COL_OFFSET + 4 + entry.dailyHours.length; // AK
+
+    const totalCell = getCell(worksheet, row0, monthTotalCol0);
     totalCell.value = entry.monthTotal;
-    applyTotalCellStyle(totalCell, false);
+    applyTimesCellStyle(totalCell, { size: 11, horizontal: "center" });
 
-    const summaryGroupCell = getCell(worksheet, row, monthTotalCol + 1);
+    const summaryGroupCell = getCell(worksheet, row0, monthTotalCol0 + 1); // AL
     summaryGroupCell.value = entry.groupName;
-    applyDataCellStyle(summaryGroupCell);
+    applyTimesCellStyle(summaryGroupCell, { size: 11 });
 
-    const summarySubjectCell = getCell(worksheet, row, monthTotalCol + 2);
-    summarySubjectCell.value = entry.subjectName;
-    applyDataCellStyle(summarySubjectCell, { horizontal: "left" });
+    const summarySubjectCell = getCell(worksheet, row0, monthTotalCol0 + 2); // AM
+    summarySubjectCell.value = combinedSubjectName;
+    applyTimesCellStyle(summarySubjectCell, {
+      size: 8,
+      horizontal: "left",
+      vertical: "middle",
+      wrapText: true,
+      indent: 1,
+    });
 
-    const plannedCell = getCell(worksheet, row, monthTotalCol + 3);
+    const plannedCell = getCell(worksheet, row0, monthTotalCol0 + 3); // AN
     plannedCell.value = entry.plannedHours;
-    applyDataCellStyle(plannedCell, { numFmt: "0.0" });
+    applyTimesCellStyle(plannedCell, {
+      size: 11,
+      horizontal: "center",
+      vertical: "middle",
+    });
 
-    const actualCell = getCell(worksheet, row, monthTotalCol + 4);
+    const actualCell = getCell(worksheet, row0, monthTotalCol0 + 4); // AO
     actualCell.value = entry.actualHours;
-    applyDataCellStyle(actualCell, { numFmt: "0.0" });
+    applyTimesCellStyle(actualCell, { size: 11, horizontal: "center" });
 
-    const cumulativeCell = getCell(worksheet, row, monthTotalCol + 5);
+    const cumulativeCell = getCell(worksheet, row0, monthTotalCol0 + 5); // AP
     cumulativeCell.value = entry.cumulativeHours;
-    applyDataCellStyle(cumulativeCell, { numFmt: "0.0" });
+    applyTimesCellStyle(cumulativeCell, { size: 11, horizontal: "center" });
 
-    const remainingCell = getCell(worksheet, row, monthTotalCol + 6);
+    const remainingCell = getCell(worksheet, row0, monthTotalCol0 + 6); // AQ
     remainingCell.value = entry.remainingHours;
-    applyDataCellStyle(remainingCell, { numFmt: "0.0" });
-    remainingCell.border = {
-      ...remainingCell.border,
-      right: { style: "medium", color: { argb: "FF000000" } },
-    };
+    applyTimesCellStyle(remainingCell, {
+      size: 11,
+      horizontal: "center",
+      vertical: "middle",
+    });
   });
 }
 
@@ -729,76 +794,103 @@ async function populateForm2(
     }
   }
 
-  const form2DataRow = form2HeaderRow + 1;
-  const form2ColRange = getColumnRange(worksheet);
-
-  const form2Templates = collectColumnTemplates(
-    worksheet,
-    form2HeaderRow,
-    form2ColRange.start,
-    form2ColRange.end
-  );
-
-  const clearEnd = form2DataRow + Math.max(payload.summaryEntries.length, 1);
-
-  for (let r = form2DataRow; r < clearEnd; r++) {
-    for (let c = form2ColRange.start; c <= form2ColRange.end; c++) {
-      setCell(worksheet, r, c, null, form2Templates);
-    }
-  }
+  const headerRow0 = form2HeaderRow - 1;
+  const dataStartRow0 = headerRow0 + 1;
 
   const COL_OFFSET = 1;
 
   payload.summaryEntries.forEach((entry, index) => {
-    const row = form2DataRow + index;
+    const row0 = dataStartRow0 + index;
 
     const combinedSubjectName = entry.moduleIndex
       ? `${entry.moduleIndex} ${entry.subjectName}`
       : entry.subjectName;
 
-    const groupCell = getCell(worksheet, row, COL_OFFSET + 0);
+    const groupCell = getCell(worksheet, row0, COL_OFFSET + 0);
     groupCell.value = entry.groupName;
-    applyDataCellStyle(groupCell);
+    applyTimesCellStyle(groupCell, { size: 11 });
 
-    const subjectCell = getCell(worksheet, row, COL_OFFSET + 1);
+    const subjectCell = getCell(worksheet, row0, COL_OFFSET + 1);
     subjectCell.value = combinedSubjectName;
-    applyDataCellStyle(subjectCell, { horizontal: "left" });
+    applyTimesCellStyle(subjectCell, {
+      size: 8,
+      horizontal: "left",
+      vertical: "middle",
+      wrapText: true,
+      indent: 1,
+    });
 
-    const plannedCell = getCell(worksheet, row, COL_OFFSET + 2);
+    const plannedCell = getCell(worksheet, row0, COL_OFFSET + 2);
     plannedCell.value = entry.plannedHours;
-    applyDataCellStyle(plannedCell, { numFmt: "0.0" });
+    applyTimesCellStyle(plannedCell, {
+      size: 11,
+      horizontal: "center",
+      vertical: "middle",
+    });
 
-    const actualCell = getCell(worksheet, row, COL_OFFSET + 3);
+    const actualCell = getCell(worksheet, row0, COL_OFFSET + 3);
     actualCell.value = entry.actualHours;
-    applyDataCellStyle(actualCell, { numFmt: "0.0" });
+    applyTimesCellStyle(actualCell, {
+      size: 11,
+      horizontal: "center",
+      vertical: "middle",
+    });
 
-    const facPlanCell = getCell(worksheet, row, COL_OFFSET + 4);
+    const facPlanCell = getCell(worksheet, row0, COL_OFFSET + 4);
     facPlanCell.value = entry.facultativePlanned || null;
-    applyDataCellStyle(facPlanCell, { numFmt: "0.0" });
+    applyTimesCellStyle(facPlanCell, {
+      size: 11,
+      horizontal: "center",
+      vertical: "middle",
+    });
 
-    const facActualCell = getCell(worksheet, row, COL_OFFSET + 5);
+    const facActualCell = getCell(worksheet, row0, COL_OFFSET + 5);
     facActualCell.value = entry.facultativeActual || null;
-    applyDataCellStyle(facActualCell, { numFmt: "0.0" });
+    applyTimesCellStyle(facActualCell, {
+      size: 11,
+      horizontal: "center",
+      vertical: "middle",
+    });
 
-    const consPlanCell = getCell(worksheet, row, COL_OFFSET + 6);
+    const consPlanCell = getCell(worksheet, row0, COL_OFFSET + 6);
     consPlanCell.value = entry.consultationsPlanned || null;
-    applyDataCellStyle(consPlanCell, { numFmt: "0.0" });
+    applyTimesCellStyle(consPlanCell, {
+      size: 11,
+      horizontal: "center",
+      vertical: "middle",
+    });
 
-    const consActualCell = getCell(worksheet, row, COL_OFFSET + 7);
+    const consActualCell = getCell(worksheet, row0, COL_OFFSET + 7);
     consActualCell.value = entry.consultationsActual || null;
-    applyDataCellStyle(consActualCell, { numFmt: "0.0" });
+    applyTimesCellStyle(consActualCell, {
+      size: 11,
+      horizontal: "center",
+      vertical: "middle",
+    });
 
-    const examsPlanCell = getCell(worksheet, row, COL_OFFSET + 8);
+    const examsPlanCell = getCell(worksheet, row0, COL_OFFSET + 8);
     examsPlanCell.value = entry.examsPlanned || null;
-    applyDataCellStyle(examsPlanCell, { numFmt: "0.0" });
+    applyTimesCellStyle(examsPlanCell, {
+      size: 11,
+      horizontal: "center",
+      vertical: "middle",
+    });
 
-    const examsActualCell = getCell(worksheet, row, COL_OFFSET + 9);
+    const examsActualCell = getCell(worksheet, row0, COL_OFFSET + 9);
     examsActualCell.value = entry.examsActual || null;
-    applyDataCellStyle(examsActualCell, { numFmt: "0.0" });
+    applyTimesCellStyle(examsActualCell, {
+      size: 11,
+      horizontal: "center",
+      vertical: "middle",
+    });
 
-    const totalCell = getCell(worksheet, row, COL_OFFSET + 10);
+    const totalCell = getCell(worksheet, row0, COL_OFFSET + 10);
     totalCell.value = entry.totalHours;
-    applyTotalCellStyle(totalCell, true);
+    applyTimesCellStyle(totalCell, {
+      size: 11,
+      horizontal: "center",
+      vertical: "middle",
+    });
   });
 }
 
@@ -811,32 +903,19 @@ async function populateForm3(
     ["қыркүйек", "сентябрь", "Итого", "Топтар"],
     30
   );
-  const form3DataRow = form3HeaderRow + 1;
-  const form3ColRange = getColumnRange(worksheet);
-
-  const form3Templates = collectColumnTemplates(
-    worksheet,
-    form3HeaderRow,
-    form3ColRange.start,
-    form3ColRange.end
-  );
-
-  const clearEnd = form3DataRow + Math.max(payload.monthlyDistribution.length, 1);
-
-  for (let r = form3DataRow; r < clearEnd; r++) {
-    for (let c = form3ColRange.start; c <= form3ColRange.end; c++) {
-      setCell(worksheet, r, c, null, form3Templates);
-    }
-  }
+  const headerRow0 = form3HeaderRow - 1;
+  const dataStartRow0 = headerRow0 + 1;
 
   const COL_OFFSET = 1;
 
   payload.monthlyDistribution.forEach((entry, index) => {
-    const row = form3DataRow + index;
+    const row0 = dataStartRow0 + index;
+    // Template rows use 15.25pt height for the data area.
+    worksheet.getRow(row0 + 1).height = 15.25;
 
-    const groupCell = getCell(worksheet, row, COL_OFFSET + 0);
+    const groupCell = getCell(worksheet, row0, COL_OFFSET + 0);
     groupCell.value = entry.groupName;
-    applyDataCellStyle(groupCell);
+    applyTimesCellStyle(groupCell, { size: 11, horizontal: "center" });
 
     const monthValues = [
       entry.september,
@@ -852,14 +931,18 @@ async function populateForm3(
     ];
 
     monthValues.forEach((value, idx) => {
-      const cell = getCell(worksheet, row, COL_OFFSET + 1 + idx);
+      const cell = getCell(worksheet, row0, COL_OFFSET + 1 + idx);
       cell.value = value;
-      applyDataCellStyle(cell, { numFmt: "0.0" });
+      applyTimesCellStyle(cell, { size: 12, horizontal: "center" });
     });
 
-    const totalCell = getCell(worksheet, row, COL_OFFSET + 11);
+    const totalCell = getCell(worksheet, row0, COL_OFFSET + 11);
     totalCell.value = entry.total;
-    applyTotalCellStyle(totalCell, true);
+    applyTimesCellStyle(totalCell, {
+      size: 11,
+      horizontal: "center",
+      vertical: "middle",
+    });
   });
 }
 
@@ -880,16 +963,58 @@ export async function exportTeacherWorkloadToExcel(
     throw new Error("Template sheets are missing");
   }
 
-  // Update text placeholders
-  updateCellWithText(form1Sheet, "Килаш", payload.teacherFullName, 30);
-  updateCellWithText(form1Sheet, "2024-2025", payload.academicYear, 30);
-  updateCellWithText(form1Sheet, "сентябрь", payload.month, 30);
+  // ==========================================================================
+  // Dynamic header fields
+  // ==========================================================================
 
-  updateCellWithText(form2Sheet, "Килаш", payload.teacherFullName, 60);
-  updateCellWithText(form2Sheet, "2024-2025", payload.academicYear, 30);
+  // Form 1
+  form1Sheet.getCell("B3").value = payload.institutionName;
+  form1Sheet.getCell("B5").value = `${payload.academicYear} оқу жылы/ за ${payload.academicYear} учебный год`;
+  form1Sheet.getCell("B6").value =
+    `Педагогтің тегі, аты, әкесінің аты /Фамилия, имя, отчество педагога  ${payload.teacherFullName}`;
+  form1Sheet.getCell("F8").value = {
+    richText: [
+      { text: "____________айы/Месяц " },
+      {
+        text: payload.month,
+        font: {
+          bold: true,
+          underline: true,
+          size: 12,
+          color: { indexed: 8 } as any,
+          name: TIMES_NEW_ROMAN,
+        },
+      },
+    ],
+  };
 
-  updateCellWithText(form3Sheet, "Килаш", payload.teacherFullName, 30);
-  updateCellWithText(form3Sheet, "2024-2025", payload.academicYear, 30);
+  // Form 3
+  form3Sheet.getCell("B5").value = payload.institutionName;
+  form3Sheet.getCell("B7").value =
+    `${payload.academicYear} оқу жылында педагог берген сағаттарды және (немесе) кредиттерді жылдық есепке алу/` +
+    `Годовой учет часов и (или) кредитов, проведенных педагогом  в ${payload.academicYear} учебном году`;
+  form3Sheet.getCell("B9").value =
+    `Педагогтің тегі, аты, әкесінің аты (болған жағдайда) (толық)/Фамилия, имя, отчество ${payload.teacherFullName}`;
+
+  const moduleList = (() => {
+    const seen = new Set<string>();
+    const items: string[] = [];
+    for (const entry of payload.summaryEntries) {
+      const moduleIndex = entry.moduleIndex?.trim();
+      const subjectName = entry.subjectName?.trim();
+      const combined = [moduleIndex, subjectName]
+        .filter(Boolean)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (!combined || seen.has(combined)) continue;
+      seen.add(combined);
+      items.push(combined);
+    }
+    return items.join(", ");
+  })();
+
+  form3Sheet.getCell("B12").value = moduleList;
 
   await populateForm1(form1Sheet, payload);
   await populateForm2(form2Sheet, payload);

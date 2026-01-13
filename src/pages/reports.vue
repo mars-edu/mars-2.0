@@ -344,9 +344,11 @@ async function generateWorkloadReport() {
 
     const payload: TeacherWorkloadExportPayload = {
       institutionName:
-        "Музыкалық колледж - дарынды балаларға арналған мамандандырылған мектеп-интернат",
+        `"Музыкалық колледж  - дарынды балаларға арналған музыкалық мектеп - интернат" Кешені ММ/ ГУ "Комплекс "Музыкальный колледж - музыкальная школа - интернат для одарённых детей"`,
       teacherFullName: teacher ? getTeacherFullName(teacher) : "Не указан",
-      academicYear: academicYear ? academicYear.name : "2024/2025",
+      academicYear: academicYear
+        ? `${academicYear.startYear}/${academicYear.endYear}`
+        : "2024/2025",
       month: reportMonthName,
       entries: entries,
       summaryEntries: summaryEntries,
@@ -366,7 +368,11 @@ async function generateWorkloadReport() {
       }
     }
 
-    const filename = `ООД_${teacher?.surname}_${academicYear?.name}_${periodForFilename}.xlsx`;
+    const academicYearForFilename = (academicYear?.name || payload.academicYear).replace(
+      /\//g,
+      "-"
+    );
+    const filename = `ООД_${teacher?.surname || "teacher"}_${academicYearForFilename}_${periodForFilename}.xlsx`;
 
     await exportTeacherWorkloadViaConvex(payload, filename);
 

@@ -139,7 +139,10 @@ export async function parseEducationalScheduleViaConvex(
   file: File
 ): Promise<any> {
   // Upload file to Convex storage first
-  const uploadUrl = await convex.mutation(api.files.mutations.generateUploadUrl);
+  const uploadUrl = await convex.mutation(
+    api.files.mutations.generateUploadUrl,
+    {}
+  );
   const uploadResponse = await fetch(uploadUrl, {
     method: "POST",
     headers: { "Content-Type": file.type || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
@@ -161,6 +164,41 @@ export async function parseEducationalScheduleViaConvex(
 }
 
 /**
+ * Parse KTP from Word (.docx) file via Convex action
+ */
+export async function parseKtpDocxTemplateViaConvex(file: File): Promise<any> {
+  // Upload file to Convex storage first
+  const uploadUrl = await convex.mutation(
+    api.files.mutations.generateUploadUrl,
+    {}
+  );
+  const uploadResponse = await fetch(uploadUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type":
+        file.type ||
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    },
+    body: file,
+  });
+
+  if (!uploadResponse.ok) {
+    throw new Error(`File upload failed: ${uploadResponse.statusText}`);
+  }
+
+  const { storageId: fileStorageId } = (await uploadResponse.json()) as {
+    storageId: Id<"_storage">;
+  };
+
+  const result = await convex.action(api.excel.actions.parseKtpDocxTemplate, {
+    fileStorageId,
+    fileName: file.name,
+  });
+
+  return result;
+}
+
+/**
  * Export KTP to Excel using template via Convex action
  */
 export async function exportKtpToExcelViaConvex(
@@ -174,7 +212,10 @@ export async function exportKtpToExcelViaConvex(
   const templateBlob = await response.blob();
 
   // Upload template to Convex storage
-  const uploadUrl = await convex.mutation(api.files.mutations.generateUploadUrl);
+  const uploadUrl = await convex.mutation(
+    api.files.mutations.generateUploadUrl,
+    {}
+  );
   const uploadResponse = await fetch(uploadUrl, {
     method: "POST",
     headers: { "Content-Type": templateBlob.type || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },

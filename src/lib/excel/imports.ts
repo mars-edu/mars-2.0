@@ -5,6 +5,7 @@
 
 import * as Excel from "exceljs/dist/exceljs.min.js";
 import type * as ExcelJS from "exceljs";
+import * as mammoth from "mammoth";
 
 // ============================================================================
 // Type Definitions
@@ -405,6 +406,49 @@ export async function importJournalFromBuffer(
   }
 }
 
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
+      String.fromCharCode(parseInt(hex, 16))
+    )
+    .replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)));
+}
+
+function stripHtml(html: string): string {
+  return decodeHtmlEntities(html.replace(/<[^>]*>/g, " "));
+}
+
+function normalizeText(value: string): string {
+  return value.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function parseHoursFromText(value: string): number | string {
+  const str = normalizeText(value);
+  if (!str) return 0;
+  const num = parseFloat(str.replace(",", "."));
+  return Number.isFinite(num) ? num : str;
+}
+
+function tableLooksLikeKtpTemplate(tableText: string): boolean {
+  const t = normalizeText(tableText).toLowerCase();
+  const signals = [
+    /№\s*занятия/i,
+    /сабақ\s*№/i,
+    /количество\s+часов/i,
+    /тип\s+занятий/i,
+    /домашнее\s+задание/i,
+    /примечание/i,
+  ];
+  const hits = signals.reduce((acc, re) => acc + (re.test(t) ? 1 : 0), 0);
+  return hits >= 2;
+}
+
 /**
  * Parse educational schedule from Excel buffer
  */
@@ -497,6 +541,104 @@ export async function parseEducationalScheduleFromBuffer(
   };
 
   return result;
+}
+
+/**
+ * Parse KTP template data from Word (.docx) buffer.
+ *
+ * Expects a table with columns similar to:
+ * № занятия | Тема | Часы | Тип занятий | Домашнее задание | Примечание
+ */
+export async function parseKtpDocxFromBuffer(
+  buffer: ArrayBuffer,
+  fileName: string
+): Promise<ParseResult> {
+  // Mammoth has different inputs for browser vs Node:
+  // - browser: { arrayBuffer }
+  // - node: { buffer }
+  // Convex actions run in Node, so prefer { buffer }.
+  const mammothInput =
+    typeof Buffer !== "undefined"
+      ? { buffer: Buffer.from(new Uint8Array(buffer)) }
+      : { arrayBuffer: buffer };
+
+  const { value: html } = await mammoth.convertToHtml(mammothInput as any);
+
+  const tables = html.match(/<table[\s\S]*?<\/table>/gi) || [];
+  if (!tables.length) {
+    throw new Error("No tables found in the Word document");
+  }
+
+  const tableHtml =
+    tables.find((t) => tableLooksLikeKtpTemplate(stripHtml(t))) ?? tables[0];
+  if (!tableHtml) {
+    throw new Error("No tables found in the Word document");
+  }
+
+  const rows = tableHtml.match(/<tr[\s\S]*?<\/tr>/gi) || [];
+  if (rows.length < 2) {
+    throw new Error("No data rows found in the Word table");
+  }
+
+  const headerRowIndex = rows.findIndex((row) =>
+    /№\s*занятия|сабақ/i.test(stripHtml(row))
+  );
+  const startIndex = headerRowIndex >= 0 ? headerRowIndex + 1 : 1;
+
+  const lessons: ParsedLesson[] = [];
+
+  for (const rowHtml of rows.slice(startIndex)) {
+    const cellMatches =
+      rowHtml.match(/<(td|th)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi) || [];
+    if (!cellMatches.length) continue;
+
+    const expanded: string[] = [];
+
+    for (const cellHtml of cellMatches) {
+      const attrs = cellHtml.match(/<(td|th)(\s[^>]*)?>/i)?.[2] || "";
+      const colspanMatch = attrs.match(/colspan\s*=\s*"?(\d+)"?/i);
+      const colspan = colspanMatch ? parseInt(colspanMatch[1], 10) : 1;
+
+      const inner =
+        cellHtml.match(/<(td|th)(\s[^>]*)?>([\s\S]*?)<\/\1>/i)?.[3] || "";
+      const cellText = normalizeText(stripHtml(inner));
+
+      for (let i = 0; i < Math.max(1, colspan); i++) {
+        expanded.push(cellText);
+      }
+    }
+
+    const numberMatch = (expanded[0] || "").match(/\d+/);
+    const lessonNumber = numberMatch ? parseInt(numberMatch[0], 10) : NaN;
+    if (!Number.isFinite(lessonNumber) || lessonNumber <= 0) continue;
+
+    const subject = expanded[1] || "";
+    const hours = parseHoursFromText(expanded[2] || "");
+    const lessonType = expanded[3] || "";
+    const homework = expanded[4] || "";
+    const notes = normalizeText(expanded.slice(5).filter(Boolean).join(" "));
+
+    lessons.push({
+      lessonNumber,
+      subject,
+      hours,
+      lessonType,
+      homework,
+      notes,
+    });
+  }
+
+  return {
+    metadata: {
+      fileName,
+      sheetName: "DOCX",
+      totalLessons: lessons.length,
+      headerRow: headerRowIndex,
+      headers: ["lessonNumber", "subject", "hours", "lessonType", "homework", "notes"],
+      parsedAt: new Date().toISOString(),
+    },
+    lessons,
+  };
 }
 
 /**
