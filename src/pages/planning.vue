@@ -168,11 +168,14 @@ const navigationTabs = [
 const weekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
 const selectedTeacherId = computed({
-  get: () => calendarStore.selectedTeacherId || "",
-  set: (value: string) => calendarStore.setSelectedTeacher(value || null),
+  get: () => calendarStore.selectedTeacherId || "all",
+  set: (value: string) => calendarStore.setSelectedTeacher(value === "all" ? null : value),
 });
 
-const teacherOptions = computed(() => teacherStore.teacherSelectOptions);
+const teacherOptions = computed(() => [
+  { value: "all", text: "Все" },
+  ...teacherStore.teacherSelectOptions,
+]);
 
 const effectiveTeacherId = computed(() => {
   if (userStore.isAdmin) {
