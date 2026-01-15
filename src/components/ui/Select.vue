@@ -289,8 +289,7 @@ const isOptionSelected = (option: SelectOption) => {
 }
 
 .smart-select-list-container .item-content .item-inner {
-  padding: 0.625rem 0.75rem;
-  padding-right: 2rem;
+  padding: 0.625rem 0.5rem;
   width: 100%;
   display: flex;
   justify-content: space-between;

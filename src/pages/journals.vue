@@ -41,7 +41,8 @@
                 :options="teacherOptions"
                 placeholder="Преподаватель:"
                 name="teacher"
-                class="w-full sm:w-44"
+                class="w-full sm:w-[250px]"
+                :searchable="true"
               />
             </div>
           </div>
@@ -472,11 +473,14 @@ const semesterOptions = computed(() => {
 });
 
 const selectedTeacherId = computed({
-  get: () => calendarStore.selectedTeacherId || "",
-  set: (value: string) => calendarStore.setSelectedTeacher(value || null),
+  get: () => calendarStore.selectedTeacherId || "all",
+  set: (value: string) => calendarStore.setSelectedTeacher(value === "all" ? null : value),
 });
 
-const teacherOptions = computed(() => teacherStore.teacherSelectOptions);
+const teacherOptions = computed(() => [
+  { value: "all", text: "Все" },
+  ...teacherStore.teacherSelectOptions,
+]);
 
 onMounted(async () => {
   console.log("\n\n");
@@ -625,9 +629,15 @@ const filteredJournalsByCourse = computed(() => {
         console.log(`      📆 Weekly Schedules: ${event.weeklySchedules?.length || 0}`);
         console.log(`      👨‍🏫 Event Teacher: ${event.teacherId || "(none)"}`);
 
-        if (teacherId && event.teacherId !== teacherId) {
-          console.log(`      ❌ FILTERED: Teacher mismatch`);
-          return false;
+        // Check teacher match - event.teacherId could be either teacher record ID or user ID
+        if (teacherId) {
+          const selectedTeacher = teacherStore.getTeacherById(teacherId);
+          const teacherUserId = selectedTeacher?.userId;
+          const isTeacherMatch = event.teacherId === teacherId || event.teacherId === teacherUserId;
+          if (!isTeacherMatch) {
+            console.log(`      ❌ FILTERED: Teacher mismatch`);
+            return false;
+          }
         }
 
         if (yearId && event.startDate) {
@@ -709,9 +719,15 @@ const filteredMixedGroupJournals = computed(() => {
     console.log(`      📆 Weekly Schedules: ${event.weeklySchedules?.length || 0}`);
     console.log(`      👨‍🏫 Event Teacher: ${event.teacherId || "(none)"}`);
 
-    if (teacherId && event.teacherId !== teacherId) {
-      console.log(`      ❌ FILTERED: Teacher mismatch`);
-      return false;
+    // Check teacher match - event.teacherId could be either teacher record ID or user ID
+    if (teacherId) {
+      const selectedTeacher = teacherStore.getTeacherById(teacherId);
+      const teacherUserId = selectedTeacher?.userId;
+      const isTeacherMatch = event.teacherId === teacherId || event.teacherId === teacherUserId;
+      if (!isTeacherMatch) {
+        console.log(`      ❌ FILTERED: Teacher mismatch`);
+        return false;
+      }
     }
 
     if (yearId && event.startDate) {
@@ -749,7 +765,13 @@ const filteredIndividualJournals = computed(() => {
 
     if (!event) return false;
 
-    if (teacherId && event.teacherId !== teacherId) return false;
+    // Check teacher match - event.teacherId could be either teacher record ID or user ID
+    if (teacherId) {
+      const selectedTeacher = teacherStore.getTeacherById(teacherId);
+      const teacherUserId = selectedTeacher?.userId;
+      const isTeacherMatch = event.teacherId === teacherId || event.teacherId === teacherUserId;
+      if (!isTeacherMatch) return false;
+    }
 
     if (semId && (!event.semester || event.semester !== semId)) return false;
 
