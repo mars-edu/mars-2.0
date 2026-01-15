@@ -192,11 +192,21 @@ const onPageMounted = () => {
   console.log("Planning page mounted");
 };
 
+watch(
+  () => teacherStore.teachers,
+  (teachers) => {
+    if (userStore.isTeacher && userStore.currentUser?.id && !calendarStore.selectedTeacherId) {
+      const teacher = teacherStore.getTeacherByUserId(userStore.currentUser.id);
+      if (teacher) {
+        calendarStore.setSelectedTeacher(teacher.id);
+      }
+    }
+  },
+  { immediate: true }
+);
+
 onMounted(() => {
   f7ready(() => {
-    if (userStore.isTeacher && userStore.currentUser?.id) {
-      calendarStore.setSelectedTeacher(userStore.currentUser.id);
-    }
   });
 });
 
