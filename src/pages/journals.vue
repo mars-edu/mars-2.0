@@ -406,6 +406,12 @@ import {
 } from "@/services/convex-excel-export";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
+import {
+  extractLessonDates,
+  formatAttendanceValue,
+  extractFinalGrade,
+  prepareJournalExportMetadata,
+} from "@/utils/journalExport";
 
 type JournalStudentRow = JournalExportParams["students"][number];
 
@@ -906,56 +912,22 @@ async function downloadSelectedJournals() {
       // Get marks structure from first student to determine columns (export ALL columns like JournalDetails)
       const firstStudentMarks = journalMarks?.studentMarks?.[0]?.marks || [];
 
-      // Build lessonDates from ALL columns (dates get formatted, sessions get their label)
-      const lessonDates: string[] = firstStudentMarks.map((mark) => {
-        if (mark.type === "date" && mark.isoDate) {
-          // Format date as DD.MM.YYYY for export
-          const parts = mark.isoDate.split("-");
-          if (parts.length === 3) {
-            return `${parts[2]}.${parts[1]}.${parts[0]}`;
-          }
-          return mark.isoDate;
-        }
-        // For session columns, use label (e.g., "РК1", "РК2", "Экз")
-        return mark.label || "";
-      });
+      // Use utility to extract lesson dates from marks template
+      const lessonDates = extractLessonDates(firstStudentMarks);
 
       // Build student rows with attendance data for ALL columns
       const studentRows: JournalStudentRow[] = (journal.students || []).map(
         (studentId) => {
           const studentMarks = marksStore.getStudentMarks(journalId, studentId) || [];
 
-          // Build attendance array from ALL marks (dates + sessions)
+          // Build attendance array from ALL marks using utility function
           const attendance: (string | number | null)[] = firstStudentMarks.map((_, markIndex) => {
             const mark = studentMarks[markIndex];
-            if (!mark) return "";
-
-            if (mark.type === "date") {
-              // Combine all values for the date (multiple lessons per day)
-              const combined = (mark.values || [])
-                .map((value) =>
-                  value === null || value === "" ? "" : String(value).trim()
-                )
-                .filter((value) => value.length > 0);
-              return combined.join(" / ");
-            }
-
-            // For session marks, just get the first value
-            const value = mark.values?.[0];
-            return value == null || value === "" ? "" : String(value);
+            return formatAttendanceValue(mark);
           });
 
-          // Get final grade from session marks (look for final control type)
-          let finalGrade: string | undefined;
-          const finalMark = studentMarks.find(
-            (m) => m.type === "session" && m.controlType === "final"
-          );
-          if (finalMark && finalMark.values?.[0]) {
-            const val = finalMark.values[0];
-            if (val !== null && val !== "") {
-              finalGrade = String(val);
-            }
-          }
+          // Extract final grade using utility function
+          const finalGrade = extractFinalGrade(studentMarks);
 
           return {
             id: studentId,
@@ -966,66 +938,41 @@ async function downloadSelectedJournals() {
         }
       );
 
-      const primaryStudentId = journal.students?.[0];
-      const primaryStudent = primaryStudentId
-        ? students.value.find((s) => s.id === primaryStudentId)
-        : undefined;
-      const specialty = primaryStudent?.specialty
-        ? specialtyStore.getSpecialtyByCode(primaryStudent.specialty)
-        : undefined;
-
+      // Prepare export metadata using shared utility
       const academicYearId = selectedItemsStore.selectedAcademicYearId;
       const academicYear = academicYearId
         ? academicYearStore.getAcademicYearById(academicYearId)
         : academicYearStore.getActiveAcademicYear;
 
-      const academicYearLabel = academicYear
-        ? `${academicYear.startYear}/${academicYear.endYear}`
-        : "";
+      const semesters = academicYear
+        ? academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(academicYear.id)
+        : [];
 
-      const teacherName = event?.teacherId
-        ? teacherStore.getTeacherFullName(event.teacherId)
-        : "";
-
-      const disciplineTitle = journalStore.getDisciplineTitle(journal);
-      const groupTitle = journalStore.getJournalTitle(journal);
-
-      // Get final control form from distribution entry
-      let finalControlForm: string | null = null;
-      const class9Item = class9Store.class9Items.find((c) => c.id === journal.disciplineId);
-      if (class9Item && academicYear) {
-        const semesters = academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(academicYear.id);
-        const semester = semesters.find((s) => s.semesterNumber === (event?.semester ?? 1));
-        if (semester) {
-          const distributionEntry = class9Item.distributionEntries.find(
-            (entry: DistributionEntry) => entry.academicYearId === academicYear.id && entry.semesterId === semester.id
-          );
-          if (distributionEntry?.finalControlId) {
-            // distributionEntry.finalControlId is ScheduledFinalControl.id, not FinalControl.id
-            const scheduledControl = scheduledFinalControlStore.getScheduledFinalControlById(distributionEntry.finalControlId);
-            if (scheduledControl) {
-              const finalControl = finalControlStore.getFinalControlById(scheduledControl.finalControlId);
-              finalControlForm = finalControl?.name ?? null;
-            }
-          }
-        }
-      }
-
-      const filename = `${disciplineTitle}_${groupTitle}`
-        .replace(/[^a-zA-Zа-яА-Я0-9_\-\.]/g, "_")
-        .concat(".xlsx");
+      const metadata = prepareJournalExportMetadata({
+        journal,
+        event,
+        students: students.value,
+        academicYear,
+        selectedAcademicYearId: academicYearId,
+        class9Items: class9Store.class9Items,
+        academicYearSemesters: semesters,
+        scheduledFinalControls: scheduledFinalControlStore.scheduledFinalControls,
+        finalControls: finalControlStore.finalControls,
+        getSpecialtyByCode: (code: string) => specialtyStore.getSpecialtyByCode(code),
+        getTeacherFullName: (id: string) => teacherStore.getTeacherFullName(id),
+        getDisciplineTitle: (j) => journalStore.getDisciplineTitle(j),
+        getJournalTitle: (j) => journalStore.getJournalTitle(j),
+      });
 
       journalsData.push({
-        filename,
-        groupName: groupTitle,
-        courseLabel: journal.courseNumber.toString(),
-        specialtyLabel: specialty
-          ? `${specialty.code} - ${specialty.name}`
-          : undefined,
-        academicYearLabel,
-        disciplineTitle,
-        teacherFullName: teacherName,
-        finalControlForm,
+        filename: metadata.filename,
+        groupName: metadata.groupName,
+        courseLabel: metadata.courseLabel,
+        specialtyLabel: metadata.specialtyLabel,
+        academicYearLabel: metadata.academicYearLabel,
+        disciplineTitle: metadata.disciplineTitle,
+        teacherFullName: metadata.teacherFullName,
+        finalControlForm: metadata.finalControlForm,
         students: studentRows,
         lessonDates,
       });
