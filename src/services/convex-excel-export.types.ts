@@ -55,17 +55,36 @@ export interface WorkloadExportParams {
   }>;
   monthlyDistribution: Array<{
     groupName: string;
-    september: number;
-    october: number;
-    november: number;
-    december: number;
-    january: number;
-    february: number;
-    march: number;
-    april: number;
-    may: number;
-    june: number;
+    monthlyHours: Record<string, number>;
     total: number;
+  }>;
+  months?: Array<{
+    key: string;
+    name: string;
+    year: number;
+    month: number;
+  }>;
+  /** Multi-month workload data for Form 1 */
+  allMonthsWorkload?: Array<{
+    monthInfo: {
+      key: string;
+      name: string;
+      year: number;
+      month: number;
+    };
+    entries: Array<{
+      rowNumber: number;
+      moduleIndex: string;
+      subjectName: string;
+      groupName: string;
+      dailyHours: (number | null)[];
+      monthTotal: number;
+      plannedHours: number;
+      actualHours: number;
+      cumulativeHours: number;
+      remainingHours: number;
+    }>;
+    totalHours: number;
   }>;
 }
 

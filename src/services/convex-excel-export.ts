@@ -29,6 +29,7 @@ export type {
   WorkloadEntry,
   WorkloadSummaryEntry,
   MonthlyDistributionEntry,
+  MonthInfo,
   TeacherWorkloadExportPayload,
 } from "@/lib/excel/workloadExport";
 

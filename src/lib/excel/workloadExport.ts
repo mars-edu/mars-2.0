@@ -328,12 +328,10 @@ function createForm1Sheet(workbook: ExcelJS.Workbook): void {
   const dayFont = { name: "Times New Roman", size: 11, color: THEME_BLACK };
   const dayAlignment = { horizontal: "center" as const };
 
-  // Match the provided template: day numbers shown for 1..30; the 31st day column
-  // exists (so totals can include it) but the header cell is left blank.
   for (let day = 1; day <= 31; day++) {
     const colIndex = 5 + day;
     const cell = sheet.getCell(9, colIndex);
-    cell.value = day <= 30 ? day : null;
+    cell.value = day;
     cell.font = dayFont;
     cell.alignment = dayAlignment;
     cell.border = THIN_BORDER;
@@ -366,22 +364,13 @@ function createForm2Sheet(workbook: ExcelJS.Workbook): void {
         right: 0.7,
         top: 0.75,
         bottom: 0.75,
-        // Matches the provided XLS template (≈13mm).
-        header: 0.511811023622047,
-        footer: 0.511811023622047,
+        header: 0.3,
+        footer: 0.3,
       },
     },
     properties: {
-      defaultRowHeight: 14.4,
-      defaultColWidth: 8.96484375,
+      defaultRowHeight: 15,
     },
-    views: [
-      {
-        showGridLines: true,
-        showRowColHeaders: true,
-        zoomScale: 70,
-      },
-    ],
   });
 
   // Set column widths
@@ -404,44 +393,10 @@ function createForm2Sheet(workbook: ExcelJS.Workbook): void {
   sheet.mergeCells("B1:L1");
 
   const headerFont = { name: TIMES_NEW_ROMAN, size: 10, bold: true, color: THEME_BLACK };
-  // Match the provided XLS template row heights (non-default only).
-  const TEMPLATE_ROW_HEIGHTS: Record<number, number> = {
-    1: 15,
-    3: 21.75,
-    4: 27.75,
-    5: 26.4,
-    6: 13.8,
-    7: 17.25,
-    8: 16.5,
-    9: 29.25,
-    10: 20.4,
-    11: 27,
-    12: 13.5,
-    13: 18,
-    14: 20.4,
-    21: 45.75,
-    22: 30,
-    23: 20.4,
-    25: 21,
-    26: 25.8,
-    27: 29.25,
-    28: 24.6,
-    29: 39.75,
-    30: 15.75,
-    41: 24,
-    42: 24,
-    43: 24,
-    44: 24,
-    48: 24,
-    49: 24,
-    50: 24,
-    53: 24,
-    55: 46.5,
-    56: 24.75,
-  };
-  for (const [rowStr, height] of Object.entries(TEMPLATE_ROW_HEIGHTS)) {
-    sheet.getRow(Number(rowStr)).height = height;
-  }
+  sheet.getRow(3).height = 21.75;
+  sheet.getRow(4).height = 27.75;
+  sheet.getRow(5).height = 25.55;
+  sheet.getRow(6).height = 14.15;
 
   const b3 = sheet.getCell("B3");
   b3.value = "Оқу тобының №, студенттің аты-жөні/             № учебной группы/ ФИО студента";
@@ -525,40 +480,6 @@ function createForm2Sheet(workbook: ExcelJS.Workbook): void {
     cell.alignment = { horizontal: "center", vertical: "middle" };
     cell.border = THIN_BORDER;
   }
-
-  // Signature block (matches the provided XLS template).
-  sheet.mergeCells("B55:C55");
-  sheet.mergeCells("E55:J55");
-
-  const b55 = sheet.getCell("B55");
-  b55.value =
-    "Педагогтің тегі, аты, әкесінің аты (бар болған жағдайда) (толық)\n\n" +
-    "Фамилия, имя, отчество (при его наличии) педагога (полностью)";
-  b55.font = { name: TIMES_NEW_ROMAN, size: 11, color: THEME_BLACK };
-  b55.alignment = { horizontal: "center", vertical: "top", wrapText: true };
-
-  const e55 = sheet.getCell("E55");
-  e55.value = ""; // filled dynamically at export time
-  e55.font = {
-    name: TIMES_NEW_ROMAN,
-    size: 11,
-    color: THEME_BLACK,
-    underline: "single",
-  };
-  e55.alignment = { horizontal: "center", vertical: "middle" };
-
-  const b56 = sheet.getCell("B56");
-  b56.value = "_______________________________________________________________ (қолы/подпись)";
-  b56.font = { name: TIMES_NEW_ROMAN, size: 11, color: THEME_BLACK };
-
-  const b58 = sheet.getCell("B58");
-  b58.value = "Тексерілді/Проверено ___________________________________________________";
-  b58.font = { name: TIMES_NEW_ROMAN, size: 11, color: THEME_BLACK };
-
-  const b60 = sheet.getCell("B60");
-  b60.value =
-    "Басшының оқу жұмысы жөніндегі орынбасары/Заместитель руководителя по учебной работе _____________________";
-  b60.font = { name: TIMES_NEW_ROMAN, size: 11, color: THEME_BLACK };
 }
 
 function createForm3Sheet(workbook: ExcelJS.Workbook): void {
@@ -761,11 +682,8 @@ async function populateForm1(
 
   const COL_OFFSET = 1; // Column B (0-based)
 
-  const DAYS_IN_TEMPLATE = 31;
-
   payload.entries.forEach((entry, index) => {
     const row0 = dataStartRow0 + index;
-    const excelRow = row0 + 1; // Excel rows are 1-based
 
     const combinedSubjectName = entry.moduleIndex
       ? `${entry.moduleIndex} ${entry.subjectName}`.trim()
@@ -796,9 +714,9 @@ async function populateForm1(
     groupCell.value = entry.groupName;
     applyTimesCellStyle(groupCell, { size: 11 });
 
-    for (let dayIndex = 0; dayIndex < DAYS_IN_TEMPLATE; dayIndex++) {
-      const hours = entry.dailyHours[dayIndex] ?? null;
-      const col0 = COL_OFFSET + 4 + dayIndex; // F..AJ (always 31 columns)
+    const nonNullDays: Array<{ day:number, hours:number }> = [];
+    entry.dailyHours.forEach((hours, dayIndex) => {
+      const col0 = COL_OFFSET + 4 + dayIndex; // F..AJ
       const cell = getCell(worksheet, row0, col0);
       cell.value = hours;
       applyTimesCellStyle(cell, {
@@ -806,17 +724,19 @@ async function populateForm1(
         horizontal: "center",
         vertical: "middle",
       });
+      if (hours !== null && hours !== 0) nonNullDays.push({ day: dayIndex + 1, hours });
+    });
+
+    if (nonNullDays.length > 0) {
+      console.log(`[populateForm1MultiMonth] Entry ${entry.rowNumber} (${entry.groupName} - ${entry.subjectName}) non-null days:`, nonNullDays);
+    } else {
+      console.log(`[populateForm1MultiMonth] Entry ${entry.rowNumber} (${entry.groupName} - ${entry.subjectName}) has no marked days`);
     }
 
-    const monthTotalCol0 = COL_OFFSET + 4 + DAYS_IN_TEMPLATE; // AK
+    const monthTotalCol0 = COL_OFFSET + 4 + entry.dailyHours.length; // AK
 
     const totalCell = getCell(worksheet, row0, monthTotalCol0);
-    // Match template: month total is a SUM formula over day columns.
-    // Template sums G..AJ (leaves F out), so keep it consistent here.
-    totalCell.value = {
-      formula: `SUM(G${excelRow}:AJ${excelRow})`,
-      result: entry.monthTotal,
-    };
+    totalCell.value = entry.monthTotal;
     applyTimesCellStyle(totalCell, { size: 11, horizontal: "center" });
 
     const summaryGroupCell = getCell(worksheet, row0, monthTotalCol0 + 1); // AL
@@ -889,7 +809,6 @@ async function populateForm2(
 
   payload.summaryEntries.forEach((entry, index) => {
     const row0 = dataStartRow0 + index;
-    const excelRow = row0 + 1; // Excel rows are 1-based
 
     const combinedSubjectName = entry.moduleIndex
       ? `${entry.moduleIndex} ${entry.subjectName}`
@@ -974,16 +893,7 @@ async function populateForm2(
     });
 
     const totalCell = getCell(worksheet, row0, COL_OFFSET + 10);
-    // Match XLS template: total = E + G + I + K (fact columns).
-    const computedTotal =
-      (entry.actualHours || 0) +
-      (entry.facultativeActual || 0) +
-      (entry.consultationsActual || 0) +
-      (entry.examsActual || 0);
-    totalCell.value = {
-      formula: `SUM(E${excelRow}+G${excelRow}+I${excelRow}+K${excelRow})`,
-      result: computedTotal,
-    };
+    totalCell.value = entry.totalHours;
     applyTimesCellStyle(totalCell, {
       size: 11,
       horizontal: "center",
@@ -1093,9 +1003,6 @@ export async function exportTeacherWorkloadToExcel(
     `Годовой учет часов и (или) кредитов, проведенных педагогом  в ${payload.academicYear} учебном году`;
   form3Sheet.getCell("B9").value =
     `Педагогтің тегі, аты, әкесінің аты (болған жағдайда) (толық)/Фамилия, имя, отчество ${payload.teacherFullName}`;
-
-  // Form 2 (signature block)
-  form2Sheet.getCell("E55").value = payload.teacherFullName;
 
   const moduleList = (() => {
     const seen = new Set<string>();

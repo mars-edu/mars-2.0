@@ -469,7 +469,6 @@ import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { storeToRefs } from "pinia";
-import { f7Accordion } from "framework7-vue";
 import { useLanguageStore } from "@/stores/languageStore";
 import { useStudentStore } from "@/stores/studentStore";
 import { useJournalStore } from "@/stores/journalStore";
@@ -531,11 +530,6 @@ const clearReportPreview = () => {
   emptyDisciplineToast = null;
 };
 
-const reportTypeOptions = [
-  { value: "student-performance", text: "Успеваемость обучающихся" },
-  { value: "attendance", text: "Посещаемость" },
-  { value: "grades", text: "Оценки" },
-];
 
 const reportCategoryOptions = computed(() => {
   const options: Array<{ value: string; text: string }> = [
@@ -696,24 +690,6 @@ const reportFinalForms = computed(() =>
   }))
 );
 
-const reportDisciplineGroupsSemester = computed(() =>
-  getDisciplinesForSemester.value.map((d) => ({ id: d.id, title: d.title }))
-);
-
-const reportDisciplineGroupsWithoutFinal = computed(() =>
-  getDisciplinesForWithoutFinal.value.map((d) => ({ id: d.id, title: d.title }))
-);
-
-const reportDisciplineGroupsByForm = computed(() => {
-  const result: Record<string, Array<{ id: string; title: string }>> = {};
-  sortedFinalControls.value.forEach((form) => {
-    result[form.id] = getDisciplinesForFinalForm(form.id).map((d) => ({
-      id: d.id,
-      title: d.title,
-    }));
-  });
-  return result;
-});
 
 const getDisciplinesForSemester = computed(() => {
   const hasData = new Set<string>();

@@ -115,6 +115,8 @@ import {
   generateDailyWorkload,
   generateWorkloadSummary,
   generateMonthlyDistribution,
+  computeMonthsFromSemesters,
+  generateAllMonthsWorkload,
 } from "@/services/teacher-workload-calculator";
 
 const activeNavItem = ref("reports");
@@ -259,56 +261,22 @@ async function generateWorkloadReport() {
     // Get all class9 items
     const class9Items = class9Store.class9Items;
 
-    // For Form 1 (daily workload), intelligently select month based on semester selection
-    // Month is 0-indexed in JavaScript (0 = January, 8 = September, etc.)
-    let reportMonth: number;
-    let reportYear: number;
+    // Compute months from semester date ranges first
+    const semesterMonths = computeMonthsFromSemesters(availableSemesters.value);
 
     console.log('[Reports] Semester selection:', selectedPeriod.value);
     console.log('[Reports] Academic year:', academicYear?.name);
+    console.log('[Reports] Computed semester months:', semesterMonths.map(m => `${m.key}(${m.year})`).join(', '));
 
-    if (selectedPeriod.value === "full_year") {
-      // Full year: use current month if in academic year (Sept-June), else September
-      const now = new Date();
-      const currentMonth = now.getMonth();
-      reportYear = academicYear?.startYear || now.getFullYear();
-
-      // Academic year is Sept (8) through June (5 of next year)
-      // If current month is Sept-Dec (8-11) or Jan-June (0-5), use it; else default to Sept
-      if (currentMonth >= 8 || currentMonth <= 5) {
-        reportMonth = currentMonth;
-        // Adjust year if we're in Jan-June (it's the next calendar year)
-        if (currentMonth <= 5) {
-          reportYear = reportYear + 1;
-        }
-      } else {
-        reportMonth = 8; // September
-      }
-    } else {
-      // Semester selected: use first month of semester or current month if within semester range
-      if (!filterStartDate || !filterEndDate) {
-        // Fallback to September if dates are missing
-        reportMonth = 8;
-        reportYear = academicYear?.startYear || new Date().getFullYear();
-      } else {
-        const semesterStartMonth = filterStartDate.getMonth();
-        const semesterEndMonth = filterEndDate.getMonth();
-        reportYear = filterStartDate.getFullYear();
-
-        const now = new Date();
-        const currentMonth = now.getMonth();
-
-        // Use current month if it falls within the semester range
-        if (currentMonth >= semesterStartMonth && currentMonth <= semesterEndMonth) {
-          reportMonth = currentMonth;
-          // Adjust year if current date year matches semester end year
-          reportYear = now.getFullYear();
-        } else {
-          // Use first month of semester as default
-          reportMonth = semesterStartMonth;
-        }
-      }
+    if (semesterMonths.length === 0) {
+      throw new Error("Не удалось вычислить месяцы из семестров. Проверьте настройки дат семестров для учебного года.");
     }
+
+    // For Form 1 (daily workload), use the first month from semester date ranges
+    const firstMonth = semesterMonths[0];
+    const reportMonth = firstMonth.month;
+    const reportYear = firstMonth.year;
+    console.log(`[Reports] Using first semester month: ${firstMonth.key} (month=${reportMonth}, year=${reportYear})`);
 
     const monthNamesEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     console.log(`[Reports] Report month selected: ${reportMonth} (${monthNamesEn[reportMonth]}), year: ${reportYear}`);
@@ -351,8 +319,20 @@ async function generateWorkloadReport() {
       filterEndDate
     );
 
-    const monthlyDistribution: MonthlyDistributionEntry[] =
-      generateMonthlyDistribution(teacherEvents, class9Items, enrichedStudents, academicYear);
+    const { distributions: monthlyDistribution, months: reportMonths } =
+      generateMonthlyDistribution(teacherEvents, class9Items, enrichedStudents, availableSemesters.value);
+
+    // Generate workload data for all months (Form 1 multi-month structure)
+    const allMonthsWorkload = generateAllMonthsWorkload(
+      teacherEvents,
+      class9Items,
+      enrichedStudents,
+      availableSemesters.value,
+      allJournals,
+      marksStore.journalMarks
+    );
+
+    console.log('[Reports] All months workload generated:', allMonthsWorkload.length, 'months');
 
     let periodLabel = "за весь учебный год";
     if (selectedPeriod.value !== "full_year") {
@@ -382,6 +362,8 @@ async function generateWorkloadReport() {
       entries: entries,
       summaryEntries: summaryEntries,
       monthlyDistribution: monthlyDistribution,
+      months: reportMonths,
+      allMonthsWorkload: allMonthsWorkload,
     };
 
     let periodForFilename = "весь_год";

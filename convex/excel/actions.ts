@@ -25,6 +25,8 @@ import {
   type WorkloadEntry,
   type WorkloadSummaryEntry,
   type MonthlyDistributionEntry,
+  type MonthInfo,
+  type MonthWorkloadData,
 } from "../../src/lib/excel/workloadExport";
 
 import {
@@ -137,18 +139,46 @@ export const exportTeacherWorkload = action({
     monthlyDistribution: v.array(
       v.object({
         groupName: v.string(),
-        september: v.number(),
-        october: v.number(),
-        november: v.number(),
-        december: v.number(),
-        january: v.number(),
-        february: v.number(),
-        march: v.number(),
-        april: v.number(),
-        may: v.number(),
-        june: v.number(),
+        monthlyHours: v.record(v.string(), v.number()),
         total: v.number(),
       })
+    ),
+    months: v.optional(
+      v.array(
+        v.object({
+          key: v.string(),
+          name: v.string(),
+          year: v.number(),
+          month: v.number(),
+        })
+      )
+    ),
+    allMonthsWorkload: v.optional(
+      v.array(
+        v.object({
+          monthInfo: v.object({
+            key: v.string(),
+            name: v.string(),
+            year: v.number(),
+            month: v.number(),
+          }),
+          entries: v.array(
+            v.object({
+              rowNumber: v.number(),
+              moduleIndex: v.string(),
+              subjectName: v.string(),
+              groupName: v.string(),
+              dailyHours: v.array(v.union(v.number(), v.null())),
+              monthTotal: v.number(),
+              plannedHours: v.number(),
+              actualHours: v.number(),
+              cumulativeHours: v.number(),
+              remainingHours: v.number(),
+            })
+          ),
+          totalHours: v.number(),
+        })
+      )
     ),
   },
   handler: async (ctx, args): Promise<Id<"_storage">> => {
@@ -160,6 +190,8 @@ export const exportTeacherWorkload = action({
       entries: args.entries as WorkloadEntry[],
       summaryEntries: args.summaryEntries as WorkloadSummaryEntry[],
       monthlyDistribution: args.monthlyDistribution as MonthlyDistributionEntry[],
+      months: args.months,
+      allMonthsWorkload: args.allMonthsWorkload as MonthWorkloadData[] | undefined,
     };
 
     const buffer = await exportTeacherWorkloadToExcel(payload);
