@@ -25,7 +25,6 @@ import {
   type WorkloadEntry,
   type WorkloadSummaryEntry,
   type MonthlyDistributionEntry,
-  type MonthInfo,
   type MonthWorkloadData,
 } from "../../src/lib/excel/workloadExport";
 
@@ -182,6 +181,23 @@ export const exportTeacherWorkload = action({
     ),
   },
   handler: async (ctx, args): Promise<Id<"_storage">> => {
+    const monthlyDistribution: MonthlyDistributionEntry[] = args.monthlyDistribution.map(
+      (entry) => ({
+        groupName: entry.groupName,
+        september: entry.monthlyHours.september ?? 0,
+        october: entry.monthlyHours.october ?? 0,
+        november: entry.monthlyHours.november ?? 0,
+        december: entry.monthlyHours.december ?? 0,
+        january: entry.monthlyHours.january ?? 0,
+        february: entry.monthlyHours.february ?? 0,
+        march: entry.monthlyHours.march ?? 0,
+        april: entry.monthlyHours.april ?? 0,
+        may: entry.monthlyHours.may ?? 0,
+        june: entry.monthlyHours.june ?? 0,
+        total: entry.total,
+      })
+    );
+
     const payload: TeacherWorkloadExportPayload = {
       institutionName: args.institutionName,
       teacherFullName: args.teacherFullName,
@@ -189,7 +205,7 @@ export const exportTeacherWorkload = action({
       month: args.month,
       entries: args.entries as WorkloadEntry[],
       summaryEntries: args.summaryEntries as WorkloadSummaryEntry[],
-      monthlyDistribution: args.monthlyDistribution as MonthlyDistributionEntry[],
+      monthlyDistribution,
       months: args.months,
       allMonthsWorkload: args.allMonthsWorkload as MonthWorkloadData[] | undefined,
     };
