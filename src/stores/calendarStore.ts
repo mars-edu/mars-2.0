@@ -3,10 +3,9 @@ import { ref, computed, watch } from "vue";
 import { useClass9Store } from "./class9Store";
 import { useKtpStore } from "./ktpStore";
 import { useAcademicYearSemesterStore } from "./academicYearSemesterStore";
-import { useTeacherStore } from "./teacherStore";
+import { useUserStore } from "./userStore";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
-import { useConvexQuery } from "convex-vue";
 
 export interface WeeklySchedule {
   weekId: number;
@@ -52,66 +51,76 @@ export const useCalendarStore = defineStore(
     const error = ref<string | null>(null);
     const selectedTeacherId = ref<string | null>(null);
 
-    const teacherStore = useTeacherStore();
+    const userStore = useUserStore();
 
-    // Reactive query args that update when selectedTeacherId changes
-    const queryArgs = computed(() => {
-      if (!selectedTeacherId.value) {
-        return {};
+    /**
+     * Fetch events from the backend with JWT-based role access control.
+     * The backend validates the JWT token and enforces role-based filtering:
+     * - Admins can see all events or filter by selectedTeacherId
+     * - Teachers can only see their own events (enforced by backend)
+     */
+    async function fetchEventsWithRoleAccess() {
+      const token = userStore.token;
+      if (!token) {
+        events.value = [];
+        return;
       }
-      const teacher = teacherStore.getTeacherById(selectedTeacherId.value);
-      return {
-        teacherId: selectedTeacherId.value,
-        teacherUserId: teacher?.userId,
-      };
-    });
 
-    // Reactive subscription to Convex with teacher filter
-    const { data: convexEvents } = useConvexQuery(
-      api.calendarEvents.queries.list,
-      queryArgs
+      loading.value = true;
+      try {
+        const data = await convex.action(api.calendarEvents.queries.listWithRoleAccess, {
+          token,
+          selectedTeacherId: selectedTeacherId.value,
+        });
+
+        console.log("[calendarStore] Fetched events with role access:", {
+          eventsCount: data.length,
+          firstEventSettings: data[0]?.journalSettings,
+        });
+
+        events.value = data.map((event: any) => ({
+          id: event._id,
+          class9Id: event.class9Id,
+          ktpId: event.ktpId,
+          teacherId: event.teacherId,
+          startDate: event.startDate,
+          startTime: event.startTime,
+          endDate: event.endDate,
+          endTime: event.endTime,
+          participants: event.participants,
+          color: event.color,
+          semester: event.semester,
+          useCustomPeriod: event.useCustomPeriod,
+          weeklySchedules: event.weeklySchedules,
+          isIndividualJournal: event.isIndividualJournal,
+          mergedJournalIds: event.mergedJournalIds,
+          parentIndividualJournalId: event.parentIndividualJournalId,
+          isClosed: event.isClosed,
+          journalSettings: event.journalSettings,
+          createdAt: new Date(event.createdAt),
+          updatedAt: new Date(event.updatedAt),
+        }));
+        error.value = null;
+      } catch (err) {
+        console.error("[calendarStore] Failed to fetch events:", err);
+        error.value = err instanceof Error ? err.message : "Failed to fetch events";
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    // Watch for changes that should trigger a refetch
+    watch(
+      [() => userStore.token, () => userStore.isAuthenticated, selectedTeacherId],
+      ([token, isAuthenticated]) => {
+        if (token && isAuthenticated) {
+          fetchEventsWithRoleAccess();
+        } else {
+          events.value = [];
+        }
+      },
+      { immediate: true }
     );
-
-    watch(convexEvents, (newData) => {
-      if (newData) {
-        console.log("[calendarStore] Reactive subscription update:", {
-          eventsCount: newData.length,
-          firstEventSettings: newData[0]?.journalSettings,
-          firstEventKeys: newData[0] ? Object.keys(newData[0]) : [],
-          firstEventFull: newData[0],
-        });
-        events.value = newData.map((event) => {
-          console.log("[calendarStore] Mapping event:", {
-            id: event._id,
-            hasJournalSettings: 'journalSettings' in event,
-            journalSettings: event.journalSettings,
-            eventKeys: Object.keys(event),
-          });
-          return {
-            id: event._id,
-            class9Id: event.class9Id,
-            ktpId: event.ktpId,
-            teacherId: event.teacherId,
-            startDate: event.startDate,
-            startTime: event.startTime,
-            endDate: event.endDate,
-            endTime: event.endTime,
-            participants: event.participants,
-            color: event.color,
-            semester: event.semester,
-            useCustomPeriod: event.useCustomPeriod,
-            weeklySchedules: event.weeklySchedules,
-            isIndividualJournal: event.isIndividualJournal,
-            mergedJournalIds: event.mergedJournalIds,
-            parentIndividualJournalId: event.parentIndividualJournalId,
-            isClosed: event.isClosed,
-            journalSettings: event.journalSettings,
-            createdAt: new Date(event.createdAt),
-            updatedAt: new Date(event.updatedAt),
-          };
-        });
-      }
-    });
 
     const getEventById = computed(() => {
       return (id: string) => events.value.find((e) => e.id === id);
@@ -203,7 +212,8 @@ export const useCalendarStore = defineStore(
             createdAt: new Date(created.createdAt),
             updatedAt: new Date(created.updatedAt),
           };
-          // Don't push to events.value - the reactive subscription will handle it
+          // Refresh events list after adding
+          await fetchEventsWithRoleAccess();
           error.value = null;
           return mapped;
         }
@@ -308,7 +318,8 @@ export const useCalendarStore = defineStore(
             createdAt: new Date(updated.createdAt),
             updatedAt: new Date(updated.updatedAt),
           };
-          // Don't update events.value - the reactive subscription will handle it
+          // Refresh events list after updating
+          await fetchEventsWithRoleAccess();
           error.value = null;
           return mapped;
         }
@@ -324,11 +335,11 @@ export const useCalendarStore = defineStore(
     async function deleteEvent(id: string) {
       loading.value = true;
       try {
-        // Use Convex - the reactive subscription will handle updating the local state
         await convex.mutation(api.calendarEvents.mutations.remove, {
           id: id as any,
         });
-        // Don't filter events.value - the reactive subscription will handle it
+        // Refresh events list after deleting
+        await fetchEventsWithRoleAccess();
         error.value = null;
       } catch (err) {
         error.value =
@@ -403,6 +414,7 @@ export const useCalendarStore = defineStore(
       updateEvent,
       deleteEvent,
       loadFromBackend,
+      fetchEventsWithRoleAccess,
       setSelectedTeacher,
       clearError,
       reset,

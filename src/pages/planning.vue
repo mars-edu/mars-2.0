@@ -91,7 +91,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed, watch, nextTick } from "vue";
+import { onMounted, ref, computed, nextTick } from "vue";
 import { f7, f7ready, f7Page, f7PageContent } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import { useCalendar } from "@/composables/useCalendar";
@@ -116,8 +116,6 @@ const selectedEventId = ref<string | null>(null);
 const calendarStore = useCalendarStore();
 const userStore = useUserStore();
 const teacherStore = useTeacherStore();
-
-// Sidebar is always visible; hover/teleport behavior removed
 
 const {
   year,
@@ -177,15 +175,10 @@ const teacherOptions = computed(() => [
   ...teacherStore.teacherSelectOptions,
 ]);
 
-const effectiveTeacherId = computed(() => {
-  if (userStore.isAdmin) {
-    return calendarStore.selectedTeacherId || undefined;
-  }
-  if (userStore.isTeacher) {
-    return userStore.currentUser?.id;
-  }
-  return undefined;
-});
+// Note: Role-based event filtering is now handled entirely by the Convex backend.
+// - Admins can see all events or filter by selectedTeacherId using the dropdown
+// - Teachers automatically see only their own events (enforced by backend)
+// The effectiveTeacherId computed is no longer needed as the backend handles this logic.
 
 const onPageInit = () => {
   console.log("Planning page initialized");
@@ -194,19 +187,6 @@ const onPageInit = () => {
 const onPageMounted = () => {
   console.log("Planning page mounted");
 };
-
-watch(
-  () => teacherStore.teachers,
-  (teachers) => {
-    if (userStore.isTeacher && userStore.currentUser?.id && !calendarStore.selectedTeacherId) {
-      const teacher = teacherStore.getTeacherByUserId(userStore.currentUser.id);
-      if (teacher) {
-        calendarStore.setSelectedTeacher(teacher.id);
-      }
-    }
-  },
-  { immediate: true }
-);
 
 onMounted(() => {
   f7ready(() => {
