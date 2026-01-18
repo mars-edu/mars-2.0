@@ -3,8 +3,7 @@
  *
  * Convex actions for generating and parsing Excel files on the backend.
  *
- * Uses the ExcelJS "dist" bundle to avoid Convex local bundling issues:
- * https://github.com/exceljs/exceljs/issues/348
+ * Runs Excel parsing/generation on the backend to keep ExcelJS out of the frontend bundle.
  */
 
 "use node";
@@ -15,34 +14,41 @@ import { v } from "convex/values";
 
 import {
   exportJournalToExcel,
-  type JournalExportPayload,
-  type JournalStudentRow,
-} from "../../src/lib/excel/journalExport";
+} from "./lib/journalExport";
+import type {
+  JournalExportPayload,
+  JournalStudentRow,
+} from "../../src/lib/excel/journalExport.types";
 
 import {
   exportTeacherWorkloadToExcel,
-  type TeacherWorkloadExportPayload,
-  type WorkloadEntry,
-  type WorkloadSummaryEntry,
-  type MonthlyDistributionEntry,
-  type MonthWorkloadData,
-} from "../../src/lib/excel/workloadExport";
+} from "./lib/workloadExport";
+import type {
+  TeacherWorkloadExportPayload,
+  WorkloadEntry,
+  WorkloadSummaryEntry,
+  MonthlyDistributionEntry,
+  MonthWorkloadData,
+} from "../../src/lib/excel/workloadExport.types";
 
 import {
   exportAnalyticsToExcel,
-  type AnalyticsExportPayload,
-  type CourseGroup,
-  type FinalControlForm,
-} from "../../src/lib/excel/analyticsExport";
+} from "./lib/analyticsExport";
+import type {
+  AnalyticsExportPayload,
+  CourseGroup,
+  FinalControlForm,
+} from "../../src/lib/excel/analyticsExport.types";
 
 import {
   exportKtpToExcelFromTemplate,
   importJournalFromBuffer,
   parseEducationalScheduleFromBuffer,
-  parseKtpDocxFromBuffer,
-  type JournalImportSummary,
-  type ParseResult,
-} from "../../src/lib/excel/imports";
+} from "./lib/imports";
+import type {
+  JournalImportSummary,
+  ParseResult,
+} from "../../src/lib/excel/imports.types";
 
 // ============================================================================
 // Journal Export Action
@@ -327,25 +333,6 @@ export const parseEducationalSchedule = action({
     }
     const buffer = await fileBlob.arrayBuffer();
     return await parseEducationalScheduleFromBuffer(buffer, args.fileName);
-  },
-});
-
-// ============================================================================
-// KTP DOCX Parse Action
-// ============================================================================
-
-export const parseKtpDocxTemplate = action({
-  args: {
-    fileStorageId: v.id("_storage"),
-    fileName: v.string(),
-  },
-  handler: async (ctx, args): Promise<ParseResult> => {
-    const fileBlob = await ctx.storage.get(args.fileStorageId);
-    if (!fileBlob) {
-      throw new Error("File not found in storage");
-    }
-    const buffer = await fileBlob.arrayBuffer();
-    return await parseKtpDocxFromBuffer(buffer, args.fileName);
   },
 });
 

@@ -57,19 +57,23 @@ describe("exportTeacherWorkloadToExcel", () => {
     const buffer = await exportTeacherWorkloadToExcel(payload);
 
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer);
+    const arrayBuffer = buffer.buffer.slice(
+      buffer.byteOffset,
+      buffer.byteOffset + buffer.byteLength
+    );
+    await workbook.xlsx.load(arrayBuffer as any);
 
     const sheet = workbook.getWorksheet("форма 1");
     expect(sheet).toBeTruthy();
 
     // First data row starts at row 10 in this template
     expect(sheet!.getCell("AI9").value).toBe(30); // header shows days 1..30
-    expect(sheet!.getCell("AJ9").value).toBeNull(); // day 31 header is blank in template
+    expect(sheet!.getCell("AJ9").value).toBe(31); // day 31 header exists in template
     expect(sheet!.getCell("B10").value).toBe(1);
     expect(sheet!.getCell("G10").value).toBe(2); // day 2
     expect(sheet!.getCell("AJ10").value).toBeNull(); // day 31 must remain a day column
     const monthTotal = sheet!.getCell("AK10").value as any;
-    expect(monthTotal?.formula).toBe("SUM(G10:AJ10)");
+    expect(monthTotal?.formula).toBe("SUM(F10:AJ10)");
     expect(monthTotal?.result).toBe(2);
     expect(sheet!.getCell("AN10").value).toBe(38); // planned hours column
   });
@@ -94,7 +98,11 @@ describe("exportTeacherWorkloadToExcel", () => {
     const buffer = await exportTeacherWorkloadToExcel(payload);
 
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer);
+    const arrayBuffer = buffer.buffer.slice(
+      buffer.byteOffset,
+      buffer.byteOffset + buffer.byteLength
+    );
+    await workbook.xlsx.load(arrayBuffer as any);
 
     const sheet = workbook.getWorksheet("форма 2");
     expect(sheet).toBeTruthy();

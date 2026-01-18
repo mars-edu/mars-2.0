@@ -12,7 +12,7 @@ import { saveAs } from "file-saver";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { convex } from "@/lib/convexClient";
-import type { JournalImportSummary } from "@/lib/excel/imports";
+import type { JournalImportSummary } from "@/lib/excel/imports.types";
 import type {
   AnalyticsExportParams,
   JournalExportParams,
@@ -23,7 +23,7 @@ import type {
 export type {
   JournalStudentRow,
   JournalExportPayload,
-} from "@/lib/excel/journalExport";
+} from "@/lib/excel/journalExport.types";
 
 export type {
   WorkloadEntry,
@@ -31,7 +31,7 @@ export type {
   MonthlyDistributionEntry,
   MonthInfo,
   TeacherWorkloadExportPayload,
-} from "@/lib/excel/workloadExport";
+} from "@/lib/excel/workloadExport.types";
 
 export type {
   DisciplineInfo,
@@ -40,7 +40,7 @@ export type {
   SpecialtyGroup,
   CourseGroup,
   AnalyticsExportPayload,
-} from "@/lib/excel/analyticsExport";
+} from "@/lib/excel/analyticsExport.types";
 
 export type {
   AnalyticsExportParams,
@@ -157,41 +157,6 @@ export async function parseEducationalScheduleViaConvex(
   const { storageId: fileStorageId } = await uploadResponse.json() as { storageId: Id<"_storage"> };
 
   const result = await convex.action(api.excel.actions.parseEducationalSchedule, {
-    fileStorageId,
-    fileName: file.name,
-  });
-
-  return result;
-}
-
-/**
- * Parse KTP from Word (.docx) file via Convex action
- */
-export async function parseKtpDocxTemplateViaConvex(file: File): Promise<any> {
-  // Upload file to Convex storage first
-  const uploadUrl = await convex.mutation(
-    api.files.mutations.generateUploadUrl,
-    {}
-  );
-  const uploadResponse = await fetch(uploadUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type":
-        file.type ||
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    },
-    body: file,
-  });
-
-  if (!uploadResponse.ok) {
-    throw new Error(`File upload failed: ${uploadResponse.statusText}`);
-  }
-
-  const { storageId: fileStorageId } = (await uploadResponse.json()) as {
-    storageId: Id<"_storage">;
-  };
-
-  const result = await convex.action(api.excel.actions.parseKtpDocxTemplate, {
     fileStorageId,
     fileName: file.name,
   });

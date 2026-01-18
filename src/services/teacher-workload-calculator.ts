@@ -10,7 +10,7 @@ import type {
   MonthlyDistributionEntry,
   MonthInfo,
   MonthWorkloadData,
-} from "@/lib/excel/workloadExport";
+} from "@/lib/excel/workloadExport.types";
 import type { Journal } from "@/stores/journalStore";
 import type { JournalMarks } from "@/types/marks";
 

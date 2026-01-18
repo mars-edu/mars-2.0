@@ -1,5 +1,5 @@
 /**
- * Excel Utility Library for Convex Actions
+ * Excel Utility Library for Convex Actions (Backend)
  * Provides helper functions and styles for ExcelJS workbook generation
  */
 

@@ -209,6 +209,59 @@ async function generateWorkloadReport() {
   isGenerating.value = true;
 
   try {
+    // Ensure all required stores are loaded
+    console.log('[Reports] Checking data availability before export...');
+    console.log('[Reports] Calendar events:', calendarStore.events?.length ?? 0);
+    console.log('[Reports] Class9 items:', class9Store.items?.length ?? 0);
+    console.log('[Reports] Students:', studentStore.students?.length ?? 0);
+
+    // Wait for required data to load
+    let attempts = 0;
+    const maxAttempts = 30; // 30 * 100ms = 3 seconds
+
+    while (attempts < maxAttempts) {
+      const eventsLoaded = calendarStore.events && calendarStore.events.length > 0;
+      const class9Loaded = class9Store.items && class9Store.items.length > 0;
+      const studentsLoaded = studentStore.students && studentStore.students.length > 0;
+
+      if (eventsLoaded && class9Loaded && studentsLoaded) {
+        console.log('[Reports] All required data loaded successfully');
+        break;
+      }
+
+      if (attempts === 0) {
+        console.log('[Reports] Waiting for data to load...', {
+          events: eventsLoaded,
+          class9: class9Loaded,
+          students: studentsLoaded
+        });
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
+    }
+
+    // Final check
+    if (!calendarStore.events || calendarStore.events.length === 0) {
+      console.warn('[Reports] No calendar events found after waiting');
+      f7.dialog.alert('Нет данных о расписании преподавателя. Пожалуйста, убедитесь, что у преподавателя есть занятия в календаре.');
+      return;
+    }
+
+    if (!class9Store.items || class9Store.items.length === 0) {
+      console.warn('[Reports] No class9 items found');
+    }
+
+    if (!studentStore.students || studentStore.students.length === 0) {
+      console.warn('[Reports] No students found');
+    }
+
+    console.log('[Reports] Final data counts:', {
+      events: calendarStore.events.length,
+      class9: class9Store.items?.length ?? 0,
+      students: studentStore.students?.length ?? 0
+    });
+
     const teacher = selectedTeacher.value;
     const academicYear = selectedAcademicYearId.value
       ? academicYears.value.find((y) => y.id === selectedAcademicYearId.value)

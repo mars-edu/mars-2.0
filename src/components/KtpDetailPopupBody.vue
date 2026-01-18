@@ -238,9 +238,9 @@ import RupImportDialog from "@/components/RupImportDialog.vue";
 import { storeToRefs } from "pinia";
 import {
   parseEducationalScheduleViaConvex,
-  parseKtpDocxTemplateViaConvex,
   exportKtpToExcelViaConvex,
 } from "@/services/convex-excel-export";
+import { parseKtpDocxFile } from "@/services/docx-ktp-parser";
 
 const props = defineProps<{
   ktpId: string | null;
@@ -415,7 +415,7 @@ const uploadDocument = () => {
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
       const parseResult = isDocx
-        ? await parseKtpDocxTemplateViaConvex(file)
+        ? await parseKtpDocxFile(file)
         : await parseEducationalScheduleViaConvex(file);
 
       if (!parseResult.lessons.length) {
