@@ -1457,6 +1457,7 @@ async function populateForm3(
 
   const COL_OFFSET = 1;
 
+  // Populate main workload entries
   payload.monthlyDistribution.forEach((entry, index) => {
     const row0 = dataStartRow0 + index;
     // Template rows use 15.25pt height for the data area.
@@ -1493,6 +1494,230 @@ async function populateForm3(
       vertical: "middle",
     });
   });
+
+  // Calculate row positions for the rest of the sections
+  const mainEntriesEndRow0 = dataStartRow0 + payload.monthlyDistribution.length - 1;
+
+  // "Всего" (Total) row - Row 46 in template
+  const vsegoRow0 = mainEntriesEndRow0 + 1;
+  const vsegoRow1 = vsegoRow0 + 1; // 1-based
+
+  const vsegoLabelCell = getCell(worksheet, vsegoRow0, COL_OFFSET);
+  vsegoLabelCell.value = "Всего";
+  applyTimesCellStyle(vsegoLabelCell, { size: 11, bold: true, horizontal: "left" });
+
+  // Calculate month totals using SUM formulas
+  const firstDataRow1 = dataStartRow0 + 1;
+  const lastDataRow1 = dataStartRow0 + payload.monthlyDistribution.length;
+
+  for (let monthIdx = 0; monthIdx < 10; monthIdx++) {
+    const colLetter = getColumnLetter(COL_OFFSET + 1 + monthIdx);
+    const cell = getCell(worksheet, vsegoRow0, COL_OFFSET + 1 + monthIdx);
+    cell.value = {
+      formula: `SUM(${colLetter}${firstDataRow1}:${colLetter}${lastDataRow1})`,
+      result: 0,
+    };
+    applyTimesCellStyle(cell, { size: 12, bold: true, horizontal: "center" });
+  }
+
+  // Total column
+  const totalColLetter = getColumnLetter(COL_OFFSET + 11);
+  const vsegoTotalCell = getCell(worksheet, vsegoRow0, COL_OFFSET + 11);
+  vsegoTotalCell.value = {
+    formula: `SUM(${totalColLetter}${firstDataRow1}:${totalColLetter}${lastDataRow1})`,
+    result: 0,
+  };
+  applyTimesCellStyle(vsegoTotalCell, { size: 11, bold: true, horizontal: "center" });
+
+  // "Замена" (Replacement) section - Row 47 in template
+  const zamenaLabelRow0 = vsegoRow0 + 1;
+  const zamenaLabelCell = getCell(worksheet, zamenaLabelRow0, COL_OFFSET);
+  zamenaLabelCell.value = "Замена:";
+  applyTimesCellStyle(zamenaLabelCell, { size: 11, horizontal: "left" });
+
+  // Empty cells for months in Замена label row
+  for (let i = 1; i <= 12; i++) {
+    const cell = getCell(worksheet, zamenaLabelRow0, COL_OFFSET + i);
+    cell.value = "";
+    applyTimesCellStyle(cell, { size: 11, horizontal: "center" });
+  }
+
+  // Замена entries would go here (rows 48-60 in template)
+  // For now, we'll leave them empty as they're typically filled manually
+
+  // "Всего" row for Замена section - Row 61 in template
+  const zamenaVsegoRow0 = zamenaLabelRow0 + 14; // After Замена label + empty entries
+  const zamenaVsegoCell = getCell(worksheet, zamenaVsegoRow0, COL_OFFSET);
+  zamenaVsegoCell.value = "Всего";
+  applyTimesCellStyle(zamenaVsegoCell, { size: 11, bold: true, horizontal: "left" });
+
+  // Empty cells for Замена totals
+  for (let i = 1; i <= 12; i++) {
+    const cell = getCell(worksheet, zamenaVsegoRow0, COL_OFFSET + i);
+    cell.value = null;
+    applyTimesCellStyle(cell, { size: 11, bold: true, horizontal: "center" });
+  }
+
+  // "Емтихандар/Экзамены" row - Row 62 in template
+  const examsRow0 = zamenaVsegoRow0 + 1;
+  const examsCell = getCell(worksheet, examsRow0, COL_OFFSET);
+  examsCell.value = "Емтихандар/Экзамены (емтихан ведомосының негізінде енгізіледі/заносятся на основании экзаменационной ведомости)";
+  applyTimesCellStyle(examsCell, { size: 11, horizontal: "left" });
+
+  // Empty cells for exam months (except June which might have data)
+  for (let i = 1; i <= 12; i++) {
+    const cell = getCell(worksheet, examsRow0, COL_OFFSET + i);
+    cell.value = null;
+    applyTimesCellStyle(cell, { size: 11, horizontal: "center" });
+  }
+
+  // "Консультациялар/Консультации" row - Row 63 in template
+  const consultationsRow0 = examsRow0 + 1;
+  const consultationsCell = getCell(worksheet, consultationsRow0, COL_OFFSET);
+  consultationsCell.value = "Консультациялар/Консультации";
+  applyTimesCellStyle(consultationsCell, { size: 11, horizontal: "left" });
+
+  // Empty cells for consultation months
+  for (let i = 1; i <= 12; i++) {
+    const cell = getCell(worksheet, consultationsRow0, COL_OFFSET + i);
+    cell.value = null;
+    applyTimesCellStyle(cell, { size: 11, horizontal: "center" });
+  }
+
+  // Summary section starts at Row 64
+  const summaryFont = { name: TIMES_NEW_ROMAN, size: 11, color: THEME_BLACK };
+
+  // Row 64: "Барлығы жоспарланған, сағат Всего запланировано, часов"
+  const plannedRow0 = consultationsRow0 + 1;
+  const plannedCell = getCell(worksheet, plannedRow0, COL_OFFSET);
+  plannedCell.value = "Барлығы жоспарланған, сағат Всего запланировано, часов";
+  plannedCell.font = summaryFont;
+  plannedCell.alignment = { horizontal: "left" };
+
+  // Empty cells for planned months (would reference data from other forms)
+  for (let i = 1; i <= 12; i++) {
+    const cell = getCell(worksheet, plannedRow0, COL_OFFSET + i);
+    cell.value = null;
+    applyTimesCellStyle(cell, { size: 11, horizontal: "center" });
+  }
+
+  // Row 65: "Нақты орындалған, сағат/ Фактически выполнено, часов"
+  const actualRow0 = plannedRow0 + 1;
+  const actualRow1 = actualRow0 + 1; // 1-based
+  const actualCell = getCell(worksheet, actualRow0, COL_OFFSET);
+  actualCell.value = "Нақты орындалған, сағат/ Фактически выполнено, часов";
+  actualCell.font = summaryFont;
+  actualCell.alignment = { horizontal: "left" };
+
+  // Reference Всего row for actual hours
+  for (let monthIdx = 0; monthIdx < 10; monthIdx++) {
+    const colLetter = getColumnLetter(COL_OFFSET + 1 + monthIdx);
+    const cell = getCell(worksheet, actualRow0, COL_OFFSET + 1 + monthIdx);
+    cell.value = {
+      formula: `${colLetter}${vsegoRow1}`,
+      result: 0,
+    };
+    applyTimesCellStyle(cell, { size: 11, horizontal: "center" });
+  }
+
+  // Total column references Всего total
+  const actualTotalCell = getCell(worksheet, actualRow0, COL_OFFSET + 11);
+  actualTotalCell.value = {
+    formula: `${getColumnLetter(COL_OFFSET + 11)}${vsegoRow1}`,
+    result: 0,
+  };
+  applyTimesCellStyle(actualTotalCell, { size: 11, horizontal: "center" });
+
+  // Empty row 66
+  const emptyRow1 = actualRow0 + 1;
+
+  // Row 67: "Жоспар бойынша барлық сағаттар/Всего часов по плану:"
+  const planTotalRow0 = emptyRow1 + 1;
+  const planTotalCell = getCell(worksheet, planTotalRow0, COL_OFFSET);
+  planTotalCell.value = "Жоспар бойынша барлық сағаттар/Всего часов по плану:";
+  planTotalCell.font = summaryFont;
+  planTotalCell.alignment = { horizontal: "left" };
+
+  // Plan total value in column G (index 6)
+  const planValueCell = getCell(worksheet, planTotalRow0, COL_OFFSET + 5);
+  planValueCell.value = null; // Would be filled from Form 2 data
+  applyTimesCellStyle(planValueCell, { size: 11, horizontal: "center" });
+
+  // Row 68: "Сағаттардың орындалмағаны/Не выполнено часов:"
+  const notCompletedRow0 = planTotalRow0 + 1;
+  const notCompletedCell = getCell(worksheet, notCompletedRow0, COL_OFFSET);
+  notCompletedCell.value = "Сағаттардың орындалмағаны/Не выполнено часов:";
+  notCompletedCell.font = summaryFont;
+  notCompletedCell.alignment = { horizontal: "left" };
+
+  const notCompletedValueCell = getCell(worksheet, notCompletedRow0, COL_OFFSET + 5);
+  notCompletedValueCell.value = 0;
+  applyTimesCellStyle(notCompletedValueCell, { size: 11, horizontal: "center" });
+
+  // Row 69: "Сағаттардың орындалғаны/Выполнено часов" with note
+  const completedRow0 = notCompletedRow0 + 1;
+  const completedCell = getCell(worksheet, completedRow0, COL_OFFSET);
+  completedCell.value = "Сағаттардың орындалғаны/Выполнено часов";
+  completedCell.font = summaryFont;
+  completedCell.alignment = { horizontal: "left" };
+
+  const completedValueCell = getCell(worksheet, completedRow0, COL_OFFSET + 5);
+  completedValueCell.value = null; // References main Всего total
+  applyTimesCellStyle(completedValueCell, { size: 11, horizontal: "center" });
+
+  // Note cell
+  const noteCell1 = getCell(worksheet, completedRow0, COL_OFFSET + 6);
+  noteCell1.value = ""; // Would show difference if any
+  applyTimesCellStyle(noteCell1, { size: 11, horizontal: "center" });
+
+  // Row 70: "Жоспардан тыс сағаттар берілді/Дано часов сверх плана:" (exams)
+  const extraHoursRow1_0 = completedRow0 + 1;
+  const extraHoursCell1 = getCell(worksheet, extraHoursRow1_0, COL_OFFSET);
+  extraHoursCell1.value = "Жоспардан тыс сағаттар берілді/Дано часов сверх плана:";
+  extraHoursCell1.font = summaryFont;
+  extraHoursCell1.alignment = { horizontal: "left" };
+
+  const extraValue1Cell = getCell(worksheet, extraHoursRow1_0, COL_OFFSET + 5);
+  extraValue1Cell.value = null; // Exam hours
+  applyTimesCellStyle(extraValue1Cell, { size: 11, horizontal: "center" });
+
+  const extraNote1Cell = getCell(worksheet, extraHoursRow1_0, COL_OFFSET + 6);
+  extraNote1Cell.value = "экзамен";
+  applyTimesCellStyle(extraNote1Cell, { size: 11, horizontal: "center" });
+
+  // Row 71: Replacement hours
+  const extraHoursRow2_0 = extraHoursRow1_0 + 1;
+  const extraValue2Cell = getCell(worksheet, extraHoursRow2_0, COL_OFFSET + 5);
+  extraValue2Cell.value = null; // Replacement hours
+  applyTimesCellStyle(extraValue2Cell, { size: 11, horizontal: "center" });
+
+  const extraNote2Cell = getCell(worksheet, extraHoursRow2_0, COL_OFFSET + 6);
+  extraNote2Cell.value = "замена";
+  applyTimesCellStyle(extraNote2Cell, { size: 11, horizontal: "center" });
+
+  // Row 72: "Барлығы бір жыл ішінде берілген сағаттар/Всего дано за год часов:"
+  const totalYearRow0 = extraHoursRow2_0 + 1;
+  const totalYearCell = getCell(worksheet, totalYearRow0, COL_OFFSET);
+  totalYearCell.value = "Барлығы бір жыл ішінде берілген сағаттар/Всего дано за год часов:";
+  totalYearCell.font = summaryFont;
+  totalYearCell.alignment = { horizontal: "left" };
+
+  const totalYearValueCell = getCell(worksheet, totalYearRow0, COL_OFFSET + 5);
+  totalYearValueCell.value = null; // Grand total including extras
+  applyTimesCellStyle(totalYearValueCell, { size: 11, horizontal: "center" });
+
+  // Signature block - Rows 75-76
+  const signatureRow1_0 = totalYearRow0 + 3;
+  const signatureCell = getCell(worksheet, signatureRow1_0, COL_OFFSET);
+  signatureCell.value = "Басшының оқу жұмысы жөніндегі орынбасары /Заместитель руководителя по учебной работе _____________";
+  signatureCell.font = { name: TIMES_NEW_ROMAN, size: 11, color: THEME_BLACK };
+  signatureCell.alignment = { horizontal: "left" };
+
+  const signatureRow2_0 = signatureRow1_0 + 1;
+  const signatureCell2 = getCell(worksheet, signatureRow2_0, COL_OFFSET + 5);
+  signatureCell2.value = "(қолы/подпись)";
+  signatureCell2.font = { name: TIMES_NEW_ROMAN, size: 11, color: THEME_BLACK };
+  signatureCell2.alignment = { horizontal: "center" };
 }
 
 // ============================================================================
