@@ -529,18 +529,23 @@ async function populateForm1MultiMonth(
   let currentRow = baseStartRow;
 
   const COL_OFFSET = 1; // Column B (0-based)
-  const DAY_COLUMNS = 31;
+  const DAY_COLUMNS = 31; // Always show 31 day columns for consistency
   const dayStartCol0 = COL_OFFSET + 4; // Column F (0-based)
   const monthTotalCol0 = dayStartCol0 + DAY_COLUMNS; // Column AK (0-based)
 
   for (const monthData of payload.allMonthsWorkload) {
     console.log(`[populateForm1MultiMonth] Processing month: ${monthData.monthInfo.key} ${monthData.monthInfo.year}, entries: ${monthData.entries.length}`);
 
-    // Skip months with no entries
-    if (monthData.entries.length === 0) {
-      console.log(`[populateForm1MultiMonth] Skipping ${monthData.monthInfo.key} - no entries`);
-      continue;
-    }
+    // Always show month section, even if there are no entries (hours finished)
+    // if (monthData.entries.length === 0) {
+    //   console.log(`[populateForm1MultiMonth] Skipping ${monthData.monthInfo.key} - no entries`);
+    //   continue;
+    // }
+
+    // Calculate actual days in this specific month
+    const daysInMonth = monthData.entries[0]?.dailyHours.length ||
+      new Date(monthData.monthInfo.year, monthData.monthInfo.month + 1, 0).getDate() ||
+      31;
 
     // All months: Create full header section (2 rows) for consistency
     const headerRow1 = currentRow; // First header row (0-based)
@@ -651,18 +656,27 @@ async function populateForm1MultiMonth(
     // Row 2: Day numbers
     const dayFont = { name: TIMES_NEW_ROMAN, size: 11, color: THEME_BLACK };
     const dayAlignment = { horizontal: "center" as const };
-    const daysInMonth = monthData.entries[0]?.dailyHours.length || 31;
 
     // Set row height for day numbers row
     worksheet.getRow(headerRow2 + 1).height = 54;
 
-    for (let day = 1; day <= daysInMonth; day++) {
+    // Always render 31 day columns
+    for (let day = 1; day <= DAY_COLUMNS; day++) {
       const dayCell = worksheet.getCell(headerRow2 + 1, dayStartCol0 + day);
-      dayCell.value = day;
-      dayCell.font = dayFont;
-      dayCell.alignment = dayAlignment;
-      dayCell.border = THIN_BORDER;
-      dayCell.fill = GRAY_FILL;
+
+      if (day <= daysInMonth) {
+        // Valid day for this month - show day number with gray fill
+        dayCell.value = day;
+        dayCell.font = dayFont;
+        dayCell.alignment = dayAlignment;
+        dayCell.border = THIN_BORDER;
+        dayCell.fill = GRAY_FILL;
+      } else {
+        // Day doesn't exist in this month (e.g., day 31 in a 30-day month)
+        dayCell.value = null;
+        dayCell.border = THIN_BORDER;
+        // No fill for empty days
+      }
     }
 
     // Sub-headers for AO and AP
@@ -720,9 +734,9 @@ async function populateForm1MultiMonth(
       groupCell.value = entry.groupName;
       applyTimesCellStyle(groupCell, { size: 11 });
 
-      // Daily hours (1-31)
-      for (let dayIndex = 0; dayIndex < daysInMonth; dayIndex++) {
-        const hours = entry.dailyHours[dayIndex] ?? null;
+      // Daily hours (always 31 columns)
+      for (let dayIndex = 0; dayIndex < DAY_COLUMNS; dayIndex++) {
+        const hours = dayIndex < daysInMonth ? (entry.dailyHours[dayIndex] ?? null) : null;
         const col0 = dayStartCol0 + dayIndex;
         const cell = getCell(worksheet, row0, col0);
         cell.value = hours;
@@ -800,173 +814,191 @@ async function populateForm1MultiMonth(
       });
     });
 
-    // Add "Итого" (Total) row after all entries
-    const totalRow = dataStartRow + monthData.entries.length;
-    const totalRow1 = totalRow + 1; // 1-based for formulas
+    // Only add "Итого" row and signatures if there are entries
+    if (monthData.entries.length > 0) {
+      // Add "Итого" (Total) row after all entries
+      const totalRow = dataStartRow + monthData.entries.length;
+      const totalRow1 = totalRow + 1; // 1-based for formulas
 
-    // B and C columns: Empty cells with borders
-    const totalB = getCell(worksheet, totalRow, COL_OFFSET);
-    totalB.value = "";
-    applyTimesCellStyle(totalB, { size: 11, bold: true });
+      // B and C columns: Empty cells with borders
+      const totalB = getCell(worksheet, totalRow, COL_OFFSET);
+      totalB.value = "";
+      applyTimesCellStyle(totalB, { size: 11, bold: true });
 
-    const totalC = getCell(worksheet, totalRow, COL_OFFSET + 1);
-    totalC.value = "";
-    applyTimesCellStyle(totalC, { size: 11, bold: true });
+      const totalC = getCell(worksheet, totalRow, COL_OFFSET + 1);
+      totalC.value = "";
+      applyTimesCellStyle(totalC, { size: 11, bold: true });
 
-    // D column: "Итого" text
-    const totalLabelCell = getCell(worksheet, totalRow, COL_OFFSET + 2);
-    totalLabelCell.value = "Итого";
-    applyTimesCellStyle(totalLabelCell, {
-      size: 11,
-      bold: true,
-      horizontal: "left",
-    });
+      // D column: "Итого" text
+      const totalLabelCell = getCell(worksheet, totalRow, COL_OFFSET + 2);
+      totalLabelCell.value = "Итого";
+      applyTimesCellStyle(totalLabelCell, {
+        size: 11,
+        bold: true,
+        horizontal: "left",
+      });
 
-    // E column: Empty cell with border
-    const totalE = getCell(worksheet, totalRow, COL_OFFSET + 3);
-    totalE.value = "";
-    applyTimesCellStyle(totalE, { size: 11, bold: true });
+      // E column: Empty cell with border
+      const totalE = getCell(worksheet, totalRow, COL_OFFSET + 3);
+      totalE.value = "";
+      applyTimesCellStyle(totalE, { size: 11, bold: true });
 
-    // Add SUM formulas for each day column
-    const firstDataRow = dataStartRow + 1; // 1-based
-    const lastDataRow = dataStartRow + monthData.entries.length; // 1-based
+      // Add SUM formulas for each day column (always 31 columns)
+      const firstDataRow = dataStartRow + 1; // 1-based
+      const lastDataRow = dataStartRow + monthData.entries.length; // 1-based
 
-    for (let dayIndex = 0; dayIndex < daysInMonth; dayIndex++) {
-      const col0 = dayStartCol0 + dayIndex;
-      const colLetter = getColumnLetter(col0);
-      const cell = getCell(worksheet, totalRow, col0);
-      cell.value = {
-        formula: `SUM(${colLetter}${firstDataRow}:${colLetter}${lastDataRow})`,
-        result: 0,
+      for (let dayIndex = 0; dayIndex < DAY_COLUMNS; dayIndex++) {
+        const col0 = dayStartCol0 + dayIndex;
+        const cell = getCell(worksheet, totalRow, col0);
+
+        if (dayIndex < daysInMonth) {
+          // Valid day - add SUM formula
+          const colLetter = getColumnLetter(col0);
+          cell.value = {
+            formula: `SUM(${colLetter}${firstDataRow}:${colLetter}${lastDataRow})`,
+            result: 0,
+          };
+          applyTimesCellStyle(cell, {
+            size: 11,
+            bold: true,
+            horizontal: "center",
+          });
+        } else {
+          // Day doesn't exist in this month - empty cell with border
+          cell.value = null;
+          applyTimesCellStyle(cell, {
+            size: 11,
+            bold: true,
+            horizontal: "center",
+          });
+        }
+      }
+
+      // Month total column with SUM of day totals in this row
+      const monthTotalCell = getCell(worksheet, totalRow, monthTotalCol0);
+      const firstDayCol = getColumnLetter(dayStartCol0);
+      const lastDayCol = getColumnLetter(dayStartCol0 + daysInMonth - 1);
+      monthTotalCell.value = {
+        formula: `SUM(${firstDayCol}${totalRow1}:${lastDayCol}${totalRow1})`,
+        result: monthData.totalHours || 0,
       };
-      applyTimesCellStyle(cell, {
+      applyTimesCellStyle(monthTotalCell, {
         size: 11,
         bold: true,
         horizontal: "center",
       });
+
+      // Add empty cells with borders for AL and AM columns
+      // AL: Empty cell (group name column in total row)
+      const totalAL = getCell(worksheet, totalRow, monthTotalCol0 + 1);
+      totalAL.value = "";
+      applyTimesCellStyle(totalAL, { size: 11, bold: true });
+
+      // AM: Empty cell (subject name column in total row)
+      const totalAM = getCell(worksheet, totalRow, monthTotalCol0 + 2);
+      totalAM.value = "";
+      applyTimesCellStyle(totalAM, { size: 11, bold: true });
+
+      // Add summary total formulas in columns AN, AO, AP, AQ
+      // AN: SUM of planned hours
+      const plannedTotalCell = getCell(worksheet, totalRow, monthTotalCol0 + 3);
+      const anCol = getColumnLetter(monthTotalCol0 + 3);
+      plannedTotalCell.value = {
+        formula: `SUM(${anCol}${firstDataRow}:${anCol}${lastDataRow})`,
+        result: 0,
+      };
+      applyTimesCellStyle(plannedTotalCell, {
+        size: 11,
+        bold: true,
+        horizontal: "center",
+      });
+
+      // AO: SUM of actual hours (month)
+      const actualMonthTotalCell = getCell(worksheet, totalRow, monthTotalCol0 + 4);
+      const aoCol = getColumnLetter(monthTotalCol0 + 4);
+      actualMonthTotalCell.value = {
+        formula: `SUM(${aoCol}${firstDataRow}:${aoCol}${lastDataRow})`,
+        result: 0,
+      };
+      applyTimesCellStyle(actualMonthTotalCell, {
+        size: 11,
+        bold: true,
+        horizontal: "center",
+      });
+
+      // AP: SUM of actual hours (cumulative)
+      const actualCumulativeTotalCell = getCell(worksheet, totalRow, monthTotalCol0 + 5);
+      const apCol = getColumnLetter(monthTotalCol0 + 5);
+      actualCumulativeTotalCell.value = {
+        formula: `SUM(${apCol}${firstDataRow}:${apCol}${lastDataRow})`,
+        result: 0,
+      };
+      applyTimesCellStyle(actualCumulativeTotalCell, {
+        size: 11,
+        bold: true,
+        horizontal: "center",
+      });
+
+      // AQ: SUM of remaining hours
+      const remainingTotalCell = getCell(worksheet, totalRow, monthTotalCol0 + 6);
+      const aqCol = getColumnLetter(monthTotalCol0 + 6);
+      remainingTotalCell.value = {
+        formula: `SUM(${aqCol}${firstDataRow}:${aqCol}${lastDataRow})`,
+        result: 0,
+      };
+      applyTimesCellStyle(remainingTotalCell, {
+        size: 11,
+        bold: true,
+        horizontal: "center",
+      });
+
+      // Add spacing rows after total
+      currentRow = totalRow + 1;
+
+      // Add "Барлығы бір айда нақты орындалды/Всего фактически выполнено за месяц" text
+      const summaryTextRow = currentRow + 2;
+      const summaryTextCell = getCell(worksheet, summaryTextRow, COL_OFFSET);
+      const totalHoursValue = monthData.totalHours || 0;
+      summaryTextCell.value = `Барлығы бір айда нақты орындалды/Всего фактически выполнено за месяц                ${totalHoursValue}                    сағат/ часов`;
+      summaryTextCell.font = {
+        name: TIMES_NEW_ROMAN,
+        size: 12,
+        bold: true,
+        underline: true,
+        color: THEME_BLACK,
+      };
+      summaryTextCell.alignment = { horizontal: "left" };
+
+      // Add signature rows
+      const signatureRow1 = summaryTextRow + 2;
+      const signature1Cell = getCell(worksheet, signatureRow1, COL_OFFSET);
+      signature1Cell.value = "Педагог  _________________ (қолы/подпись)";
+      signature1Cell.font = {
+        name: TIMES_NEW_ROMAN,
+        size: 12,
+        bold: true,
+        color: THEME_BLACK,
+      };
+      signature1Cell.alignment = { horizontal: "left" };
+
+      const signatureRow2 = signatureRow1 + 2;
+      const signature2Cell = getCell(worksheet, signatureRow2, COL_OFFSET);
+      signature2Cell.value =
+        "Басшының оқу жұмысы жөніндегі орынбасары/Заместитель руководителя по УР ______________________ (қолы/подпись)";
+      signature2Cell.font = {
+        name: TIMES_NEW_ROMAN,
+        size: 12,
+        bold: true,
+        color: THEME_BLACK,
+      };
+      signature2Cell.alignment = { horizontal: "left" };
+
+      // Move to next section (leave some space)
+      currentRow = signatureRow2 + 2;
+    } else {
+      // No entries for this month - just add spacing and move to next month
+      currentRow = dataStartRow + 2;
     }
-
-    // Month total column with SUM of day totals in this row
-    const monthTotalCell = getCell(worksheet, totalRow, monthTotalCol0);
-    const firstDayCol = getColumnLetter(dayStartCol0);
-    const lastDayCol = getColumnLetter(dayStartCol0 + daysInMonth - 1);
-    monthTotalCell.value = {
-      formula: `SUM(${firstDayCol}${totalRow1}:${lastDayCol}${totalRow1})`,
-      result: monthData.totalHours || 0,
-    };
-    applyTimesCellStyle(monthTotalCell, {
-      size: 11,
-      bold: true,
-      horizontal: "center",
-    });
-
-    // Add empty cells with borders for AL and AM columns
-    // AL: Empty cell (group name column in total row)
-    const totalAL = getCell(worksheet, totalRow, monthTotalCol0 + 1);
-    totalAL.value = "";
-    applyTimesCellStyle(totalAL, { size: 11, bold: true });
-
-    // AM: Empty cell (subject name column in total row)
-    const totalAM = getCell(worksheet, totalRow, monthTotalCol0 + 2);
-    totalAM.value = "";
-    applyTimesCellStyle(totalAM, { size: 11, bold: true });
-
-    // Add summary total formulas in columns AN, AO, AP, AQ
-    // AN: SUM of planned hours
-    const plannedTotalCell = getCell(worksheet, totalRow, monthTotalCol0 + 3);
-    const anCol = getColumnLetter(monthTotalCol0 + 3);
-    plannedTotalCell.value = {
-      formula: `SUM(${anCol}${firstDataRow}:${anCol}${lastDataRow})`,
-      result: 0,
-    };
-    applyTimesCellStyle(plannedTotalCell, {
-      size: 11,
-      bold: true,
-      horizontal: "center",
-    });
-
-    // AO: SUM of actual hours (month)
-    const actualMonthTotalCell = getCell(worksheet, totalRow, monthTotalCol0 + 4);
-    const aoCol = getColumnLetter(monthTotalCol0 + 4);
-    actualMonthTotalCell.value = {
-      formula: `SUM(${aoCol}${firstDataRow}:${aoCol}${lastDataRow})`,
-      result: 0,
-    };
-    applyTimesCellStyle(actualMonthTotalCell, {
-      size: 11,
-      bold: true,
-      horizontal: "center",
-    });
-
-    // AP: SUM of actual hours (cumulative)
-    const actualCumulativeTotalCell = getCell(worksheet, totalRow, monthTotalCol0 + 5);
-    const apCol = getColumnLetter(monthTotalCol0 + 5);
-    actualCumulativeTotalCell.value = {
-      formula: `SUM(${apCol}${firstDataRow}:${apCol}${lastDataRow})`,
-      result: 0,
-    };
-    applyTimesCellStyle(actualCumulativeTotalCell, {
-      size: 11,
-      bold: true,
-      horizontal: "center",
-    });
-
-    // AQ: SUM of remaining hours
-    const remainingTotalCell = getCell(worksheet, totalRow, monthTotalCol0 + 6);
-    const aqCol = getColumnLetter(monthTotalCol0 + 6);
-    remainingTotalCell.value = {
-      formula: `SUM(${aqCol}${firstDataRow}:${aqCol}${lastDataRow})`,
-      result: 0,
-    };
-    applyTimesCellStyle(remainingTotalCell, {
-      size: 11,
-      bold: true,
-      horizontal: "center",
-    });
-
-    // Add spacing rows after total
-    currentRow = totalRow + 1;
-
-    // Add "Барлығы бір айда нақты орындалды/Всего фактически выполнено за месяц" text
-    const summaryTextRow = currentRow + 2;
-    const summaryTextCell = getCell(worksheet, summaryTextRow, COL_OFFSET);
-    const totalHoursValue = monthData.totalHours || 0;
-    summaryTextCell.value = `Барлығы бір айда нақты орындалды/Всего фактически выполнено за месяц                ${totalHoursValue}                    сағат/ часов`;
-    summaryTextCell.font = {
-      name: TIMES_NEW_ROMAN,
-      size: 12,
-      bold: true,
-      underline: true,
-      color: THEME_BLACK,
-    };
-    summaryTextCell.alignment = { horizontal: "left" };
-
-    // Add signature rows
-    const signatureRow1 = summaryTextRow + 2;
-    const signature1Cell = getCell(worksheet, signatureRow1, COL_OFFSET);
-    signature1Cell.value = "Педагог  _________________ (қолы/подпись)";
-    signature1Cell.font = {
-      name: TIMES_NEW_ROMAN,
-      size: 12,
-      bold: true,
-      color: THEME_BLACK,
-    };
-    signature1Cell.alignment = { horizontal: "left" };
-
-    const signatureRow2 = signatureRow1 + 2;
-    const signature2Cell = getCell(worksheet, signatureRow2, COL_OFFSET);
-    signature2Cell.value =
-      "Басшының оқу жұмысы жөніндегі орынбасары/Заместитель руководителя по УР ______________________ (қолы/подпись)";
-    signature2Cell.font = {
-      name: TIMES_NEW_ROMAN,
-      size: 12,
-      bold: true,
-      color: THEME_BLACK,
-    };
-    signature2Cell.alignment = { horizontal: "left" };
-
-    // Move to next section (leave some space)
-    currentRow = signatureRow2 + 2;
   }
 
   console.log(`[populateForm1MultiMonth] Finished processing all months`);

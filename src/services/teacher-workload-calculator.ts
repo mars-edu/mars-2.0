@@ -761,13 +761,38 @@ export function generateAllMonthsWorkload(
   // Get academic year start for cumulative calculations
   const academicYearStart = months[0].year;
 
+  // First, collect all unique subject/group combinations across all events
+  // This ensures we show all subjects in all months, even if they have no hours in some months
+  const allSubjectGroups = new Map<string, {
+    class9: Class9Data;
+    groupName: string;
+    rowNumber: number;
+  }>();
+
+  let rowNumber = 1;
+  for (const event of events) {
+    const class9 = class9Items.find((c) => c.id === event.class9Id);
+    if (!class9) continue;
+
+    const eventStudents = students.filter((s) => event.participants.includes(s.id));
+    const groupName = generateGroupName(eventStudents);
+    const key = `${class9.id}-${groupName}`;
+
+    if (!allSubjectGroups.has(key)) {
+      allSubjectGroups.set(key, { class9, groupName, rowNumber });
+      rowNumber++;
+    }
+  }
+
+  console.log(`[generateAllMonthsWorkload] Found ${allSubjectGroups.size} unique subject/group combinations`);
+
   const allMonthsData: MonthWorkloadData[] = [];
 
   for (const monthInfo of months) {
     console.log(`[generateAllMonthsWorkload] Processing ${monthInfo.key} ${monthInfo.year}...`);
 
     // Generate workload entries for this month
-    const entries = generateDailyWorkload(
+    const monthEntries = generateDailyWorkload(
       events,
       class9Items,
       students,
@@ -778,6 +803,61 @@ export function generateAllMonthsWorkload(
       journalMarks
     );
 
+    // Create a map of existing entries by subject/group key
+    const existingEntriesMap = new Map<string, WorkloadEntry>();
+    for (const entry of monthEntries) {
+      const key = `${entry.moduleIndex}-${entry.subjectName}-${entry.groupName}`;
+      existingEntriesMap.set(key, entry);
+    }
+
+    // Ensure all subject/group combinations are present in this month
+    // Fill in missing ones with zero hours
+    const daysInMonth = new Date(monthInfo.year, monthInfo.month + 1, 0).getDate();
+    const entries: WorkloadEntry[] = [];
+
+    for (const [key, subjectGroup] of allSubjectGroups) {
+      const entryKey = `${subjectGroup.class9.moduleIndex}-${subjectGroup.class9.moduleName}-${subjectGroup.groupName}`;
+
+      if (existingEntriesMap.has(entryKey)) {
+        // Subject has hours this month - use existing entry
+        entries.push(existingEntriesMap.get(entryKey)!);
+      } else {
+        // Subject has no hours this month - create empty entry
+        const plannedHours = parseFloat(subjectGroup.class9.totalHours) || 0;
+
+        // Calculate cumulative hours from previous months
+        let cumulativeHours = 0;
+        for (const prevMonthData of allMonthsData) {
+          const prevEntry = prevMonthData.entries.find(
+            e => e.moduleIndex === subjectGroup.class9.moduleIndex &&
+                 e.subjectName === subjectGroup.class9.moduleName &&
+                 e.groupName === subjectGroup.groupName
+          );
+          if (prevEntry) {
+            cumulativeHours = prevEntry.cumulativeHours;
+          }
+        }
+
+        const remainingHours = Math.max(0, plannedHours - cumulativeHours);
+
+        entries.push({
+          rowNumber: subjectGroup.rowNumber,
+          moduleIndex: subjectGroup.class9.moduleIndex,
+          subjectName: subjectGroup.class9.moduleName,
+          groupName: subjectGroup.groupName,
+          dailyHours: Array(daysInMonth).fill(null),
+          monthTotal: 0,
+          plannedHours,
+          actualHours: 0,
+          cumulativeHours,
+          remainingHours,
+        });
+      }
+    }
+
+    // Sort entries by row number to maintain consistent ordering
+    entries.sort((a, b) => a.rowNumber - b.rowNumber);
+
     // Calculate total hours for this month
     const totalHours = entries.reduce((sum, entry) => sum + entry.monthTotal, 0);
 
@@ -787,7 +867,7 @@ export function generateAllMonthsWorkload(
       totalHours,
     });
 
-    console.log(`[generateAllMonthsWorkload] ${monthInfo.key}: ${entries.length} entries, ${totalHours} total hours`);
+    console.log(`[generateAllMonthsWorkload] ${monthInfo.key}: ${entries.length} entries (${monthEntries.length} with hours), ${totalHours} total hours`);
   }
 
   console.log(`[generateAllMonthsWorkload] Done. Generated data for ${allMonthsData.length} months`);
