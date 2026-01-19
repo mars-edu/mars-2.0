@@ -1557,10 +1557,12 @@ async function populateForm3(
     applyTimesCellStyle(cell, { size: 12, bold: true, horizontal: "center" });
   }
 
-  // Замена entries (rows 48-60 = 13 rows)
+  // Замена entries - only 1 empty row for manual entry
   const zamenaFirstRow0 = zamenaLabelRow0 + 1;
   const zamenaFirstRow1 = zamenaFirstRow0 + 1;
-  for (let rowOffset = 0; rowOffset < 13; rowOffset++) {
+  const ZAMENA_EMPTY_ROWS = 1; // Single empty row for replacement entries
+
+  for (let rowOffset = 0; rowOffset < ZAMENA_EMPTY_ROWS; rowOffset++) {
     const row0 = zamenaFirstRow0 + rowOffset;
     const row1 = row0 + 1;
     worksheet.getRow(row1).height = 15.6;
@@ -1587,10 +1589,10 @@ async function populateForm3(
     applyTimesCellStyle(totalCell, { size: 11, horizontal: "center" });
   }
 
-  // "Всего" row for Замена section - Row 61 in template
-  const zamenaVsegoRow0 = zamenaFirstRow0 + 13;
+  // "Всего" row for Замена section
+  const zamenaVsegoRow0 = zamenaFirstRow0 + ZAMENA_EMPTY_ROWS;
   const zamenaVsegoRow1 = zamenaVsegoRow0 + 1;
-  const zamenaLastRow1 = zamenaVsegoRow1 - 1;
+  const zamenaLastRow1 = zamenaFirstRow1 + ZAMENA_EMPTY_ROWS - 1;
 
   const zamenaVsegoCell = getCell(worksheet, zamenaVsegoRow0, COL_B);
   zamenaVsegoCell.value = "Всего";
