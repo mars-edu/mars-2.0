@@ -1,17 +1,32 @@
 <template>
-  <div class="desktop-header desktop-only">
+  <div v-bind="$attrs" class="desktop-header desktop-only">
     <Logo class="header-left" />
     <div class="header-center">
       <SearchBar />
     </div>
     <div class="header-right">
-      <f7-link class="notification-icon" icon-f7="bell"></f7-link>
-      <ThemeToggle class="theme-toggle" />
-      <LanguageSelector
-        :theme="themeStore.currentTheme"
-        class="language-selector"
-      />
-      <div class="avatar-container">
+      <div class="flex-shrink-0">
+        <button
+          id="notification-bell-button"
+          @click="openNotificationCenter"
+          class="relative p-2 rounded-full transition-colors hover:bg-primary/10 text-primary"
+        >
+          <i class="icon f7-icons text-[22px]">bell</i>
+          <span
+            v-if="unreadCount > 0"
+            class="absolute top-1 right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-medium rounded-full flex items-center justify-center px-1"
+          >
+            {{ unreadCount > 99 ? '99+' : unreadCount }}
+          </span>
+        </button>
+      </div>
+      <div class="flex-shrink-0">
+        <ThemeToggle />
+      </div>
+      <div class="flex-shrink-0 min-w-[100px]">
+        <LanguageSelector :theme="themeStore.currentTheme" />
+      </div>
+      <div class="avatar-container flex-shrink-0">
         <img
           v-if="userStore.currentUser?.avatar"
           :src="userStore.currentUser.avatar"
@@ -23,18 +38,29 @@
         </div>
       </div>
     </div>
+
+    <!-- Notification Center Popover -->
+    <NotificationCenterPopover />
   </div>
 </template>
 
 <script setup lang="ts">
-import { f7Link } from "framework7-vue";
+import { f7 } from "framework7-vue";
 import SearchBar from "../SearchBar.vue";
 import LanguageSelector from "../LanguageSelector.vue";
 import Logo from "../Logo/Logo.vue";
 import ThemeToggle from "../ThemeToggle.vue";
+import NotificationCenterPopover from "../NotificationCenterPopover.vue";
 import { useThemeStore } from "@/stores/themeStore";
 import { useUserStore } from "@/stores/userStore";
-import { onMounted } from "vue";
+import { onMounted, computed } from "vue";
+import { useConvexQuery } from "convex-vue";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
+
+defineOptions({
+  inheritAttrs: false,
+});
 
 console.log("[Header] Component setup initiated");
 
@@ -43,6 +69,20 @@ const userStore = useUserStore();
 
 console.log("[Header] Theme store initialized");
 console.log("[Header] Current theme:", themeStore.currentTheme);
+
+// Use Convex reactive query for real-time unread count (no polling needed!)
+const unreadCountResult = useConvexQuery(
+  api.notifications.queries.getUnreadCount,
+  computed(() => userStore.currentUser?.id ? {
+    userId: userStore.currentUser.id as Id<"users">,
+  } : "skip")
+);
+
+const unreadCount = computed(() => (unreadCountResult as any).data.value ?? 0);
+
+const openNotificationCenter = () => {
+  f7.popover.open("#notification-center-popover", "#notification-bell-button");
+};
 
 onMounted(() => {
   console.log("[Header] Component mounted");
@@ -74,42 +114,26 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 24px;
+  flex-shrink: 0;
 }
 
 .header-center {
   position: relative;
-  flex: 1;
+  flex: 1 1 auto;
   padding: 0 40px;
   margin: 0 auto;
   max-width: 600px;
-  width: 100%;
+  min-width: 200px;
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
+  flex-shrink: 0;
 }
 
-.notification-icon {
-  color: hsl(var(--primary));
-  font-size: 22px;
-  padding: 8px;
-  border-radius: 50%;
-  transition: background-color 0.2s ease;
-}
-
-.notification-icon:hover {
-  background-color: rgba(var(--primary-rgb), 0.1);
-}
-
-.language-selector {
-  margin: 0 8px;
-}
-
-.theme-toggle {
-  margin: 0 8px;
-}
+/* Notification icon styling moved to Tailwind classes in template */
 
 .avatar-container {
   position: relative;

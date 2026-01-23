@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex overflow-hidden rounded-lg border transition-colors"
+    class="flex overflow-hidden rounded-lg border transition-colors min-w-[100px]"
     :class="[themeClasses.background, themeClasses.border]"
   >
     <button
@@ -43,18 +43,21 @@ const themeClasses = computed(() => {
         background: "bg-gray-700",
         border: "border-gray-600",
         hoverBackground: "hover:bg-gray-600",
+        textColor: "text-gray-200",
       };
     case "lavanda":
       return {
         background: "bg-purple-100",
         border: "border-purple-200",
         hoverBackground: "hover:bg-purple-200",
+        textColor: "text-purple-900",
       };
     default:
       return {
         background: "bg-gray-100",
         border: "border-gray-200",
         hoverBackground: "hover:bg-gray-200",
+        textColor: "text-gray-700",
       };
   }
 });

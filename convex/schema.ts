@@ -651,4 +651,103 @@ export default defineSchema({
     .index("by_academicYear", ["academicYearId"])
     .index("by_specialty", ["specialtyId"])
     .index("by_semester", ["semesterId"]),
+
+  // ==========================================================================
+  // NOTIFICATIONS & SUBSTITUTIONS
+  // ==========================================================================
+
+  /**
+   * Notifications - system notifications for users
+   * NEW: Notification center functionality
+   */
+  notifications: defineTable({
+    userId: v.id("users"), // User receiving the notification
+    type: v.union(
+      v.literal("substitution"), // Journal substitution assignment
+      v.literal("journal_closure"), // Journal closure reminder
+      v.literal("system") // General system announcement
+    ),
+    status: v.union(
+      v.literal("unread"),
+      v.literal("read"),
+      v.literal("archived")
+    ),
+    title: v.string(),
+    message: v.string(),
+    // Metadata for different notification types
+    metadata: v.optional(
+      v.object({
+        substitutionId: v.optional(v.id("substitutions")),
+        journalId: v.optional(v.id("journals")),
+        deadline: v.optional(v.string()), // ISO date
+      })
+    ),
+    createdAt: v.number(),
+    readAt: v.optional(v.number()),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_status", ["userId", "status"])
+    .index("by_userId_createdAt", ["userId", "createdAt"])
+    .index("by_type", ["type"]),
+
+  /**
+   * Substitutions - journal substitution assignments (замена)
+   * NEW: When a teacher transfers a journal to another teacher
+   */
+  substitutions: defineTable({
+    journalId: v.id("journals"),
+    fromTeacherId: v.string(), // Original teacher (references teachers table)
+    toTeacherId: v.string(), // Teacher receiving the substitution
+    toUserId: v.id("users"), // User account of receiving teacher
+    startDate: v.string(), // ISO date - substitution period start
+    endDate: v.string(), // ISO date - substitution period end
+    status: v.union(
+      v.literal("pending"), // Awaiting acceptance
+      v.literal("accepted"), // Teacher accepted
+      v.literal("rejected"), // Teacher rejected
+      v.literal("completed") // Substitution period ended
+    ),
+    reason: v.optional(v.string()), // Reason for substitution
+    serviceLetterNumber: v.optional(v.string()), // Official letter/order number (служебное письмо)
+    // Journal snapshot at time of transfer
+    journalSnapshot: v.optional(
+      v.object({
+        disciplineName: v.string(),
+        groupName: v.optional(v.string()),
+        course: v.optional(v.string()),
+        semester: v.optional(v.string()),
+      })
+    ),
+    createdBy: v.id("users"), // User who created the substitution
+    acceptedAt: v.optional(v.number()),
+    rejectedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_journal", ["journalId"])
+    .index("by_fromTeacher", ["fromTeacherId"])
+    .index("by_toTeacher", ["toTeacherId"])
+    .index("by_toUser", ["toUserId"])
+    .index("by_toUser_status", ["toUserId", "status"])
+    .index("by_status", ["status"])
+    .index("by_createdAt", ["createdAt"]),
+
+  /**
+   * Journal closure reminders - tracks journal closure deadlines
+   * NEW: System-wide journal closure notifications
+   */
+  journalClosureReminders: defineTable({
+    academicYearId: v.string(),
+    semesterId: v.optional(v.id("academicYearSemesters")),
+    deadline: v.string(), // ISO date - when journals must be closed
+    message: v.string(), // Announcement text
+    createdBy: v.id("users"), // Admin who created the reminder
+    isActive: v.boolean(), // Whether this reminder is currently active
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_academicYear", ["academicYearId"])
+    .index("by_semester", ["semesterId"])
+    .index("by_isActive", ["isActive"])
+    .index("by_deadline", ["deadline"]),
 });
