@@ -163,6 +163,14 @@ const routes: RouteConfig[] = [
     },
   },
   {
+    path: "/protocol",
+    asyncComponent: () => import("../pages/suspense/ProtocolPage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN, Role.TEACHER])],
+    options: {
+      roles: [Role.ADMIN, Role.TEACHER],
+    },
+  },
+  {
     path: "/rup",
     asyncComponent: () => import("../pages/suspense/RupPage.vue"),
     beforeEnter: [createAuthGuard([Role.ADMIN, Role.TEACHER])],

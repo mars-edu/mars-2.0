@@ -55,6 +55,13 @@ export function useRBAC() {
         route: "/planning",
       },
       {
+        id: "protocol",
+        label: "Протокол",
+        icon: "list_bullet_fill",
+        roles: [Role.ADMIN, Role.TEACHER],
+        route: "/protocol",
+      },
+      {
         id: "journals",
         label: "Журналы",
         icon: "doc_text_fill",
