@@ -16,6 +16,7 @@
           <JournalHeader
             :discipline-text="currentClass9Text"
             :group="currentJournal?.group"
+            :group-language="currentJournalGroupLanguage"
             :academic-year="currentAcademicYearText"
             :semester="currentSemesterText"
             @back="handleBackClick"
@@ -489,6 +490,11 @@ const { students: studentStoreStudents } = storeToRefs(studentStore);
 const currentJournal = computed(() => {
   if (!journalId.value) return null;
   return journalStore.getJournalById(journalId.value);
+});
+
+const currentJournalGroupLanguage = computed(() => {
+  if (!currentJournal.value) return "";
+  return journalStore.getJournalGroupLanguage(currentJournal.value);
 });
 
 const currentClass9Text = computed(() => {

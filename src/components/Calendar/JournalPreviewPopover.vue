@@ -29,6 +29,7 @@
         <JournalCard
           :title="getTitle()"
           :subtitle="getSubtitle()"
+          :group-language="getGroupLanguage()"
           :schedule="getSchedule()"
           :percent="getPercent()"
           @click="handleGoToJournal"
@@ -87,6 +88,12 @@ function getSchedule() {
     return "";
   }
   return journalStore.getJournalScheduleText(journal);
+}
+
+function getGroupLanguage() {
+  const journal: Journal | null = journalStore.getJournalById(props.event.id);
+  if (!journal) return "";
+  return journalStore.getJournalGroupLanguage(journal);
 }
 
 function getPercent() {

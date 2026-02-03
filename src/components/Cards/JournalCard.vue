@@ -32,6 +32,9 @@
           <div class="text-xs font-medium text-gray-700">
             {{ subtitle }}
           </div>
+          <div v-if="groupLanguage" class="text-xs font-medium text-gray-700">
+            Язык: {{ groupLanguage }}
+          </div>
           <div class="text-xs font-medium text-gray-500 leading-4">
             {{ schedule }}
           </div>
@@ -98,6 +101,7 @@ interface Props {
   title: string;
   subtitle: string;
   schedule: string;
+  groupLanguage?: string;
   percent?: number;
   selectionMode?: boolean;
   selected?: boolean;

@@ -70,6 +70,7 @@ import { useClass9Store } from "@/stores/class9Store";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useUserStore } from "@/stores/userStore";
+import { useNestedPopover } from "@/composables/useNestedPopover";
 import { storeToRefs } from "pinia";
 import { WEEK_DAYS, DATE_UI_FORMAT } from "@/constants/calendar";
 import { useEventFormDerived, type WeekDaySchedule } from "./useEventFormDerived";
@@ -82,6 +83,11 @@ const emit = defineEmits<{
 }>();
 
 const calendarStore = useCalendarStore();
+
+// Nested popover management
+const { confirmWithParent } = useNestedPopover({
+  parentPopoverId: "#edit-event-popover",
+});
 
 // Get event from store by ID - always fresh data
 const event = computed(() => calendarStore.getEventById(props.eventId));
@@ -241,29 +247,21 @@ const handleUpdateEvent = async () => {
 
 const showDeleteConfirmation = () => {
   if (!event.value) return;
-  f7.popover.close("#edit-event-popover");
   const eventTitle = calendarStore.getEventTitle(event.value);
-  f7.dialog.confirm(
+
+  confirmWithParent(
+    "Удаление события",
     `<p>Вы уверены, что хотите удалить событие \"${eventTitle}\"?</p>
      <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
-    "Удаление события",
     async () => {
       if (!event.value) return;
       try {
         await calendarStore.deleteEvent(event.value.id);
         emit("updated", event.value);
       } catch (error) {
-        f7.dialog.alert(
-          "Произошла ошибка при удалении события.",
-          "Ошибка",
-          () => {
-            f7.popover.open("#edit-event-popover");
-          }
-        );
+        f7.dialog.alert("Произошла ошибка при удалении события.", "Ошибка");
+        throw error; // Re-throw to trigger parent reopening
       }
-    },
-    () => {
-      f7.popover.open("#edit-event-popover");
     }
   );
 };

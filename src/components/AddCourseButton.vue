@@ -66,8 +66,7 @@
             label="Семестры"
             placeholder="Выберите семестры"
             :multiple="true"
-            @before-open="closeParentPopover"
-            @after-close="openParentPopover"
+            v-bind="selectHandlers"
           />
         </div>
       </div>
@@ -81,11 +80,18 @@ import { f7, f7Popover, f7Icon, f7Input } from "framework7-vue";
 import { z } from "zod";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSemesterStore } from "@/stores/semesterStore";
+import { useNestedPopover } from "@/composables/useNestedPopover";
 import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const courseStore = useCourseStore();
 const semesterStore = useSemesterStore();
+
+// Nested popover management
+const { selectHandlers } = useNestedPopover({
+  parentPopoverId: "#add-settings-course-popover",
+  parentTargetSelector: "#add-settings-course-button",
+});
 
 const semesterOptions = computed(() =>
   semesterStore.sortedSemesters.map((p) => ({ value: p.id, text: p.shortName }))
@@ -149,17 +155,6 @@ const openAddCoursePopover = () => {
 const closeAddCoursePopover = () => {
   f7.popover.close("#add-settings-course-popover");
   resetForm();
-};
-
-const closeParentPopover = () => {
-  f7.popover.close("#add-settings-course-popover");
-};
-
-const openParentPopover = () => {
-  f7.popover.open(
-    "#add-settings-course-popover",
-    "#add-settings-course-button"
-  );
 };
 
 const handleSaveCourse = async () => {

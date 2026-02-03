@@ -153,6 +153,13 @@
                     class="mr-2"
                   />
                   <f7-icon
+                    v-else-if="selectionAction === 'replace'"
+                    ios="f7:arrow_2_squarepath"
+                    md="material:swap_horiz"
+                    size="16px"
+                    class="mr-2"
+                  />
+                  <f7-icon
                     v-else
                     ios="f7:lock_open"
                     md="material:lock_open"
@@ -221,6 +228,21 @@
                   Скачать
                 </f7-button>
                 <f7-button
+                  id="replace-journal-button"
+                  small
+                  default
+                  @click="onReplaceClick"
+                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
+                >
+                  <f7-icon
+                    ios="f7:arrow_2_squarepath"
+                    md="material:swap_horiz"
+                    size="16px"
+                    class="mr-2"
+                  />
+                  Заменить
+                </f7-button>
+                <f7-button
                   small
                   default
                   @click="onUploadClick"
@@ -268,6 +290,7 @@
                       <JournalCard
                         :title="journalStore.getDisciplineTitle(journal)"
                         :subtitle="journalStore.getJournalSubtitle(journal)"
+                        :group-language="journalStore.getJournalGroupLanguage(journal)"
                         :schedule="journalStore.getJournalScheduleText(journal)"
                         :percent="journalStore.getJournalPercent(journal)"
                         :selection-mode="isSelectionMode"
@@ -299,6 +322,7 @@
                       <JournalCard
                         :title="journalStore.getDisciplineTitle(journal)"
                         :subtitle="journalStore.getJournalSubtitle(journal)"
+                        :group-language="journalStore.getJournalGroupLanguage(journal)"
                         :schedule="journalStore.getJournalScheduleText(journal)"
                         :percent="journalStore.getJournalPercent(journal)"
                         :selection-mode="isSelectionMode"
@@ -339,6 +363,7 @@
                       <JournalCard
                         :title="journalStore.getDisciplineTitle(journal)"
                         :subtitle="journalStore.getJournalSubtitle(journal)"
+                        :group-language="journalStore.getJournalGroupLanguage(journal)"
                         :schedule="journalStore.getJournalScheduleText(journal)"
                         :percent="journalStore.getJournalPercent(journal)"
                         :selection-mode="isSelectionMode"
@@ -369,6 +394,12 @@
       @save="onIndividualJournalSave"
       @close="onIndividualJournalClose"
     />
+
+    <ReplaceJournalPopover
+      :is-loading="isReplacingJournals"
+      @save="handleReplaceJournals"
+      @cancel="handleReplaceCancel"
+    />
   </f7-page>
 </template>
 
@@ -380,6 +411,8 @@ import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
 import JournalCard from "@/components/Cards/JournalCard.vue";
 import IndividualJournalPopup from "@/components/IndividualJournalPopup.vue";
+import ReplaceJournalPopover from "@/components/ReplaceJournalPopover.vue";
+import type { ReplaceJournalData } from "@/components/ReplaceJournalPopover.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { useJournalStore, type Journal } from "@/stores/journalStore";
@@ -804,7 +837,7 @@ const groupOptions = ref([{ value: "pi-1-21", text: "ПИ-1-21" }]);
 const selectedRole = ref("");
 const roleOptions = ref([{ value: "student", text: "Студент" }]);
 
-type SelectionAction = "download" | "close" | "open";
+type SelectionAction = "download" | "close" | "open" | "replace";
 
 const isSelectionMode = ref(false);
 const selectionAction = ref<SelectionAction>("download");
@@ -813,6 +846,7 @@ const selectedJournalIds = ref(new Set<string>());
 const selectionDoneText = computed(() => {
   if (selectionAction.value === "close") return "Закрыть";
   if (selectionAction.value === "open") return "Открыть";
+  if (selectionAction.value === "replace") return "Заменить";
   return "Скачать";
 });
 
@@ -820,6 +854,7 @@ const selectionDoneButtonClass = computed(() => {
   const base = "text-white transition-colors flex-1 sm:flex-none";
   if (selectionAction.value === "close") return `bg-red-500 hover:bg-red-600 ${base}`;
   if (selectionAction.value === "open") return `bg-green-500 hover:bg-green-600 ${base}`;
+  if (selectionAction.value === "replace") return `bg-orange-500 hover:bg-orange-600 ${base}`;
   return `bg-primary hover:bg-primary-dark ${base}`;
 });
 
@@ -1023,6 +1058,10 @@ function onDownloadClick() {
   startSelectionMode("download");
 }
 
+function onReplaceClick() {
+  startSelectionMode("replace");
+}
+
 function onSelectionDone() {
   if (selectedJournalIds.value.size === 0) {
     f7.dialog.alert("Выберите хотя бы один журнал");
@@ -1033,6 +1072,11 @@ function onSelectionDone() {
 
   if (selectionAction.value === "download") {
     void downloadSelectedJournals();
+    return;
+  }
+
+  if (selectionAction.value === "replace") {
+    f7.popover.open("#replace-journal-popover");
     return;
   }
 
@@ -1135,6 +1179,53 @@ function onUploadClick() {
 
 function onShareClick() {
   f7.dialog.alert("Поделиться журналами");
+}
+
+const isReplacingJournals = ref(false);
+
+async function handleReplaceJournals(data: ReplaceJournalData) {
+  try {
+    isReplacingJournals.value = true;
+
+    // Get selected journal IDs
+    const ids = Array.from(selectedJournalIds.value);
+
+    // TODO: Implement the actual replace logic here
+    // This would typically involve calling a backend API to replace journals
+    // with the specified teacher, period, and reason
+
+    console.log('Replacing journals:', {
+      journalIds: ids,
+      teacherId: data.teacherId,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      reason: data.reason
+    });
+
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    isReplacingJournals.value = false;
+
+    // Close the popover
+    f7.popover.close("#replace-journal-popover");
+
+    f7.toast.create({
+      text: `Успешно заменено ${ids.length} журнал(ов)`,
+      position: 'center',
+      closeTimeout: 2000,
+    }).open();
+
+    exitSelectionMode();
+  } catch (error) {
+    isReplacingJournals.value = false;
+    console.error('Failed to replace journals', error);
+    f7.dialog.alert('Не удалось заменить журналы. Попробуйте еще раз.');
+  }
+}
+
+function handleReplaceCancel() {
+  f7.popover.close("#replace-journal-popover");
 }
 
 const individualJournalPopupRef = ref<InstanceType<typeof IndividualJournalPopup>>();

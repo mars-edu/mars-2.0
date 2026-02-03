@@ -8,8 +8,7 @@
       name="event-class9-generic"
       id="event-class9-generic"
       searchable
-      @before-open="closeParentPopover"
-      @after-close="openParentPopover"
+      v-bind="selectHandlers"
     />
 
     <div class="flex items-center">
@@ -211,6 +210,7 @@ import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore
 import { useClass9Store } from "@/stores/class9Store";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useKtpStore } from "@/stores/ktpStore";
+import { useNestedPopover } from "@/composables/useNestedPopover";
 import type { SemesterDates, WeekDaySchedule } from "./useEventFormDerived";
 
 dayjs.extend(customParseFormat);
@@ -254,6 +254,11 @@ const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
 
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const ktpStore = useKtpStore();
+
+// Nested popover management
+const { closeParent, openParent, selectHandlers, withParentToggle } = useNestedPopover({
+  parentPopoverId: computed(() => props.parentPopoverId),
+});
 
 const checkboxId = computed(() => {
   return props.mode === "edit" ? "use-custom-period-edit" : "use-custom-period";
@@ -390,17 +395,16 @@ function updateWeekDayTime(
 
 const studentPopup = ref<{ open: (p: string[]) => void } | null>(null);
 
-function openStreamSelection() {
-  closeParentPopover();
+const openStreamSelection = withParentToggle(() => {
   studentPopup.value?.open(participantsModel.value || []);
-}
+});
 
 function handleStudentsSave(selectedIds: string[]) {
   participantsModel.value = selectedIds;
 }
 
 function handleStudentPopupClose() {
-  openParentPopover();
+  openParent();
 }
 
 const isKtpPopupOpen = ref(false);
@@ -443,7 +447,7 @@ const currentKtpTitle = computed(() => {
 
 function handleKtpPopupClosed(isOpen: boolean) {
   isKtpPopupOpen.value = isOpen;
-  if (!isOpen) openParentPopover();
+  if (!isOpen) openParent();
 }
 
 async function openKtpPopup() {
@@ -468,20 +472,12 @@ async function openKtpPopup() {
       props.eventId
     );
     currentKtpIdRef.value = ktp.id;
-    closeParentPopover();
+    closeParent();
     isKtpPopupOpen.value = true;
   } catch (error) {
     console.error("Failed to ensure KTP:", error);
     f7.dialog.alert("Не удалось создать КТП", "Ошибка");
   }
-}
-
-function openParentPopover() {
-  f7.popover.open(props.parentPopoverId);
-}
-
-function closeParentPopover() {
-  f7.popover.close(props.parentPopoverId);
 }
 
 const selectedHoursText = computed(() => props.selectedHours || "0");

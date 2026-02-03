@@ -4,6 +4,7 @@ import { useCalendarStore } from "./calendarStore";
 import { useCourseStore } from "./courseStore";
 import { useStudentStore } from "./studentStore";
 import { useSpecialtyStore } from "./specialtyStore";
+import { useLanguageStore } from "./languageStore";
 import { useClass9Store } from "./class9Store";
 import { useAcademicYearSemesterStore } from "./academicYearSemesterStore";
 import { useEducationScheduleStore } from "./educationScheduleStore";
@@ -33,9 +34,26 @@ export const useJournalStore = defineStore(
     const courseStore = useCourseStore();
     const studentStore = useStudentStore();
     const specialtyStore = useSpecialtyStore();
+    const languageStore = useLanguageStore();
     const class9Store = useClass9Store();
     const academicYearSemesterStore = useAcademicYearSemesterStore();
     const educationScheduleStore = useEducationScheduleStore();
+
+    function getLanguageNameByCode(code: string): string {
+      const found = languageStore.languages.find((l) => l.code === code);
+      return found?.name || code;
+    }
+
+    function getJournalGroupLanguage(journal: Journal): string {
+      const codes = (journal.students || [])
+        .map((id) => studentStore.getStudentById(id)?.language || "")
+        .filter((code): code is string => Boolean(code));
+
+      const uniqueCodes = Array.from(new Set(codes)).sort();
+      if (uniqueCodes.length === 0) return "—";
+
+      return uniqueCodes.map(getLanguageNameByCode).join(" / ");
+    }
 
     function generateJournalTitle(
       courseNumbers: number[],
@@ -457,6 +475,7 @@ export const useJournalStore = defineStore(
       generateGroupFromStudents,
       getDisciplineTitle,
       getJournalSubtitle,
+      getJournalGroupLanguage,
       getJournalScheduleText,
       getJournalPercent,
       getJournalTitle,

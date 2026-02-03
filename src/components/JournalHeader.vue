@@ -20,6 +20,10 @@
           Учебная группа:
           <span class="text-green-600">{{ group }}</span>
         </p>
+        <p v-if="groupLanguage">
+          Язык группы:
+          <span class="text-green-600">{{ groupLanguage }}</span>
+        </p>
       </div>
     </div>
     <div class="flex flex-col items-end gap-1">
@@ -41,6 +45,7 @@ import { f7Link, f7Icon } from "framework7-vue";
 defineProps<{
   disciplineText: string;
   group?: string;
+  groupLanguage?: string;
   academicYear: string;
   semester: string;
 }>();

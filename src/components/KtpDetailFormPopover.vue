@@ -116,6 +116,7 @@ import { ref, computed, watch, reactive } from "vue";
 import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
+import { useNestedPopover } from "@/composables/useNestedPopover";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
 const props = defineProps<{
@@ -127,6 +128,11 @@ const props = defineProps<{
 const emit = defineEmits(["update:opened"]);
 
 const ktpStore = useKtpStore();
+
+// Nested popover management
+const { confirmWithParent } = useNestedPopover({
+  parentPopoverId: "#ktp-detail-form-popover",
+});
 
 const isEditMode = computed(() => !!props.detailToEdit);
 const formError = ref("");
@@ -232,14 +238,17 @@ const handleSave = () => {
 };
 
 const showDeleteConfirmation = () => {
-  emit("update:opened", false);
   if (!props.detailToEdit) return;
 
-  f7.dialog.confirm(
-    `Вы уверены, что хотите удалить тему "${props.detailToEdit.theme}"?`,
+  confirmWithParent(
     "Удаление темы",
+    `Вы уверены, что хотите удалить тему "${props.detailToEdit.theme}"?`,
     () => {
       ktpStore.deleteKtpDetail(props.detailToEdit!.id);
+      emit("update:opened", false);
+    },
+    () => {
+      // On cancel, parent reopens automatically
     }
   );
 };

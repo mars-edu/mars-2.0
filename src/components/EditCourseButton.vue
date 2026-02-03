@@ -51,8 +51,7 @@
             label="Семестры"
             placeholder="Выберите семестры"
             :multiple="true"
-            @before-open="closeParentPopover"
-            @after-close="openParentPopover"
+            v-bind="selectHandlers"
           />
 
           <div class="pt-4 border-t border-border">
@@ -82,6 +81,7 @@ import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSemesterStore } from "@/stores/semesterStore";
+import { useNestedPopover } from "@/composables/useNestedPopover";
 import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 
@@ -91,6 +91,15 @@ const props = defineProps<{
 
 const courseStore = useCourseStore();
 const semesterStore = useSemesterStore();
+
+// Nested popover management
+const popoverId = computed(() => `#edit-settings-course-popover-${props.courseId}`);
+const targetSelector = computed(() => `#course-item-${props.courseId}`);
+
+const { selectHandlers, confirmWithParent } = useNestedPopover({
+  parentPopoverId: popoverId,
+  parentTargetSelector: targetSelector,
+});
 
 const semesterOptions = computed(() =>
   semesterStore.sortedSemesters.map((p) => ({ value: p.id, text: p.shortName }))
@@ -150,19 +159,8 @@ const isFormValid = computed(() => {
 });
 
 const closeEditCoursePopover = () => {
-  f7.popover.close(`#edit-settings-course-popover-${props.courseId}`);
+  f7.popover.close(popoverId.value);
   resetForm();
-};
-
-const closeParentPopover = () => {
-  f7.popover.close(`#edit-settings-course-popover-${props.courseId}`);
-};
-
-const openParentPopover = () => {
-  f7.popover.open(
-    `#edit-settings-course-popover-${props.courseId}`,
-    `#course-item-${props.courseId}`
-  );
 };
 
 const handleUpdateCourse = async () => {
@@ -188,12 +186,10 @@ const handleUpdateCourse = async () => {
 };
 
 const showDeleteConfirmation = () => {
-  f7.popover.close(`#edit-settings-course-popover-${props.courseId}`);
-
-  f7.dialog.confirm(
+  confirmWithParent(
+    "Удаление курса",
     `<p>Вы уверены, что хотите удалить курс "${course.value?.number ?? ""}"?</p>
      <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
-    "Удаление курса",
     async () => {
       try {
         await courseStore.deleteCourse(props.courseId);
