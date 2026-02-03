@@ -19,7 +19,6 @@
       id="search-popover"
       style="width: 350px !important"
       target="#search-input"
-      close-on-escape
     >
       <div class="search-popover bg-card">
         <!-- Header with search input -->

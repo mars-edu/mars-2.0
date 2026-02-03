@@ -4,7 +4,6 @@
     style="width: 500px !important"
     class="max-h-screen"
     :arrow="false"
-    close-on-escape
   >
     <div class="event-popover bg-card text-card-foreground">
       <!-- Header with buttons -->

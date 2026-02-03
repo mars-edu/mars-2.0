@@ -4,7 +4,6 @@
       v-if="student"
       :id="'edit-student-popover-' + student.id"
       style="width: 600px !important"
-      close-on-escape
       :target="`#student-item-${student.id}`"
     >
       <div class="student-popover bg-card text-card-foreground">

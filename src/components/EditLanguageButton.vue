@@ -3,7 +3,6 @@
     <f7-popover
       :id="'edit-language-popover-' + languageId"
       style="width: 600px !important"
-      close-on-escape
       :target="`#language-item-${languageId}`"
     >
       <div class="language-popover bg-card text-card-foreground">

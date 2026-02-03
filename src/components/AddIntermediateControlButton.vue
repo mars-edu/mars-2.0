@@ -19,7 +19,6 @@
       id="add-settings-intermediate-control-popover"
       style="width: 600px !important"
       target="#add-settings-intermediate-control-button"
-      close-on-escape
     >
       <div class="intermediate-control-popover bg-card text-card-foreground">
         <PopoverHeader

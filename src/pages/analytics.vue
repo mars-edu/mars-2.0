@@ -415,7 +415,6 @@
     <f7-popover
       class="specialty-info-popover"
       :arrow="true"
-      close-on-escape
       style="width: 320px !important"
     >
       <div

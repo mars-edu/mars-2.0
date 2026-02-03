@@ -1,7 +1,7 @@
 <template>
   <div class="flex justify-between items-center mb-2" :class="class">
     <!-- Left side: Navigation -->
-    <div class="flex items-center space-x-2">
+    <div class="flex items-center space-x-4">
       <button
         @click="$emit('today')"
         class="flex items-center w-fit hover:bg-secondary rounded-lg p-2 transition-colors"

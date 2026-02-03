@@ -3,7 +3,6 @@
     <f7-popover
       :id="'edit-settings-intermediate-control-popover-' + controlId"
       style="width: 600px !important"
-      close-on-escape
       :target="`#intermediate-control-item-${controlId}`"
     >
       <div class="intermediate-control-popover bg-card text-card-foreground">

@@ -7,7 +7,6 @@
         width: calc(100vw - 50px) !important;
         height: calc(100dvh - 50px) !important;
       "
-      close-on-escape
       @popover:closed="handlePopoverClosed"
     >
       <div class="ktp-detail-popover bg-card text-card-foreground">

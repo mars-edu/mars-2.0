@@ -5,7 +5,6 @@
       id="add-module-template-popover"
       style="width: 600px !important"
       :target="popoverTarget"
-      close-on-escape
     >
       <div class="module-template-popover bg-card text-card-foreground">
         <div

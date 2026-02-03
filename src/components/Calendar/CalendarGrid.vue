@@ -1,12 +1,12 @@
 <template>
   <div
-    class="grid grid-cols-7 auto-rows-[minmax(2rem,auto)] gap-0 bg-white rounded-lg border border-gray-200 overflow-hidden"
+    class="grid grid-cols-7 auto-rows-[minmax(2rem,auto)] gap-px bg-gray-200 border border-gray-200 rounded-[32px] overflow-hidden shadow-2xl"
   >
     <!-- Weekday headers -->
     <div
       v-for="day in weekdays"
       :key="day"
-      class="bg-gray-50 p-3 text-center text-sm font-semibold text-gray-700 border-b border-gray-200"
+      class="bg-gray-50 p-4 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200"
     >
       {{ day }}
     </div>
@@ -18,7 +18,6 @@
       :day="day"
       :selected-event-id="selectedEventId"
       @event-click="onEventClick"
-      class="border-r border-b border-gray-200 last:border-r-0"
     />
   </div>
 </template>

@@ -296,7 +296,7 @@ export const listProtocolWithRoleAccessInternal = internalQuery({
 
         // Get discipline name from journal
         let disciplineName = "Неизвестная дисциплина";
-        if (journal?.disciplineId) {
+        if (journal && "disciplineId" in journal) {
           const class9Items = await ctx.db.query("class9Items").collect();
           const class9Item = class9Items.find((c) => c._id === journal.disciplineId);
           if (class9Item) {
@@ -329,12 +329,12 @@ export const listProtocolWithRoleAccessInternal = internalQuery({
  * @param selectedTeacherId - Optional teacher ID for admin filtering
  * @returns Array of protocol entries (substitutions) with enriched data
  */
-export const listProtocolWithRoleAccess = action({
+export const listProtocolWithRoleAccess: any = action({
   args: {
     token: v.string(),
     selectedTeacherId: v.optional(v.union(v.string(), v.null())),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<any> => {
     const { token, selectedTeacherId } = args;
 
     // Get JWT secret from environment
@@ -354,7 +354,7 @@ export const listProtocolWithRoleAccess = action({
     }
 
     // Fetch protocol entries using internal query with validated user info
-    const protocolEntries = await ctx.runQuery(
+    const protocolEntries: any = await ctx.runQuery(
       internal.substitutions.queries.listProtocolWithRoleAccessInternal,
       {
         userId: payload.userId,

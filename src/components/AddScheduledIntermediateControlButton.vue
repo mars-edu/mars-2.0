@@ -14,7 +14,6 @@
       :id="popoverId"
       style="width: 600px !important"
       :target="`#${buttonId}`"
-      close-on-escape
     >
       <div class="control-popover bg-card text-card-foreground">
         <PopoverHeader

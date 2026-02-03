@@ -22,6 +22,8 @@
 
   .custom-modal-backdrop, .actions-backdrop, .dialog-backdrop, .popover-backdrop, .popup-backdrop, .preloader-backdrop, .sheet-backdrop, .fab-backdrop {
     background: #000000a1 !important;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
   }
 }
 

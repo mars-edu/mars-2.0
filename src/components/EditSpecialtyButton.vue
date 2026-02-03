@@ -4,7 +4,6 @@
       v-if="specialty"
       :id="'edit-specialty-popover-' + specialty.id"
       style="width: 600px !important"
-      close-on-escape
       :target="`#specialty-item-${specialty.id}`"
     >
       <div class="specialty-popover bg-card text-card-foreground">

@@ -5,7 +5,6 @@
     @popover:closed="onPopoverClosed"
     class="popover-center-page"
     style="width: 600px !important"
-    close-on-escape
   >
     <div class="bg-card text-card-foreground">
       <PopoverHeader

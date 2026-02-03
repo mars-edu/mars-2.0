@@ -22,7 +22,6 @@
       id="add-ktp-popover"
       style="width: 400px !important"
       target="#add-ktp-button"
-      close-on-escape
     >
       <div class="bg-card text-card-foreground">
         <PopoverHeader title="Выбрать" :disabled="!isValid" />

@@ -19,7 +19,6 @@
       id="add-education-schedule-popover"
       style="width: 600px !important"
       target="#add-education-schedule-button"
-      close-on-escape
     >
       <div class="education-schedule-popover bg-card text-card-foreground">
         <PopoverHeader

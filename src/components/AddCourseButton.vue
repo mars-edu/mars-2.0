@@ -19,7 +19,6 @@
       id="add-settings-course-popover"
       style="width: 600px !important"
       target="#add-settings-course-button"
-      close-on-escape
     >
       <div class="course-popover bg-card text-card-foreground">
         <PopoverHeader

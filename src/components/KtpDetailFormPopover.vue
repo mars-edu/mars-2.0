@@ -4,7 +4,6 @@
     :opened="opened"
     @popover:closed="$emit('update:opened', false)"
     style="width: 600px !important; max-width: calc(100vw - 32px) !important"
-    close-on-escape
     :arrow="false"
   >
     <div class="bg-card text-card-foreground">

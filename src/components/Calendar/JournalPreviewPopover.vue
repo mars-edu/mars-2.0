@@ -3,7 +3,6 @@
     id="journal-preview-popover"
     style="width: 560px !important"
     :arrow="true"
-    close-on-escape
     @popover:closed="onClosed"
   >
     <div class="bg-card text-card-foreground flex flex-col">

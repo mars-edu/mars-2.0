@@ -3,7 +3,6 @@
     id="class9-popover"
     :arrow="false"
     style="width: calc(100vw - 400px) !important"
-    close-on-escape
   >
     <div class="course-popover bg-card text-card-foreground">
       <div class="fixed-header">

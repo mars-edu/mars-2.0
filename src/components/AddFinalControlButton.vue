@@ -19,7 +19,6 @@
       id="add-settings-final-control-popover"
       style="width: 600px !important"
       target="#add-settings-final-control-button"
-      close-on-escape
     >
       <div class="final-control-popover bg-card text-card-foreground">
         <PopoverHeader

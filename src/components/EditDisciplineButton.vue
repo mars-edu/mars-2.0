@@ -4,7 +4,6 @@
       v-if="discipline"
       :id="'edit-discipline-popover-' + discipline._id"
       style="width: 600px !important"
-      close-on-escape
       :target="`#discipline-item-${discipline._id}`"
     >
       <div class="discipline-popover bg-card text-card-foreground">

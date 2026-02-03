@@ -2,7 +2,6 @@
   <f7-popover
     id="replace-journal-popover"
     style="width: 500px !important"
-    close-on-escape
   >
     <div class="replace-journal-popover bg-card text-card-foreground">
       <PopoverHeader

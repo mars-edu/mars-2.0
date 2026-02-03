@@ -3,7 +3,6 @@
     <f7-popover
       :id="'edit-settings-final-control-popover-' + controlId"
       style="width: 600px !important"
-      close-on-escape
       :target="`#final-control-item-${controlId}`"
     >
       <div class="final-control-popover bg-card text-card-foreground">

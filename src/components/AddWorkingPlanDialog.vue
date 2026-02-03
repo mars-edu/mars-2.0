@@ -26,7 +26,6 @@
       id="add-working-plan-popover"
       style="width: 400px !important"
       target="#add-working-plan-button"
-      close-on-escape
     >
       <div class="working-plan-popover bg-card text-card-foreground">
         <PopoverHeader title="Выбрать" :disabled="!isValid" />

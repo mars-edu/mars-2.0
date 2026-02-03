@@ -14,7 +14,6 @@
       id="add-academic-year-semester-popover"
       style="width: 600px !important"
       target="#add-academic-year-semester-button"
-      close-on-escape
     >
       <div class="semester-popover bg-card text-card-foreground">
         <PopoverHeader

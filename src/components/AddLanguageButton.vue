@@ -19,7 +19,6 @@
       id="add-language-popover"
       style="width: 600px !important"
       target="#add-language-button"
-      close-on-escape
     >
       <div class="language-popover bg-card text-card-foreground">
         <PopoverHeader

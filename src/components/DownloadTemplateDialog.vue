@@ -4,7 +4,6 @@
       id="download-template-popover"
       style="width: 400px !important"
       target="#download-template-button"
-      close-on-escape
     >
       <div class="download-template-popover bg-card text-card-foreground">
         <PopoverHeader

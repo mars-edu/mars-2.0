@@ -3,7 +3,6 @@
     <f7-popover
       :id="'edit-semester-popover-' + semesterId"
       style="width: 600px !important"
-      close-on-escape
       :target="`#semester-item-${semesterId}`"
     >
       <div class="semester-popover bg-card text-card-foreground">

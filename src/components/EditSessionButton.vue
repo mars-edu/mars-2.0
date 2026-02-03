@@ -4,7 +4,6 @@
       v-if="session"
       :id="'edit-session-popover-' + session.id"
       style="width: 600px !important"
-      close-on-escape
       :target="`#session-item-${session.id}`"
     >
       <div class="session-popover bg-card text-card-foreground">

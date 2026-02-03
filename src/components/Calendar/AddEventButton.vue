@@ -8,53 +8,53 @@
       <f7-icon ios="f7:plus" md="material:add" size="16px"></f7-icon>
     </f7-fab>
 
-    <!-- Framework7 Popover -->
-    <f7-popover
-      id="add-event-popover"
-      class="max-h-screen"
-      style="width: 500px !important"
-      :arrow="false"
-      close-on-escape
+    <!-- Framework7 Popup (was Popover) -->
+    <f7-popup
+      :opened="isPopupOpen"
+      @popup:closed="onPopupClosed"
+      class="add-event-popup"
     >
-      <div class="event-popover bg-card text-card-foreground">
-        <!-- Header with buttons -->
-        <div class="fixed-header">
-          <PopoverHeader
-            title="Создать"
-            save-text="Добавить"
-            :disabled="!isFormValid"
-            :on-cancel="closeAddEventPopover"
-            :on-save="handleAddEvent"
-          />
-          <div v-if="formError" class="px-4 pb-2 text-destructive text-sm">
-            {{ formError }}
+      <f7-page>
+        <div class="event-popover bg-card text-card-foreground">
+          <!-- Header with buttons -->
+          <div class="fixed-header">
+            <PopoverHeader
+              title="Создать"
+              save-text="Добавить"
+              :disabled="!isFormValid"
+              :on-cancel="closeAddEventPopover"
+              :on-save="handleAddEvent"
+            />
+            <div v-if="formError" class="px-4 pb-2 text-destructive text-sm">
+              {{ formError }}
+            </div>
+          </div>
+
+          <div class="scrollable-content">
+            <EventForm
+              parent-popover-id="#add-event-popup"
+              mode="add"
+              :event-id="tempEventId"
+              :semester="semesterId"
+              :semester-dates="semesterDates"
+              :total-planned-hours="totalPlannedHours"
+              :semester-planned-hours="semesterPlannedHours"
+              :selected-hours="selectedHours"
+              :hours-exceeded-error="hoursExceededError"
+              :date-validation-error="dateValidationError"
+              class="overflow-y-auto"
+              v-model:class9Id="class9Id"
+              v-model:useCustomPeriod="useCustomPeriod"
+              v-model:startDate="customStartDate"
+              v-model:endDate="customEndDate"
+              v-model:participants="participants"
+              v-model:color="eventColor"
+              v-model:selectedWeekDays="selectedWeekDays"
+            />
           </div>
         </div>
-
-        <div class="scrollable-content">
-          <EventForm
-            :parent-popover-id="'#add-event-popover'"
-            mode="add"
-            :event-id="tempEventId"
-            :semester="semesterId"
-            :semester-dates="semesterDates"
-            :total-planned-hours="totalPlannedHours"
-            :semester-planned-hours="semesterPlannedHours"
-            :selected-hours="selectedHours"
-            :hours-exceeded-error="hoursExceededError"
-            :date-validation-error="dateValidationError"
-            class="overflow-y-auto"
-            v-model:class9Id="class9Id"
-            v-model:useCustomPeriod="useCustomPeriod"
-            v-model:startDate="customStartDate"
-            v-model:endDate="customEndDate"
-            v-model:participants="participants"
-            v-model:color="eventColor"
-            v-model:selectedWeekDays="selectedWeekDays"
-          />
-        </div>
-      </div>
-    </f7-popover>
+      </f7-page>
+    </f7-popup>
   </div>
 </template>
 
@@ -99,6 +99,7 @@ const eventColor = ref("#3F51B5");
 const tempEventId = ref<string>(""); // Pre-generated event ID for creating KTP before saving
 
 const selectedWeekDays = ref<WeekDaySchedule[]>([]);
+const isPopupOpen = ref(false);
 
 const semesterId = computed(() => getActiveAcademicYearSemester.value?.id || "");
 
@@ -195,20 +196,43 @@ const resetForm = () => {
 const openAddEventPopover = () => {
   // Generate temporary event ID for KTP creation
   tempEventId.value = crypto.randomUUID();
-  f7.popover.open("#add-event-popover");
+  isPopupOpen.value = true;
 };
 
 const closeAddEventPopover = () => {
-  f7.popover.close("#add-event-popover");
+  isPopupOpen.value = false;
+};
+
+const onPopupClosed = () => {
+  // Popup closed by backdrop click or escape key
+  isPopupOpen.value = false;
 };
 </script>
 
 <style scoped>
-.event-popover {
+.add-event-popup {
+  width: auto;
+  min-width: 500px;
+  max-width: 90vw;
+  max-height: 90vh;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.add-event-popup .page-content {
+  padding: 0;
   height: 100%;
+}
+
+.event-popover {
   display: flex;
   flex-direction: column;
-  max-height: 100dvh;
+  max-height: 90vh;
+  width: 100%;
+  height: 100%;
 }
 
 .fixed-header {
@@ -222,10 +246,6 @@ const closeAddEventPopover = () => {
 .scrollable-content {
   flex: 1;
   overflow-y: auto;
-  height: calc(100dvh - 120px); /* Adjust height as needed */
-}
-#add-event-popover {
-  left: 50%;
-  transform: translateX(-50%);
+  min-height: 0; /* Allow flexbox to shrink */
 }
 </style>

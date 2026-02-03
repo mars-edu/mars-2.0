@@ -19,7 +19,6 @@
       id="add-student-popover"
       style="width: 600px !important"
       target="#add-student-button"
-      close-on-escape
     >
       <div class="student-popover bg-card text-card-foreground">
         <PopoverHeader

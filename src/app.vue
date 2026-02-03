@@ -118,6 +118,16 @@ const f7params: Framework7Parameters = {
     searchbarDisableText: "Отмена",
   },
 
+  popover: {
+    closeByBackdropClick: true,
+    closeOnEscape: true,
+  },
+
+  popup: {
+    closeByBackdropClick: true,
+    closeOnEscape: true,
+  },
+
   view: {
     browserHistory: true,
     browserHistorySeparator: '',  // Empty string removes #!/ prefix

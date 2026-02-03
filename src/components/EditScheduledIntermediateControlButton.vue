@@ -4,7 +4,6 @@
       v-if="control"
       :id="'edit-scheduled-intermediate-control-popover-' + control.id"
       style="width: 600px !important"
-      close-on-escape
       :target="`#scheduled-intermediate-control-item-${control.id}`"
     >
       <div class="control-popover bg-card text-card-foreground">

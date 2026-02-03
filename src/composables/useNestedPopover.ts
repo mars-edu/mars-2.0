@@ -1,10 +1,12 @@
 import { f7 } from "framework7-vue";
+import { type MaybeRefOrGetter, toValue } from "vue";
 
 export interface NestedPopoverOptions {
   /**
    * The ID of the parent popover (e.g., "#my-popover")
+   * Can be a string, ref, or computed value
    */
-  parentPopoverId: string;
+  parentPopoverId: MaybeRefOrGetter<string>;
   /**
    * Optional target element selector for reopening the parent
    */
@@ -46,17 +48,19 @@ export function useNestedPopover(options: NestedPopoverOptions) {
    * Close the parent popover
    */
   const closeParent = () => {
-    f7.popover.close(parentPopoverId);
+    const popoverId = toValue(parentPopoverId);
+    f7.popover.close(popoverId);
   };
 
   /**
    * Open the parent popover
    */
   const openParent = () => {
+    const popoverId = toValue(parentPopoverId);
     if (parentTargetSelector) {
-      f7.popover.open(parentPopoverId, parentTargetSelector);
+      f7.popover.open(popoverId, parentTargetSelector);
     } else {
-      f7.popover.open(parentPopoverId);
+      f7.popover.open(popoverId);
     }
   };
 

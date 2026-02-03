@@ -19,7 +19,6 @@
       id="add-discipline-popover"
       style="width: 600px !important"
       target="#add-discipline-button"
-      close-on-escape
     >
       <div class="discipline-popover bg-card text-card-foreground">
         <PopoverHeader

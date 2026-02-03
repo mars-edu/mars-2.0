@@ -4,7 +4,6 @@
       v-if="academicYearSemester"
       :id="'edit-academic-year-semester-popover-' + academicYearSemester.id"
       style="width: 600px !important"
-      close-on-escape
       :target="`#academic-year-semester-item-${academicYearSemester.id}`"
     >
       <div class="semester-popover bg-card text-card-foreground">

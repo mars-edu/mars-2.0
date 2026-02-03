@@ -4,7 +4,6 @@
       v-if="schedule"
       :id="'edit-schedule-popover-' + schedule.id"
       style="width: 600px !important"
-      close-on-escape
       :target="`#schedule-item-${schedule.id}`"
     >
       <div class="schedule-popover bg-card text-card-foreground">

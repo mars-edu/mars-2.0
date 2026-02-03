@@ -5,7 +5,6 @@
       id="column-config-popover"
       style="width: 600px !important"
       :target="popoverTarget"
-      close-on-escape
     >
       <div class="column-config-popover bg-card text-card-foreground">
         <div

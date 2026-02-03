@@ -1,7 +1,7 @@
 <template>
-  <div class="bg-white min-h-32 p-3 relative group" :class="dayClasses">
+  <div class="bg-white min-h-[120px] p-2 relative group" :class="dayClasses">
     <div
-      class="text-sm mb-2"
+      class="text-sm mb-1.5"
       :class="{
         'text-gray-400': !day.isCurrentMonth,
         'text-white': day.isToday,
@@ -10,11 +10,11 @@
     >
       <span
         v-if="day.isToday"
-        class="w-7 h-7 bg-red-500 rounded-full inline-flex items-center justify-center font-semibold"
+        class="w-6 h-6 bg-red-500 rounded-lg inline-flex items-center justify-center font-black text-[11px] shadow-md"
       >
         {{ day.dayNumber }}
       </span>
-      <span v-else class="font-medium">
+      <span v-else class="font-black text-[11px]">
         {{ day.dayNumber }}
       </span>
     </div>
@@ -61,8 +61,8 @@ const dayClasses = computed(() => {
   const isWeekend = weekday === 0 || weekday === 6; // Sunday=0, Saturday=6
   return {
     "bg-gray-50": isWeekend,
-    "hover:bg-gray-50": !props.day.isToday && !isWeekend,
-    "bg-red-50 border-red-200": props.day.isToday,
+    "hover:bg-orange-50/20 transition-colors": !props.day.isToday,
+    "bg-red-50": props.day.isToday,
   } as Record<string, boolean>;
 });
 </script>

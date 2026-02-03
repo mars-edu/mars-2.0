@@ -4,7 +4,6 @@
       v-if="vacation"
       :id="'edit-vacation-popover-' + vacation.id"
       style="width: 600px !important"
-      close-on-escape
       :target="`#vacation-item-${vacation.id}`"
     >
       <div class="vacation-popover bg-card text-card-foreground">

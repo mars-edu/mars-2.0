@@ -230,7 +230,8 @@ const openSearchablePopup = () => {
 
 const onSelectOption = (value: string | number | Array<string | number>) => {
   emit("update:modelValue", value);
-  emit("after-close");
+  // Don't emit "after-close" here - it will be emitted by onPopupClose when popup actually closes
+  // This prevents double emission when used with nested popover handlers
 };
 
 const onPopupClose = () => {

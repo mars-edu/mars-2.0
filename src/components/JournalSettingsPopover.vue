@@ -2,7 +2,6 @@
   <f7-popover
     id="journal-settings-popover"
     style="width: 500px !important"
-    close-on-escape
     target="#journal-settings-button"
   >
     <div class="journal-settings-popover bg-card text-card-foreground">

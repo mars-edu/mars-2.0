@@ -19,7 +19,6 @@
       id="add-teacher-popover"
       style="width: 600px !important"
       target="#add-teacher-button"
-      close-on-escape
     >
       <div class="teacher-popover bg-card text-card-foreground">
         <PopoverHeader

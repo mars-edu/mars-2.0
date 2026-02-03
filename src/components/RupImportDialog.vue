@@ -9,7 +9,6 @@
       height: auto !important;
       max-height: 80dvh !important;
     "
-    close-on-escape
     @popover:closed="$emit('update:opened', false)"
   >
     <div class="rup-import-dialog bg-card text-card-foreground">

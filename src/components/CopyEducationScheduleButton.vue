@@ -21,7 +21,6 @@
       id="copy-education-schedule-popover"
       style="width: 600px !important"
       target="#copy-education-schedule-button"
-      close-on-escape
     >
       <div class="copy-schedule-popover bg-card text-card-foreground">
         <PopoverHeader
