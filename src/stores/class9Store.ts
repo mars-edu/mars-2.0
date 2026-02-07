@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import { useAcademicYearStore } from "@/stores/academicYearStore";
 
 export interface DistributionEntry {
   id: string;
@@ -168,17 +169,22 @@ export const useClass9Store = defineStore(
     const getError = computed(() => error.value);
 
     const class9Options = computed(() => {
+      const academicYearStore = useAcademicYearStore();
       return class9Items.value
         .filter(
           (item) => item.learningOutcome && item.learningOutcome.trim() !== ""
         )
-        .map((item) => ({
-          value: item.id,
-          text: `${item.moduleIndex} ${item.moduleName} - ${item.learningOutcome}`,
-          moduleIndex: item.moduleIndex,
-          moduleName: item.moduleName,
-          learningOutcome: item.learningOutcome,
-        }));
+        .map((item) => {
+          const year = academicYearStore.getAcademicYearById(item.academicYearId);
+          const yearSuffix = year ? ` (${year.startYear})` : "";
+          return {
+            value: item.id,
+            text: `${item.moduleIndex} ${item.moduleName} - ${item.learningOutcome}${yearSuffix}`,
+            moduleIndex: item.moduleIndex,
+            moduleName: item.moduleName,
+            learningOutcome: item.learningOutcome,
+          };
+        });
     });
 
     function createEmptyClass9Data(

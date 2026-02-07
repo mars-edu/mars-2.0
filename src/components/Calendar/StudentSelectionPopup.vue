@@ -382,6 +382,11 @@ const filteredStudents = computed(() => {
       // Students now store specialty as id
       return ids.includes(s.specialty);
     })
+    .filter((s) => {
+      const ayId = allowedAcademicYearId.value;
+      if (!ayId) return true;
+      return s.academicYearId === ayId;
+    })
     .filter(
       (s) => filters.language === "all" || s.language === filters.language
     )
@@ -421,6 +426,12 @@ const allowedSpecialtyIds = computed(() => {
   // Get the selected class9 item from the store
   const selectedClass9 = class9Store.getClass9ById(props.class9Id);
   return selectedClass9?.specialtyIds || [];
+});
+
+const allowedAcademicYearId = computed<string | undefined>(() => {
+  if (!props.class9Id) return undefined;
+  const selectedClass9 = class9Store.getClass9ById(props.class9Id);
+  return selectedClass9?.academicYearId;
 });
 
 const filteredStudentsInfo = computed(() => {

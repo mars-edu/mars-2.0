@@ -10,7 +10,7 @@
         smart-select
         :smart-select-params="smartSelectParams"
         :id="uniqueId"
-        :class="{ 'item-smart-select-value': !!modelValue }"
+        :class="{ 'item-smart-select-value': !isShowingPlaceholder, 'select-showing-placeholder': isShowingPlaceholder }"
         @smartselect:open="onSmartSelectOpen"
         @smartselect:close="onSmartSelectClose"
       >
@@ -46,7 +46,7 @@
         :title="listTitle"
         :after="selectedOptionText"
         :id="uniqueId"
-        :class="{ 'item-smart-select-value': !!modelValue }"
+        :class="{ 'item-smart-select-value': !isShowingPlaceholder, 'select-showing-placeholder': isShowingPlaceholder }"
         @click="openSearchablePopup"
       >
         <template v-if="props.multiple && Array.isArray(modelValue)">
@@ -177,26 +177,26 @@ const selectedOptionText = computed(() => {
         (props.modelValue as Array<string | number>).includes(o.value)
       )
       .map((o) => o.text);
+    if (selectedTexts.length === 0) return props.placeholder || " ";
     return selectedTexts.join(", ");
   }
   const selected = props.options.find(
     (option) => option.value == props.modelValue
   );
-  return selected ? selected.text : "";
+  return selected ? selected.text : props.placeholder || " ";
+});
+
+const isShowingPlaceholder = computed(() => {
+  if (!hasOptions.value) return false;
+  if (props.multiple && Array.isArray(props.modelValue)) {
+    return props.modelValue.length === 0;
+  }
+  return !props.options.find((option) => option.value == props.modelValue);
 });
 
 const listTitle = computed(() => {
   if (!hasOptions.value) return " ";
-  // if (props.multiple && Array.isArray(props.modelValue)) {
-  //   return (props.modelValue as Array<string | number>).length
-  //     ? ""
-  //     : props.placeholder || " ";
-  // }
-  // const selected = props.options.find(
-  //   (option) => option.value == props.modelValue
-  // );
-  // return selected ? "" : props.placeholder || " ";
-  return props.placeholder || " ";
+  return " ";
 });
 
 const smartSelectView = ref<any>(null);
@@ -258,8 +258,7 @@ const isOptionSelected = (option: SelectOption) => {
 
 /* Generalize styles */
 .smart-select-list-container .item-content {
-  overflow: auto;
-  height: 38px;
+  overflow: hidden;
   min-height: 38px;
   padding: 0 !important;
 }
@@ -328,14 +327,18 @@ const isOptionSelected = (option: SelectOption) => {
 .smart-select-list-container .item-after {
   flex-grow: 1;
   flex-shrink: 1;
+  min-width: 0;
   text-align: right;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal !important;
+  overflow-wrap: break-word;
   font-size: 0.875rem;
   font-weight: 400;
   line-height: 1.25rem;
   color: hsl(var(--card-foreground));
+}
+
+.smart-select-list-container .select-showing-placeholder .item-after {
+  color: hsl(var(--muted-foreground));
 }
 
 .smart-select-list-container:focus-within {
