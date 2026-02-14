@@ -1,11 +1,11 @@
 <template>
-  <div class="bg-white min-h-[120px] p-2 relative group" :class="dayClasses">
+  <div class="bg-card min-h-[120px] p-2 relative group" :class="dayClasses">
     <div
       class="text-sm mb-1.5"
       :class="{
-        'text-gray-400': !day.isCurrentMonth,
-        'text-white': day.isToday,
-        'text-gray-900': day.isCurrentMonth && !day.isToday,
+        'text-muted-foreground/40': !day.isCurrentMonth,
+        'text-primary-foreground': day.isToday,
+        'text-foreground': day.isCurrentMonth && !day.isToday,
       }"
     >
       <span
@@ -58,11 +58,11 @@ const props = defineProps<{
 
 const dayClasses = computed(() => {
   const weekday = dayjs(props.day.date).day();
-  const isWeekend = weekday === 0 || weekday === 6; // Sunday=0, Saturday=6
+  const isWeekend = weekday === 0 || weekday === 6;
   return {
-    "bg-gray-50": isWeekend,
-    "hover:bg-orange-50/20 transition-colors": !props.day.isToday,
-    "bg-red-50": props.day.isToday,
+    "bg-muted/30": isWeekend,
+    "hover:bg-primary/5 transition-colors": !props.day.isToday,
+    "bg-primary/10": props.day.isToday,
   } as Record<string, boolean>;
 });
 </script>
@@ -77,12 +77,12 @@ const dayClasses = computed(() => {
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgba(var(--muted-foreground), 0.5);
+  background-color: hsl(var(--muted-foreground) / 0.3);
   border-radius: 20px;
 }
 
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(var(--muted-foreground), 0.5) transparent;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
 }
 </style>

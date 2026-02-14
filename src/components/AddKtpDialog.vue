@@ -2,7 +2,7 @@
   <div>
     <button
       id="add-ktp-button"
-      class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-green-500 hover:bg-green-600 rounded-full transition-colors"
+      class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-primary hover:bg-primary/90 rounded-full transition-colors"
       :class="{
         'opacity-50 cursor-not-allowed': disabled,
       }"

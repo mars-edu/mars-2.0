@@ -1,12 +1,13 @@
 <template>
   <div>
-    <f7-fab
+    <button
       id="add-button"
-      position="right-bottom"
+      class="flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-full transition-colors"
       @click="openAddEventPopover"
     >
-      <f7-icon ios="f7:plus" md="material:add" size="16px"></f7-icon>
-    </f7-fab>
+      <i class="f7-icons text-[16px]">plus</i>
+      <span>Создать</span>
+    </button>
 
     <!-- Framework7 Popup (was Popover) -->
     <GuardedPopover

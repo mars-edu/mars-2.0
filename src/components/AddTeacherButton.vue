@@ -2,7 +2,7 @@
   <div>
     <button
       id="add-teacher-button"
-      class="fixed bottom-20 right-4 md:bottom-6 md:right-6 w-14 h-14 md:w-12 md:h-12 flex items-center justify-center text-white bg-green-500 hover:bg-green-600 rounded-full transition-colors shadow-lg z-50"
+      class="fixed bottom-20 right-4 md:bottom-6 md:right-6 w-14 h-14 md:w-12 md:h-12 flex items-center justify-center text-white bg-primary hover:bg-primary/90 rounded-full transition-colors shadow-lg z-50"
       aria-label="Add Teacher"
       type="button"
       @click.stop="openAddTeacherPopover"

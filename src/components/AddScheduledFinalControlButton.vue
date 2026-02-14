@@ -2,7 +2,7 @@
   <div>
     <button
       :id="buttonId"
-      class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-green-500 hover:bg-green-600 rounded-full transition-colors"
+      class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-primary hover:bg-primary/90 rounded-full transition-colors"
       aria-label="Добавить итоговый контроль"
       type="button"
       @click.stop="openAddControlPopover"

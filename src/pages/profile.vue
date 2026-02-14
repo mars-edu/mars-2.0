@@ -17,22 +17,27 @@
           </div>
 
           <div
-            class="bg-card text-card-foreground rounded-xl p-4 md:p-6 shadow-sm"
+            class="bg-card text-card-foreground rounded-xl p-4 md:p-6 shadow-sm space-y-6"
           >
-            <div class="profile-container">
-              <div class="profile-avatar-section">
-                <div class="avatar-wrapper">
-                  <img
-                    v-if="avatarUrl"
-                    :src="avatarUrl"
-                    alt="Profile Picture"
-                    class="profile-avatar"
-                  />
-                  <div v-else class="profile-avatar-placeholder">
-                    <i class="icon f7-icons">person_circle_fill</i>
-                  </div>
+            <!-- Avatar Row -->
+            <div class="flex items-center gap-4 pb-6 border-b border-border">
+              <div class="avatar-wrapper flex-shrink-0">
+                <img
+                  v-if="avatarUrl"
+                  :src="avatarUrl"
+                  alt="Profile Picture"
+                  class="profile-avatar"
+                />
+                <div v-else class="profile-avatar-placeholder">
+                  <i class="icon f7-icons">person_circle_fill</i>
                 </div>
-                <div class="avatar-actions">
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-lg font-semibold text-foreground truncate">
+                  {{ userStore.currentUser?.firstName }} {{ userStore.currentUser?.lastName }}
+                </p>
+                <p class="text-sm text-muted-foreground truncate">{{ userStore.currentUser?.username }}</p>
+                <div class="flex gap-2 mt-3 flex-wrap">
                   <f7-button fill small @click="selectImage">
                     {{ avatarUrl ? 'Изменить фото' : 'Загрузить фото' }}
                   </f7-button>
@@ -46,37 +51,46 @@
                     Удалить фото
                   </f7-button>
                 </div>
-                <input
-                  ref="fileInput"
-                  type="file"
-                  accept="image/*"
-                  style="display: none"
-                  @change="handleFileSelect"
-                />
               </div>
+              <input
+                ref="fileInput"
+                type="file"
+                accept="image/*"
+                style="display: none"
+                @change="handleFileSelect"
+              />
+            </div>
 
-              <div class="profile-info">
-                <div class="info-grid">
-                  <div class="info-item">
-                    <span class="info-label">Имя</span>
-                    <span class="info-value">{{ userStore.currentUser?.firstName }}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">Фамилия</span>
-                    <span class="info-value">{{ userStore.currentUser?.lastName }}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">Email</span>
-                    <span class="info-value">{{ userStore.currentUser?.email }}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">Имя пользователя</span>
-                    <span class="info-value">{{ userStore.currentUser?.username }}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">Роли</span>
-                    <span class="info-value">{{ userStore.currentUser?.roles.join(', ') }}</span>
-                  </div>
+            <!-- Personal Info Section -->
+            <div>
+              <h2 class="text-base font-semibold text-foreground mb-3">Личные данные</h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="bg-muted rounded-lg p-3">
+                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">Имя</div>
+                  <div class="text-sm font-medium text-foreground">{{ userStore.currentUser?.firstName || '—' }}</div>
+                </div>
+                <div class="bg-muted rounded-lg p-3">
+                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">Фамилия</div>
+                  <div class="text-sm font-medium text-foreground">{{ userStore.currentUser?.lastName || '—' }}</div>
+                </div>
+                <div class="bg-muted rounded-lg p-3">
+                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">Email</div>
+                  <div class="text-sm font-medium text-foreground">{{ userStore.currentUser?.email || '—' }}</div>
+                </div>
+                <div class="bg-muted rounded-lg p-3">
+                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">Имя пользователя</div>
+                  <div class="text-sm font-medium text-foreground">{{ userStore.currentUser?.username || '—' }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Security Section -->
+            <div>
+              <h2 class="text-base font-semibold text-foreground mb-3">Безопасность</h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="bg-muted rounded-lg p-3">
+                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">Роли</div>
+                  <div class="text-sm font-medium text-foreground">{{ userStore.currentUser?.roles.join(', ') || '—' }}</div>
                 </div>
               </div>
             </div>
@@ -347,24 +361,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.profile-container {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-
-.profile-avatar-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  padding: 24px 0;
-  border-bottom: 1px solid hsl(var(--border));
-}
-
 .avatar-wrapper {
-  width: 150px;
-  height: 150px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   overflow: hidden;
   background: hsl(var(--muted));
@@ -373,6 +372,7 @@ onMounted(() => {
   justify-content: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border: 3px solid hsl(var(--border));
+  flex-shrink: 0;
 }
 
 .profile-avatar {
@@ -391,62 +391,9 @@ onMounted(() => {
 }
 
 .profile-avatar-placeholder .icon {
-  font-size: 80px;
+  font-size: 40px;
   color: hsl(var(--muted-foreground));
   opacity: 0.4;
-}
-
-.avatar-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.profile-info {
-  width: 100%;
-}
-
-.info-grid {
-  display: grid;
-  gap: 20px;
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid hsl(var(--border));
-}
-
-.info-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.info-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: hsl(var(--muted-foreground));
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.info-value {
-  font-size: 1rem;
-  font-weight: 400;
-  color: hsl(var(--foreground));
-}
-
-@media (min-width: 768px) {
-  .info-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .profile-avatar-section {
-    padding: 32px 0;
-  }
 }
 
 /* Cropper Popup Styles */

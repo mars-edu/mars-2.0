@@ -1,9 +1,9 @@
 <template>
-  <Card :theme="theme">
+  <Card>
     <template #header>
       <div class="flex justify-between w-full">
         <div class="flex items-center space-x-3">
-          <h2 class="text-sm font-medium w-full" :class="textClass">
+          <h2 class="text-sm font-medium w-full text-foreground">
             {{ currentMonthYear }}
           </h2>
           <button
@@ -16,22 +16,16 @@
         </div>
         <div class="flex space-x-1 items-center">
           <button
-            class="p-1 rounded transition-colors"
-            :class="controlButtonClass"
+            class="p-1 rounded transition-colors hover:bg-muted"
             @click="previousMonth"
           >
-            <i class="f7-icons text-sm" :class="controlIconClass"
-              >chevron_left</i
-            >
+            <i class="f7-icons text-sm text-muted-foreground">chevron_left</i>
           </button>
           <button
-            class="p-1 rounded transition-colors"
-            :class="controlButtonClass"
+            class="p-1 rounded transition-colors hover:bg-muted"
             @click="nextMonth"
           >
-            <i class="f7-icons text-sm" :class="controlIconClass"
-              >chevron_right</i
-            >
+            <i class="f7-icons text-sm text-muted-foreground">chevron_right</i>
           </button>
         </div>
       </div>
@@ -43,8 +37,7 @@
       <div
         v-for="day in weekDays"
         :key="day"
-        class="text-center text-xs font-medium pb-2"
-        :class="weekdayClass"
+        class="text-center text-xs font-medium pb-2 text-muted-foreground"
       >
         {{ day }}
       </div>
@@ -63,8 +56,8 @@
               : date.isCurrentMonth && isSelectedDate(date)
               ? 'bg-red-200 text-red-700'
               : date.isCurrentMonth
-              ? [dateClass, 'hover:' + dateHoverClass]
-              : [inactiveDateClass, 'hover:' + inactiveDateHoverClass],
+              ? 'text-foreground hover:bg-muted'
+              : 'text-muted-foreground/50 hover:bg-muted/50',
             date.hasSchedule ? 'font-bold' : '',
           ]"
           :disabled="!date.isCurrentMonth"
@@ -84,10 +77,11 @@ import { f7 } from "framework7-vue";
 import Card from "@/components/ui/Card.vue";
 
 interface Props {
+  /** @deprecated Theme is now handled by CSS custom properties. */
   theme?: "white" | "dark" | "lavanda";
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   theme: "white",
 });
 
@@ -103,100 +97,9 @@ const weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const currentDate = ref(new Date());
 const scheduleStore = useScheduleStore();
 
-
-const textClass = computed(() => {
-  switch (props.theme) {
-    case "dark":
-      return "text-white";
-    case "lavanda":
-      return "text-purple-900";
-    default:
-      return "text-gray-900";
-  }
-});
-
-const weekdayClass = computed(() => {
-  switch (props.theme) {
-    case "dark":
-      return "text-gray-400";
-    case "lavanda":
-      return "text-purple-500";
-    default:
-      return "text-gray-500";
-  }
-});
-
-const dateClass = computed(() => {
-  switch (props.theme) {
-    case "dark":
-      return "text-gray-200";
-    case "lavanda":
-      return "text-purple-900";
-    default:
-      return "text-gray-900";
-  }
-});
-
-const dateHoverClass = computed(() => {
-  switch (props.theme) {
-    case "dark":
-      return "bg-gray-700";
-    case "lavanda":
-      return "bg-purple-100";
-    default:
-      return "bg-gray-100";
-  }
-});
-
-const inactiveDateClass = computed(() => {
-  switch (props.theme) {
-    case "dark":
-      return "text-gray-600";
-    case "lavanda":
-      return "text-purple-300";
-    default:
-      return "text-gray-400";
-  }
-});
-
-const inactiveDateHoverClass = computed(() => {
-  switch (props.theme) {
-    case "dark":
-      return "bg-gray-800";
-    case "lavanda":
-      return "bg-purple-50";
-    default:
-      return "bg-gray-50";
-  }
-});
-
-const controlButtonClass = computed(() => {
-  switch (props.theme) {
-    case "dark":
-      return "hover:bg-gray-700";
-    case "lavanda":
-      return "hover:bg-purple-100";
-    default:
-      return "hover:bg-gray-100";
-  }
-});
-
-const controlIconClass = computed(() => {
-  switch (props.theme) {
-    case "dark":
-      return "text-gray-400";
-    case "lavanda":
-      return "text-purple-500";
-    default:
-      return "text-gray-600";
-  }
-});
-
-
 const navigateToPlanning = () => {
   f7.views.main.router.navigate("/planning");
 };
-
 
 const isSelectedDate = (date: CalendarDate): boolean => {
   if (!date.isCurrentMonth) return false;
@@ -213,25 +116,21 @@ const isSelectedDate = (date: CalendarDate): boolean => {
   );
 };
 
-
 const selectDate = (date: CalendarDate) => {
   if (!date.isCurrentMonth) return;
   scheduleStore.setSelectedDate(date.date);
 };
-
 
 const nextMonth = () => {
   const newDate = new Date(currentDate.value);
   newDate.setMonth(newDate.getMonth() + 1);
   currentDate.value = newDate;
 
-  
   const selectedDate = new Date(scheduleStore.selectedDate);
   const newMonth = newDate.getMonth();
   const newYear = newDate.getFullYear();
   const lastDayOfNewMonth = new Date(newYear, newMonth + 1, 0).getDate();
 
-  
   const newDay = Math.min(selectedDate.getDate(), lastDayOfNewMonth);
   const newSelectedDate = new Date(newYear, newMonth, newDay);
 
@@ -243,13 +142,11 @@ const previousMonth = () => {
   newDate.setMonth(newDate.getMonth() - 1);
   currentDate.value = newDate;
 
-  
   const selectedDate = new Date(scheduleStore.selectedDate);
   const newMonth = newDate.getMonth();
   const newYear = newDate.getFullYear();
   const lastDayOfNewMonth = new Date(newYear, newMonth + 1, 0).getDate();
 
-  
   const newDay = Math.min(selectedDate.getDate(), lastDayOfNewMonth);
   const newSelectedDate = new Date(newYear, newMonth, newDay);
 
@@ -276,7 +173,6 @@ const currentMonthYear = computed(() => {
   return `${month} ${year}`;
 });
 
-
 const checkHasSchedule = (date: Date): boolean => {
   const formattedDate = `${date.getFullYear()}-${String(
     date.getMonth() + 1
@@ -292,12 +188,10 @@ const calendarDays = computed(() => {
   const month = currentDate.value.getMonth();
   const today = new Date();
 
-  
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
 
-  
-  const firstDayOfWeek = firstDay.getDay() || 7; 
+  const firstDayOfWeek = firstDay.getDay() || 7;
   const daysFromPrevMonth = firstDayOfWeek - 1;
 
   const prevMonthDays: CalendarDate[] = [];
@@ -326,7 +220,6 @@ const calendarDays = computed(() => {
     }
   }
 
-  
   const currentMonthDays = Array.from(
     { length: lastDay.getDate() },
     (_, i): CalendarDate => {
@@ -344,8 +237,7 @@ const calendarDays = computed(() => {
     }
   );
 
-  
-  const totalDaysToShow = 42; 
+  const totalDaysToShow = 42;
   const remainingDays =
     totalDaysToShow - (prevMonthDays.length + currentMonthDays.length);
 
@@ -363,7 +255,6 @@ const calendarDays = computed(() => {
 
   return [...prevMonthDays, ...currentMonthDays, ...nextMonthDays];
 });
-
 
 onMounted(() => {
   scheduleStore.setSelectedDate(new Date());

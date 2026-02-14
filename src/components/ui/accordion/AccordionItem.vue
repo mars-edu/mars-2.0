@@ -1,7 +1,7 @@
 <template>
   <div class="border border-border rounded-lg md:rounded-xl overflow-hidden">
     <div
-      class="px-3 md:px-4 py-1.5 md:py-2 bg-muted bg-gray-50 md:bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
+      class="px-3 md:px-4 py-1.5 md:py-2 bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
       @click="toggle"
     >
       <div class="flex items-center">
