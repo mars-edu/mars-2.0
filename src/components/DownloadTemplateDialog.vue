@@ -1,6 +1,6 @@
 <template>
   <div>
-    <f7-popover
+    <GuardedPopover
       id="download-template-popover"
       style="width: 400px !important"
       target="#download-template-button"
@@ -40,13 +40,14 @@
           </a>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
 <script setup lang="ts">
 import { f7, f7Popover, f7Icon } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { saveAs } from "file-saver";
 
 const handleClose = () => {

@@ -126,6 +126,7 @@
                   @update-students="updateStudents"
                   @open-ktp-details="onOpenKtpDetails"
                   @open-settings="openJournalSettings"
+                  @save-journal-settings="saveJournalSettings"
                   @open-rup="openRupDialog"
                 />
               </f7-tab>
@@ -298,91 +299,6 @@
       @cancel="onImportCancel"
     />
 
-    <!-- Journal Settings Popup -->
-    <f7-popover
-      id="journal-settings-popover"
-      style="width: 500px !important"
-      target="#journal-settings-button"
-    >
-      <div class="journal-settings-popover bg-card text-card-foreground">
-        <PopoverHeader
-          title="Настройки журнала"
-          :disabled="false"
-          :is-loading="false"
-          :on-cancel="closeJournalSettings"
-          :on-save="saveJournalSettings"
-        />
-
-        <div class="p-4 space-y-6">
-          <!-- Calculation Type Section -->
-          <div class="space-y-3">
-            <h3 class="text-sm font-medium text-foreground">
-              Тип расчета сессии
-            </h3>
-
-            <div class="space-y-3">
-              <!-- Calculated Option -->
-              <div class="space-y-2">
-                <label class="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="calculation-type"
-                    value="calculated"
-                    v-model="journalSettings.calculationType"
-                    class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary"
-                  />
-                  <span class="text-sm text-foreground">Расчитываемая</span>
-                </label>
-
-                <!-- Sub-options for Calculated -->
-                <div
-                  v-if="journalSettings.calculationType === 'calculated'"
-                  class="ml-7 space-y-2"
-                >
-                  <label class="flex items-center space-x-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="calculation-method"
-                      value="only-assigned"
-                      v-model="journalSettings.calculationMethod"
-                      class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary"
-                    />
-                    <span class="text-sm text-muted-foreground"
-                      >Только выставленных дней</span
-                    >
-                  </label>
-
-                  <label class="flex items-center space-x-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="calculation-method"
-                      value="all-days"
-                      v-model="journalSettings.calculationMethod"
-                      class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary"
-                    />
-                    <span class="text-sm text-muted-foreground">Всех дней</span>
-                  </label>
-                </div>
-              </div>
-
-              <!-- Manual Option -->
-              <div>
-                <label class="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="calculation-type"
-                    value="manual"
-                    v-model="journalSettings.calculationType"
-                    class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary"
-                  />
-                  <span class="text-sm text-foreground">Выставляемая</span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </f7-popover>
 
     <!-- Student Edit Popover -->
     <div id="student-edit-trigger" style="display: none;"></div>
@@ -403,7 +319,6 @@ import {
   f7Tabs,
   f7Tab,
   f7Icon,
-  f7Popover,
 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -421,7 +336,6 @@ import DateColumnFocus from "@/components/DateColumnFocus.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
 import KtpDetailPopupBody from "@/components/KtpDetailPopupBody.vue";
 import Class9Popup from "@/components/Class9Popup.vue";
-import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import StudentListTable from "@/components/StudentListTable.vue";
 import EditStudentButton from "@/components/EditStudentButton.vue";
 import { storeToRefs } from "pinia";
@@ -811,10 +725,19 @@ const closeJournalSettings = () => {
   f7.popover.close("#journal-settings-popover");
 };
 
-const saveJournalSettings = async () => {
+const saveJournalSettings = async (
+  nextSettings?: {
+    calculationType: "calculated" | "manual";
+    calculationMethod: "only-assigned" | "all-days";
+  }
+) => {
   if (!currentJournal.value) {
     f7.dialog.alert("Журнал не найден");
     return;
+  }
+
+  if (nextSettings) {
+    journalSettings.value = { ...nextSettings };
   }
 
   console.log("[JournalDetails] Saving journal settings:", {

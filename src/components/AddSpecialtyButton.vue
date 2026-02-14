@@ -15,7 +15,8 @@
       ></f7-icon>
     </button>
 
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       id="add-specialty-popover"
       style="width: 600px !important"
       target="#add-specialty-button"
@@ -24,7 +25,7 @@
         <PopoverHeader
           title="Создать"
           :is-loading="specialtyStore.isLoading"
-          :on-cancel="closeAddSpecialtyPopover"
+          :on-cancel="requestClose"
           :on-save="handleSaveSpecialty"
         />
         <!-- :disabled="!isFormValid || specialtyStore.isLoading" -->
@@ -86,7 +87,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -96,6 +97,7 @@ import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const specialtyStore = useSpecialtyStore();
 

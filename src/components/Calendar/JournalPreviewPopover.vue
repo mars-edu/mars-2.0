@@ -1,5 +1,5 @@
 <template>
-  <f7-popover
+  <GuardedPopover
     id="journal-preview-popover"
     style="width: 560px !important"
     :arrow="true"
@@ -35,7 +35,7 @@
         />
       </div>
     </div>
-  </f7-popover>
+  </GuardedPopover>
 </template>
 
 <script setup lang="ts">
@@ -43,6 +43,7 @@ import { computed, ref } from "vue";
 import { f7 } from "framework7-vue";
 import JournalCard from "@/components/Cards/JournalCard.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Button from "@/components/ui/Button.vue";
 import { useJournalStore, type Journal } from "@/stores/journalStore";
 import type { CalendarEvent } from "@/stores/calendarStore";

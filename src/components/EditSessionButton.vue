@@ -1,6 +1,7 @@
 <template>
   <div>
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       v-if="session"
       :id="'edit-session-popover-' + session.id"
       style="width: 600px !important"
@@ -11,7 +12,7 @@
           title="Редактировать сессию"
           :disabled="!isFormValid || sessionStore.isLoading"
           :is-loading="sessionStore.isLoading"
-          :on-cancel="closePopover"
+          :on-cancel="requestClose"
           :on-save="handleUpdateSession"
         />
 
@@ -100,7 +101,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -110,6 +111,7 @@ import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { f7, f7Input, f7Icon, f7Popover } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { z } from "zod";
 import { useSessionStore } from "@/stores/sessionStore";
 import type { Session } from "@/stores/sessionStore";

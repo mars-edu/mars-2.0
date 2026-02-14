@@ -1,16 +1,18 @@
 <template>
   <div>
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       :id="'edit-language-popover-' + languageId"
       style="width: 600px !important"
       :target="`#language-item-${languageId}`"
-    >
+    
+      :on-closed="resetForm">
       <div class="language-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать"
           :disabled="!isFormValid || languageStore.isLoading"
           :is-loading="languageStore.isLoading"
-          :on-cancel="closeEditLanguagePopover"
+          :on-cancel="requestClose"
           :on-save="handleUpdateLanguage"
         />
 
@@ -63,7 +65,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -73,6 +75,7 @@ import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useLanguageStore } from "@/stores/languageStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{ languageId: string }>();
 

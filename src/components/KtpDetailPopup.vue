@@ -1,6 +1,7 @@
 <template>
   <div>
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       id="ktp-detail-popover"
       :arrow="false"
       style="
@@ -14,7 +15,7 @@
           <PopoverHeader
             :title="displayTitle"
             cancel-text="Закрыть"
-            :on-cancel="handleClose"
+            :on-cancel="requestClose"
             :is-loading="loading"
           >
             <template #save>
@@ -42,7 +43,7 @@
           />
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -53,6 +54,7 @@ import { useKtpStore } from "@/stores/ktpStore";
 import { useClass9Store } from "@/stores/class9Store";
 import KtpDetailPopupBody from "@/components/KtpDetailPopupBody.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Button from "@/components/ui/Button.vue";
 import { storeToRefs } from "pinia";
 

@@ -211,6 +211,7 @@ import { useClass9Store } from "@/stores/class9Store";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useKtpStore } from "@/stores/ktpStore";
 import { useNestedPopover } from "@/composables/useNestedPopover";
+import { useNestedPopup } from "@/composables/useNestedPopup";
 import type { SemesterDates, WeekDaySchedule } from "./useEventFormDerived";
 
 dayjs.extend(customParseFormat);
@@ -225,6 +226,7 @@ const props = defineProps<{
   color: string;
   selectedWeekDays: WeekDaySchedule[];
   parentPopoverId: string;
+  parentPopoverType?: "popover" | "popup";
   mode?: "add" | "edit";
   semester?: string;
   eventId?: string;
@@ -255,10 +257,41 @@ const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const ktpStore = useKtpStore();
 
-// Nested popover management
-const { closeParent, openParent, selectHandlers, withParentToggle } = useNestedPopover({
+const popoverNested = useNestedPopover({
   parentPopoverId: computed(() => props.parentPopoverId),
 });
+const popupNested = useNestedPopup({
+  parentPopupId: computed(() => props.parentPopoverId),
+});
+const isParentPopup = computed(() => (props.parentPopoverType ?? "popover") === "popup");
+
+const closeParent = () => {
+  if (isParentPopup.value) {
+    popupNested.closeParent();
+    return;
+  }
+  popoverNested.closeParent();
+};
+
+const openParent = () => {
+  if (isParentPopup.value) {
+    popupNested.openParent();
+    return;
+  }
+  popoverNested.openParent();
+};
+
+const withParentToggle = <T extends (...args: any[]) => any>(fn: T): T => {
+  return ((...args: any[]) => {
+    closeParent();
+    return fn(...args);
+  }) as T;
+};
+
+const selectHandlers = {
+  onBeforeOpen: closeParent,
+  onAfterClose: openParent,
+};
 
 const checkboxId = computed(() => {
   return props.mode === "edit" ? "use-custom-period-edit" : "use-custom-period";

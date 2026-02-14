@@ -15,17 +15,19 @@
       ></f7-icon>
     </button>
 
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       id="add-discipline-popover"
       style="width: 600px !important"
       target="#add-discipline-button"
-    >
+    
+      :on-closed="resetForm">
       <div class="discipline-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать"
           :disabled="!isFormValid || disciplineStore.isLoading"
           :is-loading="disciplineStore.isLoading"
-          :on-cancel="closeAddDisciplinePopover"
+          :on-cancel="requestClose"
           :on-save="handleSaveDiscipline"
         />
 
@@ -74,7 +76,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -84,6 +86,7 @@ import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useDisciplineStore } from "@/stores/disciplineStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const disciplineStore = useDisciplineStore();
 

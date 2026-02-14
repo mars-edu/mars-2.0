@@ -17,17 +17,19 @@
       ></f7-icon>
     </button>
 
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       id="copy-education-schedule-popover"
       style="width: 600px !important"
       target="#copy-education-schedule-button"
-    >
+    
+      :on-closed="resetForm">
       <div class="copy-schedule-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Копировать расписание звонков"
           :disabled="!selectedYearId || educationScheduleStore.isLoading"
           :is-loading="educationScheduleStore.isLoading"
-          :on-cancel="closeCopySchedulePopover"
+          :on-cancel="requestClose"
           :on-save="handleCopySchedule"
           save-text="Копировать"
         />
@@ -94,7 +96,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -104,6 +106,7 @@ import { f7, f7Popover, f7Icon } from "framework7-vue";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const educationScheduleStore = useEducationScheduleStore();
 const academicYearStore = useAcademicYearStore();

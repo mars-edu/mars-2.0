@@ -16,5 +16,9 @@ module.exports = {
   },
   testMatch: ["**/__tests__/**/*.spec.(ts|tsx|js)"],
   setupFiles: [],
-  collectCoverageFrom: ["src/utils/eventDate.ts"],
+  collectCoverageFrom: [
+    "src/utils/eventDate.ts",
+    "src/composables/useUnsavedChangesDialog.ts",
+    "src/composables/useUnsavedPopoverGuard.ts",
+  ],
 };

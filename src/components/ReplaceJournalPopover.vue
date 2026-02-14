@@ -1,7 +1,10 @@
 <template>
-  <f7-popover
+  <GuardedPopover
+    v-slot="{ requestClose }"
     id="replace-journal-popover"
     style="width: 500px !important"
+    :is-dirty="isDirty"
+    :on-closed="resetLocalData"
   >
     <div class="replace-journal-popover bg-card text-card-foreground">
       <PopoverHeader
@@ -9,7 +12,7 @@
         save-text="Добавить"
         :disabled="!isFormValid"
         :is-loading="isLoading"
-        :on-cancel="onCancel"
+        :on-cancel="requestClose"
         :on-save="onSave"
       />
 
@@ -65,7 +68,7 @@
         </div>
       </div>
     </div>
-  </f7-popover>
+  </GuardedPopover>
 </template>
 
 <script setup lang="ts">
@@ -74,6 +77,7 @@ import { f7Popover, f7Input } from "framework7-vue";
 import dayjs from "dayjs";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import Select from "@/components/ui/Select.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useNestedPopover } from "@/composables/useNestedPopover";
 import { DATE_PICKER_PARAMS, DATE_STORAGE_FORMAT } from "@/constants/calendar";
@@ -118,6 +122,32 @@ const localData = ref<{
   reason: props.data?.reason || "",
 });
 
+const resetLocalData = () => {
+  localData.value = {
+    teacherId: props.data?.teacherId || "",
+    startDate: props.data?.startDate ? [dayjs(props.data.startDate).toDate()] : [],
+    endDate: props.data?.endDate ? [dayjs(props.data.endDate).toDate()] : [],
+    reason: props.data?.reason || "",
+  };
+};
+
+const isDirty = () => {
+  const startDate =
+    localData.value.startDate.length > 0
+      ? dayjs(localData.value.startDate[0]).format(DATE_STORAGE_FORMAT)
+      : "";
+  const endDate =
+    localData.value.endDate.length > 0
+      ? dayjs(localData.value.endDate[0]).format(DATE_STORAGE_FORMAT)
+      : "";
+  return (
+    localData.value.teacherId !== (props.data?.teacherId || "") ||
+    startDate !== (props.data?.startDate || "") ||
+    endDate !== (props.data?.endDate || "") ||
+    localData.value.reason !== (props.data?.reason || "")
+  );
+};
+
 const isFormValid = computed(() => {
   return localData.value.teacherId.trim().length > 0;
 });
@@ -126,12 +156,7 @@ watch(
   () => props.data,
   (newData) => {
     if (newData) {
-      localData.value = {
-        teacherId: newData.teacherId || "",
-        startDate: newData.startDate ? [dayjs(newData.startDate).toDate()] : [],
-        endDate: newData.endDate ? [dayjs(newData.endDate).toDate()] : [],
-        reason: newData.reason || "",
-      };
+      resetLocalData();
     }
   },
   { deep: true }
@@ -155,12 +180,7 @@ const onSave = () => {
 };
 
 const onCancel = () => {
-  localData.value = {
-    teacherId: props.data?.teacherId || "",
-    startDate: props.data?.startDate ? [dayjs(props.data.startDate).toDate()] : [],
-    endDate: props.data?.endDate ? [dayjs(props.data.endDate).toDate()] : [],
-    reason: props.data?.reason || "",
-  };
+  resetLocalData();
   emit("cancel");
 };
 </script>

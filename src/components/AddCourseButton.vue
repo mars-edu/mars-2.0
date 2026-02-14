@@ -15,17 +15,19 @@
       ></f7-icon>
     </button>
 
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       id="add-settings-course-popover"
       style="width: 600px !important"
       target="#add-settings-course-button"
-    >
+    
+      :on-closed="resetForm">
       <div class="course-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать"
           :disabled="!isFormValid || courseStore.isLoading"
           :is-loading="courseStore.isLoading"
-          :on-cancel="closeAddCoursePopover"
+          :on-cancel="requestClose"
           :on-save="handleSaveCourse"
         />
 
@@ -69,7 +71,7 @@
           />
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -82,6 +84,7 @@ import { useSemesterStore } from "@/stores/semesterStore";
 import { useNestedPopover } from "@/composables/useNestedPopover";
 import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const courseStore = useCourseStore();
 const semesterStore = useSemesterStore();

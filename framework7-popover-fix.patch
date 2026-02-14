@@ -1,29 +1,68 @@
 --- a/node_modules/framework7/components/popover/popover-class.js
 +++ b/node_modules/framework7/components/popover/popover-class.js
-@@ -105,11 +105,11 @@ class Popover extends Modal {
+@@ -55,6 +55,7 @@
+ 
+     // Open
+     const originalOpen = popover.open;
++    const originalClose = popover.close;
+     extend(popover, {
+       app,
+       $el,
+@@ -73,6 +74,23 @@
+           popover.targetEl = popover.$targetEl[0];
+         }
+         return originalOpen.call(popover, animate);
++      },
++      close(...args) {
++        let [animate, reason, event] = args;
++        if (typeof animate === 'string') {
++          [reason, event] = [animate, reason];
++          animate = undefined;
++        }
++        const closeReason = reason || 'programmatic';
++        if (popover.params && typeof popover.params.beforeClose === 'function') {
++          const allowClose = popover.params.beforeClose({
++            popover,
++            reason: closeReason,
++            event
++          });
++          if (allowClose === false) return popover;
++        }
++        return originalClose.call(popover, animate);
+       }
+     });
+     function handleResize() {
+@@ -105,21 +123,21 @@
+       const keyboardOpened = !device.desktop && device.cordova && (window.Keyboard && window.Keyboard.isVisible || window.cordova.plugins && window.cordova.plugins.Keyboard && window.cordova.plugins.Keyboard.isVisible);
+       if (keyboardOpened) return;
        if ($target.closest(popover.el).length === 0) {
 -        if (popover.params.closeByBackdropClick && popover.params.backdrop && popover.backdropEl && popover.backdropEl === target && touchStartTarget === target) {
-+        if (popover.params && popover.params.closeByBackdropClick && popover.params.backdrop && popover.backdropEl && popover.backdropEl === target && touchStartTarget === target) {
-           popover.close();
+-          popover.close();
 -        } else if (popover.params.closeByOutsideClick && touchStartTarget === target) {
++        if (popover.params && popover.params.closeByBackdropClick && popover.params.backdrop && popover.backdropEl && popover.backdropEl === target && touchStartTarget === target) {
++          popover.close(undefined, 'backdrop', e);
 +        } else if (popover.params && popover.params.closeByOutsideClick && touchStartTarget === target) {
            const isAnotherPopoverBackdrop = $target.hasClass('popover-backdrop-unique') && target.f7PopoverRef !== popover || $target.hasClass('popover-backdrop') && target !== popover.backdropEl;
            const isAnotherPopoverTarget = target.closest('.popover') && target.closest('.popover') !== popover.$el[0];
            if (!isAnotherPopoverBackdrop && !isAnotherPopoverTarget) {
-             popover.close();
+-            popover.close();
++            popover.close(undefined, 'outside', e);
            }
          }
        }
-@@ -118,7 +118,7 @@ class Popover extends Modal {
+     }
      function onKeyDown(e) {
        const keyCode = e.keyCode;
 -      if (keyCode === 27 && popover.params.closeOnEscape) {
+-        popover.close();
 +      if (keyCode === 27 && popover.params && popover.params.closeOnEscape) {
-         popover.close();
++        popover.close(undefined, 'escape', e);
        }
      }
-@@ -131,7 +131,7 @@ class Popover extends Modal {
-     });
+     if (popover.params.closeOnEscape) {
+@@ -131,13 +149,13 @@
+       });
+     }
      popover.on('popoverOpened', () => {
 -      if (popover.params.closeByOutsideClick || popover.params.closeByBackdropClick) {
 +      if (popover.params && (popover.params.closeByOutsideClick || popover.params.closeByBackdropClick)) {
@@ -31,11 +70,393 @@
          app.on('click', handleClick);
        }
      });
-@@ -136,7 +136,7 @@ class Popover extends Modal {
      popover.on('popoverClose', () => {
 -      if (popover.params.closeByOutsideClick || popover.params.closeByBackdropClick) {
 +      if (popover.params && (popover.params.closeByOutsideClick || popover.params.closeByBackdropClick)) {
          app.off('touchstart', handleTouchStart);
          app.off('click', handleClick);
        }
+@@ -250,4 +268,4 @@
+     }
+   }
+ }
+-export default Popover;
+\ No newline at end of file
++export default Popover;
+--- a/node_modules/framework7/components/popover/popover.js
++++ b/node_modules/framework7/components/popover/popover.js
+@@ -52,6 +52,32 @@
+           }, data));
+         }
+         return popover.open(targetEl, animate);
++      },
++      close(popoverEl, animate, reason, targetEl) {
++        let $popoverEl = $(popoverEl || '.popover.modal-in');
++        if (!$popoverEl.length) return undefined;
++        if ($popoverEl.length > 1) {
++          let $parentEl;
++          if (targetEl) {
++            const $targetEl = $(targetEl);
++            if ($targetEl.length) {
++              $parentEl = $targetEl.parents($popoverEl);
++            }
++          }
++          if ($parentEl && $parentEl.length > 0) {
++            $popoverEl = $parentEl;
++          } else {
++            $popoverEl = $popoverEl.eq($popoverEl.length - 1);
++          }
++        }
++        let popover = $popoverEl[0].f7Modal;
++        if (!popover) {
++          const data = $popoverEl.dataset();
++          popover = new Popover(app, Object.assign({
++            el: $popoverEl
++          }, data));
++        }
++        return popover.close(animate, reason);
+       }
      });
+   },
+@@ -62,7 +88,7 @@
+     },
+     '.popover-close': function closePopover($clickedEl, data = {}) {
+       const app = this;
+-      app.popover.close(data.popover, data.animate, $clickedEl);
++      app.popover.close(data.popover, data.animate, undefined, $clickedEl);
+     }
+   }
+-};
+\ No newline at end of file
++};
+--- a/node_modules/framework7/components/popover/popover.d.ts
++++ b/node_modules/framework7/components/popover/popover.d.ts
+@@ -6,6 +6,13 @@
+ } from '../app/app-class.js';
+ 
+ export namespace Popover {
++  type CloseReason =
++    | 'cancel'
++    | 'backdrop'
++    | 'outside'
++    | 'escape'
++    | 'programmatic'
++    | 'discard-confirmed';
+   interface Events {
+     /** Event will be triggered when Popover starts its opening animation. As an argument event handler receives popover instance */
+     open: (popover: Popover) => void;
+@@ -51,6 +58,8 @@
+     containerEl?: HTMLElement | CSSSelector;
+     /** Force popover vertical position, can be 'auto', 'top' or 'bottom' (default 'auto')  */
+     verticalPosition?: string;
++    /** Optional hook called before popover close. Return false to cancel closing. */
++    beforeClose?: (context: { popover: Popover; reason?: CloseReason; event?: Event }) => boolean | void;
+     /** Object with events handlers.. */
+     on?: {
+       [event in keyof Events]?: Events[event];
+@@ -80,6 +89,8 @@
+     open(targetEl: HTMLElement | CSSSelector, animate?: boolean): Popover;
+     open(animate?: boolean): Popover;
+     /** Close popover. */
++    close(animate?: boolean, reason?: CloseReason): Popover;
++    close(reason?: CloseReason): Popover;
+     close(animate?: boolean): Popover;
+     /** Destroy popover */
+     destroy(): void;
+@@ -110,7 +121,7 @@
+         animate?: boolean,
+       ): Popover;
+       /** closes Popover */
+-      close(el?: HTMLElement | CSSSelector, animate?: boolean): Popover;
++      close(el?: HTMLElement | CSSSelector, animate?: boolean, reason?: CloseReason): Popover;
+     };
+   }
+   interface AppParams {
+--- a/node_modules/framework7/components/popup/popup-class.js
++++ b/node_modules/framework7/components/popup/popup-class.js
+@@ -45,6 +45,7 @@
+         popup.$containerEl.append($backdropEl);
+       }
+     }
++    const originalClose = popup.close;
+     extend(popup, {
+       app,
+       push: $el.hasClass('popup-push') || popup.params.push,
+@@ -53,7 +54,24 @@
+       $backdropEl,
+       backdropEl: $backdropEl && $backdropEl[0],
+       type: 'popup',
+-      $htmlEl: $('html')
++      $htmlEl: $('html'),
++      close(...args) {
++        let [animate, reason, event] = args;
++        if (typeof animate === 'string') {
++          [reason, event] = [animate, reason];
++          animate = undefined;
++        }
++        const closeReason = reason || 'programmatic';
++        if (popup.params && typeof popup.params.beforeClose === 'function') {
++          const allowClose = popup.params.beforeClose({
++            popup,
++            reason: closeReason,
++            event
++          });
++          if (allowClose === false) return popup;
++        }
++        return originalClose.call(popup, animate);
++      }
+     });
+     if (popup.params.push) {
+       $el.addClass('popup-push');
+@@ -74,15 +92,15 @@
+             }
+           });
+           if (needToClose) {
+-            popup.close();
++            popup.close(undefined, 'backdrop', e);
+           }
+         }
+       }
+     }
+     function onKeyDown(e) {
+       const keyCode = e.keyCode;
+-      if (keyCode === 27 && popup.params.closeOnEscape) {
+-        popup.close();
++      if (keyCode === 27 && popup.params && popup.params.closeOnEscape) {
++        popup.close(undefined, 'escape', e);
+       }
+     }
+     let pushOffset;
+@@ -228,7 +246,7 @@
+           $el.transform('');
+           popup.emit('local::swipeclose popupSwipeClose', popup);
+           popup.$el.trigger('popup:swipeclose');
+-          popup.close();
++          popup.close(undefined, 'swipe', e);
+           allowSwipeToClose = true;
+         });
+         return;
+@@ -332,4 +350,4 @@
+     return popup;
+   }
+ }
+-export default Popup;
+\ No newline at end of file
++export default Popup;
+--- a/node_modules/framework7/components/popup/popup.js
++++ b/node_modules/framework7/components/popup/popup.js
+@@ -1,5 +1,7 @@
+ import Popup from './popup-class.js';
+ import ModalMethods from '../../shared/modal-methods.js';
++import { extend } from '../../shared/utils.js';
++import $ from '../../shared/dom7.js';
+ export default {
+   name: 'popup',
+   params: {
+@@ -20,11 +22,38 @@
+   },
+   create() {
+     const app = this;
+-    app.popup = ModalMethods({
++    app.popup = extend(ModalMethods({
+       app,
+       constructor: Popup,
+       defaultSelector: '.popup.modal-in',
+       parentSelector: '.popup'
++    }), {
++      close(popupEl = '.popup.modal-in', animate, reason, targetEl) {
++        let $popupEl = $(popupEl);
++        if (!$popupEl.length) return undefined;
++        if ($popupEl.length > 1) {
++          let $parentEl;
++          if (targetEl) {
++            const $targetEl = $(targetEl);
++            if ($targetEl.length) {
++              $parentEl = $targetEl.parents($popupEl);
++            }
++          }
++          if ($parentEl && $parentEl.length > 0) {
++            $popupEl = $parentEl;
++          } else {
++            $popupEl = $popupEl.eq($popupEl.length - 1);
++          }
++        }
++        let popup = $popupEl[0].f7Modal;
++        if (!popup) {
++          const data = $popupEl.dataset();
++          popup = new Popup(app, Object.assign({
++            el: $popupEl
++          }, data));
++        }
++        return popup.close(animate, reason);
++      }
+     });
+   },
+   clicks: {
+@@ -34,7 +63,7 @@
+     },
+     '.popup-close': function closePopup($clickedEl, data = {}) {
+       const app = this;
+-      app.popup.close(data.popup, data.animate, $clickedEl);
++      app.popup.close(data.popup, data.animate, undefined, $clickedEl);
+     }
+   }
+-};
+\ No newline at end of file
++};
+--- a/node_modules/framework7/components/popup/popup.d.ts
++++ b/node_modules/framework7/components/popup/popup.d.ts
+@@ -6,6 +6,14 @@
+ } from '../app/app-class.js';
+ 
+ export namespace Popup {
++  type CloseReason =
++    | 'cancel'
++    | 'backdrop'
++    | 'outside'
++    | 'escape'
++    | 'swipe'
++    | 'programmatic'
++    | 'discard-confirmed';
+   interface Events {
+     /** Event will be triggered in the beginning of swipe-to-close interaction (when user just started to drag popup) */
+     swipeStart: (popup: Popup) => void;
+@@ -51,6 +59,8 @@
+     push?: boolean;
+     /** Element to mount modal to. (default app.el) */
+     containerEl?: HTMLElement | CSSSelector;
++    /** Optional hook called before popup close. Return false to cancel closing. */
++    beforeClose?: (context: { popup: Popup; reason?: CloseReason; event?: Event }) => boolean | void;
+ 
+     /** Object with events handlers.. */
+     on?: {
+@@ -76,6 +86,8 @@
+     /** Open popup. */
+     open(animate?: boolean): Popup;
+     /** Close popup. */
++    close(animate?: boolean, reason?: CloseReason): Popup;
++    close(reason?: CloseReason): Popup;
+     close(animate?: boolean): Popup;
+     /** Destroy popup */
+     destroy(): void;
+@@ -110,7 +122,7 @@
+       /** open Popup */
+       open(el?: HTMLElement | CSSSelector, animate?: boolean): Popup;
+       /** closes Popup */
+-      close(el?: HTMLElement | CSSSelector, animate?: boolean): Popup;
++      close(el?: HTMLElement | CSSSelector, animate?: boolean, reason?: CloseReason): Popup;
+     };
+   }
+   interface AppParams {
+--- a/node_modules/framework7-vue/components/popover.js
++++ b/node_modules/framework7-vue/components/popover.js
+@@ -46,6 +46,10 @@
+       type: Boolean,
+       default: undefined
+     },
++    beforeClose: {
++      type: Function,
++      default: undefined
++    },
+     containerEl: {
+       type: [String, Object],
+       default: undefined
+@@ -111,6 +115,7 @@
+         closeByBackdropClick,
+         closeByOutsideClick,
+         closeOnEscape,
++        beforeClose,
+         backdrop,
+         backdropEl,
+         containerEl,
+@@ -120,6 +125,7 @@
+       if (typeof closeByBackdropClick !== 'undefined') popoverParams.closeByBackdropClick = closeByBackdropClick;
+       if (typeof closeByOutsideClick !== 'undefined') popoverParams.closeByOutsideClick = closeByOutsideClick;
+       if (typeof closeOnEscape !== 'undefined') popoverParams.closeOnEscape = closeOnEscape;
++      if (typeof beforeClose !== 'undefined') popoverParams.beforeClose = beforeClose;
+       if (typeof backdrop !== 'undefined') popoverParams.backdrop = backdrop;
+       if (typeof backdropEl !== 'undefined') popoverParams.backdropEl = backdropEl;
+       if (typeof containerEl !== 'undefined') popoverParams.containerEl = containerEl;
+@@ -146,4 +152,4 @@
+       classes
+     };
+   }
+-};
+\ No newline at end of file
++};
+--- a/node_modules/framework7-vue/components/popover.d.ts
++++ b/node_modules/framework7-vue/components/popover.d.ts
+@@ -43,6 +43,10 @@
+       type: BooleanConstructor;
+       default: undefined;
+     },
++    beforeClose: {
++      type: FunctionConstructor;
++      default: undefined;
++    },
+ 
+     containerEl: {
+       type: StringConstructor | ObjectConstructor;
+@@ -93,4 +97,4 @@
+ >;
+ 
+ export default Popover;
+-  
+\ No newline at end of file
++  
+--- a/node_modules/framework7-vue/components/popup.js
++++ b/node_modules/framework7-vue/components/popup.js
+@@ -36,6 +36,10 @@
+       type: Boolean,
+       default: undefined
+     },
++    beforeClose: {
++      type: Function,
++      default: undefined
++    },
+     swipeToClose: {
+       type: [Boolean, String],
+       default: false
+@@ -120,6 +124,7 @@
+       const {
+         closeByBackdropClick,
+         closeOnEscape,
++        beforeClose,
+         animate,
+         backdrop,
+         backdropEl,
+@@ -129,6 +134,7 @@
+       } = props;
+       if (typeof closeByBackdropClick !== 'undefined') popupParams.closeByBackdropClick = closeByBackdropClick;
+       if (typeof closeOnEscape !== 'undefined') popupParams.closeOnEscape = closeOnEscape;
++      if (typeof beforeClose !== 'undefined') popupParams.beforeClose = beforeClose;
+       if (typeof animate !== 'undefined') popupParams.animate = animate;
+       if (typeof backdrop !== 'undefined') popupParams.backdrop = backdrop;
+       if (typeof backdropEl !== 'undefined') popupParams.backdropEl = backdropEl;
+@@ -160,4 +166,4 @@
+       classes
+     };
+   }
+-};
+\ No newline at end of file
++};
+--- a/node_modules/framework7-vue/components/popup.d.ts
++++ b/node_modules/framework7-vue/components/popup.d.ts
+@@ -41,6 +41,10 @@
+       type: BooleanConstructor;
+       default: undefined;
+     },
++    beforeClose: {
++      type: FunctionConstructor;
++      default: undefined;
++    },
+ 
+     swipeToClose: {
+       type: BooleanConstructor | StringConstructor;
+@@ -96,4 +100,4 @@
+ >;
+ 
+ export default Popup;
+-  
+\ No newline at end of file
++  

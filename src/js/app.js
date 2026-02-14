@@ -13,6 +13,21 @@ import { convexPlugin, convexUrl } from "../lib/convexClient";
 
 Framework7.use(Framework7Vue);
 
+if (import.meta.env.DEV && typeof window !== "undefined" && "serviceWorker" in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => {
+      void registration.unregister();
+    });
+  });
+  if ("caches" in window) {
+    caches.keys().then((keys) => {
+      keys.forEach((key) => {
+        void caches.delete(key);
+      });
+    });
+  }
+}
+
 const app = createApp(App);
 
 const pinia = createPinia();
@@ -46,4 +61,3 @@ window.resetAllPiniaStores = () => {
 };
 
 app.mount("#app");
-

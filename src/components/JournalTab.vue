@@ -349,7 +349,8 @@
     />
 
     <!-- Journal Settings Popover (moved here for correct positioning) -->
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       id="journal-settings-popover"
       style="width: 500px !important"
       target="#journal-settings-button"
@@ -359,7 +360,7 @@
           title="Настройки журнала"
           :disabled="false"
           :is-loading="false"
-          :on-cancel="closeJournalSettings"
+          :on-cancel="requestClose"
           :on-save="saveJournalSettings"
         />
 
@@ -428,9 +429,9 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
     <!-- Recalculate Popover -->
-    <f7-popover
+    <GuardedPopover
       id="recalc-popover"
       style="width: 300px !important"
       target="#recalc-button"
@@ -460,7 +461,7 @@
           </f7-button>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -476,6 +477,7 @@ import {
 import { getEventDays, type SemesterInfo } from "@/utils/eventDate";
 import { f7, f7Icon, f7Button } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import MarkCell from "@/components/ui/MarkCell.vue";
 import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
 import KtpDetailViewPopover from "@/components/KtpDetailViewPopover.vue";

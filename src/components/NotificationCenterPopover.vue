@@ -1,5 +1,5 @@
 <template>
-  <f7-popover
+  <GuardedPopover
     id="notification-center-popover"
     class="notification-popover"
     @popover:open="refresh"
@@ -152,7 +152,7 @@
         </div>
       </div>
     </div>
-  </f7-popover>
+  </GuardedPopover>
 </template>
 
 <script setup lang="ts">
@@ -163,6 +163,7 @@ import { useConvexQuery, useConvexMutation } from 'convex-vue';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
 import { useUserStore } from '@/stores/userStore';
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const userStore = useUserStore();
 

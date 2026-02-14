@@ -1,16 +1,18 @@
 <template>
   <div>
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       :id="'edit-settings-course-popover-' + courseId"
       style="width: 600px !important"
       :target="`#course-item-${courseId}`"
-    >
+    
+      :on-closed="resetForm">
       <div class="course-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать"
           :disabled="!isFormValid || courseStore.isLoading"
           :is-loading="courseStore.isLoading"
-          :on-cancel="closeEditCoursePopover"
+          :on-cancel="requestClose"
           :on-save="handleUpdateCourse"
         />
 
@@ -70,7 +72,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -83,6 +85,7 @@ import { useSemesterStore } from "@/stores/semesterStore";
 import { useNestedPopover } from "@/composables/useNestedPopover";
 import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{
   courseId: string;

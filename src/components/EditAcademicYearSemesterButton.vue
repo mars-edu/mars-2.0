@@ -1,6 +1,7 @@
 <template>
   <div>
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       v-if="academicYearSemester"
       :id="'edit-academic-year-semester-popover-' + academicYearSemester.id"
       style="width: 600px !important"
@@ -11,7 +12,7 @@
           title="Редактировать семестр учебного года"
           :disabled="academicYearSemesterStore.isLoading"
           :is-loading="academicYearSemesterStore.isLoading"
-          :on-cancel="closeEditAcademicYearSemesterPopover"
+          :on-cancel="requestClose"
           :on-save="handleUpdateAcademicYearSemester"
         />
 
@@ -76,7 +77,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -90,6 +91,7 @@ import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore
 import { useSemesterStore } from "@/stores/semesterStore";
 import type { AcademicYearSemester } from "@/stores/academicYearSemesterStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Input from "@/components/ui/Input.vue";
 import Select from "@/components/ui/Select.vue";
 import { DATE_PICKER_PARAMS } from "@/constants/calendar";

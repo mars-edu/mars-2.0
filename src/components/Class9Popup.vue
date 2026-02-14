@@ -1,15 +1,17 @@
 <template>
-  <f7-popover
+  <GuardedPopover
+    v-slot="{ requestClose }"
     id="class9-popover"
     :arrow="false"
     style="width: calc(100vw - 400px) !important"
+    :on-closed="handlePopoverClosed"
   >
     <div class="course-popover bg-card text-card-foreground">
       <div class="fixed-header">
         <PopoverHeader
           title="Создать"
           :disabled="!isFormValid"
-          :on-cancel="close"
+          :on-cancel="requestClose"
           :on-save="submit"
         >
           <template #title>
@@ -321,7 +323,7 @@
         </div>
       </div>
     </div>
-  </f7-popover>
+  </GuardedPopover>
 </template>
 
 <script setup lang="ts">
@@ -335,6 +337,7 @@ import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlSto
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { z } from "zod";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Select from "@/components/ui/Select.vue";
 import Input from "@/components/ui/Input.vue";
 import TagsSelector from "@/components/ui/TagsSelector.vue";
@@ -571,11 +574,19 @@ function copyFromPreviousStep(
   }
 }
 
-function close() {
+function resetLocalState() {
   steps.value = [createEmptyStep()];
   currentStep.value = 1;
   selectedSpecialtyIds.value = [];
+}
+
+function handlePopoverClosed() {
+  resetLocalState();
   emit("close");
+}
+
+function closeProgrammatically() {
+  f7.popover.close("#class9-popover", true, "programmatic");
 }
 
 async function submit() {
@@ -684,7 +695,7 @@ function showDeleteConfirmation() {
     async () => {
       try {
         await class9Store.deleteClass9(props.initialData.id);
-        close();
+        closeProgrammatically();
         emit("submit");
       } catch (error) {
         f7.dialog.alert("Произошла ошибка при удалении.");

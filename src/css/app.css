@@ -169,3 +169,18 @@ body {
   font-size: 1rem;
   line-height: 1.5;
 }
+
+.unsaved-changes-dialog {
+  @apply !w-[324px] !max-w-[calc(100vw-24px)] !rounded-[28px];
+}
+
+.unsaved-changes-dialog .dialog-buttons {
+  @apply !grid !grid-cols-[1.6fr_1fr] !gap-2;
+}
+
+.unsaved-changes-dialog .dialog-button {
+  @apply !h-auto !min-h-12 !px-3 !py-2 !text-center !leading-5;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}

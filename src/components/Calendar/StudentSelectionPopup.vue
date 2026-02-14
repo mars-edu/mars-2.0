@@ -1,7 +1,12 @@
 <template>
-  <f7-popup
+  <GuardedPopover
+    ref="studentSelectionPopupRef"
+    v-slot="{ requestClose }"
     id="student-selection-popup"
+    kind="popup"
     :opened="isPopupOpen"
+    :close-on-escape="true"
+    :is-dirty="hasUnsavedChanges"
     @popup:closed="onPopupClosed"
     class="student-selection-popup"
   >
@@ -10,7 +15,7 @@
         <PopoverHeader
           title="Выбрать обучающихся"
           save-text="Сохранить"
-          :on-cancel="internalClose"
+          :on-cancel="requestClose"
           :on-save="save"
         />
         <div class="p-4 space-y-4 flex-1 overflow-y-auto">
@@ -146,7 +151,7 @@
         </div>
       </div>
     </f7-page>
-  </f7-popup>
+  </GuardedPopover>
 </template>
 
 <style>
@@ -169,11 +174,12 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive } from "vue";
-import { f7Input, f7Checkbox, f7Popup, f7Page } from "framework7-vue";
+import { f7, f7Input, f7Checkbox, f7Page } from "framework7-vue";
 import { storeToRefs } from "pinia";
 import { withAllOption, getGenderOptions } from "@/lib/utils";
 import Select from "../ui/Select.vue";
 import PopoverHeader from "../ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
@@ -215,8 +221,25 @@ const { getActiveAcademicYearSemesters } = storeToRefs(
 );
 
 const isPopupOpen = ref(false);
+const studentSelectionPopupRef = ref<{ allowNextClose: () => void } | null>(null);
+const initialSelectionSnapshot = ref("");
 const showDebug = ref(false);
 const localSelectedStudents = reactive(new Set<string>());
+
+const serializeSelection = (ids: Iterable<string>) =>
+  Array.from(ids).sort().join("|");
+
+const isDirty = computed(
+  () =>
+    serializeSelection(localSelectedStudents) !== initialSelectionSnapshot.value
+);
+
+const forceClose = (reason: string = "programmatic") => {
+  studentSelectionPopupRef.value?.allowNextClose();
+  f7.popup.close("#student-selection-popup", true, reason as any);
+};
+const hasUnsavedChanges = () => isDirty.value;
+
 const filters = reactive({
   searchTerm: "",
   language: "all",
@@ -468,6 +491,7 @@ const open = (currentSelection: string[]) => {
   resetFilters();
   localSelectedStudents.clear();
   currentSelection.forEach((id) => localSelectedStudents.add(id));
+  initialSelectionSnapshot.value = serializeSelection(localSelectedStudents);
   isPopupOpen.value = true;
 };
 
@@ -477,12 +501,13 @@ const internalClose = () => {
 
 const onPopupClosed = () => {
   internalClose();
+  initialSelectionSnapshot.value = "";
   emit("close");
 };
 
 const save = () => {
   emit("save", Array.from(localSelectedStudents));
-  internalClose();
+  forceClose("programmatic");
 };
 
 const resetFilters = () => {

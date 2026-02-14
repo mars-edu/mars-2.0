@@ -1,5 +1,5 @@
 <template>
-  <f7-popover
+  <GuardedPopover
     id="journal-import-confirm-popover"
     :arrow="false"
     style="
@@ -133,12 +133,13 @@
         </div>
       </div>
     </div>
-  </f7-popover>
+  </GuardedPopover>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue";
 import { f7Popover, f7Button, f7Toggle } from "framework7-vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 interface Props {
   stats: {

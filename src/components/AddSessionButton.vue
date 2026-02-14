@@ -10,17 +10,19 @@
       <f7-icon ios="f7:plus" md="material:add" size="16px" class="text-white" />
     </button>
 
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       :id="popoverId"
       style="width: 600px !important"
       :target="`#${buttonId}`"
-    >
+    
+      :on-closed="resetForm">
       <div class="session-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать сессию"
           :disabled="!isFormValid || sessionStore.isLoading"
           :is-loading="sessionStore.isLoading"
-          :on-cancel="closeAddSessionPopover"
+          :on-cancel="requestClose"
           :on-save="handleSaveSession"
         />
 
@@ -86,7 +88,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -99,6 +101,7 @@ import { z } from "zod";
 import { useSessionStore } from "@/stores/sessionStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { DATE_PICKER_PARAMS } from "@/constants/calendar";
 
 const props = defineProps<{ prefix?: string }>();

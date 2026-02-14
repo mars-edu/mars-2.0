@@ -1,6 +1,7 @@
 <template>
   <div>
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       v-if="control"
       :id="'edit-scheduled-intermediate-control-popover-' + control.id"
       style="width: 600px !important"
@@ -13,7 +14,7 @@
             !isFormValid || scheduledIntermediateControlStore.isLoading
           "
           :is-loading="scheduledIntermediateControlStore.isLoading"
-          :on-cancel="closePopover"
+          :on-cancel="requestClose"
           :on-save="handleUpdateControl"
         />
 
@@ -104,7 +105,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -114,6 +115,7 @@ import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT, DATE_PICKER_PARAMS } from "@/constants/calendar";
 import { f7, f7Input, f7Icon, f7Popover } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Select from "@/components/ui/Select.vue";
 import { z } from "zod";
 import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermediateControlStore";
@@ -253,5 +255,4 @@ const confirmDelete = () => {
   );
 };
 </script>
-
 

@@ -1,16 +1,18 @@
 <template>
   <div>
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       :id="'edit-settings-final-control-popover-' + controlId"
       style="width: 600px !important"
       :target="`#final-control-item-${controlId}`"
-    >
+    
+      :on-closed="resetForm">
       <div class="final-control-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать"
           :disabled="!isFormValid || finalControlStore.isLoading"
           :is-loading="finalControlStore.isLoading"
-          :on-cancel="closeEditFinalControlPopover"
+          :on-cancel="requestClose"
           :on-save="handleUpdateFinalControl"
         />
 
@@ -68,7 +70,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -78,6 +80,7 @@ import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{
   controlId: string;

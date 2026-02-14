@@ -15,17 +15,19 @@
       ></f7-icon>
     </button>
 
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       id="add-student-popover"
       style="width: 600px !important"
       target="#add-student-button"
-    >
+    
+      :on-closed="resetForm">
       <div class="student-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать"
           :disabled="!isFormValid || studentStore.isLoading"
           :is-loading="studentStore.isLoading"
-          :on-cancel="closeAddStudentPopover"
+          :on-cancel="requestClose"
           :on-save="handleSaveStudent"
         />
 
@@ -136,7 +138,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -152,6 +154,7 @@ import { useBaseStore } from "@/stores/baseStore";
 import { storeToRefs } from "pinia";
 import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();

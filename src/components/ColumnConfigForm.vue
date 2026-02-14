@@ -1,10 +1,11 @@
 <template>
   <div>
     <slot name="trigger" :open="openColumnConfigPopover"></slot>
-    <f7-popover
+    <GuardedPopover
       id="column-config-popover"
       style="width: 600px !important"
       :target="popoverTarget"
+      :on-closed="handlePopoverClosed"
     >
       <div class="column-config-popover bg-card text-card-foreground">
         <div
@@ -68,7 +69,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -78,6 +79,7 @@ import { f7 } from "framework7-vue";
 import { useColumnConfigStore } from "@/stores/columnConfig";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { z } from "zod";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 interface Column {
   name: string;
@@ -135,6 +137,7 @@ const formError = computed(() => {
 });
 
 const popoverTarget = ref<string | HTMLElement>("#column-config-button");
+const shouldResetOnClose = ref(true);
 
 const openColumnConfigPopover = (event?: Event) => {
   if (event && event.currentTarget) {
@@ -147,15 +150,23 @@ const openColumnConfigPopover = (event?: Event) => {
     popoverTarget.value = "#column-config-button";
     f7.popover.open("#column-config-popover", "#column-config-button");
   }
+  shouldResetOnClose.value = true;
 };
 
-const closeColumnConfigPopover = () => {
-  f7.popover.close("#column-config-popover");
+const closeColumnConfigPopover = (reason: "cancel" | "programmatic" = "programmatic") => {
+  f7.popover.close("#column-config-popover", true, reason);
 };
 
 const handleCancel = () => {
-  resetForm();
-  closeColumnConfigPopover();
+  shouldResetOnClose.value = true;
+  closeColumnConfigPopover("cancel");
+};
+
+const handlePopoverClosed = () => {
+  if (shouldResetOnClose.value) {
+    resetForm();
+  }
+  shouldResetOnClose.value = true;
 };
 
 const addColumn = () => {
@@ -191,7 +202,8 @@ const handleSaveColumns = () => {
   const validationResult = columnSchema.safeParse({ columns: columns.value });
   if (!validationResult.success) return;
 
-  closeColumnConfigPopover();
+  shouldResetOnClose.value = false;
+  closeColumnConfigPopover("programmatic");
 };
 
 const resetForm = () => {

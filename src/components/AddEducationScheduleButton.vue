@@ -15,17 +15,19 @@
       ></f7-icon>
     </button>
 
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       id="add-education-schedule-popover"
       style="width: 600px !important"
       target="#add-education-schedule-button"
-    >
+    
+      :on-closed="resetForm">
       <div class="education-schedule-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать"
           :disabled="!isFormValid || educationScheduleStore.isLoading"
           :is-loading="educationScheduleStore.isLoading"
-          :on-cancel="closeAddSchedulePopover"
+          :on-cancel="requestClose"
           :on-save="handleSaveSchedule"
         />
 
@@ -77,7 +79,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -88,6 +90,7 @@ import { z } from "zod";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const educationScheduleStore = useEducationScheduleStore();
 const academicYearStore = useAcademicYearStore();

@@ -9,8 +9,14 @@
     </f7-fab>
 
     <!-- Framework7 Popup (was Popover) -->
-    <f7-popup
+    <GuardedPopover
+      ref="addEventPopupRef"
+      v-slot="{ requestClose }"
+      id="add-event-popup"
+      kind="popup"
       :opened="isPopupOpen"
+      :close-on-escape="true"
+      :is-dirty="hasUnsavedChanges"
       @popup:closed="onPopupClosed"
       class="add-event-popup"
     >
@@ -22,7 +28,7 @@
               title="Создать"
               save-text="Добавить"
               :disabled="!isFormValid"
-              :on-cancel="closeAddEventPopover"
+              :on-cancel="requestClose"
               :on-save="handleAddEvent"
             />
             <div v-if="formError" class="px-4 pb-2 text-destructive text-sm">
@@ -33,6 +39,7 @@
           <div class="scrollable-content">
             <EventForm
               parent-popover-id="#add-event-popup"
+              parent-popover-type="popup"
               mode="add"
               :event-id="tempEventId"
               :semester="semesterId"
@@ -54,7 +61,7 @@
           </div>
         </div>
       </f7-page>
-    </f7-popup>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -63,6 +70,7 @@ import { ref, computed } from "vue";
 import { f7 } from "framework7-vue";
 import { storeToRefs } from "pinia";
 import PopoverHeader from "../ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import EventForm from "./EventForm.vue";
 import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
 import { useUserStore } from "@/stores/userStore";
@@ -100,6 +108,7 @@ const tempEventId = ref<string>(""); // Pre-generated event ID for creating KTP 
 
 const selectedWeekDays = ref<WeekDaySchedule[]>([]);
 const isPopupOpen = ref(false);
+const addEventPopupRef = ref<{ allowNextClose: () => void } | null>(null);
 
 const semesterId = computed(() => getActiveAcademicYearSemester.value?.id || "");
 
@@ -170,8 +179,7 @@ const handleAddEvent = async () => {
 
     if (newEvent) {
       emit("event-added", newEvent);
-      closeAddEventPopover();
-      resetForm();
+      closeAddEventPopoverForced();
     } else {
       throw new Error("Failed to create event");
     }
@@ -194,19 +202,36 @@ const resetForm = () => {
 };
 
 const openAddEventPopover = () => {
+  // Reset only on explicit user open; avoids losing state when nested popups temporarily close this popup.
+  resetForm();
   // Generate temporary event ID for KTP creation
   tempEventId.value = crypto.randomUUID();
   isPopupOpen.value = true;
 };
 
-const closeAddEventPopover = () => {
-  isPopupOpen.value = false;
+const closeAddEventPopoverForced = () => {
+  addEventPopupRef.value?.allowNextClose();
+  f7.popup.close("#add-event-popup", true, "programmatic");
 };
 
 const onPopupClosed = () => {
-  // Popup closed by backdrop click or escape key
   isPopupOpen.value = false;
 };
+
+const isDirty = computed(() => {
+  return (
+    tempEventId.value !== "" ||
+    class9Id.value !== "" ||
+    useCustomPeriodRaw.value !== false ||
+    customStartDate.value !== "" ||
+    customEndDate.value !== "" ||
+    participants.value.length > 0 ||
+    selectedWeekDays.value.length > 0 ||
+    eventColor.value !== "#3F51B5"
+  );
+});
+
+const hasUnsavedChanges = () => isDirty.value;
 </script>
 
 <style scoped>

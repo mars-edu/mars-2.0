@@ -15,17 +15,19 @@
       ></f7-icon>
     </button>
 
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       id="add-settings-intermediate-control-popover"
       style="width: 600px !important"
       target="#add-settings-intermediate-control-button"
-    >
+    
+      :on-closed="resetForm">
       <div class="intermediate-control-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать"
           :disabled="!isFormValid || intermediateControlStore.isLoading"
           :is-loading="intermediateControlStore.isLoading"
-          :on-cancel="closeAddIntermediateControlPopover"
+          :on-cancel="requestClose"
           :on-save="handleSaveIntermediateControl"
         />
 
@@ -70,7 +72,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -80,6 +82,7 @@ import { f7, f7Popover, f7Icon, f7Input } from "framework7-vue";
 import { z } from "zod";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const intermediateControlStore = useIntermediateControlStore();
 

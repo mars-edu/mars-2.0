@@ -15,17 +15,19 @@
       ></f7-icon>
     </button>
 
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       id="add-academic-year-popover"
       style="width: 600px !important"
       target="#add-academic-year-button"
-    >
+    
+      :on-closed="resetForm">
       <div class="academic-year-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать"
           :disabled="!isFormValid || academicYearStore.isLoading"
           :is-loading="academicYearStore.isLoading"
-          :on-cancel="closeAddAcademicYearPopover"
+          :on-cancel="requestClose"
           :on-save="handleSaveAcademicYear"
         />
 
@@ -86,7 +88,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -96,6 +98,7 @@ import { f7, f7Popover, f7Input, f7Icon, f7Checkbox } from "framework7-vue";
 import { z } from "zod";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const academicYearStore = useAcademicYearStore();
 

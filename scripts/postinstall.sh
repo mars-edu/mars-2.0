@@ -28,3 +28,9 @@ if [ -f "$PATCH_FILE" ]; then
 else
     echo "Framework7 popover patch file not found: $PATCH_FILE"
 fi
+
+# Clear Vite optimized deps cache so patched Framework7 files are re-bundled
+if [ -d "./node_modules/.vite" ]; then
+    echo "Clearing Vite optimized deps cache..."
+    rm -rf ./node_modules/.vite/deps ./node_modules/.vite/deps_temp* 2>/dev/null || true
+fi

@@ -15,17 +15,19 @@
       ></f7-icon>
     </button>
 
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       id="add-teacher-popover"
       style="width: 600px !important"
       target="#add-teacher-button"
-    >
+    
+      :on-closed="resetForm">
       <div class="teacher-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать"
           :disabled="!isFormValid || teacherStore.isLoading"
           :is-loading="teacherStore.isLoading"
-          :on-cancel="closeAddTeacherPopover"
+          :on-cancel="requestClose"
           :on-save="handleSaveTeacher"
         />
 
@@ -115,7 +117,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -128,6 +130,7 @@ import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
 import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Button from "@/components/ui/Button.vue";
 
 const teacherStore = useTeacherStore();

@@ -1,5 +1,6 @@
 <template>
-  <f7-popover
+  <GuardedPopover
+    v-slot="{ requestClose }"
     id="ktp-detail-form-popover"
     :opened="opened"
     @popover:closed="$emit('update:opened', false)"
@@ -11,7 +12,7 @@
         :title="isEditMode ? 'Редактировать' : 'Создать'"
         :disabled="!isFormValid || ktpStore.loading"
         :is-loading="ktpStore.loading"
-        :on-cancel="() => $emit('update:opened', false)"
+        :on-cancel="requestClose"
         :on-save="handleSave"
       />
 
@@ -107,7 +108,7 @@
         </div>
       </div>
     </div>
-  </f7-popover>
+  </GuardedPopover>
 </template>
 
 <script setup lang="ts">
@@ -117,6 +118,7 @@ import { z } from "zod";
 import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
 import { useNestedPopover } from "@/composables/useNestedPopover";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{
   opened: boolean;

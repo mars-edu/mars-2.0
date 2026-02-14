@@ -1,5 +1,5 @@
 <template>
-  <f7-popover
+  <GuardedPopover
     id="journal-history-popover"
     class="history-popover"
     @popover:open="refresh"
@@ -48,7 +48,7 @@
         </template>
       </div>
     </div>
-  </f7-popover>
+  </GuardedPopover>
 </template>
 
 <script setup lang="ts">
@@ -57,6 +57,7 @@ import { useStudentStore } from '@/stores/studentStore';
 import { useTeacherStore } from '@/stores/teacherStore';
 import { useJournalHistoryStore } from "@/stores/journalHistoryStore";
 import { formatDateTime } from '@/utils/dateUtils';
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 interface Props {
   journalId: string;

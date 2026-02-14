@@ -18,7 +18,7 @@
       ></f7-icon>
     </button>
 
-    <f7-popover
+    <GuardedPopover
       id="add-ktp-popover"
       style="width: 400px !important"
       target="#add-ktp-button"
@@ -42,7 +42,7 @@
           </button>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
     <input
       type="file"
       ref="fileInput"
@@ -57,6 +57,7 @@
 import { ref, computed } from "vue";
 import { f7 } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{
   disabled?: boolean;

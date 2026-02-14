@@ -1,10 +1,11 @@
 <template>
   <div>
     <slot name="trigger" :open="openAddModuleTemplatePopover"></slot>
-    <f7-popover
+    <GuardedPopover
       id="add-module-template-popover"
       style="width: 600px !important"
       :target="popoverTarget"
+      :on-closed="resetForm"
     >
       <div class="module-template-popover bg-card text-card-foreground">
         <div
@@ -12,7 +13,7 @@
         >
           <button
             class="text-muted-foreground hover:text-foreground"
-            @click="closeAddModuleTemplatePopover"
+            @click="handleCancel"
           >
             Отменить
           </button>
@@ -51,7 +52,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -61,6 +62,7 @@ import { f7, f7Popover, f7Input } from "framework7-vue";
 import { useColumnConfigStore } from "@/stores/columnConfig";
 import { useModuleStore } from "@/stores/moduleStore";
 import { z } from "zod";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{
   specialtyId: string;
@@ -126,9 +128,12 @@ const openAddModuleTemplatePopover = (event?: Event) => {
   }
 };
 
-const closeAddModuleTemplatePopover = () => {
-  f7.popover.close("#add-module-template-popover");
-  resetForm();
+const closeAddModuleTemplatePopover = (reason: "cancel" | "programmatic" = "programmatic") => {
+  f7.popover.close("#add-module-template-popover", true, reason);
+};
+
+const handleCancel = () => {
+  closeAddModuleTemplatePopover("cancel");
 };
 
 const handleSaveModuleTemplate = () => {
@@ -145,7 +150,7 @@ const handleSaveModuleTemplate = () => {
   });
 
   moduleStore.addModule(moduleData as any);
-  closeAddModuleTemplatePopover();
+  closeAddModuleTemplatePopover("programmatic");
 };
 
 const resetForm = () => {

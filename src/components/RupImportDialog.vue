@@ -1,5 +1,6 @@
 <template>
-  <f7-popover
+  <GuardedPopover
+    v-slot="{ requestClose }"
     id="rup-import-popover"
     :opened="opened"
     :arrow="false"
@@ -16,7 +17,7 @@
         <PopoverHeader
           title="Импорт тем из существующих РУП"
           cancel-text="Отмена"
-          :on-cancel="handleClose"
+          :on-cancel="requestClose"
           :is-loading="loading"
         />
       </div>
@@ -137,7 +138,7 @@
         </div>
       </div>
     </div>
-  </f7-popover>
+  </GuardedPopover>
 </template>
 
 <script setup lang="ts">
@@ -149,6 +150,7 @@ import { useCourseStore } from "@/stores/courseStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Select from "@/components/ui/Select.vue";
 import { storeToRefs } from "pinia";
 

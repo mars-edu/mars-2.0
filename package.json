@@ -14,6 +14,7 @@
     "build:convex": "npx convex codegen && npx convex deploy --cmd 'npm run build' && ./scripts/run-migrations.sh",
     "migrate": "./scripts/run-migrations.sh",
     "postinstall": "./scripts/postinstall.sh",
+    "patch:framework7": "./scripts/generate-framework7-popover-patch.sh",
     "preview": "npm run build && cross-env NODE_ENV=production vite preview",
     "test": "jest --runInBand",
     "test:e2e": "playwright test",

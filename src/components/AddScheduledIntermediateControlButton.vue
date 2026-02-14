@@ -10,11 +10,13 @@
       <f7-icon ios="f7:plus" md="material:add" size="16px" class="text-white" />
     </button>
 
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       :id="popoverId"
       style="width: 600px !important"
       :target="`#${buttonId}`"
-    >
+    
+      :on-closed="resetForm">
       <div class="control-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать промежуточный контроль"
@@ -22,7 +24,7 @@
             !isFormValid || scheduledIntermediateControlStore.isLoading
           "
           :is-loading="scheduledIntermediateControlStore.isLoading"
-          :on-cancel="closeAddControlPopover"
+          :on-cancel="requestClose"
           :on-save="handleSaveControl"
         />
 
@@ -89,7 +91,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -103,6 +105,7 @@ import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermed
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Select from "@/components/ui/Select.vue";
 
 const props = defineProps<{ prefix?: string }>();

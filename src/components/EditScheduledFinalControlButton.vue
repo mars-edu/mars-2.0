@@ -1,6 +1,7 @@
 <template>
   <div>
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       v-if="control"
       :id="'edit-scheduled-final-control-popover-' + control.id"
       style="width: 600px !important"
@@ -11,7 +12,7 @@
           title="Редактировать итоговый контроль"
           :disabled="!isFormValid || scheduledFinalControlStore.isLoading"
           :is-loading="scheduledFinalControlStore.isLoading"
-          :on-cancel="closePopover"
+          :on-cancel="requestClose"
           :on-save="handleUpdateControl"
         />
 
@@ -102,7 +103,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -112,6 +113,7 @@ import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT, DATE_PICKER_PARAMS } from "@/constants/calendar";
 import { f7, f7Input, f7Icon, f7Popover } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Select from "@/components/ui/Select.vue";
 import { z } from "zod";
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
@@ -241,5 +243,4 @@ const confirmDelete = () => {
   );
 };
 </script>
-
 

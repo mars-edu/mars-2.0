@@ -1,17 +1,19 @@
 <template>
   <div>
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       v-if="student"
       :id="'edit-student-popover-' + student.id"
       style="width: 600px !important"
       :target="`#student-item-${student.id}`"
-    >
+    
+      :on-closed="resetForm">
       <div class="student-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать"
           :disabled="!isFormValid || studentStore.isLoading"
           :is-loading="studentStore.isLoading"
-          :on-cancel="closeEditStudentPopover"
+          :on-cancel="requestClose"
           :on-save="handleUpdateStudent"
         />
 
@@ -141,7 +143,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -157,6 +159,7 @@ import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
 import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{
   studentId: string;

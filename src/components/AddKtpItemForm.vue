@@ -1,5 +1,6 @@
 <template>
-  <f7-popover
+  <GuardedPopover
+    v-slot="{ requestClose }"
     id="add-ktp-item-popover"
     :opened="opened"
     @popover:closed="onPopoverClosed"
@@ -11,7 +12,7 @@
         title="Результат обучения/дисциплина"
         :disabled="!isFormValid || class9Store.loading"
         :is-loading="class9Store.loading"
-        :on-cancel="onPopoverClosed"
+        :on-cancel="requestClose"
         :on-save="handleSave"
       />
 
@@ -33,7 +34,7 @@
         />
       </div>
     </div>
-  </f7-popover>
+  </GuardedPopover>
 </template>
 
 <script setup lang="ts">
@@ -43,6 +44,7 @@ import { storeToRefs } from "pinia";
 import { useClass9Store } from "@/stores/class9Store";
 import { useKtpStore } from "@/stores/ktpStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Select from "@/components/ui/Select.vue";
 
 const props = defineProps<{

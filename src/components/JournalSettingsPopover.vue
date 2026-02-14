@@ -1,15 +1,18 @@
 <template>
-  <f7-popover
+  <GuardedPopover
+    v-slot="{ requestClose }"
     id="journal-settings-popover"
     style="width: 500px !important"
     target="#journal-settings-button"
+    :is-dirty="isDirty"
+    :on-closed="resetLocalSettings"
   >
     <div class="journal-settings-popover bg-card text-card-foreground">
       <PopoverHeader
         title="Настройки журнала"
         :disabled="false"
         :is-loading="false"
-        :on-cancel="onCancel"
+        :on-cancel="requestClose"
         :on-save="onSave"
       />
 
@@ -82,13 +85,14 @@
         </div>
       </div>
     </div>
-  </f7-popover>
+  </GuardedPopover>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { f7Popover } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{
   settings: {
@@ -104,6 +108,13 @@ const emit = defineEmits<{
 }>();
 
 const localSettings = ref({ ...props.settings });
+const resetLocalSettings = () => {
+  localSettings.value = { ...props.settings };
+};
+
+const isDirty = () =>
+  localSettings.value.calculationType !== props.settings.calculationType ||
+  localSettings.value.calculationMethod !== props.settings.calculationMethod;
 
 watch(
   () => props.settings,
@@ -119,7 +130,7 @@ const onSave = () => {
 };
 
 const onCancel = () => {
-  localSettings.value = { ...props.settings };
+  resetLocalSettings();
   emit("cancel");
 };
 </script>

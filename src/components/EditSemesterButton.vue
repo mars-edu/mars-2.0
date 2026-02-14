@@ -1,6 +1,7 @@
 <template>
   <div>
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       :id="'edit-semester-popover-' + semesterId"
       style="width: 600px !important"
       :target="`#semester-item-${semesterId}`"
@@ -10,7 +11,7 @@
           title="Редактировать семестр"
           :disabled="!isFormValid || semesterStore.isLoading"
           :is-loading="semesterStore.isLoading"
-          :on-cancel="closePopover"
+          :on-cancel="requestClose"
           :on-save="handleUpdateSemester"
         />
 
@@ -53,7 +54,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -61,6 +62,7 @@
 import { ref, computed, watch } from "vue";
 import { f7, f7Input, f7Icon, f7Popover } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { z } from "zod";
 import { useSemesterStore } from "@/stores/semesterStore";
 const props = defineProps<{ semesterId: string }>();

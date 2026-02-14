@@ -15,7 +15,7 @@
     </div>
 
     <!-- Framework7 Popover -->
-    <f7-popover
+    <GuardedPopover
       id="search-popover"
       style="width: 350px !important"
       target="#search-input"
@@ -84,13 +84,14 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { f7, f7Popover } from "framework7-vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{
   placeholder: string;

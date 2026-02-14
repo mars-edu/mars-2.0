@@ -1,9 +1,11 @@
 <template>
-  <f7-popover
+  <GuardedPopover
+    v-slot="{ requestClose }"
     id="edit-event-popover"
     style="width: 500px !important"
     class="max-h-screen"
     :arrow="false"
+    :on-closed="onPopoverClosed"
   >
     <div class="event-popover bg-card text-card-foreground">
       <!-- Header with buttons -->
@@ -11,7 +13,7 @@
         title="Редактировать"
         save-text="Сохранить"
         :disabled="!isFormValid"
-        :on-cancel="closeEditEventPopoverGuarded"
+        :on-cancel="requestClose"
         :on-save="handleUpdateEventGuarded"
       />
       <div v-if="formError" class="px-4 pt-2 text-destructive text-sm">
@@ -56,13 +58,14 @@
         </div>
       </EventForm>
     </div>
-  </f7-popover>
+  </GuardedPopover>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watchEffect } from "vue";
 import { f7 } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import EventForm from "./EventForm.vue";
 import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
 import { useClass9Store } from "@/stores/class9Store";
@@ -267,19 +270,13 @@ const showDeleteConfirmation = () => {
 
 const closeEditEventPopover = () => {
   f7.popover.close("#edit-event-popover");
-  emit("cancel");
-};
-
-const closeEditEventPopoverGuarded = () => {
-  f7.popover.close("#edit-event-popover");
-  emit("cancel");
 };
 
 const handleUpdateEventGuarded = () => {
   handleUpdateEvent();
 };
 
-const onClosed = () => {
+const onPopoverClosed = () => {
   emit("cancel");
 };
 

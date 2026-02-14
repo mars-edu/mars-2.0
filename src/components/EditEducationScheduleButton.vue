@@ -1,17 +1,19 @@
 <template>
   <div>
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       v-if="schedule"
       :id="'edit-schedule-popover-' + schedule.id"
       style="width: 600px !important"
       :target="`#schedule-item-${schedule.id}`"
-    >
+    
+      :on-closed="resetForm">
       <div class="schedule-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать"
           :disabled="!isFormValid || educationScheduleStore.isLoading"
           :is-loading="educationScheduleStore.isLoading"
-          :on-cancel="closeEditSchedulePopover"
+          :on-cancel="requestClose"
           :on-save="handleUpdateSchedule"
         />
 
@@ -85,7 +87,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -96,6 +98,7 @@ import { z } from "zod";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import type { EducationSchedule } from "@/stores/educationScheduleStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{
   scheduleId: string;

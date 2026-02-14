@@ -51,3 +51,5 @@ playwright-report-*/
 tests/.auth/
 
 stats.html
+# Test coverage
+coverage/

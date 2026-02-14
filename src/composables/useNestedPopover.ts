@@ -44,23 +44,34 @@ export interface NestedPopoverOptions {
 export function useNestedPopover(options: NestedPopoverOptions) {
   const { parentPopoverId, parentTargetSelector } = options;
 
+  const resolveParentId = () => toValue(parentPopoverId);
+
+  const parentExists = (parentId: string) => {
+    if (typeof document === "undefined") return true;
+    if (!parentId) return false;
+    return !!document.querySelector(parentId);
+  };
+
   /**
    * Close the parent popover
    */
   const closeParent = () => {
-    const popoverId = toValue(parentPopoverId);
-    f7.popover.close(popoverId);
+    const parentId = resolveParentId();
+    if (!parentExists(parentId)) return;
+    f7.popover.close(parentId);
   };
 
   /**
    * Open the parent popover
    */
   const openParent = () => {
-    const popoverId = toValue(parentPopoverId);
+    const parentId = resolveParentId();
+    if (!parentExists(parentId)) return;
+
     if (parentTargetSelector) {
-      f7.popover.open(popoverId, parentTargetSelector);
+      f7.popover.open(parentId, parentTargetSelector);
     } else {
-      f7.popover.open(popoverId);
+      f7.popover.open(parentId);
     }
   };
 
@@ -88,15 +99,17 @@ export function useNestedPopover(options: NestedPopoverOptions) {
   };
 
   /**
-   * Opens a Framework7 dialog and manages parent popover state
-   * Automatically reopens parent on cancel or error
+   * Opens a Framework7 dialog and manages parent popover state.
+   * Requires explicit button kinds to avoid heuristic text matching.
    *
    * @param dialogFn - Function that returns a Framework7 dialog
-   * @param onConfirm - Callback when dialog is confirmed (optional, parent stays closed)
-   * @param onCancel - Callback when dialog is cancelled (optional, parent reopens)
+   * @param buttonKinds - Array aligned with dialog.params.buttons ("confirm" | "cancel")
+   * @param onConfirm - Callback when confirm button is clicked
+   * @param onCancel - Callback when cancel button is clicked
    */
   const openDialogWithParent = (
     dialogFn: () => ReturnType<typeof f7.dialog.create>,
+    buttonKinds: Array<"confirm" | "cancel">,
     onConfirm?: () => void | Promise<void>,
     onCancel?: () => void
   ) => {
@@ -105,8 +118,9 @@ export function useNestedPopover(options: NestedPopoverOptions) {
 
     // Override button handlers to manage parent state
     if (dialog.params.buttons) {
-      dialog.params.buttons = dialog.params.buttons.map((button: any) => {
+      dialog.params.buttons = dialog.params.buttons.map((button: any, index: number) => {
         const originalOnClick = button.onClick;
+        const kind = buttonKinds[index] ?? "cancel";
 
         return {
           ...button,
@@ -114,10 +128,7 @@ export function useNestedPopover(options: NestedPopoverOptions) {
             if (originalOnClick) {
               const result = originalOnClick();
 
-              // If this looks like a confirm button (has strong or specific text)
-              if (button.strong || button.text?.toLowerCase().includes('да') ||
-                  button.text?.toLowerCase().includes('удалить') ||
-                  button.text?.toLowerCase().includes('сохранить')) {
+              if (kind === "confirm") {
                 if (onConfirm) {
                   Promise.resolve(onConfirm()).catch(() => {
                     openParent(); // Reopen on error
@@ -131,7 +142,7 @@ export function useNestedPopover(options: NestedPopoverOptions) {
 
               return result;
             }
-          }
+          },
         };
       });
     }

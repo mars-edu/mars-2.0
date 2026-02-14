@@ -1,16 +1,18 @@
 <template>
   <div>
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       :id="'edit-settings-intermediate-control-popover-' + controlId"
       style="width: 600px !important"
       :target="`#intermediate-control-item-${controlId}`"
-    >
+    
+      :on-closed="resetForm">
       <div class="intermediate-control-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать"
           :disabled="!isFormValid || intermediateControlStore.isLoading"
           :is-loading="intermediateControlStore.isLoading"
-          :on-cancel="closeEditIntermediateControlPopover"
+          :on-cancel="requestClose"
           :on-save="handleUpdateIntermediateControl"
         />
 
@@ -71,7 +73,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -81,6 +83,7 @@ import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{
   controlId: string;

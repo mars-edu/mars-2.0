@@ -1,5 +1,7 @@
 <template>
-  <f7-popover
+  <GuardedPopover
+    v-slot="{ requestClose }"
+    id="ktp-detail-view-popover"
     :opened="opened"
     @popover:closed="$emit('update:opened', false)"
     class="popover-center-page"
@@ -10,7 +12,7 @@
       <PopoverHeader
         title="Просмотр темы занятия"
         cancel-text="Закрыть"
-        :on-cancel="() => $emit('update:opened', false)"
+        :on-cancel="requestClose"
       />
 
       <div v-if="formError" class="px-4 pt-2 text-destructive text-sm">
@@ -67,7 +69,7 @@
         </div>
       </div>
     </div>
-  </f7-popover>
+  </GuardedPopover>
 </template>
 
 <script setup lang="ts">
@@ -75,6 +77,7 @@ import { ref } from "vue";
 import { f7Icon } from "framework7-vue";
 import type { KtpDetail } from "@/stores/ktpStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{
   opened: boolean;

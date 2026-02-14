@@ -22,7 +22,7 @@
       ></f7-icon>
     </button>
 
-    <f7-popover
+    <GuardedPopover
       id="add-working-plan-popover"
       style="width: 400px !important"
       target="#add-working-plan-button"
@@ -46,7 +46,7 @@
           </button>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -54,6 +54,7 @@
 import { computed, ref } from "vue";
 import { f7, f7Popover } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{
   opened: boolean;

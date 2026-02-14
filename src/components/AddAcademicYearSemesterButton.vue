@@ -10,17 +10,19 @@
       <f7-icon ios="f7:plus" md="material:add" size="16px" class="text-white" />
     </button>
 
-    <f7-popover
+    <GuardedPopover
+      v-slot="{ requestClose }"
       id="add-academic-year-semester-popover"
       style="width: 600px !important"
       target="#add-academic-year-semester-button"
-    >
+    
+      :on-closed="resetForm">
       <div class="semester-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Добавить семестр к учебному году"
           :disabled="academicYearSemesterStore.isLoading"
           :is-loading="academicYearSemesterStore.isLoading"
-          :on-cancel="closeAddAcademicYearSemesterPopover"
+          :on-cancel="requestClose"
           :on-save="handleSaveAcademicYearSemester"
         />
 
@@ -69,7 +71,7 @@
           </div>
         </div>
       </div>
-    </f7-popover>
+    </GuardedPopover>
   </div>
 </template>
 
@@ -83,6 +85,7 @@ import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Input from "@/components/ui/Input.vue";
 import Select from "@/components/ui/Select.vue";
 import { DATE_PICKER_PARAMS } from "@/constants/calendar";
