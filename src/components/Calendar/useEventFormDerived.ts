@@ -152,11 +152,25 @@ export function useEventFormDerived(args: {
     return `Выбранное количество часов (${selectedHours.value}) превышает запланированное на семестр (${semesterPlannedHours.value})`;
   });
 
+  const slotTimeError = computed(() => {
+    const schedules = educationScheduleStore.getActiveYearSchedules;
+    for (const day of args.selectedWeekDays.value) {
+      if (!day.startId || !day.endId) continue;
+      const startIndex = schedules.findIndex((s) => s.id === day.startId);
+      const endIndex = schedules.findIndex((s) => s.id === day.endId);
+      if (startIndex !== -1 && endIndex !== -1 && endIndex < startIndex) {
+        return `Время окончания в ${day.russianWeekDay} должно быть позже времени начала`;
+      }
+    }
+    return null;
+  });
+
   const isValid = computed(() => {
     if (!args.semesterId.value) return false;
     if (!args.class9Id.value) return false;
     if (!effectiveStartDate.value || !effectiveEndDate.value) return false;
     if (isSelectedHoursExceeded.value) return false;
+    if (slotTimeError.value) return false;
 
     if (!args.useCustomPeriod.value) {
       return !!semesterDates.value;
@@ -178,6 +192,7 @@ export function useEventFormDerived(args: {
     selectedHours,
     isSelectedHoursExceeded,
     hoursExceededError,
+    slotTimeError,
     isValid,
   };
 }

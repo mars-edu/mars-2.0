@@ -127,7 +127,7 @@ test.describe.serial("Planning Add Popup Unsaved Guard", () => {
   test("shows custom alert on dirty close via Cancel button", async ({ page }) => {
     const popup = await openAddPopup(page);
 
-    await popup.getByRole("button", { name: "Отменить" }).click();
+    await popup.getByRole("button", { name: "Отмена" }).click();
     await unsavedDialog(page);
   });
 
@@ -153,7 +153,7 @@ test.describe.serial("Planning Add Popup Unsaved Guard", () => {
       .first();
     await expect(selectedClass9Value).not.toHaveValue("");
 
-    await popup.getByRole("button", { name: "Отменить" }).click();
+    await popup.getByRole("button", { name: "Отмена" }).click();
     const dialog = await unsavedDialog(page);
     await dialog.getByRole("button", { name: "Продолжить редактирование" }).click();
 
@@ -169,7 +169,7 @@ test.describe.serial("Planning Add Popup Unsaved Guard", () => {
       popup.locator('input[type="hidden"][name="event-class9-generic"]').first()
     ).not.toHaveValue("");
 
-    await popup.getByRole("button", { name: "Отменить" }).click();
+    await popup.getByRole("button", { name: "Отмена" }).click();
     const dialog = await unsavedDialog(page);
     await dialog.getByRole("button", { name: "Закрыть" }).click();
 
@@ -182,15 +182,15 @@ test.describe.serial("Planning Add Popup Unsaved Guard", () => {
     ).toHaveValue("");
   });
 
-  test("save flow closes popup without unsaved alert", async ({ page }) => {
+  test("step gating enables next only when current step is valid", async ({ page }) => {
     const popup = await openAddPopup(page);
+    const nextButton = popup.getByRole("button", { name: "Далее" });
+    await expect(nextButton).toBeDisabled();
+
     await selectFirstDisciplineOption(page, popup);
+    await expect(nextButton).toBeEnabled({ timeout: 20_000 });
+    await nextButton.click();
 
-    const saveButton = popup.getByRole("button", { name: "Добавить" });
-    await expect(saveButton).toBeEnabled({ timeout: 20_000 });
-    await saveButton.click();
-
-    await expect(popup).toBeHidden({ timeout: 30_000 });
-    await expect(page.locator(".dialog.unsaved-changes-dialog:visible")).toHaveCount(0);
+    await expect(popup.getByText("Расписание")).toBeVisible({ timeout: 20_000 });
   });
 });

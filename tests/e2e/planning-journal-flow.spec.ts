@@ -737,6 +737,8 @@ test.describe("Planning → Journal E2E flow", () => {
     await selectPopup.getByRole("button", { name: "Выбрать" }).click();
     await expect(selectPopup).toBeHidden();
 
+    await addEventPopover.getByRole("button", { name: "Далее" }).click();
+
     await addEventPopover
       .locator("#use-custom-period, #use-custom-period-edit")
       .first()
@@ -747,12 +749,25 @@ test.describe("Planning → Journal E2E flow", () => {
     await dateInputs.nth(1).click();
     await pickF7CalendarDay(page, { offsetDays: 1 });
 
-    await addEventPopover.locator("#event-form-participants").click();
-    const studentPopup = page.locator("#student-selection-popup");
-    await expect(studentPopup).toBeVisible();
-    await studentPopup.getByText(studentOneName).click();
-    await studentPopup.getByRole("button", { name: "Сохранить" }).click();
-    await expect(studentPopup).toBeHidden();
+    await addEventPopover.locator("#event-weekday-0").click();
+    await selectFirstRealOption(
+      addEventPopover.locator("#event-weekday-start-0-0 select").first()
+    );
+    await selectFirstRealOption(
+      addEventPopover.locator("#event-weekday-end-0-0 select").first()
+    );
+
+    await addEventPopover.getByRole("button", { name: "Далее" }).click();
+    await expect(addEventPopover.locator("#event-form-participants")).toBeVisible({
+      timeout: 30_000,
+    });
+    await addEventPopover
+      .locator("#event-student-search input, #event-student-search")
+      .first()
+      .fill(studentOneName);
+    await addEventPopover.getByText(studentOneName).first().click();
+
+    await addEventPopover.getByRole("button", { name: "Далее" }).click();
 
     await addEventPopover.locator("#event-form-ktp").click();
     const ktpDetailPopover = page.locator("#ktp-detail-popover:visible");
@@ -803,7 +818,7 @@ test.describe("Planning → Journal E2E flow", () => {
     await ktpDetailPopover.getByRole("button", { name: "Закрыть" }).click();
     await expect(ktpDetailPopover).toBeHidden({ timeout: 30_000 });
 
-    await addEventPopover.getByRole("button", { name: "Добавить" }).click();
+    await addEventPopover.getByRole("button", { name: "Создать" }).click();
     await expect(addEventPopover).toBeHidden({ timeout: 15_000 });
 
     // Determine created calendar event id (journal id) via Convex queries (works in dev+prod).

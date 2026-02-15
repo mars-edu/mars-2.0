@@ -9,7 +9,6 @@
       <span>Создать</span>
     </button>
 
-    <!-- Framework7 Popup (was Popover) -->
     <GuardedPopover
       ref="addEventPopupRef"
       v-slot="{ requestClose }"
@@ -22,45 +21,33 @@
       class="add-event-popup"
     >
       <f7-page>
-        <div class="event-popover bg-card text-card-foreground">
-          <!-- Header with buttons -->
-          <div class="fixed-header">
-            <PopoverHeader
-              title="Создать"
-              save-text="Добавить"
-              :disabled="!isFormValid"
-              :on-cancel="requestClose"
-              :on-save="handleAddEvent"
-            />
-            <div v-if="formError" class="px-4 pb-2 text-destructive text-sm">
-              {{ formError }}
-            </div>
-          </div>
-
-          <div class="scrollable-content">
-            <EventForm
-              parent-popover-id="#add-event-popup"
-              parent-popover-type="popup"
-              mode="add"
-              :event-id="tempEventId"
-              :semester="semesterId"
-              :semester-dates="semesterDates"
-              :total-planned-hours="totalPlannedHours"
-              :semester-planned-hours="semesterPlannedHours"
-              :selected-hours="selectedHours"
-              :hours-exceeded-error="hoursExceededError"
-              :date-validation-error="dateValidationError"
-              class="overflow-y-auto"
-              v-model:class9Id="class9Id"
-              v-model:useCustomPeriod="useCustomPeriod"
-              v-model:startDate="customStartDate"
-              v-model:endDate="customEndDate"
-              v-model:participants="participants"
-              v-model:color="eventColor"
-              v-model:selectedWeekDays="selectedWeekDays"
-            />
-          </div>
-        </div>
+        <AddEventWizard
+          :session-key="sessionKey"
+          :request-close="requestClose"
+          :form-error="formError"
+          :is-submitting="calendarStore.isLoading"
+          :semester-id="semesterId"
+          :semester-dates="semesterDates"
+          :total-planned-hours="totalPlannedHours"
+          :semester-planned-hours="semesterPlannedHours"
+          :selected-hours="selectedHours"
+          :hours-exceeded-error="hoursExceededError"
+          :slot-time-error="slotTimeError"
+          :date-validation-error="dateValidationError"
+          :derived-is-valid="isFormValid"
+          :temp-event-id="tempEventId"
+          v-model:class9Id="class9Id"
+          v-model:useCustomPeriod="useCustomPeriod"
+          v-model:startDate="customStartDate"
+          v-model:endDate="customEndDate"
+          v-model:participants="participants"
+          v-model:color="eventColor"
+          v-model:selectedWeekDays="selectedWeekDays"
+          v-model:useIndividualJournals="useIndividualJournals"
+          v-model:gradingType="gradingType"
+          v-model:individualJournals="individualJournals"
+          @submit="handleAddEvent"
+        />
       </f7-page>
     </GuardedPopover>
   </div>
@@ -70,13 +57,18 @@
 import { ref, computed } from "vue";
 import { f7 } from "framework7-vue";
 import { storeToRefs } from "pinia";
-import PopoverHeader from "../ui/PopoverHeader.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
-import EventForm from "./EventForm.vue";
+import AddEventWizard from "./AddEventWizard.vue";
 import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
 import { useUserStore } from "@/stores/userStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useEventFormDerived, type WeekDaySchedule } from "./useEventFormDerived";
+import {
+  createEmptyAddWizardDraft,
+  serializeAddWizardDraft,
+  type AddWizardDraft,
+  type IndividualJournalDraft,
+} from "./useAddEventWizard";
 
 const emit = defineEmits<{
   (e: "event-added", event: CalendarEvent): void;
@@ -105,10 +97,14 @@ const customEndDate = ref("");
 const participants = ref<string[]>([]);
 const formError = ref<string | null>(null);
 const eventColor = ref("#3F51B5");
-const tempEventId = ref<string>(""); // Pre-generated event ID for creating KTP before saving
-
+const tempEventId = ref<string>("");
 const selectedWeekDays = ref<WeekDaySchedule[]>([]);
+const useIndividualJournals = ref(false);
+const gradingType = ref<"combined" | "separate" | "">("");
+const individualJournals = ref<IndividualJournalDraft[]>([]);
+
 const isPopupOpen = ref(false);
+const sessionKey = ref(0);
 const addEventPopupRef = ref<{ allowNextClose: () => void } | null>(null);
 
 const semesterId = computed(() => getActiveAcademicYearSemester.value?.id || "");
@@ -122,6 +118,7 @@ const {
   semesterPlannedHours,
   selectedHours,
   hoursExceededError,
+  slotTimeError,
   isValid: isFormValid,
 } = useEventFormDerived({
   class9Id,
@@ -199,12 +196,16 @@ const resetForm = () => {
   selectedWeekDays.value = [];
   formError.value = null;
   eventColor.value = "#3F51B5";
-  tempEventId.value = ""; // Reset temporary event ID
+  tempEventId.value = "";
+  useIndividualJournals.value = false;
+  gradingType.value = "";
+  individualJournals.value = [];
 };
 
 const openAddEventPopover = () => {
   // Reset only on explicit user open; avoids losing state when nested popups temporarily close this popup.
   resetForm();
+  sessionKey.value += 1;
   // Generate temporary event ID for KTP creation
   tempEventId.value = crypto.randomUUID();
   isPopupOpen.value = true;
@@ -219,17 +220,24 @@ const onPopupClosed = () => {
   isPopupOpen.value = false;
 };
 
+const draft = computed<AddWizardDraft>(() => ({
+  class9Id: class9Id.value,
+  useCustomPeriod: useCustomPeriodRaw.value,
+  startDate: customStartDate.value,
+  endDate: customEndDate.value,
+  participants: participants.value,
+  color: eventColor.value,
+  selectedWeekDays: selectedWeekDays.value,
+  tempEventId: tempEventId.value,
+  useIndividualJournals: useIndividualJournals.value,
+  gradingType: gradingType.value,
+  individualJournals: individualJournals.value,
+}));
+
+const emptyDraft = createEmptyAddWizardDraft();
+
 const isDirty = computed(() => {
-  return (
-    tempEventId.value !== "" ||
-    class9Id.value !== "" ||
-    useCustomPeriodRaw.value !== false ||
-    customStartDate.value !== "" ||
-    customEndDate.value !== "" ||
-    participants.value.length > 0 ||
-    selectedWeekDays.value.length > 0 ||
-    eventColor.value !== "#3F51B5"
-  );
+  return serializeAddWizardDraft(draft.value) !== serializeAddWizardDraft(emptyDraft);
 });
 
 const hasUnsavedChanges = () => isDirty.value;
@@ -251,27 +259,5 @@ const hasUnsavedChanges = () => isDirty.value;
 .add-event-popup .page-content {
   padding: 0;
   height: 100%;
-}
-
-.event-popover {
-  display: flex;
-  flex-direction: column;
-  max-height: 90vh;
-  width: 100%;
-  height: 100%;
-}
-
-.fixed-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background-color: var(--f7-popover-bg-color);
-  border-bottom: 1px solid var(--f7-border-color);
-}
-
-.scrollable-content {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0; /* Allow flexbox to shrink */
 }
 </style>

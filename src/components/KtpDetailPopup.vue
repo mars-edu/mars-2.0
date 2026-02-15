@@ -3,6 +3,7 @@
     <GuardedPopover
       v-slot="{ requestClose }"
       id="ktp-detail-popover"
+      :guard-unsaved="false"
       :arrow="false"
       style="
         width: calc(100vw - 50px) !important;
