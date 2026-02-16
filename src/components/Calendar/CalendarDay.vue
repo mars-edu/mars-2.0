@@ -33,7 +33,6 @@
 <script setup lang="ts">
 import type { CalendarDay } from "@/composables/useCalendar";
 import CalendarEvent from "./CalendarEvent.vue";
-import dayjs from "dayjs";
 import { computed } from "vue";
 
 const emit = defineEmits<{
@@ -57,10 +56,7 @@ const props = defineProps<{
 }>();
 
 const dayClasses = computed(() => {
-  const weekday = dayjs(props.day.date).day();
-  const isWeekend = weekday === 0 || weekday === 6;
   return {
-    "bg-muted/30": isWeekend,
     "hover:bg-primary/5 transition-colors": !props.day.isToday,
     "bg-primary/10": props.day.isToday,
   } as Record<string, boolean>;

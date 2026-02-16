@@ -235,10 +235,6 @@
       </div>
     </div>
 
-    <template #fixed>
-      <FabActions v-if="!isSelectMode" />
-    </template>
-
     <f7-popover
       class="specialty-info-popover"
       :arrow="true"
@@ -286,7 +282,6 @@ import AccordionItem from "@/components/ui/accordion/AccordionItem.vue";
 import Select from "@/components/ui/Select.vue";
 import { storeToRefs } from "pinia";
 import ImportWorkingPlanDialog from "@/components/ImportWorkingPlanDialog.vue";
-import FabActions from "@/components/FabActions.vue";
 import { useRupStore } from "@/stores/rupStore";
 import { useClass9Store, type Class9Data } from "@/stores/class9Store";
 import { useUserStore } from "@/stores/userStore";

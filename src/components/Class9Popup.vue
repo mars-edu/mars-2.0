@@ -14,7 +14,7 @@
           :on-cancel="requestClose"
         >
           <template #title>
-            <div v-if="!editMode" class="flex items-center space-x-4">
+            <div v-if="!editMode" class="flex items-center justify-center space-x-4">
               <button @click="removeStep(currentStep)" v-if="steps.length > 1">
                 <f7-icon f7="trash" class="text-red-500"></f7-icon>
               </button>
@@ -91,35 +91,76 @@
               />
             </div>
 
-            <div class="space-y-4">
-              <Input
-                :id="'module-index-' + index"
-                v-model="stepData.moduleIndex"
-                label="Индекс модуля/дисциплины"
-                placeholder="Введите индекс"
-                :show-copy-button="index > 0"
-                @copy="copyFromPreviousStep(index, 'moduleIndex')"
-              />
+            <!-- Language selector -->
+            <div v-if="index === 0" class="mb-6">
+              <label class="text-sm text-foreground mb-2 block font-medium flex items-center gap-2">
+                <f7-icon f7="globe" size="16px" class="text-muted-foreground"></f7-icon>
+                Языки обучения
+              </label>
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  v-for="lang in languageOptions"
+                  :key="lang.code"
+                  type="button"
+                  @click="toggleLanguage(lang.code)"
+                  class="language-chip"
+                  :class="{ 'language-chip-active': selectedLanguages.includes(lang.code) }"
+                >
+                  <span>{{ lang.name }}</span>
+                  <f7-icon
+                    v-if="selectedLanguages.includes(lang.code)"
+                    f7="checkmark_circle_fill"
+                    size="14px"
+                    class="ml-1"
+                  ></f7-icon>
+                </button>
+              </div>
+            </div>
 
-              <Input
-                :id="'module-name-' + index"
-                v-model="stepData.moduleName"
-                label="Наименование модуля"
-                placeholder="Введите наименование"
-                :show-copy-button="index > 0"
-                @copy="copyFromPreviousStep(index, 'moduleName')"
-              />
+            <!-- Language sections for each selected language -->
+            <div class="space-y-6">
+              <div
+                v-for="lang in selectedLanguages"
+                :key="lang"
+                class="bg-muted/50 border border-border rounded-lg p-4"
+              >
+                <div class="flex items-center gap-2 mb-4">
+                  <div class="w-2 h-2 rounded-full bg-primary"></div>
+                  <span class="text-sm font-bold uppercase">{{ getLanguageName(lang) }}</span>
+                </div>
 
-              <Input
-                :id="'learning-outcome-' + index"
-                v-model="stepData.learningOutcome"
-                label="Наименование результата обучения/дисциплина"
-                placeholder="Введите результат"
-                :show-copy-button="index > 0"
-                @copy="copyFromPreviousStep(index, 'learningOutcome')"
-              />
+                <div class="space-y-4">
+                  <Input
+                    :id="'module-index-' + index + '-' + lang"
+                    v-model="languageTexts[lang].moduleIndex"
+                    label="Индекс модуля/дисциплины"
+                    placeholder="Введите индекс"
+                    :show-copy-button="index > 0"
+                    @copy="copyFromPreviousStep(index, 'moduleIndex')"
+                  />
 
-              <div class="mt-6 grid grid-cols-2 gap-4">
+                  <Input
+                    :id="'module-name-' + index + '-' + lang"
+                    v-model="languageTexts[lang].moduleName"
+                    label="Наименование модуля"
+                    placeholder="Введите наименование"
+                    :show-copy-button="index > 0"
+                    @copy="copyFromPreviousStep(index, 'moduleName')"
+                  />
+
+                  <Input
+                    :id="'learning-outcome-' + index + '-' + lang"
+                    v-model="languageTexts[lang].learningOutcome"
+                    label="Наименование результата обучения/дисциплина"
+                    placeholder="Введите результат"
+                    :show-copy-button="index > 0"
+                    @copy="copyFromPreviousStep(index, 'learningOutcome')"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 grid grid-cols-2 gap-4">
                 <Input
                   :id="'total-credits-' + index"
                   v-model="stepData.totalCredits"
@@ -316,7 +357,6 @@
                   </div>
                 </div>
               </div>
-            </div>
           </div>
           </template>
         </div>
@@ -347,6 +387,7 @@ import Select from "@/components/ui/Select.vue";
 import Input from "@/components/ui/Input.vue";
 import TagsSelector from "@/components/ui/TagsSelector.vue";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
+import { useLanguageStore } from "@/stores/languageStore";
 
 const emit = defineEmits<{
   (e: "submit"): void;
@@ -367,6 +408,7 @@ const academicYearStore = useAcademicYearStore();
 const semesterStore = useSemesterStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const specialtyStore = useSpecialtyStore();
+const languageStore = useLanguageStore();
 const scheduledFinalControlStore = useScheduledFinalControlStore();
 const finalControlStore = useFinalControlStore();
 
@@ -374,13 +416,67 @@ function createEmptyStep() {
   return class9Store.createEmptyClass9Data(
     props.academicYearId,
     props.specialtyIds || [],
-    props.baseClass ?? 9
+    props.baseClass ?? 9,
+    "ru"
   );
 }
 
 const steps = ref([createEmptyStep()]);
 const currentStep = ref(1);
 const selectedSpecialtyIds = ref<string[]>([]);
+
+const selectedLanguages = ref<string[]>(["ru"]);
+const activeLanguageTab = ref("ru");
+
+// Language options from store
+const languageOptions = computed(() =>
+  languageStore.languages.map((lang) => ({
+    code: lang.code,
+    name: lang.name,
+  }))
+);
+
+// Per-language text fields: { [langCode]: { moduleIndex, moduleName, learningOutcome } }
+const languageTexts = ref<Record<string, { moduleIndex: string; moduleName: string; learningOutcome: string }>>({
+  ru: { moduleIndex: "", moduleName: "", learningOutcome: "" },
+});
+
+const editVariantIds = ref<Record<string, string>>({});
+
+function toggleLanguage(code: string) {
+  const idx = selectedLanguages.value.indexOf(code);
+  if (idx > -1) {
+    if (selectedLanguages.value.length > 1) {
+      selectedLanguages.value.splice(idx, 1);
+      delete languageTexts.value[code];
+      if (activeLanguageTab.value === code) {
+        activeLanguageTab.value = selectedLanguages.value[0];
+      }
+    }
+  } else {
+    selectedLanguages.value.push(code);
+    if (!languageTexts.value[code]) {
+      languageTexts.value[code] = { moduleIndex: "", moduleName: "", learningOutcome: "" };
+    }
+  }
+}
+
+function getLanguageName(code: string) {
+  return languageOptions.value.find((l) => l.code === code)?.name ?? code;
+}
+
+const currentLanguageTexts = computed({
+  get() {
+    const lang = activeLanguageTab.value;
+    if (!languageTexts.value[lang]) {
+      languageTexts.value[lang] = { moduleIndex: "", moduleName: "", learningOutcome: "" };
+    }
+    return languageTexts.value[lang];
+  },
+  set(val) {
+    languageTexts.value[activeLanguageTab.value] = val;
+  },
+});
 
 // Specialty options for TagsSelector
 const specialtyOptions = computed(() =>
@@ -396,11 +492,70 @@ watch(
   () => [props.initialData, props.editMode],
   ([val, edit]) => {
     if (edit && val) {
-      steps.value = [{ ...val }];
-      selectedSpecialtyIds.value = val.specialtyIds || [];
+      // Check if this item is part of a language group
+      if (val.groupId) {
+        const variants = class9Store.getGroupedVariants(val.groupId);
+        if (variants.length > 0) {
+          const langs = variants.map((v: any) => v.language || "ru");
+          selectedLanguages.value = [...new Set(langs)];
+          activeLanguageTab.value = val.language || langs[0];
+
+          // Build languageTexts from all variants
+          const texts: Record<string, { moduleIndex: string; moduleName: string; learningOutcome: string }> = {};
+          const variantIdMap: Record<string, string> = {};
+          for (const v of variants) {
+            const lang = v.language || "ru";
+            texts[lang] = {
+              moduleIndex: v.moduleIndex,
+              moduleName: v.moduleName,
+              learningOutcome: v.learningOutcome,
+            };
+            variantIdMap[lang] = v.id;
+          }
+          languageTexts.value = texts;
+          editVariantIds.value = variantIdMap;
+
+          // Use first variant for shared fields
+          const first = variants[0];
+          steps.value = [{ ...first }];
+          selectedSpecialtyIds.value = first.specialtyIds || [];
+        } else {
+          // Fallback: group not found, treat as single
+          steps.value = [{ ...val }];
+          selectedLanguages.value = [val.language || "ru"];
+          activeLanguageTab.value = val.language || "ru";
+          languageTexts.value = {
+            [val.language || "ru"]: {
+              moduleIndex: val.moduleIndex,
+              moduleName: val.moduleName,
+              learningOutcome: val.learningOutcome,
+            },
+          };
+          editVariantIds.value = { [val.language || "ru"]: val.id };
+          selectedSpecialtyIds.value = val.specialtyIds || [];
+        }
+      } else {
+        // Legacy item without groupId
+        steps.value = [{ ...val }];
+        selectedLanguages.value = [val.language || "ru"];
+        activeLanguageTab.value = val.language || "ru";
+        languageTexts.value = {
+          [val.language || "ru"]: {
+            moduleIndex: val.moduleIndex,
+            moduleName: val.moduleName,
+            learningOutcome: val.learningOutcome,
+          },
+        };
+        editVariantIds.value = { [val.language || "ru"]: val.id };
+        selectedSpecialtyIds.value = val.specialtyIds || [];
+      }
       currentStep.value = 1;
     } else {
       steps.value = [createEmptyStep()];
+      selectedLanguages.value = ["ru"];
+      activeLanguageTab.value = "ru";
+      languageTexts.value = { ru: { moduleIndex: "", moduleName: "", learningOutcome: "" } };
+      editVariantIds.value = {};
       selectedSpecialtyIds.value = props.specialtyIds || [];
       currentStep.value = 1;
     }
@@ -422,14 +577,15 @@ watch(
 
 onMounted(async () => {
   await specialtyStore.fetchSpecialties();
-  steps.value =
-    props.editMode && props.initialData
-      ? [{ ...props.initialData }]
-      : [createEmptyStep()];
-  selectedSpecialtyIds.value =
-    props.editMode && props.initialData
-      ? props.initialData.specialtyIds || []
-      : props.specialtyIds || [];
+  if (props.editMode && props.initialData) {
+    // Watch handles the initialization
+  } else {
+    steps.value = [createEmptyStep()];
+    selectedSpecialtyIds.value = props.specialtyIds || [];
+    selectedLanguages.value = ["ru"];
+    activeLanguageTab.value = "ru";
+    languageTexts.value = { ru: { moduleIndex: "", moduleName: "", learningOutcome: "" } };
+  }
   currentStep.value = 1;
   nextTick(() => {
     f7.tooltip.create({
@@ -521,10 +677,11 @@ const validationResult = computed(() => {
   const step = steps.value[currentStep.value - 1];
   if (!step)
     return { success: false, error: { issues: [{ message: "Нет данных" }] } };
+  const texts = languageTexts.value[activeLanguageTab.value] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
   return class9Schema.safeParse({
-    moduleIndex: step.moduleIndex,
-    moduleName: step.moduleName,
-    learningOutcome: step.learningOutcome,
+    moduleIndex: texts.moduleIndex,
+    moduleName: texts.moduleName,
+    learningOutcome: texts.learningOutcome,
     totalCredits: String(step.totalCredits),
     totalHours: String(step.totalHours),
     theoreticalHours: String(step.theoreticalHours),
@@ -585,6 +742,10 @@ function resetLocalState() {
   steps.value = [createEmptyStep()];
   currentStep.value = 1;
   selectedSpecialtyIds.value = [];
+  selectedLanguages.value = ["ru"];
+  activeLanguageTab.value = "ru";
+  languageTexts.value = { ru: { moduleIndex: "", moduleName: "", learningOutcome: "" } };
+  editVariantIds.value = {};
 }
 
 function handlePopoverClosed() {
@@ -608,19 +769,91 @@ async function submit() {
   }
 
   try {
-    if (props.editMode && props.initialData && props.initialData.id) {
-      await class9Store.updateClass9(props.initialData.id, {
-        ...steps.value[0],
-        specialtyIds: selectedSpecialtyIds.value,
-        baseClass: props.baseClass ?? 9,
-      });
+    const baseClass = props.baseClass ? [props.baseClass] : [9];
+
+    if (props.editMode && props.initialData) {
+      // Edit mode: update each language variant
+      for (const lang of selectedLanguages.value) {
+        const texts = languageTexts.value[lang] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
+        const variantId = editVariantIds.value[lang];
+        const step = steps.value[0];
+
+        if (variantId) {
+          // Update existing variant
+          await class9Store.updateClass9(variantId, {
+            ...step,
+            specialtyIds: selectedSpecialtyIds.value,
+            baseClass,
+            language: lang,
+            moduleIndex: texts.moduleIndex,
+            moduleName: texts.moduleName,
+            learningOutcome: texts.learningOutcome,
+          });
+        } else {
+          // New language added during edit - create new variant with same groupId
+          const existingGroupId = props.initialData.groupId || crypto.randomUUID();
+          await class9Store.addClass9(
+            props.academicYearId,
+            selectedSpecialtyIds.value,
+            {
+              ...step,
+              baseClass,
+              language: lang,
+              groupId: existingGroupId,
+              moduleIndex: texts.moduleIndex,
+              moduleName: texts.moduleName,
+              learningOutcome: texts.learningOutcome,
+            }
+          );
+        }
+      }
+
+      // Delete removed language variants
+      for (const [lang, variantId] of Object.entries(editVariantIds.value)) {
+        if (!selectedLanguages.value.includes(lang)) {
+          await class9Store.deleteClass9(variantId);
+        }
+      }
     } else {
+      // Create mode
+      const groupId = crypto.randomUUID();
+
       for (const step of steps.value) {
-        await class9Store.addClass9(
-          props.academicYearId,
-          selectedSpecialtyIds.value,
-          { ...step, baseClass: props.baseClass ?? 9 }
-        );
+        if (selectedLanguages.value.length === 1) {
+          const lang = selectedLanguages.value[0];
+          const texts = languageTexts.value[lang] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
+          await class9Store.addClass9(
+            props.academicYearId,
+            selectedSpecialtyIds.value,
+            {
+              ...step,
+              baseClass,
+              language: lang,
+              groupId,
+              moduleIndex: texts.moduleIndex,
+              moduleName: texts.moduleName,
+              learningOutcome: texts.learningOutcome,
+            }
+          );
+        } else {
+          // Multiple languages - create all variants
+          for (const lang of selectedLanguages.value) {
+            const texts = languageTexts.value[lang] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
+            await class9Store.addClass9(
+              props.academicYearId,
+              selectedSpecialtyIds.value,
+              {
+                ...step,
+                baseClass,
+                language: lang,
+                groupId,
+                moduleIndex: texts.moduleIndex,
+                moduleName: texts.moduleName,
+                learningOutcome: texts.learningOutcome,
+              }
+            );
+          }
+        }
       }
     }
     emit("submit");
@@ -697,19 +930,60 @@ function getFinalControlOptionsForYear(
 
 function showDeleteConfirmation() {
   if (!props.initialData || !props.initialData.id) return;
-  f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить запись "${props.initialData.moduleName}"?</p><p class='text-sm text-muted-foreground mt-2'>Это действие нельзя отменить.</p>`,
-    "Удаление записи",
-    async () => {
-      try {
-        await class9Store.deleteClass9(props.initialData.id);
-        closeProgrammatically();
-        emit("submit");
-      } catch (error) {
-        f7.dialog.alert("Произошла ошибка при удалении.");
+
+  const hasGroup = props.initialData.groupId &&
+    class9Store.getGroupedVariants(props.initialData.groupId).length > 1;
+
+  if (hasGroup) {
+    f7.dialog.create({
+      title: "Удаление записи",
+      text: `<p>Удалить все языковые варианты записи "${props.initialData.moduleName}" или только текущий?</p>`,
+      buttons: [
+        { text: "Отмена", close: true },
+        {
+          text: "Только этот язык",
+          close: true,
+          onClick: async () => {
+            try {
+              await class9Store.deleteClass9(props.initialData.id);
+              closeProgrammatically();
+              emit("submit");
+            } catch (error) {
+              f7.dialog.alert("Произошла ошибка при удалении.");
+            }
+          },
+        },
+        {
+          text: "Все варианты",
+          close: true,
+          cssClass: "text-destructive",
+          onClick: async () => {
+            try {
+              await class9Store.deleteClass9Group(props.initialData.groupId);
+              closeProgrammatically();
+              emit("submit");
+            } catch (error) {
+              f7.dialog.alert("Произошла ошибка при удалении.");
+            }
+          },
+        },
+      ],
+    }).open();
+  } else {
+    f7.dialog.confirm(
+      `<p>Вы уверены, что хотите удалить запись "${props.initialData.moduleName}"?</p><p class='text-sm text-muted-foreground mt-2'>Это действие нельзя отменить.</p>`,
+      "Удаление записи",
+      async () => {
+        try {
+          await class9Store.deleteClass9(props.initialData.id);
+          closeProgrammatically();
+          emit("submit");
+        } catch (error) {
+          f7.dialog.alert("Произошла ошибка при удалении.");
+        }
       }
-    }
-  );
+    );
+  }
 }
 </script>
 
@@ -815,5 +1089,37 @@ function showDeleteConfirmation() {
   display: grid;
   grid-template-columns: 120px repeat(8, 1fr);
   gap: 0.5rem;
+}
+
+/* Language selector chips */
+.language-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  border: 1.5px solid var(--f7-border-color);
+  background-color: var(--f7-card-bg-color);
+  color: var(--f7-text-color);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.language-chip:hover {
+  border-color: var(--f7-theme-color);
+  background-color: var(--f7-theme-color-tint);
+}
+
+.language-chip-active {
+  border-color: var(--f7-theme-color);
+  background-color: var(--f7-theme-color);
+  color: white;
+  box-shadow: 0 2px 8px rgba(var(--f7-theme-color-rgb), 0.3);
+}
+
+.language-chip-active:hover {
+  background-color: var(--f7-theme-color-shade);
 }
 </style>

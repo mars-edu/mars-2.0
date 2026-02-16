@@ -21,7 +21,9 @@ export interface Class9Data {
   id: string;
   specialtyIds: string[]; // Changed from specialtyId to specialtyIds array
   academicYearId: string;
-  baseClass: number; // 9 or 11
+  baseClass: number[]; // e.g. [9], [11], or [9, 11]
+  language: string;
+  groupId?: string;
   moduleIndex: string;
   moduleName: string;
   learningOutcome: string;
@@ -60,7 +62,13 @@ export const useClass9Store = defineStore(
         id: item._id,
         specialtyIds: item.specialtyIds,
         academicYearId: item.academicYearId,
-        baseClass: item.baseClass ?? 9,
+        baseClass: item.baseClass == null
+          ? [9]
+          : Array.isArray(item.baseClass)
+            ? item.baseClass
+            : [item.baseClass],
+        language: item.language ?? "",
+        groupId: item.groupId,
         moduleIndex: item.moduleIndex,
         moduleName: item.moduleName,
         learningOutcome: item.learningOutcome,
@@ -94,6 +102,11 @@ export const useClass9Store = defineStore(
       return (id: string) => class9Items.value.find((c) => c.id === id);
     });
 
+    const getGroupedVariants = computed(() => {
+      return (groupId: string) =>
+        class9Items.value.filter((c) => c.groupId === groupId);
+    });
+
     const getClass9ItemsByContext = computed(() => {
       return (academicYearId: string, specialtyIds?: string[], baseClass?: number) =>
         class9Items.value
@@ -103,7 +116,7 @@ export const useClass9Store = defineStore(
               (!specialtyIds ||
                 specialtyIds.length === 0 ||
                 specialtyIds.some((id) => c.specialtyIds.includes(id))) &&
-              (!baseClass || (c.baseClass ?? 9) === baseClass)
+              (!baseClass || c.baseClass.includes(baseClass))
           )
           .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
     });
@@ -193,13 +206,16 @@ export const useClass9Store = defineStore(
     function createEmptyClass9Data(
       academicYearId: string,
       specialtyIds: string[] = [],
-      baseClass: number = 9
+      baseClass: number = 9,
+      language: string = ""
     ): Class9Data {
       return {
         id: crypto.randomUUID(),
         specialtyIds,
         academicYearId,
-        baseClass,
+        baseClass: [baseClass],
+        language,
+        groupId: undefined,
         moduleIndex: "",
         moduleName: "",
         learningOutcome: "",
@@ -236,7 +252,9 @@ export const useClass9Store = defineStore(
         const id = await convex.mutation(api.class9Items.mutations.create, {
           specialtyIds,
           academicYearId,
-          baseClass: data?.baseClass ?? 9,
+          baseClass: data?.baseClass ?? [9],
+          language: data?.language ?? "",
+          groupId: data?.groupId,
           moduleIndex: data?.moduleIndex || "",
           moduleName: data?.moduleName || "",
           learningOutcome: data?.learningOutcome || "",
@@ -314,7 +332,9 @@ export const useClass9Store = defineStore(
         const id = await convex.mutation(api.class9Items.mutations.create, {
           specialtyIds,
           academicYearId,
-          baseClass: existingItem.baseClass ?? 9,
+          baseClass: existingItem.baseClass ?? [9],
+          language: existingItem.language ?? "",
+          groupId: existingItem.groupId,
           moduleIndex: existingItem.moduleIndex,
           moduleName: existingItem.moduleName,
           learningOutcome: existingItem.learningOutcome,
@@ -350,7 +370,9 @@ export const useClass9Store = defineStore(
           await convex.mutation(api.class9Items.mutations.create, {
             specialtyIds: item.specialtyIds,
             academicYearId: item.academicYearId,
-            baseClass: item.baseClass ?? 9,
+            baseClass: item.baseClass ?? [9],
+            language: item.language ?? "",
+            groupId: item.groupId,
             moduleIndex: item.moduleIndex,
             moduleName: item.moduleName,
             learningOutcome: item.learningOutcome,
@@ -390,6 +412,8 @@ export const useClass9Store = defineStore(
           specialtyIds: data.specialtyIds,
           academicYearId: data.academicYearId,
           baseClass: data.baseClass,
+          language: data.language,
+          groupId: data.groupId,
           moduleIndex: data.moduleIndex,
           moduleName: data.moduleName,
           learningOutcome: data.learningOutcome,
@@ -495,7 +519,9 @@ export const useClass9Store = defineStore(
         const id = await convex.mutation(api.class9Items.mutations.create, {
           specialtyIds: itemToDuplicate.specialtyIds,
           academicYearId: itemToDuplicate.academicYearId,
-          baseClass: itemToDuplicate.baseClass ?? 9,
+          baseClass: itemToDuplicate.baseClass ?? [9],
+          language: itemToDuplicate.language ?? "",
+          groupId: itemToDuplicate.groupId,
           moduleIndex: itemToDuplicate.moduleIndex,
           moduleName: itemToDuplicate.moduleName,
           learningOutcome: itemToDuplicate.learningOutcome,
@@ -538,6 +564,79 @@ export const useClass9Store = defineStore(
       }
     }
 
+    async function addClass9MultiLanguage(
+      academicYearId: string,
+      specialtyIds: string[],
+      languages: string[],
+      data?: Partial<
+        Omit<
+          Class9Data,
+          "id" | "createdAt" | "updatedAt" | "specialtyIds" | "academicYearId" | "language" | "groupId"
+        >
+      >
+    ) {
+      loading.value = true;
+      try {
+        const groupId = crypto.randomUUID();
+        const contextItems = getClass9ItemsByContext.value(academicYearId, specialtyIds);
+        const ids: string[] = [];
+
+        for (let i = 0; i < languages.length; i++) {
+          const id = await convex.mutation(api.class9Items.mutations.create, {
+            specialtyIds,
+            academicYearId,
+            baseClass: data?.baseClass ?? [9],
+            language: languages[i],
+            groupId,
+            moduleIndex: data?.moduleIndex || "",
+            moduleName: data?.moduleName || "",
+            learningOutcome: data?.learningOutcome || "",
+            totalCredits: data?.totalCredits || "",
+            totalHours: data?.totalHours || "",
+            theoreticalHours: data?.theoreticalHours || "",
+            labPracticalHours: data?.labPracticalHours || "",
+            field3Value: data?.field3Value || "",
+            srspHours: data?.srspHours || "",
+            srsHours: data?.srsHours || "",
+            trainingPracticeHours: data?.trainingPracticeHours || "",
+            individualHours: data?.individualHours || "",
+            position: contextItems.length + i,
+          });
+          ids.push(id);
+        }
+
+        error.value = null;
+        return { groupId, ids };
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to add multi-language class9 data";
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    async function deleteClass9Group(groupId: string) {
+      loading.value = true;
+      try {
+        const itemsInGroup = class9Items.value.filter(
+          (c) => c.groupId === groupId
+        );
+        for (const item of itemsInGroup) {
+          await convex.mutation(api.class9Items.mutations.remove, {
+            id: item.id as any,
+          });
+        }
+        error.value = null;
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to delete class9 group";
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    }
+
     async function deleteClass9(id: string) {
       loading.value = true;
       try {
@@ -571,6 +670,7 @@ export const useClass9Store = defineStore(
       loading,
       error,
       getClass9ById,
+      getGroupedVariants,
       getClass9ItemsByContext,
       getAllClass9Items,
       getAllModulesAndOutcomes,
@@ -584,6 +684,8 @@ export const useClass9Store = defineStore(
       updateClass9,
       updateClass9Order,
       duplicateClass9Item,
+      addClass9MultiLanguage,
+      deleteClass9Group,
       deleteClass9,
       clearError,
       reset,

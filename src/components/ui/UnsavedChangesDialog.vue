@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="opened"
-    class="fixed inset-0 z-[20000] flex items-center justify-center bg-black/35 p-4"
+    class="fixed inset-0 z-[20000] flex items-center justify-center bg-white/65 backdrop-blur-[6px] p-4"
     role="dialog"
     aria-modal="true"
     @click.self="handleCancel"

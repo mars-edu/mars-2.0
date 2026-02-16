@@ -9,7 +9,9 @@ export const create = mutation({
   args: {
     specialtyIds: v.array(v.string()),
     academicYearId: v.string(),
-    baseClass: v.optional(v.number()),
+    baseClass: v.optional(v.array(v.number())),
+    language: v.optional(v.string()),
+    groupId: v.optional(v.string()),
     moduleIndex: v.string(),
     moduleName: v.string(),
     learningOutcome: v.string(),
@@ -42,7 +44,9 @@ export const update = mutation({
     id: v.id("class9Items"),
     specialtyIds: v.optional(v.array(v.string())),
     academicYearId: v.optional(v.string()),
-    baseClass: v.optional(v.number()),
+    baseClass: v.optional(v.array(v.number())),
+    language: v.optional(v.string()),
+    groupId: v.optional(v.string()),
     moduleIndex: v.optional(v.string()),
     moduleName: v.optional(v.string()),
     learningOutcome: v.optional(v.string()),
@@ -173,7 +177,9 @@ export const updateWithDistributions = mutation({
     id: v.id("class9Items"),
     specialtyIds: v.optional(v.array(v.string())),
     academicYearId: v.optional(v.string()),
-    baseClass: v.optional(v.number()),
+    baseClass: v.optional(v.array(v.number())),
+    language: v.optional(v.string()),
+    groupId: v.optional(v.string()),
     moduleIndex: v.optional(v.string()),
     moduleName: v.optional(v.string()),
     learningOutcome: v.optional(v.string()),
@@ -264,5 +270,87 @@ export const updateWithDistributions = mutation({
     }
 
     return await ctx.db.get(id);
+  },
+});
+
+/**
+ * Create multiple language variants of a class9 item in one transaction
+ */
+export const createMultiLanguage = mutation({
+  args: {
+    specialtyIds: v.array(v.string()),
+    academicYearId: v.string(),
+    baseClass: v.optional(v.array(v.number())),
+    groupId: v.string(),
+    totalCredits: v.string(),
+    totalHours: v.string(),
+    theoreticalHours: v.string(),
+    labPracticalHours: v.string(),
+    field3Value: v.string(),
+    srspHours: v.string(),
+    srsHours: v.string(),
+    trainingPracticeHours: v.string(),
+    individualHours: v.string(),
+    position: v.number(),
+    variants: v.array(
+      v.object({
+        language: v.string(),
+        moduleIndex: v.string(),
+        moduleName: v.string(),
+        learningOutcome: v.string(),
+      })
+    ),
+    distributionEntries: v.optional(
+      v.array(
+        v.object({
+          academicYearId: v.string(),
+          semesterId: v.string(),
+          hours: v.string(),
+          intermediateControlId: v.optional(v.string()),
+          finalControlId: v.optional(v.string()),
+          examEnabled: v.optional(v.boolean()),
+          creditEnabled: v.optional(v.boolean()),
+          controlLessonEnabled: v.optional(v.boolean()),
+        })
+      )
+    ),
+  },
+  handler: async (ctx, args) => {
+    const { variants, distributionEntries, groupId, ...sharedFields } = args;
+    const timestamps = createTimestamps();
+    const createdIds: string[] = [];
+
+    for (const variant of variants) {
+      const id = await ctx.db.insert("class9Items", {
+        ...sharedFields,
+        moduleIndex: variant.moduleIndex,
+        moduleName: variant.moduleName,
+        learningOutcome: variant.learningOutcome,
+        language: variant.language,
+        groupId,
+        ...timestamps,
+      });
+
+      if (distributionEntries) {
+        for (const dist of distributionEntries) {
+          await ctx.db.insert("distributionEntries", {
+            class9ItemId: id,
+            academicYearId: dist.academicYearId,
+            semesterId: dist.semesterId as any,
+            hours: dist.hours,
+            intermediateControlId: dist.intermediateControlId,
+            finalControlId: dist.finalControlId,
+            examEnabled: dist.examEnabled,
+            creditEnabled: dist.creditEnabled,
+            controlLessonEnabled: dist.controlLessonEnabled,
+            ...timestamps,
+          });
+        }
+      }
+
+      createdIds.push(id);
+    }
+
+    return createdIds;
   },
 });

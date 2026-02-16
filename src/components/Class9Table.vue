@@ -41,6 +41,17 @@
             <div class="flex items-center gap-4 p-2">
               <div class="flex-1">
                 <div class="flex items-center gap-2">
+                  <span
+                    v-if="item.language"
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase"
+                    :class="{
+                      'bg-blue-100 text-blue-700': item.language === 'ru',
+                      'bg-green-100 text-green-700': item.language === 'kk',
+                      'bg-purple-100 text-purple-700': item.language === 'en',
+                    }"
+                  >
+                    {{ item.language.toUpperCase() }}
+                  </span>
                   <div class="text-sm font-medium">{{ item.moduleIndex }}</div>
                   <div class="text-sm">{{ item.moduleName }}</div>
                 </div>

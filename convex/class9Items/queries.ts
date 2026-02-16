@@ -122,3 +122,32 @@ export const getByAcademicYearAndSpecialty = query({
     return itemsWithDistributions;
   },
 });
+
+/**
+ * Get class9 items by groupId (all language variants in a group)
+ */
+export const getByGroupId = query({
+  args: { groupId: v.string() },
+  handler: async (ctx, args) => {
+    const items = await ctx.db
+      .query("class9Items")
+      .withIndex("by_groupId", (q) => q.eq("groupId", args.groupId))
+      .collect();
+
+    const itemsWithDistributions = await Promise.all(
+      items.map(async (item) => {
+        const distributions = await ctx.db
+          .query("distributionEntries")
+          .withIndex("by_class9Item", (q) => q.eq("class9ItemId", item._id))
+          .collect();
+
+        return {
+          ...item,
+          distributionEntries: distributions,
+        };
+      })
+    );
+
+    return itemsWithDistributions;
+  },
+});

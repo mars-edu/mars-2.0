@@ -217,7 +217,9 @@ export default defineSchema({
   class9Items: defineTable({
     specialtyIds: v.array(v.string()), // Multiple specialty IDs
     academicYearId: v.string(),
-    baseClass: v.optional(v.number()), // 9 or 11 (defaults to 9 for existing records)
+    baseClass: v.optional(v.array(v.number())), // [9], [11], or [9, 11]
+    language: v.optional(v.string()), // "ru" | "kk" | "en"
+    groupId: v.optional(v.string()), // UUID linking language variants
     moduleIndex: v.string(),
     moduleName: v.string(),
     learningOutcome: v.string(),
@@ -235,7 +237,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_academicYear", ["academicYearId"])
-    .index("by_position", ["academicYearId", "position"]),
+    .index("by_position", ["academicYearId", "position"])
+    .index("by_groupId", ["groupId"]),
 
   /**
    * Distribution entries for class9 items across semesters
