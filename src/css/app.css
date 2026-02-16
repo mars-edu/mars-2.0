@@ -178,3 +178,37 @@ body {
   overflow: visible !important;
   text-overflow: clip !important;
 }
+
+/* Popup: zoom-in-95 + fade (replaces F7 iOS slide-from-bottom) */
+.popup {
+  transform: scale(0.95) !important;
+  opacity: 0 !important;
+  transition-property: transform, opacity !important;
+  transform-origin: center center !important;
+}
+.popup.modal-in {
+  transform: scale(1) !important;
+  opacity: 1 !important;
+}
+.popup.modal-out {
+  transform: scale(0.95) !important;
+  opacity: 0 !important;
+}
+
+/* Popover: zoom-in-95 + fade (replaces F7 iOS scale-from-0 at trigger point) */
+.popover {
+  transform: scale(0.95) !important;
+  transition-property: opacity, transform !important;
+  transform-origin: center center !important;
+}
+.popover.modal-in {
+  transform: scale(1) !important;
+}
+.popover.modal-out {
+  transform: scale(0.95) !important;
+}
+/* Disable the iOS popover-inner secondary offset/bounce animation */
+.popover .popover-inner {
+  transform: none !important;
+  transition: none !important;
+}
