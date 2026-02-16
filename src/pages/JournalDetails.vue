@@ -273,7 +273,10 @@
       :journal-id="journalId"
       @close="isDateFocusVisible = false"
     />
-    <KtpDetailPopup v-model:opened="isKtpPopupOpened" :ktp-id="ktpParentId" />
+    <KtpDetailPopup
+      v-model:opened="isKtpPopupOpened"
+      :ktp-id="ktpParentId"
+    />
     
     <!-- Class9 (RUP) Popup -->
     <Class9Popup

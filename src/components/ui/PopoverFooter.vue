@@ -2,7 +2,11 @@
   <div class="border-t border-input flex items-stretch flex-shrink-0">
     <button
       v-if="onCancel"
-      class="flex-1 py-4 text-sm font-medium text-secondary-foreground hover:bg-muted/60 transition-colors border-r border-input"
+      class="flex-1 py-4 text-sm font-medium transition-colors border-r border-input"
+      :class="disabledCancel
+        ? 'text-muted-foreground/40 cursor-not-allowed'
+        : 'text-secondary-foreground hover:bg-muted/60'"
+      :disabled="disabledCancel"
       @click="handleCancel"
     >
       {{ cancelText }}
@@ -45,6 +49,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  disabledCancel: {
+    type: Boolean,
+    default: false,
+  },
   isLoading: {
     type: Boolean,
     default: false,
@@ -69,6 +77,7 @@ function handleSave(event: MouseEvent) {
 }
 
 function handleCancel(event: MouseEvent) {
+  if (props.disabledCancel) return;
   if (props.onCancel) props.onCancel(event);
   emit("cancel", event);
 }

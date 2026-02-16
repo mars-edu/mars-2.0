@@ -388,9 +388,6 @@
           <div class="text-sm font-medium text-foreground">
             {{ currentKtpId ? `Тем КТП: ${currentKtpDetailCount}` : 'КТП не создан' }}
           </div>
-          <div v-if="!isProgramReady" class="text-sm text-destructive">
-            Добавьте хотя бы одну тему КТП для создания журнала.
-          </div>
         </div>
       </section>
 
@@ -621,6 +618,8 @@
       :opened="isKtpPopupOpen"
       :ktp-id="currentKtpId"
       :module-title="currentKtpTitle"
+      :on-back="handleKtpBack"
+      :on-next="handleKtpNext"
       @update:opened="handleKtpPopupClosed"
     />
   </div>
@@ -1301,6 +1300,14 @@ function handleKtpPopupClosed(isOpen: boolean) {
     }
     openParent();
   }
+}
+
+function handleKtpBack() {
+  handleKtpPopupClosed(false);
+}
+
+function handleKtpNext() {
+  handleKtpPopupClosed(false);
 }
 
 watch(

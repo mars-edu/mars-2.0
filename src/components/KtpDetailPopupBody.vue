@@ -5,7 +5,7 @@
     </div>
 
     <div class="ktp-content">
-      <div class="p-4 space-y-3">
+      <div class="p-4 space-y-3 pb-8">
         <!-- Hour Counter -->
         <div class="bg-secondary p-4 border border-border rounded-lg">
           <div class="flex justify-between mb-2">

@@ -19,7 +19,7 @@
             cancel-text="Закрыть"
             :on-cancel="requestClose"
           >
-            <template #actions>
+            <div class="flex justify-end mt-2">
               <Button
                 variant="ghost"
                 size="md"
@@ -33,7 +33,7 @@
                 ></f7-icon>
                 Удалить
               </Button>
-            </template>
+            </div>
           </PopoverHeader>
         </div>
 
@@ -43,6 +43,14 @@
             :ktp-id="ktpId"
           />
         </div>
+
+        <PopoverFooter
+          v-if="onBack || onNext"
+          cancel-text="Назад"
+          save-text="Далее"
+          :on-cancel="onBack"
+          :on-save="onNext"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -55,6 +63,7 @@ import { useKtpStore } from "@/stores/ktpStore";
 import { useClass9Store } from "@/stores/class9Store";
 import KtpDetailPopupBody from "@/components/KtpDetailPopupBody.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Button from "@/components/ui/Button.vue";
 import { storeToRefs } from "pinia";
@@ -63,6 +72,8 @@ const props = defineProps<{
   ktpId: string | null;
   opened: boolean;
   moduleTitle?: string;
+  onBack?: () => void;
+  onNext?: () => void;
 }>();
 
 const emit = defineEmits<{
@@ -186,6 +197,6 @@ watch(opened, (isOpened, wasOpened) => {
 .scrollable-content {
   flex: 1;
   overflow-y: auto;
-  height: calc(100dvh - 120px);
+  min-height: 0;
 }
 </style>

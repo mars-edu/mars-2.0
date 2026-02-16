@@ -124,7 +124,7 @@ export function useAddEventWizard(options: UseAddEventWizardOptions) {
   });
 
   const isStep3Valid = computed(() => options.participants.value.length > 0);
-  const isStep4Valid = computed(() => options.isProgramReady.value);
+  const isStep4Valid = computed(() => true);
   const isStep5Valid = computed(() => options.isStep5Valid.value);
 
   const stepValidity = computed<Record<AddWizardStep, boolean>>(() => ({
