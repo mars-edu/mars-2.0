@@ -179,16 +179,21 @@ watch(opened, (isOpened, wasOpened) => {
 </script>
 
 <style>
+#ktp-detail-popover .popover-inner {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .ktp-detail-popover {
   height: 100%;
   display: flex;
   flex-direction: column;
-  max-height: 100dvh;
 }
 
 .fixed-header {
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 10;
   background-color: var(--f7-popover-bg-color);
   border-bottom: 1px solid var(--f7-border-color);

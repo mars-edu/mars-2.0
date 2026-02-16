@@ -596,14 +596,9 @@ const onThemesImported = (count: number) => {
 
 <style scoped>
 .ktp-detail-body {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
 }
 
 .ktp-content {
-  flex: 1;
-  overflow-y: auto;
 }
 
 .is-dragging {
