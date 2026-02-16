@@ -2,6 +2,7 @@
   <GuardedPopover
     v-slot="{ requestClose }"
     id="class9-popover"
+    positioning="center"
     :arrow="false"
     style="width: calc(100vw - 400px) !important"
     :on-closed="handlePopoverClosed"
@@ -710,11 +711,6 @@ function showDeleteConfirmation() {
 </script>
 
 <style>
-#class9-popover {
-  left: 50%;
-  transform: translateX(-50%);
-}
-
 :deep(.tooltip) {
   background: rgba(0, 0, 0, 0.8);
   color: #fff;
