@@ -5,7 +5,7 @@
   >
     <div class="flex items-center w-full min-h-[32px]">
       <span
-        class="text-foreground font-semibold text-lg leading-none"
+        class="text-foreground font-semibold text-lg leading-none flex-1"
         :class="{ 'pointer-events-none': !$slots.title }"
       >
         <slot name="title" v-if="$slots.title"></slot>

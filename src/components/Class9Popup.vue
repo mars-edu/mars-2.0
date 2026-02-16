@@ -14,7 +14,7 @@
           :on-cancel="requestClose"
         >
           <template #title>
-            <div v-if="!editMode" class="flex items-center justify-center space-x-4">
+            <div v-if="!editMode" class="flex-1 flex items-center justify-center space-x-4">
               <button @click="removeStep(currentStep)" v-if="steps.length > 1">
                 <f7-icon f7="trash" class="text-red-500"></f7-icon>
               </button>
