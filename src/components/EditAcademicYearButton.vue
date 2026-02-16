@@ -11,12 +11,8 @@
       <div class="academic-year-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать"
-          :disabled="!isFormValid || academicYearStore.isLoading"
-          :is-loading="academicYearStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleUpdateAcademicYear"
         />
-
         <div
           v-if="formError || academicYearStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
@@ -90,6 +86,12 @@
             </button>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleUpdateAcademicYear"
+          :disabled="!isFormValid || academicYearStore.isLoading"
+          :is-loading="academicYearStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -101,6 +103,7 @@ import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{

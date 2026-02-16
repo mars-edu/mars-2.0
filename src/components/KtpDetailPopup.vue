@@ -17,13 +17,12 @@
             :title="displayTitle"
             cancel-text="Закрыть"
             :on-cancel="requestClose"
-            :is-loading="loading"
           >
-            <template #save>
+            <template #actions>
               <Button
-                variant="primary"
+                variant="ghost"
                 size="md"
-                class="ml-auto flex items-center gap-1"
+                class="text-destructive hover:text-destructive flex items-center gap-1"
                 @click="handleDeleteAll"
               >
                 <f7-icon

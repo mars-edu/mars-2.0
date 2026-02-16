@@ -18,7 +18,6 @@
           title="Импорт тем из существующих РУП"
           cancel-text="Отмена"
           :on-cancel="requestClose"
-          :is-loading="loading"
         />
       </div>
 

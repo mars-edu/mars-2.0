@@ -28,7 +28,7 @@
       target="#add-working-plan-button"
     >
       <div class="working-plan-popover bg-card text-card-foreground">
-        <PopoverHeader title="Выбрать" :disabled="!isValid" />
+        <PopoverHeader title="Выбрать" />
 
         <div class="p-4 flex flex-col gap-4">
           <button

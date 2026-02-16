@@ -9,8 +9,19 @@
       <PopoverHeader
         :onCancel="handleClose"
         cancelText="Закрыть"
-        :onSave="handleEdit"
-      >
+      />
+      <div class="p-4">
+        <JournalCard
+          :title="getTitle()"
+          :subtitle="getSubtitle()"
+          :group-language="getGroupLanguage()"
+          :schedule="getSchedule()"
+          :percent="getPercent()"
+          @click="handleGoToJournal"
+        />
+      </div>
+
+      <PopoverFooter :on-save="handleEdit">
         <template #save="{ disabled, isLoading, onSave }">
           <Button
             variant="success"
@@ -23,17 +34,7 @@
             <f7-icon ios="f7:pencil" md="material:edit" size="20px" />
           </Button>
         </template>
-      </PopoverHeader>
-      <div class="p-4">
-        <JournalCard
-          :title="getTitle()"
-          :subtitle="getSubtitle()"
-          :group-language="getGroupLanguage()"
-          :schedule="getSchedule()"
-          :percent="getPercent()"
-          @click="handleGoToJournal"
-        />
-      </div>
+      </PopoverFooter>
     </div>
   </GuardedPopover>
 </template>
@@ -43,6 +44,7 @@ import { computed, ref } from "vue";
 import { f7 } from "framework7-vue";
 import JournalCard from "@/components/Cards/JournalCard.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Button from "@/components/ui/Button.vue";
 import { useJournalStore, type Journal } from "@/stores/journalStore";

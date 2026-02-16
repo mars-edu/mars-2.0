@@ -11,9 +11,7 @@
       <div class="specialty-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать"
-          :is-loading="specialtyStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleUpdateSpecialty"
         />
         <!-- :disabled="!isFormValid || specialtyStore.isLoading" -->
 
@@ -89,6 +87,11 @@
             </button>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleUpdateSpecialty"
+          :is-loading="specialtyStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -100,6 +103,7 @@ import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{

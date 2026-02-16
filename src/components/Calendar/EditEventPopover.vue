@@ -11,10 +11,7 @@
       <!-- Header with buttons -->
       <PopoverHeader
         title="Редактировать"
-        save-text="Сохранить"
-        :disabled="!isFormValid"
         :on-cancel="requestClose"
-        :on-save="handleUpdateEventGuarded"
       />
       <div v-if="formError" class="px-4 pt-2 text-destructive text-sm">
         {{ formError }}
@@ -57,6 +54,12 @@
           </button>
         </div>
       </EventForm>
+
+      <PopoverFooter
+        :on-save="handleUpdateEventGuarded"
+        :disabled="!isFormValid"
+        save-text="Сохранить"
+      />
     </div>
   </GuardedPopover>
 </template>
@@ -65,6 +68,7 @@
 import { ref, computed, watchEffect } from "vue";
 import { f7 } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import EventForm from "./EventForm.vue";
 import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";

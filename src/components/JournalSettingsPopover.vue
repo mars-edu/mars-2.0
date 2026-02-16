@@ -10,12 +10,8 @@
     <div class="journal-settings-popover bg-card text-card-foreground">
       <PopoverHeader
         title="Настройки журнала"
-        :disabled="false"
-        :is-loading="false"
         :on-cancel="requestClose"
-        :on-save="onSave"
       />
-
       <div class="p-4 space-y-6">
         <!-- Calculation Type Section -->
         <div class="space-y-3">
@@ -84,6 +80,12 @@
           </div>
         </div>
       </div>
+
+      <PopoverFooter
+        :on-save="onSave"
+        :disabled="false"
+        :is-loading="false"
+      />
     </div>
   </GuardedPopover>
 </template>
@@ -92,6 +94,7 @@
 import { ref, watch } from "vue";
 import { f7Popover } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{

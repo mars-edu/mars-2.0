@@ -25,12 +25,8 @@
       <div class="final-control-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать"
-          :disabled="!isFormValid || finalControlStore.isLoading"
-          :is-loading="finalControlStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleSaveFinalControl"
         />
-
         <div
           v-if="formError || finalControlStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
@@ -68,6 +64,12 @@
             ></f7-input>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleSaveFinalControl"
+          :disabled="!isFormValid || finalControlStore.isLoading"
+          :is-loading="finalControlStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -79,6 +81,7 @@ import { f7, f7Popover, f7Icon, f7Input } from "framework7-vue";
 import { z } from "zod";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const finalControlStore = useFinalControlStore();

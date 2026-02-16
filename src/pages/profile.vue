@@ -109,10 +109,7 @@
         <PopoverHeader
           title="Обрезать изображение"
           cancel-text="Отмена"
-          save-text="Сохранить"
-          :is-loading="uploading"
           :on-cancel="cancelCrop"
-          :on-save="handleCropAndUpload"
         />
         <div class="cropper-container">
           <Cropper
@@ -126,6 +123,13 @@
             image-restriction="stencil"
           />
         </div>
+
+        <PopoverFooter
+          save-text="Сохранить"
+          :is-loading="uploading"
+          :on-cancel="cancelCrop"
+          :on-save="handleCropAndUpload"
+        />
       </div>
     </f7-popup>
   </f7-page>
@@ -141,6 +145,7 @@ import { api } from "@convex/_generated/api";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import { Cropper, CircleStencil } from "vue-advanced-cropper";
 import "vue-advanced-cropper/dist/style.css";
 

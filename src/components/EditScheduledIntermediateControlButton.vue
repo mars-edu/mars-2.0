@@ -10,14 +10,8 @@
       <div class="control-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать промежуточный контроль"
-          :disabled="
-            !isFormValid || scheduledIntermediateControlStore.isLoading
-          "
-          :is-loading="scheduledIntermediateControlStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleUpdateControl"
         />
-
         <div
           v-if="formError || scheduledIntermediateControlStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
@@ -104,6 +98,12 @@
             </button>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleUpdateControl"
+          :disabled="!isFormValid || scheduledIntermediateControlStore.isLoading"
+          :is-loading="scheduledIntermediateControlStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -115,6 +115,7 @@ import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT, DATE_PICKER_PARAMS } from "@/constants/calendar";
 import { f7, f7Input, f7Icon, f7Popover } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Select from "@/components/ui/Select.vue";
 import { z } from "zod";

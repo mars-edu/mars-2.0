@@ -25,12 +25,8 @@
       <div class="language-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать"
-          :disabled="!isFormValid || languageStore.isLoading"
-          :is-loading="languageStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleSaveLanguage"
         />
-
         <div
           v-if="formError || languageStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
@@ -63,6 +59,12 @@
             ></f7-input>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleSaveLanguage"
+          :disabled="!isFormValid || languageStore.isLoading"
+          :is-loading="languageStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -74,6 +76,7 @@ import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useLanguageStore } from "@/stores/languageStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const languageStore = useLanguageStore();

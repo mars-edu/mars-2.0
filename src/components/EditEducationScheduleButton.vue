@@ -11,12 +11,8 @@
       <div class="schedule-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать"
-          :disabled="!isFormValid || educationScheduleStore.isLoading"
-          :is-loading="educationScheduleStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleUpdateSchedule"
         />
-
         <div
           v-if="formError || educationScheduleStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
@@ -86,6 +82,12 @@
             </button>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleUpdateSchedule"
+          :disabled="!isFormValid || educationScheduleStore.isLoading"
+          :is-loading="educationScheduleStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -98,6 +100,7 @@ import { z } from "zod";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import type { EducationSchedule } from "@/stores/educationScheduleStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{

@@ -10,9 +10,7 @@
       <div class="fixed-header">
         <PopoverHeader
           title="Создать"
-          :disabled="!isFormValid"
           :on-cancel="requestClose"
-          :on-save="submit"
         >
           <template #title>
             <div v-if="!editMode" class="flex items-center space-x-4">
@@ -322,6 +320,11 @@
           </template>
         </div>
       </div>
+
+      <PopoverFooter
+        :on-save="submit"
+        :disabled="!isFormValid"
+      />
     </div>
   </GuardedPopover>
 </template>
@@ -337,6 +340,7 @@ import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlSto
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { z } from "zod";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Select from "@/components/ui/Select.vue";
 import Input from "@/components/ui/Input.vue";

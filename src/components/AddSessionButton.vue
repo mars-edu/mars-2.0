@@ -20,12 +20,8 @@
       <div class="session-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать сессию"
-          :disabled="!isFormValid || sessionStore.isLoading"
-          :is-loading="sessionStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleSaveSession"
         />
-
         <div
           v-if="formError || sessionStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
@@ -87,6 +83,12 @@
             </div>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleSaveSession"
+          :disabled="!isFormValid || sessionStore.isLoading"
+          :is-loading="sessionStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -101,6 +103,7 @@ import { z } from "zod";
 import { useSessionStore } from "@/stores/sessionStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { DATE_PICKER_PARAMS } from "@/constants/calendar";
 

@@ -20,12 +20,8 @@
       <div class="control-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать итоговый контроль"
-          :disabled="!isFormValid || scheduledFinalControlStore.isLoading"
-          :is-loading="scheduledFinalControlStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleSaveControl"
         />
-
         <div
           v-if="formError || scheduledFinalControlStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
@@ -88,6 +84,12 @@
             </div>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleSaveControl"
+          :disabled="!isFormValid || scheduledFinalControlStore.isLoading"
+          :is-loading="scheduledFinalControlStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -103,6 +105,7 @@ import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlSto
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Select from "@/components/ui/Select.vue";
 

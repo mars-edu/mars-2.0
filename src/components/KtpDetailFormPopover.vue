@@ -10,12 +10,8 @@
     <div class="bg-card text-card-foreground">
       <PopoverHeader
         :title="isEditMode ? 'Редактировать' : 'Создать'"
-        :disabled="!isFormValid || ktpStore.loading"
-        :is-loading="ktpStore.loading"
         :on-cancel="requestClose"
-        :on-save="handleSave"
       />
-
       <div v-if="formError" class="px-4 pt-2 text-destructive text-sm">
         {{ formError }}
       </div>
@@ -107,6 +103,12 @@
           </button>
         </div>
       </div>
+
+      <PopoverFooter
+        :on-save="handleSave"
+        :disabled="!isFormValid || ktpStore.loading"
+        :is-loading="ktpStore.loading"
+      />
     </div>
   </GuardedPopover>
 </template>
@@ -118,6 +120,7 @@ import { z } from "zod";
 import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
 import { useNestedPopover } from "@/composables/useNestedPopover";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{

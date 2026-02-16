@@ -25,12 +25,8 @@
       <div class="course-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать"
-          :disabled="!isFormValid || courseStore.isLoading"
-          :is-loading="courseStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleSaveCourse"
         />
-
         <div
           v-if="formError || courseStore.getError || duplicateSemesters.length > 0"
           class="px-4 pt-2 text-destructive text-sm"
@@ -70,6 +66,12 @@
             v-bind="selectHandlers"
           />
         </div>
+
+        <PopoverFooter
+          :on-save="handleSaveCourse"
+          :disabled="!isFormValid || courseStore.isLoading"
+          :is-loading="courseStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -84,6 +86,7 @@ import { useSemesterStore } from "@/stores/semesterStore";
 import { useNestedPopover } from "@/composables/useNestedPopover";
 import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const courseStore = useCourseStore();

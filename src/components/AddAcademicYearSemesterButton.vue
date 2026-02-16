@@ -20,12 +20,8 @@
       <div class="semester-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Добавить семестр к учебному году"
-          :disabled="academicYearSemesterStore.isLoading"
-          :is-loading="academicYearSemesterStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleSaveAcademicYearSemester"
         />
-
         <div
           v-if="formError || academicYearSemesterStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
@@ -70,6 +66,12 @@
             </div>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleSaveAcademicYearSemester"
+          :disabled="academicYearSemesterStore.isLoading"
+          :is-loading="academicYearSemesterStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -85,6 +87,7 @@ import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Input from "@/components/ui/Input.vue";
 import Select from "@/components/ui/Select.vue";

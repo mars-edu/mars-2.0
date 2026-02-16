@@ -9,10 +9,7 @@
         <PopoverHeader
           :title="title"
           cancel-text="Назад"
-          save-text="Выбрать"
           :on-cancel="internalClose"
-          :on-save="saveSelection"
-          :disabled="localSelected.size === 0"
         />
         <div class="p-4 space-y-4 flex-1 overflow-y-auto">
           <f7-input
@@ -49,6 +46,12 @@
             </table>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="saveSelection"
+          :disabled="localSelected.size === 0"
+          save-text="Выбрать"
+        />
       </div>
     </f7-page>
   </f7-popup>
@@ -59,6 +62,7 @@ import { ref, computed, reactive } from "vue";
 import Fuse from "fuse.js";
 import { f7Input, f7Radio, f7Checkbox, f7Popup, f7Page } from "framework7-vue";
 import PopoverHeader from "./PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 
 interface SelectOption {
   value: string | number;

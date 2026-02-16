@@ -9,13 +9,8 @@
     <div class="replace-journal-popover bg-card text-card-foreground">
       <PopoverHeader
         title="Заменить журналы"
-        save-text="Добавить"
-        :disabled="!isFormValid"
-        :is-loading="isLoading"
         :on-cancel="requestClose"
-        :on-save="onSave"
       />
-
       <div class="p-4 space-y-4">
         <Select
           label="Укажите преподавателя"
@@ -67,6 +62,13 @@
           ></textarea>
         </div>
       </div>
+
+      <PopoverFooter
+        :on-save="onSave"
+        :disabled="!isFormValid"
+        :is-loading="isLoading"
+        save-text="Добавить"
+      />
     </div>
   </GuardedPopover>
 </template>
@@ -76,6 +78,7 @@ import { ref, computed, watch } from "vue";
 import { f7Popover, f7Input } from "framework7-vue";
 import dayjs from "dayjs";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import Select from "@/components/ui/Select.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { useTeacherStore } from "@/stores/teacherStore";

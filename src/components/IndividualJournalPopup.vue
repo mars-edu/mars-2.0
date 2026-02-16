@@ -9,11 +9,7 @@
       <div class="bg-card text-card-foreground h-full flex flex-col">
         <PopoverHeader
           :title="isEditMode ? 'Редактировать индивидуальный журнал' : 'Создать индивидуальный журнал'"
-          save-text="Сохранить"
           :on-cancel="handleClose"
-          :on-save="handleSave"
-          :is-loading="isLoading"
-          :disabled="localSelectedJournals.size === 0"
         />
         <div class="p-4 space-y-4 flex-1 overflow-y-auto">
           <!-- Search Input -->
@@ -118,6 +114,13 @@
             </Button>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleSave"
+          :disabled="localSelectedJournals.size === 0"
+          :is-loading="isLoading"
+          save-text="Сохранить"
+        />
       </div>
     </f7-page>
   </f7-popup>
@@ -127,6 +130,7 @@
 import { ref, computed, watch, reactive } from "vue";
 import { f7Popup, f7Page, f7Input, f7Checkbox, f7Icon, f7 } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import Button from "@/components/ui/Button.vue";
 import { useJournalStore, type Journal } from "@/stores/journalStore";
 import { useCalendarStore } from "@/stores/calendarStore";

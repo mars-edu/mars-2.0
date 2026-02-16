@@ -24,9 +24,7 @@
       <div class="specialty-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать"
-          :is-loading="specialtyStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleSaveSpecialty"
         />
         <!-- :disabled="!isFormValid || specialtyStore.isLoading" -->
 
@@ -86,6 +84,11 @@
             ></f7-input>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleSaveSpecialty"
+          :is-loading="specialtyStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -97,6 +100,7 @@ import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const specialtyStore = useSpecialtyStore();

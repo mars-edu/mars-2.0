@@ -10,12 +10,8 @@
       <div class="intermediate-control-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать"
-          :disabled="!isFormValid || intermediateControlStore.isLoading"
-          :is-loading="intermediateControlStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleUpdateIntermediateControl"
         />
-
         <div
           v-if="formError || intermediateControlStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
@@ -72,6 +68,12 @@
             </button>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleUpdateIntermediateControl"
+          :disabled="!isFormValid || intermediateControlStore.isLoading"
+          :is-loading="intermediateControlStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -83,6 +85,7 @@ import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{

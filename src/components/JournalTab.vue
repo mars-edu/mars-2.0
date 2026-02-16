@@ -358,12 +358,8 @@
       <div class="journal-settings-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Настройки журнала"
-          :disabled="false"
-          :is-loading="false"
           :on-cancel="requestClose"
-          :on-save="saveJournalSettings"
         />
-
         <div class="p-4 space-y-6">
           <div class="space-y-3">
             <h3 class="text-sm font-medium text-foreground">
@@ -428,6 +424,11 @@
             </div>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="saveJournalSettings"
+          :on-cancel="requestClose"
+        />
       </div>
     </GuardedPopover>
     <!-- Recalculate Popover -->
@@ -477,6 +478,7 @@ import {
 import { getEventDays, type SemesterInfo } from "@/utils/eventDate";
 import { f7, f7Icon, f7Button } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import MarkCell from "@/components/ui/MarkCell.vue";
 import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";

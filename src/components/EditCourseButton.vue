@@ -10,12 +10,8 @@
       <div class="course-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать"
-          :disabled="!isFormValid || courseStore.isLoading"
-          :is-loading="courseStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleUpdateCourse"
         />
-
         <div
           v-if="formError || courseStore.getError || duplicateSemesters.length > 0"
           class="px-4 pt-2 text-destructive text-sm"
@@ -71,6 +67,12 @@
             </button>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleUpdateCourse"
+          :disabled="!isFormValid || courseStore.isLoading"
+          :is-loading="courseStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -85,6 +87,7 @@ import { useSemesterStore } from "@/stores/semesterStore";
 import { useNestedPopover } from "@/composables/useNestedPopover";
 import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{

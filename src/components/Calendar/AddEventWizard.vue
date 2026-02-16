@@ -5,15 +5,13 @@
         :title="currentStepMeta.title"
         cancel-text="Закрыть"
         :on-cancel="requestClose"
-      />
-
-      <div class="px-4 pb-3 border-b border-input bg-card">
-        <p class="text-sm text-muted-foreground">{{ currentStepMeta.subtitle }}</p>
-        <div class="flex gap-1.5 mt-3">
+      >
+        <p class="text-sm text-muted-foreground mt-0.5">{{ currentStepMeta.subtitle }}</p>
+        <div class="flex gap-1.5 mt-2.5">
           <div
             v-for="step in steps"
             :key="step.id"
-            class="h-1.5 flex-1 rounded-full overflow-hidden bg-muted"
+            class="h-1 flex-1 rounded-full overflow-hidden bg-muted"
           >
             <div
               class="h-full bg-primary transition-all duration-200"
@@ -21,7 +19,7 @@
             />
           </div>
         </div>
-      </div>
+      </PopoverHeader>
 
       <div v-if="formError" class="px-4 py-2 text-destructive text-sm border-b border-input">
         {{ formError }}
@@ -611,23 +609,13 @@
       </section>
     </div>
 
-    <div class="wizard-footer border-t border-input flex items-stretch bg-card">
-      <button
-        class="flex-1 py-4 text-sm font-medium text-secondary-foreground hover:bg-secondary/60 transition-colors border-r border-input"
-        @click="handleBack"
-      >
-        {{ isFirstStep ? 'Отмена' : 'Назад' }}
-      </button>
-
-      <button
-        class="flex-1 py-4 text-sm font-semibold transition-colors"
-        :class="isPrimaryEnabled ? 'text-primary hover:bg-primary/10' : 'text-muted-foreground/40 cursor-not-allowed'"
-        :disabled="!isPrimaryEnabled"
-        @click="handlePrimaryAction"
-      >
-        {{ isLastStep ? 'Создать' : 'Далее' }}
-      </button>
-    </div>
+    <PopoverFooter
+      :cancel-text="isFirstStep ? 'Отмена' : 'Назад'"
+      :save-text="isLastStep ? 'Создать' : 'Далее'"
+      :disabled="!isPrimaryEnabled"
+      :on-cancel="handleBack"
+      :on-save="handlePrimaryAction"
+    />
 
     <KtpDetailPopup
       :opened="isKtpPopupOpen"
@@ -647,6 +635,7 @@ import "dayjs/locale/ru";
 import { storeToRefs } from "pinia";
 import { withAllOption, getGenderOptions } from "@/lib/utils";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import Select from "@/components/ui/Select.vue";
 import ColorPicker from "@/components/ui/ColorPicker.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
@@ -1420,10 +1409,6 @@ defineExpose<{
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-}
-
-.wizard-footer {
-  flex-shrink: 0;
 }
 
 .students-table-header,

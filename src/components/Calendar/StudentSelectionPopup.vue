@@ -14,9 +14,7 @@
       <div class="event-popover bg-card text-card-foreground flex flex-col h-full">
         <PopoverHeader
           title="Выбрать обучающихся"
-          save-text="Сохранить"
           :on-cancel="requestClose"
-          :on-save="save"
         />
         <div class="p-4 space-y-4 flex-1 overflow-y-auto">
           <div class="grid grid-cols-2 gap-4">
@@ -149,6 +147,11 @@
             </table>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="save"
+          save-text="Сохранить"
+        />
       </div>
     </f7-page>
   </GuardedPopover>
@@ -179,6 +182,7 @@ import { storeToRefs } from "pinia";
 import { withAllOption, getGenderOptions } from "@/lib/utils";
 import Select from "../ui/Select.vue";
 import PopoverHeader from "../ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";

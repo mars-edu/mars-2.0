@@ -11,12 +11,8 @@
       <div class="teacher-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать"
-          :disabled="!isFormValid || teacherStore.isLoading"
-          :is-loading="teacherStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleUpdateTeacher"
         />
-
         <div
           v-if="formError || teacherStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
@@ -121,6 +117,12 @@
             </button>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleUpdateTeacher"
+          :disabled="!isFormValid || teacherStore.isLoading"
+          :is-loading="teacherStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -135,6 +137,7 @@ import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
 import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Button from "@/components/ui/Button.vue";
 

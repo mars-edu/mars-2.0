@@ -9,12 +9,8 @@
       <div class="semester-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать семестр"
-          :disabled="!isFormValid || semesterStore.isLoading"
-          :is-loading="semesterStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleUpdateSemester"
         />
-
         <div
           v-if="formError || semesterStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
@@ -53,6 +49,12 @@
             </button>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleUpdateSemester"
+          :disabled="!isFormValid || semesterStore.isLoading"
+          :is-loading="semesterStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -62,6 +64,7 @@
 import { ref, computed, watch } from "vue";
 import { f7, f7Input, f7Icon, f7Popover } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { z } from "zod";
 import { useSemesterStore } from "@/stores/semesterStore";

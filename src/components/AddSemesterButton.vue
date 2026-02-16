@@ -20,12 +20,8 @@
       <div class="period-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать семестр"
-          :disabled="!isFormValid || semesterStore.isLoading"
-          :is-loading="semesterStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleSaveSemester"
         />
-
         <div
           v-if="formError || semesterStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
@@ -58,6 +54,12 @@
             />
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleSaveSemester"
+          :disabled="!isFormValid || semesterStore.isLoading"
+          :is-loading="semesterStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -70,6 +72,7 @@ import { z } from "zod";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{ prefix?: string }>();

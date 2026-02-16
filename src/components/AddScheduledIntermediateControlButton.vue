@@ -20,14 +20,8 @@
       <div class="control-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Создать промежуточный контроль"
-          :disabled="
-            !isFormValid || scheduledIntermediateControlStore.isLoading
-          "
-          :is-loading="scheduledIntermediateControlStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleSaveControl"
         />
-
         <div
           v-if="formError || scheduledIntermediateControlStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
@@ -90,6 +84,12 @@
             </div>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleSaveControl"
+          :disabled="!isFormValid || scheduledIntermediateControlStore.isLoading"
+          :is-loading="scheduledIntermediateControlStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -105,6 +105,7 @@ import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermed
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Select from "@/components/ui/Select.vue";
 

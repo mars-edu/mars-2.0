@@ -10,12 +10,8 @@
     <div class="bg-card text-card-foreground">
       <PopoverHeader
         title="Результат обучения/дисциплина"
-        :disabled="!isFormValid || class9Store.loading"
-        :is-loading="class9Store.loading"
         :on-cancel="requestClose"
-        :on-save="handleSave"
       />
-
       <div v-if="formError" class="px-4 pt-2 text-destructive text-sm">
         {{ formError }}
       </div>
@@ -33,6 +29,12 @@
           @after-close="openKtpItemPopover"
         />
       </div>
+
+      <PopoverFooter
+        :on-save="handleSave"
+        :disabled="!isFormValid || class9Store.loading"
+        :is-loading="class9Store.loading"
+      />
     </div>
   </GuardedPopover>
 </template>
@@ -44,6 +46,7 @@ import { storeToRefs } from "pinia";
 import { useClass9Store } from "@/stores/class9Store";
 import { useKtpStore } from "@/stores/ktpStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Select from "@/components/ui/Select.vue";
 

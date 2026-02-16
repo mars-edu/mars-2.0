@@ -11,12 +11,8 @@
       <div class="discipline-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать"
-          :disabled="!isFormValid || disciplineStore.isLoading"
-          :is-loading="disciplineStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleUpdateDiscipline"
         />
-
         <div
           v-if="formError || disciplineStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
@@ -77,6 +73,12 @@
             </button>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleUpdateDiscipline"
+          :disabled="!isFormValid || disciplineStore.isLoading"
+          :is-loading="disciplineStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -88,6 +90,7 @@ import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
 import { z } from "zod";
 import { useDisciplineStore } from "@/stores/disciplineStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{

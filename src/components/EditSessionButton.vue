@@ -10,12 +10,8 @@
       <div class="session-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Редактировать сессию"
-          :disabled="!isFormValid || sessionStore.isLoading"
-          :is-loading="sessionStore.isLoading"
           :on-cancel="requestClose"
-          :on-save="handleUpdateSession"
         />
-
         <div
           v-if="formError || sessionStore.getError"
           class="px-4 pt-2 text-destructive text-sm"
@@ -100,6 +96,12 @@
             </button>
           </div>
         </div>
+
+        <PopoverFooter
+          :on-save="handleUpdateSession"
+          :disabled="!isFormValid || sessionStore.isLoading"
+          :is-loading="sessionStore.isLoading"
+        />
       </div>
     </GuardedPopover>
   </div>
@@ -111,6 +113,7 @@ import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { f7, f7Input, f7Icon, f7Popover } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { z } from "zod";
 import { useSessionStore } from "@/stores/sessionStore";
