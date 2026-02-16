@@ -9,6 +9,7 @@ export const create = mutation({
   args: {
     specialtyIds: v.array(v.string()),
     academicYearId: v.string(),
+    baseClass: v.optional(v.number()),
     moduleIndex: v.string(),
     moduleName: v.string(),
     learningOutcome: v.string(),
@@ -41,6 +42,7 @@ export const update = mutation({
     id: v.id("class9Items"),
     specialtyIds: v.optional(v.array(v.string())),
     academicYearId: v.optional(v.string()),
+    baseClass: v.optional(v.number()),
     moduleIndex: v.optional(v.string()),
     moduleName: v.optional(v.string()),
     learningOutcome: v.optional(v.string()),
@@ -171,6 +173,7 @@ export const updateWithDistributions = mutation({
     id: v.id("class9Items"),
     specialtyIds: v.optional(v.array(v.string())),
     academicYearId: v.optional(v.string()),
+    baseClass: v.optional(v.number()),
     moduleIndex: v.optional(v.string()),
     moduleName: v.optional(v.string()),
     learningOutcome: v.optional(v.string()),

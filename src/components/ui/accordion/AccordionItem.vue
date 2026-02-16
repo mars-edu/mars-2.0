@@ -11,9 +11,9 @@
           size="14px"
           class="mr-1 md:mr-2 text-foreground/60"
         ></f7-icon>
-        <span class="font-medium text-sm md:text-base">
+        <div class="font-medium text-sm md:text-base flex items-center">
           <slot name="title"></slot>
-        </span>
+        </div>
         <slot v-if="!isExpanded" name="selected-item"></slot>
       </div>
       <div class="flex items-center gap-1 md:gap-2">

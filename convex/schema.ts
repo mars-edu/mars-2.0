@@ -217,6 +217,7 @@ export default defineSchema({
   class9Items: defineTable({
     specialtyIds: v.array(v.string()), // Multiple specialty IDs
     academicYearId: v.string(),
+    baseClass: v.optional(v.number()), // 9 or 11 (defaults to 9 for existing records)
     moduleIndex: v.string(),
     moduleName: v.string(),
     learningOutcome: v.string(),

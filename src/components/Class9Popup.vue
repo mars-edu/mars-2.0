@@ -357,6 +357,7 @@ const props = defineProps<{
   specialtyIds?: string[];
   academicYearId: string;
   teacherId?: string;
+  baseClass?: number;
   initialData?: any;
   editMode?: boolean;
 }>();
@@ -372,7 +373,8 @@ const finalControlStore = useFinalControlStore();
 function createEmptyStep() {
   return class9Store.createEmptyClass9Data(
     props.academicYearId,
-    props.specialtyIds || []
+    props.specialtyIds || [],
+    props.baseClass ?? 9
   );
 }
 
@@ -610,13 +612,14 @@ async function submit() {
       await class9Store.updateClass9(props.initialData.id, {
         ...steps.value[0],
         specialtyIds: selectedSpecialtyIds.value,
+        baseClass: props.baseClass ?? 9,
       });
     } else {
       for (const step of steps.value) {
         await class9Store.addClass9(
           props.academicYearId,
           selectedSpecialtyIds.value,
-          { ...step }
+          { ...step, baseClass: props.baseClass ?? 9 }
         );
       }
     }

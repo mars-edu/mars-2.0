@@ -147,7 +147,37 @@
             </AccordionItem>
 
             <AccordionItem id="workingPlans" :default-expanded="true">
-              <template #title>Рабочий учебный план:</template>
+              <template #title>
+                <span>Рабочий учебный план:</span>
+                <div
+                  v-if="selectedAcademicYear && selectedSpecialtyId"
+                  class="inline-flex items-center rounded-lg border border-border bg-background ml-3"
+                  @click.stop
+                >
+                  <button
+                    class="px-3 py-1 text-sm whitespace-nowrap rounded-md transition-colors"
+                    :class="
+                      selectedClassLevel === 9
+                        ? 'border border-foreground font-semibold bg-white dark:bg-card shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    "
+                    @click="selectedClassLevel = 9"
+                  >
+                    База 9 класса
+                  </button>
+                  <button
+                    class="px-3 py-1 text-sm whitespace-nowrap rounded-md transition-colors"
+                    :class="
+                      selectedClassLevel === 11
+                        ? 'border border-foreground font-semibold bg-white dark:bg-card shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    "
+                    @click="selectedClassLevel = 11"
+                  >
+                    База 11 класса
+                  </button>
+                </div>
+              </template>
               <template #actions>
                 <ImportWorkingPlanDialog
                   :disabled="!(selectedAcademicYear && selectedSpecialtyId)"
@@ -156,11 +186,8 @@
                 />
 
                 <AddWorkingPlanDialog
-                  v-model:opened="showAddWorkingPlanDialog"
-                  @submit="handleWorkingPlanSubmit"
                   :disabled="!(selectedAcademicYear && selectedSpecialtyId)"
-                  :specialty-id="selectedSpecialtyId || ''"
-                  @add-class-9="addClass9"
+                  @add="addClass9"
                 />
               </template>
               <div
@@ -190,20 +217,16 @@
                 </div>
               </div>
               <div v-else class="space-y-3">
-                <div class="mt-4">
-                  <template v-if="selectedClassLevel === 9">
-                    <Class9Table
-                      ref="class9TableRef"
-                      :specialty-ids="[selectedSpecialtyId]"
-                      :academic-year-id="selectedAcademicYear"
-                      :teacher-id="effectiveTeacherId"
-                      :select-mode="isSelectMode"
-                      @duplicate-item="handleDuplicateClass9Item"
-                    />
-                  </template>
-                  <template v-else>
-                    <Class11Table :specialty-id="selectedSpecialtyId" />
-                  </template>
+                <div>
+                  <Class9Table
+                    ref="class9TableRef"
+                    :specialty-ids="[selectedSpecialtyId]"
+                    :academic-year-id="selectedAcademicYear"
+                    :teacher-id="effectiveTeacherId"
+                    :select-mode="isSelectMode"
+                    :base-class="selectedClassLevel"
+                    @duplicate-item="handleDuplicateClass9Item"
+                  />
                 </div>
               </div>
             </AccordionItem>
@@ -256,7 +279,6 @@ import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddWorkingPlanDialog from "@/components/AddWorkingPlanDialog.vue";
 import Class9Table from "@/components/Class9Table.vue";
-import Class11Table from "@/components/Class11Table.vue";
 import { useSpecialtyStore, type Specialty } from "@/stores/specialtyStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import Accordion from "@/components/ui/accordion/Accordion.vue";
@@ -288,10 +310,6 @@ const selectedAcademicYear = computed({
   set: (value) => rupStore.setSelectedAcademicYear(value || null),
 });
 
-const showAddWorkingPlanDialog = ref(false);
-const workingPlans = ref<
-  Array<{ id: number; name: string; year: number; description?: string }>
->([]);
 const selectedClassLevel = ref<9 | 11>(9);
 
 const rupStore = useRupStore();
@@ -375,16 +393,6 @@ const handleImport = () => {
     `Импортировано ${newItems.length} элементов в выбранную специальность.`,
     "Импорт завершен"
   );
-};
-
-const handleWorkingPlanSubmit = (data: { baseClass: number }) => {
-  const newPlan = {
-    id: Date.now(),
-    name: `План ${data.baseClass} класс`,
-    year: new Date().getFullYear(),
-    baseClass: data.baseClass,
-  };
-  workingPlans.value.push(newPlan);
 };
 
 const addClass9 = () => {

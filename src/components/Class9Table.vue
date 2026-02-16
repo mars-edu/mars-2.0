@@ -182,6 +182,7 @@
       :specialty-ids="specialtyIds"
       :academic-year-id="academicYearId"
       :teacher-id="teacherId"
+      :base-class="baseClass"
       :initial-data="initialData"
       :edit-mode="editMode"
       @close="closePopup"
@@ -206,6 +207,7 @@ const props = defineProps<{
   academicYearId: string;
   teacherId?: string;
   selectMode?: boolean;
+  baseClass?: number;
 }>();
 
 const emit = defineEmits<{
@@ -225,7 +227,8 @@ const class9List = computed(() => {
   }
   return class9Store.getClass9ItemsByContext(
     props.academicYearId,
-    props.specialtyIds
+    props.specialtyIds,
+    props.baseClass
   );
 });
 

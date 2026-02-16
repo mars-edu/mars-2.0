@@ -21,6 +21,7 @@ export interface Class9Data {
   id: string;
   specialtyIds: string[]; // Changed from specialtyId to specialtyIds array
   academicYearId: string;
+  baseClass: number; // 9 or 11
   moduleIndex: string;
   moduleName: string;
   learningOutcome: string;
@@ -59,6 +60,7 @@ export const useClass9Store = defineStore(
         id: item._id,
         specialtyIds: item.specialtyIds,
         academicYearId: item.academicYearId,
+        baseClass: item.baseClass ?? 9,
         moduleIndex: item.moduleIndex,
         moduleName: item.moduleName,
         learningOutcome: item.learningOutcome,
@@ -93,14 +95,15 @@ export const useClass9Store = defineStore(
     });
 
     const getClass9ItemsByContext = computed(() => {
-      return (academicYearId: string, specialtyIds?: string[]) =>
+      return (academicYearId: string, specialtyIds?: string[], baseClass?: number) =>
         class9Items.value
           .filter(
             (c) =>
               c.academicYearId === academicYearId &&
               (!specialtyIds ||
                 specialtyIds.length === 0 ||
-                specialtyIds.some((id) => c.specialtyIds.includes(id)))
+                specialtyIds.some((id) => c.specialtyIds.includes(id))) &&
+              (!baseClass || (c.baseClass ?? 9) === baseClass)
           )
           .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
     });
@@ -189,12 +192,14 @@ export const useClass9Store = defineStore(
 
     function createEmptyClass9Data(
       academicYearId: string,
-      specialtyIds: string[] = []
+      specialtyIds: string[] = [],
+      baseClass: number = 9
     ): Class9Data {
       return {
         id: crypto.randomUUID(),
         specialtyIds,
         academicYearId,
+        baseClass,
         moduleIndex: "",
         moduleName: "",
         learningOutcome: "",
@@ -231,6 +236,7 @@ export const useClass9Store = defineStore(
         const id = await convex.mutation(api.class9Items.mutations.create, {
           specialtyIds,
           academicYearId,
+          baseClass: data?.baseClass ?? 9,
           moduleIndex: data?.moduleIndex || "",
           moduleName: data?.moduleName || "",
           learningOutcome: data?.learningOutcome || "",
@@ -308,6 +314,7 @@ export const useClass9Store = defineStore(
         const id = await convex.mutation(api.class9Items.mutations.create, {
           specialtyIds,
           academicYearId,
+          baseClass: existingItem.baseClass ?? 9,
           moduleIndex: existingItem.moduleIndex,
           moduleName: existingItem.moduleName,
           learningOutcome: existingItem.learningOutcome,
@@ -343,6 +350,7 @@ export const useClass9Store = defineStore(
           await convex.mutation(api.class9Items.mutations.create, {
             specialtyIds: item.specialtyIds,
             academicYearId: item.academicYearId,
+            baseClass: item.baseClass ?? 9,
             moduleIndex: item.moduleIndex,
             moduleName: item.moduleName,
             learningOutcome: item.learningOutcome,
@@ -381,6 +389,7 @@ export const useClass9Store = defineStore(
           id: id as any,
           specialtyIds: data.specialtyIds,
           academicYearId: data.academicYearId,
+          baseClass: data.baseClass,
           moduleIndex: data.moduleIndex,
           moduleName: data.moduleName,
           learningOutcome: data.learningOutcome,
@@ -486,6 +495,7 @@ export const useClass9Store = defineStore(
         const id = await convex.mutation(api.class9Items.mutations.create, {
           specialtyIds: itemToDuplicate.specialtyIds,
           academicYearId: itemToDuplicate.academicYearId,
+          baseClass: itemToDuplicate.baseClass ?? 9,
           moduleIndex: itemToDuplicate.moduleIndex,
           moduleName: itemToDuplicate.moduleName,
           learningOutcome: itemToDuplicate.learningOutcome,
