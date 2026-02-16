@@ -207,6 +207,7 @@ const isOptionSelected = (option: SelectOption) => {
   min-height: 44px !important;
   padding: 0 !important;
   transition: background-color 0.15s ease;
+  overflow: hidden !important;
 }
 
 .select-item .item-content:active,
@@ -222,7 +223,8 @@ const isOptionSelected = (option: SelectOption) => {
   align-items: center !important;
   gap: 0.5rem !important;
   position: relative !important;
-  padding-right: 2rem !important;
+  padding-right: 2.5rem !important;
+  overflow: hidden !important;
 }
 
 /* hide the empty title */
@@ -254,7 +256,7 @@ const isOptionSelected = (option: SelectOption) => {
 .select-item .item-inner::after {
   content: "" !important;
   position: absolute !important;
-  right: 0.625rem !important;
+  right: 0.875rem !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
   width: 1rem !important;
@@ -264,6 +266,13 @@ const isOptionSelected = (option: SelectOption) => {
   background-position: center !important;
   background-size: contain !important;
   flex-shrink: 0 !important;
+}
+
+/* Framework7 smart-select chevron override */
+.select-item.smart-select .item-inner::before,
+.select-item .smart-select .item-inner::before,
+.list .select-item .item-link .item-inner::before {
+  right: 0.875rem !important;
 }
 
 /* popover dropdown list */

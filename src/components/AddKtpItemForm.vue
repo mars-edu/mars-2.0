@@ -4,7 +4,7 @@
     id="add-ktp-item-popover"
     :opened="opened"
     @popover:closed="onPopoverClosed"
-    class="popover-center-page"
+    positioning="center"
     style="width: 600px !important"
   >
     <div class="bg-card text-card-foreground">
@@ -149,13 +149,3 @@ const handleSave = async () => {
   }
 };
 </script>
-
-<style>
-.popover.popover-center-page {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 0.5rem;
-  overflow: hidden;
-}
-</style>

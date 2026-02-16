@@ -212,3 +212,25 @@ body {
   transform: none !important;
   transition: none !important;
 }
+
+/* Centered popover positioning with animation support */
+.popover.popover-center {
+  left: 50% !important;
+  top: 50% !important;
+  margin: 0 !important;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* Override scale transform while preserving centering */
+.popover.popover-center {
+  transform: translate(-50%, -50%) scale(0.95) !important;
+}
+
+.popover.popover-center.modal-in {
+  transform: translate(-50%, -50%) scale(1) !important;
+}
+
+.popover.popover-center.modal-out {
+  transform: translate(-50%, -50%) scale(0.95) !important;
+}

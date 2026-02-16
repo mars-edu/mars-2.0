@@ -944,7 +944,7 @@ test.describe("Planning → Journal E2E flow", () => {
       .toBeTruthy();
     await paperclipIcons.first().click();
 
-    const ktpViewPopover = page.locator(".popover.popover-center-page:visible");
+    const ktpViewPopover = page.locator(".popover.popover-center:visible");
     await expect(ktpViewPopover.getByText("Просмотр темы занятия")).toBeVisible({
       timeout: 30_000,
     });

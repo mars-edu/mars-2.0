@@ -3,6 +3,7 @@
     <GuardedPopover
       v-slot="{ requestClose }"
       id="ktp-detail-popover"
+      positioning="center"
       :guard-unsaved="false"
       :arrow="false"
       style="
@@ -167,11 +168,6 @@ watch(opened, (isOpened, wasOpened) => {
 </script>
 
 <style>
-#ktp-detail-popover {
-  left: 50%;
-  transform: translateX(-50%);
-}
-
 .ktp-detail-popover {
   height: 100%;
   display: flex;

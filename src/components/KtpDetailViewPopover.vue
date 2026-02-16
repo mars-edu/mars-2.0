@@ -4,7 +4,7 @@
     id="ktp-detail-view-popover"
     :opened="opened"
     @popover:closed="$emit('update:opened', false)"
-    class="popover-center-page"
+    positioning="center"
     style="width: 600px !important"
     :target-el="target"
   >
@@ -89,13 +89,3 @@ const emit = defineEmits(["update:opened"]);
 
 const formError = ref("");
 </script>
-
-<style>
-.popover.popover-center-page {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 0.5rem;
-  overflow: hidden;
-}
-</style>
