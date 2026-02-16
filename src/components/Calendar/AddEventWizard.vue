@@ -306,15 +306,15 @@
           </span>
         </div>
 
-        <div class="flex justify-between">
+        <div class="flex justify-between gap-2">
           <button
-            class="text-sm text-primary font-medium hover:underline"
+            class="flex-1 py-2 px-4 rounded-lg border border-input text-sm text-muted-foreground font-medium hover:bg-primary/10 hover:text-primary hover:border-primary transition-colors"
             @click="toggleSelectAllStudents"
           >
             Выбрать всех
           </button>
           <button
-            class="text-sm text-muted-foreground hover:text-foreground hover:underline"
+            class="flex-1 py-2 px-4 rounded-lg border border-input text-sm text-muted-foreground font-medium hover:bg-primary/10 hover:text-primary hover:border-primary transition-colors"
             @click="participantsModel = []"
           >
             Сбросить
