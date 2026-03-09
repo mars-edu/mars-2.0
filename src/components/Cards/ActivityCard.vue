@@ -1,35 +1,70 @@
 <template>
-  <Card title="Ваша активность">
-    <div class="space-y-4">
-      <div class="grid grid-cols-2 gap-4">
-        <div class="bg-muted rounded-lg p-4">
-          <div class="text-sm text-muted-foreground">Посещаемость</div>
-          <div class="mt-1 flex items-baseline">
-            <div class="text-2xl font-semibold text-foreground">94%</div>
-            <div class="ml-2 text-sm text-green-500">+2.3%</div>
+  <div class="bg-card rounded-3xl p-8 shadow-sm border border-border flex flex-col">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-lg font-bold text-foreground">Последняя активность</h3>
+      <button
+        class="text-primary text-sm font-medium hover:opacity-70 transition-opacity"
+        @click="navigateToProtocol"
+      >
+        Показать все
+      </button>
+    </div>
+
+    <div class="space-y-5">
+      <div
+        v-for="item in activityItems"
+        :key="item.id"
+        class="flex gap-4 group cursor-default"
+      >
+        <div class="mt-0.5 flex-shrink-0">
+          <div
+            class="w-10 h-10 rounded-full bg-muted border border-border flex items-center justify-center text-muted-foreground group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors"
+          >
+            <i class="f7-icons text-base">{{ item.icon }}</i>
           </div>
         </div>
-        <div class="bg-muted rounded-lg p-4">
-          <div class="text-sm text-muted-foreground">Средний балл</div>
-          <div class="mt-1 flex items-baseline">
-            <div class="text-2xl font-semibold text-foreground">???</div>
-            <div class="ml-2 text-sm text-green-500">+32</div>
+        <div class="border-b border-border pb-5 w-full last:border-0 last:pb-0">
+          <div class="flex justify-between mb-1">
+            <span class="text-sm font-bold text-foreground">{{ item.title }}</span>
+            <span class="text-xs text-muted-foreground">{{ item.time }}</span>
           </div>
+          <p class="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+            {{ item.description }}
+          </p>
         </div>
       </div>
     </div>
-  </Card>
+  </div>
 </template>
 
 <script setup lang="ts">
-import Card from "@/components/ui/Card.vue";
+import { f7 } from "framework7-vue";
 
-interface Props {
-  /** @deprecated Theme is now handled by CSS custom properties. */
-  theme?: "white" | "dark" | "lavanda";
-}
+const navigateToProtocol = () => {
+  f7.views.main.router.navigate("/protocol");
+};
 
-withDefaults(defineProps<Props>(), {
-  theme: "white",
-});
+const activityItems = [
+  {
+    id: 1,
+    icon: "doc_text_fill",
+    title: "Журнал закрыт",
+    time: "14:30",
+    description: "Журнал по дисциплине «Философия» для группы 3 РЭХТ закрыт.",
+  },
+  {
+    id: 2,
+    icon: "arrow_2_squarepath",
+    title: "Назначена пересдача",
+    time: "11:15",
+    description: "Пересдача экзамена назначена в журнале по дисциплине «История Казахстана».",
+  },
+  {
+    id: 3,
+    icon: "bell_fill",
+    title: "Новое объявление",
+    time: "09:00",
+    description: "Опубликовано объявление: «Заседание кафедры — 5 января, 15:00».",
+  },
+];
 </script>

@@ -1,89 +1,140 @@
 <template>
-  <Card title="Объявления">
-    <template #header>
-      <div class="flex items-center justify-between w-full">
-        <h2 class="text-lg font-semibold text-foreground">Объявления</h2>
-        <a href="#" class="text-sm font-medium text-red-500 hover:text-red-600">
-          подробнее
-        </a>
+  <div class="bg-card rounded-3xl p-8 shadow-sm border border-border">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+      <div class="flex items-center gap-3">
+        <div class="bg-orange-100 text-orange-600 p-2 rounded-xl">
+          <i class="f7-icons text-xl">megaphone_fill</i>
+        </div>
+        <h3 class="text-lg font-bold text-foreground">Объявления и новости</h3>
       </div>
-    </template>
 
-    <div class="space-y-4">
-      <div
-        v-for="(announcement, index) in announcements"
-        :key="index"
-        class="group p-4 rounded-lg transition-colors cursor-pointer bg-muted hover:bg-muted/80"
-      >
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-3">
-            <div class="flex-shrink-0">
-              <div
-                class="w-10 h-10 rounded-full flex items-center justify-center bg-destructive/10"
-              >
-                <i class="text-red-500" :class="announcement.icon"></i>
-              </div>
-            </div>
-            <div>
-              <h3 class="text-sm font-medium text-foreground">
-                {{ announcement.title }}
-              </h3>
-              <p class="text-sm text-muted-foreground">
-                {{ announcement.date }}
-              </p>
-            </div>
-          </div>
-          <i class="f7:chevron_right text-muted-foreground group-hover:text-foreground"></i>
-        </div>
-        <p class="mt-2 text-sm text-muted-foreground">
-          {{ announcement.description }}
-        </p>
-        <div class="mt-3 flex items-center space-x-2">
-          <span
-            v-if="announcement.category"
-            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground border border-border"
-          >
-            {{ announcement.category }}
-          </span>
-          <span class="text-xs text-muted-foreground">
-            {{ announcement.timeAgo }}
-          </span>
-        </div>
+      <!-- Filter Tabs -->
+      <div class="flex p-1 bg-muted rounded-xl overflow-x-auto">
+        <button
+          v-for="filter in filters"
+          :key="filter.id"
+          class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all"
+          :class="
+            activeFilter === filter.id
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          "
+          @click="activeFilter = filter.id"
+        >
+          {{ filter.label }}
+        </button>
       </div>
     </div>
-  </Card>
+
+    <!-- Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <template v-if="filteredItems.length > 0">
+        <div
+          v-for="item in filteredItems"
+          :key="item.id"
+          class="p-5 rounded-3xl border border-border bg-muted hover:bg-card hover:shadow-md transition-all cursor-default group"
+        >
+          <div class="flex justify-between items-start mb-3">
+            <span
+              class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wide"
+              :class="item.badgeClass"
+            >
+              {{ item.badge }}
+            </span>
+            <span class="text-xs text-muted-foreground font-medium">{{ item.date }}</span>
+          </div>
+          <h4
+            class="text-sm font-bold text-foreground mb-2 leading-tight group-hover:text-primary transition-colors"
+          >
+            {{ item.title }}
+          </h4>
+          <p class="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+            {{ item.description }}
+          </p>
+        </div>
+      </template>
+      <div v-else class="col-span-3 text-center py-8 text-muted-foreground text-sm">
+        Нет объявлений в этой категории
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import Card from "@/components/ui/Card.vue";
+import { ref, computed } from "vue";
 
-interface Props {
-  /** @deprecated Theme is now handled by CSS custom properties. */
-  theme?: "white" | "dark" | "lavanda";
-}
+const activeFilter = ref("all");
 
-withDefaults(defineProps<Props>(), {
-  theme: "white",
-});
+const filters = [
+  { id: "all", label: "Все" },
+  { id: "academic", label: "Учебная часть" },
+  { id: "contests", label: "Конкурсы" },
+  { id: "events", label: "Мероприятия" },
+  { id: "system", label: "Система" },
+];
 
-interface Announcement {
+interface AnnouncementItem {
+  id: number;
   title: string;
   description: string;
   date: string;
-  timeAgo: string;
-  category?: string;
-  icon: string;
+  category: string;
+  badge: string;
+  badgeClass: string;
 }
 
-const announcements = ref<Announcement[]>([
+const items: AnnouncementItem[] = [
   {
-    title: "Технические работы",
-    description: "Плановые технические работы в системе",
-    date: "13 января 2025",
-    timeAgo: "2 дня назад",
-    category: "Система",
-    icon: "f7:gear",
+    id: 1,
+    title: "Заседание кафедры",
+    date: "5 марта, 15:00",
+    category: "academic",
+    badge: "Инфо",
+    badgeClass: "bg-blue-50 text-blue-600",
+    description: "Обсуждение плана на 2 семестр. Явка обязательна.",
   },
-]);
+  {
+    id: 2,
+    title: "Срок сдачи ведомостей",
+    date: "до 10 марта",
+    category: "academic",
+    badge: "Важно",
+    badgeClass: "bg-red-50 text-red-600",
+    description: "Необходимо закрыть все электронные журналы до конца недели.",
+  },
+  {
+    id: 3,
+    title: "Обновление системы",
+    date: "11 марта",
+    category: "system",
+    badge: "Система",
+    badgeClass: "bg-muted text-muted-foreground border border-border",
+    description: "Плановые технические работы с 22:00 до 00:00.",
+  },
+  {
+    id: 4,
+    title: "Конкурс «Лучший куратор»",
+    date: "Заявки до 20.03",
+    category: "contests",
+    badge: "Конкурс",
+    badgeClass: "bg-yellow-50 text-yellow-600",
+    description: "Открыт приём заявок на ежегодный конкурс.",
+  },
+  {
+    id: 5,
+    title: "Весенний концерт",
+    date: "22 марта",
+    category: "events",
+    badge: "Мероприятие",
+    badgeClass: "bg-purple-50 text-purple-600",
+    description: "Праздничное мероприятие в актовом зале в 17:00.",
+  },
+];
+
+const filteredItems = computed(() =>
+  activeFilter.value === "all"
+    ? items
+    : items.filter((i) => i.category === activeFilter.value)
+);
 </script>
