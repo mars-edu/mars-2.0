@@ -6,6 +6,7 @@ import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 import { VitePWA } from "vite-plugin-pwa";
 import buildInfoPlugin from "./vite-plugins/build-info.js";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
+import Icons from "unplugin-icons/vite";
 
 const SRC_DIR = path.resolve(__dirname, "./src");
 const PUBLIC_DIR = path.resolve(__dirname, "./public");
@@ -84,6 +85,10 @@ export default async () => {
       ViteImageOptimizer({}),
       visualizer(),
       buildInfoPlugin(),
+      Icons({
+        compiler: "vue3",
+        autoInstall: false,
+      }),
     ],
     define: {
       __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
