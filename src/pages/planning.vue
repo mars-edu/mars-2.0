@@ -12,7 +12,7 @@
     <f7-page-content class="planning-content">
       <Sidebar v-model:activeNavItem="activeNavItem" />
 
-      <div ref="calendarContainer" class="calendar-container p-2 md:ml-32">
+      <div ref="calendarContainer" class="calendar-container p-2 transition-all duration-200" :class="contentMargin">
         <div v-if="userStore.isAdmin" class="mb-3 flex justify-end">
           <Select
             v-model="selectedTeacherId"
@@ -91,6 +91,8 @@
 </template>
 
 <script setup lang="ts">
+import { useSidebar } from "@/composables/useSidebar";
+const { contentMargin } = useSidebar();
 import { onMounted, ref, computed, nextTick } from "vue";
 import { f7, f7ready, f7Page, f7PageContent } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";

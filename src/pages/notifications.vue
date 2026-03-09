@@ -13,7 +13,7 @@
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <!-- Page Content -->
-      <div class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-32">
+      <div class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 transition-all duration-200" :class="contentMargin">
         <div class="max-w-4xl mx-auto">
           <!-- Header -->
           <div class="mb-6">
@@ -197,6 +197,8 @@
 </template>
 
 <script setup lang="ts">
+import { useSidebar } from "@/composables/useSidebar";
+const { contentMargin } = useSidebar();
 import { ref, computed } from "vue";
 import { f7, f7Page, f7Preloader } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";

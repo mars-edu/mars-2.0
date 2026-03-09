@@ -14,7 +14,8 @@
 
       <!-- Main Content Area for Desktop -->
       <div
-        class="flex-1 overflow-y-auto p-4 bg-background text-foreground ml-32"
+        class="flex-1 overflow-y-auto p-4 bg-background text-foreground transition-all duration-200"
+        :class="contentMargin"
       >
         <div class="flex flex-row gap-4">
           <div class="flex-1 space-y-4 min-w-[60%]">
@@ -117,6 +118,8 @@
 </template>
 
 <script setup lang="ts">
+import { useSidebar } from "@/composables/useSidebar";
+const { contentMargin } = useSidebar();
 import { ref, onMounted } from "vue";
 import {
   f7Navbar,

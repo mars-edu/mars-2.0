@@ -9,7 +9,8 @@
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-32 relative"
+        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 relative transition-all duration-200"
+        :class="contentMargin"
       >
         <div
           v-if="isSelectMode"
@@ -269,6 +270,8 @@
 </template>
 
 <script setup lang="ts">
+import { useSidebar } from "@/composables/useSidebar";
+const { contentMargin } = useSidebar();
 import { ref, onMounted, computed } from "vue";
 import { f7Page, f7Icon, f7SkeletonBlock, f7, f7Popover } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";

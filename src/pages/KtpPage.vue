@@ -9,7 +9,8 @@
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-32 relative"
+        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 relative transition-all duration-200"
+        :class="contentMargin"
       >
         <div
           class="bg-card text-card-foreground rounded-xl p-4 md:p-4 shadow-sm"
@@ -128,6 +129,8 @@
 </template>
 
 <script setup lang="ts">
+import { useSidebar } from "@/composables/useSidebar";
+const { contentMargin } = useSidebar();
 import { ref, onMounted, computed, watch } from "vue";
 import { f7Page, f7Icon, f7Fab, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";

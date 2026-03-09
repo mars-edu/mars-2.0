@@ -29,7 +29,7 @@
       </div>
 
       <!-- Main Content Skeleton -->
-      <div class="flex-1 overflow-y-auto p-3 md:p-4 bg-background md:ml-32">
+      <div class="flex-1 overflow-y-auto p-3 md:p-4 bg-background transition-all duration-200" :class="contentMargin">
         <!-- Alert/Info Bar Skeleton -->
         <div class="mb-4">
           <div class="bg-muted/50 h-16 animate-pulse rounded-lg"></div>
@@ -120,6 +120,8 @@
 </template>
 
 <script setup lang="ts">
+import { useSidebar } from "@/composables/useSidebar";
+const { contentMargin } = useSidebar();
 import { f7Page } from "framework7-vue";
 
 defineOptions({
