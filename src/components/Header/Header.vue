@@ -20,22 +20,26 @@
           </span>
         </button>
       </div>
+      <div class="flex-shrink-0 min-w-[100px]">
+        <LanguageSelector />
+      </div>
+      <div class="h-6 w-px bg-border flex-shrink-0"></div>
       <div class="flex-shrink-0">
         <ThemeToggle />
       </div>
-      <div class="flex-shrink-0 min-w-[100px]">
-        <LanguageSelector :theme="themeStore.currentTheme" />
-      </div>
       <div class="avatar-container flex-shrink-0">
-        <img
-          v-if="userStore.currentUser?.avatar"
-          :src="userStore.currentUser.avatar"
-          alt="User Avatar"
-          class="user-avatar"
-        />
-        <div v-else class="user-avatar-placeholder">
-          <i class="icon f7-icons">person_circle_fill</i>
-        </div>
+        <button class="flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full hover:bg-muted transition-colors border border-transparent hover:border-border">
+          <img
+            v-if="userStore.currentUser?.avatar"
+            :src="userStore.currentUser.avatar"
+            alt="User Avatar"
+            class="user-avatar"
+          />
+          <div v-else class="user-avatar-placeholder">
+            <i class="icon f7-icons">person_circle_fill</i>
+          </div>
+          <i class="icon f7-icons text-[14px] text-muted-foreground">chevron_down</i>
+        </button>
       </div>
     </div>
 
@@ -95,12 +99,14 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 12px;
-  height: 80px;
+  padding: 0 16px;
+  height: 64px;
   border-bottom: 1px solid var(--border-color);
-  background-color: hsl(var(--card));
+  background-color: hsl(var(--card) / 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: hsl(var(--card-foreground));
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -137,12 +143,6 @@ onMounted(() => {
 
 .avatar-container {
   position: relative;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.avatar-container:hover {
-  transform: scale(1.05);
 }
 
 .user-avatar {
