@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node --env-file=.env.local -r ts-node/register/esm agent.ts dev",
-    "start": "node --env-file=.env.local -r ts-node/register/esm agent.ts start"
+    "dev": "node --env-file=.env.local node_modules/.bin/tsx agent.ts dev",
+    "start": "node --env-file=.env.local node_modules/.bin/tsx agent.ts start"
   },
   "dependencies": {
     "@google/genai": "^0.7.0",
@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.0.0",
     "typescript": "^5.0.0"
   }
 }
