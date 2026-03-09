@@ -120,9 +120,10 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebar } from "@/composables/useSidebar";
-const { contentMargin } = useSidebar();
 import { f7Page } from "framework7-vue";
+import { useSidebar } from "@/composables/useSidebar";
+
+const { contentMargin } = useSidebar();
 
 defineOptions({
   name: "PageSkeleton",

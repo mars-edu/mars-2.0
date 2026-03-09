@@ -137,8 +137,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebar } from "@/composables/useSidebar";
-const { contentMargin } = useSidebar();
 import { ref, computed, onMounted } from "vue";
 import { f7Page, f7Button, f7Popup } from "framework7-vue";
 import { useUserStore } from "../stores/userStore";
@@ -151,8 +149,11 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import { Cropper, CircleStencil } from "vue-advanced-cropper";
 import "vue-advanced-cropper/dist/style.css";
+import { useSidebar } from "@/composables/useSidebar";
 
 console.log("[ProfilePage] Component setup initiated");
+
+const { contentMargin } = useSidebar();
 
 const activeNavItem = ref("profile");
 const userStore = useUserStore();

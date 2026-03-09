@@ -197,8 +197,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebar } from "@/composables/useSidebar";
-const { contentMargin } = useSidebar();
 import { ref, computed } from "vue";
 import { f7, f7Page, f7Preloader } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
@@ -208,7 +206,9 @@ import { useConvexQuery, useConvexMutation } from 'convex-vue';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
 import { useUserStore } from '@/stores/userStore';
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 const userStore = useUserStore();
 const processing = ref(false);
 const pageId = ref(Date.now());

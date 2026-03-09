@@ -118,8 +118,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebar } from "@/composables/useSidebar";
-const { contentMargin } = useSidebar();
 import { ref, onMounted } from "vue";
 import {
   f7Navbar,
@@ -144,8 +142,11 @@ import AnnouncementsCard from "@/components/Cards/AnnouncementsCard.vue";
 import CalendarCard from "@/components/Cards/CalendarCard.vue";
 import ScheduleCard from "@/components/Cards/ScheduleCard.vue";
 import AcademicWeekCard from "@/components/Cards/AcademicWeekCard.vue";
+import { useSidebar } from "@/composables/useSidebar";
 
 console.log("[HomePage] Component setup initiated");
+
+const { contentMargin } = useSidebar();
 
 // Unique page ID that changes on each mount to track navigation
 const pageId = ref(Date.now());

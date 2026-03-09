@@ -145,8 +145,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebar } from "@/composables/useSidebar";
-const { contentMargin } = useSidebar();
 import { ref, computed, watch, onMounted, nextTick } from "vue";
 import { f7Page, f7Input, f7, f7Icon } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
@@ -162,7 +160,9 @@ import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 const activeNavItem = ref("teacher-card");
 const teacherStore = useTeacherStore();
 const positionStore = usePositionStore();

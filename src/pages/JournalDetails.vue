@@ -314,8 +314,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebar } from "@/composables/useSidebar";
-const { contentMargin } = useSidebar();
 import { ref, computed, nextTick, watch } from "vue";
 import {
   f7Page,
@@ -357,7 +355,9 @@ import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermediateControlStore";
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 const isDev = import.meta.env.DEV;
 
 const journalId = computed(() => {

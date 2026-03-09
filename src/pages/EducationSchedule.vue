@@ -478,8 +478,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebar } from "@/composables/useSidebar";
-const { contentMargin } = useSidebar();
 import { ref, computed, nextTick } from "vue";
 import { f7Page, f7Icon, f7, f7Preloader } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
@@ -515,7 +513,9 @@ import type { ScheduledFinalControl } from "@/stores/scheduledFinalControlStore"
 import type { ScheduledIntermediateControl } from "@/stores/scheduledIntermediateControlStore";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT, DATE_UI_FORMAT } from "@/constants/calendar";
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 const activeNavItem = ref("education-schedule");
 const educationScheduleStore = useEducationScheduleStore();
 

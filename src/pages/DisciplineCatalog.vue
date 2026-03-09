@@ -74,8 +74,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebar } from "@/composables/useSidebar";
-const { contentMargin } = useSidebar();
 import { ref, computed, nextTick } from "vue";
 import { f7Page, f7Input, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
@@ -83,9 +81,11 @@ import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddDisciplineButton from "@/components/AddDisciplineButton.vue";
 import EditDisciplineButton from "@/components/EditDisciplineButton.vue";
 import { useDisciplineStore, type Discipline } from "@/stores/disciplineStore";
+import { useSidebar } from "@/composables/useSidebar";
 
 // Unique page ID that changes on each mount to track navigation
 const pageId = ref(Date.now());
+const { contentMargin } = useSidebar();
 
 const activeNavItem = ref("discipline-catalog");
 const disciplineStore = useDisciplineStore();

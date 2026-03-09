@@ -447,8 +447,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebar } from "@/composables/useSidebar";
-const { contentMargin } = useSidebar();
 import { ref, computed, onMounted, watch } from "vue";
 import {
   f7Page,
@@ -485,7 +483,9 @@ import {
   exportAnalyticsViaConvex,
   type AnalyticsExportParams,
 } from "@/services/convex-excel-export";
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 const activeNavItem = ref("analytics");
 
 const academicYearStore = useAcademicYearStore();

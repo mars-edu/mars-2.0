@@ -270,8 +270,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebar } from "@/composables/useSidebar";
-const { contentMargin } = useSidebar();
 import { ref, onMounted, computed } from "vue";
 import { f7Page, f7Icon, f7SkeletonBlock, f7, f7Popover } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
@@ -289,7 +287,9 @@ import { useRupStore } from "@/stores/rupStore";
 import { useClass9Store, type Class9Data } from "@/stores/class9Store";
 import { useUserStore } from "@/stores/userStore";
 import { useTeacherStore } from "@/stores/teacherStore";
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 const activeNavItem = ref("rup");
 const specialtyStore = useSpecialtyStore();
 const academicYearStore = useAcademicYearStore();

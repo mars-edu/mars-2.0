@@ -91,8 +91,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebar } from "@/composables/useSidebar";
-const { contentMargin } = useSidebar();
 import { onMounted, ref, computed, nextTick } from "vue";
 import { f7, f7ready, f7Page, f7PageContent } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
@@ -109,7 +107,9 @@ import { type CalendarEvent as StoreCalendarEvent } from "@/stores/calendarStore
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useUserStore } from "@/stores/userStore";
 import { useTeacherStore } from "@/stores/teacherStore";
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 const calendarContainer = ref<HTMLElement | null>(null);
 const activeNavItem = ref("calendar");
 

@@ -129,8 +129,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebar } from "@/composables/useSidebar";
-const { contentMargin } = useSidebar();
 import { ref, onMounted, computed, watch } from "vue";
 import { f7Page, f7Icon, f7Fab, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
@@ -148,7 +146,9 @@ import { useKtpStore } from "@/stores/ktpStore";
 import { useJournalStore } from "@/stores/journalStore";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { storeToRefs } from "pinia";
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 const activeNavItem = ref("ktp");
 
 const academicYearStore = useAcademicYearStore();

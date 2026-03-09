@@ -352,8 +352,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebar } from "@/composables/useSidebar";
-const { contentMargin } = useSidebar();
 import { ref, computed, nextTick, onMounted, onBeforeMount } from "vue";
 import { storeToRefs } from "pinia";
 import { f7Page, f7Icon, f7, f7Preloader } from "framework7-vue";
@@ -382,8 +380,11 @@ import AddIntermediateControlButton from "@/components/AddIntermediateControlBut
 import EditIntermediateControlButton from "@/components/EditIntermediateControlButton.vue";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import type { IntermediateControl } from "@/stores/intermediateControlStore";
+import { useSidebar } from "@/composables/useSidebar";
 
 console.log("[SettingsPage] Component setup initiated");
+
+const { contentMargin } = useSidebar();
 
 const activeNavItem = ref("settings");
 const courseStore = useCourseStore();

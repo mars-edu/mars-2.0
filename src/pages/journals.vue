@@ -405,8 +405,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebar } from "@/composables/useSidebar";
-const { contentMargin } = useSidebar();
 import { ref, computed, onMounted, watch } from "vue";
 import { f7Page, f7Input, f7, f7Icon, f7Button } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
@@ -448,7 +446,9 @@ import {
   extractFinalGrade,
   prepareJournalExportMetadata,
 } from "@/utils/journalExport";
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 type JournalStudentRow = JournalExportParams["students"][number];
 
 // Unique page ID that changes on each mount to track navigation

@@ -88,8 +88,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebar } from "@/composables/useSidebar";
-const { contentMargin } = useSidebar();
 import { ref, computed, onMounted, watchEffect } from "vue";
 import { f7Page, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
@@ -109,7 +107,9 @@ import {
   exportTeacherWorkloadViaConvex,
   type WorkloadExportParams,
 } from "@/services/convex-excel-export";
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 type WorkloadEntry = WorkloadExportParams["entries"][number];
 type WorkloadSummaryEntry = WorkloadExportParams["summaryEntries"][number];
 type MonthlyDistributionEntry = WorkloadExportParams["monthlyDistribution"][number];

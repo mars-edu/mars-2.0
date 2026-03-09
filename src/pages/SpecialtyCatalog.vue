@@ -79,8 +79,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebar } from "@/composables/useSidebar";
-const { contentMargin } = useSidebar();
 import { ref, nextTick, computed } from "vue";
 import { f7Page, f7Input, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
@@ -90,7 +88,9 @@ import EditSpecialtyButton from "@/components/EditSpecialtyButton.vue";
 import { useSpecialtyStore, type Specialty } from "@/stores/specialtyStore";
 import { storeToRefs } from "pinia";
 import Fuse from "fuse.js";
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 const activeNavItem = ref("specialty-catalog");
 const specialtyStore = useSpecialtyStore();
 const { specialties } = storeToRefs(specialtyStore);

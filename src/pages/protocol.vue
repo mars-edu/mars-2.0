@@ -148,8 +148,6 @@
 </template>
 
 <script setup lang="ts">
-import { useSidebar } from "@/composables/useSidebar";
-const { contentMargin } = useSidebar();
 import { onMounted, ref, computed } from "vue";
 import { f7ready, f7Page, f7PageContent, f7Preloader } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
@@ -158,7 +156,9 @@ import Select from "@/components/ui/Select.vue";
 import { useProtocolStore } from "@/stores/protocolStore";
 import { useUserStore } from "@/stores/userStore";
 import { useTeacherStore } from "@/stores/teacherStore";
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 const activeNavItem = ref("protocol");
 const protocolStore = useProtocolStore();
 const userStore = useUserStore();
