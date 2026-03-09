@@ -23,7 +23,7 @@
           v-for="item in navigationItems"
           :key="item.id"
           :label="item.label"
-          :active="item.id === activeNavItem"
+          :active="item.id === activeItem"
           :collapsed="collapsed"
           @click="handleNavItemClick(item.id)"
         >
@@ -50,6 +50,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from "vue";
+import type { Component } from "vue";
 import { useRBAC } from "@/composables/useRBAC";
 import { useSidebar } from "@/composables/useSidebar";
 import { f7 } from "framework7-vue";
@@ -76,7 +77,7 @@ import IconLogOut from "~icons/lucide/log-out";
 import IconChevronLeft from "~icons/lucide/chevron-left";
 import IconChevronRight from "~icons/lucide/chevron-right";
 
-const navIconMap: Record<string, unknown> = {
+const navIconMap: Record<string, Component> = {
   "home": IconHouse,
   "specialty-catalog": IconGraduationCap,
   "discipline-catalog": IconBookOpen,
@@ -91,7 +92,7 @@ const navIconMap: Record<string, unknown> = {
   "teacher-card": IconUserCheck,
 };
 
-const profileIconMap: Record<string, unknown> = {
+const profileIconMap: Record<string, Component> = {
   "profile": IconCircleUser,
   "settings": IconSettings,
   "logout": IconLogOut,
@@ -115,13 +116,13 @@ const emit = defineEmits<{
   (e: "update:activeNavItem", value: string): void;
 }>();
 
-const activeNavItem = computed({
+const activeItem = computed({
   get: () => props.activeNavItem,
   set: (value) => emit("update:activeNavItem", value),
 });
 
 const handleNavItemClick = (itemId: string): void => {
-  activeNavItem.value = itemId;
+  activeItem.value = itemId;
   const item = navigationItems.value.find((item) => item.id === itemId);
   if (item && item.route) {
     f7.views.main.router.navigate(item.route);
@@ -153,7 +154,7 @@ const updateActiveItem = () => {
     return best;
   }, null as NavigationItem | null);
   if (matchingItem) {
-    activeNavItem.value = matchingItem.id;
+    activeItem.value = matchingItem.id;
   }
 };
 
