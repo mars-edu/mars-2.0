@@ -1,64 +1,21 @@
 <template>
-  <div
-    class="flex overflow-hidden rounded-lg border transition-colors min-w-[100px]"
-    :class="[themeClasses.background, themeClasses.border]"
-  >
+  <div class="flex p-0.5 rounded-full bg-muted">
     <button
       v-for="lang in availableLanguages"
       :key="lang.code"
-      class="px-3 py-1.5 text-sm font-medium transition-colors"
-      :class="{
-        'bg-red-500 text-white': lang.code === activeLanguage,
-        [themeClasses.hoverBackground]: lang.code !== activeLanguage,
-      }"
+      class="px-3 py-1 rounded-full text-xs font-bold transition-all"
+      :class="lang.code === activeLanguage
+        ? 'bg-card text-foreground shadow-sm'
+        : 'text-muted-foreground hover:text-foreground'"
       @click="setLanguage(lang.code)"
     >
-      {{ lang.code }}
+      {{ lang.code.toUpperCase() }}
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useLanguage } from "@/composables/useLanguage";
-import { useThemeStore } from "@/stores/themeStore";
-import { computed } from "vue";
-
-interface Props {
-  theme?: "light" | "dark" | "lavanda";
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  theme: "light",
-});
 
 const { activeLanguage, availableLanguages, setLanguage } = useLanguage();
-const themeStore = useThemeStore();
-
-const themeClasses = computed(() => {
-  const currentTheme = props.theme || themeStore.currentTheme;
-
-  switch (currentTheme) {
-    case "dark":
-      return {
-        background: "bg-gray-700",
-        border: "border-gray-600",
-        hoverBackground: "hover:bg-gray-600",
-        textColor: "text-gray-200",
-      };
-    case "lavanda":
-      return {
-        background: "bg-purple-100",
-        border: "border-purple-200",
-        hoverBackground: "hover:bg-purple-200",
-        textColor: "text-purple-900",
-      };
-    default:
-      return {
-        background: "bg-gray-100",
-        border: "border-gray-200",
-        hoverBackground: "hover:bg-gray-200",
-        textColor: "text-gray-700",
-      };
-  }
-});
 </script>
