@@ -22,7 +22,7 @@ http.route({
     if (!apiKey || !apiSecret || !serverUrl) {
       return new Response(
         JSON.stringify({ error: 'LiveKit credentials not configured' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
+        { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
