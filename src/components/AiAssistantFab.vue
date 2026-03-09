@@ -1,41 +1,65 @@
 <!-- src/components/AiAssistantFab.vue -->
 <template>
-  <div>
-    <!-- FAB Button -->
-    <button
-      class="fixed z-[999] bottom-24 right-6 w-14 h-14 rounded-full shadow-lg
-             bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700
-             flex items-center justify-center
-             transition-all duration-200 ease-out
-             hover:scale-105 active:scale-95"
-      :class="{ 'ring-2 ring-indigo-300 ring-offset-2': isOpen }"
-      aria-label="AI Ассистент"
-      @click="isOpen = !isOpen"
-    >
-      <BotIcon v-if="!isOpen" :size="24" class="text-white" />
-      <XIcon v-else :size="24" class="text-white" />
-    </button>
+  <f7-fab class="ai-assistant-fab" position="right-bottom" @click="openPanel">
+    <f7-icon ios="f7:sparkles" md="material:smart_toy" />
+  </f7-fab>
 
-    <!-- Assistant Panel -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="transition duration-200 ease-out"
-        enter-from-class="opacity-0 scale-95 translate-y-2"
-        enter-to-class="opacity-100 scale-100 translate-y-0"
-        leave-active-class="transition duration-150 ease-in"
-        leave-from-class="opacity-100 scale-100 translate-y-0"
-        leave-to-class="opacity-0 scale-95 translate-y-2"
-      >
-        <AiAssistantPanel v-if="isOpen" @close="isOpen = false" />
-      </Transition>
-    </Teleport>
-  </div>
+  <f7-popup
+    id="ai-assistant-popup"
+    class="ai-assistant-popup"
+    :backdrop="false"
+    :close-by-backdrop-click="false"
+    :close-on-escape="true"
+  >
+    <AiAssistantPanel @close="closePanel" />
+  </f7-popup>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { BotIcon, XIcon } from 'lucide-vue-next';
+import { f7, f7Fab, f7Icon, f7Popup } from 'framework7-vue';
 import AiAssistantPanel from './AiAssistantPanel.vue';
 
-const isOpen = ref(false);
+function openPanel() {
+  f7.popup.open('#ai-assistant-popup');
+}
+
+function closePanel() {
+  f7.popup.close('#ai-assistant-popup');
+}
 </script>
+
+<style>
+/* Raise the FAB above F7's view layer (z-index: 5000) */
+.ai-assistant-fab.fab {
+  z-index: 6000 !important;
+}
+
+/* Solid card background for popup content */
+.ai-assistant-popup .page,
+.ai-assistant-popup .page-content {
+  background-color: hsl(var(--card)) !important;
+}
+
+/* Position as a floating panel in the bottom-right, not full-screen */
+.ai-assistant-popup.popup {
+  width: 380px !important;
+  height: 560px !important;
+  left: auto !important;
+  right: 24px !important;
+  top: auto !important;
+  bottom: 104px !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  transform-origin: bottom right !important;
+}
+
+.ai-assistant-popup.popup.modal-in {
+  transform: scale(1) !important;
+  opacity: 1 !important;
+}
+
+.ai-assistant-popup.popup.modal-out {
+  transform: scale(0.95) !important;
+  opacity: 0 !important;
+}
+</style>
