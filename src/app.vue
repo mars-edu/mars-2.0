@@ -17,11 +17,13 @@
       :browserHistoryInitialMatch="true"
       :browserHistoryOnLoad="true"
     ></f7-view>
+    <AiAssistantFab />
   </f7-app>
 </template>
 
 <script setup lang="ts">
 import { onMounted, onBeforeMount, computed } from "vue";
+import AiAssistantFab from './components/AiAssistantFab.vue';
 import { f7, f7ready } from "framework7-vue";
 import type { Framework7Parameters } from "framework7/types";
 import { useUserStore } from "./stores/userStore";
