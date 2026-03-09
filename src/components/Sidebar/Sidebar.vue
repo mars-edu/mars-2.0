@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="fixed top-[55px] left-0 bottom-0 bg-card border-r border-border overflow-visible z-50 shadow-sm transition-all duration-200"
+    class="fixed top-[64px] left-0 bottom-0 bg-card border-r border-border overflow-visible z-50 shadow-sm transition-all duration-200"
     :class="sidebarWidth"
     style="display: grid; grid-template-rows: 1fr auto"
   >
