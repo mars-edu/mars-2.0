@@ -36,10 +36,11 @@
             </label>
             <f7-input
               id="semester-number"
-              type="number"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
               v-model:value="semesterNumber"
               placeholder="Например: 1"
-              min="1"
             />
           </div>
           <div class="space-y-2">

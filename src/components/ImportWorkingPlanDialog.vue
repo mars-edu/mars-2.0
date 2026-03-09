@@ -2,9 +2,10 @@
   <div>
     <button
       id="import-working-plan-button"
-      class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-blue-500 hover:bg-blue-600 rounded-full transition-colors"
+      class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors shadow-sm"
       :class="{
-        'opacity-50 cursor-not-allowed': disabled,
+        'opacity-50 cursor-not-allowed border-border bg-muted text-muted-foreground':
+          disabled,
       }"
       @click.stop="handleImport"
       :disabled="disabled"
@@ -17,8 +18,8 @@
       <f7-icon
         ios="f7:arrow_down_doc"
         md="material:file_upload"
-        size="16px"
-        class="text-white"
+        size="17px"
+        class="text-current"
       ></f7-icon>
     </button>
   </div>

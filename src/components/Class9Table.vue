@@ -1,16 +1,16 @@
 <template>
   <div class="class9-table">
-    <div v-if="class9List.length" ref="sortableList" class="space-y-0.5">
+    <div v-if="class9List.length" ref="sortableList" class="space-y-0">
       <div
         v-for="(item, idx) in class9List"
         :key="item.id"
-        class="overflow-hidden bg-card border-b border-gray-200"
+        class="overflow-hidden bg-card border-b border-border last:border-b-0 transition-colors duration-150"
         :class="{ 'is-selected': rupStore.isClass9ItemSelected(item.id) }"
         @click="handleRowClick(item)"
       >
         <div class="flex items-stretch w-full">
           <div
-            class="w-8 bg-muted flex items-center justify-center text-sm font-medium border-r border-border drag-handle cursor-move"
+            class="w-6 sm:w-7 bg-muted/60 text-muted-foreground flex items-center justify-center text-sm font-medium border-r border-border drag-handle cursor-move"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -33,39 +33,106 @@
             </svg>
           </div>
           <div
-            class="w-8 bg-muted flex items-center justify-center text-sm font-medium border-r border-border"
+            class="w-10 sm:w-11 bg-muted/40 flex items-center justify-center text-sm font-medium border-r border-border text-foreground/75"
           >
             {{ idx + 1 }}
           </div>
-          <div class="flex-1">
-            <div class="flex items-center gap-4 p-2">
-              <div class="flex-1">
-                <div class="flex items-center gap-2">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start gap-2 sm:gap-3 px-3 py-3 sm:px-4 sm:py-3.5">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-baseline flex-wrap gap-1.5 sm:gap-2">
+                  <div class="text-base font-semibold text-foreground">
+                    {{ item.moduleIndex }}
+                  </div>
+                  <div class="text-base font-medium text-foreground/90 truncate">
+                    {{ item.moduleName }}
+                  </div>
                   <span
                     v-if="item.language"
-                    class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase"
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide"
                     :class="{
-                      'bg-blue-100 text-blue-700': item.language === 'ru',
-                      'bg-green-100 text-green-700': item.language === 'kk',
+                      'bg-indigo-100 text-indigo-700': item.language === 'ru',
+                      'bg-teal-100 text-teal-700': item.language === 'kk',
                       'bg-purple-100 text-purple-700': item.language === 'en',
                     }"
                   >
                     {{ item.language.toUpperCase() }}
                   </span>
-                  <div class="text-sm font-medium">{{ item.moduleIndex }}</div>
-                  <div class="text-sm">{{ item.moduleName }}</div>
                 </div>
                 <div
                   v-if="item.learningOutcome"
-                  class="text-xs text-muted-foreground mt-1"
+                  class="text-sm text-muted-foreground mt-1 truncate"
                 >
                   {{ item.learningOutcome }}
                 </div>
+                <div
+                  v-if="
+                    item.distributionEntries &&
+                    item.distributionEntries.some(
+                      (entry) =>
+                        entry.finalControlId ||
+                        entry.intermediateControlId ||
+                        entry.examEnabled ||
+                        entry.creditEnabled ||
+                        entry.controlLessonEnabled
+                    )
+                  "
+                  class="mt-2.5 flex flex-wrap items-center gap-1.5"
+                >
+                  <template
+                    v-for="entry in item.distributionEntries"
+                    :key="entry.id"
+                  >
+                    <span
+                      v-if="entry.finalControlId"
+                      class="inline-flex items-center px-2 py-1 rounded-md border border-red-100 bg-red-50 text-red-700 text-xs font-medium"
+                    >
+                      {{
+                        finalControlStore.getFinalControlById(entry.finalControlId)
+                          ?.shortName ?? "Ф"
+                      }}
+                    </span>
+                    <span
+                      v-if="entry.intermediateControlId"
+                      class="inline-flex items-center px-2 py-1 rounded-md border border-red-100 bg-red-50 text-red-700 text-xs font-medium"
+                    >
+                      {{
+                        intermediateControlStore.getIntermediateControlById(
+                          entry.intermediateControlId
+                        )?.shortName ?? "П"
+                      }}
+                    </span>
+                    <span
+                      v-if="entry.examEnabled"
+                      class="inline-flex items-center px-2 py-1 rounded-md border border-red-100 bg-red-50 text-red-700 text-xs font-medium"
+                    >
+                      Экз.
+                    </span>
+                    <span
+                      v-if="entry.creditEnabled"
+                      class="inline-flex items-center px-2 py-1 rounded-md border border-red-100 bg-red-50 text-red-700 text-xs font-medium"
+                    >
+                      Зач.
+                    </span>
+                    <span
+                      v-if="entry.controlLessonEnabled"
+                      class="inline-flex items-center px-2 py-1 rounded-md border border-red-100 bg-red-50 text-red-700 text-xs font-medium"
+                    >
+                      Контр.
+                    </span>
+                  </template>
+                  <span
+                    v-if="item.totalHours"
+                    class="inline-flex items-center px-2 py-1 rounded-md border border-red-100 bg-red-50 text-red-700 text-xs font-medium"
+                  >
+                    {{ item.totalHours }} ч.
+                  </span>
+                </div>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-start gap-2">
                 <button
                   @click.stop="duplicateItem(item)"
-                  class="p-1 text-gray-500 hover:text-gray-700"
+                  class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
                   aria-label="Дублировать"
                 >
                   <svg
@@ -87,107 +154,23 @@
                   </svg>
                 </button>
               </div>
-              <div
-                v-if="
-                  item.distributionEntries &&
-                  item.distributionEntries.some(
-                    (entry) =>
-                      entry.finalControlId ||
-                      entry.intermediateControlId ||
-                      entry.examEnabled ||
-                      entry.creditEnabled ||
-                      entry.controlLessonEnabled
-                  )
-                "
-                class="flex items-center gap-3 px-3 py-1.5 bg-orange-500 text-white rounded-lg"
-              >
-                <template
-                  v-for="entry in item.distributionEntries"
-                  :key="entry.id"
-                >
-                  <div
-                    v-if="entry.finalControlId"
-                    class="flex items-center gap-1.5"
-                  >
-                    <span class="text-xs font-medium">
-                      {{
-                        finalControlStore.getFinalControlById(
-                          entry.finalControlId
-                        )?.shortName ?? "Ф"
-                      }}
-                    </span>
-                    <div
-                      class="w-6 h-6 bg-white text-orange-500 rounded flex items-center justify-center"
-                    >
-                      <span class="text-xs font-bold">✓</span>
-                    </div>
-                  </div>
-                  <div
-                    v-if="entry.intermediateControlId"
-                    class="flex items-center gap-1.5"
-                  >
-                    <span class="text-xs font-medium">
-                      {{
-                        intermediateControlStore.getIntermediateControlById(
-                          entry.intermediateControlId
-                        )?.shortName ?? "П"
-                      }}
-                    </span>
-                    <div
-                      class="w-6 h-6 bg-white text-orange-500 rounded flex items-center justify-center"
-                    >
-                      <span class="text-xs font-bold">✓</span>
-                    </div>
-                  </div>
-                  <div
-                    v-if="entry.examEnabled"
-                    class="flex items-center gap-1.5"
-                  >
-                    <span class="text-xs font-medium">Экз.</span>
-                    <div
-                      class="w-6 h-6 bg-white text-orange-500 rounded flex items-center justify-center"
-                    >
-                      <span class="text-xs font-bold">✓</span>
-                    </div>
-                  </div>
-                  <div
-                    v-if="entry.creditEnabled"
-                    class="flex items-center gap-1.5"
-                  >
-                    <span class="text-xs font-medium">Зач.</span>
-                    <div
-                      class="w-6 h-6 bg-white text-orange-500 rounded flex items-center justify-center"
-                    >
-                      <span class="text-xs font-bold">✓</span>
-                    </div>
-                  </div>
-                  <div
-                    v-if="entry.controlLessonEnabled"
-                    class="flex items-center gap-1.5"
-                  >
-                    <span class="text-xs font-medium">Контр.</span>
-                    <div
-                      class="w-6 h-6 bg-white text-orange-500 rounded flex items-center justify-center"
-                    >
-                      <span class="text-xs font-bold">✓</span>
-                    </div>
-                  </div>
-                </template>
-                <div
-                  v-if="item.totalHours"
-                  class="flex items-center gap-1 ml-2 pl-2 border-l border-orange-400"
-                >
-                  <span class="text-xs">{{ item.totalHours }}</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <div v-else class="text-center text-muted-foreground py-4">
+    <div
+      v-else
+      class="min-h-[160px] rounded-lg border border-dashed border-border bg-muted/20 text-center text-muted-foreground flex items-center justify-center px-4 py-6"
+    >
       Нет данных для отображения
     </div>
+    <Class9ViewPopover
+      v-if="viewPopupOpen"
+      :item="viewData"
+      @close="closeViewPopup"
+      @edit="openEditFromView"
+    />
     <Class9Popup
       v-if="popupOpen"
       :specialty-ids="specialtyIds"
@@ -210,6 +193,7 @@ import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { f7 } from "framework7-vue";
 import Class9Popup from "@/components/Class9Popup.vue";
+import Class9ViewPopover from "@/components/Class9ViewPopover.vue";
 import { useRupStore } from "@/stores/rupStore";
 import Sortable from "sortablejs";
 
@@ -272,12 +256,14 @@ onBeforeUnmount(() => {
 const popupOpen = ref(false);
 const editMode = ref(false);
 const initialData = ref<Class9Data | null>(null);
+const viewPopupOpen = ref(false);
+const viewData = ref<Class9Data | null>(null);
 
 function handleRowClick(item: Class9Data) {
   if (props.selectMode) {
     rupStore.toggleClass9ItemSelection(item.id);
   } else {
-    openEditPopup(item);
+    openViewPopup(item);
   }
 }
 
@@ -287,6 +273,14 @@ function openEditPopup(item: Class9Data) {
   popupOpen.value = true;
   nextTick(() => {
     f7.popover.open("#class9-popover");
+  });
+}
+
+function openViewPopup(item: Class9Data) {
+  viewData.value = { ...item };
+  viewPopupOpen.value = true;
+  nextTick(() => {
+    f7.popover.open("#class9-view-popover");
   });
 }
 
@@ -306,6 +300,24 @@ function closePopup() {
   f7.popover.close("#class9-popover");
 }
 
+function closeViewPopup() {
+  viewPopupOpen.value = false;
+  viewData.value = null;
+}
+
+function requestCloseViewPopup() {
+  f7.popover.close("#class9-view-popover");
+}
+
+function openEditFromView() {
+  const item = viewData.value;
+  if (!item) return;
+  requestCloseViewPopup();
+  setTimeout(() => {
+    openEditPopup(item);
+  }, 0);
+}
+
 function handlePopupSubmit() {
   closePopup();
 }
@@ -321,9 +333,10 @@ defineExpose({
 
 <style scoped>
 .class9-table {
-  border: 1px solid hsl(var(--border));
-  border-radius: 8px;
+  border: 1px solid hsl(var(--border) / 0.9);
+  border-radius: 12px;
   overflow: hidden;
+  background: hsl(var(--card));
 }
 
 .ghost {
@@ -333,12 +346,11 @@ defineExpose({
 }
 
 .class9-table > div > div:hover {
-  background-color: hsl(var(--muted)) !important;
+  background-color: hsl(var(--muted) / 0.35) !important;
   cursor: pointer;
 }
 
 .is-selected {
-  background-color: hsl(var(--primary) / 0.15) !important;
-  border: 1px solid var(--f7-theme-color) !important;
+  background-color: hsl(var(--primary) / 0.12) !important;
 }
 </style>

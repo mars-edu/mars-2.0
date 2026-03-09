@@ -54,7 +54,9 @@
               </label>
               <f7-input
                 id="start-year"
-                type="number"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]*"
                 v-model:value="startYear"
                 placeholder="Например: 2023"
               ></f7-input>
@@ -66,7 +68,9 @@
               </label>
               <f7-input
                 id="end-year"
-                type="number"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]*"
                 v-model:value="endYear"
                 placeholder="Например: 2024"
               ></f7-input>

@@ -4,22 +4,39 @@
       {{ label }}
     </label>
     <div class="flex gap-2 w-full">
-      <f7-input
-        :id="inputId"
-        class="w-full"
-        :class="{ 'has-data': hasData }"
-        :type="type"
-        :placeholder="placeholder"
-        :clear-button="clearButton"
-        :disabled="disabled"
-        :value="modelValue"
-        @input="onInput"
-        v-bind="$attrs"
-      >
-        <template v-if="showCheckmark" #media>
-          <f7-icon f7="checkmark_alt" class="text-green-500"></f7-icon>
-        </template>
-      </f7-input>
+      <div class="input-with-actions w-full">
+        <f7-input
+          :id="inputId"
+          class="w-full"
+          :class="{
+            'has-data': hasData,
+            'with-distribute-button': showDistributeButton || !!$slots.button,
+          }"
+          :type="computedType"
+          :placeholder="placeholder"
+          :clear-button="effectiveClearButton"
+          :disabled="disabled"
+          :value="inputValue"
+          @input="onInput"
+          v-bind="{ ...$attrs, ...numericAttrs }"
+        >
+          <template v-if="showCheckmark" #media>
+            <f7-icon f7="checkmark_alt" class="text-green-500"></f7-icon>
+          </template>
+        </f7-input>
+        <div v-if="$slots.button" class="slot-button-container">
+          <slot name="button" />
+        </div>
+        <button
+          v-else-if="showDistributeButton"
+          type="button"
+          class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-md bg-transparent border-0 p-0 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer transition-colors active:scale-95 z-[3]"
+          @click="$emit('distribute')"
+          :title="distributeTooltip"
+        >
+          <f7-icon f7="arrow_down" class="text-base"></f7-icon>
+        </button>
+      </div>
       <f7-button
         v-if="showCopyButton"
         small
@@ -34,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, getCurrentInstance } from "vue";
+import { computed, getCurrentInstance, useSlots } from "vue";
 import { f7Input, f7Icon, f7Button } from "framework7-vue";
 
 defineOptions({
@@ -42,7 +59,7 @@ defineOptions({
 });
 
 interface Props {
-  modelValue: string | number;
+  modelValue?: string | number;
   label?: string;
   type?: string;
   placeholder?: string;
@@ -51,6 +68,8 @@ interface Props {
   showCheckmark?: boolean;
   showCopyButton?: boolean;
   copyTooltip?: string;
+  showDistributeButton?: boolean;
+  distributeTooltip?: string;
   id?: string;
 }
 
@@ -61,15 +80,35 @@ const props = withDefaults(defineProps<Props>(), {
   showCheckmark: true,
   showCopyButton: false,
   copyTooltip: "Вставить из предыдущего",
+  showDistributeButton: false,
+  distributeTooltip: "Распределить по семестрам",
 });
 
+const computedType = computed(() =>
+  props.type === "number" ? "text" : props.type
+);
+
+const numericAttrs = computed(() =>
+  props.type === "number"
+    ? { inputmode: "numeric", pattern: "[0-9]*" }
+    : {}
+);
+
+const slots = useSlots();
+
+const effectiveClearButton = computed(
+  () => props.clearButton && !props.showDistributeButton && !slots.button
+);
+
 const emit = defineEmits<{
-  "update:modelValue": [value: string | number];
+  "update:modelValue": [value: string | number | undefined];
   copy: [];
+  distribute: [];
 }>();
 
 const instance = getCurrentInstance();
 const inputId = computed(() => props.id || `input-${instance?.uid}`);
+const inputValue = computed<string | number>(() => props.modelValue ?? "");
 
 const hasData = computed(() => {
   return (
@@ -81,8 +120,7 @@ const hasData = computed(() => {
 
 const onInput = (event: Event) => {
   const target = event.target as HTMLInputElement;
-  const value = props.type === "number" ? target.value : target.value;
-  emit("update:modelValue", value);
+  emit("update:modelValue", target.value);
 };
 </script>
 
@@ -91,6 +129,21 @@ const onInput = (event: Event) => {
   background-color: rgb(34 197 94) !important;
   color: white !important;
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.input-with-actions {
+  position: relative;
+}
+
+.slot-button-container {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  z-index: 3;
 }
 
 .copy-button:active {
@@ -107,5 +160,9 @@ const onInput = (event: Event) => {
 
 :deep(.input:hover) {
   background-color: hsl(var(--input)) !important;
+}
+
+:deep(.with-distribute-button input) {
+  padding-right: 3rem !important;
 }
 </style>

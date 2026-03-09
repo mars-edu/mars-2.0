@@ -7,13 +7,23 @@ import {
 } from 'ai';
 import { MARS_SYSTEM_PROMPT } from './marsSystemPrompt';
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
+function errorResponse(message: string, status: number): Response {
+  return new Response(
+    JSON.stringify({ error: message }),
+    { status, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } }
+  );
+}
+
 export async function handleChatRequest(request: Request): Promise<Response> {
   const googleApiKey = process.env.GOOGLE_API_KEY;
   if (!googleApiKey) {
-    return new Response(
-      JSON.stringify({ error: 'GOOGLE_API_KEY not configured' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return errorResponse('GOOGLE_API_KEY not configured', 500);
   }
 
   let messages: UIMessage[];
@@ -21,28 +31,34 @@ export async function handleChatRequest(request: Request): Promise<Response> {
     const body = await request.json();
     messages = body.messages as UIMessage[];
   } catch {
-    return new Response(
-      JSON.stringify({ error: 'Invalid request body' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
+    return errorResponse('Invalid request body', 400);
   }
 
-  const google = createGoogleGenerativeAI({ apiKey: googleApiKey });
+  let modelMessages;
+  try {
+    modelMessages = await convertToModelMessages(messages);
+  } catch {
+    return errorResponse('Failed to convert messages', 400);
+  }
 
-  const result = streamText({
-    model: google('gemini-2.0-flash'),
-    system: MARS_SYSTEM_PROMPT,
-    messages: await convertToModelMessages(messages),
-  });
+  try {
+    const google = createGoogleGenerativeAI({ apiKey: googleApiKey });
+    const result = streamText({
+      model: google('gemini-2.0-flash'),
+      system: MARS_SYSTEM_PROMPT,
+      messages: modelMessages,
+    });
 
-  const response = result.toUIMessageStreamResponse();
-
-  // Add CORS headers
-  const headers = new Headers(response.headers);
-  headers.set('Access-Control-Allow-Origin', '*');
-
-  return new Response(response.body, {
-    status: response.status,
-    headers,
-  });
+    const streamResponse = result.toUIMessageStreamResponse();
+    const headers = new Headers(streamResponse.headers);
+    for (const [key, value] of Object.entries(CORS_HEADERS)) {
+      headers.set(key, value);
+    }
+    return new Response(streamResponse.body, {
+      status: streamResponse.status,
+      headers,
+    });
+  } catch {
+    return errorResponse('AI service error', 500);
+  }
 }

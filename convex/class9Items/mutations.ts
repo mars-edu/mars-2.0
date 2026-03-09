@@ -24,6 +24,7 @@ export const create = mutation({
     srsHours: v.string(),
     trainingPracticeHours: v.string(),
     individualHours: v.string(),
+    individualAdditionalHours: v.optional(v.string()),
     position: v.number(),
   },
   handler: async (ctx, args) => {
@@ -59,6 +60,7 @@ export const update = mutation({
     srsHours: v.optional(v.string()),
     trainingPracticeHours: v.optional(v.string()),
     individualHours: v.optional(v.string()),
+    individualAdditionalHours: v.optional(v.string()),
     position: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -192,6 +194,7 @@ export const updateWithDistributions = mutation({
     srsHours: v.optional(v.string()),
     trainingPracticeHours: v.optional(v.string()),
     individualHours: v.optional(v.string()),
+    individualAdditionalHours: v.optional(v.string()),
     position: v.optional(v.number()),
     distributionEntries: v.array(
       v.object({
@@ -291,6 +294,7 @@ export const createMultiLanguage = mutation({
     srsHours: v.string(),
     trainingPracticeHours: v.string(),
     individualHours: v.string(),
+    individualAdditionalHours: v.optional(v.string()),
     position: v.number(),
     variants: v.array(
       v.object({

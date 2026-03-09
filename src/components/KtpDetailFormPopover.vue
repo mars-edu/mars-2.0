@@ -38,7 +38,9 @@
             </label>
             <f7-input
               id="ktp-total-hours"
-              type="number"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
               v-model:value="formData.totalHours"
               placeholder="0"
             ></f7-input>
@@ -47,7 +49,9 @@
             <label class="text-sm text-foreground" for="ktp-srsp">СРСП</label>
             <f7-input
               id="ktp-srsp"
-              type="number"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
               v-model:value="formData.srsp"
               placeholder="0"
             ></f7-input>
@@ -56,7 +60,9 @@
             <label class="text-sm text-foreground" for="ktp-srs">СРС</label>
             <f7-input
               id="ktp-srs"
-              type="number"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
               v-model:value="formData.srs"
               placeholder="0"
             ></f7-input>

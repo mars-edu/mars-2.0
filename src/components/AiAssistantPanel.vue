@@ -1,6 +1,6 @@
 <!-- src/components/AiAssistantPanel.vue -->
 <template>
-  <f7-page class="bg-card text-foreground">
+  <div class="ai-panel-root bg-card text-foreground">
 
     <!-- Header -->
     <div class="flex items-center justify-between px-4 py-3 border-b border-border bg-card flex-shrink-0">
@@ -40,7 +40,7 @@
     </div>
 
     <!-- Voice Tab -->
-    <f7-page-content v-if="activeTab === 'voice'" class="flex flex-col items-center justify-center gap-6 p-6 h-full">
+    <div v-if="activeTab === 'voice'" class="flex flex-col items-center justify-center gap-6 p-6 flex-1 min-h-0 overflow-y-auto">
 
       <!-- Radial Visualizer -->
       <div class="relative w-48 h-48">
@@ -112,12 +112,12 @@
       </div>
 
       <p v-if="voiceError" class="text-xs text-red-500 text-center px-4">{{ voiceError }}</p>
-    </f7-page-content>
+    </div>
 
     <!-- Chat Tab -->
-    <f7-page-content v-else class="flex flex-col overflow-hidden p-0 h-full">
+    <div v-else class="flex flex-col flex-1 min-h-0 overflow-hidden">
       <!-- Messages -->
-      <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-3">
+      <div ref="messagesContainer" class="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
         <div
           v-for="(message, idx) in chat.messages"
           :key="message.id ?? idx"
@@ -188,14 +188,13 @@
           </button>
         </form>
       </div>
-    </f7-page-content>
+    </div>
 
-  </f7-page>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
-import { f7Page, f7PageContent } from 'framework7-vue';
 import {
   XIcon,
   BotIcon,

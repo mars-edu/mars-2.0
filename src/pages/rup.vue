@@ -9,7 +9,7 @@
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 relative transition-all duration-200"
+        class="flex-1 overflow-y-auto px-2 py-3 sm:px-3 md:p-4 bg-background pb-16 md:pb-6 relative transition-all duration-200"
         :class="contentMargin"
       >
         <div
@@ -52,43 +52,43 @@
             </button>
           </div>
         </div>
-        <div
-          class="bg-card text-card-foreground rounded-xl p-4 md:p-4 shadow-sm"
-        >
+        <div class="bg-card text-card-foreground rounded-2xl border border-border/80 p-3 sm:p-4 md:p-5 shadow-sm">
           <div
-            class="flex flex-col md:flex-row md:items-center md:gap-3 mb-4 md:mb-4"
+            class="flex flex-col gap-3 md:flex-row md:items-center md:gap-4 mb-4"
           >
             <div
-              class="flex flex-col md:flex-row md:items-center md:gap-3 flex-1 mb-4 md:mb-0"
+              class="flex flex-col md:flex-row md:items-center md:gap-3 flex-1"
             >
               <span
-                class="text-base md:text-lg font-medium md:font-semibold mb-1 md:mb-0"
+                class="text-[1.75rem] leading-tight sm:text-2xl font-bold text-foreground"
                 >Рабочие учебные планы:</span
               >
             </div>
-            <div class="flex flex-col md:flex-row md:items-center md:gap-3">
+            <div class="flex md:justify-end">
               <Select
                 v-model="selectedAcademicYear"
                 :options="academicYearOptions"
                 placeholder="Год поступления:"
                 name="academic-year"
-                class="w-[250px]"
+                class="w-full sm:w-[220px] md:w-[250px]"
               />
             </div>
           </div>
 
-          <Accordion>
+          <Accordion class="rup-accordion !space-y-4">
             <AccordionItem id="specialties" :default-expanded="true">
-              <template #title>Специальности:</template>
+              <template #title>
+                <span class="text-lg font-medium">Специальности:</span>
+              </template>
               <template #selected-item>
                 <span
                   v-if="selectedSpecialty"
-                  class="ml-2 text-xs md:text-sm px-2 py-1 rounded-md ring-2 ring-primary bg-primary/10"
+                  class="ml-2 text-xs md:text-sm px-2.5 py-1 rounded-md border border-primary/30 bg-primary/10 text-foreground"
                 >
                   {{ selectedSpecialty.codeName || selectedSpecialty.name }}
                 </span>
               </template>
-              <div class="flex flex-wrap items-center gap-2 md:gap-3">
+              <div class="flex flex-wrap items-center gap-2 md:gap-2.5">
                 <template v-if="specialtyStore.isLoading">
                   <div
                     v-for="n in 3"
@@ -113,22 +113,24 @@
                   <div
                     v-for="specialty in specialties"
                     :key="specialty.id"
-                    class="flex items-center justify-between gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                    class="group flex items-center justify-between gap-2 px-3.5 py-2.5 border rounded-lg bg-muted/20 transition-all duration-200 cursor-pointer min-w-[72px] sm:min-w-[88px]"
                     :class="{
-                      'ring-2 ring-primary bg-primary/10':
+                      'border-primary bg-primary/10 ring-1 ring-primary/25 shadow-sm':
                         selectedSpecialtyId === specialty.id,
+                      'border-border hover:border-border/80 hover:bg-muted/50':
+                        selectedSpecialtyId !== specialty.id,
                     }"
                     @click="selectedSpecialtyId = specialty.id"
                   >
-                    <span class="font-medium">
+                    <span class="text-base font-semibold tracking-tight">
                       {{ specialty.codeName || specialty.name }}
                     </span>
                     <f7-icon
                       ios="f7:info_circle"
                       md="material:info"
-                      size="18px"
+                      size="14px"
                       :id="`specialty-item-${specialty.id}`"
-                      class="text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                      class="text-muted-foreground group-hover:text-foreground transition-colors cursor-pointer"
                       @click.stop="
                         handleSpecialtyInfoClick(
                           specialty,
@@ -139,7 +141,7 @@
                   </div>
                   <div
                     v-if="specialties.length === 0"
-                    class="text-muted-foreground"
+                    class="w-full text-muted-foreground rounded-lg border border-dashed border-border px-3 py-5 text-center"
                   >
                     Нет специальностей
                   </div>
@@ -149,17 +151,17 @@
 
             <AccordionItem id="workingPlans" :default-expanded="true">
               <template #title>
-                <span>Рабочий учебный план:</span>
+                <span class="text-lg font-medium">Рабочий учебный план:</span>
                 <div
                   v-if="selectedAcademicYear && selectedSpecialtyId"
-                  class="inline-flex items-center rounded-lg border border-border bg-background ml-3"
+                  class="inline-flex items-center rounded-lg border border-border bg-muted/70 p-1 ml-2 md:ml-3"
                   @click.stop
                 >
                   <button
-                    class="px-3 py-1 text-sm whitespace-nowrap rounded-md transition-colors"
+                    class="px-3.5 py-1.5 text-xs md:text-sm whitespace-nowrap rounded-md transition-all"
                     :class="
                       selectedClassLevel === 9
-                        ? 'border border-foreground font-semibold bg-white dark:bg-card shadow-sm'
+                        ? 'bg-background text-foreground font-semibold shadow-sm'
                         : 'text-muted-foreground hover:text-foreground'
                     "
                     @click="selectedClassLevel = 9"
@@ -167,10 +169,10 @@
                     База 9 класса
                   </button>
                   <button
-                    class="px-3 py-1 text-sm whitespace-nowrap rounded-md transition-colors"
+                    class="px-3.5 py-1.5 text-xs md:text-sm whitespace-nowrap rounded-md transition-all"
                     :class="
                       selectedClassLevel === 11
-                        ? 'border border-foreground font-semibold bg-white dark:bg-card shadow-sm'
+                        ? 'bg-background text-foreground font-semibold shadow-sm'
                         : 'text-muted-foreground hover:text-foreground'
                     "
                     @click="selectedClassLevel = 11"
@@ -180,22 +182,24 @@
                 </div>
               </template>
               <template #actions>
-                <ImportWorkingPlanDialog
-                  :disabled="!(selectedAcademicYear && selectedSpecialtyId)"
-                  :specialty-id="selectedSpecialtyId || ''"
-                  @enable-select-mode="enableSelectMode"
-                />
+                <div class="flex items-center gap-2">
+                  <ImportWorkingPlanDialog
+                    :disabled="!(selectedAcademicYear && selectedSpecialtyId)"
+                    :specialty-id="selectedSpecialtyId || ''"
+                    @enable-select-mode="enableSelectMode"
+                  />
 
-                <AddWorkingPlanDialog
-                  :disabled="!(selectedAcademicYear && selectedSpecialtyId)"
-                  @add="addClass9"
-                />
+                  <AddWorkingPlanDialog
+                    :disabled="!(selectedAcademicYear && selectedSpecialtyId)"
+                    @add="addClass9"
+                  />
+                </div>
               </template>
               <div
                 v-if="!selectedAcademicYear"
-                class="w-full p-3 flex items-center justify-center"
+                class="w-full min-h-[140px] px-4 py-6 flex items-center justify-center rounded-lg border border-dashed border-border bg-muted/20"
               >
-                <div class="text-muted-foreground flex items-center gap-2">
+                <div class="text-muted-foreground text-sm md:text-base flex items-center gap-2">
                   <f7-icon
                     ios="f7:arrow_up"
                     md="material:keyboard_arrow_up"
@@ -206,9 +210,9 @@
               </div>
               <div
                 v-else-if="!selectedSpecialtyId"
-                class="w-full p-3 flex items-center justify-center"
+                class="w-full min-h-[140px] px-4 py-6 flex items-center justify-center rounded-lg border border-dashed border-border bg-muted/20"
               >
-                <div class="text-muted-foreground flex items-center gap-2">
+                <div class="text-muted-foreground text-sm md:text-base flex items-center gap-2">
                   <f7-icon
                     ios="f7:arrow_up"
                     md="material:keyboard_arrow_up"
@@ -217,7 +221,7 @@
                   <span>Сначала выберите специальность</span>
                 </div>
               </div>
-              <div v-else class="space-y-3">
+              <div v-else class="space-y-3 min-w-0">
                 <div>
                   <Class9Table
                     ref="class9TableRef"
@@ -444,5 +448,13 @@ onMounted(async () => {
 <style scoped>
 .specialty-info-popover.popover {
   margin-top: -160px !important; /* FIXME: workaround */
+}
+
+.rup-accordion :deep(.border) {
+  border-radius: 0.9rem;
+}
+
+.rup-accordion :deep(.bg-muted) {
+  background-color: hsl(var(--muted) / 0.38);
 }
 </style>

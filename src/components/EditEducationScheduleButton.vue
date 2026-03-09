@@ -28,7 +28,9 @@
             </label>
             <f7-input
               id="schedule-lesson-number"
-              type="number"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
               v-model:value="lessonNumber"
               placeholder="Введите номер урока"
             ></f7-input>

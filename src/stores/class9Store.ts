@@ -36,6 +36,7 @@ export interface Class9Data {
   srsHours: string;
   trainingPracticeHours: string;
   individualHours: string;
+  individualAdditionalHours: string;
   distributionEntries: DistributionEntry[];
   position: number;
   createdAt: Date;
@@ -81,6 +82,7 @@ export const useClass9Store = defineStore(
         srsHours: item.srsHours,
         trainingPracticeHours: item.trainingPracticeHours,
         individualHours: item.individualHours,
+        individualAdditionalHours: item.individualAdditionalHours ?? "",
         position: item.position,
         distributionEntries: (item.distributionEntries || []).map((d: any) => ({
           id: d._id,
@@ -228,6 +230,7 @@ export const useClass9Store = defineStore(
         srsHours: "",
         trainingPracticeHours: "",
         individualHours: "",
+        individualAdditionalHours: "",
         distributionEntries: [],
         position: 0,
         createdAt: new Date(),
@@ -267,6 +270,7 @@ export const useClass9Store = defineStore(
           srsHours: data?.srsHours || "",
           trainingPracticeHours: data?.trainingPracticeHours || "",
           individualHours: data?.individualHours || "",
+          individualAdditionalHours: data?.individualAdditionalHours || "",
           position: contextItems.length,
         });
 
@@ -313,6 +317,7 @@ export const useClass9Store = defineStore(
           | "srsHours"
           | "trainingPracticeHours"
           | "individualHours"
+          | "individualAdditionalHours"
         >
       >
     ) {
@@ -347,6 +352,10 @@ export const useClass9Store = defineStore(
           srsHours: customData?.srsHours || existingItem.srsHours,
           trainingPracticeHours: customData?.trainingPracticeHours || existingItem.trainingPracticeHours,
           individualHours: customData?.individualHours || existingItem.individualHours,
+          individualAdditionalHours:
+            customData?.individualAdditionalHours ||
+            existingItem.individualAdditionalHours ||
+            "",
           position: contextItems.length,
         });
 
@@ -385,6 +394,7 @@ export const useClass9Store = defineStore(
             srsHours: item.srsHours,
             trainingPracticeHours: item.trainingPracticeHours,
             individualHours: item.individualHours,
+            individualAdditionalHours: item.individualAdditionalHours || "",
             position: item.position,
           });
         }
@@ -426,6 +436,7 @@ export const useClass9Store = defineStore(
           srsHours: data.srsHours,
           trainingPracticeHours: data.trainingPracticeHours,
           individualHours: data.individualHours,
+          individualAdditionalHours: data.individualAdditionalHours,
           position: data.position,
           distributionEntries: (data.distributionEntries || []).map((d) => ({
             id: d.id,
@@ -511,6 +522,7 @@ export const useClass9Store = defineStore(
             srsHours: item.srsHours,
             trainingPracticeHours: item.trainingPracticeHours,
             individualHours: item.individualHours,
+            individualAdditionalHours: item.individualAdditionalHours || "",
             position: item.position + 1,
           });
         }
@@ -534,6 +546,7 @@ export const useClass9Store = defineStore(
           srsHours: itemToDuplicate.srsHours,
           trainingPracticeHours: itemToDuplicate.trainingPracticeHours,
           individualHours: itemToDuplicate.individualHours,
+          individualAdditionalHours: itemToDuplicate.individualAdditionalHours || "",
           position: insertionPosition,
         });
 
@@ -600,6 +613,7 @@ export const useClass9Store = defineStore(
             srsHours: data?.srsHours || "",
             trainingPracticeHours: data?.trainingPracticeHours || "",
             individualHours: data?.individualHours || "",
+            individualAdditionalHours: data?.individualAdditionalHours || "",
             position: contextItems.length + i,
           });
           ids.push(id);

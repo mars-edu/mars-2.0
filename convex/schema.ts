@@ -232,6 +232,7 @@ export default defineSchema({
     srsHours: v.string(),
     trainingPracticeHours: v.string(),
     individualHours: v.string(),
+    individualAdditionalHours: v.optional(v.string()),
     position: v.number(),
     createdAt: v.number(),
     updatedAt: v.number(),

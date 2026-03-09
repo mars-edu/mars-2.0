@@ -1,8 +1,8 @@
 <template>
   <button
-    class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-primary hover:bg-primary/90 rounded-full transition-colors"
+    class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-white bg-emerald-500 hover:bg-emerald-600 rounded-full transition-colors shadow-sm"
     :class="{
-      'opacity-50 cursor-not-allowed': disabled,
+      'opacity-50 cursor-not-allowed bg-muted text-muted-foreground': disabled,
     }"
     @click.stop="handleAdd"
     :disabled="disabled"
@@ -15,7 +15,7 @@
     <f7-icon
       ios="f7:plus"
       md="material:add"
-      size="16px"
+      size="18px"
       class="text-white"
     ></f7-icon>
   </button>

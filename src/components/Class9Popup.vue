@@ -207,7 +207,18 @@
                   label="Самостоятельная работа студента с педагогом"
                   type="number"
                   placeholder="0"
-                />
+                >
+                  <template #button>
+                    <button
+                      type="button"
+                      title="Распределить по семестрам"
+                      class="w-6 h-6 flex items-center justify-center rounded-md bg-transparent border-0 p-0 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer transition-colors active:scale-95"
+                      @click="distributeHoursFromField('srspHours')"
+                    >
+                      <f7-icon f7="arrow_down" class="text-base" />
+                    </button>
+                  </template>
+                </Input>
 
                 <Input
                   :id="'srs-hours-' + index"
@@ -215,7 +226,18 @@
                   label="Самостоятельная работа студента"
                   type="number"
                   placeholder="0"
-                />
+                >
+                  <template #button>
+                    <button
+                      type="button"
+                      title="Распределить по семестрам"
+                      class="w-6 h-6 flex items-center justify-center rounded-md bg-transparent border-0 p-0 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer transition-colors active:scale-95"
+                      @click="distributeHoursFromField('srsHours')"
+                    >
+                      <f7-icon f7="arrow_down" class="text-base" />
+                    </button>
+                  </template>
+                </Input>
 
                 <Input
                   :id="'training-practice-hours-' + index"
@@ -232,11 +254,30 @@
                   type="number"
                   placeholder="0"
                 />
+
+                <Input
+                  :id="'individual-additional-hours-' + index"
+                  v-model="stepData.individualAdditionalHours"
+                  label="Индивидуальные (дополнительно)"
+                  type="number"
+                  placeholder="0"
+                >
+                  <template #button>
+                    <button
+                      type="button"
+                      title="Распределить по семестрам"
+                      class="w-6 h-6 flex items-center justify-center rounded-md bg-transparent border-0 p-0 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer transition-colors active:scale-95"
+                      @click="distributeHoursFromField('individualAdditionalHours')"
+                    >
+                      <f7-icon f7="arrow_down" class="text-base" />
+                    </button>
+                  </template>
+                </Input>
               </div>
 
               <div class="mt-6">
-                <div class="flex items-center justify-between mb-3">
-                  <div class="text-sm font-medium">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="text-sm font-semibold text-gray-900">
                     Распределение по курсам и семестрам
                   </div>
                   <f7-button
@@ -250,24 +291,30 @@
                   </f7-button>
                 </div>
 
-                <div class="space-y-3">
-                  <div
-                    v-for="(entry, entryIndex) in stepData.distributionEntries"
-                    :key="entry.id"
-                    class="border border-input rounded-lg p-3"
-                  >
-                    <div class="flex items-center justify-end mb-3">
-                      <f7-button
-                        small
-                        @click="removeDistributionEntry(entry.id)"
-                        class="remove-entry-btn"
-                      >
-                        <f7-icon f7="trash" size="14px" color="red"></f7-icon>
-                      </f7-button>
+                <div class="distribution-table border border-input rounded-lg">
+                  <div class="overflow-x-auto">
+                    <div class="distribution-grid distribution-header">
+                      <div>Учебный год</div>
+                      <div>Семестр</div>
+                      <div class="text-center">Групп</div>
+                      <div>Форма контроля</div>
+                      <div></div>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-3">
-                      <div class="space-y-2">
+                    <div
+                      v-if="stepData.distributionEntries.length === 0"
+                      class="text-center py-4 text-muted-foreground text-sm bg-white"
+                    >
+                      Нет записей распределения. Нажмите "Добавить" чтобы создать
+                      первую запись.
+                    </div>
+
+                    <div v-else class="distribution-body">
+                      <div
+                        v-for="entry in stepData.distributionEntries"
+                        :key="entry.id"
+                        class="distribution-grid distribution-row"
+                      >
                         <Select
                           :modelValue="entry.academicYearId"
                           :options="
@@ -276,7 +323,6 @@
                               text: `${year.startYear}-${year.endYear}`,
                             }))
                           "
-                          label="Учебный год"
                           placeholder="Выберите год"
                           search-placeholder="Поиск учебного года..."
                           @update:modelValue="
@@ -287,9 +333,7 @@
                             }
                           "
                         />
-                      </div>
 
-                      <div class="space-y-2">
                         <Select
                           :modelValue="entry.semesterId"
                           :options="
@@ -302,58 +346,50 @@
                                 text: `Семестр ${academicYearSemester.semesterNumber}`,
                               }))
                           "
-                          label="Семестр"
                           placeholder="Выберите семестр"
                           search-placeholder="Поиск семестра..."
                           @update:modelValue="
                             (value) => {
-                              console.log('[Class9Popup] Semester changed:', {
-                                entryId: entry.id,
-                                oldValue: entry.semesterId,
-                                newValue: value,
-                                academicYearId: entry.academicYearId,
-                              });
                               entry.semesterId = value;
                             }
                           "
                         />
+
+                        <Input
+                          v-model="entry.hours"
+                          type="number"
+                          placeholder="0"
+                          :show-checkmark="false"
+                          :clear-button="false"
+                          class="distribution-hours-input"
+                        />
+
+                        <Select
+                          :modelValue="entry.finalControlId ?? ''"
+                          @update:modelValue="
+                            entry.finalControlId = $event || null
+                          "
+                          :options="
+                            getFinalControlOptionsForYear(
+                              entry.academicYearId,
+                              entry.semesterId
+                            )
+                          "
+                          placeholder="Выберите форму контроля"
+                          search-placeholder="Поиск формы контроля..."
+                        />
+
+                        <div class="distribution-actions">
+                          <f7-button
+                            small
+                            @click="removeDistributionEntry(entry.id)"
+                            class="remove-entry-btn"
+                          >
+                            <f7-icon f7="trash" size="14px"></f7-icon>
+                          </f7-button>
+                        </div>
                       </div>
-
-                      <Input
-                        v-model="entry.hours"
-                        label="Объем часов"
-                        type="number"
-                        placeholder="0"
-                        :show-checkmark="false"
-                        class="text-center"
-                      />
                     </div>
-
-                    <div class="mt-4">
-                      <div class="text-sm font-medium mb-2">Форма контроля</div>
-                      <Select
-                        :modelValue="entry.finalControlId ?? ''"
-                        @update:modelValue="
-                          entry.finalControlId = $event || null
-                        "
-                        :options="
-                          getFinalControlOptionsForYear(
-                            entry.academicYearId,
-                            entry.semesterId
-                          )
-                        "
-                        placeholder="Выберите форму контроля"
-                        search-placeholder="Поиск формы контроля..."
-                      />
-                    </div>
-                  </div>
-
-                  <div
-                    v-if="stepData.distributionEntries.length === 0"
-                    class="text-center py-4 text-muted-foreground text-sm"
-                  >
-                    Нет записей распределения. Нажмите "Добавить" чтобы создать
-                    первую запись.
                   </div>
                 </div>
               </div>
@@ -670,6 +706,12 @@ const class9Schema = z.object({
       message: "Индивидуальные часы должны быть положительным числом",
     })
     .optional(),
+  individualAdditionalHours: z
+    .string()
+    .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+      message: "Индивидуальные (дополнительно) должны быть положительным числом",
+    })
+    .optional(),
   distributionEntries: z.array(distributionEntrySchema).min(0),
 });
 
@@ -691,6 +733,7 @@ const validationResult = computed(() => {
     srsHours: String(step.srsHours),
     trainingPracticeHours: String(step.trainingPracticeHours),
     individualHours: String(step.individualHours),
+    individualAdditionalHours: String(step.individualAdditionalHours ?? ""),
     distributionEntries: step.distributionEntries,
   });
 });
@@ -892,6 +935,34 @@ function removeDistributionEntry(entryId: string) {
   }
 }
 
+function distributeHoursFromField(
+  field: "srspHours" | "srsHours" | "individualAdditionalHours"
+) {
+  const step = steps.value[currentStep.value - 1];
+  if (!step) return;
+
+  if (!step.distributionEntries.length) {
+    f7.dialog.alert("Сначала добавьте записи в распределение по семестрам");
+    return;
+  }
+
+  const sourceValue = Number(step[field] ?? 0);
+  if (!Number.isFinite(sourceValue) || sourceValue < 0) {
+    f7.dialog.alert("Введите корректное количество часов");
+    return;
+  }
+
+  const total = Math.round(sourceValue * 100);
+  const count = step.distributionEntries.length;
+  const base = Math.floor(total / count);
+  const remainder = total % count;
+
+  step.distributionEntries.forEach((entry, idx) => {
+    const value = (base + (idx < remainder ? 1 : 0)) / 100;
+    entry.hours = Number.isInteger(value) ? String(value) : value.toFixed(2);
+  });
+}
+
 function getFinalControlOptionsForYear(
   academicYearId: string,
   semesterId?: string
@@ -1056,39 +1127,138 @@ function showDeleteConfirmation() {
 }
 
 .add-distribution-btn {
-  background-color: var(--f7-theme-color) !important;
-  color: white !important;
+  background-color: #22c55e !important;
+  color: #ffffff !important;
+  border: 1px solid #22c55e !important;
+  border-radius: 0.5rem !important;
+  min-height: 2rem !important;
+  padding: 0 0.8rem !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+
+.add-distribution-btn:hover {
+  background-color: #16a34a !important;
+  border-color: #16a34a !important;
+}
+
+.add-distribution-btn:active {
+  transform: scale(0.98);
 }
 
 .remove-entry-btn {
-  min-width: 24px !important;
-  width: 24px !important;
-  height: 24px !important;
+  min-width: 26px !important;
+  width: 26px !important;
+  height: 26px !important;
   padding: 0 !important;
+  color: #9ca3af !important;
+  border-radius: 0.375rem !important;
 }
 
-:deep(.distribution-hours input[type="number"]) {
-  -moz-appearance: textfield;
-  -webkit-appearance: textfield;
-  appearance: textfield;
+.remove-entry-btn:hover {
+  background: #f3f4f6 !important;
+  color: #6b7280 !important;
 }
 
-:deep(.distribution-hours input[type="number"]::-webkit-outer-spin-button),
-:deep(.distribution-hours input[type="number"]::-webkit-inner-spin-button) {
-  -webkit-appearance: none;
-  margin: 0;
+.distribution-table {
+  margin-top: 0.25rem;
+  border: 1px solid #d9dee5 !important;
+  border-radius: 0.6rem !important;
+  background: #fff;
+  overflow: hidden;
 }
 
-.distribution-hours {
+.distribution-grid {
   display: grid;
-  grid-template-columns: 120px repeat(8, 1fr);
+  grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) 100px minmax(220px, 1.4fr) 32px;
   gap: 0.5rem;
+  min-width: 760px;
 }
 
-.semester-grid {
-  display: grid;
-  grid-template-columns: 120px repeat(8, 1fr);
-  gap: 0.5rem;
+.distribution-header {
+  padding: 0.5rem 0.75rem;
+  background: #f3f4f6;
+  border-bottom: 1px solid #d9dee5;
+  font-size: 0.8rem;
+  line-height: 1rem;
+  font-weight: 600;
+  color: #5f6b7a;
+  align-items: center;
+}
+
+.distribution-body {
+  background: #fff;
+}
+
+.distribution-row {
+  padding: 0.35rem 0.75rem;
+  align-items: center;
+  border-bottom: 1px solid #eceff3;
+}
+
+.distribution-row:last-child {
+  border-bottom: none;
+}
+
+.distribution-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+:deep(.distribution-hours-input input[inputmode="numeric"]) {
+  text-align: center;
+  padding-right: 0.7rem !important;
+}
+
+:deep(.distribution-row .select-item .item-content) {
+  min-height: 34px !important;
+  background: #ffffff !important;
+  border: 1px solid #d7dde5 !important;
+  border-radius: 0.5rem !important;
+}
+
+:deep(.distribution-row .select-item .item-link::after),
+:deep(.distribution-row .select-item .item-link::before),
+:deep(.distribution-row .select-item .item-inner::before) {
+  display: none !important;
+}
+
+:deep(.distribution-row .select-item .item-inner) {
+  min-height: 34px !important;
+  padding: 0.4rem 0.65rem !important;
+  padding-right: 2.05rem !important;
+}
+
+:deep(.distribution-row .select-item .item-after) {
+  font-size: 0.95rem !important;
+  color: #1f2937 !important;
+}
+
+:deep(.distribution-row .select-item .item-inner::after) {
+  content: "" !important;
+  right: 0.65rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 0.95rem !important;
+  height: 0.95rem !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+}
+
+:deep(.distribution-row .distribution-hours-input .input) {
+  background: #f3f4f6 !important;
+  min-height: 34px !important;
+  border-radius: 0.5rem !important;
+}
+
+:deep(.distribution-row li::after),
+:deep(.distribution-row li::before),
+:deep(.distribution-row .item-content::after),
+:deep(.distribution-row .item-content::before) {
+  display: none !important;
 }
 
 /* Language selector chips */
