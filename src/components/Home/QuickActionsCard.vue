@@ -50,7 +50,7 @@
         </p>
       </div>
       <div class="mt-4 pt-4 border-t border-border">
-        <span class="text-orange-500 text-sm font-bold flex items-center gap-1">
+        <span class="text-primary text-sm font-bold flex items-center gap-1">
           Создать <i class="f7-icons text-xs">chevron_right</i>
         </span>
       </div>
