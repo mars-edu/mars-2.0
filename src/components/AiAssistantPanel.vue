@@ -283,7 +283,7 @@ function barClass(band: number): string {
 // ── Chat (Vercel AI SDK) ─────────────────────────────────────────────────────
 const chat = new Chat({
   transport: new DefaultChatTransport({
-    url: `${CONVEX_SITE_URL}/api/chat`,
+    api: `${CONVEX_SITE_URL}/api/chat`,
   }),
 });
 
