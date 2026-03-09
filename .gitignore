@@ -53,3 +53,4 @@ tests/.auth/
 stats.html
 # Test coverage
 coverage/
+.worktrees/
