@@ -44,6 +44,7 @@ const navigateToProtocol = () => {
   f7.views.main.router.navigate("/protocol");
 };
 
+// TODO: replace with real activity data from protocolStore or journalHistoryStore
 const activityItems = [
   {
     id: 1,

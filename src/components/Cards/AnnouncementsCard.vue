@@ -54,7 +54,7 @@
           </p>
         </div>
       </template>
-      <div v-else class="col-span-3 text-center py-8 text-muted-foreground text-sm">
+      <div v-else class="col-span-full text-center py-8 text-muted-foreground text-sm">
         Нет объявлений в этой категории
       </div>
     </div>
@@ -74,6 +74,7 @@ const filters = [
   { id: "system", label: "Система" },
 ];
 
+// TODO: replace with real data from notificationStore or a dedicated announcements API
 interface AnnouncementItem {
   id: number;
   title: string;

@@ -10,29 +10,35 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, onMounted, onUnmounted } from "vue";
 import { useUserStore } from "@/stores/userStore";
 
 const userStore = useUserStore();
 
-const firstName = computed(() => {
-  const name = userStore.currentUser?.firstName;
-  return name || "Пользователь";
+const now = ref(new Date());
+let timer: ReturnType<typeof setInterval>;
+
+onMounted(() => {
+  // Update every minute so greeting and date stay current
+  timer = setInterval(() => { now.value = new Date(); }, 60_000);
 });
+onUnmounted(() => clearInterval(timer));
+
+const firstName = computed(() => userStore.currentUser?.firstName || "Пользователь");
 
 const greeting = computed(() => {
-  const hour = new Date().getHours();
+  const hour = now.value.getHours();
   if (hour < 12) return "Доброе утро";
   if (hour < 17) return "Добрый день";
   return "Добрый вечер";
 });
 
-const formattedDate = computed(() => {
-  return new Date().toLocaleDateString("ru-RU", {
+const formattedDate = computed(() =>
+  now.value.toLocaleDateString("ru-RU", {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
-  });
-});
+  })
+);
 </script>
