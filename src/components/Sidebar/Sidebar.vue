@@ -1,63 +1,49 @@
 <template>
   <aside
-    class="fixed top-[55px] left-0 bottom-0 w-28 bg-card border-r border-border overflow-hidden z-50 shadow-sm"
+    class="fixed top-[55px] left-0 bottom-0 bg-card border-r border-border overflow-visible z-50 shadow-sm transition-all duration-200"
+    :class="sidebarWidth"
     style="display: grid; grid-template-rows: 1fr auto"
   >
-    <div class="overflow-y-auto w-full">
-      <nav class="flex flex-col items-center pt-8 pb-4 w-full">
-        <template v-for="(item, index) in navigationItems" :key="item.id">
-          <!-- Section separator before first item of a new group -->
-          <div
-            v-if="getSectionLabel(item.id, index)"
-            class="w-full px-3 py-2"
-          >
-            <div class="border-t border-border"></div>
-          </div>
-          <div
-            :title="item.label"
-            class="group relative flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all duration-200 px-2 py-2 flex-shrink-0 w-full"
-            :class="[
-              item.id === activeNavItem
-                ? 'bg-primary/10 text-primary'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted',
-            ]"
-            @click="handleNavItemClick(item.id)"
-          >
-            <i class="f7-icons text-[22px]">{{ item.icon }}</i>
-            <span
-              class="text-[10px] mt-1 text-center leading-tight max-w-[90px] break-words hyphens-auto"
-              style="hyphens: auto; -webkit-hyphens: auto; -ms-hyphens: auto"
-              >{{ item.label }}</span
-            >
-            <div
-              v-if="item.id === activeNavItem"
-              class="absolute bottom-1 w-1 h-1 bg-primary rounded-full"
-            ></div>
-          </div>
-        </template>
+    <!-- Toggle button on right edge -->
+    <button
+      class="absolute -right-3 top-6 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-card border border-border shadow-sm hover:bg-muted transition-colors"
+      @click="toggle"
+      :title="collapsed ? 'Развернуть' : 'Свернуть'"
+    >
+      <component
+        :is="collapsed ? IconChevronRight : IconChevronLeft"
+        class="w-3 h-3 text-muted-foreground"
+      />
+    </button>
+
+    <!-- Nav items -->
+    <div class="overflow-y-auto overflow-x-hidden w-full">
+      <nav class="flex flex-col pt-4 pb-4 w-full">
+        <SidebarItem
+          v-for="item in navigationItems"
+          :key="item.id"
+          :label="item.label"
+          :active="item.id === activeNavItem"
+          :collapsed="collapsed"
+          @click="handleNavItemClick(item.id)"
+        >
+          <component :is="navIconMap[item.id]" class="w-5 h-5" />
+        </SidebarItem>
       </nav>
     </div>
 
-    <div class="border-t border-border bg-card p-3">
-      <div class="space-y-1">
-        <div
-          v-for="item in profileMenuItems"
-          :key="item.id"
-          :title="item.label"
-          class="group relative flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all duration-200 px-2 py-2 flex-shrink-0"
-          :class="[
-            'text-muted-foreground hover:text-foreground hover:bg-muted',
-          ]"
-          @click="handleProfileItemClick(item.id)"
-        >
-          <i class="f7-icons text-[22px]">{{ item.icon }}</i>
-          <span
-            class="text-[10px] mt-1 text-center leading-tight max-w-[90px] break-words hyphens-auto"
-            style="hyphens: auto; -webkit-hyphens: auto; -ms-hyphens: auto"
-            >{{ item.label }}</span
-          >
-        </div>
-      </div>
+    <!-- Profile / bottom items -->
+    <div class="border-t border-border bg-card py-3 overflow-x-hidden">
+      <SidebarItem
+        v-for="item in profileMenuItems"
+        :key="item.id"
+        :label="item.label"
+        :active="false"
+        :collapsed="collapsed"
+        @click="handleProfileItemClick(item.id)"
+      >
+        <component :is="profileIconMap[item.id]" class="w-5 h-5" />
+      </SidebarItem>
     </div>
   </aside>
 </template>
@@ -65,10 +51,51 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from "vue";
 import { useRBAC } from "@/composables/useRBAC";
+import { useSidebar } from "@/composables/useSidebar";
 import { f7 } from "framework7-vue";
-import { useUserStore } from "@/stores/userStore";
 import AuthService from "@/services/auth";
 import type { NavigationItem } from "@/composables/useRBAC";
+import SidebarItem from "./SidebarItem.vue";
+
+// Lucide icons via unplugin-icons
+import IconHouse from "~icons/lucide/house";
+import IconGraduationCap from "~icons/lucide/graduation-cap";
+import IconBookOpen from "~icons/lucide/book-open";
+import IconCalendar from "~icons/lucide/calendar";
+import IconFileText from "~icons/lucide/file-text";
+import IconClipboardList from "~icons/lucide/clipboard-list";
+import IconLayoutList from "~icons/lucide/layout-list";
+import IconBarChart2 from "~icons/lucide/bar-chart-2";
+import IconFileBarChart from "~icons/lucide/file-bar-chart";
+import IconCalendarDays from "~icons/lucide/calendar-days";
+import IconUsers from "~icons/lucide/users";
+import IconUserCheck from "~icons/lucide/user-check";
+import IconCircleUser from "~icons/lucide/circle-user";
+import IconSettings from "~icons/lucide/settings";
+import IconLogOut from "~icons/lucide/log-out";
+import IconChevronLeft from "~icons/lucide/chevron-left";
+import IconChevronRight from "~icons/lucide/chevron-right";
+
+const navIconMap: Record<string, unknown> = {
+  "home": IconHouse,
+  "specialty-catalog": IconGraduationCap,
+  "discipline-catalog": IconBookOpen,
+  "schedule": IconCalendar,
+  "protocol": IconFileText,
+  "journals": IconClipboardList,
+  "rup": IconLayoutList,
+  "analytics": IconBarChart2,
+  "reports": IconFileBarChart,
+  "education-schedule": IconCalendarDays,
+  "student-card": IconUsers,
+  "teacher-card": IconUserCheck,
+};
+
+const profileIconMap: Record<string, unknown> = {
+  "profile": IconCircleUser,
+  "settings": IconSettings,
+  "logout": IconLogOut,
+};
 
 interface Props {
   activeNavItem?: string;
@@ -78,36 +105,11 @@ const props = withDefaults(defineProps<Props>(), {
   activeNavItem: "home",
 });
 
+const { collapsed, sidebarWidth, toggle } = useSidebar();
 const { getNavigationItems, getProfileMenuItems } = useRBAC();
-const userStore = useUserStore();
 
 const navigationItems = computed(() => getNavigationItems.value);
 const profileMenuItems = computed(() => getProfileMenuItems.value);
-
-const SECTION_GROUPS: Record<string, string> = {
-  "specialty-catalog": "АКАДЕМИЧЕСКИЙ",
-  "discipline-catalog": "АКАДЕМИЧЕСКИЙ",
-  "schedule": "АКАДЕМИЧЕСКИЙ",
-  "protocol": "АКАДЕМИЧЕСКИЙ",
-  "journals": "АКАДЕМИЧЕСКИЙ",
-  "rup": "АКАДЕМИЧЕСКИЙ",
-  "analytics": "АНАЛИТИКА",
-  "reports": "АНАЛИТИКА",
-  "education-schedule": "АНАЛИТИКА",
-  "student-card": "КАРТОТЕКА",
-  "teacher-card": "КАРТОТЕКА",
-};
-
-const getSectionLabel = (itemId: string, index: number): string | null => {
-  const items = navigationItems.value;
-  const currentGroup = SECTION_GROUPS[itemId] ?? null;
-  if (!currentGroup) return null;
-  // Show label only if previous visible item belongs to a different group
-  if (index === 0) return currentGroup;
-  const prevId = items[index - 1]?.id;
-  const prevGroup = SECTION_GROUPS[prevId] ?? null;
-  return prevGroup !== currentGroup ? currentGroup : null;
-};
 
 const emit = defineEmits<{
   (e: "update:activeNavItem", value: string): void;
@@ -137,14 +139,6 @@ const handleProfileItemClick = async (itemId: string): Promise<void> => {
     f7.views.main.router.navigate(item.route);
   }
 };
-
-const userInitial = computed(() => {
-  const user = userStore.currentUser;
-  if (user?.firstName) {
-    return user.firstName.charAt(0).toUpperCase();
-  }
-  return "S";
-});
 
 const updateActiveItem = () => {
   const currentPath = f7.views.main.router.currentRoute.path;
