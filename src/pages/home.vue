@@ -14,7 +14,8 @@
 
       <!-- Main Content Area for Desktop -->
       <div
-        class="flex-1 overflow-y-auto p-4 bg-background text-foreground ml-32"
+        class="flex-1 overflow-y-auto p-4 bg-background text-foreground transition-all duration-200"
+        :class="contentMargin"
       >
         <div class="flex flex-row gap-4">
           <div class="flex-1 space-y-4 min-w-[60%]">
@@ -117,21 +118,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import {
-  f7Navbar,
-  f7Page,
-  f7Link,
-  f7Toolbar,
-  f7Panel,
-  f7Block,
-  f7List,
-  f7ListItem,
-  f7NavLeft,
-  f7NavRight,
-  f7Tabs,
-  f7Tab,
-} from "framework7-vue";
+import { ref } from "vue";
+import { f7Page, f7Link, f7Toolbar, f7Tabs, f7Tab } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Doodle from "@/components/Doodle/Doodle.vue";
@@ -141,19 +129,14 @@ import AnnouncementsCard from "@/components/Cards/AnnouncementsCard.vue";
 import CalendarCard from "@/components/Cards/CalendarCard.vue";
 import ScheduleCard from "@/components/Cards/ScheduleCard.vue";
 import AcademicWeekCard from "@/components/Cards/AcademicWeekCard.vue";
+import { useSidebar } from "@/composables/useSidebar";
 
-console.log("[HomePage] Component setup initiated");
+const { contentMargin } = useSidebar();
 
 // Unique page ID that changes on each mount to track navigation
 const pageId = ref(Date.now());
 
 const activeNavItem = ref("home");
-
-onMounted(() => {
-  console.log("[HomePage] Component mounted");
-  console.log("[HomePage] Active navigation item:", activeNavItem.value);
-  console.log("[HomePage] Navigation items configured:", navigationItems);
-});
 
 const navigationItems = [
   { id: "home", label: "Главная", icon: "house_fill" },

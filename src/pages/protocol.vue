@@ -12,7 +12,7 @@
     <f7-page-content class="protocol-content">
       <Sidebar v-model:activeNavItem="activeNavItem" />
 
-      <div class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-32">
+      <div class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 transition-all duration-200" :class="contentMargin">
         <div class="flex flex-col gap-4">
           <!-- Page Header with Teacher Selector -->
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -156,7 +156,9 @@ import Select from "@/components/ui/Select.vue";
 import { useProtocolStore } from "@/stores/protocolStore";
 import { useUserStore } from "@/stores/userStore";
 import { useTeacherStore } from "@/stores/teacherStore";
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 const activeNavItem = ref("protocol");
 const protocolStore = useProtocolStore();
 const userStore = useUserStore();

@@ -11,7 +11,8 @@
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-32"
+        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 transition-all duration-200"
+        :class="contentMargin"
       >
         <div class="flex flex-col gap-4">
           <div class="flex items-center justify-between">
@@ -80,9 +81,11 @@ import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddDisciplineButton from "@/components/AddDisciplineButton.vue";
 import EditDisciplineButton from "@/components/EditDisciplineButton.vue";
 import { useDisciplineStore, type Discipline } from "@/stores/disciplineStore";
+import { useSidebar } from "@/composables/useSidebar";
 
 // Unique page ID that changes on each mount to track navigation
 const pageId = ref(Date.now());
+const { contentMargin } = useSidebar();
 
 const activeNavItem = ref("discipline-catalog");
 const disciplineStore = useDisciplineStore();

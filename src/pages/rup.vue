@@ -9,7 +9,8 @@
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-32 relative"
+        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 relative transition-all duration-200"
+        :class="contentMargin"
       >
         <div
           v-if="isSelectMode"
@@ -286,7 +287,9 @@ import { useRupStore } from "@/stores/rupStore";
 import { useClass9Store, type Class9Data } from "@/stores/class9Store";
 import { useUserStore } from "@/stores/userStore";
 import { useTeacherStore } from "@/stores/teacherStore";
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 const activeNavItem = ref("rup");
 const specialtyStore = useSpecialtyStore();
 const academicYearStore = useAcademicYearStore();

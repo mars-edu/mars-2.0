@@ -9,7 +9,8 @@
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-32"
+        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 transition-all duration-200"
+        :class="contentMargin"
       >
         <div
           class="bg-card text-card-foreground rounded-xl p-4 md:p-4 shadow-sm"
@@ -512,7 +513,9 @@ import type { ScheduledFinalControl } from "@/stores/scheduledFinalControlStore"
 import type { ScheduledIntermediateControl } from "@/stores/scheduledIntermediateControlStore";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT, DATE_UI_FORMAT } from "@/constants/calendar";
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 const activeNavItem = ref("education-schedule");
 const educationScheduleStore = useEducationScheduleStore();
 

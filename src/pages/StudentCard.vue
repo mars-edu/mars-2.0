@@ -9,7 +9,8 @@
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-32"
+        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 transition-all duration-200"
+        :class="contentMargin"
       >
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
@@ -150,7 +151,9 @@ import { useLanguageStore } from "@/stores/languageStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useBaseStore } from "@/stores/baseStore";
 import { storeToRefs } from "pinia";
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 const activeNavItem = ref("student-card");
 const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();

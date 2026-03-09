@@ -9,7 +9,8 @@
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-32"
+        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 transition-all duration-200"
+        :class="contentMargin"
       >
         <div class="flex flex-col gap-4">
           <div class="flex items-center justify-between">
@@ -148,8 +149,11 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import { Cropper, CircleStencil } from "vue-advanced-cropper";
 import "vue-advanced-cropper/dist/style.css";
+import { useSidebar } from "@/composables/useSidebar";
 
 console.log("[ProfilePage] Component setup initiated");
+
+const { contentMargin } = useSidebar();
 
 const activeNavItem = ref("profile");
 const userStore = useUserStore();

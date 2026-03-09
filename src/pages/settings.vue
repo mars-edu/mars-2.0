@@ -9,7 +9,8 @@
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-32"
+        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 transition-all duration-200"
+        :class="contentMargin"
       >
         <div
           class="bg-card text-card-foreground rounded-xl p-4 md:p-4 shadow-sm"
@@ -379,8 +380,11 @@ import AddIntermediateControlButton from "@/components/AddIntermediateControlBut
 import EditIntermediateControlButton from "@/components/EditIntermediateControlButton.vue";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import type { IntermediateControl } from "@/stores/intermediateControlStore";
+import { useSidebar } from "@/composables/useSidebar";
 
 console.log("[SettingsPage] Component setup initiated");
+
+const { contentMargin } = useSidebar();
 
 const activeNavItem = ref("settings");
 const courseStore = useCourseStore();

@@ -12,7 +12,7 @@
     <f7-page-content class="planning-content">
       <Sidebar v-model:activeNavItem="activeNavItem" />
 
-      <div ref="calendarContainer" class="calendar-container p-2 md:ml-32">
+      <div ref="calendarContainer" class="calendar-container p-2 transition-all duration-200" :class="contentMargin">
         <div v-if="userStore.isAdmin" class="mb-3 flex justify-end">
           <Select
             v-model="selectedTeacherId"
@@ -107,7 +107,9 @@ import { type CalendarEvent as StoreCalendarEvent } from "@/stores/calendarStore
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useUserStore } from "@/stores/userStore";
 import { useTeacherStore } from "@/stores/teacherStore";
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 const calendarContainer = ref<HTMLElement | null>(null);
 const activeNavItem = ref("calendar");
 

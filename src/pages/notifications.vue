@@ -13,7 +13,7 @@
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <!-- Page Content -->
-      <div class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-32">
+      <div class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 transition-all duration-200" :class="contentMargin">
         <div class="max-w-4xl mx-auto">
           <!-- Header -->
           <div class="mb-6">
@@ -206,7 +206,9 @@ import { useConvexQuery, useConvexMutation } from 'convex-vue';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
 import { useUserStore } from '@/stores/userStore';
+import { useSidebar } from "@/composables/useSidebar";
 
+const { contentMargin } = useSidebar();
 const userStore = useUserStore();
 const processing = ref(false);
 const pageId = ref(Date.now());
