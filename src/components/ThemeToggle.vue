@@ -1,104 +1,41 @@
 <!-- ThemeToggle.vue -->
 <template>
-  <div>
-    <!-- Desktop view (hidden on small screens) -->
-    <div
-      class="hidden sm:flex overflow-hidden rounded-lg border transition-colors"
-      :class="[themeClasses.background, themeClasses.border]"
+  <div class="flex items-center gap-2 p-1.5 rounded-full border border-border bg-card shadow-sm">
+    <button
+      v-for="t in themes"
+      :key="t.value"
+      :title="t.label"
+      class="w-5 h-5 rounded-full border border-border/60 transition-transform hover:scale-110 flex items-center justify-center flex-shrink-0"
+      :class="themeStore.currentTheme === t.value ? 'ring-2 ring-offset-1 ring-primary scale-110' : ''"
+      :style="{ backgroundColor: t.color }"
+      @click="themeStore.setTheme(t.value)"
     >
-      <button
-        v-for="theme in availableThemes"
-        :key="theme.value"
-        class="px-3 py-1.5 text-sm font-medium transition-colors whitespace-nowrap"
-        :class="{
-          'bg-red-500 text-white': theme.value === themeStore.currentTheme,
-          [themeClasses.hoverBackground]: theme.value !== themeStore.currentTheme,
-        }"
-        @click="handleThemeChange(theme.value)"
+      <svg
+        v-if="themeStore.currentTheme === t.value"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="3"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="w-2.5 h-2.5"
+        :class="t.value === 'dark' ? 'text-white' : 'text-gray-600'"
       >
-        {{ theme.label }}
-      </button>
-    </div>
-
-    <!-- Mobile view (visible only on small screens) -->
-    <div
-      class="sm:hidden"
-      :class="[themeClasses.background, themeClasses.border]"
-    >
-      <select
-        :value="themeStore.currentTheme"
-        @change="(e) => handleThemeChange((e.target as HTMLSelectElement).value as ThemeOption)"
-        class="w-full px-3 py-1.5 text-sm font-medium rounded-lg border appearance-none cursor-pointer bg-transparent focus:outline-none focus:ring-2 focus:ring-red-500"
-        :class="[themeClasses.border]"
-      >
-        <option
-          v-for="theme in availableThemes"
-          :key="theme.value"
-          :value="theme.value"
-        >
-          {{ theme.label }}
-        </option>
-      </select>
-    </div>
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useThemeStore } from "../stores/themeStore";
-import { computed } from "vue";
-
-type ThemeOption = "light" | "dark" | "lavanda";
-
-interface ThemeChoice {
-  value: ThemeOption;
-  label: string;
-}
 
 const themeStore = useThemeStore();
 
-const availableThemes: ThemeChoice[] = [
-  { value: 'light', label: '☀️ светлая' },
-  { value: 'dark', label: '🌙 темная' },
-  { value: 'lavanda', label: '💜 лавандовая' }
-];
-
-const handleThemeChange = (value: ThemeOption) => {
-  themeStore.setTheme(value);
-};
-
-const themeClasses = computed(() => {
-  switch (themeStore.currentTheme) {
-    case "dark":
-      return {
-        background: "bg-gray-700",
-        border: "border-gray-600",
-        hoverBackground: "hover:bg-gray-600",
-      };
-    case "lavanda":
-      return {
-        background: "bg-purple-100",
-        border: "border-purple-200",
-        hoverBackground: "hover:bg-purple-200",
-      };
-    default:
-      return {
-        background: "bg-gray-100",
-        border: "border-gray-200",
-        hoverBackground: "hover:bg-gray-200",
-      };
-  }
-});
+const themes = [
+  { value: 'light',   color: '#ffffff',  label: 'Светлая' },
+  { value: 'dark',    color: '#1f2937',  label: 'Темная' },
+  { value: 'lavanda', color: '#e9d5ff',  label: 'Лавандовая' },
+] as const;
 </script>
-
-<style scoped>
-select {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 0.5rem center;
-  background-repeat: no-repeat;
-  background-size: 1.5em 1.5em;
-  padding-right: 2.5rem;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-}
-</style>
