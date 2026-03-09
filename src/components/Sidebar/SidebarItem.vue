@@ -14,7 +14,7 @@
     </div>
     <span
       class="text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-200"
-      :class="collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'"
+      :class="collapsed ? 'max-w-0 opacity-0' : 'max-w-[200px] opacity-100'"
     >
       {{ label }}
     </span>
