@@ -112,7 +112,7 @@ export default async () => {
             groups: [
               {
                 name: "framework7",
-                test: /node_modules\/(framework7|framework7-vue|framework7-icons)/,
+                test: /node_modules\/(framework7|framework7-vue)/,
                 priority: 10,
               },
               {
