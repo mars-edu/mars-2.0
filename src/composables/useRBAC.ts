@@ -1,6 +1,24 @@
 import { computed } from "vue";
 import { useUserStore } from "../stores/userStore";
 import { Role } from "../types/user";
+import {
+  nav_home,
+  nav_specialty_catalog,
+  nav_discipline_catalog,
+  nav_schedule,
+  nav_protocol,
+  nav_journals,
+  nav_rup,
+  nav_analytics,
+  nav_reports,
+  nav_education_schedule,
+  nav_student_card,
+  nav_teacher_card,
+  nav_profile,
+  nav_settings,
+  nav_logout,
+} from "@/paraglide/messages";
+import { useLocaleStore } from "@/stores/localeStore";
 
 export interface AccessControl {
   roles: Role[];
@@ -17,6 +35,7 @@ export interface NavigationItem {
 
 export function useRBAC() {
   const userStore = useUserStore();
+  const localeStore = useLocaleStore();
 
   const checkAccess = (requiredRoles: Role[]): boolean => {
     if (!userStore.isAuthenticated) return false;
@@ -25,156 +44,121 @@ export function useRBAC() {
   };
 
   const getNavigationItems = computed(() => {
+    void localeStore.locale; // reactive dependency — re-runs when locale changes
     const items: NavigationItem[] = [
       {
         id: "home",
-        label: "Главная",
+        label: nav_home(),
         icon: "house_fill",
         roles: [],
         route: "/home",
       },
       {
         id: "specialty-catalog",
-        label: "Каталог специальностей",
+        label: nav_specialty_catalog(),
         icon: "book_fill",
         roles: [Role.ADMIN],
         route: "/specialty-catalog/",
       },
       {
         id: "discipline-catalog",
-        label: "Каталог дисциплин",
+        label: nav_discipline_catalog(),
         icon: "book_fill",
         roles: [Role.ADMIN],
         route: "/discipline-catalog/",
       },
       {
         id: "schedule",
-        label: "Планирование",
+        label: nav_schedule(),
         icon: "calendar_fill",
         roles: [Role.ADMIN, Role.TEACHER],
         route: "/planning",
       },
       {
         id: "protocol",
-        label: "Протокол",
+        label: nav_protocol(),
         icon: "list_bullet_fill",
         roles: [Role.ADMIN, Role.TEACHER],
         route: "/protocol",
       },
       {
         id: "journals",
-        label: "Журналы",
+        label: nav_journals(),
         icon: "doc_text_fill",
         roles: [Role.ADMIN, Role.TEACHER],
         route: "/journals/",
       },
       {
         id: "rup",
-        label: "РУП",
+        label: nav_rup(),
         icon: "doc_fill",
         roles: [Role.ADMIN, Role.TEACHER],
         route: "/rup/",
       },
-      // {
-      //   id: "testing",
-      //   label: "Тестирование",
-      //   icon: "checkmark_circle_fill",
-      //   roles: [Role.ADMIN, Role.TEACHER],
-      //   route: "/testing/",
-      // },
       {
         id: "analytics",
-        label: "Аналитика",
+        label: nav_analytics(),
         icon: "chart_bar_fill",
         roles: [Role.ADMIN],
         route: "/analytics/",
       },
       {
         id: "reports",
-        label: "Отчеты",
+        label: nav_reports(),
         icon: "doc_chart_fill",
         roles: [Role.ADMIN, Role.TEACHER],
         route: "/reports/",
       },
-      // {
-      //   id: "room-booking",
-      //   label: "Бронирование кабинета",
-      //   icon: "building_2_fill",
-      //   roles: [Role.ADMIN],
-      //   route: "/room-booking/",
-      // },
-      // {
-      //   id: "communication",
-      //   label: "Общение",
-      //   icon: "chat_bubble_fill",
-      //   roles: [Role.ADMIN],
-      //   route: "/communication/",
-      // },
       {
         id: "education-schedule",
-        label: "График образовательного процесса",
+        label: nav_education_schedule(),
         icon: "calendar_fill",
         roles: [Role.ADMIN],
         route: "/education-schedule/",
       },
       {
         id: "student-card",
-        label: "Картотека обучающихся",
+        label: nav_student_card(),
         icon: "book_fill",
         roles: [Role.ADMIN],
         route: "/student-card/",
       },
       {
         id: "teacher-card",
-        label: "Картотека преподавателей",
+        label: nav_teacher_card(),
         icon: "book_fill",
         roles: [Role.ADMIN],
         route: "/teacher-card/",
       },
-      // {
-      //   id: "library",
-      //   label: "Библиотека",
-      //   icon: "book_fill",
-      //   roles: [Role.ADMIN],
-      //   route: "/library/",
-      // },
-      // {
-      //   id: "institution-info",
-      //   label: "Информация об учебном заведении",
-      //   icon: "building_2_fill",
-      //   roles: [Role.ADMIN],
-      //   route: "/institution-info/",
-      // },
     ];
-
     return items.filter((item) => checkAccess(item.roles));
   });
 
   const getProfileMenuItems = computed(() => {
+    void localeStore.locale;
     const items: NavigationItem[] = [
       {
         id: "profile",
-        label: "Профиль",
+        label: nav_profile(),
         icon: "person_fill",
         roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
         route: "/profile/",
       },
       {
         id: "settings",
-        label: "Настройки",
+        label: nav_settings(),
         icon: "gear_fill",
         roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
         route: "/settings/",
       },
       {
         id: "logout",
-        label: "Выйти",
+        label: nav_logout(),
         icon: "arrow_right_circle_fill",
         roles: [],
         route: "/login/",
       },
     ];
-
     return items.filter((item) => checkAccess(item.roles));
   });
 

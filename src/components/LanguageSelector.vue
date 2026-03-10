@@ -1,13 +1,15 @@
 <template>
   <div class="flex p-0.5 rounded-full bg-muted">
     <button
-      v-for="lang in availableLanguages"
+      v-for="lang in availableLocales"
       :key="lang.code"
       class="px-3 py-1 rounded-full text-xs font-bold transition-all"
-      :class="lang.code === activeLanguage
-        ? 'bg-card text-foreground shadow-sm'
-        : 'text-muted-foreground hover:text-foreground'"
-      @click="setLanguage(lang.code)"
+      :class="
+        lang.code === locale
+          ? 'bg-card text-foreground shadow-sm'
+          : 'text-muted-foreground hover:text-foreground'
+      "
+      @click="setLocale(lang.code)"
     >
       {{ lang.code.toUpperCase() }}
     </button>
@@ -15,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { useLanguage } from "@/composables/useLanguage";
+import { useI18n } from "@/composables/useI18n";
 
-const { activeLanguage, availableLanguages, setLanguage } = useLanguage();
+const { locale, availableLocales, setLocale } = useI18n();
 </script>
