@@ -11,7 +11,7 @@
       {{ event.title }}
     </div>
     <div class="flex items-center gap-1 text-opacity-80" :style="{ color: textColor }">
-      <Clock :size="10" />
+      <IconClock class="w-2.5 h-2.5 shrink-0" />
       <span class="truncate">{{ event.time }}</span>
     </div>
     <div
@@ -27,7 +27,7 @@
 <script setup lang="ts">
 import type { CalendarEvent } from "@/composables/useCalendar";
 import { computed } from "vue";
-import { Clock } from "lucide-vue-next";
+import IconClock from "~icons/lucide/clock";
 import { useThemeStore } from "@/stores/themeStore";
 
 const props = defineProps<{
