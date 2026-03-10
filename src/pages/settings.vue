@@ -83,12 +83,7 @@
                     aria-label="Edit Semester"
                     type="button"
                   >
-                    <f7-icon
-                      ios="f7:pencil"
-                      md="material:edit"
-                      size="18px"
-                      class="text-primary"
-                    />
+                    <IconPencil class="w-[18px] h-[18px] text-primary" />
                   </button>
                 </div>
                 <EditSemesterButton
@@ -136,12 +131,7 @@
                     aria-label="Edit Course"
                     type="button"
                   >
-                    <f7-icon
-                      ios="f7:pencil"
-                      md="material:edit"
-                      size="18px"
-                      class="text-primary"
-                    />
+                    <IconPencil class="w-[18px] h-[18px] text-primary" />
                   </button>
                 </div>
                 <EditCourseButton
@@ -195,12 +185,7 @@
                     aria-label="Edit Language"
                     type="button"
                   >
-                    <f7-icon
-                      ios="f7:pencil"
-                      md="material:edit"
-                      size="18px"
-                      class="text-primary"
-                    />
+                    <IconPencil class="w-[18px] h-[18px] text-primary" />
                   </button>
                 </div>
                 <EditLanguageButton
@@ -256,12 +241,7 @@
                         aria-label="Edit Final Control"
                         type="button"
                       >
-                        <f7-icon
-                          ios="f7:pencil"
-                          md="material:edit"
-                          size="18px"
-                          class="text-primary"
-                        />
+                        <IconPencil class="w-[18px] h-[18px] text-primary" />
                       </button>
                     </div>
                     <EditFinalControlButton
@@ -316,12 +296,7 @@
                         aria-label="Edit Intermediate Control"
                         type="button"
                       >
-                        <f7-icon
-                          ios="f7:pencil"
-                          md="material:edit"
-                          size="18px"
-                          class="text-primary"
-                        />
+                        <IconPencil class="w-[18px] h-[18px] text-primary" />
                       </button>
                     </div>
                     <EditIntermediateControlButton
@@ -375,6 +350,7 @@ import EditIntermediateControlButton from "@/components/EditIntermediateControlB
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import type { IntermediateControl } from "@/stores/intermediateControlStore";
 import { useSidebar } from "@/composables/useSidebar";
+import IconPencil from "~icons/lucide/pencil";
 
 console.log("[SettingsPage] Component setup initiated");
 
