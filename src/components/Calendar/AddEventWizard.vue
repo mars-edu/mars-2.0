@@ -224,7 +224,7 @@
                 @click="removeWeekDaySlot(day.weekId, slot.index)"
                 title="Удалить время"
               >
-                <i class="f7-icons text-sm">xmark</i>
+                <IconX class="text-sm" />
               </button>
             </div>
 
@@ -379,7 +379,7 @@
           <span class="text-sm text-foreground">РУП/КТП</span>
           <span class="text-muted-foreground flex items-center">
             Открыть
-            <i class="f7-icons text-muted-foreground ml-1">chevron_right</i>
+            <IconChevronRight class="text-muted-foreground ml-1" />
           </span>
         </button>
 
@@ -458,7 +458,7 @@
                   @click="removeJournal(journal.id)"
                   title="Удалить журнал"
                 >
-                  <i class="f7-icons text-sm">xmark</i>
+                  <IconX class="text-sm" />
                 </button>
               </div>
 
@@ -474,9 +474,8 @@
                       : 'Выберите студентов'
                     }}
                   </span>
-                  <i class="f7-icons text-sm text-muted-foreground">
-                    {{ openStudentSelectorId === journal.id ? 'chevron_up' : 'chevron_down' }}
-                  </i>
+                  <IconChevronUp v-if="openStudentSelectorId === journal.id" class="text-sm text-muted-foreground" />
+                  <IconChevronDown v-else class="text-sm text-muted-foreground" />
                 </button>
 
                 <div
@@ -572,7 +571,7 @@
                       @click="removeJournalSlot(journal.id, slot.index)"
                       title="Удалить время"
                     >
-                      <i class="f7-icons text-sm">xmark</i>
+                      <IconX class="text-sm" />
                     </button>
                   </div>
 
@@ -628,6 +627,10 @@
 <script setup lang="ts">
 import { computed, reactive, ref, toRefs, watch, type Ref } from "vue";
 import { f7 } from "framework7-vue";
+import IconX from "~icons/lucide/x";
+import IconChevronRight from "~icons/lucide/chevron-right";
+import IconChevronUp from "~icons/lucide/chevron-up";
+import IconChevronDown from "~icons/lucide/chevron-down";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import "dayjs/locale/ru";
