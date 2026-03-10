@@ -17,12 +17,7 @@
             class="w-full py-3 rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors flex items-center justify-center gap-2 cursor-pointer"
             @click="openExcel"
           >
-            <f7-icon
-              ios="f7:doc_text"
-              md="material:description"
-              size="16px"
-              class="text-white"
-            ></f7-icon>
+            <IconFileText class="w-4 h-4 text-white" />
             Скачать Excel шаблон
           </a>
 
@@ -30,12 +25,7 @@
             class="w-full py-3 rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 cursor-pointer"
             @click="openWord"
           >
-            <f7-icon
-              ios="f7:doc_text"
-              md="material:article"
-              size="16px"
-              class="text-white"
-            ></f7-icon>
+            <IconFileText class="w-4 h-4 text-white" />
             Скачать Word шаблон
           </a>
         </div>
@@ -45,7 +35,8 @@
 </template>
 
 <script setup lang="ts">
-import { f7, f7Popover, f7Icon } from "framework7-vue";
+import { f7, f7Popover } from "framework7-vue";
+import IconFileText from "~icons/lucide/file-text";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { saveAs } from "file-saver";

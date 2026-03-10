@@ -55,7 +55,7 @@
                 class="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center"
                 @click="deleteColumn(index)"
               >
-                <i class="f7-icons text-xs">trash</i>
+                <IconTrash class="w-3 h-3" />
               </button>
             </div>
           </template>
@@ -64,7 +64,7 @@
               class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center"
               @click="addColumn"
             >
-              <i class="f7-icons">plus</i>
+              <IconPlus class="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -76,6 +76,8 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { f7 } from "framework7-vue";
+import IconTrash from "~icons/lucide/trash-2";
+import IconPlus from "~icons/lucide/plus";
 import { useColumnConfigStore } from "@/stores/columnConfig";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { z } from "zod";

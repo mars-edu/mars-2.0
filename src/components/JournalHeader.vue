@@ -5,11 +5,7 @@
         @click="$emit('back')"
         class="back-button flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted transition-colors cursor-pointer"
       >
-        <f7-icon
-          f7="chevron_left"
-          size="24px"
-          class="text-foreground"
-        />
+        <IconChevronLeft class="w-6 h-6 text-foreground" />
       </f7-link>
       <div class="text-l font-semibold">
         <p>
@@ -40,7 +36,8 @@
 </template>
 
 <script setup lang="ts">
-import { f7Link, f7Icon } from "framework7-vue";
+import { f7Link } from "framework7-vue";
+import IconChevronLeft from "~icons/lucide/chevron-left";
 
 defineProps<{
   disciplineText: string;

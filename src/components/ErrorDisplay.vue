@@ -3,11 +3,7 @@
     <f7-card class="error-card margin-horizontal">
       <f7-card-content class="text-align-center">
         <div class="error-icon-container">
-          <f7-icon
-            f7="exclamationmark_triangle_fill"
-            size="50"
-            color="red"
-          ></f7-icon>
+          <IconTriangleAlert class="w-[50px] h-[50px] text-red-500" />
         </div>
         <h3 class="error-title">Ошибка</h3>
         <p class="error-message">{{ message }}</p>
@@ -20,7 +16,8 @@
 </template>
 
 <script setup lang="ts">
-import { f7Button, f7Card, f7CardContent, f7Icon } from "framework7-vue";
+import { f7Button, f7Card, f7CardContent } from "framework7-vue";
+import IconTriangleAlert from "~icons/lucide/triangle-alert";
 
 defineProps<{
   message: string;

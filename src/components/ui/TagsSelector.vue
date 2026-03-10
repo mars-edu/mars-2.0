@@ -34,12 +34,8 @@
             {{ selectedItems.length }}
             {{ selectedItems.length === 1 ? "элемент" : "элементов" }} выбрано
           </span>
-          <f7-icon
-            :ios="isOpen ? 'f7:chevron_up' : 'f7:chevron_down'"
-            :md="isOpen ? 'material:expand_less' : 'material:expand_more'"
-            size="16px"
-            class="ml-2 opacity-60"
-          />
+          <IconChevronUp v-if="isOpen" class="w-4 h-4 ml-2 opacity-60" />
+          <IconChevronDown v-else class="w-4 h-4 ml-2 opacity-60" />
         </button>
 
         <!-- Dropdown menu -->
@@ -90,7 +86,9 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, watch, onMounted, onUnmounted } from "vue";
-import { f7Input, f7Chip, f7Icon, f7Checkbox } from "framework7-vue";
+import { f7Input, f7Chip, f7Checkbox } from "framework7-vue";
+import IconChevronUp from "~icons/lucide/chevron-up";
+import IconChevronDown from "~icons/lucide/chevron-down";
 
 interface SelectableItem {
   id: string;
