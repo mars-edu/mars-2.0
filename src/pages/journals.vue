@@ -11,8 +11,7 @@
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 transition-all duration-200"
-        :class="contentMargin"
+        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 md:ml-32"
       >
         <div class="flex flex-col gap-4">
           <div
@@ -42,8 +41,7 @@
                 :options="teacherOptions"
                 placeholder="Преподаватель:"
                 name="teacher"
-                class="w-full sm:w-[250px]"
-                :searchable="true"
+                class="w-full sm:w-44"
               />
             </div>
           </div>
@@ -96,7 +94,12 @@
                   @click="exitSelectionMode"
                   class="bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex-1 sm:flex-none"
                 >
-                  <IconX class="w-4 h-4 mr-2" />
+                  <f7-icon
+                    ios="f7:xmark"
+                    md="material:close"
+                    size="16px"
+                    class="mr-2"
+                  />
                   Отмена
                 </f7-button>
                 <f7-button
@@ -105,7 +108,12 @@
                   @click="selectAll"
                   class="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex-1 sm:flex-none"
                 >
-                  <IconCircleCheck class="w-4 h-4 mr-2" />
+                  <f7-icon
+                    ios="f7:checkmark_circle"
+                    md="material:check_circle"
+                    size="16px"
+                    class="mr-2"
+                  />
                   Выбрать все
                 </f7-button>
                 <f7-button
@@ -114,7 +122,12 @@
                   @click="deselectAll"
                   class="bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex-1 sm:flex-none"
                 >
-                  <IconCircleX class="w-4 h-4 mr-2" />
+                  <f7-icon
+                    ios="f7:xmark_circle"
+                    md="material:cancel"
+                    size="16px"
+                    class="mr-2"
+                  />
                   Снять все
                 </f7-button>
                 <f7-button
@@ -124,21 +137,26 @@
                   :class="selectionDoneButtonClass"
                   :disabled="selectedJournalIds.size === 0"
                 >
-                  <IconArrowDownToLine
+                  <f7-icon
                     v-if="selectionAction === 'download'"
-                    class="w-4 h-4 mr-2"
+                    ios="f7:arrow_down_to_line"
+                    md="material:file_download"
+                    size="16px"
+                    class="mr-2"
                   />
-                  <IconCircleX
+                  <f7-icon
                     v-else-if="selectionAction === 'close'"
-                    class="w-4 h-4 mr-2"
+                    ios="f7:xmark_circle"
+                    md="material:cancel"
+                    size="16px"
+                    class="mr-2"
                   />
-                  <IconRefreshCw
-                    v-else-if="selectionAction === 'replace'"
-                    class="w-4 h-4 mr-2"
-                  />
-                  <IconLockOpen
+                  <f7-icon
                     v-else
-                    class="w-4 h-4 mr-2"
+                    ios="f7:lock_open"
+                    md="material:lock_open"
+                    size="16px"
+                    class="mr-2"
                   />
                   {{ selectionDoneText }} ({{ selectedJournalIds.size }})
                 </f7-button>
@@ -151,7 +169,12 @@
                   @click="onSettingsClick"
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
-                  <IconSettings2 class="w-4 h-4 mr-2" />
+                  <f7-icon
+                    ios="f7:gear"
+                    md="material:settings"
+                    size="16px"
+                    class="mr-2"
+                  />
                   Настройки
                 </f7-button>
                 <f7-button
@@ -160,7 +183,12 @@
                   @click="onOpenJournalClick"
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
-                  <IconLockOpen class="w-4 h-4 mr-2" />
+                  <f7-icon
+                    ios="f7:lock_open"
+                    md="material:lock_open"
+                    size="16px"
+                    class="mr-2"
+                  />
                   Открыть журнал
                 </f7-button>
                 <f7-button
@@ -169,7 +197,12 @@
                   @click="onCloseJournalClick"
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
-                  <IconCircleX class="w-4 h-4 mr-2" />
+                  <f7-icon
+                    ios="f7:xmark_circle"
+                    md="material:cancel"
+                    size="16px"
+                    class="mr-2"
+                  />
                   Закрыть журнал
                 </f7-button>
                 <f7-button
@@ -178,18 +211,13 @@
                   @click="onDownloadClick"
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
-                  <IconArrowDownToLine class="w-4 h-4 mr-2" />
+                  <f7-icon
+                    ios="f7:arrow_down_to_line"
+                    md="material:file_download"
+                    size="16px"
+                    class="mr-2"
+                  />
                   Скачать
-                </f7-button>
-                <f7-button
-                  id="replace-journal-button"
-                  small
-                  default
-                  @click="onReplaceClick"
-                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
-                >
-                  <IconRefreshCw class="w-4 h-4 mr-2" />
-                  Заменить
                 </f7-button>
                 <f7-button
                   small
@@ -197,7 +225,12 @@
                   @click="onUploadClick"
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
-                  <IconArrowUpToLine class="w-4 h-4 mr-2" />
+                  <f7-icon
+                    ios="f7:arrow_up_to_line"
+                    md="material:file_upload"
+                    size="16px"
+                    class="mr-2"
+                  />
                   Загрузить
                 </f7-button>
                 <f7-button
@@ -206,51 +239,123 @@
                   @click="onShareClick"
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
-                  <IconShare class="w-4 h-4 mr-2" />
+                  <f7-icon
+                    ios="f7:share"
+                    md="material:share"
+                    size="16px"
+                    class="mr-2"
+                  />
                   Поделится
                 </f7-button>
               </template>
             </div>
-            <!-- Filter bar -->
-            <div class="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl self-start overflow-x-auto max-w-full mb-5 flex-wrap">
-              <button
-                v-for="f in JOURNAL_FILTERS"
-                :key="f.id"
-                type="button"
-                :aria-pressed="activeFilter === f.id"
-                @click="activeFilter = f.id"
-                class="px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 whitespace-nowrap"
-                :class="activeFilter === f.id
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'"
-              >
-                {{ f.label }}
-              </button>
-            </div>
-
-            <!-- Journal grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              <JournalGridCard
-                v-for="journal in filteredByTab"
-                :key="journal.id"
-                :title="journalStore.getDisciplineTitle(journal)"
-                :subtitle="journalStore.getJournalSubtitle(journal)"
-                :accent-color="getJournalAccentColor(journal.id)"
-                :course-number="(!journal.isMixedGroup && !journal.isIndividualJournal) ? journal.courseNumber : undefined"
-                :student-count="journal.students?.length ?? 0"
-                :selection-mode="isSelectionMode"
-                :selected="selectedJournalIds.has(journal.id)"
-                @click="goToJournalDetails(journal.id)"
-                @toggle-select="toggleJournalSelection(journal.id)"
-              />
-              <div
-                v-if="filteredByTab.length === 0"
-                class="col-span-full rounded-2xl border-2 border-dashed border-border flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground"
-              >
-                <div class="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                  <IconInbox class="w-6 h-6 opacity-40" />
-                </div>
-                <span class="text-sm font-medium opacity-60">В этой категории нет журналов</span>
+            <div class="overflow-x-auto">
+              <div class="flex gap-5 w-full">
+                <template v-for="(course, idx) in courses" :key="course.id">
+                  <div class="flex flex-col gap-3 w-full">
+                    <h2
+                      class="font-semibold text-sm text-center py-1 bg-muted rounded-md text-muted-foreground"
+                    >
+                      {{ course.number }} курс
+                    </h2>
+                    <div
+                      v-for="journal in filteredJournalsByCourse[
+                        parseInt(course.number)
+                      ]"
+                      :key="journal.id"
+                    >
+                      <JournalCard
+                        :title="journalStore.getDisciplineTitle(journal)"
+                        :subtitle="journalStore.getJournalSubtitle(journal)"
+                        :schedule="journalStore.getJournalScheduleText(journal)"
+                        :percent="journalStore.getJournalPercent(journal)"
+                        :selection-mode="isSelectionMode"
+                        :selected="selectedJournalIds.has(journal.id)"
+                        :show-edit-button="false"
+                        @click="goToJournalDetails(journal.id)"
+                        @toggle-select="toggleJournalSelection(journal.id)"
+                      />
+                    </div>
+                    <div
+                      v-if="
+                        filteredJournalsByCourse[parseInt(course.number)].length === 0
+                      "
+                      class="rounded-lg p-4 text-gray-500 shadow-sm min-h-[90px] flex items-center justify-center bg-gray-50 border border-gray-100"
+                    >
+                      <p class="text-sm">Нет доступных журналов</p>
+                    </div>
+                  </div>
+                  <div v-if="idx === 3" class="flex flex-col gap-3 w-full">
+                    <h2
+                      class="font-semibold text-sm text-center py-1 bg-muted rounded-md text-muted-foreground"
+                    >
+                      смешанные группы
+                    </h2>
+                    <div
+                      v-for="journal in filteredMixedGroupJournals"
+                      :key="journal.id"
+                    >
+                      <JournalCard
+                        :title="journalStore.getDisciplineTitle(journal)"
+                        :subtitle="journalStore.getJournalSubtitle(journal)"
+                        :schedule="journalStore.getJournalScheduleText(journal)"
+                        :percent="journalStore.getJournalPercent(journal)"
+                        :selection-mode="isSelectionMode"
+                        :selected="selectedJournalIds.has(journal.id)"
+                        :show-edit-button="false"
+                        @click="goToJournalDetails(journal.id)"
+                        @toggle-select="toggleJournalSelection(journal.id)"
+                      />
+                    </div>
+                    <div
+                      v-if="filteredMixedGroupJournals.length === 0"
+                      class="rounded-lg p-4 text-gray-500 shadow-sm min-h-[90px] flex items-center justify-center bg-gray-50 border border-gray-100"
+                    >
+                      <p class="text-sm">Нет доступных журналов</p>
+                    </div>
+                  </div>
+                  <div v-if="idx === 3" class="flex flex-col gap-3 w-full">
+                    <h2
+                      class="font-semibold text-sm text-center py-1 bg-primary/10 rounded-md text-primary flex items-center justify-between px-2"
+                    >
+                      <span>индивидуальный журнал</span>
+                      <button
+                        @click="onAddIndividualJournal"
+                        class="w-6 h-6 rounded-md bg-primary hover:bg-primary-dark transition-colors flex items-center justify-center"
+                      >
+                        <f7-icon
+                          ios="f7:plus"
+                          md="material:add"
+                          size="16px"
+                          class="text-white"
+                        />
+                      </button>
+                    </h2>
+                    <div
+                      v-for="journal in filteredIndividualJournals"
+                      :key="journal.id"
+                    >
+                      <JournalCard
+                        :title="journalStore.getDisciplineTitle(journal)"
+                        :subtitle="journalStore.getJournalSubtitle(journal)"
+                        :schedule="journalStore.getJournalScheduleText(journal)"
+                        :percent="journalStore.getJournalPercent(journal)"
+                        :selection-mode="isSelectionMode"
+                        :selected="selectedJournalIds.has(journal.id)"
+                        :show-edit-button="true"
+                        @click="goToJournalDetails(journal.id)"
+                        @toggle-select="toggleJournalSelection(journal.id)"
+                        @edit="onEditIndividualJournal(journal.id)"
+                      />
+                    </div>
+                    <div
+                      v-if="filteredIndividualJournals.length === 0"
+                      class="rounded-lg p-4 text-gray-500 shadow-sm min-h-[90px] flex items-center justify-center bg-gray-50 border border-gray-100"
+                    >
+                      <p class="text-sm">Нет индивидуальных журналов</p>
+                    </div>
+                  </div>
+                </template>
               </div>
             </div>
           </div>
@@ -263,35 +368,17 @@
       @save="onIndividualJournalSave"
       @close="onIndividualJournalClose"
     />
-
-    <ReplaceJournalPopover
-      :is-loading="isReplacingJournals"
-      @save="handleReplaceJournals"
-      @cancel="handleReplaceCancel"
-    />
   </f7-page>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
-import { f7Page, f7Input, f7, f7Button } from "framework7-vue";
-import IconX from "~icons/lucide/x";
-import IconCircleCheck from "~icons/lucide/circle-check";
-import IconCircleX from "~icons/lucide/circle-x";
-import IconArrowDownToLine from "~icons/lucide/arrow-down-to-line";
-import IconArrowUpToLine from "~icons/lucide/arrow-up-to-line";
-import IconRefreshCw from "~icons/lucide/refresh-cw";
-import IconLockOpen from "~icons/lucide/lock-open";
-import IconSettings2 from "~icons/lucide/settings-2";
-import IconShare from "~icons/lucide/share-2";
-import IconInbox from "~icons/lucide/inbox";
+import { f7Page, f7Input, f7, f7Icon, f7Button } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
+import JournalCard from "@/components/Cards/JournalCard.vue";
 import IndividualJournalPopup from "@/components/IndividualJournalPopup.vue";
-import ReplaceJournalPopover from "@/components/ReplaceJournalPopover.vue";
-import type { ReplaceJournalData } from "@/components/ReplaceJournalPopover.vue";
-import JournalGridCard from '@/components/Cards/JournalGridCard.vue'
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { useJournalStore, type Journal } from "@/stores/journalStore";
@@ -318,15 +405,7 @@ import {
 } from "@/services/convex-excel-export";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
-import {
-  extractLessonDates,
-  formatAttendanceValue,
-  extractFinalGrade,
-  prepareJournalExportMetadata,
-} from "@/utils/journalExport";
-import { useSidebar } from "@/composables/useSidebar";
 
-const { contentMargin } = useSidebar();
 type JournalStudentRow = JournalExportParams["students"][number];
 
 // Unique page ID that changes on each mount to track navigation
@@ -393,14 +472,11 @@ const semesterOptions = computed(() => {
 });
 
 const selectedTeacherId = computed({
-  get: () => calendarStore.selectedTeacherId || "all",
-  set: (value: string) => calendarStore.setSelectedTeacher(value === "all" ? null : value),
+  get: () => calendarStore.selectedTeacherId || "",
+  set: (value: string) => calendarStore.setSelectedTeacher(value || null),
 });
 
-const teacherOptions = computed(() => [
-  { value: "all", text: "Все" },
-  ...teacherStore.teacherSelectOptions,
-]);
+const teacherOptions = computed(() => teacherStore.teacherSelectOptions);
 
 onMounted(async () => {
   console.log("\n\n");
@@ -475,7 +551,6 @@ watch(selectedSemesterId, (newVal, oldVal) => {
   console.log(`\n   Old: "${oldVal || "(none)"}"`);
   console.log(`   New: "${newVal || "(none)"}"`);
   console.log("\n" + "─".repeat(60));
-  activeFilter.value = 'all'
 });
 
 // Watch for academicYearSemester data to arrive and auto-select
@@ -550,15 +625,9 @@ const filteredJournalsByCourse = computed(() => {
         console.log(`      📆 Weekly Schedules: ${event.weeklySchedules?.length || 0}`);
         console.log(`      👨‍🏫 Event Teacher: ${event.teacherId || "(none)"}`);
 
-        // Check teacher match - event.teacherId could be either teacher record ID or user ID
-        if (teacherId) {
-          const selectedTeacher = teacherStore.getTeacherById(teacherId);
-          const teacherUserId = selectedTeacher?.userId;
-          const isTeacherMatch = event.teacherId === teacherId || event.teacherId === teacherUserId;
-          if (!isTeacherMatch) {
-            console.log(`      ❌ FILTERED: Teacher mismatch`);
-            return false;
-          }
+        if (teacherId && event.teacherId !== teacherId) {
+          console.log(`      ❌ FILTERED: Teacher mismatch`);
+          return false;
         }
 
         if (yearId && event.startDate) {
@@ -640,15 +709,9 @@ const filteredMixedGroupJournals = computed(() => {
     console.log(`      📆 Weekly Schedules: ${event.weeklySchedules?.length || 0}`);
     console.log(`      👨‍🏫 Event Teacher: ${event.teacherId || "(none)"}`);
 
-    // Check teacher match - event.teacherId could be either teacher record ID or user ID
-    if (teacherId) {
-      const selectedTeacher = teacherStore.getTeacherById(teacherId);
-      const teacherUserId = selectedTeacher?.userId;
-      const isTeacherMatch = event.teacherId === teacherId || event.teacherId === teacherUserId;
-      if (!isTeacherMatch) {
-        console.log(`      ❌ FILTERED: Teacher mismatch`);
-        return false;
-      }
+    if (teacherId && event.teacherId !== teacherId) {
+      console.log(`      ❌ FILTERED: Teacher mismatch`);
+      return false;
     }
 
     if (yearId && event.startDate) {
@@ -686,67 +749,13 @@ const filteredIndividualJournals = computed(() => {
 
     if (!event) return false;
 
-    // Check teacher match - event.teacherId could be either teacher record ID or user ID
-    if (teacherId) {
-      const selectedTeacher = teacherStore.getTeacherById(teacherId);
-      const teacherUserId = selectedTeacher?.userId;
-      const isTeacherMatch = event.teacherId === teacherId || event.teacherId === teacherUserId;
-      if (!isTeacherMatch) return false;
-    }
+    if (teacherId && event.teacherId !== teacherId) return false;
 
     if (semId && (!event.semester || event.semester !== semId)) return false;
 
     return true;
   });
 });
-
-// ─── Journal grid redesign ────────────────────────────────────────────────
-
-const JOURNAL_CARD_PALETTE = [
-  { bg: '#EFF6FF', text: '#3b82f6' },
-  { bg: '#F0FDF4', text: '#10b981' },
-  { bg: '#FFF7ED', text: '#f59e0b' },
-  { bg: '#F5F3FF', text: '#8b5cf6' },
-  { bg: '#FFF1F2', text: '#f43f5e' },
-  { bg: '#ECFDF5', text: '#059669' },
-] as const
-
-function getJournalAccentColor(id: string): { bg: string; text: string } {
-  let hash = 0
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash * 31 + id.charCodeAt(i)) & 0xfffffff
-  }
-  return JOURNAL_CARD_PALETTE[hash % JOURNAL_CARD_PALETTE.length]
-}
-
-type JournalFilter = 'all' | 'course-1' | 'course-2' | 'course-3' | 'course-4' | 'mixed' | 'individual'
-const activeFilter = ref<JournalFilter>('all')
-
-const JOURNAL_FILTERS: ReadonlyArray<{ id: JournalFilter; label: string }> = [
-  { id: 'all',        label: 'Все' },
-  { id: 'course-1',   label: '1 Курс' },
-  { id: 'course-2',   label: '2 Курс' },
-  { id: 'course-3',   label: '3 Курс' },
-  { id: 'course-4',   label: '4 Курс' },
-  { id: 'mixed',      label: 'Смешанные' },
-  { id: 'individual', label: 'Индивидуальные' },
-]
-
-const filteredByTab = computed(() => {
-  if (activeFilter.value === 'all') {
-    const flat: Journal[] = []
-    Object.values(filteredJournalsByCourse.value).forEach((list) => flat.push(...list))
-    flat.push(...filteredMixedGroupJournals.value)
-    flat.push(...filteredIndividualJournals.value)
-    return flat
-  }
-  if (activeFilter.value === 'mixed')      return filteredMixedGroupJournals.value
-  if (activeFilter.value === 'individual') return filteredIndividualJournals.value
-  const num = parseInt(activeFilter.value.split('-')[1])
-  return filteredJournalsByCourse.value[num] ?? []
-})
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 const goToJournalDetails = (id: number | string) => {
   f7.views.main.router.navigate(`/journals/${id}?from=journals`);
@@ -767,7 +776,7 @@ const groupOptions = ref([{ value: "pi-1-21", text: "ПИ-1-21" }]);
 const selectedRole = ref("");
 const roleOptions = ref([{ value: "student", text: "Студент" }]);
 
-type SelectionAction = "download" | "close" | "open" | "replace";
+type SelectionAction = "download" | "close" | "open";
 
 const isSelectionMode = ref(false);
 const selectionAction = ref<SelectionAction>("download");
@@ -776,7 +785,6 @@ const selectedJournalIds = ref(new Set<string>());
 const selectionDoneText = computed(() => {
   if (selectionAction.value === "close") return "Закрыть";
   if (selectionAction.value === "open") return "Открыть";
-  if (selectionAction.value === "replace") return "Заменить";
   return "Скачать";
 });
 
@@ -784,7 +792,6 @@ const selectionDoneButtonClass = computed(() => {
   const base = "text-white transition-colors flex-1 sm:flex-none";
   if (selectionAction.value === "close") return `bg-red-500 hover:bg-red-600 ${base}`;
   if (selectionAction.value === "open") return `bg-green-500 hover:bg-green-600 ${base}`;
-  if (selectionAction.value === "replace") return `bg-orange-500 hover:bg-orange-600 ${base}`;
   return `bg-primary hover:bg-primary-dark ${base}`;
 });
 
@@ -874,25 +881,55 @@ async function downloadSelectedJournals() {
       await marksStore.loadJournalMarks(journalId);
       const journalMarks = marksStore.getJournalMarks(journalId);
 
-      // Get marks structure from first student to determine columns (export ALL columns like JournalDetails)
+      // Extract lesson dates and build attendance data from marks
+      const lessonDates: string[] = [];
+      const dateMarkIndices: number[] = [];
+
+      // Get marks structure from first student to determine columns
       const firstStudentMarks = journalMarks?.studentMarks?.[0]?.marks || [];
+      firstStudentMarks.forEach((mark, index) => {
+        if (mark.type === "date" && mark.isoDate) {
+          // Format date as DD.MM.YYYY for export
+          const parts = mark.isoDate.split("-");
+          if (parts.length === 3) {
+            lessonDates.push(`${parts[2]}.${parts[1]}.${parts[0]}`);
+          } else {
+            lessonDates.push(mark.isoDate);
+          }
+          dateMarkIndices.push(index);
+        }
+      });
 
-      // Use utility to extract lesson dates from marks template
-      const lessonDates = extractLessonDates(firstStudentMarks);
-
-      // Build student rows with attendance data for ALL columns
+      // Build student rows with attendance data
       const studentRows: JournalStudentRow[] = (journal.students || []).map(
         (studentId) => {
           const studentMarks = marksStore.getStudentMarks(journalId, studentId) || [];
 
-          // Build attendance array from ALL marks using utility function
-          const attendance: (string | number | null)[] = firstStudentMarks.map((_, markIndex) => {
+          // Build attendance array from date marks only
+          const attendance: (string | number | null)[] = dateMarkIndices.map((markIndex) => {
             const mark = studentMarks[markIndex];
-            return formatAttendanceValue(mark);
+            if (!mark) return "";
+
+            // Combine all values for the date (multiple lessons per day)
+            const combined = (mark.values || [])
+              .map((value) =>
+                value === null || value === "" ? "" : String(value).trim()
+              )
+              .filter((value) => value.length > 0);
+            return combined.join(" / ");
           });
 
-          // Extract final grade using utility function
-          const finalGrade = extractFinalGrade(studentMarks);
+          // Get final grade from session marks (look for final control type)
+          let finalGrade: string | undefined;
+          const finalMark = studentMarks.find(
+            (m) => m.type === "session" && m.controlType === "final"
+          );
+          if (finalMark && finalMark.values?.[0]) {
+            const val = finalMark.values[0];
+            if (val !== null && val !== "") {
+              finalGrade = String(val);
+            }
+          }
 
           return {
             id: studentId,
@@ -903,41 +940,66 @@ async function downloadSelectedJournals() {
         }
       );
 
-      // Prepare export metadata using shared utility
+      const primaryStudentId = journal.students?.[0];
+      const primaryStudent = primaryStudentId
+        ? students.value.find((s) => s.id === primaryStudentId)
+        : undefined;
+      const specialty = primaryStudent?.specialty
+        ? specialtyStore.getSpecialtyByCode(primaryStudent.specialty)
+        : undefined;
+
       const academicYearId = selectedItemsStore.selectedAcademicYearId;
       const academicYear = academicYearId
         ? academicYearStore.getAcademicYearById(academicYearId)
         : academicYearStore.getActiveAcademicYear;
 
-      const semesters = academicYear
-        ? academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(academicYear.id)
-        : [];
+      const academicYearLabel = academicYear
+        ? `${academicYear.startYear}/${academicYear.endYear}`
+        : "";
 
-      const metadata = prepareJournalExportMetadata({
-        journal,
-        event,
-        students: students.value,
-        academicYear,
-        selectedAcademicYearId: academicYearId,
-        class9Items: class9Store.class9Items,
-        academicYearSemesters: semesters,
-        scheduledFinalControls: scheduledFinalControlStore.scheduledFinalControls,
-        finalControls: finalControlStore.finalControls,
-        getSpecialtyByCode: (code: string) => specialtyStore.getSpecialtyByCode(code),
-        getTeacherFullName: (id: string) => teacherStore.getTeacherFullName(id),
-        getDisciplineTitle: (j) => journalStore.getDisciplineTitle(j),
-        getJournalTitle: (j) => journalStore.getJournalTitle(j),
-      });
+      const teacherName = event?.teacherId
+        ? teacherStore.getTeacherFullName(event.teacherId)
+        : "";
+
+      const disciplineTitle = journalStore.getDisciplineTitle(journal);
+      const groupTitle = journalStore.getJournalTitle(journal);
+
+      // Get final control form from distribution entry
+      let finalControlForm: string | null = null;
+      const class9Item = class9Store.class9Items.find((c) => c.id === journal.disciplineId);
+      if (class9Item && academicYear) {
+        const semesters = academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(academicYear.id);
+        const semester = semesters.find((s) => s.semesterNumber === (event?.semester ?? 1));
+        if (semester) {
+          const distributionEntry = class9Item.distributionEntries.find(
+            (entry: DistributionEntry) => entry.academicYearId === academicYear.id && entry.semesterId === semester.id
+          );
+          if (distributionEntry?.finalControlId) {
+            // distributionEntry.finalControlId is ScheduledFinalControl.id, not FinalControl.id
+            const scheduledControl = scheduledFinalControlStore.getScheduledFinalControlById(distributionEntry.finalControlId);
+            if (scheduledControl) {
+              const finalControl = finalControlStore.getFinalControlById(scheduledControl.finalControlId);
+              finalControlForm = finalControl?.name ?? null;
+            }
+          }
+        }
+      }
+
+      const filename = `${disciplineTitle}_${groupTitle}`
+        .replace(/[^a-zA-Zа-яА-Я0-9_\-\.]/g, "_")
+        .concat(".xlsx");
 
       journalsData.push({
-        filename: metadata.filename,
-        groupName: metadata.groupName,
-        courseLabel: metadata.courseLabel,
-        specialtyLabel: metadata.specialtyLabel,
-        academicYearLabel: metadata.academicYearLabel,
-        disciplineTitle: metadata.disciplineTitle,
-        teacherFullName: metadata.teacherFullName,
-        finalControlForm: metadata.finalControlForm,
+        filename,
+        groupName: groupTitle,
+        courseLabel: journal.courseNumber.toString(),
+        specialtyLabel: specialty
+          ? `${specialty.code} - ${specialty.name}`
+          : undefined,
+        academicYearLabel,
+        disciplineTitle,
+        teacherFullName: teacherName,
+        finalControlForm,
         students: studentRows,
         lessonDates,
       });
@@ -988,10 +1050,6 @@ function onDownloadClick() {
   startSelectionMode("download");
 }
 
-function onReplaceClick() {
-  startSelectionMode("replace");
-}
-
 function onSelectionDone() {
   if (selectedJournalIds.value.size === 0) {
     f7.dialog.alert("Выберите хотя бы один журнал");
@@ -1002,11 +1060,6 @@ function onSelectionDone() {
 
   if (selectionAction.value === "download") {
     void downloadSelectedJournals();
-    return;
-  }
-
-  if (selectionAction.value === "replace") {
-    f7.popover.open("#replace-journal-popover");
     return;
   }
 
@@ -1109,53 +1162,6 @@ function onUploadClick() {
 
 function onShareClick() {
   f7.dialog.alert("Поделиться журналами");
-}
-
-const isReplacingJournals = ref(false);
-
-async function handleReplaceJournals(data: ReplaceJournalData) {
-  try {
-    isReplacingJournals.value = true;
-
-    // Get selected journal IDs
-    const ids = Array.from(selectedJournalIds.value);
-
-    // TODO: Implement the actual replace logic here
-    // This would typically involve calling a backend API to replace journals
-    // with the specified teacher, period, and reason
-
-    console.log('Replacing journals:', {
-      journalIds: ids,
-      teacherId: data.teacherId,
-      startDate: data.startDate,
-      endDate: data.endDate,
-      reason: data.reason
-    });
-
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    isReplacingJournals.value = false;
-
-    // Close the popover
-    f7.popover.close("#replace-journal-popover");
-
-    f7.toast.create({
-      text: `Успешно заменено ${ids.length} журнал(ов)`,
-      position: 'center',
-      closeTimeout: 2000,
-    }).open();
-
-    exitSelectionMode();
-  } catch (error) {
-    isReplacingJournals.value = false;
-    console.error('Failed to replace journals', error);
-    f7.dialog.alert('Не удалось заменить журналы. Попробуйте еще раз.');
-  }
-}
-
-function handleReplaceCancel() {
-  f7.popover.close("#replace-journal-popover");
 }
 
 const individualJournalPopupRef = ref<InstanceType<typeof IndividualJournalPopup>>();
