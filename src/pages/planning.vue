@@ -13,6 +13,10 @@
       <Sidebar v-model:activeNavItem="activeNavItem" />
 
       <div ref="calendarContainer" class="calendar-container p-2 transition-all duration-200" :class="contentMargin">
+        <div class="mb-4 px-1">
+          <h1 class="text-2xl font-bold text-foreground tracking-tight">Планирование</h1>
+          <p class="text-sm text-muted-foreground font-medium mt-0.5">Календарь занятий и мероприятий</p>
+        </div>
         <div v-if="userStore.isAdmin" class="mb-3 flex justify-end">
           <Select
             v-model="selectedTeacherId"
