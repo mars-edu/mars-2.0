@@ -110,7 +110,10 @@ export const useProtocolStore = defineStore("protocol", () => {
    */
   async function acceptEntry(substitutionId: Id<"substitutions">) {
     const userId = userStore.currentUser?.id as Id<"users">;
-    if (!userId) return;
+    if (!userId) {
+      console.warn("[protocolStore] No authenticated user, cannot perform action");
+      return;
+    }
 
     actionLoading.value = true;
     actionError.value = null;
@@ -137,7 +140,10 @@ export const useProtocolStore = defineStore("protocol", () => {
     reason?: string
   ) {
     const userId = userStore.currentUser?.id as Id<"users">;
-    if (!userId) return;
+    if (!userId) {
+      console.warn("[protocolStore] No authenticated user, cannot perform action");
+      return;
+    }
 
     actionLoading.value = true;
     actionError.value = null;
@@ -233,6 +239,8 @@ export const useProtocolStore = defineStore("protocol", () => {
     loading.value = false;
     error.value = null;
     selectedTeacherId.value = null;
+    actionLoading.value = false;
+    actionError.value = null;
   }
 
   return {
