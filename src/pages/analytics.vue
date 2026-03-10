@@ -77,15 +77,12 @@
                     @click="toggleSelectAllSpecialties"
                   >
                     <span class="font-medium">Все</span>
-                    <f7-icon
+                    <IconCircleCheck
                       v-if="
                         selectedSpecialties.length === specialties.length &&
                         specialties.length > 0
                       "
-                      ios="f7:checkmark_circle_fill"
-                      md="material:check_circle"
-                      size="18px"
-                      class="text-primary"
+                      class="w-[18px] h-[18px] text-primary"
                     />
                   </div>
                   <div
@@ -101,12 +98,9 @@
                     <span class="font-medium">
                       {{ specialty.codeName || specialty.name }}
                     </span>
-                    <f7-icon
-                      ios="f7:info_circle"
-                      md="material:info"
-                      size="18px"
+                    <IconInfo
+                      class="w-[18px] h-[18px] text-muted-foreground hover:text-primary transition-colors cursor-pointer"
                       :id="`specialty-item-${specialty.id}`"
-                      class="text-muted-foreground hover:text-primary transition-colors cursor-pointer"
                       @click.stop="
                         handleSpecialtyInfoClick(
                           specialty,
@@ -145,15 +139,12 @@
                     @click="toggleSelectAllCourses"
                   >
                     <span class="font-medium">Все</span>
-                    <f7-icon
+                    <IconCircleCheck
                       v-if="
                         selectedCourses.length === courseNumbers.length &&
                         courseNumbers.length > 0
                       "
-                      ios="f7:checkmark_circle_fill"
-                      md="material:check_circle"
-                      size="18px"
-                      class="text-primary"
+                      class="w-[18px] h-[18px] text-primary"
                     />
                   </button>
                   <button
@@ -198,15 +189,12 @@
                     @click="toggleSelectAllLanguages"
                   >
                     <span class="font-medium">Все</span>
-                    <f7-icon
+                    <IconCircleCheck
                       v-if="
                         selectedLanguageGroups.length === languages.length &&
                         languages.length > 0
                       "
-                      ios="f7:checkmark_circle_fill"
-                      md="material:check_circle"
-                      size="18px"
-                      class="text-primary"
+                      class="w-[18px] h-[18px] text-primary"
                     />
                   </div>
                   <div
@@ -220,12 +208,9 @@
                     @click="toggleLanguageSelection(language.code)"
                   >
                     <span class="font-medium">{{ language.name }}</span>
-                    <f7-icon
+                    <IconCircleCheck
                       v-if="selectedLanguageGroups.includes(language.code)"
-                      ios="f7:checkmark_circle_fill"
-                      md="material:check_circle"
-                      size="18px"
-                      class="text-primary"
+                      class="w-[18px] h-[18px] text-primary"
                     />
                   </div>
                   <div
@@ -298,12 +283,7 @@
                 @click="resetFilters"
                 class="bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
               >
-                <f7-icon
-                  ios="f7:arrow_clockwise"
-                  md="material:refresh"
-                  size="16px"
-                  class="mr-2"
-                />
+                <IconRotateCw class="w-4 h-4 mr-2" />
                 Сбросить
               </f7-button>
               <f7-button
@@ -313,12 +293,7 @@
                 @click="generateReport"
                 class="bg-primary text-white hover:bg-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <f7-icon
-                  ios="f7:doc_on_doc"
-                  md="material:table_view"
-                  size="16px"
-                  class="mr-2"
-                />
+                <IconCopy class="w-4 h-4 mr-2" />
                 Экспорт
               </f7-button>
               <f7-button
@@ -328,12 +303,7 @@
                 @click="exportToExcel"
                 class="bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <f7-icon
-                  ios="f7:doc_text"
-                  md="material:download"
-                  size="16px"
-                  class="mr-2"
-                />
+                <IconFileText class="w-4 h-4 mr-2" />
                 Экспорт (Excel)
               </f7-button>
             </div>
@@ -360,12 +330,7 @@
                   @click="clearReportPreview"
                   class="text-muted-foreground hover:text-foreground"
                 >
-                  <f7-icon
-                    ios="f7:eye_slash"
-                    md="material:visibility_off"
-                    size="16px"
-                    class="mr-2"
-                  />
+                  <IconEyeOff class="w-4 h-4 mr-2" />
                   Скрыть
                 </f7-button>
               </div>
@@ -450,12 +415,17 @@
 import { ref, computed, onMounted, watch } from "vue";
 import {
   f7Page,
-  f7Icon,
   f7Button,
   f7,
   f7Popover,
   f7Checkbox,
 } from "framework7-vue";
+import IconCircleCheck from "~icons/lucide/circle-check";
+import IconInfo from "~icons/lucide/info";
+import IconRotateCw from "~icons/lucide/rotate-cw";
+import IconCopy from "~icons/lucide/copy";
+import IconFileText from "~icons/lucide/file-text";
+import IconEyeOff from "~icons/lucide/eye-off";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
