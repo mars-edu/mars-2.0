@@ -11,7 +11,7 @@
           @click="openNotificationCenter"
           class="relative p-2 rounded-full transition-colors hover:bg-primary/10 text-primary"
         >
-          <i class="icon f7-icons text-[22px]">bell</i>
+          <IconBell class="text-[22px]" />
           <span
             v-if="unreadCount > 0"
             class="absolute top-1 right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-medium rounded-full flex items-center justify-center px-1"
@@ -36,9 +36,9 @@
             class="user-avatar"
           />
           <div v-else class="user-avatar-placeholder">
-            <i class="icon f7-icons">person_circle_fill</i>
+            <IconCircleUser />
           </div>
-          <i class="icon f7-icons text-[14px] text-muted-foreground">chevron_down</i>
+          <IconChevronDown class="text-[14px] text-muted-foreground" />
         </button>
       </div>
     </div>
@@ -55,6 +55,9 @@ import LanguageSelector from "../LanguageSelector.vue";
 import Logo from "../Logo/Logo.vue";
 import ThemeToggle from "../ThemeToggle.vue";
 import NotificationCenterPopover from "../NotificationCenterPopover.vue";
+import IconBell from "~icons/lucide/bell";
+import IconCircleUser from "~icons/lucide/circle-user";
+import IconChevronDown from "~icons/lucide/chevron-down";
 import { useThemeStore } from "@/stores/themeStore";
 import { useUserStore } from "@/stores/userStore";
 import { onMounted, computed } from "vue";
