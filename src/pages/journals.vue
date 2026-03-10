@@ -96,12 +96,7 @@
                   @click="exitSelectionMode"
                   class="bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex-1 sm:flex-none"
                 >
-                  <f7-icon
-                    ios="f7:xmark"
-                    md="material:close"
-                    size="16px"
-                    class="mr-2"
-                  />
+                  <IconX class="w-4 h-4 mr-2" />
                   Отмена
                 </f7-button>
                 <f7-button
@@ -110,12 +105,7 @@
                   @click="selectAll"
                   class="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex-1 sm:flex-none"
                 >
-                  <f7-icon
-                    ios="f7:checkmark_circle"
-                    md="material:check_circle"
-                    size="16px"
-                    class="mr-2"
-                  />
+                  <IconCircleCheck class="w-4 h-4 mr-2" />
                   Выбрать все
                 </f7-button>
                 <f7-button
@@ -124,12 +114,7 @@
                   @click="deselectAll"
                   class="bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex-1 sm:flex-none"
                 >
-                  <f7-icon
-                    ios="f7:xmark_circle"
-                    md="material:cancel"
-                    size="16px"
-                    class="mr-2"
-                  />
+                  <IconCircleX class="w-4 h-4 mr-2" />
                   Снять все
                 </f7-button>
                 <f7-button
@@ -139,33 +124,21 @@
                   :class="selectionDoneButtonClass"
                   :disabled="selectedJournalIds.size === 0"
                 >
-                  <f7-icon
+                  <IconArrowDownToLine
                     v-if="selectionAction === 'download'"
-                    ios="f7:arrow_down_to_line"
-                    md="material:file_download"
-                    size="16px"
-                    class="mr-2"
+                    class="w-4 h-4 mr-2"
                   />
-                  <f7-icon
+                  <IconCircleX
                     v-else-if="selectionAction === 'close'"
-                    ios="f7:xmark_circle"
-                    md="material:cancel"
-                    size="16px"
-                    class="mr-2"
+                    class="w-4 h-4 mr-2"
                   />
-                  <f7-icon
+                  <IconRefreshCw
                     v-else-if="selectionAction === 'replace'"
-                    ios="f7:arrow_2_squarepath"
-                    md="material:swap_horiz"
-                    size="16px"
-                    class="mr-2"
+                    class="w-4 h-4 mr-2"
                   />
-                  <f7-icon
+                  <IconLockOpen
                     v-else
-                    ios="f7:lock_open"
-                    md="material:lock_open"
-                    size="16px"
-                    class="mr-2"
+                    class="w-4 h-4 mr-2"
                   />
                   {{ selectionDoneText }} ({{ selectedJournalIds.size }})
                 </f7-button>
@@ -178,12 +151,7 @@
                   @click="onSettingsClick"
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
-                  <f7-icon
-                    ios="f7:gear"
-                    md="material:settings"
-                    size="16px"
-                    class="mr-2"
-                  />
+                  <IconSettings2 class="w-4 h-4 mr-2" />
                   Настройки
                 </f7-button>
                 <f7-button
@@ -192,12 +160,7 @@
                   @click="onOpenJournalClick"
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
-                  <f7-icon
-                    ios="f7:lock_open"
-                    md="material:lock_open"
-                    size="16px"
-                    class="mr-2"
-                  />
+                  <IconLockOpen class="w-4 h-4 mr-2" />
                   Открыть журнал
                 </f7-button>
                 <f7-button
@@ -206,12 +169,7 @@
                   @click="onCloseJournalClick"
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
-                  <f7-icon
-                    ios="f7:xmark_circle"
-                    md="material:cancel"
-                    size="16px"
-                    class="mr-2"
-                  />
+                  <IconCircleX class="w-4 h-4 mr-2" />
                   Закрыть журнал
                 </f7-button>
                 <f7-button
@@ -220,12 +178,7 @@
                   @click="onDownloadClick"
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
-                  <f7-icon
-                    ios="f7:arrow_down_to_line"
-                    md="material:file_download"
-                    size="16px"
-                    class="mr-2"
-                  />
+                  <IconArrowDownToLine class="w-4 h-4 mr-2" />
                   Скачать
                 </f7-button>
                 <f7-button
@@ -235,12 +188,7 @@
                   @click="onReplaceClick"
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
-                  <f7-icon
-                    ios="f7:arrow_2_squarepath"
-                    md="material:swap_horiz"
-                    size="16px"
-                    class="mr-2"
-                  />
+                  <IconRefreshCw class="w-4 h-4 mr-2" />
                   Заменить
                 </f7-button>
                 <f7-button
@@ -249,12 +197,7 @@
                   @click="onUploadClick"
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
-                  <f7-icon
-                    ios="f7:arrow_up_to_line"
-                    md="material:file_upload"
-                    size="16px"
-                    class="mr-2"
-                  />
+                  <IconArrowUpToLine class="w-4 h-4 mr-2" />
                   Загрузить
                 </f7-button>
                 <f7-button
@@ -263,12 +206,7 @@
                   @click="onShareClick"
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
-                  <f7-icon
-                    ios="f7:share"
-                    md="material:share"
-                    size="16px"
-                    class="mr-2"
-                  />
+                  <IconShare class="w-4 h-4 mr-2" />
                   Поделится
                 </f7-button>
               </template>
@@ -310,7 +248,7 @@
                 class="col-span-full rounded-2xl border-2 border-dashed border-border flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground"
               >
                 <div class="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                  <f7-icon ios="f7:tray" md="material:inbox" size="24px" class="opacity-40" />
+                  <IconInbox class="w-6 h-6 opacity-40" />
                 </div>
                 <span class="text-sm font-medium opacity-60">В этой категории нет журналов</span>
               </div>
@@ -336,7 +274,17 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
-import { f7Page, f7Input, f7, f7Icon, f7Button } from "framework7-vue";
+import { f7Page, f7Input, f7, f7Button } from "framework7-vue";
+import IconX from "~icons/lucide/x";
+import IconCircleCheck from "~icons/lucide/circle-check";
+import IconCircleX from "~icons/lucide/circle-x";
+import IconArrowDownToLine from "~icons/lucide/arrow-down-to-line";
+import IconArrowUpToLine from "~icons/lucide/arrow-up-to-line";
+import IconRefreshCw from "~icons/lucide/refresh-cw";
+import IconLockOpen from "~icons/lucide/lock-open";
+import IconSettings2 from "~icons/lucide/settings-2";
+import IconShare from "~icons/lucide/share-2";
+import IconInbox from "~icons/lucide/inbox";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
