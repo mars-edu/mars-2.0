@@ -202,10 +202,12 @@ import StudentSelectionPopup from "./StudentSelectionPopup.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
 
 import {
-  WEEK_DAYS,
-  DATE_PICKER_PARAMS,
+  getWeekDays,
+  getDatePickerParams,
   DATE_UI_FORMAT,
 } from "@/constants/calendar";
+
+const DATE_PICKER_PARAMS = getDatePickerParams();
 
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useClass9Store } from "@/stores/class9Store";
@@ -378,7 +380,7 @@ const endTimeOptions = computed(() => {
 });
 
 const weekDays = computed(() => {
-  return WEEK_DAYS.map((day) => ({
+  return getWeekDays().map((day) => ({
     ...day,
     isStartDate: false,
     isSelected: selectedWeekDaysModel.value.some(

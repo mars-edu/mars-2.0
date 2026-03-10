@@ -98,7 +98,9 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import dayjs from "dayjs";
-import { DATE_STORAGE_FORMAT, DATE_PICKER_PARAMS } from "@/constants/calendar";
+import { DATE_STORAGE_FORMAT, getDatePickerParams } from "@/constants/calendar";
+
+const DATE_PICKER_PARAMS = getDatePickerParams();
 import { f7, f7Popover, f7Input } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
 import { z } from "zod";

@@ -28,6 +28,24 @@ import { f7, f7ready } from "framework7-vue";
 import type { Framework7Parameters } from "framework7/types";
 import { useUserStore } from "./stores/userStore";
 import { useThemeStore } from "./stores/themeStore";
+import {
+  f7_dialog_ok,
+  f7_dialog_cancel,
+  f7_picker_done,
+  f7_smart_select_close,
+  f7_smart_select_search_placeholder,
+  f7_smart_select_search_cancel,
+  f7_month_jan, f7_month_feb, f7_month_mar, f7_month_apr,
+  f7_month_may, f7_month_jun, f7_month_jul, f7_month_aug,
+  f7_month_sep, f7_month_oct, f7_month_nov, f7_month_dec,
+  f7_month_jan_short, f7_month_feb_short, f7_month_mar_short, f7_month_apr_short,
+  f7_month_may_short, f7_month_jun_short, f7_month_jul_short, f7_month_aug_short,
+  f7_month_sep_short, f7_month_oct_short, f7_month_nov_short, f7_month_dec_short,
+  f7_day_sun, f7_day_mon, f7_day_tue, f7_day_wed,
+  f7_day_thu, f7_day_fri, f7_day_sat,
+  f7_day_sun_short, f7_day_mon_short, f7_day_tue_short, f7_day_wed_short,
+  f7_day_thu_short, f7_day_fri_short, f7_day_sat_short,
+} from "@/paraglide/messages";
 
 import routes from "./js/routes";
 import store from "./js/store";
@@ -64,60 +82,40 @@ const f7params: Framework7Parameters = {
   routes: routes,
 
   dialog: {
-    buttonOk: "Хорошо",
-    buttonCancel: "Отмена",
+    buttonOk: f7_dialog_ok(),
+    buttonCancel: f7_dialog_cancel(),
   },
 
   picker: {
-    toolbarCloseText: "Готово",
+    toolbarCloseText: f7_picker_done(),
   },
 
   calendar: {
     monthNames: [
-      "Январь",
-      "Февраль",
-      "Март",
-      "Апрель",
-      "Май",
-      "Июнь",
-      "Июль",
-      "Август",
-      "Сентябрь",
-      "Октябрь",
-      "Ноябрь",
-      "Декабрь",
+      f7_month_jan(), f7_month_feb(), f7_month_mar(), f7_month_apr(),
+      f7_month_may(), f7_month_jun(), f7_month_jul(), f7_month_aug(),
+      f7_month_sep(), f7_month_oct(), f7_month_nov(), f7_month_dec(),
     ],
     monthNamesShort: [
-      "Янв",
-      "Фев",
-      "Мар",
-      "Апр",
-      "Май",
-      "Июн",
-      "Июл",
-      "Авг",
-      "Сен",
-      "Окт",
-      "Ноя",
-      "Дек",
+      f7_month_jan_short(), f7_month_feb_short(), f7_month_mar_short(), f7_month_apr_short(),
+      f7_month_may_short(), f7_month_jun_short(), f7_month_jul_short(), f7_month_aug_short(),
+      f7_month_sep_short(), f7_month_oct_short(), f7_month_nov_short(), f7_month_dec_short(),
     ],
     dayNames: [
-      "Воскресенье",
-      "Понедельник",
-      "Вторник",
-      "Среда",
-      "Четверг",
-      "Пятница",
-      "Суббота",
+      f7_day_sun(), f7_day_mon(), f7_day_tue(), f7_day_wed(),
+      f7_day_thu(), f7_day_fri(), f7_day_sat(),
     ],
-    dayNamesShort: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
+    dayNamesShort: [
+      f7_day_sun_short(), f7_day_mon_short(), f7_day_tue_short(), f7_day_wed_short(),
+      f7_day_thu_short(), f7_day_fri_short(), f7_day_sat_short(),
+    ],
     firstDay: 1,
   },
 
   smartSelect: {
-    popupCloseLinkText: "Назад",
-    searchbarPlaceholder: "Поиск",
-    searchbarDisableText: "Отмена",
+    popupCloseLinkText: f7_smart_select_close(),
+    searchbarPlaceholder: f7_smart_select_search_placeholder(),
+    searchbarDisableText: f7_smart_select_search_cancel(),
   },
 
   popover: {

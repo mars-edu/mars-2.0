@@ -107,7 +107,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, watchEffect } from "vue";
 import dayjs from "dayjs";
-import { DATE_STORAGE_FORMAT, DATE_PICKER_PARAMS } from "@/constants/calendar";
+import { DATE_STORAGE_FORMAT, getDatePickerParams } from "@/constants/calendar";
+
+const DATE_PICKER_PARAMS = getDatePickerParams();
 import { f7, f7Input, f7Popover } from "framework7-vue";
 import IconTrash from "~icons/lucide/trash-2";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";

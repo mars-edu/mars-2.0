@@ -114,7 +114,9 @@ import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { z } from "zod";
 import { useSessionStore } from "@/stores/sessionStore";
 import type { Session } from "@/stores/sessionStore";
-import { DATE_PICKER_PARAMS } from "@/constants/calendar";
+import { getDatePickerParams } from "@/constants/calendar";
+
+const DATE_PICKER_PARAMS = getDatePickerParams();
 
 const props = defineProps<{ sessionId: string }>();
 

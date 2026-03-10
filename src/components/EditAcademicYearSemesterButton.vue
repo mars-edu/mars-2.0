@@ -93,7 +93,9 @@ import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Input from "@/components/ui/Input.vue";
 import Select from "@/components/ui/Select.vue";
-import { DATE_PICKER_PARAMS } from "@/constants/calendar";
+import { getDatePickerParams } from "@/constants/calendar";
+
+const DATE_PICKER_PARAMS = getDatePickerParams();
 
 const props = defineProps<{ academicYearSemesterId: string }>();
 

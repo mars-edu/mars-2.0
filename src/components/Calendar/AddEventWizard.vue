@@ -642,10 +642,12 @@ import Select from "@/components/ui/Select.vue";
 import ColorPicker from "@/components/ui/ColorPicker.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
 import {
-  WEEK_DAYS,
-  DATE_PICKER_PARAMS,
+  getWeekDays,
+  getDatePickerParams,
   DATE_UI_FORMAT,
 } from "@/constants/calendar";
+
+const DATE_PICKER_PARAMS = getDatePickerParams();
 import { useNestedPopup } from "@/composables/useNestedPopup";
 import { useClass9Store } from "@/stores/class9Store";
 import { useStudentStore } from "@/stores/studentStore";
@@ -823,7 +825,7 @@ const endDateModel = computed<Date[]>({
 });
 
 const weekDays = computed(() => {
-  return WEEK_DAYS.map((day) => ({
+  return getWeekDays().map((day) => ({
     ...day,
     isSelected: selectedWeekDaysModel.value.some(
       (selected) => selected.weekId === day.weekId

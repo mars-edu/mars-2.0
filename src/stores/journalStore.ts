@@ -8,7 +8,7 @@ import { useLanguageStore } from "./languageStore";
 import { useClass9Store } from "./class9Store";
 import { useAcademicYearSemesterStore } from "./academicYearSemesterStore";
 import { useEducationScheduleStore } from "./educationScheduleStore";
-import { WEEK_DAYS, DATE_STORAGE_FORMAT } from "@/constants/calendar";
+import { getWeekDays, DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import dayjs from "dayjs";
 
 export interface Journal {
@@ -406,7 +406,7 @@ export const useJournalStore = defineStore(
       // Check for weeklySchedules first
       const ws = calendarEvent.weeklySchedules?.[0];
       if (ws) {
-        const weekDay = WEEK_DAYS.find((day) => day.weekId === ws.weekId);
+        const weekDay = getWeekDays().find((day) => day.weekId === ws.weekId);
         const day = weekDay?.russianAbbreviation || "";
 
         // Get start and end times - either from direct time strings or by looking up schedule IDs
@@ -441,7 +441,7 @@ export const useJournalStore = defineStore(
       // Get JavaScript day (0=Sunday, 1=Monday, etc.) and convert to weekId (0=Monday, 1=Tuesday, etc.)
       const jsDay = startDate.day();
       const weekId = jsDay === 0 ? 6 : jsDay - 1; // Convert Sunday from 0 to 6, and shift others down by 1
-      const weekDay = WEEK_DAYS.find((day) => day.weekId === weekId);
+      const weekDay = getWeekDays().find((day) => day.weekId === weekId);
       const day = weekDay?.russianAbbreviation || "";
 
       return `${day} // ${start}-${end}`.trim();

@@ -74,7 +74,7 @@ import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore
 import { useUserStore } from "@/stores/userStore";
 import { useNestedPopover } from "@/composables/useNestedPopover";
 import { storeToRefs } from "pinia";
-import { WEEK_DAYS, DATE_UI_FORMAT } from "@/constants/calendar";
+import { getWeekDays, DATE_UI_FORMAT } from "@/constants/calendar";
 import { useEventFormDerived, type WeekDaySchedule } from "./useEventFormDerived";
 
 const props = defineProps<{ eventId: string }>();
@@ -183,7 +183,7 @@ watchEffect(() => {
         ws.endId || schedules.find((s) => s.endTime === ws.endTime)?.id || "";
       return {
         weekId: ws.weekId,
-        russianWeekDay: WEEK_DAYS.find((d) => d.weekId === ws.weekId)?.name || "",
+        russianWeekDay: getWeekDays().find((d) => d.weekId === ws.weekId)?.name || "",
         startId,
         endId,
       };

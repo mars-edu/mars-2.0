@@ -117,7 +117,9 @@ import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { z } from "zod";
 import { useVacationStore } from "@/stores/vacationStore";
 import type { Vacation } from "@/stores/vacationStore";
-import { DATE_PICKER_PARAMS } from "@/constants/calendar";
+import { getDatePickerParams } from "@/constants/calendar";
+
+const DATE_PICKER_PARAMS = getDatePickerParams();
 
 const props = defineProps<{ vacationId: string }>();
 
