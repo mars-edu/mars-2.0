@@ -21,7 +21,7 @@
           v-bind="{ ...$attrs, ...numericAttrs }"
         >
           <template v-if="showCheckmark" #media>
-            <f7-icon f7="checkmark_alt" class="text-green-500"></f7-icon>
+            <IconCheck class="text-green-500" />
           </template>
         </f7-input>
         <div v-if="$slots.button" class="slot-button-container">
@@ -34,7 +34,7 @@
           @click="$emit('distribute')"
           :title="distributeTooltip"
         >
-          <f7-icon f7="arrow_down" class="text-base"></f7-icon>
+          <IconArrowDown class="text-base" />
         </button>
       </div>
       <f7-button
@@ -44,7 +44,7 @@
         @click="$emit('copy')"
         :tooltip="copyTooltip"
       >
-        <f7-icon f7="square_on_square" class="text-lg"></f7-icon>
+        <IconCopy class="text-lg" />
       </f7-button>
     </div>
   </div>
@@ -52,7 +52,10 @@
 
 <script setup lang="ts">
 import { computed, getCurrentInstance, useSlots } from "vue";
-import { f7Input, f7Icon, f7Button } from "framework7-vue";
+import { f7Input, f7Button } from "framework7-vue";
+import IconCheck from "~icons/lucide/check";
+import IconArrowDown from "~icons/lucide/arrow-down";
+import IconCopy from "~icons/lucide/copy";
 
 defineOptions({
   inheritAttrs: false,
