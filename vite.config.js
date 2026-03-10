@@ -7,6 +7,7 @@ import { VitePWA } from "vite-plugin-pwa";
 import buildInfoPlugin from "./vite-plugins/build-info.js";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import Icons from "unplugin-icons/vite";
+import { paraglideVitePlugin } from "@inlang/paraglide-js";
 
 const SRC_DIR = path.resolve(__dirname, "./src");
 const PUBLIC_DIR = path.resolve(__dirname, "./public");
@@ -88,6 +89,10 @@ export default async () => {
       Icons({
         compiler: "vue3",
         autoInstall: false,
+      }),
+      paraglideVitePlugin({
+        project: "./project.inlang",
+        outdir: "./src/paraglide",
       }),
     ],
     define: {
