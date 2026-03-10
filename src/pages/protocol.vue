@@ -211,6 +211,7 @@
         <div
           v-if="modalOpen"
           class="fixed inset-0 z-50 flex items-center justify-center p-4"
+          @click.self="closeModal"
         >
           <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeModal"></div>
           <div class="relative bg-card rounded-xl shadow-xl w-full max-w-sm p-6 border border-border">

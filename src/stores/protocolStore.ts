@@ -256,7 +256,6 @@ export const useProtocolStore = defineStore("protocol", () => {
     rejectEntry,
     getTeacherName,
     formatDate,
-    getStatusText,
     entriesByDate,
     reset,
   };
