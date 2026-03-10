@@ -414,6 +414,7 @@ import JournalCard from "@/components/Cards/JournalCard.vue";
 import IndividualJournalPopup from "@/components/IndividualJournalPopup.vue";
 import ReplaceJournalPopover from "@/components/ReplaceJournalPopover.vue";
 import type { ReplaceJournalData } from "@/components/ReplaceJournalPopover.vue";
+import JournalGridCard from '@/components/Cards/JournalGridCard.vue'
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { useJournalStore, type Journal } from "@/stores/journalStore";
@@ -820,6 +821,54 @@ const filteredIndividualJournals = computed(() => {
     return true;
   });
 });
+
+// ─── Journal grid redesign ────────────────────────────────────────────────
+
+const JOURNAL_CARD_PALETTE = [
+  { bg: '#EFF6FF', text: '#3b82f6' },
+  { bg: '#F0FDF4', text: '#10b981' },
+  { bg: '#FFF7ED', text: '#f59e0b' },
+  { bg: '#F5F3FF', text: '#8b5cf6' },
+  { bg: '#FFF1F2', text: '#f43f5e' },
+  { bg: '#ECFDF5', text: '#059669' },
+] as const
+
+function getJournalAccentColor(id: string): { bg: string; text: string } {
+  let hash = 0
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) & 0xfffffff
+  }
+  return JOURNAL_CARD_PALETTE[hash % JOURNAL_CARD_PALETTE.length]
+}
+
+type JournalFilter = 'all' | 'course-1' | 'course-2' | 'course-3' | 'course-4' | 'mixed' | 'individual'
+const activeFilter = ref<JournalFilter>('all')
+
+const JOURNAL_FILTERS = [
+  { id: 'all',        label: 'Все' },
+  { id: 'course-1',   label: '1 Курс' },
+  { id: 'course-2',   label: '2 Курс' },
+  { id: 'course-3',   label: '3 Курс' },
+  { id: 'course-4',   label: '4 Курс' },
+  { id: 'mixed',      label: 'Смешанные' },
+  { id: 'individual', label: 'Индивидуальные' },
+] as const
+
+const filteredByTab = computed(() => {
+  if (activeFilter.value === 'all') {
+    const flat: Journal[] = []
+    Object.values(filteredJournalsByCourse.value).forEach((list) => flat.push(...list))
+    flat.push(...filteredMixedGroupJournals.value)
+    flat.push(...filteredIndividualJournals.value)
+    return flat
+  }
+  if (activeFilter.value === 'mixed')      return filteredMixedGroupJournals.value
+  if (activeFilter.value === 'individual') return filteredIndividualJournals.value
+  const num = parseInt(activeFilter.value.split('-')[1])
+  return filteredJournalsByCourse.value[num] ?? []
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 const goToJournalDetails = (id: number | string) => {
   f7.views.main.router.navigate(`/journals/${id}?from=journals`);
