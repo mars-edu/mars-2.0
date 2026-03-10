@@ -5,7 +5,7 @@
       class="flex items-center bg-gray-100/80 backdrop-blur rounded-lg px-3 h-9 focus-within:bg-white focus-within:shadow-sm transition-colors"
       :class="{ 'bg-white shadow-sm': isActive }"
     >
-      <i class="f7:search text-gray-400 text-lg"></i>
+      <IconSearch class="text-gray-400 text-lg" />
       <input
         ref="searchInput"
         v-model="searchQuery"
@@ -24,7 +24,7 @@
         class="flex items-center justify-center w-5 h-5 rounded-full bg-gray-400/20 hover:bg-gray-400/30 transition-colors"
         @click="clearSearch"
       >
-        <i class="f7:xmark text-gray-500 text-xs"></i>
+        <IconX class="text-gray-500 text-xs" />
       </button>
     </div>
 
@@ -52,9 +52,10 @@
             class="w-8 h-8 rounded-full flex items-center justify-center"
             :class="getIconBackground(result.type)"
           >
-            <i class="f7-icons text-white text-sm">{{
-              getIconClass(result.type)
-            }}</i>
+            <component
+              :is="getIconComponent(result.type)"
+              class="text-white text-sm"
+            />
           </div>
           <div class="ml-3 min-w-0">
             <div class="text-sm font-medium text-gray-900 truncate">
@@ -71,6 +72,12 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { f7 } from "framework7-vue";
+import IconSearch from "~icons/lucide/search";
+import IconX from "~icons/lucide/x";
+import IconBook from "~icons/lucide/book";
+import IconCalendar from "~icons/lucide/calendar";
+import IconFileText from "~icons/lucide/file-text";
+import IconFile from "~icons/lucide/file";
 
 interface SearchResult {
   id: string;
@@ -195,14 +202,14 @@ const clearSearch = () => {
 };
 
 
-const getIconClass = (type: string) => {
+const getIconComponent = (type: string) => {
   const icons = {
-    subject: "f7:book_fill",
-    schedule: "f7:calendar",
-    journal: "f7:doc_text_fill",
-    document: "f7:doc_fill",
+    subject: IconBook,
+    schedule: IconCalendar,
+    journal: IconFileText,
+    document: IconFile,
   };
-  return icons[type as keyof typeof icons] || "f7:doc_fill";
+  return icons[type as keyof typeof icons] || IconFile;
 };
 
 const getIconBackground = (type: string) => {
