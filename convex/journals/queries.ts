@@ -90,3 +90,20 @@ export const getIndividualJournals = query({
     return journals.filter((j) => j.isIndividualJournal === true);
   },
 });
+
+/**
+ * Get journals by student ID
+ */
+export const getByStudentId = query({
+  args: { studentId: v.string() },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query('journalStudents')
+      .withIndex('by_student', (q) => q.eq('studentId', args.studentId))
+      .collect();
+    const journals = await Promise.all(
+      rows.map((r) => ctx.db.get(r.journalId)),
+    );
+    return journals.filter(Boolean);
+  },
+});

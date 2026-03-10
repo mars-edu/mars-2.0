@@ -151,3 +151,16 @@ export const getJournalStats = query({
     };
   },
 });
+
+/**
+ * Get all marks by student ID
+ */
+export const getAllByStudentId = query({
+  args: { studentId: v.string() },
+  handler: async (ctx, args) => {
+    return ctx.db
+      .query('marks')
+      .withIndex('by_student', (q) => q.eq('studentId', args.studentId))
+      .collect();
+  },
+});
