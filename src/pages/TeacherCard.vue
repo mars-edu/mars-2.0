@@ -108,11 +108,7 @@
                           class="p-2 hover:bg-gray-200 rounded-full transition-colors"
                           :id="`teacher-actions-${teacher.id}`"
                         >
-                          <f7-icon
-                            ios="f7:ellipsis_vertical"
-                            md="material:more_vert"
-                            size="20px"
-                          ></f7-icon>
+                          <IconEllipsisVertical class="w-5 h-5" />
                         </button>
                       </div>
                     </td>
@@ -146,7 +142,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick } from "vue";
-import { f7Page, f7Input, f7, f7Icon } from "framework7-vue";
+import { f7Page, f7Input, f7 } from "framework7-vue";
+import IconEllipsisVertical from "~icons/lucide/ellipsis-vertical";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddTeacherButton from "@/components/AddTeacherButton.vue";
@@ -329,13 +326,13 @@ const openActionsMenu = (teacher: Teacher, event: Event) => {
 
   const buttons = [
     {
-      text: '<div class="flex items-center gap-3"><i class="f7-icons">arrow_clockwise</i><span>Обновить пароль</span></div>',
+      text: 'Обновить пароль',
       onClick: () => {
         regeneratePassword(teacher);
       },
     },
     {
-      text: '<div class="flex items-center gap-3"><i class="f7-icons">clock</i><span>История изменений</span></div>',
+      text: 'История изменений',
       onClick: () => {
         showPasswordHistory(teacher);
       },
