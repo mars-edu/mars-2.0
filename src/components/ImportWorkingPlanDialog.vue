@@ -15,17 +15,14 @@
           : 'Импортировать рабочий учебный план'
       "
     >
-      <f7-icon
-        ios="f7:arrow_down_doc"
-        md="material:file_upload"
-        size="17px"
-        class="text-current"
-      ></f7-icon>
+      <IconFileDown class="w-4 h-4 text-current" />
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
+import IconFileDown from "~icons/lucide/file-down";
+
 const props = defineProps<{
   disabled?: boolean;
   specialtyId?: string;

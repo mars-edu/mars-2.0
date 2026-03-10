@@ -9,12 +9,7 @@
       :disabled="!hasOtherYearsWithSchedules"
       :title="hasOtherYearsWithSchedules ? 'Копировать расписание из другого учебного года' : 'Нет доступных учебных годов с расписанием для копирования'"
     >
-      <f7-icon
-        ios="f7:doc_on_doc"
-        md="material:content_copy"
-        size="16px"
-        class="text-white"
-      ></f7-icon>
+      <IconCopy class="w-4 h-4 text-white" />
     </button>
 
     <GuardedPopover
@@ -66,12 +61,9 @@
                     {{ pluralizeSchedule(yearData.scheduleCount) }}
                   </span>
                 </div>
-                <f7-icon
+                <IconCircleCheck
                   v-if="selectedYearId === yearData.year.id"
-                  ios="f7:checkmark_circle_fill"
-                  md="material:check_circle"
-                  size="24px"
-                  class="text-primary"
+                  class="w-6 h-6 text-primary"
                 />
               </div>
             </div>
@@ -104,7 +96,9 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { f7, f7Popover, f7Icon } from "framework7-vue";
+import { f7, f7Popover } from "framework7-vue";
+import IconCopy from "~icons/lucide/copy";
+import IconCircleCheck from "~icons/lucide/circle-check";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
