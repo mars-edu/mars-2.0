@@ -10,6 +10,7 @@ import "../css/app.css";
 import App from "../app.vue";
 import localforage from "localforage";
 import { convexPlugin, convexUrl } from "../lib/convexClient";
+import { useLocaleStore } from "../stores/localeStore";
 
 Framework7.use(Framework7Vue);
 
@@ -43,6 +44,11 @@ pinia.use(
 );
 
 app.use(pinia);
+
+// Initialize Paraglide locale from persisted preference before first render.
+// localeStore uses localStorage (sync), so it's already hydrated here.
+const localeStore = useLocaleStore();
+localeStore.initialize();
 
 // Register Convex plugin if URL is configured
 if (convexUrl) {
