@@ -80,7 +80,7 @@
       <span class="text-sm text-foreground">Обучающиеся</span>
       <span class="text-muted-foreground flex items-center">
         {{ participantsModel.length || "Не выбрано" }}
-        <i class="f7-icons text-muted-foreground ml-1">chevron_right</i>
+        <IconChevronRight class="text-muted-foreground ml-1" />
       </span>
     </div>
 
@@ -136,7 +136,7 @@
       <span class="text-sm text-foreground">РУП/КТП</span>
       <span class="text-muted-foreground flex items-center">
         Открыть
-        <i class="f7-icons text-muted-foreground ml-1">chevron_right</i>
+        <IconChevronRight class="text-muted-foreground ml-1" />
       </span>
     </div>
 
@@ -190,6 +190,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { f7 } from "framework7-vue";
+import IconChevronRight from "~icons/lucide/chevron-right";
 import { storeToRefs } from "pinia";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";

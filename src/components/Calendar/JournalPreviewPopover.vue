@@ -31,7 +31,7 @@
             :isLoading="isLoading"
             @click="onSave"
           >
-            <f7-icon ios="f7:pencil" md="material:edit" size="20px" />
+            <IconPencil class="w-5 h-5" />
           </Button>
         </template>
       </PopoverFooter>
@@ -42,6 +42,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { f7 } from "framework7-vue";
+import IconPencil from "~icons/lucide/pencil";
 import JournalCard from "@/components/Cards/JournalCard.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
