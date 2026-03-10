@@ -33,11 +33,7 @@
               class="!h-8 !min-h-8 !text-xs bg-sun"
               @click="downloadTemplate"
             >
-              <f7-icon
-                ios="f7:arrow_down_doc"
-                md="material:download"
-                class="!text-sm mr-1"
-              ></f7-icon>
+              <IconFileDown class="w-4 h-4 mr-1" />
               Скачать шаблон
             </f7-button>
 
@@ -47,11 +43,7 @@
               class="!h-8 !min-h-8 !text-xs bg-sun"
               @click="uploadDocument"
             >
-              <f7-icon
-                ios="f7:arrow_up_doc"
-                md="material:upload_file"
-                class="!text-sm mr-1"
-              ></f7-icon>
+              <IconFileUp class="w-4 h-4 mr-1" />
               Загрузить план
             </f7-button>
 
@@ -61,11 +53,7 @@
               class="!h-8 !min-h-8 !text-xs bg-sun"
               @click="importData"
             >
-              <f7-icon
-                ios="f7:square_arrow_down"
-                md="material:import_export"
-                class="!text-sm mr-1"
-              ></f7-icon>
+              <IconSquareArrowDown class="w-4 h-4 mr-1" />
               Импорт
             </f7-button>
 
@@ -76,11 +64,7 @@
               class="!h-8 !min-h-8 !text-xs bg-sun"
               @click="addManually"
             >
-              <f7-icon
-                ios="f7:plus"
-                md="material:add"
-                class="!text-sm mr-1"
-              ></f7-icon>
+              <IconPlus class="w-4 h-4 mr-1" />
               Добавить
             </f7-button>
 
@@ -111,11 +95,7 @@
               class="!h-8 !min-h-8 !text-xs bg-sun"
               @click="downloadRup"
             >
-              <f7-icon
-                ios="f7:arrow_down_doc"
-                md="material:download"
-                class="!text-sm mr-1"
-              ></f7-icon>
+              <IconFileDown class="w-4 h-4 mr-1" />
               Скачать РУП
             </f7-button>
           </div>
@@ -169,11 +149,7 @@
                   <span
                     class="drag-handle inline-flex items-center justify-center p-1 rounded cursor-move text-muted-foreground/80 hover:text-foreground hover:bg-muted"
                   >
-                    <f7-icon
-                      ios="f7:line_horizontal_3"
-                      md="material:drag_indicator"
-                      class="!text-base"
-                    ></f7-icon>
+                    <IconMenu class="w-4 h-4" />
                   </span>
                   <span class="text-sm font-medium">{{
                     item.position
@@ -226,7 +202,12 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { f7, f7Icon, f7Button } from "framework7-vue";
+import { f7, f7Button } from "framework7-vue";
+import IconFileDown from "~icons/lucide/file-down";
+import IconFileUp from "~icons/lucide/file-up";
+import IconSquareArrowDown from "~icons/lucide/square-arrow-down";
+import IconPlus from "~icons/lucide/plus";
+import IconMenu from "~icons/lucide/menu";
 import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";

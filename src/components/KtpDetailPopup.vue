@@ -26,11 +26,7 @@
                 class="text-destructive hover:text-destructive flex items-center gap-1"
                 @click="handleDeleteAll"
               >
-                <f7-icon
-                  ios="f7:trash"
-                  md="material:delete"
-                  class="!text-sm"
-                ></f7-icon>
+                <IconTrash class="w-4 h-4" />
                 Удалить
               </Button>
             </div>
@@ -58,7 +54,8 @@
 
 <script setup lang="ts">
 import { ref, watch, toRefs, computed } from "vue";
-import { f7, f7Popover, f7Icon } from "framework7-vue";
+import { f7, f7Popover } from "framework7-vue";
+import IconTrash from "~icons/lucide/trash-2";
 import { useKtpStore } from "@/stores/ktpStore";
 import { useClass9Store } from "@/stores/class9Store";
 import KtpDetailPopupBody from "@/components/KtpDetailPopupBody.vue";
