@@ -17,7 +17,7 @@
         class="ml-auto w-8 h-8 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center text-muted-foreground transition-colors"
         @click="handleCancel"
       >
-        <f7-icon ios="f7:xmark" md="material:close" size="16px" />
+        <IconX class="w-4 h-4" />
       </button>
     </div>
     <slot></slot>
@@ -26,6 +26,7 @@
 
 <script setup lang="ts">
 import type { PropType } from "vue";
+import IconX from "~icons/lucide/x";
 
 const props = defineProps({
   title: {
