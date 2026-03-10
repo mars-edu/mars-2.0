@@ -6,7 +6,7 @@
     >
       <div class="flex justify-between items-start">
         <div class="p-2.5 bg-blue-50 text-blue-600 rounded-full">
-          <i class="f7-icons text-xl">person_2_fill</i>
+          <IconUsers class="text-xl w-5 h-5" />
         </div>
         <span class="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded-full">
           {{ studentCount }} всего
@@ -26,7 +26,7 @@
     >
       <div class="flex justify-between items-start">
         <div class="p-2.5 bg-orange-50 text-orange-600 rounded-full">
-          <i class="f7-icons text-xl">calendar</i>
+          <IconCalendar class="text-xl w-5 h-5" />
         </div>
         <span class="text-xs font-bold bg-muted text-muted-foreground px-2 py-1 rounded-full">
           {{ semesterLabel }}
@@ -48,7 +48,7 @@
     >
       <div class="flex justify-between items-start">
         <div class="p-2.5 bg-red-50 text-red-500 rounded-full">
-          <i class="f7-icons text-xl">chart_bar_fill</i>
+          <IconBarChart class="text-xl w-5 h-5" />
         </div>
         <span class="text-xs font-bold text-red-500 bg-red-50 px-2 py-1 rounded-full">
           -1.2%
@@ -69,6 +69,9 @@ import { computed } from "vue";
 import { storeToRefs } from "pinia";
 import { useStudentStore } from "@/stores/studentStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
+import IconUsers from "~icons/lucide/users";
+import IconCalendar from "~icons/lucide/calendar";
+import IconBarChart from "~icons/lucide/bar-chart-2";
 
 const studentStore = useStudentStore();
 const studentCount = computed(() => studentStore.students?.length ?? 0);

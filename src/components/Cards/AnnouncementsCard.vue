@@ -4,7 +4,7 @@
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
       <div class="flex items-center gap-3">
         <div class="bg-orange-100 text-orange-600 p-2 rounded-xl">
-          <i class="f7-icons text-xl">megaphone_fill</i>
+          <IconMegaphone class="text-xl w-5 h-5" />
         </div>
         <h3 class="text-lg font-bold text-foreground">Объявления и новости</h3>
       </div>
@@ -63,6 +63,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import IconMegaphone from "~icons/lucide/megaphone";
 
 const activeFilter = ref("all");
 

@@ -13,12 +13,9 @@
         selected ? 'bg-primary border-primary' : 'bg-white/80 border-gray-400'
       "
     >
-      <f7-icon
+      <IconCheck
         v-if="selected"
-        ios="f7:checkmark"
-        md="material:check"
-        size="16px"
-        class="text-white"
+        class="w-4 h-4 text-white"
       />
     </div>
     <div class="relative p-4 flex items-start gap-2 h-min-[95px]">
@@ -48,12 +45,7 @@
           @click="handleEditClick"
           class="w-8 h-8 rounded-lg bg-white/30 hover:bg-white/50 flex items-center justify-center transition-colors"
         >
-          <f7-icon
-            ios="f7:pencil"
-            md="material:edit"
-            size="18px"
-            class="text-gray-900"
-          />
+          <IconPencil class="w-[18px] h-[18px] text-gray-900" />
         </button>
       </div>
       <div class="shrink-0 w-12 h-12 relative self-end">
@@ -95,7 +87,8 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { f7Icon } from "framework7-vue";
+import IconCheck from "~icons/lucide/check";
+import IconPencil from "~icons/lucide/pencil";
 
 interface Props {
   title: string;

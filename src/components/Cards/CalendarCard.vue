@@ -10,7 +10,7 @@
             class="flex items-center space-x-2 px-3 py-1 bg-red-100 text-red-600 rounded-full text-xs font-medium hover:bg-red-200 transition-colors"
             @click="navigateToPlanning"
           >
-            <i class="f7-icons text-xs">calendar_badge_plus</i>
+            <IconCalendarPlus class="text-xs w-3 h-3" />
             <span>планирование</span>
           </button>
         </div>
@@ -19,13 +19,13 @@
             class="p-1 rounded transition-colors hover:bg-muted"
             @click="previousMonth"
           >
-            <i class="f7-icons text-sm text-muted-foreground">chevron_left</i>
+            <IconChevronLeft class="text-sm w-4 h-4 text-muted-foreground" />
           </button>
           <button
             class="p-1 rounded transition-colors hover:bg-muted"
             @click="nextMonth"
           >
-            <i class="f7-icons text-sm text-muted-foreground">chevron_right</i>
+            <IconChevronRight class="text-sm w-4 h-4 text-muted-foreground" />
           </button>
         </div>
       </div>
@@ -75,6 +75,9 @@ import { ref, computed, onMounted } from "vue";
 import { useScheduleStore } from "../../stores/scheduleStore";
 import { f7 } from "framework7-vue";
 import Card from "@/components/ui/Card.vue";
+import IconCalendarPlus from "~icons/lucide/calendar-plus";
+import IconChevronLeft from "~icons/lucide/chevron-left";
+import IconChevronRight from "~icons/lucide/chevron-right";
 
 interface Props {
   /** @deprecated Theme is now handled by CSS custom properties. */

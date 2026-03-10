@@ -1,7 +1,7 @@
 <!-- src/components/AiAssistantFab.vue -->
 <template>
   <f7-fab class="ai-assistant-fab" position="right-bottom" @click="openAssistant">
-    <f7-icon ios="f7:sparkles" md="material:smart_toy" />
+    <IconSparkles />
   </f7-fab>
 
   <GuardedPopover
@@ -17,7 +17,8 @@
 </template>
 
 <script setup lang="ts">
-import { f7, f7Fab, f7Icon } from 'framework7-vue';
+import { f7, f7Fab } from 'framework7-vue';
+import IconSparkles from '~icons/lucide/sparkles';
 import GuardedPopover from '@/components/ui/GuardedPopover.vue';
 import AiAssistantPanel from './AiAssistantPanel.vue';
 
