@@ -50,6 +50,8 @@ export const useProtocolStore = defineStore("protocol", () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
   const selectedTeacherId = ref<string | null>(null);
+  const actionLoading = ref(false);
+  const actionError = ref<string | null>(null);
 
   const userStore = useUserStore();
 
@@ -101,6 +103,58 @@ export const useProtocolStore = defineStore("protocol", () => {
   function setSelectedTeacher(teacherId: string | null) {
     selectedTeacherId.value = teacherId === "all" ? null : teacherId;
     fetchProtocolWithRoleAccess();
+  }
+
+  /**
+   * Accept a substitution entry
+   */
+  async function acceptEntry(substitutionId: Id<"substitutions">) {
+    const userId = userStore.currentUser?.id as Id<"users">;
+    if (!userId) return;
+
+    actionLoading.value = true;
+    actionError.value = null;
+
+    try {
+      await convex.mutation(api.substitutions.mutations.acceptSubstitution, {
+        substitutionId,
+        userId,
+      });
+      await fetchProtocolWithRoleAccess();
+    } catch (err: any) {
+      console.error("[protocolStore] acceptEntry failed:", err);
+      actionError.value = err?.message || "Не удалось принять замену";
+    } finally {
+      actionLoading.value = false;
+    }
+  }
+
+  /**
+   * Reject a substitution entry
+   */
+  async function rejectEntry(
+    substitutionId: Id<"substitutions">,
+    reason?: string
+  ) {
+    const userId = userStore.currentUser?.id as Id<"users">;
+    if (!userId) return;
+
+    actionLoading.value = true;
+    actionError.value = null;
+
+    try {
+      await convex.mutation(api.substitutions.mutations.rejectSubstitution, {
+        substitutionId,
+        userId,
+        rejectionReason: reason,
+      });
+      await fetchProtocolWithRoleAccess();
+    } catch (err: any) {
+      console.error("[protocolStore] rejectEntry failed:", err);
+      actionError.value = err?.message || "Не удалось отклонить замену";
+    } finally {
+      actionLoading.value = false;
+    }
   }
 
   /**
@@ -186,8 +240,12 @@ export const useProtocolStore = defineStore("protocol", () => {
     loading,
     error,
     selectedTeacherId,
+    actionLoading,
+    actionError,
     fetchProtocolWithRoleAccess,
     setSelectedTeacher,
+    acceptEntry,
+    rejectEntry,
     getTeacherName,
     formatDate,
     getStatusText,
