@@ -5,12 +5,10 @@
       @click="toggle"
     >
       <div class="flex items-center">
-        <f7-icon
-          :ios="isExpanded ? 'f7:chevron_down' : 'f7:chevron_right'"
-          :md="isExpanded ? 'material:expand_more' : 'material:chevron_right'"
-          size="14px"
-          class="mr-1 md:mr-2 text-foreground/60"
-        ></f7-icon>
+        <component
+          :is="isExpanded ? IconChevronDown : IconChevronRight"
+          class="w-3.5 h-3.5 mr-1 md:mr-2 text-foreground/60"
+        />
         <div class="font-medium text-sm md:text-base flex items-center">
           <slot name="title"></slot>
         </div>
@@ -28,7 +26,8 @@
 
 <script setup lang="ts">
 import { computed, inject, onMounted } from "vue";
-import { f7Icon } from "framework7-vue";
+import IconChevronDown from "~icons/lucide/chevron-down";
+import IconChevronRight from "~icons/lucide/chevron-right";
 
 const props = defineProps<{
   id: string;
