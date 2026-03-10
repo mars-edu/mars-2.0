@@ -73,77 +73,187 @@
               <div
                 v-for="entry in group.entries"
                 :key="entry._id"
-                class="protocol-entry rounded-lg bg-card p-4 shadow-sm border border-border"
+                class="protocol-entry relative overflow-hidden rounded-lg bg-card border border-border shadow-sm"
               >
-                <!-- Entry Type Badge -->
-                <div class="mb-2 flex items-center gap-2">
-                  <span
-                    class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-                    :class="getStatusBadgeClass(entry.status)"
-                  >
-                    {{ protocolStore.getStatusText(entry.status) }}
-                  </span>
-                  <span class="text-xs text-muted-foreground">
-                    {{ formatTime(entry.createdAt) }}
-                  </span>
-                </div>
+                <!-- Left color bar -->
+                <div
+                  class="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg"
+                  :class="{
+                    'bg-blue-400':    entry.status === 'pending',
+                    'bg-green-400':   entry.status === 'accepted',
+                    'bg-red-400':     entry.status === 'rejected',
+                    'bg-muted-foreground/30': entry.status === 'completed',
+                  }"
+                ></div>
 
-                <!-- Entry Content -->
-                <div class="space-y-1.5">
-                  <div v-if="entry.type === 'substitution'">
-                    <p class="text-sm font-medium text-foreground">
-                      Установлена замена
-                    </p>
-                    <p class="text-sm text-muted-foreground leading-relaxed mt-1">
+                <div class="pl-5 pr-4 py-4 flex flex-col md:flex-row gap-4">
+                  <!-- Left: dot + time -->
+                  <div class="flex-shrink-0 flex flex-col items-center gap-1.5 min-w-[52px]">
+                    <div
+                      class="w-3 h-3 rounded-full mt-0.5"
+                      :class="{
+                        'bg-blue-500 ring-4 ring-blue-100 dark:ring-blue-900/30':    entry.status === 'pending',
+                        'bg-green-500 ring-4 ring-green-100 dark:ring-green-900/30': entry.status === 'accepted',
+                        'bg-red-500 ring-4 ring-red-100 dark:ring-red-900/30':       entry.status === 'rejected',
+                        'bg-muted-foreground ring-4 ring-muted/50':                  entry.status === 'completed',
+                      }"
+                    ></div>
+                    <span class="text-xs text-muted-foreground font-mono">
+                      {{ formatTime(entry.createdAt) }}
+                    </span>
+                  </div>
+
+                  <!-- Center: content -->
+                  <div class="flex-grow min-w-0">
+                    <div class="flex items-center gap-2 mb-1 flex-wrap">
+                      <h3 class="text-sm font-semibold text-foreground">Установлена замена</h3>
+                      <span class="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">
+                        Замена
+                      </span>
+                    </div>
+
+                    <p class="text-sm text-muted-foreground leading-relaxed mb-2">
                       Журнал
-                      <span class="font-medium text-foreground">{{
-                        entry.disciplineName || "БМД Владеть основами философских знаний"
-                      }}</span>
-                      <span v-if="entry.journal?.groupName">
-                        {{ entry.journal.groupName }}
-                      </span>
+                      <span class="font-medium text-foreground">{{ entry.disciplineName || entry.journalSnapshot?.disciplineName || 'Дисциплина' }}</span>
+                      <span v-if="entry.journal?.groupName"> {{ entry.journal.groupName }}</span>
                       преподавателя
-                      <span class="font-medium text-foreground">{{
-                        protocolStore.getTeacherName(entry.fromTeacher)
-                      }}</span>
+                      <span class="font-medium text-foreground">{{ protocolStore.getTeacherName(entry.fromTeacher) }}</span>
                       переведен преподавателю
-                      <span class="font-medium text-foreground">{{
-                        protocolStore.getTeacherName(entry.toTeacher)
-                      }}</span>
+                      <span class="font-medium text-foreground">{{ protocolStore.getTeacherName(entry.toTeacher) }}</span>
                       в период с
-                      <span class="font-medium text-foreground">{{
-                        protocolStore.formatDate(entry.startDate)
-                      }}</span>
+                      <span class="font-medium text-foreground">{{ protocolStore.formatDate(entry.startDate) }}</span>
                       г. по
-                      <span class="font-medium text-foreground">{{
-                        protocolStore.formatDate(entry.endDate)
-                      }}</span>
-                      г.
-                      <span v-if="entry.serviceLetterNumber">
-                        на основании служебного письма от
-                        <span class="font-medium text-foreground">{{
-                          entry.serviceLetterNumber
-                        }}</span>
-                        г.
-                      </span>
+                      <span class="font-medium text-foreground">{{ protocolStore.formatDate(entry.endDate) }}</span>
+                      г.<span v-if="entry.serviceLetterNumber"> на основании служебного письма от <span class="font-medium text-foreground">{{ entry.serviceLetterNumber }}</span> г.</span>
+                    </p>
+
+                    <p v-if="entry.reason" class="text-xs text-muted-foreground italic">
+                      Причина: {{ entry.reason }}
                     </p>
                   </div>
 
-                  <!-- Reason if provided -->
-                  <p
-                    v-if="entry.reason"
-                    class="text-xs text-muted-foreground italic mt-2"
-                  >
-                    Причина: {{ entry.reason }}
-                  </p>
+                  <!-- Right: actions / status -->
+                  <div class="flex-shrink-0 md:w-44 flex flex-col justify-center items-end gap-2">
+                    <!-- Pending + current user is toTeacher → show action buttons -->
+                    <template v-if="entry.status === 'pending' && isCurrentUserToTeacher(entry)">
+                      <span class="text-xs font-medium text-muted-foreground self-end">Действие:</span>
+                      <div class="flex gap-2">
+                        <button
+                          @click="openModal(entry._id, 'reject')"
+                          :disabled="protocolStore.actionLoading"
+                          class="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded border border-red-200 hover:bg-red-100 transition-colors text-xs font-bold disabled:opacity-50 dark:bg-red-900/20 dark:border-red-800 dark:hover:bg-red-900/30"
+                        >
+                          ✕ Отклонить
+                        </button>
+                        <button
+                          @click="openModal(entry._id, 'accept')"
+                          :disabled="protocolStore.actionLoading"
+                          class="flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-600 rounded border border-green-200 hover:bg-green-100 transition-colors text-xs font-bold disabled:opacity-50 dark:bg-green-900/20 dark:border-green-800 dark:hover:bg-green-900/30"
+                        >
+                          ✓ Принять
+                        </button>
+                      </div>
+                    </template>
+
+                    <!-- Pending but not toTeacher → show waiting pill -->
+                    <template v-else-if="entry.status === 'pending'">
+                      <div class="flex items-center gap-1.5 text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-full">
+                        <span class="text-xs font-bold">Ожидает</span>
+                      </div>
+                    </template>
+
+                    <!-- Accepted -->
+                    <template v-else-if="entry.status === 'accepted'">
+                      <div class="flex items-center gap-1.5 text-green-600 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-full">
+                        <span class="text-xs font-bold">✓ Принято</span>
+                      </div>
+                      <div v-if="entry.acceptedAt" class="text-[10px] text-muted-foreground text-right">
+                        {{ new Date(entry.acceptedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) }}
+                      </div>
+                    </template>
+
+                    <!-- Rejected -->
+                    <template v-else-if="entry.status === 'rejected'">
+                      <div class="flex items-center gap-1.5 text-red-600 bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-full">
+                        <span class="text-xs font-bold">✕ Отклонено</span>
+                      </div>
+                      <div v-if="entry.rejectedAt" class="text-[10px] text-muted-foreground text-right">
+                        {{ new Date(entry.rejectedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) }}
+                      </div>
+                    </template>
+
+                    <!-- Completed -->
+                    <template v-else-if="entry.status === 'completed'">
+                      <div class="flex items-center gap-1.5 text-muted-foreground bg-muted px-3 py-1.5 rounded-full">
+                        <span class="text-xs font-bold">Завершено</span>
+                      </div>
+                    </template>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+          <!-- Action Error -->
+          <div
+            v-if="protocolStore.actionError"
+            class="rounded-lg bg-destructive/10 p-3 text-sm text-destructive text-center"
+          >
+            {{ protocolStore.actionError }}
+          </div>
         </div>
       </div>
     </f7-page-content>
+
+    <!-- Confirmation Modal -->
+    <Teleport to="body">
+      <div
+        v-if="modalOpen"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+      >
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeModal"></div>
+        <div class="relative bg-card rounded-xl shadow-xl w-full max-w-sm p-6 border border-border">
+          <div class="flex flex-col items-center text-center">
+            <!-- Icon -->
+            <div
+              class="w-12 h-12 rounded-full flex items-center justify-center mb-4 text-xl"
+              :class="pendingAction?.type === 'accept'
+                ? 'bg-green-100 text-green-600 dark:bg-green-900/30'
+                : 'bg-red-100 text-red-600 dark:bg-red-900/30'"
+            >
+              {{ pendingAction?.type === 'accept' ? '✓' : '✕' }}
+            </div>
+
+            <h3 class="text-lg font-bold text-foreground mb-2">
+              {{ pendingAction?.type === 'accept' ? 'Принять замену?' : 'Отклонить замену?' }}
+            </h3>
+            <p class="text-sm text-muted-foreground mb-6">
+              Это действие будет зафиксировано в протоколе и не может быть отменено. Статус замены будет обновлён.
+            </p>
+
+            <div class="flex gap-3 w-full">
+              <button
+                @click="closeModal"
+                class="flex-1 px-4 py-2 bg-muted text-foreground rounded-lg font-medium hover:bg-muted/80 transition-colors"
+              >
+                Отмена
+              </button>
+              <button
+                @click="confirmAction"
+                :disabled="protocolStore.actionLoading"
+                class="flex-1 px-4 py-2 text-white rounded-lg font-bold shadow-sm transition-colors disabled:opacity-50"
+                :class="pendingAction?.type === 'accept'
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : 'bg-red-600 hover:bg-red-700'"
+              >
+                {{ protocolStore.actionLoading ? 'Подождите...' : 'Подтвердить' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </f7-page>
 </template>
 
@@ -154,7 +264,9 @@ import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
 import { useProtocolStore } from "@/stores/protocolStore";
+import type { ProtocolEntry } from "@/stores/protocolStore";
 import { useUserStore } from "@/stores/userStore";
+import type { Id } from "@convex/_generated/dataModel";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useSidebar } from "@/composables/useSidebar";
 
@@ -177,6 +289,37 @@ const teacherOptions = computed(() => [
   ...teacherStore.teacherSelectOptions,
 ]);
 
+const modalOpen = ref(false);
+const pendingAction = ref<{
+  id: Id<"substitutions">;
+  type: "accept" | "reject";
+} | null>(null);
+
+function openModal(id: Id<"substitutions">, type: "accept" | "reject") {
+  pendingAction.value = { id, type };
+  modalOpen.value = true;
+}
+
+function closeModal() {
+  modalOpen.value = false;
+  pendingAction.value = null;
+}
+
+async function confirmAction() {
+  if (!pendingAction.value) return;
+  const { id, type } = pendingAction.value;
+  closeModal();
+  if (type === "accept") {
+    await protocolStore.acceptEntry(id);
+  } else {
+    await protocolStore.rejectEntry(id);
+  }
+}
+
+function isCurrentUserToTeacher(entry: ProtocolEntry): boolean {
+  return userStore.currentUser?.id === entry.toUserId;
+}
+
 /**
  * Format timestamp to time string (HH:MM)
  */
@@ -186,19 +329,6 @@ function formatTime(timestamp: number): string {
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-/**
- * Get CSS classes for status badge
- */
-function getStatusBadgeClass(status: string): string {
-  const classes = {
-    pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-    accepted: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-    rejected: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-    completed: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-  };
-  return classes[status as keyof typeof classes] || classes.pending;
 }
 
 /**
