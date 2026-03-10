@@ -17,13 +17,13 @@
             class="p-1 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors"
             @click="previousMonth"
           >
-            <i class="f7-icons text-sm">chevron_left</i>
+            <IconChevronLeft class="text-sm" />
           </button>
           <button
             class="p-1 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors"
             @click="nextMonth"
           >
-            <i class="f7-icons text-sm">chevron_right</i>
+            <IconChevronRight class="text-sm" />
           </button>
         </div>
       </div>
@@ -96,7 +96,7 @@
 
       <EmptyState
         v-else
-        icon="calendar"
+        :icon="IconCalendar"
         title="Нет занятий на этот день"
       />
     </div>
@@ -107,6 +107,9 @@
 import { ref, computed, onMounted } from "vue";
 import { useScheduleStore } from "@/stores/scheduleStore";
 import EmptyState from "@/components/ui/EmptyState.vue";
+import IconCalendar from "~icons/lucide/calendar";
+import IconChevronLeft from "~icons/lucide/chevron-left";
+import IconChevronRight from "~icons/lucide/chevron-right";
 
 const scheduleStore = useScheduleStore();
 const weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];

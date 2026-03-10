@@ -41,15 +41,13 @@
 
         <!-- Arrow -->
         <div class="flex-shrink-0 ml-4">
-          <i class="f7-icons text-muted-foreground group-hover:text-foreground"
-            >chevron_right</i
-          >
+          <IconChevronRight class="text-muted-foreground group-hover:text-foreground" />
         </div>
       </div>
     </div>
     <EmptyState
       v-else
-      icon="calendar"
+      :icon="IconCalendar"
       title="Нет занятий на этот день"
     />
   </Card>
@@ -60,6 +58,8 @@ import { computed } from "vue";
 import { useScheduleStore } from "../../stores/scheduleStore";
 import Card from "@/components/ui/Card.vue";
 import EmptyState from "@/components/ui/EmptyState.vue";
+import IconCalendar from "~icons/lucide/calendar";
+import IconChevronRight from "~icons/lucide/chevron-right";
 
 interface Props {
   /** @deprecated Theme is now handled by CSS custom properties. */
