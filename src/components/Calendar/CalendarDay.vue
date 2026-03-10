@@ -1,21 +1,28 @@
 <template>
   <div class="bg-card min-h-[120px] p-2 relative group" :class="dayClasses">
-    <div
-      class="text-sm mb-1.5"
-      :class="{
-        'text-muted-foreground/40': !day.isCurrentMonth,
-        'text-primary-foreground': day.isToday,
-        'text-foreground': day.isCurrentMonth && !day.isToday,
-      }"
-    >
-      <span
-        v-if="day.isToday"
-        class="w-6 h-6 bg-red-500 rounded-lg inline-flex items-center justify-center font-black text-[11px] shadow-md"
+    <div class="flex justify-between items-start mb-1.5">
+      <div
+        :class="{
+          'text-muted-foreground/40': !day.isCurrentMonth,
+          'text-primary-foreground': day.isToday,
+          'text-foreground': day.isCurrentMonth && !day.isToday,
+        }"
       >
-        {{ day.dayNumber }}
-      </span>
-      <span v-else class="font-black text-[11px]">
-        {{ day.dayNumber }}
+        <span
+          v-if="day.isToday"
+          class="w-6 h-6 bg-primary text-primary-foreground rounded-lg inline-flex items-center justify-center font-black text-[11px] shadow-md"
+        >
+          {{ day.dayNumber }}
+        </span>
+        <span v-else class="font-black text-[11px]">
+          {{ day.dayNumber }}
+        </span>
+      </div>
+      <span
+        v-if="day.events.length > 0"
+        class="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md"
+      >
+        {{ day.events.length }}
       </span>
     </div>
     <div class="space-y-1 overflow-y-auto scrollbar-thin">
