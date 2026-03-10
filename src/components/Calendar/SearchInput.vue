@@ -5,10 +5,7 @@
       class="flex items-center bg-card border border-input rounded-full pl-3 pr-1 py-3 shadow-sm w-52 cursor-pointer"
       @click="openSearchPopover"
     >
-      <i
-        class="f7-icons text-muted-foreground text-lg mr-2 flex items-center justify-center"
-        >search</i
-      >
+      <IconSearch class="text-muted-foreground text-lg mr-2 flex items-center justify-center" />
       <div class="bg-transparent outline-none text-sm text-muted-foreground">
         {{ placeholder }}
       </div>
@@ -24,7 +21,7 @@
         <!-- Header with search input -->
         <div class="p-3 border-b border-input">
           <div class="flex items-center bg-secondary rounded-lg px-3 py-2">
-            <i class="f7-icons text-muted-foreground text-lg mr-2">search</i>
+            <IconSearch class="text-muted-foreground text-lg mr-2" />
             <input
               type="text"
               :placeholder="placeholder"
@@ -39,7 +36,7 @@
               class="flex items-center justify-center w-5 h-5 rounded-full bg-muted hover:bg-muted/80 transition-colors"
               @click="clearSearch"
             >
-              <i class="f7-icons text-muted-foreground text-xs">xmark</i>
+              <IconX class="text-muted-foreground text-xs" />
             </button>
           </div>
         </div>
@@ -91,6 +88,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { f7, f7Popover } from "framework7-vue";
+import IconSearch from "~icons/lucide/search";
+import IconX from "~icons/lucide/x";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{

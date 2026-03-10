@@ -5,7 +5,7 @@
       class="flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-full transition-colors"
       @click="openAddEventPopover"
     >
-      <i class="f7-icons text-[16px]">plus</i>
+      <IconPlus class="text-[16px]" />
       <span>Создать</span>
     </button>
 
@@ -55,6 +55,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import IconPlus from "~icons/lucide/plus";
 import { f7 } from "framework7-vue";
 import { storeToRefs } from "pinia";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";

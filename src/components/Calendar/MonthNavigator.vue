@@ -4,7 +4,7 @@
       class="p-1 hover:bg-secondary rounded transition-colors"
       @click="$emit('previous-month')"
     >
-      <i class="f7-icons text-muted-foreground text-sm">chevron_left</i>
+      <IconChevronLeft class="text-muted-foreground text-sm" />
     </button>
     <h1 class="text-xl text-foreground px-2 select-none min-w-fit">
       {{ monthName }} {{ year }}
@@ -13,13 +13,15 @@
       class="p-1 hover:bg-secondary rounded transition-colors"
       @click="$emit('next-month')"
     >
-      <i class="f7-icons text-muted-foreground text-sm">chevron_right</i>
+      <IconChevronRight class="text-muted-foreground text-sm" />
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue";
+import IconChevronLeft from "~icons/lucide/chevron-left";
+import IconChevronRight from "~icons/lucide/chevron-right";
 
 defineProps<{
   monthName: string;
