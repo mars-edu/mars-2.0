@@ -76,8 +76,8 @@ http.route({
 http.route({
   path: '/api/chat',
   method: 'POST',
-  handler: httpAction(async (_ctx, request) => {
-    return handleChatRequest(request);
+  handler: httpAction(async (ctx, request) => {
+    return handleChatRequest(ctx, request);
   }),
 });
 
