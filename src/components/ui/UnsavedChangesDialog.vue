@@ -11,7 +11,7 @@
         class="mx-auto mb-2.5 flex h-11 w-11 items-center justify-center rounded-full bg-[#f8dfe1] text-[#ef4444]"
         aria-hidden="true"
       >
-        <f7-icon ios="f7:exclamationmark_triangle_fill" md="material:warning" size="20" />
+        <IconTriangleAlert class="w-5 h-5" />
       </div>
 
       <h3 class="m-0 text-[30px] font-bold leading-[1.2] text-[#1f2937] max-[480px]:text-2xl">
@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { f7Icon } from "framework7-vue";
+import IconTriangleAlert from "~icons/lucide/triangle-alert";
 
 withDefaults(
   defineProps<{
