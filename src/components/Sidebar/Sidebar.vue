@@ -1,12 +1,12 @@
 <template>
   <aside
-    class="fixed top-[64px] left-0 bottom-0 bg-card border-r border-border overflow-visible z-50 shadow-sm transition-all duration-200"
+    class="fixed top-[64px] left-0 bottom-0 bg-card border-r border-border z-50 shadow-sm transition-all duration-300 overflow-visible"
     :class="sidebarWidth"
     style="display: grid; grid-template-rows: 1fr auto"
   >
     <!-- Toggle button on right edge -->
     <button
-      class="absolute -right-3 top-6 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-card border border-border shadow-sm hover:bg-muted transition-colors"
+      class="absolute -right-3 top-6 z-[100] flex h-6 w-6 items-center justify-center rounded-full bg-card border border-border shadow-sm hover:bg-muted transition-colors"
       @click="toggle"
       :title="collapsed ? 'Развернуть' : 'Свернуть'"
     >
@@ -17,8 +17,11 @@
     </button>
 
     <!-- Nav items -->
-    <div class="overflow-y-auto overflow-x-hidden w-full">
-      <nav class="flex flex-col pt-4 pb-4 w-full">
+    <div
+      class="w-full pt-4 pb-4"
+      :class="collapsed ? 'overflow-visible' : 'overflow-y-auto overflow-x-hidden'"
+    >
+      <nav class="flex flex-col space-y-2 w-full">
         <SidebarItem
           v-for="item in navigationItems"
           :key="item.id"
@@ -33,23 +36,25 @@
     </div>
 
     <!-- Profile / bottom items -->
-    <div class="border-t border-border bg-card py-3 overflow-x-hidden">
-      <SidebarItem
-        v-for="item in profileMenuItems"
-        :key="item.id"
-        :label="item.label"
-        :active="false"
-        :collapsed="collapsed"
-        @click="handleProfileItemClick(item.id)"
-      >
-        <component :is="profileIconMap[item.id]" class="w-5 h-5" />
-      </SidebarItem>
+    <div class="border-t border-border bg-card py-3">
+      <div class="flex flex-col space-y-2">
+        <SidebarItem
+          v-for="item in profileMenuItems"
+          :key="item.id"
+          :label="item.label"
+          :active="false"
+          :collapsed="collapsed"
+          @click="handleProfileItemClick(item.id)"
+        >
+          <component :is="profileIconMap[item.id]" class="w-5 h-5" />
+        </SidebarItem>
+      </div>
     </div>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from "vue";
+import { computed } from "vue";
 import type { Component } from "vue";
 import { useRBAC } from "@/composables/useRBAC";
 import { useSidebar } from "@/composables/useSidebar";
@@ -157,6 +162,8 @@ const updateActiveItem = () => {
     activeItem.value = matchingItem.id;
   }
 };
+
+import { onMounted, onUnmounted } from "vue";
 
 onMounted(() => {
   updateActiveItem();

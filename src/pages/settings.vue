@@ -34,15 +34,9 @@
                 class="gap-2"
                 type="button"
               >
-                <f7-icon
-                  :ios="areAllExpanded ? 'f7:chevron_up' : 'f7:chevron_down'"
-                  :md="
-                    areAllExpanded
-                      ? 'material:expand_less'
-                      : 'material:expand_more'
-                  "
-                  size="16px"
-                  ck
+                <component
+                  :is="areAllExpanded ? IconChevronUp : IconChevronDown"
+                  class="w-4 h-4"
                 />
                 {{ areAllExpanded ? "Свернуть все" : "Развернуть все" }}
               </f7-button>
@@ -72,7 +66,7 @@
                 <NoData
                   title="Нет семестров"
                   description="Семестры не добавлены в систему"
-                  :icon="{ ios: 'f7:calendar', md: 'material:event' }"
+                  :icon="IconCalendar"
                 />
               </div>
               <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
@@ -123,7 +117,7 @@
                 <NoData
                   title="Нет курсов"
                   description="Курсы не добавлены в систему"
-                  :icon="{ ios: 'f7:book', md: 'material:menu_book' }"
+                  :icon="IconBookOpen"
                 />
               </div>
               <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
@@ -179,7 +173,7 @@
                 <NoData
                   title="Нет языков"
                   description="Языки не добавлены в систему"
-                  :icon="{ ios: 'f7:globe', md: 'material:language' }"
+                  :icon="IconGlobe"
                 />
               </div>
               <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
@@ -242,10 +236,7 @@
                     <NoData
                       title="Нет форм контроля"
                       description="Формы итогового контроля не добавлены в систему"
-                      :icon="{
-                        ios: 'f7:check_circle',
-                        md: 'material:verified',
-                      }"
+                      :icon="IconCircleCheck"
                     />
                   </div>
                   <div
@@ -305,10 +296,7 @@
                     <NoData
                       title="Нет промежуточных контролей"
                       description="Промежуточный контроль не добавлен в систему"
-                      :icon="{
-                        ios: 'f7:check_circle',
-                        md: 'material:verified',
-                      }"
+                      :icon="IconCircleCheck"
                     />
                   </div>
                   <div
@@ -354,7 +342,13 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onBeforeMount } from "vue";
 import { storeToRefs } from "pinia";
-import { f7Page, f7Icon, f7, f7Preloader } from "framework7-vue";
+import { f7Page, f7, f7Preloader } from "framework7-vue";
+import IconCalendar from "~icons/lucide/calendar";
+import IconBookOpen from "~icons/lucide/book-open";
+import IconGlobe from "~icons/lucide/globe";
+import IconCircleCheck from "~icons/lucide/circle-check";
+import IconChevronUp from "~icons/lucide/chevron-up";
+import IconChevronDown from "~icons/lucide/chevron-down";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Accordion from "@/components/ui/accordion/Accordion.vue";

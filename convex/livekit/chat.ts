@@ -10,7 +10,7 @@ import { MARS_SYSTEM_PROMPT } from './marsSystemPrompt';
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': '*',
 };
 
 function errorResponse(message: string, status: number): Response {

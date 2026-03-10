@@ -161,7 +161,7 @@ export default async () => {
     },
     server: {
       host: true,
-      allowedHosts: ["*"],
+      allowedHosts: ["fitting-rooster-aware.ngrok-free.app"],
       fs: {
         strict: false,
       },
