@@ -101,10 +101,11 @@
         :key="item.id"
         :tab-link="'#tab-' + item.id"
         :tab-link-active="item.id === activeNavItem"
-        :icon-f7="item.icon"
-        :text="item.label"
         @click="activeNavItem = item.id"
-      ></f7-link>
+      >
+        <component :is="item.icon" class="icon" />
+        <span class="tabbar-label">{{ item.label }}</span>
+      </f7-link>
     </f7-toolbar>
   </f7-page>
 </template>
@@ -121,15 +122,19 @@ import StatsRow from "@/components/Home/StatsRow.vue";
 import QuickActionsCard from "@/components/Home/QuickActionsCard.vue";
 import CalendarSchedulePanel from "@/components/Home/CalendarSchedulePanel.vue";
 import { useSidebar } from "@/composables/useSidebar";
+import IconHouse from "~icons/lucide/house";
+import IconCalendar from "~icons/lucide/calendar";
+import IconFileText from "~icons/lucide/file-text";
+import IconBookOpen from "~icons/lucide/book-open";
 
 const { contentMargin } = useSidebar();
 const pageId = ref(Date.now());
 const activeNavItem = ref("home");
 
 const navigationItems = [
-  { id: "home", label: "Главная", icon: "house_fill" },
-  { id: "schedule", label: "Расписание", icon: "calendar" },
-  { id: "journals", label: "Журналы", icon: "doc_text_fill" },
-  { id: "rup", label: "РУП", icon: "book_fill" },
+  { id: "home", label: "Главная", icon: IconHouse },
+  { id: "schedule", label: "Расписание", icon: IconCalendar },
+  { id: "journals", label: "Журналы", icon: IconFileText },
+  { id: "rup", label: "РУП", icon: IconBookOpen },
 ];
 </script>
