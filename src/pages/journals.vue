@@ -273,116 +273,44 @@
                 </f7-button>
               </template>
             </div>
-            <div class="overflow-x-auto">
-              <div class="flex gap-5 w-full">
-                <template v-for="(course, idx) in courses" :key="course.id">
-                  <div class="flex flex-col gap-3 w-full">
-                    <h2
-                      class="font-semibold text-sm text-center py-1 bg-muted rounded-md text-muted-foreground"
-                    >
-                      {{ course.number }} курс
-                    </h2>
-                    <div
-                      v-for="journal in filteredJournalsByCourse[
-                        parseInt(course.number)
-                      ]"
-                      :key="journal.id"
-                    >
-                      <JournalCard
-                        :title="journalStore.getDisciplineTitle(journal)"
-                        :subtitle="journalStore.getJournalSubtitle(journal)"
-                        :group-language="journalStore.getJournalGroupLanguage(journal)"
-                        :schedule="journalStore.getJournalScheduleText(journal)"
-                        :percent="journalStore.getJournalPercent(journal)"
-                        :selection-mode="isSelectionMode"
-                        :selected="selectedJournalIds.has(journal.id)"
-                        :show-edit-button="false"
-                        @click="goToJournalDetails(journal.id)"
-                        @toggle-select="toggleJournalSelection(journal.id)"
-                      />
-                    </div>
-                    <div
-                      v-if="
-                        filteredJournalsByCourse[parseInt(course.number)].length === 0
-                      "
-                      class="rounded-lg p-4 text-gray-500 shadow-sm min-h-[90px] flex items-center justify-center bg-gray-50 border border-gray-100"
-                    >
-                      <p class="text-sm">Нет доступных журналов</p>
-                    </div>
-                  </div>
-                  <div v-if="idx === 3" class="flex flex-col gap-3 w-full">
-                    <h2
-                      class="font-semibold text-sm text-center py-1 bg-muted rounded-md text-muted-foreground"
-                    >
-                      смешанные группы
-                    </h2>
-                    <div
-                      v-for="journal in filteredMixedGroupJournals"
-                      :key="journal.id"
-                    >
-                      <JournalCard
-                        :title="journalStore.getDisciplineTitle(journal)"
-                        :subtitle="journalStore.getJournalSubtitle(journal)"
-                        :group-language="journalStore.getJournalGroupLanguage(journal)"
-                        :schedule="journalStore.getJournalScheduleText(journal)"
-                        :percent="journalStore.getJournalPercent(journal)"
-                        :selection-mode="isSelectionMode"
-                        :selected="selectedJournalIds.has(journal.id)"
-                        :show-edit-button="false"
-                        @click="goToJournalDetails(journal.id)"
-                        @toggle-select="toggleJournalSelection(journal.id)"
-                      />
-                    </div>
-                    <div
-                      v-if="filteredMixedGroupJournals.length === 0"
-                      class="rounded-lg p-4 text-gray-500 shadow-sm min-h-[90px] flex items-center justify-center bg-gray-50 border border-gray-100"
-                    >
-                      <p class="text-sm">Нет доступных журналов</p>
-                    </div>
-                  </div>
-                  <div v-if="idx === 3" class="flex flex-col gap-3 w-full">
-                    <h2
-                      class="font-semibold text-sm text-center py-1 bg-primary/10 rounded-md text-primary flex items-center justify-between px-2"
-                    >
-                      <span>индивидуальный журнал</span>
-                      <button
-                        @click="onAddIndividualJournal"
-                        class="w-6 h-6 rounded-md bg-primary hover:bg-primary-dark transition-colors flex items-center justify-center"
-                      >
-                        <f7-icon
-                          ios="f7:plus"
-                          md="material:add"
-                          size="16px"
-                          class="text-white"
-                        />
-                      </button>
-                    </h2>
-                    <div
-                      v-for="journal in filteredIndividualJournals"
-                      :key="journal.id"
-                    >
-                      <JournalCard
-                        :title="journalStore.getDisciplineTitle(journal)"
-                        :subtitle="journalStore.getJournalSubtitle(journal)"
-                        :group-language="journalStore.getJournalGroupLanguage(journal)"
-                        :schedule="journalStore.getJournalScheduleText(journal)"
-                        :percent="journalStore.getJournalPercent(journal)"
-                        :selection-mode="isSelectionMode"
-                        :selected="selectedJournalIds.has(journal.id)"
-                        :show-edit-button="true"
-                        @click="goToJournalDetails(journal.id)"
-                        @toggle-select="toggleJournalSelection(journal.id)"
-                        @edit="onEditIndividualJournal(journal.id)"
-                      />
-                    </div>
-                    <div
-                      v-if="filteredIndividualJournals.length === 0"
-                      class="rounded-lg p-4 text-gray-500 shadow-sm min-h-[90px] flex items-center justify-center bg-gray-50 border border-gray-100"
-                    >
-                      <p class="text-sm">Нет индивидуальных журналов</p>
-                    </div>
-                  </div>
-                </template>
+            <!-- Filter bar -->
+            <div class="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl self-start overflow-x-auto max-w-full mb-5 flex-wrap">
+              <button
+                v-for="f in JOURNAL_FILTERS"
+                :key="f.id"
+                @click="activeFilter = f.id"
+                class="px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 whitespace-nowrap"
+                :class="activeFilter === f.id
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'"
+              >
+                {{ f.label }}
+              </button>
+            </div>
+
+            <!-- Journal grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              <JournalGridCard
+                v-for="journal in filteredByTab"
+                :key="journal.id"
+                :title="journalStore.getDisciplineTitle(journal)"
+                :subtitle="journalStore.getJournalSubtitle(journal)"
+                :accent-color="getJournalAccentColor(journal.id)"
+                :course-number="(!journal.isMixedGroup && !journal.isIndividualJournal) ? journal.courseNumber : undefined"
+                :student-count="journal.students?.length ?? 0"
+                :selection-mode="isSelectionMode"
+                :selected="selectedJournalIds.has(journal.id)"
+                @click="goToJournalDetails(journal.id)"
+                @toggle-select="toggleJournalSelection(journal.id)"
+              />
+              <div
+                v-if="filteredByTab.length === 0"
+                class="col-span-full rounded-2xl border-2 border-dashed border-border flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground"
+              >
+                <div class="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                  <f7-icon ios="f7:tray" md="material:inbox" size="24px" class="opacity-40" />
+                </div>
+                <span class="text-sm font-medium opacity-60">В этой категории нет журналов</span>
               </div>
             </div>
           </div>
