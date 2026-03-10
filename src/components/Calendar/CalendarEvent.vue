@@ -7,11 +7,12 @@
     }"
     @click="handleClick"
   >
-    <div class="font-medium calendar-event-title" :style="{ color: textColor }">
+    <div class="font-bold calendar-event-title" :style="{ color: textColor }">
       {{ event.title }}
     </div>
-    <div class="text-opacity-80 truncate" :style="{ color: textColor }">
-      {{ event.time }}
+    <div class="flex items-center gap-1 text-opacity-80" :style="{ color: textColor }">
+      <Clock :size="10" />
+      <span class="truncate">{{ event.time }}</span>
     </div>
     <div
       v-if="event.group"
@@ -26,6 +27,7 @@
 <script setup lang="ts">
 import type { CalendarEvent } from "@/composables/useCalendar";
 import { computed } from "vue";
+import { Clock } from "lucide-vue-next";
 import { useThemeStore } from "@/stores/themeStore";
 
 const props = defineProps<{
