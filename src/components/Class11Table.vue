@@ -8,12 +8,7 @@
 
     <div class="p-6 text-center">
       <div class="max-w-md mx-auto space-y-4">
-        <f7-icon
-          ios="f7:doc_text"
-          md="material:description"
-          size="48px"
-          class="text-muted-foreground"
-        ></f7-icon>
+        <IconFileText class="w-12 h-12 text-muted-foreground" />
         <h3 class="text-lg font-medium">В разработке</h3>
         <p class="text-muted-foreground">
           Рабочий учебный план для 11 класса находится в разработке. Скоро здесь
@@ -25,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { f7Icon } from "framework7-vue";
+import IconFileText from "~icons/lucide/file-text";
 
 defineProps<{
   specialtyId: string;

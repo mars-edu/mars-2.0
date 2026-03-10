@@ -16,7 +16,7 @@
           <template #title>
             <div v-if="!editMode" class="flex-1 flex items-center justify-center space-x-4">
               <button @click="removeStep(currentStep)" v-if="steps.length > 1">
-                <f7-icon f7="trash" class="text-red-500"></f7-icon>
+                <IconTrash class="text-red-500" />
               </button>
               <div
                 class="text-foreground font-semibold flex items-center space-x-4"
@@ -52,12 +52,7 @@
                 class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
                 @click="showDeleteConfirmation"
               >
-                <f7-icon
-                  ios="f7:trash"
-                  md="material:delete"
-                  size="18px"
-                  class="mr-2"
-                />
+                <IconTrash class="w-[18px] h-[18px] mr-2" />
                 Удалить
               </button>
             </div>
@@ -94,7 +89,7 @@
             <!-- Language selector -->
             <div v-if="index === 0" class="mb-6">
               <label class="text-sm text-foreground mb-2 block font-medium flex items-center gap-2">
-                <f7-icon f7="globe" size="16px" class="text-muted-foreground"></f7-icon>
+                <IconGlobe class="w-4 h-4 text-muted-foreground" />
                 Языки обучения
               </label>
               <div class="grid grid-cols-3 gap-2">
@@ -107,12 +102,10 @@
                   :class="{ 'language-chip-active': selectedLanguages.includes(lang.code) }"
                 >
                   <span>{{ lang.name }}</span>
-                  <f7-icon
+                  <IconCircleCheck
                     v-if="selectedLanguages.includes(lang.code)"
-                    f7="checkmark_circle_fill"
-                    size="14px"
-                    class="ml-1"
-                  ></f7-icon>
+                    class="w-3.5 h-3.5 ml-1"
+                  />
                 </button>
               </div>
             </div>
@@ -215,7 +208,7 @@
                       class="w-6 h-6 flex items-center justify-center rounded-md bg-transparent border-0 p-0 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer transition-colors active:scale-95"
                       @click="distributeHoursFromField('srspHours')"
                     >
-                      <f7-icon f7="arrow_down" class="text-base" />
+                      <IconArrowDown class="w-4 h-4" />
                     </button>
                   </template>
                 </Input>
@@ -234,7 +227,7 @@
                       class="w-6 h-6 flex items-center justify-center rounded-md bg-transparent border-0 p-0 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer transition-colors active:scale-95"
                       @click="distributeHoursFromField('srsHours')"
                     >
-                      <f7-icon f7="arrow_down" class="text-base" />
+                      <IconArrowDown class="w-4 h-4" />
                     </button>
                   </template>
                 </Input>
@@ -269,7 +262,7 @@
                       class="w-6 h-6 flex items-center justify-center rounded-md bg-transparent border-0 p-0 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer transition-colors active:scale-95"
                       @click="distributeHoursFromField('individualAdditionalHours')"
                     >
-                      <f7-icon f7="arrow_down" class="text-base" />
+                      <IconArrowDown class="w-4 h-4" />
                     </button>
                   </template>
                 </Input>
@@ -286,7 +279,7 @@
                     @click="addDistributionEntry"
                     class="add-distribution-btn"
                   >
-                    <f7-icon f7="plus" size="14px" class="mr-1"></f7-icon>
+                    <IconPlus class="w-3.5 h-3.5 mr-1" />
                     Добавить
                   </f7-button>
                 </div>
@@ -385,7 +378,7 @@
                             @click="removeDistributionEntry(entry.id)"
                             class="remove-entry-btn"
                           >
-                            <f7-icon f7="trash" size="14px"></f7-icon>
+                            <IconTrash class="w-3.5 h-3.5" />
                           </f7-button>
                         </div>
                       </div>
@@ -408,7 +401,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from "vue";
-import { f7Popover, f7Checkbox, f7Icon, f7Button, f7 } from "framework7-vue";
+import { f7Popover, f7Checkbox, f7Button, f7 } from "framework7-vue";
+import IconTrash from "~icons/lucide/trash-2";
+import IconGlobe from "~icons/lucide/globe";
+import IconCircleCheck from "~icons/lucide/circle-check";
+import IconArrowDown from "~icons/lucide/arrow-down";
+import IconPlus from "~icons/lucide/plus";
 import { useClass9Store } from "@/stores/class9Store";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";

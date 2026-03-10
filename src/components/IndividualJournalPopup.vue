@@ -96,7 +96,7 @@
                   @click="removeJournal(journalId)"
                   class="text-destructive hover:bg-destructive/10 p-1 rounded"
                 >
-                  <f7-icon ios="f7:xmark" md="material:close" size="16px" />
+                  <IconX class="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -109,7 +109,7 @@
               class="w-full"
               @click="showDeleteConfirmation"
             >
-              <f7-icon ios="f7:trash" md="material:delete" size="18px" class="mr-2" />
+              <IconTrash class="w-[18px] h-[18px] mr-2" />
               Удалить индивидуальный журнал
             </Button>
           </div>
@@ -128,7 +128,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, reactive } from "vue";
-import { f7Popup, f7Page, f7Input, f7Checkbox, f7Icon, f7 } from "framework7-vue";
+import { f7Popup, f7Page, f7Input, f7Checkbox, f7 } from "framework7-vue";
+import IconX from "~icons/lucide/x";
+import IconTrash from "~icons/lucide/trash-2";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import Button from "@/components/ui/Button.vue";
