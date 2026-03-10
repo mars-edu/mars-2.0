@@ -7,7 +7,7 @@
       type="button"
       @click.stop="openAddControlPopover"
     >
-      <f7-icon ios="f7:plus" md="material:add" size="16px" class="text-white" />
+      <IconPlus class="w-4 h-4 text-white" />
     </button>
 
     <GuardedPopover
@@ -99,7 +99,8 @@
 import { ref, computed, watch } from "vue";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT, DATE_PICKER_PARAMS } from "@/constants/calendar";
-import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
+import { f7, f7Popover, f7Input } from "framework7-vue";
+import IconPlus from "~icons/lucide/plus";
 import { z } from "zod";
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";

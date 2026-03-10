@@ -7,12 +7,7 @@
       type="button"
       @click.stop="openAddSchedulePopover"
     >
-      <f7-icon
-        ios="f7:plus"
-        md="material:add"
-        size="16px"
-        class="text-white"
-      ></f7-icon>
+      <IconPlus class="w-4 h-4 text-white" />
     </button>
 
     <GuardedPopover
@@ -89,7 +84,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
-import { f7, f7Popover, f7Icon, f7Input } from "framework7-vue";
+import { f7, f7Popover, f7Input } from "framework7-vue";
+import IconPlus from "~icons/lucide/plus";
 import { z } from "zod";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";

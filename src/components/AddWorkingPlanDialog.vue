@@ -12,17 +12,12 @@
         : 'Создать рабочий учебный план'
     "
   >
-    <f7-icon
-      ios="f7:plus"
-      md="material:add"
-      size="18px"
-      class="text-white"
-    ></f7-icon>
+    <IconPlus class="w-4 h-4 text-white" />
   </button>
 </template>
 
 <script setup lang="ts">
-import { f7Icon } from "framework7-vue";
+import IconPlus from "~icons/lucide/plus";
 
 defineProps<{
   disabled?: boolean;

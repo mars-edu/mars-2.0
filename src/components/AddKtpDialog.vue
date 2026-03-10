@@ -10,12 +10,7 @@
       :disabled="disabled"
       :title="disabled ? 'Нельзя загрузить КТП' : 'Импорт/загрузка КТП'"
     >
-      <f7-icon
-        ios="f7:plus"
-        md="material:add"
-        size="16px"
-        class="text-white"
-      ></f7-icon>
+      <IconPlus class="w-4 h-4 text-white" />
     </button>
 
     <GuardedPopover
@@ -56,6 +51,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { f7 } from "framework7-vue";
+import IconPlus from "~icons/lucide/plus";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 

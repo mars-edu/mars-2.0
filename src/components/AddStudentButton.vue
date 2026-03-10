@@ -7,12 +7,7 @@
       type="button"
       @click.stop="openAddStudentPopover"
     >
-      <f7-icon
-        ios="f7:plus"
-        md="material:add"
-        size="16px"
-        class="text-white"
-      ></f7-icon>
+      <IconPlus class="w-4 h-4 text-white" />
     </button>
 
     <GuardedPopover
@@ -146,7 +141,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { f7, f7Popover, f7Input, f7Button, f7Icon } from "framework7-vue";
+import { f7, f7Popover, f7Input, f7Button } from "framework7-vue";
+import IconPlus from "~icons/lucide/plus";
 import { z } from "zod";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";

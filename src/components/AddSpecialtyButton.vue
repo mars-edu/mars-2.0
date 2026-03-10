@@ -7,12 +7,7 @@
       type="button"
       @click.stop="openAddSpecialtyPopover"
     >
-      <f7-icon
-        ios="f7:plus"
-        md="material:add"
-        size="16px"
-        class="text-white"
-      ></f7-icon>
+      <IconPlus class="w-4 h-4 text-white" />
     </button>
 
     <GuardedPopover
@@ -96,7 +91,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
+import { f7, f7Popover, f7Input, f7Checkbox } from "framework7-vue";
+import IconPlus from "~icons/lucide/plus";
 import { z } from "zod";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";

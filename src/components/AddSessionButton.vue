@@ -7,7 +7,7 @@
       type="button"
       @click.stop="openAddSessionPopover"
     >
-      <f7-icon ios="f7:plus" md="material:add" size="16px" class="text-white" />
+      <IconPlus class="w-4 h-4 text-white" />
     </button>
 
     <GuardedPopover
@@ -98,7 +98,8 @@
 import { ref, computed } from "vue";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
-import { f7, f7Popover, f7Input, f7Icon } from "framework7-vue";
+import { f7, f7Popover, f7Input } from "framework7-vue";
+import IconPlus from "~icons/lucide/plus";
 import { z } from "zod";
 import { useSessionStore } from "@/stores/sessionStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
