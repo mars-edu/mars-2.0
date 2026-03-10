@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-3 gap-4 mb-8">
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
     <!-- Students -->
     <div
       class="bg-card rounded-3xl p-6 shadow-sm border border-border flex flex-col justify-between h-36 hover:shadow-md transition-all"

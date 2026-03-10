@@ -18,11 +18,11 @@
         <WelcomeSection />
         <StatsRow />
 
-        <div class="flex flex-row gap-6">
+        <div class="flex flex-col xl:flex-row gap-6">
           <!-- Left: Activity + QuickActions + Announcements -->
           <div class="flex-1 space-y-6 min-w-0">
-            <div class="grid grid-cols-3 gap-6">
-              <div class="col-span-2">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div class="lg:col-span-2">
                 <ActivityCard />
               </div>
               <QuickActionsCard />
@@ -31,7 +31,7 @@
           </div>
 
           <!-- Right: Calendar + Schedule panel -->
-          <div class="w-[380px] flex-shrink-0">
+          <div class="w-full xl:w-[380px] xl:flex-shrink-0">
             <CalendarSchedulePanel />
           </div>
         </div>
