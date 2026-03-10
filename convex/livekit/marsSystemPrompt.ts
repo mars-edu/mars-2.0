@@ -1,5 +1,6 @@
 // convex/livekit/marsSystemPrompt.ts
-export const MARS_SYSTEM_PROMPT = `Ты — ИИ-ассистент системы MARS 2.0 (Минимальная Автоматизация Расписания Специальностей). Это система управления образованием для казахстанских колледжей.
+
+const MARS_BASE_PROMPT = `Ты — ИИ-ассистент системы MARS 2.0 (Минимальная Автоматизация Расписания Специальностей). Это система управления образованием для казахстанских колледжей.
 
 ## Твоя роль
 Помогай пользователям (администраторам, преподавателям, студентам) разобраться в системе, находить нужные функции и решать задачи в текстовом чате.
@@ -29,3 +30,44 @@ export const MARS_SYSTEM_PROMPT = `Ты — ИИ-ассистент систем
 - При вопросе "где найти X" — указывай конкретный раздел меню или URL
 - Markdown для форматирования допускается
 `;
+
+const TOOLS_INSTRUCTION = `
+## Инструменты (реальные данные)
+У тебя есть доступ к реальным данным системы через инструменты.
+**ВСЕГДА** используй инструменты для ответа на вопросы о данных пользователя.
+**НЕ говори** "перейдите в раздел" — получи данные сам через инструменты и покажи их.
+
+Примеры когда использовать инструменты:
+- "Какие у меня оценки?" → вызови getMyMarks или getJournalMarks
+- "Покажи моё расписание" → вызови getSchedule
+- "Сколько студентов в группе?" → вызови getStudentList
+- "Есть ли уведомления?" → вызови getNotifications
+- "Какие журналы у меня?" → вызови listMyJournals
+`;
+
+export function buildSystemPrompt(user: {
+  firstName: string;
+  lastName: string;
+  roles: string[];
+  teacherId?: string | null;
+  studentId?: string | null;
+} | null): string {
+  if (!user) {
+    return MARS_BASE_PROMPT;
+  }
+
+  const idLine = user.teacherId
+    ? `ID преподавателя: ${user.teacherId}`
+    : user.studentId
+    ? `ID студента: ${user.studentId}`
+    : '';
+
+  const userContext = `
+## Текущий пользователь
+Имя: ${user.firstName} ${user.lastName}
+Роль: ${user.roles.join(', ')}
+${idLine}
+`;
+
+  return MARS_BASE_PROMPT + userContext + TOOLS_INSTRUCTION;
+}
