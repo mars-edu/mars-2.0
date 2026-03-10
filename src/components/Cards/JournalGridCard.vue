@@ -9,13 +9,7 @@
       class="absolute top-3 right-3 z-10 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all duration-200"
       :class="selected ? 'bg-primary border-primary' : 'bg-card border-border'"
     >
-      <f7-icon
-        v-if="selected"
-        ios="f7:checkmark"
-        md="material:check"
-        size="14px"
-        class="text-white"
-      />
+      <IconCheck v-if="selected" class="w-3.5 h-3.5 text-white" />
     </div>
 
     <!-- Top row: icon + badges -->
@@ -54,7 +48,7 @@
       v-if="!selectionMode"
       class="absolute bottom-3 right-3 w-6 h-6 bg-muted rounded-full flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity"
     >
-      <f7-icon ios="f7:chevron_right" md="material:chevron_right" size="12px" />
+      <IconChevronRight class="w-3 h-3" />
     </div>
 
     <!--
@@ -75,6 +69,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import IconCheck from "~icons/lucide/check"
+import IconChevronRight from "~icons/lucide/chevron-right"
 
 interface AccentColor {
   bg: string
