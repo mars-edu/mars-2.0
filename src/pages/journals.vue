@@ -212,7 +212,7 @@
               </template>
             </div>
             <!-- Filter bar -->
-            <div class="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl self-start overflow-x-auto max-w-full mb-5 flex-wrap">
+            <div class="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl overflow-x-auto max-w-full mb-5">
               <button
                 v-for="f in JOURNAL_FILTERS"
                 :key="f.id"

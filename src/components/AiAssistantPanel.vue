@@ -134,7 +134,9 @@
               : 'bg-muted text-foreground rounded-bl-sm'"
           >
             <template v-for="(part, pIdx) in message.parts" :key="pIdx">
-              <span v-if="part.type === 'text'">{{ part.text }}</span>
+              <span v-if="part.type === 'text' && message.role === 'user'">{{ part.text }}</span>
+              <!-- eslint-disable-next-line vue/no-v-html -->
+              <div v-else-if="part.type === 'text'" class="prose-ai" v-html="renderMarkdown(part.text)" />
             </template>
           </div>
         </div>
@@ -195,6 +197,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
+import { marked } from 'marked';
 import {
   XIcon,
   BotIcon,
@@ -282,7 +285,14 @@ function barClass(band: number): string {
   return 'fill-muted-foreground/20';
 }
 
-// ── Chat (Vercel AI SDK) ─────────────────────────────────────────────────────
+// ── Markdown ─────────────────────────────────────────────────────────────────
+marked.setOptions({ breaks: true, gfm: true });
+
+function renderMarkdown(text: string): string {
+  return marked.parse(text) as string;
+}
+
+// ── Chat (Vercel AI SDK) ──────────────────────────────────────────────────────
 const chat = new Chat({
   transport: new DefaultChatTransport({
     api: `${CONVEX_SITE_URL}/api/chat`,
@@ -311,3 +321,92 @@ watch(
   }
 );
 </script>
+
+<style scoped>
+/* Markdown rendered inside assistant bubbles */
+.prose-ai :deep(p) {
+  margin: 0 0 0.5em;
+}
+.prose-ai :deep(p:last-child) {
+  margin-bottom: 0;
+}
+.prose-ai :deep(strong) {
+  font-weight: 600;
+}
+.prose-ai :deep(em) {
+  font-style: italic;
+}
+.prose-ai :deep(ul),
+.prose-ai :deep(ol) {
+  margin: 0.4em 0;
+  padding-left: 1.25em;
+}
+.prose-ai :deep(ul) {
+  list-style-type: disc;
+}
+.prose-ai :deep(ol) {
+  list-style-type: decimal;
+}
+.prose-ai :deep(li) {
+  margin: 0.15em 0;
+}
+.prose-ai :deep(h1),
+.prose-ai :deep(h2),
+.prose-ai :deep(h3) {
+  font-weight: 600;
+  margin: 0.6em 0 0.3em;
+  line-height: 1.3;
+}
+.prose-ai :deep(h1) { font-size: 1.1em; }
+.prose-ai :deep(h2) { font-size: 1.05em; }
+.prose-ai :deep(h3) { font-size: 1em; }
+.prose-ai :deep(code) {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85em;
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+.prose-ai :deep(pre) {
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  padding: 0.75em 1em;
+  margin: 0.5em 0;
+  overflow-x: auto;
+}
+.prose-ai :deep(pre code) {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8em;
+}
+.prose-ai :deep(blockquote) {
+  border-left: 3px solid hsl(var(--border));
+  margin: 0.4em 0;
+  padding-left: 0.75em;
+  color: hsl(var(--muted-foreground));
+}
+.prose-ai :deep(hr) {
+  border: none;
+  border-top: 1px solid hsl(var(--border));
+  margin: 0.5em 0;
+}
+.prose-ai :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.4em 0;
+  font-size: 0.85em;
+}
+.prose-ai :deep(th),
+.prose-ai :deep(td) {
+  border: 1px solid hsl(var(--border));
+  padding: 0.3em 0.6em;
+  text-align: left;
+}
+.prose-ai :deep(th) {
+  background: hsl(var(--background));
+  font-weight: 600;
+}
+</style>

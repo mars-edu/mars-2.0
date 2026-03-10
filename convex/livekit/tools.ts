@@ -1,9 +1,9 @@
 // convex/livekit/tools.ts
-import { tool, dynamicTool } from 'ai';
+import { dynamicTool } from 'ai';
 import { z } from 'zod';
 import { api } from '../_generated/api';
 import type { ActionCtx } from '../_generated/server';
-import type { Id } from '../_generated/dataModel';
+import type { Id, Doc } from '../_generated/dataModel';
 
 export interface ResolvedUser {
   userId: Id<'users'>;
@@ -14,7 +14,29 @@ export interface ResolvedUser {
   studentId?: string; // students._id as string (no userId index on students table)
 }
 
-export function createMarsTools(ctx: ActionCtx, user: ResolvedUser): any {
+// Tool result: either data or a typed error object
+type ToolError = { error: string };
+type ToolResult = Record<string, unknown> | Record<string, unknown>[] | ToolError | unknown[];
+
+// students.specialty stores a legacyId UUID, not a Convex Id<'specialties'>.
+// Build a map from legacyId → name by loading all specialties once.
+async function buildSpecialtyMap(ctx: ActionCtx): Promise<Record<string, string>> {
+  const all = await ctx.runQuery(api.specialties.queries.list, {});
+  const map: Record<string, string> = {};
+  for (const sp of all) {
+    if (sp.legacyId) map[sp.legacyId] = sp.name;
+  }
+  return map;
+}
+
+function accessDenied(): ToolError {
+  return { error: 'Access denied' };
+}
+
+export function createMarsTools(
+  ctx: ActionCtx,
+  user: ResolvedUser,
+): Record<string, ReturnType<typeof dynamicTool>> {
   const isAdmin = user.roles.includes('ADMIN');
   const isTeacher = user.roles.includes('TEACHER');
   const isStudent = user.roles.includes('STUDENT');
@@ -24,65 +46,58 @@ export function createMarsTools(ctx: ActionCtx, user: ResolvedUser): any {
     getCurrentUser: dynamicTool({
       description: 'Get the current logged-in user: name, roles, linked IDs.',
       inputSchema: z.object({}).passthrough(),
-      execute: async () => {
-        const result = {
-          name: `${user.firstName} ${user.lastName}`,
-          roles: user.roles,
-          teacherId: user.teacherId ?? null,
-          studentId: user.studentId ?? null,
-        };
-        return result as any;
-      },
-    } as any),
+      execute: async (): Promise<ToolResult> => ({
+        name: `${user.firstName} ${user.lastName}`,
+        roles: user.roles,
+        teacherId: user.teacherId ?? null,
+        studentId: user.studentId ?? null,
+      }),
+    }),
 
     // ── Academic Year ─────────────────────────────────────────────────────────
     getAcademicYear: dynamicTool({
       description: 'Get the current active academic year and its semesters.',
       inputSchema: z.object({}).passthrough(),
-      execute: async () => {
+      execute: async (): Promise<ToolResult> => {
         const year = await ctx.runQuery(api.academicYears.queries.getActive, {});
-        return (year ?? { error: 'No active academic year found' }) as any;
+        return (year as Record<string, unknown>) ?? { error: 'No active academic year found' };
       },
-    } as any),
+    }),
 
     // ── Disciplines ───────────────────────────────────────────────────────────
     getDisciplineList: dynamicTool({
       description: 'List all disciplines (subjects) in the system.',
       inputSchema: z.object({}).passthrough(),
-      execute: async () => {
-        const result = await ctx.runQuery(api.disciplines.queries.list, {});
-        return result as any;
-      },
-    } as any),
+      execute: async (): Promise<ToolResult> =>
+        await ctx.runQuery(api.disciplines.queries.list, {}),
+    }),
 
     // ── Journals ──────────────────────────────────────────────────────────────
     listMyJournals: dynamicTool({
       description:
         'List journals for the current user. Teachers see their own journals. Students see journals they are enrolled in. Admins see all.',
       inputSchema: z.object({}).passthrough(),
-      execute: async () => {
+      execute: async (): Promise<ToolResult> => {
         if (isAdmin) {
-          return (await ctx.runQuery(api.journals.queries.list, {})) as any;
+          return await ctx.runQuery(api.journals.queries.list, {});
         }
         if (isTeacher && user.teacherId) {
           const events = await ctx.runQuery(
             api.calendarEvents.queries.getByTeacher,
             { teacherId: user.teacherId },
           );
-          const eventIds = new Set((events as any[]).map((e: any) => e._id));
+          const eventIds = new Set(events.map((e) => e._id));
           const allJournals = await ctx.runQuery(api.journals.queries.list, {});
-          return (allJournals as any[]).filter((j: any) =>
-            eventIds.has(j.calendarEventId),
-          ) as any;
+          return allJournals.filter((j) => eventIds.has(j.calendarEventId as Id<'calendarEvents'>));
         }
         if (isStudent && user.studentId) {
           return (await ctx.runQuery(api.journals.queries.getByStudentId, {
             studentId: user.studentId,
-          })) as any;
+          })) as Doc<'journals'>[];
         }
-        return { error: 'Access denied' } as any;
+        return accessDenied();
       },
-    } as any),
+    }),
 
     getJournalMarks: dynamicTool({
       description:
@@ -90,35 +105,36 @@ export function createMarsTools(ctx: ActionCtx, user: ResolvedUser): any {
       inputSchema: z.object({
         journalId: z.string().describe('The journal _id'),
       }),
-      execute: async (input: { journalId: string }, options: any): Promise<unknown> => {
+      execute: async (input: unknown): Promise<ToolResult> => {
+        const { journalId } = input as { journalId: string };
         if (isAdmin || isTeacher) {
-          return (await ctx.runQuery(api.marks.queries.getJournalMarks, {
-            journalId: input.journalId as Id<'journals'>,
-          })) as any;
+          return await ctx.runQuery(api.marks.queries.getJournalMarks, {
+            journalId: journalId as Id<'journals'>,
+          });
         }
         if (isStudent && user.studentId) {
-          return (await ctx.runQuery(api.marks.queries.getStudentMarks, {
-            journalId: input.journalId as Id<'journals'>,
+          return await ctx.runQuery(api.marks.queries.getStudentMarks, {
+            journalId: journalId as Id<'journals'>,
             studentId: user.studentId,
-          })) as any;
+          });
         }
-        return { error: 'Access denied' } as any;
+        return accessDenied();
       },
-    } as any),
+    }),
 
     getMyMarks: dynamicTool({
       description:
         'Get all marks for the current student across all enrolled journals. Only works for STUDENT role.',
       inputSchema: z.object({}).passthrough(),
-      execute: async () => {
+      execute: async (): Promise<ToolResult> => {
         if (!isStudent || !user.studentId) {
-          return { error: 'Only students can use this tool' } as any;
+          return { error: 'Only students can use this tool' };
         }
-        return (await ctx.runQuery(api.marks.queries.getAllByStudentId, {
+        return await ctx.runQuery(api.marks.queries.getAllByStudentId, {
           studentId: user.studentId,
-        })) as any;
+        });
       },
-    } as any),
+    }),
 
     // ── Schedule ──────────────────────────────────────────────────────────────
     getSchedule: dynamicTool({
@@ -128,76 +144,126 @@ export function createMarsTools(ctx: ActionCtx, user: ResolvedUser): any {
         startDate: z.string().optional().describe('ISO date, e.g. 2026-03-01'),
         endDate: z.string().optional().describe('ISO date, e.g. 2026-03-31'),
       }),
-      execute: async (input: { startDate?: string; endDate?: string }, options: any): Promise<unknown> => {
+      execute: async (input: unknown): Promise<ToolResult> => {
+        const { startDate, endDate } = input as { startDate?: string; endDate?: string };
         if (isTeacher && user.teacherId) {
           const events = await ctx.runQuery(
             api.calendarEvents.queries.getByTeacher,
             { teacherId: user.teacherId },
           );
-          return applyDateFilter(events as any[], input.startDate, input.endDate) as any;
+          return applyDateFilter(events, startDate, endDate);
         }
         if (isAdmin) {
-          if (input.startDate && input.endDate) {
-            return (await ctx.runQuery(api.calendarEvents.queries.getByDateRange, {
-              startDate: input.startDate,
-              endDate: input.endDate,
-            })) as any;
+          if (startDate && endDate) {
+            return await ctx.runQuery(api.calendarEvents.queries.getByDateRange, {
+              startDate: startDate,
+              endDate: endDate,
+            } as { startDate: string; endDate: string });
           }
-          return (await ctx.runQuery(api.calendarEvents.queries.list, {})) as any;
+          return await ctx.runQuery(api.calendarEvents.queries.list, {});
         }
         if (isStudent && user.studentId) {
-          const allEvents = await ctx.runQuery(
-            api.calendarEvents.queries.list,
-            {},
+          const studentId = user.studentId;
+          const allEvents = await ctx.runQuery(api.calendarEvents.queries.list, {});
+          const myEvents = allEvents.filter(
+            (e) => Array.isArray(e.participants) && e.participants.includes(studentId),
           );
-          const myEvents = (allEvents as any[]).filter((e: any) =>
-            Array.isArray(e.participants) &&
-            e.participants.includes(user.studentId),
-          );
-          return applyDateFilter(myEvents, input.startDate, input.endDate) as any;
+          return applyDateFilter(myEvents, startDate, endDate);
         }
-        return { error: 'Access denied' } as any;
+        return accessDenied();
       },
-    } as any),
+    }),
 
     // ── Students ──────────────────────────────────────────────────────────────
     getStudentList: dynamicTool({
       description:
-        'List students. Optionally filter by specialty or search by name. Teacher and admin only.',
+        'List students. Use this FIRST when looking up a student by name — pass the name as "search" to get their _id. Returns specialtyName resolved to a human-readable string. Optionally filter by specialty. Teacher and admin only.',
       inputSchema: z.object({
         search: z.string().optional().describe('Name fragment to search'),
         specialty: z.string().optional().describe('Filter by specialty'),
       }),
-      execute: async (input: { search?: string; specialty?: string }, options: any): Promise<unknown> => {
-        if (!isAdmin && !isTeacher) return { error: 'Access denied' } as any;
-        if (input.search) {
-          return (await ctx.runQuery(api.students.queries.search, {
-            searchTerm: input.search,
-          })) as any;
+      execute: async (input: unknown): Promise<ToolResult> => {
+        if (!isAdmin && !isTeacher) return accessDenied();
+        const { search, specialty } = input as { search?: string; specialty?: string };
+        let students: Doc<'students'>[];
+        if (search) {
+          students = (await ctx.runQuery(api.students.queries.search, { searchTerm: search })) as Doc<'students'>[];
+        } else if (specialty) {
+          students = (await ctx.runQuery(api.students.queries.getBySpecialty, { specialty })) as Doc<'students'>[];
+        } else {
+          students = await ctx.runQuery(api.students.queries.list, {});
         }
-        if (input.specialty) {
-          return (await ctx.runQuery(api.students.queries.getBySpecialty, {
-            specialty: input.specialty,
-          })) as any;
-        }
-        return (await ctx.runQuery(api.students.queries.list, {})) as any;
+        // students.specialty stores legacyId (UUID), not Convex _id — resolve via map.
+        const specialtyMap = await buildSpecialtyMap(ctx);
+        return students.map((s) => ({
+          ...s,
+          specialtyName: s.specialty ? (specialtyMap[s.specialty] ?? null) : null,
+        }));
       },
-    } as any),
+    }),
 
     getStudentCard: dynamicTool({
       description:
-        'Get full info for one student by their ID. Teacher and admin only.',
+        'Get full info for one student by their _id. Use after finding the student via getStudentList. Never ask the user for this ID — resolve it from search results. Teacher and admin only.',
       inputSchema: z.object({
         studentId: z.string().describe('The student _id'),
       }),
-      execute: async (input: { studentId: string }, options: any): Promise<unknown> => {
-        if (!isAdmin && !isTeacher) return { error: 'Access denied' } as any;
+      execute: async (input: unknown): Promise<ToolResult> => {
+        if (!isAdmin && !isTeacher) return accessDenied();
+        const { studentId } = input as { studentId: string };
         const student = await ctx.runQuery(api.students.queries.getById, {
-          id: input.studentId as Id<'students'>,
+          id: studentId as Id<'students'>,
         });
-        return (student ?? { error: 'Student not found' }) as any;
+        if (!student) return { error: 'Student not found' };
+        // students.specialty stores legacyId (UUID), not Convex _id — resolve via map.
+        const specialtyMap = await buildSpecialtyMap(ctx);
+        return {
+          ...student,
+          specialtyName: student.specialty ? (specialtyMap[student.specialty] ?? null) : null,
+        };
       },
-    } as any),
+    }),
+
+    getStudentJournals: dynamicTool({
+      description:
+        "Get all journals a specific student is enrolled in, with human-readable discipline names resolved. Use when asked about a student's subjects, classes, or journals. Call after finding the student via getStudentList. Teacher and admin only.",
+      inputSchema: z.object({
+        studentId: z.string().describe('The student _id (from getStudentList results)'),
+      }),
+      execute: async (input: unknown): Promise<ToolResult> => {
+        if (!isAdmin && !isTeacher) return accessDenied();
+        const { studentId } = input as { studentId: string };
+        const journals = (await ctx.runQuery(api.journals.queries.getByStudentId, {
+          studentId,
+        })) as Doc<'journals'>[];
+        // Resolve disciplineId → moduleName from class9Items so AI never shows raw UUIDs
+        return Promise.all(
+          journals.map(async (j) => {
+            let disciplineName: string | null = null;
+            if (j.disciplineId) {
+              const item = await ctx.runQuery(api.class9Items.queries.getById, {
+                id: j.disciplineId as Id<'class9Items'>,
+              });
+              disciplineName = item?.moduleName ?? null;
+            }
+            return { ...j, disciplineName };
+          }),
+        );
+      },
+    }),
+
+    getMarksForStudent: dynamicTool({
+      description:
+        'Get ALL marks for a specific student across all their journals in one call. Use this instead of calling getJournalMarks for each journal separately — it avoids hitting tool call limits. Returns marks with columnDate (ISO date) and columnLabel for sorting. Teacher and admin only.',
+      inputSchema: z.object({
+        studentId: z.string().describe('The student _id (from getStudentList results)'),
+      }),
+      execute: async (input: unknown): Promise<ToolResult> => {
+        if (!isAdmin && !isTeacher) return accessDenied();
+        const { studentId } = input as { studentId: string };
+        return await ctx.runQuery(api.marks.queries.getAllByStudentId, { studentId });
+      },
+    }),
 
     // ── Teachers ──────────────────────────────────────────────────────────────
     getTeacherList: dynamicTool({
@@ -205,14 +271,15 @@ export function createMarsTools(ctx: ActionCtx, user: ResolvedUser): any {
       inputSchema: z.object({
         search: z.string().optional().describe('Name fragment to search'),
       }),
-      execute: async (input: { search?: string }, options: any): Promise<unknown> => {
-        if (!isAdmin) return { error: 'Access denied — admin only' } as any;
-        if (input.search) {
-          return (await ctx.runQuery(api.teachers.queries.search, { searchTerm: input.search })) as any;
+      execute: async (input: unknown): Promise<ToolResult> => {
+        if (!isAdmin) return { error: 'Access denied — admin only' };
+        const { search } = input as { search?: string };
+        if (search) {
+          return (await ctx.runQuery(api.teachers.queries.search, { searchTerm: search })) as Record<string, unknown>[];
         }
-        return (await ctx.runQuery(api.teachers.queries.list, {})) as any;
+        return (await ctx.runQuery(api.teachers.queries.list, {})) as Record<string, unknown>[];
       },
-    } as any),
+    }),
 
     // ── KTP ───────────────────────────────────────────────────────────────────
     getKTP: dynamicTool({
@@ -221,13 +288,14 @@ export function createMarsTools(ctx: ActionCtx, user: ResolvedUser): any {
       inputSchema: z.object({
         eventId: z.string().describe('calendarEvent _id'),
       }),
-      execute: async (input: { eventId: string }, options: any): Promise<unknown> => {
-        if (!isAdmin && !isTeacher) return { error: 'Access denied' } as any;
+      execute: async (input: unknown): Promise<ToolResult> => {
+        if (!isAdmin && !isTeacher) return accessDenied();
+        const { eventId } = input as { eventId: string };
         return (await ctx.runQuery(api.ktps.queries.getByEventId, {
-          eventId: input.eventId as Id<'calendarEvents'>,
-        })) as any;
+          eventId: eventId as Id<'calendarEvents'>,
+        })) as unknown as Record<string, unknown>[];
       },
-    } as any),
+    }),
 
     // ── Substitutions ─────────────────────────────────────────────────────────
     getSubstitutions: dynamicTool({
@@ -239,47 +307,46 @@ export function createMarsTools(ctx: ActionCtx, user: ResolvedUser): any {
           .optional()
           .describe('Filter by status'),
       }),
-      execute: async (input: { status?: 'pending' | 'accepted' | 'rejected' | 'completed' }, options: any): Promise<unknown> => {
-        // getTeacherSubstitutions uses toUserId (the user receiving the substitution)
+      execute: async (input: unknown): Promise<ToolResult> => {
+        const { status } = input as { status?: 'pending' | 'accepted' | 'rejected' | 'completed' };
         if (isTeacher) {
           return (await ctx.runQuery(
             api.substitutions.queries.getTeacherSubstitutions,
-            { toUserId: user.userId, status: input.status },
-          )) as any;
+            { toUserId: user.userId, status },
+          )) as Record<string, unknown>[];
         }
         if (isAdmin && user.teacherId) {
           return (await ctx.runQuery(
             api.substitutions.queries.getCreatedSubstitutions,
-            { fromTeacherId: user.teacherId, status: input.status },
-          )) as any;
+            { fromTeacherId: user.teacherId, status },
+          )) as Record<string, unknown>[];
         }
-        // Admin without teacherId: no all-substitutions query exists yet
-        return { error: 'No substitution query available for this role. Use the Substitutions page instead.' } as any;
+        return { error: 'No substitution query available for this role. Use the Substitutions page instead.' };
       },
-    } as any),
+    }),
 
     // ── Notifications ─────────────────────────────────────────────────────────
     getNotifications: dynamicTool({
       description: 'Get unread notifications for the current user.',
       inputSchema: z.object({}).passthrough(),
-      execute: async () =>
+      execute: async (): Promise<ToolResult> =>
         (await ctx.runQuery(api.notifications.queries.getUserNotifications, {
           userId: user.userId,
           status: 'unread',
-        })) as any,
-    } as any),
+        })) as Record<string, unknown>[],
+    }),
   };
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function applyDateFilter(
-  events: any[],
+function applyDateFilter<T extends { startDate?: string; endDate?: string }>(
+  events: T[],
   startDate?: string,
   endDate?: string,
-): any[] {
+): T[] {
   return events.filter((e) => {
-    if (startDate && e.startDate < startDate) return false;
-    if (endDate && e.endDate > endDate) return false;
+    if (startDate && e.startDate && e.startDate < startDate) return false;
+    if (endDate && e.endDate && e.endDate > endDate) return false;
     return true;
   });
 }

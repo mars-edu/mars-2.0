@@ -109,11 +109,11 @@ export async function handleChatRequest(
     const tools = user ? createMarsTools(ctx, user) : undefined;
 
     const result = streamText({
-      model: google('gemini-2.0-flash'),
+      model: google('gemini-3-flash-preview'),
       system: buildSystemPrompt(user),
       messages: modelMessages,
       tools,
-      stopWhen: stepCountIs(5),
+      stopWhen: stepCountIs(10),
     });
 
     const streamResponse = result.toUIMessageStreamResponse();
