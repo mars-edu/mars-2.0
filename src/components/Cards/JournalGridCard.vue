@@ -28,7 +28,7 @@
       </div>
       <div class="flex flex-col items-end gap-1">
         <div
-          v-if="courseNumber"
+          v-if="courseNumber !== undefined"
           class="bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-[5px]"
         >
           {{ courseNumber }} Курс
