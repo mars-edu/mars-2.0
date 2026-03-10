@@ -208,10 +208,13 @@ import {
 import { Chat } from '@ai-sdk/vue';
 import { DefaultChatTransport } from 'ai';
 import { useAgentSession } from '@/composables/useAgentSession';
+import { useUserStore } from '@/stores/userStore';
 
 const CONVEX_SITE_URL = import.meta.env.VITE_CONVEX_SITE_URL;
 
 defineEmits<{ close: [] }>();
+
+const userStore = useUserStore();
 
 const activeTab = ref<'voice' | 'chat'>('voice');
 
@@ -283,6 +286,8 @@ function barClass(band: number): string {
 const chat = new Chat({
   transport: new DefaultChatTransport({
     api: `${CONVEX_SITE_URL}/api/chat`,
+    headers: () =>
+      userStore.token ? { Authorization: `Bearer ${userStore.token}` } : {},
   }),
 });
 
