@@ -1,6 +1,6 @@
 <template>
   <div
-    class="group relative overflow-hidden rounded-[18px] bg-card border border-border shadow-sm hover:border-blue-200 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer select-none flex flex-col p-4 gap-2.5"
+    class="group relative overflow-hidden rounded-[18px] bg-card border border-border shadow-sm hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer select-none flex flex-col p-4 gap-2.5"
     @click="handleClick"
   >
     <!-- Selection checkbox -->
@@ -29,7 +29,7 @@
       <div class="flex flex-col items-end gap-1">
         <div
           v-if="courseNumber"
-          class="bg-blue-50 text-blue-600 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-[5px]"
+          class="bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-[5px]"
         >
           {{ courseNumber }} Курс
         </div>
@@ -75,7 +75,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { f7Icon } from 'framework7-vue'
 
 interface AccentColor {
   bg: string
