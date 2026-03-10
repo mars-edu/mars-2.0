@@ -18,12 +18,7 @@
           role="alert"
         >
           <div class="flex items-center">
-            <f7-icon
-              ios="f7:info_circle_fill"
-              md="material:info"
-              size="24px"
-              class="mr-3"
-            ></f7-icon>
+            <IconInfo class="w-6 h-6 mr-3" />
             <div>
               <p class="font-bold">Режим импорта</p>
               <p class="text-sm opacity-90">
@@ -36,18 +31,14 @@
               @click="handleImport"
               class="flex items-center gap-2 px-4 py-2 bg-primary-foreground text-primary rounded-lg shadow-lg hover:bg-primary-foreground/90 transition-colors"
             >
-              <f7-icon
-                ios="f7:square_arrow_up"
-                md="material:file_download"
-                size="20px"
-              ></f7-icon>
+              <IconSquareArrowUp class="w-5 h-5" />
               <span>Импорт</span>
             </button>
             <button
               @click="cancelSelectMode"
               class="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg shadow-lg hover:bg-red-600 transition-colors"
             >
-              <f7-icon ios="f7:xmark" md="material:close" size="20px"></f7-icon>
+              <IconX class="w-5 h-5" />
               <span>Отмена</span>
             </button>
           </div>
@@ -125,19 +116,16 @@
                     <span class="text-base font-semibold tracking-tight">
                       {{ specialty.codeName || specialty.name }}
                     </span>
-                    <f7-icon
-                      ios="f7:info_circle"
-                      md="material:info"
-                      size="14px"
+                    <IconInfo
+                      class="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors cursor-pointer"
                       :id="`specialty-item-${specialty.id}`"
-                      class="text-muted-foreground group-hover:text-foreground transition-colors cursor-pointer"
                       @click.stop="
                         handleSpecialtyInfoClick(
                           specialty,
                           `#specialty-item-${specialty.id}`
                         )
                       "
-                    ></f7-icon>
+                    />
                   </div>
                   <div
                     v-if="specialties.length === 0"
@@ -200,11 +188,7 @@
                 class="w-full min-h-[140px] px-4 py-6 flex items-center justify-center rounded-lg border border-dashed border-border bg-muted/20"
               >
                 <div class="text-muted-foreground text-sm md:text-base flex items-center gap-2">
-                  <f7-icon
-                    ios="f7:arrow_up"
-                    md="material:keyboard_arrow_up"
-                    size="18px"
-                  ></f7-icon>
+                  <IconArrowUp class="w-[18px] h-[18px]" />
                   <span>Сначала выберите учебный год</span>
                 </div>
               </div>
@@ -213,11 +197,7 @@
                 class="w-full min-h-[140px] px-4 py-6 flex items-center justify-center rounded-lg border border-dashed border-border bg-muted/20"
               >
                 <div class="text-muted-foreground text-sm md:text-base flex items-center gap-2">
-                  <f7-icon
-                    ios="f7:arrow_up"
-                    md="material:keyboard_arrow_up"
-                    size="18px"
-                  ></f7-icon>
+                  <IconArrowUp class="w-[18px] h-[18px]" />
                   <span>Сначала выберите специальность</span>
                 </div>
               </div>
@@ -275,7 +255,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
-import { f7Page, f7Icon, f7SkeletonBlock, f7, f7Popover } from "framework7-vue";
+import { f7Page, f7SkeletonBlock, f7, f7Popover } from "framework7-vue";
+import IconInfo from "~icons/lucide/info";
+import IconSquareArrowUp from "~icons/lucide/square-arrow-up";
+import IconX from "~icons/lucide/x";
+import IconArrowUp from "~icons/lucide/arrow-up";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddWorkingPlanDialog from "@/components/AddWorkingPlanDialog.vue";
