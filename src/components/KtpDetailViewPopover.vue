@@ -74,7 +74,6 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { f7Icon } from "framework7-vue";
 import type { KtpDetail } from "@/stores/ktpStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";

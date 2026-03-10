@@ -322,7 +322,6 @@ import {
   f7Link,
   f7Tabs,
   f7Tab,
-  f7Icon,
 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";

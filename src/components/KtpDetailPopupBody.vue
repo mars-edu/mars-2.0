@@ -69,23 +69,6 @@
             </f7-button>
 
             <!-- NOTE: bulk-delete disabled by request; delete is done per-theme via edit popover. -->
-            <!--
-            <f7-button
-              id="clear-ktp-themes-button"
-              small
-              text-color="white"
-              class="!h-8 !min-h-8 !text-xs bg-destructive"
-              :disabled="ktpDetails.length === 0"
-              @click="clearAllThemes"
-            >
-              <f7-icon
-                ios="f7:trash"
-                md="material:delete"
-                class="!text-sm mr-1"
-              ></f7-icon>
-              Очистить темы
-            </f7-button>
-            -->
 
             <div class="separator-vertical"></div>
 
