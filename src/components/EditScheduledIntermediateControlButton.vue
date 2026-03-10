@@ -88,12 +88,7 @@
               @click="confirmDelete"
               :disabled="scheduledIntermediateControlStore.isLoading"
             >
-              <f7-icon
-                ios="f7:trash"
-                md="material:delete"
-                size="18px"
-                class="mr-2"
-              />
+              <IconTrash class="w-[18px] h-[18px] mr-2" />
               Удалить промежуточный контроль
             </button>
           </div>
@@ -113,7 +108,8 @@
 import { ref, computed, watch, watchEffect } from "vue";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT, DATE_PICKER_PARAMS } from "@/constants/calendar";
-import { f7, f7Input, f7Icon, f7Popover } from "framework7-vue";
+import { f7, f7Input, f7Popover } from "framework7-vue";
+import IconTrash from "~icons/lucide/trash-2";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";

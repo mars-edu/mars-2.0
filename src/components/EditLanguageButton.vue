@@ -50,12 +50,7 @@
               @click="showDeleteConfirmation"
               :disabled="languageStore.isLoading"
             >
-              <f7-icon
-                ios="f7:trash"
-                md="material:delete"
-                size="18px"
-                class="mr-2"
-              ></f7-icon>
+              <IconTrash class="w-[18px] h-[18px] mr-2" />
               Удалить язык
             </button>
           </div>
@@ -73,7 +68,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-import { f7, f7Popover, f7Input, f7Checkbox, f7Icon } from "framework7-vue";
+import { f7, f7Popover, f7Input, f7Checkbox } from "framework7-vue";
+import IconTrash from "~icons/lucide/trash-2";
 import { z } from "zod";
 import { useLanguageStore } from "@/stores/languageStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
