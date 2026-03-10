@@ -278,6 +278,8 @@
               <button
                 v-for="f in JOURNAL_FILTERS"
                 :key="f.id"
+                type="button"
+                :aria-pressed="activeFilter === f.id"
                 @click="activeFilter = f.id"
                 class="px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 whitespace-nowrap"
                 :class="activeFilter === f.id
@@ -338,7 +340,6 @@ import { f7Page, f7Input, f7, f7Icon, f7Button } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
-import JournalCard from "@/components/Cards/JournalCard.vue";
 import IndividualJournalPopup from "@/components/IndividualJournalPopup.vue";
 import ReplaceJournalPopover from "@/components/ReplaceJournalPopover.vue";
 import type { ReplaceJournalData } from "@/components/ReplaceJournalPopover.vue";
