@@ -527,6 +527,7 @@ watch(selectedSemesterId, (newVal, oldVal) => {
   console.log(`\n   Old: "${oldVal || "(none)"}"`);
   console.log(`   New: "${newVal || "(none)"}"`);
   console.log("\n" + "─".repeat(60));
+  activeFilter.value = 'all'
 });
 
 // Watch for academicYearSemester data to arrive and auto-select
@@ -773,7 +774,7 @@ function getJournalAccentColor(id: string): { bg: string; text: string } {
 type JournalFilter = 'all' | 'course-1' | 'course-2' | 'course-3' | 'course-4' | 'mixed' | 'individual'
 const activeFilter = ref<JournalFilter>('all')
 
-const JOURNAL_FILTERS = [
+const JOURNAL_FILTERS: ReadonlyArray<{ id: JournalFilter; label: string }> = [
   { id: 'all',        label: 'Все' },
   { id: 'course-1',   label: '1 Курс' },
   { id: 'course-2',   label: '2 Курс' },
@@ -781,7 +782,7 @@ const JOURNAL_FILTERS = [
   { id: 'course-4',   label: '4 Курс' },
   { id: 'mixed',      label: 'Смешанные' },
   { id: 'individual', label: 'Индивидуальные' },
-] as const
+]
 
 const filteredByTab = computed(() => {
   if (activeFilter.value === 'all') {
