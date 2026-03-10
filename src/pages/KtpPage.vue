@@ -122,7 +122,7 @@
         id="ktp-page-add-button"
         :disabled="isAddDisabled"
       >
-        <f7-icon ios="f7:plus" md="material:add"></f7-icon>
+        <IconPlus />
       </f7-fab>
     </template>
   </f7-page>
@@ -130,7 +130,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
-import { f7Page, f7Icon, f7Fab, f7 } from "framework7-vue";
+import { f7Page, f7Fab, f7 } from "framework7-vue";
+import IconPlus from "~icons/lucide/plus";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";

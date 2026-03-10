@@ -30,7 +30,7 @@
                   class="profile-avatar"
                 />
                 <div v-else class="profile-avatar-placeholder">
-                  <i class="icon f7-icons">person_circle_fill</i>
+                  <IconCircleUser class="w-10 h-10 text-muted-foreground opacity-40" />
                 </div>
               </div>
               <div class="flex-1 min-w-0">
@@ -139,6 +139,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { f7Page, f7Button, f7Popup } from "framework7-vue";
+import IconCircleUser from "~icons/lucide/circle-user";
 import { useUserStore } from "../stores/userStore";
 import { f7 } from "framework7-vue";
 import { convex } from "../lib/convexClient";
