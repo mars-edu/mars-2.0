@@ -34,15 +34,9 @@
                 class="gap-2"
                 type="button"
               >
-                <f7-icon
-                  :ios="areAllExpanded ? 'f7:chevron_up' : 'f7:chevron_down'"
-                  :md="
-                    areAllExpanded
-                      ? 'material:expand_less'
-                      : 'material:expand_more'
-                  "
-                  size="16px"
-                  ck
+                <component
+                  :is="areAllExpanded ? IconChevronUp : IconChevronDown"
+                  class="w-4 h-4"
                 />
                 {{ areAllExpanded ? "Свернуть все" : "Развернуть все" }}
               </f7-button>
@@ -92,12 +86,7 @@
                     aria-label="Set Active"
                     type="button"
                   >
-                    <f7-icon
-                      ios="f7:checkmark_circle"
-                      md="material:check_circle"
-                      size="18px"
-                      class="text-primary"
-                    />
+                    <IconCircleCheck class="w-[18px] h-[18px] text-primary" />
                   </button>
                   <button
                     class="p-1 hover:bg-primary/10 rounded-md transition-colors"
@@ -105,12 +94,7 @@
                     aria-label="Edit Academic Year"
                     type="button"
                   >
-                    <f7-icon
-                      ios="f7:pencil"
-                      md="material:edit"
-                      size="18px"
-                      class="text-primary"
-                    />
+                    <IconPencil class="w-[18px] h-[18px] text-primary" />
                   </button>
                 </div>
                 <EditAcademicYearButton
@@ -141,7 +125,7 @@
                 <NoData
                   title="Нет семестров"
                   description="Для данного учебного года семестры не добавлены"
-                  :icon="{ ios: 'f7:calendar', md: 'material:event' }"
+                  :icon="IconCalendar"
                 />
               </div>
               <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
@@ -187,12 +171,7 @@
                     aria-label="Edit Academic Year Semester"
                     type="button"
                   >
-                    <f7-icon
-                      ios="f7:pencil"
-                      md="material:edit"
-                      size="18px"
-                      class="text-primary"
-                    />
+                    <IconPencil class="w-[18px] h-[18px] text-primary" />
                   </button>
                 </div>
                 <EditAcademicYearSemesterButton
@@ -226,7 +205,7 @@
                 <NoData
                   title="Нет расписания звонков"
                   description="Для данного учебного года расписание звонков не добавлено"
-                  :icon="{ ios: 'f7:clock', md: 'material:schedule' }"
+                  :icon="IconClock"
                 />
               </div>
               <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
@@ -249,12 +228,7 @@
                     aria-label="Edit Schedule"
                     type="button"
                   >
-                    <f7-icon
-                      ios="f7:pencil"
-                      md="material:edit"
-                      size="18px"
-                      class="text-primary"
-                    ></f7-icon>
+                    <IconPencil class="w-[18px] h-[18px] text-primary" />
                   </button>
                 </div>
                 <EditEducationScheduleButton
@@ -285,7 +259,7 @@
                 <NoData
                   title="Нет каникул"
                   description="Для данного учебного года каникулы не добавлены"
-                  :icon="{ ios: 'f7:sun_max', md: 'material:beach_access' }"
+                  :icon="IconSun"
                 />
               </div>
               <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
@@ -307,12 +281,7 @@
                     aria-label="Edit Vacation"
                     type="button"
                   >
-                    <f7-icon
-                      ios="f7:pencil"
-                      md="material:edit"
-                      size="18px"
-                      class="text-primary"
-                    />
+                    <IconPencil class="w-[18px] h-[18px] text-primary" />
                   </button>
                 </div>
                 <EditVacationButton
@@ -350,10 +319,7 @@
                     <NoData
                       title="Нет итоговых контролей"
                       description="Для данного учебного года итоговые контроли не добавлены"
-                      :icon="{
-                        ios: 'f7:check_circle',
-                        md: 'material:verified',
-                      }"
+                      :icon="IconCircleCheck"
                     />
                   </div>
                   <div
@@ -380,12 +346,7 @@
                         aria-label="Edit Scheduled Final Control"
                         type="button"
                       >
-                        <f7-icon
-                          ios="f7:pencil"
-                          md="material:edit"
-                          size="18px"
-                          class="text-primary"
-                        />
+                        <IconPencil class="w-[18px] h-[18px] text-primary" />
                       </button>
                     </div>
                     <EditScheduledFinalControlButton
@@ -420,10 +381,7 @@
                     <NoData
                       title="Нет промежуточных контролей"
                       description="Для данного учебного года промежуточные контроли не добавлены"
-                      :icon="{
-                        ios: 'f7:check_circle',
-                        md: 'material:verified',
-                      }"
+                      :icon="IconCircleCheck"
                     />
                   </div>
                   <div
@@ -454,12 +412,7 @@
                         aria-label="Edit Scheduled Intermediate Control"
                         type="button"
                       >
-                        <f7-icon
-                          ios="f7:pencil"
-                          md="material:edit"
-                          size="18px"
-                          class="text-primary"
-                        />
+                        <IconPencil class="w-[18px] h-[18px] text-primary" />
                       </button>
                     </div>
                     <EditScheduledIntermediateControlButton
@@ -479,7 +432,18 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from "vue";
-import { f7Page, f7Icon, f7, f7Preloader } from "framework7-vue";
+import { f7Page, f7, f7Preloader } from "framework7-vue";
+import IconCalendar from "~icons/lucide/calendar";
+import IconClock from "~icons/lucide/clock";
+import IconSun from "~icons/lucide/sun";
+import IconCircleCheck from "~icons/lucide/circle-check";
+import IconPlus from "~icons/lucide/plus";
+import IconTrash from "~icons/lucide/trash-2";
+import IconPencil from "~icons/lucide/pencil";
+import IconX from "~icons/lucide/x";
+import IconFileDown from "~icons/lucide/file-down";
+import IconChevronUp from "~icons/lucide/chevron-up";
+import IconChevronDown from "~icons/lucide/chevron-down";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Accordion from "@/components/ui/accordion/Accordion.vue";
