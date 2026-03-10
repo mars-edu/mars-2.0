@@ -36,7 +36,7 @@
           class="mb-6 p-4 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800"
         >
           <div class="flex items-start gap-3">
-            <i class="icon f7-icons text-orange-600 text-2xl">exclamationmark_triangle_fill</i>
+            <IconTriangleAlert class="w-6 h-6 text-orange-600" />
             <div class="flex-1">
               <h3 class="font-semibold text-orange-900 dark:text-orange-100 mb-2">
                 Важное объявление
@@ -66,7 +66,7 @@
           v-else-if="notifications.length === 0"
           class="text-center py-12 bg-card rounded-lg border border-border"
         >
-          <i class="icon f7-icons text-6xl text-muted-foreground mb-4">bell_slash</i>
+          <IconBellOff class="w-16 h-16 text-muted-foreground mb-4" />
           <h3 class="text-xl font-semibold text-foreground mb-2">Нет уведомлений</h3>
           <p class="text-muted-foreground">У вас пока нет уведомлений</p>
         </div>
@@ -86,7 +86,7 @@
               <div class="flex items-start justify-between mb-3">
                 <div class="flex items-start gap-3 flex-1">
                   <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
-                    <i class="icon f7-icons text-blue-600 dark:text-blue-400">arrow_2_squarepath</i>
+                    <IconRefreshCw class="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div class="flex-1 min-w-0">
                     <h3 class="font-semibold text-foreground mb-1">{{ notification.title }}</h3>
@@ -128,21 +128,21 @@
                   v-if="notification.substitution.status === 'accepted'"
                   class="inline-flex items-center gap-1 text-sm font-medium text-green-600"
                 >
-                  <i class="icon f7-icons">checkmark_circle_fill</i>
+                  <IconCircleCheck />
                   Принято
                 </span>
                 <span
                   v-else-if="notification.substitution.status === 'rejected'"
                   class="inline-flex items-center gap-1 text-sm font-medium text-red-600"
                 >
-                  <i class="icon f7-icons">xmark_circle_fill</i>
+                  <IconCircleX />
                   Отклонено
                 </span>
                 <span
                   v-else-if="notification.substitution.status === 'completed'"
                   class="inline-flex items-center gap-1 text-sm font-medium text-gray-600"
                 >
-                  <i class="icon f7-icons">checkmark_circle</i>
+                  <IconCircleCheck />
                   Завершено
                 </span>
               </div>
@@ -152,7 +152,7 @@
             <div v-else-if="notification.type === 'journal_closure'" class="p-4">
               <div class="flex items-start gap-3">
                 <div class="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center flex-shrink-0">
-                  <i class="icon f7-icons text-orange-600 dark:text-orange-400">calendar_badge_exclamationmark</i>
+                  <IconCalendarX class="w-5 h-5 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="flex items-start justify-between mb-1">
@@ -176,7 +176,7 @@
             <div v-else class="p-4">
               <div class="flex items-start gap-3">
                 <div class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                  <i class="icon f7-icons text-gray-600 dark:text-gray-400">info_circle_fill</i>
+                  <IconInfo class="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="flex items-start justify-between mb-1">
@@ -199,6 +199,13 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { f7, f7Page, f7Preloader } from "framework7-vue";
+import IconTriangleAlert from "~icons/lucide/triangle-alert";
+import IconBellOff from "~icons/lucide/bell-off";
+import IconRefreshCw from "~icons/lucide/refresh-cw";
+import IconCircleCheck from "~icons/lucide/circle-check";
+import IconCircleX from "~icons/lucide/circle-x";
+import IconCalendarX from "~icons/lucide/calendar-x";
+import IconInfo from "~icons/lucide/info";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import { formatDateTime, formatDate } from '@/utils/dateUtils';
