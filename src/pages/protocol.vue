@@ -168,7 +168,7 @@
                         <span class="text-xs font-bold">✓ Принято</span>
                       </div>
                       <div v-if="entry.acceptedAt" class="text-[10px] text-muted-foreground text-right">
-                        {{ new Date(entry.acceptedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) }}
+                        {{ formatTime(entry.acceptedAt) }}
                       </div>
                     </template>
 
@@ -178,7 +178,7 @@
                         <span class="text-xs font-bold">✕ Отклонено</span>
                       </div>
                       <div v-if="entry.rejectedAt" class="text-[10px] text-muted-foreground text-right">
-                        {{ new Date(entry.rejectedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) }}
+                        {{ formatTime(entry.rejectedAt) }}
                       </div>
                     </template>
 
@@ -193,7 +193,7 @@
               </div>
             </div>
           </div>
-        </div>
+          </div>
 
           <!-- Action Error -->
           <div
@@ -202,58 +202,59 @@
           >
             {{ protocolStore.actionError }}
           </div>
+
         </div>
       </div>
-    </f7-page-content>
 
-    <!-- Confirmation Modal -->
-    <Teleport to="body">
-      <div
-        v-if="modalOpen"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
-      >
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeModal"></div>
-        <div class="relative bg-card rounded-xl shadow-xl w-full max-w-sm p-6 border border-border">
-          <div class="flex flex-col items-center text-center">
-            <!-- Icon -->
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center mb-4 text-xl"
-              :class="pendingAction?.type === 'accept'
-                ? 'bg-green-100 text-green-600 dark:bg-green-900/30'
-                : 'bg-red-100 text-red-600 dark:bg-red-900/30'"
-            >
-              {{ pendingAction?.type === 'accept' ? '✓' : '✕' }}
-            </div>
-
-            <h3 class="text-lg font-bold text-foreground mb-2">
-              {{ pendingAction?.type === 'accept' ? 'Принять замену?' : 'Отклонить замену?' }}
-            </h3>
-            <p class="text-sm text-muted-foreground mb-6">
-              Это действие будет зафиксировано в протоколе и не может быть отменено. Статус замены будет обновлён.
-            </p>
-
-            <div class="flex gap-3 w-full">
-              <button
-                @click="closeModal"
-                class="flex-1 px-4 py-2 bg-muted text-foreground rounded-lg font-medium hover:bg-muted/80 transition-colors"
-              >
-                Отмена
-              </button>
-              <button
-                @click="confirmAction"
-                :disabled="protocolStore.actionLoading"
-                class="flex-1 px-4 py-2 text-white rounded-lg font-bold shadow-sm transition-colors disabled:opacity-50"
+      <!-- Confirmation Modal -->
+      <Teleport to="body">
+        <div
+          v-if="modalOpen"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeModal"></div>
+          <div class="relative bg-card rounded-xl shadow-xl w-full max-w-sm p-6 border border-border">
+            <div class="flex flex-col items-center text-center">
+              <!-- Icon -->
+              <div
+                class="w-12 h-12 rounded-full flex items-center justify-center mb-4 text-xl"
                 :class="pendingAction?.type === 'accept'
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-red-600 hover:bg-red-700'"
+                  ? 'bg-green-100 text-green-600 dark:bg-green-900/30'
+                  : 'bg-red-100 text-red-600 dark:bg-red-900/30'"
               >
-                {{ protocolStore.actionLoading ? 'Подождите...' : 'Подтвердить' }}
-              </button>
+                {{ pendingAction?.type === 'accept' ? '✓' : '✕' }}
+              </div>
+
+              <h3 class="text-lg font-bold text-foreground mb-2">
+                {{ pendingAction?.type === 'accept' ? 'Принять замену?' : 'Отклонить замену?' }}
+              </h3>
+              <p class="text-sm text-muted-foreground mb-6">
+                Это действие будет зафиксировано в протоколе и не может быть отменено. Статус замены будет обновлён.
+              </p>
+
+              <div class="flex gap-3 w-full">
+                <button
+                  @click="closeModal"
+                  class="flex-1 px-4 py-2 bg-muted text-foreground rounded-lg font-medium hover:bg-muted/80 transition-colors"
+                >
+                  Отмена
+                </button>
+                <button
+                  @click="confirmAction"
+                  :disabled="protocolStore.actionLoading"
+                  class="flex-1 px-4 py-2 text-white rounded-lg font-bold shadow-sm transition-colors disabled:opacity-50"
+                  :class="pendingAction?.type === 'accept'
+                    ? 'bg-green-600 hover:bg-green-700'
+                    : 'bg-red-600 hover:bg-red-700'"
+                >
+                  {{ protocolStore.actionLoading ? 'Подождите...' : 'Подтвердить' }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </Teleport>
+      </Teleport>
+    </f7-page-content>
   </f7-page>
 </template>
 
