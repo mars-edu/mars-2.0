@@ -8,7 +8,7 @@
           @click="enterEditMode"
           :class="{ 'bg-destructive': isEditMode }"
         >
-          <f7-icon ios="f7:pencil" md="material:edit" size="16px" />
+          <IconPencil class="w-4 h-4" />
           {{
             isEditMode ? "Закончить редактирование" : "Редактировать таблицу"
           }}
@@ -21,7 +21,7 @@
             type="button"
             @click="open"
           >
-            <f7-icon ios="f7:table" md="material:table_chart" size="16px" />
+            <IconTable class="w-4 h-4" />
             Настроить столбцы
           </button>
         </template>
@@ -90,12 +90,7 @@
                   @click.stop="clearCellValue(module.id, colIndex)"
                   type="button"
                 >
-                  <f7-icon
-                    ios="f7:xmark_circle"
-                    md="material:cancel"
-                    size="18px"
-                    class="text-muted-foreground"
-                  />
+                  <IconCircleX class="w-[18px] h-[18px] text-muted-foreground" />
                 </button>
               </div>
             </div>
@@ -114,12 +109,7 @@
                 @click.stop="clearCellValue(module.id, colIndex)"
                 type="button"
               >
-                <f7-icon
-                  ios="f7:xmark_circle"
-                  md="material:cancel"
-                  size="16px"
-                  class="text-muted-foreground"
-                />
+                <IconCircleX class="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
           </td>
@@ -137,7 +127,7 @@
           type="button"
           @click="open"
         >
-          <f7-icon ios="f7:plus" md="material:add" size="18px" />
+          <IconPlus class="w-[18px] h-[18px]" />
         </button>
       </template>
     </AddModuleTemplateButton>
@@ -154,8 +144,11 @@ import { computed, ref, nextTick, reactive } from "vue";
 import { useColumnConfigStore } from "@/stores/columnConfig";
 import { useModuleStore } from "@/stores/moduleStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
-import { f7Button, f7Icon } from "framework7-vue";
 import ColumnConfigForm from "@/components/ColumnConfigForm.vue";
+import IconPencil from "~icons/lucide/pencil";
+import IconTable from "~icons/lucide/table";
+import IconCircleX from "~icons/lucide/circle-x";
+import IconPlus from "~icons/lucide/plus";
 import AddModuleTemplateButton from "@/components/AddModuleTemplateButton.vue";
 import { f7 } from "framework7-vue";
 

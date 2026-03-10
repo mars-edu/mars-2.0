@@ -14,12 +14,7 @@
         @click="onOpenRupClick"
         class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
       >
-        <f7-icon
-          ios="f7:doc_text"
-          md="material:description"
-          size="16px"
-          class="mr-2"
-        />
+        <IconFileText class="w-4 h-4 mr-2" />
         РУП
       </f7-button>
       <f7-button
@@ -30,12 +25,7 @@
         :disabled="isViewOnly"
         class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
       >
-        <f7-icon
-          ios="f7:gear"
-          md="material:settings"
-          size="16px"
-          class="mr-2"
-        />
+        <IconSettings class="w-4 h-4 mr-2" />
         Настройки
       </f7-button>
       <f7-button
@@ -45,12 +35,7 @@
         @click="onHistoryClick"
         class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
       >
-        <f7-icon
-          ios="f7:clock"
-          md="material:history"
-          size="16px"
-          class="mr-2"
-        />
+        <IconClock class="w-4 h-4 mr-2" />
         История
       </f7-button>
       <f7-button
@@ -60,12 +45,7 @@
         @click="onCloseJournalClick"
         class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
       >
-        <f7-icon
-          ios="f7:xmark_circle"
-          md="material:cancel"
-          size="16px"
-          class="mr-2"
-        />
+        <IconCircleX class="w-4 h-4 mr-2" />
         Закрыть журнал
       </f7-button>
       <f7-button
@@ -75,12 +55,7 @@
         @click="onOpenJournalClick"
         class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
       >
-        <f7-icon
-          ios="f7:lock_open"
-          md="material:lock_open"
-          size="16px"
-          class="mr-2"
-        />
+        <IconLockOpen class="w-4 h-4 mr-2" />
         Открыть журнал
       </f7-button>
       <f7-button
@@ -89,12 +64,7 @@
         @click="onDownloadClick"
         class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
       >
-        <f7-icon
-          ios="f7:arrow_down_to_line"
-          md="material:file_download"
-          size="16px"
-          class="mr-2"
-        />
+        <IconArrowDownToLine class="w-4 h-4 mr-2" />
         Скачать
       </f7-button>
       <f7-button
@@ -104,12 +74,7 @@
         :disabled="isViewOnly"
         class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
       >
-        <f7-icon
-          ios="f7:arrow_up_to_line"
-          md="material:file_upload"
-          size="16px"
-          class="mr-2"
-        />
+        <IconArrowUpToLine class="w-4 h-4 mr-2" />
         Загрузить
       </f7-button>
       <f7-button
@@ -118,7 +83,7 @@
         @click="onShareClick"
         class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
       >
-        <f7-icon ios="f7:share" md="material:share" size="16px" class="mr-2" />
+        <IconShare class="w-4 h-4 mr-2" />
         Поделится
       </f7-button>
       <f7-button
@@ -140,12 +105,7 @@
       role="alert"
     >
       <div class="flex items-start">
-        <f7-icon
-          ios="f7:exclamationmark_triangle"
-          md="material:warning"
-          size="24px"
-          class="text-yellow-600 mr-3 flex-shrink-0"
-        />
+        <IconTriangleAlert class="w-6 h-6 text-yellow-600 mr-3 flex-shrink-0" />
         <div class="flex-1">
           <h3 class="font-semibold text-lg mb-2">
             Промежуточный контроль не настроен для этого учебного года
@@ -233,13 +193,12 @@
               "
             >
               <div class="flex flex-col items-center">
-                <f7-icon
+                <IconPaperclip
                   v-if="header.type === 'date' && getKtpForHeader(header.index) !== null"
-                  f7="paperclip"
                   class="h-8 text-gray-400"
                   @click.stop="onPaperclipClick(header, index)"
                   :id="`paperclip-${index}`"
-                ></f7-icon>
+                />
                 <span v-html="header.label.replace('\n', '<br/>')"></span>
               </div>
             </th>
@@ -476,7 +435,17 @@ import {
   DATE_STORAGE_FORMAT,
 } from "@/constants/calendar";
 import { getEventDays, type SemesterInfo } from "@/utils/eventDate";
-import { f7, f7Icon, f7Button } from "framework7-vue";
+import { f7, f7Button } from "framework7-vue";
+import IconFileText from "~icons/lucide/file-text";
+import IconSettings from "~icons/lucide/settings";
+import IconClock from "~icons/lucide/clock";
+import IconCircleX from "~icons/lucide/circle-x";
+import IconLockOpen from "~icons/lucide/lock-open";
+import IconArrowDownToLine from "~icons/lucide/arrow-down-to-line";
+import IconArrowUpToLine from "~icons/lucide/arrow-up-to-line";
+import IconShare from "~icons/lucide/share-2";
+import IconTriangleAlert from "~icons/lucide/triangle-alert";
+import IconPaperclip from "~icons/lucide/paperclip";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
