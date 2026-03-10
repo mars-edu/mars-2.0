@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mars — Logo Variations</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0d0c;
+    --bg-card: #161512;
+    --bg-card-hover: #1e1c18;
+    --border: rgba(255,255,255,0.07);
+    --text: #f0ebe0;
+    --text-muted: rgba(240,235,224,0.45);
+    --text-dim: rgba(240,235,224,0.22);
+    --accent: #e05020;
+    --accent2: #f0a030;
+    --mono: 'DM Mono', monospace;
+    --serif: 'Cormorant Garamond', serif;
+  }
+
+  html { background: var(--bg); color: var(--text); font-family: var(--mono); }
+  body { min-height: 100vh; padding: 0 0 120px; }
+
+  /* ── Header ── */
+  .header {
+    padding: 80px 64px 60px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 40px;
+  }
+  .header-left h1 {
+    font-family: var(--serif);
+    font-size: clamp(48px, 7vw, 96px);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+    color: var(--text);
+  }
+  .header-left h1 em {
+    font-style: italic;
+    color: var(--accent2);
+  }
+  .header-left p {
+    margin-top: 20px;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .header-right {
+    text-align: right;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    line-height: 2;
+  }
+
+  /* ── Section titles ── */
+  .section {
+    padding: 56px 64px 0;
+  }
+  .section-title {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2px;
+  }
+  .grid-wide {
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    transition: background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .card:hover { background: var(--bg-card-hover); }
+  .card-canvas {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 40px;
+    flex: 1;
+    min-height: 160px;
+  }
+  .card-meta {
+    padding: 16px 20px 20px;
+    border-top: 1px solid var(--border);
+  }
+  .card-label {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .card-desc {
+    font-size: 10px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    letter-spacing: 0.04em;
+  }
+  .card-tag {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 2px;
+  }
+
+  /* Dark-bg cards */
+  .card.bg-white .card-canvas  { background: #ffffff; }
+  .card.bg-offwhite .card-canvas { background: #f5f1eb; }
+  .card.bg-dark .card-canvas { background: #0e0d0c; }
+  .card.bg-deep .card-canvas { background: #0a0810; }
+  .card.bg-earth .card-canvas { background: #2a1f14; }
+  .card.bg-rust .card-canvas { background: #3d1a0a; }
+  .card.bg-slate .card-canvas { background: #1a1f2e; }
+  .card.bg-lavanda .card-canvas { background: #1c1628; }
+  .card.bg-cream .card-canvas { background: #faf7f2; }
+  .card.bg-charcoal .card-canvas { background: #1a1a1a; }
+  .card.bg-glass .card-canvas {
+    background: linear-gradient(135deg, #1a3a5c 0%, #2d1b4e 50%, #3d2010 100%);
+  }
+  .card.bg-bauhaus .card-canvas { background: #f0ece4; }
+  .card.bg-halftone .card-canvas { background: #fffef8; }
+  .card.bg-watercolor .card-canvas { background: #f8f4ef; }
+  .card.bg-ink .card-canvas { background: #fafaf8; }
+  .card.bg-night .card-canvas { background: #08080f; }
+  .card.bg-dusk .card-canvas { background: #1a0e2a; }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card {
+    animation: fadeUp 0.5s ease both;
+  }
+  .card:nth-child(1)  { animation-delay: 0.05s; }
+  .card:nth-child(2)  { animation-delay: 0.10s; }
+  .card:nth-child(3)  { animation-delay: 0.15s; }
+  .card:nth-child(4)  { animation-delay: 0.20s; }
+  .card:nth-child(5)  { animation-delay: 0.25s; }
+  .card:nth-child(6)  { animation-delay: 0.30s; }
+  .card:nth-child(7)  { animation-delay: 0.35s; }
+  .card:nth-child(8)  { animation-delay: 0.40s; }
+
+  /* ── Divider ── */
+  .rule {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 64px 64px 0;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    margin: 80px 64px 0;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="header">
+  <div class="header-left">
+    <h1>Mars<br><em>Identity</em></h1>
+    <p>Logo variations &amp; exploration — 2026</p>
+  </div>
+  <div class="header-right">
+    28 variations<br>
+    8 categories<br>
+    SVG · Scalable
+  </div>
+</header>
+
+
+<!-- ═══════════════════════════════════════
+     01 · COLOUR THEMES
+═══════════════════════════════════════ -->
+<section class="section">
+  <div class="section-title">01 · Colour Themes</div>
+  <div class="grid">
+
+    <!-- ORIGINAL -->
+    <div class="card bg-white">
+      <span class="card-tag">Reference</span>
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="34" r="34" fill="#F5A623"/>
+          <circle cx="62" cy="56" r="15" fill="#CC2828"/>
+          <text x="85" y="46" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#CC2828" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Original</div>
+        <div class="card-desc">Golden orange + crimson red on white. The canonical lockup.</div>
+      </div>
+    </div>
+
+    <!-- DARK MODE -->
+    <div class="card bg-dark">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="34" r="34" fill="#F5A623"/>
+          <circle cx="62" cy="56" r="15" fill="#E53935"/>
+          <text x="85" y="46" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#F5F5F5" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Dark Mode</div>
+        <div class="card-desc">Circles unchanged; wordmark switches to near-white for contrast.</div>
+      </div>
+    </div>
+
+    <!-- MONOCHROME -->
+    <div class="card bg-white">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="34" r="34" fill="#1a1a1a"/>
+          <circle cx="62" cy="56" r="15" fill="#555555"/>
+          <text x="85" y="46" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#1a1a1a" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Monochrome</div>
+        <div class="card-desc">Single-ink for print, embossing, or restricted contexts.</div>
+      </div>
+    </div>
+
+    <!-- LAVANDA -->
+    <div class="card bg-lavanda">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="34" r="34" fill="#9B7FD4"/>
+          <circle cx="62" cy="56" r="15" fill="#C45EA0"/>
+          <text x="85" y="46" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#E8D8FF" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Lavanda Theme</div>
+        <div class="card-desc">Purple + magenta palette matching the app's lavanda mode.</div>
+      </div>
+    </div>
+
+    <!-- INVERTED PALETTE -->
+    <div class="card bg-offwhite">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="34" r="34" fill="#CC2828"/>
+          <circle cx="62" cy="56" r="15" fill="#F5A623"/>
+          <text x="85" y="46" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#CC2828" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Inverted Palette</div>
+        <div class="card-desc">Red becomes dominant; gold accent. More aggressive energy.</div>
+      </div>
+    </div>
+
+    <!-- EMBER (DARK WARM) -->
+    <div class="card bg-earth">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="34" r="34" fill="#FF8C42"/>
+          <circle cx="62" cy="56" r="15" fill="#FF4B2B"/>
+          <text x="85" y="46" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#FFD6A5" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Ember</div>
+        <div class="card-desc">Hot orange + flame red on deep earth. Fiery and dramatic.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     02 · LAYOUT
+═══════════════════════════════════════ -->
+<section class="section">
+  <div class="section-title">02 · Layout &amp; Composition</div>
+  <div class="grid">
+
+    <!-- ICON ONLY -->
+    <div class="card bg-white">
+      <div class="card-canvas">
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="34" r="32" fill="#F5A623"/>
+          <circle cx="58" cy="55" r="14" fill="#CC2828"/>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Icon Only</div>
+        <div class="card-desc">App icon, favicon source, avatar. Two circles, pure form.</div>
+      </div>
+    </div>
+
+    <!-- STACKED -->
+    <div class="card bg-white">
+      <div class="card-canvas">
+        <svg width="100" height="110" viewBox="0 0 100 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="44" cy="38" r="34" fill="#F5A623"/>
+          <circle cx="67" cy="59" r="15" fill="#CC2828"/>
+          <text x="50" y="96" text-anchor="middle" font-family="'Arial Black', sans-serif" font-size="26" font-weight="900" fill="#CC2828" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Stacked</div>
+        <div class="card-desc">Centred, vertical. Works well in square containers and cards.</div>
+      </div>
+    </div>
+
+    <!-- COMPACT -->
+    <div class="card bg-offwhite">
+      <div class="card-canvas">
+        <svg width="140" height="44" viewBox="0 0 140 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="22" cy="20" r="20" fill="#F5A623"/>
+          <circle cx="36" cy="32" r="9" fill="#CC2828"/>
+          <text x="53" y="28" font-family="'Arial Black', sans-serif" font-size="18" font-weight="900" fill="#CC2828" letter-spacing="-0.3">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Compact Horizontal</div>
+        <div class="card-desc">Tight and small — ideal for nav bars, toolbars, breadcrumbs.</div>
+      </div>
+    </div>
+
+    <!-- WIDE / SPACED -->
+    <div class="card bg-dark">
+      <div class="card-canvas">
+        <svg width="220" height="72" viewBox="0 0 220 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="34" r="34" fill="#F5A623"/>
+          <circle cx="62" cy="56" r="15" fill="#E53935"/>
+          <text x="98" y="44" font-family="Georgia, serif" font-size="24" font-weight="700" fill="#F5F5F5" letter-spacing="6">MARS</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Spaced Capitals</div>
+        <div class="card-desc">Wide tracking serif variant. Editorial and institutional feel.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     03 · AESTHETIC STYLE
+═══════════════════════════════════════ -->
+<section class="section">
+  <div class="section-title">03 · Aesthetic Style</div>
+  <div class="grid">
+
+    <!-- GRADIENT / MODERN -->
+    <div class="card bg-white">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="g1" cx="35%" cy="30%" r="70%">
+              <stop offset="0%" stop-color="#FFD166"/>
+              <stop offset="100%" stop-color="#E07B20"/>
+            </radialGradient>
+            <radialGradient id="g2" cx="35%" cy="30%" r="70%">
+              <stop offset="0%" stop-color="#FF6B6B"/>
+              <stop offset="100%" stop-color="#B01818"/>
+            </radialGradient>
+          </defs>
+          <circle cx="36" cy="34" r="34" fill="url(#g1)"/>
+          <circle cx="62" cy="56" r="15" fill="url(#g2)"/>
+          <text x="85" y="46" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#CC2828" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Gradient Modern</div>
+        <div class="card-desc">Radial highlights give the spheres dimensionality and warmth.</div>
+      </div>
+    </div>
+
+    <!-- OUTLINED / GHOST -->
+    <div class="card bg-dark">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="34" r="32" fill="none" stroke="#F5A623" stroke-width="2.5"/>
+          <circle cx="62" cy="56" r="13" fill="none" stroke="#E53935" stroke-width="2.5"/>
+          <text x="85" y="46" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="none" stroke="#F0EBE0" stroke-width="1" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Ghost / Outlined</div>
+        <div class="card-desc">Stroke-only. Airy and sophisticated for dark surfaces and glass UI.</div>
+      </div>
+    </div>
+
+    <!-- NEON / GLOW -->
+    <div class="card bg-deep">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="glow1">
+              <feGaussianBlur stdDeviation="4" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="glow2">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <circle cx="36" cy="34" r="34" fill="#FF9500" fill-opacity="0.15" filter="url(#glow1)"/>
+          <circle cx="36" cy="34" r="32" fill="none" stroke="#FF9500" stroke-width="1.5" filter="url(#glow1)"/>
+          <circle cx="62" cy="56" r="15" fill="#FF3030" fill-opacity="0.15" filter="url(#glow2)"/>
+          <circle cx="62" cy="56" r="13" fill="none" stroke="#FF3030" stroke-width="1.5" filter="url(#glow2)"/>
+          <text x="85" y="46" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#FF9500" letter-spacing="-0.5" filter="url(#glow1)">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Neon Glow</div>
+        <div class="card-desc">SVG filter glow on deep black. Futuristic dashboard aesthetic.</div>
+      </div>
+    </div>
+
+    <!-- RETRO / VINTAGE -->
+    <div class="card bg-cream">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="noise">
+              <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/>
+              <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise"/>
+              <feBlend in="SourceGraphic" in2="grayNoise" mode="multiply" result="blend"/>
+              <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+            </filter>
+          </defs>
+          <circle cx="36" cy="34" r="34" fill="#C8893A" filter="url(#noise)"/>
+          <circle cx="62" cy="56" r="15" fill="#8B2020" filter="url(#noise)"/>
+          <text x="85" y="46" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="700" fill="#5C1A1A" letter-spacing="1">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Retro / Vintage</div>
+        <div class="card-desc">Muted, earthy tones with noise texture. 1960s poster feel.</div>
+      </div>
+    </div>
+
+    <!-- DUOTONE / SPLIT -->
+    <div class="card bg-slate">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="duo" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#F5A623"/>
+              <stop offset="50%" stop-color="#CC2828"/>
+            </linearGradient>
+          </defs>
+          <circle cx="36" cy="34" r="34" fill="url(#duo)"/>
+          <circle cx="62" cy="56" r="15" fill="#ffffff" fill-opacity="0.9"/>
+          <text x="85" y="46" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#F5A623" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Duotone Split</div>
+        <div class="card-desc">Gradient blends orange into red across the main sphere.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     04 · FAVICON / SMALL
+═══════════════════════════════════════ -->
+<section class="section">
+  <div class="section-title">04 · Favicon &amp; Small Sizes</div>
+  <div class="grid">
+
+    <div class="card bg-white">
+      <div class="card-canvas" style="gap: 20px; flex-direction: row; align-items: center; justify-content: center; flex-wrap: wrap;">
+        <!-- 64px -->
+        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+            <circle cx="29" cy="28" r="27" fill="#F5A623"/>
+            <circle cx="48" cy="46" r="12" fill="#CC2828"/>
+          </svg>
+          <span style="font-size:9px; color:rgba(0,0,0,0.3); letter-spacing:0.1em;">64px</span>
+        </div>
+        <!-- 32px -->
+        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <svg width="32" height="32" viewBox="0 0 64 64" fill="none">
+            <circle cx="29" cy="28" r="27" fill="#F5A623"/>
+            <circle cx="48" cy="46" r="12" fill="#CC2828"/>
+          </svg>
+          <span style="font-size:9px; color:rgba(0,0,0,0.3); letter-spacing:0.1em;">32px</span>
+        </div>
+        <!-- 16px -->
+        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <svg width="16" height="16" viewBox="0 0 64 64" fill="none">
+            <circle cx="29" cy="28" r="27" fill="#F5A623"/>
+            <circle cx="48" cy="46" r="12" fill="#CC2828"/>
+          </svg>
+          <span style="font-size:9px; color:rgba(0,0,0,0.3); letter-spacing:0.1em;">16px</span>
+        </div>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Favicon Scale Test</div>
+        <div class="card-desc">Icon-only form holds legibility down to 16px.</div>
+      </div>
+    </div>
+
+    <!-- Rounded favicon tile -->
+    <div class="card bg-charcoal">
+      <div class="card-canvas" style="gap: 20px; flex-direction: row; align-items: center; justify-content: center;">
+        <div style="width:64px;height:64px;border-radius:14px;background:#F5A623;display:flex;align-items:center;justify-content:center;position:relative;overflow:visible;">
+          <svg width="50" height="50" viewBox="0 0 64 64" fill="none">
+            <circle cx="28" cy="26" r="24" fill="#F5A623"/>
+            <circle cx="44" cy="42" r="11" fill="#CC2828"/>
+          </svg>
+        </div>
+        <div style="width:48px;height:48px;border-radius:10px;background:#F5A623;display:flex;align-items:center;justify-content:center;">
+          <svg width="38" height="38" viewBox="0 0 64 64" fill="none">
+            <circle cx="28" cy="26" r="24" fill="#fff" fill-opacity="0.25"/>
+            <circle cx="44" cy="42" r="11" fill="#CC2828"/>
+          </svg>
+        </div>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">App Icon Tile</div>
+        <div class="card-desc">Rounded-square container — iOS/Android home screen ready.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     05 · EXPERIMENTAL
+═══════════════════════════════════════ -->
+<section class="section">
+  <div class="section-title">05 · Experimental</div>
+  <div class="grid grid-wide">
+
+    <!-- GEOMETRIC / ABSTRACT -->
+    <div class="card bg-rust">
+      <div class="card-canvas">
+        <svg width="200" height="80" viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Deconstructed circles as arcs -->
+          <circle cx="36" cy="36" r="32" fill="none" stroke="#F5A623" stroke-width="3"/>
+          <circle cx="36" cy="36" r="32" fill="#F5A623" fill-opacity="0.12"/>
+          <path d="M 36 4 A 32 32 0 0 1 68 36" stroke="#F5A623" stroke-width="6" stroke-linecap="round" fill="none"/>
+          <circle cx="60" cy="57" r="13" fill="#FF5722"/>
+          <text x="88" y="42" font-family="'Arial Black', sans-serif" font-size="24" font-weight="900" fill="#F5A623" letter-spacing="-0.5">Mars</text>
+          <line x1="88" y1="48" x2="160" y2="48" stroke="#FF5722" stroke-width="1.5" stroke-opacity="0.6"/>
+          <text x="88" y="60" font-family="'DM Mono', monospace" font-size="8" fill="#FF5722" fill-opacity="0.7" letter-spacing="3">SYSTEM</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Deconstructed Arc</div>
+        <div class="card-desc">Partial stroke accent breaks the circle. Tech-forward with tagline space.</div>
+      </div>
+    </div>
+
+    <!-- WORDMARK ONLY, BOLD -->
+    <div class="card bg-white">
+      <div class="card-canvas">
+        <svg width="200" height="72" viewBox="0 0 200 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- M with embedded dot -->
+          <text x="10" y="56" font-family="'Arial Black', sans-serif" font-size="52" font-weight="900" fill="#F5A623" letter-spacing="-2">M</text>
+          <circle cx="46" cy="44" r="7" fill="#CC2828"/>
+          <text x="58" y="56" font-family="'Arial Black', sans-serif" font-size="52" font-weight="900" fill="#1a1a1a" letter-spacing="-2">ars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Typographic Mark</div>
+        <div class="card-desc">The red dot replaces the visual overlap, embedded in the wordmark itself.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     06 · SHAPE EXPLORATIONS
+═══════════════════════════════════════ -->
+<section class="section">
+  <div class="section-title">06 · Shape Explorations</div>
+  <div class="grid">
+
+    <!-- ORBITAL TOP -->
+    <div class="card bg-white">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="36" r="34" fill="#F5A623"/>
+          <circle cx="16" cy="16" r="13" fill="#CC2828"/>
+          <text x="85" y="44" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#CC2828" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Orbital — Top Left</div>
+        <div class="card-desc">Small sphere repositioned to upper corner. More satellite-like energy.</div>
+      </div>
+    </div>
+
+    <!-- CONCENTRIC RINGS -->
+    <div class="card bg-dark">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="36" r="34" fill="none" stroke="#F5A623" stroke-width="2"/>
+          <circle cx="36" cy="36" r="22" fill="none" stroke="#F5A623" stroke-width="2" stroke-opacity="0.5"/>
+          <circle cx="36" cy="36" r="9" fill="#CC2828"/>
+          <text x="85" y="44" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#F0EBE0" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Concentric</div>
+        <div class="card-desc">Nested rings share a centre. Planetary orbit / target metaphor.</div>
+      </div>
+    </div>
+
+    <!-- FLOATING APART -->
+    <div class="card bg-offwhite">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="22" cy="36" r="20" fill="#F5A623"/>
+          <circle cx="56" cy="50" r="10" fill="#CC2828"/>
+          <text x="76" y="44" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#CC2828" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Floating</div>
+        <div class="card-desc">Circles fully separated, breathing room between them. Light and airy.</div>
+      </div>
+    </div>
+
+    <!-- HEAVY OVERLAP / VENN -->
+    <div class="card bg-white">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <clipPath id="venn-clip">
+              <circle cx="44" cy="36" r="20"/>
+            </clipPath>
+          </defs>
+          <circle cx="28" cy="36" r="28" fill="#F5A623"/>
+          <circle cx="52" cy="36" r="20" fill="#CC2828" fill-opacity="0.9"/>
+          <!-- intersection tint -->
+          <circle cx="28" cy="36" r="28" fill="#CC2828" fill-opacity="0.25" clip-path="url(#venn-clip)"/>
+          <text x="85" y="44" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#CC2828" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Venn Overlap</div>
+        <div class="card-desc">Deep intersection — shared territory highlighted. Bold and graphic.</div>
+      </div>
+    </div>
+
+    <!-- ECLIPSE -->
+    <div class="card bg-deep">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="s6-corona" cx="50%" cy="50%" r="55%">
+              <stop offset="60%" stop-color="transparent"/>
+              <stop offset="100%" stop-color="#F5A623" stop-opacity="0.5"/>
+            </radialGradient>
+          </defs>
+          <!-- corona glow -->
+          <circle cx="36" cy="36" r="36" fill="url(#s6-corona)"/>
+          <!-- main sphere -->
+          <circle cx="36" cy="36" r="28" fill="#F5A623"/>
+          <!-- eclipse moon -->
+          <circle cx="46" cy="28" r="26" fill="#08080f"/>
+          <!-- crescent remains -->
+          <text x="85" y="44" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#F5A623" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Eclipse</div>
+        <div class="card-desc">Moon occludes the sphere, leaving a glowing crescent. Dramatic.</div>
+      </div>
+    </div>
+
+    <!-- ORBIT PATH -->
+    <div class="card bg-slate">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="38" cy="36" rx="35" ry="18" fill="none" stroke="#F5A623" stroke-width="1" stroke-opacity="0.3" stroke-dasharray="4 3"/>
+          <circle cx="38" cy="36" r="16" fill="#F5A623"/>
+          <circle cx="72" cy="25" r="8" fill="#CC2828"/>
+          <text x="90" y="44" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#F0EBE0" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Orbit Path</div>
+        <div class="card-desc">Dashed ellipse traces the orbit. System / celestial mechanics feel.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     07 · TEXTURE & DEPTH
+═══════════════════════════════════════ -->
+<section class="section">
+  <div class="section-title">07 · Texture &amp; Depth</div>
+  <div class="grid">
+
+    <!-- 3D SPHERE -->
+    <div class="card bg-offwhite">
+      <div class="card-canvas">
+        <svg width="180" height="80" viewBox="0 0 180 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="s7-sphere" cx="34%" cy="26%" r="68%">
+              <stop offset="0%" stop-color="#FFE599"/>
+              <stop offset="35%" stop-color="#F5A623"/>
+              <stop offset="80%" stop-color="#B05A00"/>
+              <stop offset="100%" stop-color="#6B3000"/>
+            </radialGradient>
+            <radialGradient id="s7-small" cx="34%" cy="26%" r="68%">
+              <stop offset="0%" stop-color="#FF8A8A"/>
+              <stop offset="45%" stop-color="#CC2828"/>
+              <stop offset="100%" stop-color="#5C0000"/>
+            </radialGradient>
+          </defs>
+          <!-- shadow -->
+          <ellipse cx="38" cy="72" rx="30" ry="6" fill="#00000018"/>
+          <ellipse cx="63" cy="72" rx="12" ry="3" fill="#00000015"/>
+          <circle cx="38" cy="36" r="34" fill="url(#s7-sphere)"/>
+          <!-- specular highlight -->
+          <ellipse cx="28" cy="22" rx="10" ry="7" fill="white" fill-opacity="0.18"/>
+          <circle cx="63" cy="57" r="14" fill="url(#s7-small)"/>
+          <ellipse cx="58" cy="51" rx="4" ry="3" fill="white" fill-opacity="0.18"/>
+          <text x="87" y="46" font-family="'Arial Black', sans-serif" font-size="26" font-weight="900" fill="#7A3000" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">3D Spheres</div>
+        <div class="card-desc">Deep radial gradients, specular highlights and cast shadows.</div>
+      </div>
+    </div>
+
+    <!-- GLASSMORPHISM -->
+    <div class="card bg-glass">
+      <div class="card-canvas">
+        <svg width="200" height="80" viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s7-blur">
+              <feGaussianBlur stdDeviation="1.5" result="blur"/>
+              <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+            </filter>
+          </defs>
+          <!-- glass large circle -->
+          <circle cx="38" cy="38" r="35" fill="white" fill-opacity="0.08"/>
+          <circle cx="38" cy="38" r="35" fill="none" stroke="white" stroke-opacity="0.25" stroke-width="1"/>
+          <!-- inner highlight -->
+          <path d="M 14 20 A 35 35 0 0 1 60 12" stroke="white" stroke-opacity="0.5" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <!-- glass small circle -->
+          <circle cx="64" cy="59" r="14" fill="white" fill-opacity="0.12"/>
+          <circle cx="64" cy="59" r="14" fill="none" stroke="white" stroke-opacity="0.3" stroke-width="1"/>
+          <path d="M 53 50 A 14 14 0 0 1 72 47" stroke="white" stroke-opacity="0.5" stroke-width="1" fill="none" stroke-linecap="round"/>
+          <text x="90" y="46" font-family="'Arial Black', sans-serif" font-size="26" font-weight="900" fill="white" fill-opacity="0.9" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Glassmorphism</div>
+        <div class="card-desc">Frosted glass circles — translucent fill, rim highlight, no colour.</div>
+      </div>
+    </div>
+
+    <!-- HALFTONE -->
+    <div class="card bg-halftone">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="s7-dots-lg" x="0" y="0" width="7" height="7" patternUnits="userSpaceOnUse">
+              <circle cx="3.5" cy="3.5" r="2.8" fill="#F5A623"/>
+            </pattern>
+            <pattern id="s7-dots-sm" x="0" y="0" width="5" height="5" patternUnits="userSpaceOnUse">
+              <circle cx="2.5" cy="2.5" r="2" fill="#CC2828"/>
+            </pattern>
+            <clipPath id="s7-c1"><circle cx="36" cy="34" r="34"/></clipPath>
+            <clipPath id="s7-c2"><circle cx="62" cy="56" r="15"/></clipPath>
+          </defs>
+          <circle cx="36" cy="34" r="34" fill="#F5A623" fill-opacity="0.08"/>
+          <rect x="0" y="0" width="72" height="72" fill="url(#s7-dots-lg)" clip-path="url(#s7-c1)"/>
+          <rect x="44" y="38" width="36" height="36" fill="url(#s7-dots-sm)" clip-path="url(#s7-c2)"/>
+          <text x="85" y="46" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#CC2828" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Halftone Dots</div>
+        <div class="card-desc">Dot-matrix fill — screen-print, risograph, or newspaper aesthetic.</div>
+      </div>
+    </div>
+
+    <!-- WATERCOLOR / SOFT -->
+    <div class="card bg-watercolor">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s7-soft" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="5" result="blur"/>
+              <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+            </filter>
+            <filter id="s7-soft2" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3.5" result="blur"/>
+              <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+            </filter>
+          </defs>
+          <circle cx="36" cy="34" r="32" fill="#F5A623" fill-opacity="0.65" filter="url(#s7-soft)"/>
+          <circle cx="36" cy="34" r="24" fill="#FFB84D" fill-opacity="0.4" filter="url(#s7-soft)"/>
+          <circle cx="62" cy="56" r="14" fill="#CC2828" fill-opacity="0.6" filter="url(#s7-soft2)"/>
+          <text x="85" y="46" font-family="Georgia, serif" font-size="26" font-weight="700" fill="#8B2500" fill-opacity="0.85" letter-spacing="0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Watercolour</div>
+        <div class="card-desc">Feathered Gaussian blur layers. Soft, organic, hand-painted quality.</div>
+      </div>
+    </div>
+
+    <!-- LONG SHADOW -->
+    <div class="card bg-offwhite">
+      <div class="card-canvas">
+        <svg width="200" height="80" viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- long shadow polygon for big circle -->
+          <polygon points="36,70 70,70 70,4 36,4" fill="#E09010" fill-opacity="0.18"/>
+          <circle cx="36" cy="36" r="34" fill="#F5A623"/>
+          <!-- long shadow for small circle -->
+          <polygon points="62,71 77,71 77,41 62,41" fill="#991818" fill-opacity="0.18"/>
+          <circle cx="62" cy="56" r="15" fill="#CC2828"/>
+          <text x="88" y="46" font-family="'Arial Black', sans-serif" font-size="26" font-weight="900" fill="#CC2828" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Long Shadow</div>
+        <div class="card-desc">Flat design long-shadow technique. Retro Material-era graphic style.</div>
+      </div>
+    </div>
+
+    <!-- NEON ON DARK — ANIMATED PULSE -->
+    <div class="card bg-night">
+      <style>
+        @keyframes pulse-orange { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+        @keyframes pulse-red    { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+        .neon-pulse-o { animation: pulse-orange 2.4s ease-in-out infinite; }
+        .neon-pulse-r { animation: pulse-red    2s   ease-in-out infinite; }
+      </style>
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="s7-neon-o" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="6" result="b1"/>
+              <feGaussianBlur stdDeviation="2" result="b2"/>
+              <feMerge><feMergeNode in="b1"/><feMergeNode in="b2"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="s7-neon-r" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="5" result="b1"/>
+              <feGaussianBlur stdDeviation="1.5" result="b2"/>
+              <feMerge><feMergeNode in="b1"/><feMergeNode in="b2"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <circle class="neon-pulse-o" cx="36" cy="34" r="32" fill="none" stroke="#FF9500" stroke-width="2" filter="url(#s7-neon-o)"/>
+          <circle class="neon-pulse-r" cx="62" cy="56" r="13" fill="none" stroke="#FF2020" stroke-width="2" filter="url(#s7-neon-r)"/>
+          <text class="neon-pulse-o" x="85" y="46" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#FF9500" letter-spacing="-0.5" filter="url(#s7-neon-o)">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Neon Pulse</div>
+        <div class="card-desc">Animated glow breathes slowly. Signage / cyberpunk aesthetic.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     08 · TYPE TREATMENTS
+═══════════════════════════════════════ -->
+<section class="section">
+  <div class="section-title">08 · Type Treatments</div>
+  <div class="grid">
+
+    <!-- BAUHAUS / SWISS -->
+    <div class="card bg-bauhaus">
+      <div class="card-canvas">
+        <svg width="200" height="80" viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- red square backdrop -->
+          <rect x="0" y="8" width="64" height="64" fill="#CC2828"/>
+          <circle cx="32" cy="40" r="26" fill="#F5A623"/>
+          <circle cx="52" cy="56" r="12" fill="white"/>
+          <!-- strict helvetica-like caps -->
+          <text x="76" y="36" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" fill="#1a1a1a" letter-spacing="4">MARS</text>
+          <line x1="76" y1="42" x2="190" y2="42" stroke="#CC2828" stroke-width="2"/>
+          <text x="76" y="56" font-family="Arial, Helvetica, sans-serif" font-size="9" font-weight="400" fill="#555" letter-spacing="3">SYSTEM</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Bauhaus / Swiss</div>
+        <div class="card-desc">Red rectangle grid, tight Helvetica caps. International style rigour.</div>
+      </div>
+    </div>
+
+    <!-- SCRIPT / HANDWRITTEN -->
+    <div class="card bg-cream">
+      <div class="card-canvas">
+        <svg width="200" height="80" viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="36" r="32" fill="#F5A623" fill-opacity="0.9"/>
+          <circle cx="60" cy="55" r="13" fill="#CC2828"/>
+          <!-- cursive-style Mars in italic Georgia -->
+          <text x="82" y="52" font-family="Georgia, 'Palatino Linotype', serif" font-size="34" font-weight="400" font-style="italic" fill="#8B2000" letter-spacing="-1">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Italic Serif</div>
+        <div class="card-desc">Flowing italic serif. Warm, personal, artisan quality.</div>
+      </div>
+    </div>
+
+    <!-- SLAB SERIF -->
+    <div class="card bg-white">
+      <div class="card-canvas">
+        <svg width="200" height="72" viewBox="0 0 200 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="34" r="34" fill="#F5A623"/>
+          <circle cx="62" cy="56" r="15" fill="#CC2828"/>
+          <!-- slab-like text using bold + letter-spacing tricks -->
+          <text x="85" y="47" font-family="'Courier New', Courier, monospace" font-size="28" font-weight="700" fill="#1a1a1a" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Slab / Mono Serif</div>
+        <div class="card-desc">Monospace with even, sturdy strokes. Technical and trustworthy.</div>
+      </div>
+    </div>
+
+    <!-- ULTRA CONDENSED ALL-CAPS -->
+    <div class="card bg-dark">
+      <div class="card-canvas">
+        <svg width="180" height="72" viewBox="0 0 180 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="30" cy="36" r="28" fill="#F5A623"/>
+          <circle cx="50" cy="53" r="12" fill="#E53935"/>
+          <text x="72" y="54" font-family="'Arial Narrow', Arial, sans-serif" font-size="52" font-weight="900" fill="#F0EBE0" letter-spacing="-3" transform="scale(1,1)">MARS</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Ultra Condensed</div>
+        <div class="card-desc">Towering all-caps fills vertical space. Poster / headline impact.</div>
+      </div>
+    </div>
+
+    <!-- OUTLINED WORDMARK -->
+    <div class="card bg-dusk">
+      <div class="card-canvas">
+        <svg width="200" height="80" viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="38" r="34" fill="#F5A623" fill-opacity="0.15"/>
+          <circle cx="36" cy="38" r="34" fill="none" stroke="#F5A623" stroke-width="1.5"/>
+          <circle cx="62" cy="59" r="15" fill="#CC2828" fill-opacity="0.15"/>
+          <circle cx="62" cy="59" r="15" fill="none" stroke="#CC2828" stroke-width="1.5"/>
+          <!-- double-stroke text trick: fill then stroke -->
+          <text x="86" y="50" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="#1a0e2a" letter-spacing="-0.5">Mars</text>
+          <text x="86" y="50" font-family="'Arial Black', sans-serif" font-size="28" font-weight="900" fill="none" stroke="#F5A623" stroke-width="1" letter-spacing="-0.5">Mars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Outlined Wordmark</div>
+        <div class="card-desc">Stroke-only logotype matched to outlined mark. Unified ghost system.</div>
+      </div>
+    </div>
+
+    <!-- MIXED WEIGHT (LIGHT + HEAVY) -->
+    <div class="card bg-white">
+      <div class="card-canvas">
+        <svg width="200" height="72" viewBox="0 0 200 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="36" r="34" fill="#F5A623"/>
+          <circle cx="62" cy="57" r="15" fill="#CC2828"/>
+          <!-- M heavy, ars light -->
+          <text x="84" y="50" font-family="'Arial Black', sans-serif" font-size="38" font-weight="900" fill="#CC2828" letter-spacing="-1">M</text>
+          <text x="116" y="50" font-family="Arial, sans-serif" font-size="30" font-weight="300" fill="#CC2828" letter-spacing="1">ars</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-label">Mixed Weight</div>
+        <div class="card-desc">Black M + light "ars" — contrast within the word creates rhythm.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ── FOOTER ── -->
+<footer class="footer">
+  <span>Mars 2.0 · Brand Exploration</span>
+  <span>2026 — SVG · All variations scalable</span>
+</footer>
+
+</body>
+</html>
