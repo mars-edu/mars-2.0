@@ -20,7 +20,7 @@
           <div
             class="w-10 h-10 rounded-full bg-muted border border-border flex items-center justify-center text-muted-foreground group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors"
           >
-            <i class="f7-icons text-base">{{ item.icon }}</i>
+            <component :is="item.icon" class="text-base" />
           </div>
         </div>
         <div class="border-b border-border pb-5 w-full last:border-0 last:pb-0">
@@ -39,6 +39,9 @@
 
 <script setup lang="ts">
 import { f7 } from "framework7-vue";
+import IconFileText from "~icons/lucide/file-text";
+import IconRefreshCw from "~icons/lucide/refresh-cw";
+import IconBell from "~icons/lucide/bell";
 
 const navigateToProtocol = () => {
   f7.views.main.router.navigate("/protocol");
@@ -48,21 +51,21 @@ const navigateToProtocol = () => {
 const activityItems = [
   {
     id: 1,
-    icon: "doc_text_fill",
+    icon: IconFileText,
     title: "Журнал закрыт",
     time: "14:30",
     description: "Журнал по дисциплине «Философия» для группы 3 РЭХТ закрыт.",
   },
   {
     id: 2,
-    icon: "arrow_2_squarepath",
+    icon: IconRefreshCw,
     title: "Назначена пересдача",
     time: "11:15",
     description: "Пересдача экзамена назначена в журнале по дисциплине «История Казахстана».",
   },
   {
     id: 3,
-    icon: "bell_fill",
+    icon: IconBell,
     title: "Новое объявление",
     time: "09:00",
     description: "Опубликовано объявление: «Заседание кафедры — 5 января, 15:00».",
