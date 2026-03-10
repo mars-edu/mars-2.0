@@ -65,9 +65,7 @@
               <div
                 class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"
               >
-                <i class="f7-icons text-primary-foreground text-sm"
-                  >doc_text_fill</i
-                >
+                <IconFileText class="text-primary-foreground text-sm" />
               </div>
               <div class="ml-3">
                 <div class="text-sm font-medium text-foreground">
@@ -90,6 +88,7 @@ import { ref, onMounted } from "vue";
 import { f7, f7Popover } from "framework7-vue";
 import IconSearch from "~icons/lucide/search";
 import IconX from "~icons/lucide/x";
+import IconFileText from "~icons/lucide/file-text";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{
