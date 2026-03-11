@@ -12,9 +12,9 @@
         <div class="absolute inset-0 opacity-10"></div>
 
         <div class="text-white max-w-md w-full text-center">
-          <h1 class="text-5xl font-bold mb-4">Добро пожаловать на Марс!</h1>
+          <h1 class="text-5xl font-bold mb-4">{{ auth_welcome_title() }}</h1>
           <p class="text-lg text-white text-opacity-95">
-            Передовая образовательная экосистема будущего.
+            {{ auth_welcome_subtitle() }}
           </p>
         </div>
       </div>
@@ -30,11 +30,11 @@
           </div>
           <form @submit.prevent="handleLogin" class="space-y-4">
             <div class="space-y-2">
-              <label class="block text-sm font-semibold mb-2"> ФИО </label>
+              <label class="block text-sm font-semibold mb-2"> {{ auth_full_name() }} </label>
               <f7-input
                 type="text"
                 v-model:value="username"
-                placeholder="Введите ФИО"
+                :placeholder="auth_full_name_placeholder()"
                 :error-message="errors.username"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
@@ -42,11 +42,11 @@
             </div>
 
             <div class="space-y-2">
-              <label class="block text-sm font-semibold mb-2"> Пароль </label>
+              <label class="block text-sm font-semibold mb-2"> {{ auth_password() }} </label>
               <f7-input
                 :type="showPassword ? 'text' : 'password'"
                 v-model:value="password"
-                placeholder="Введите пароль"
+                :placeholder="auth_password_placeholder()"
                 :error-message="errors.password"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
@@ -58,7 +58,7 @@
                 v-model:checked="showPassword"
                 class="!flex-shrink-0"
               />
-              <span class="text-sm text-gray-600"> Показать пароль </span>
+              <span class="text-sm text-gray-600"> {{ auth_show_password() }} </span>
             </div>
 
             <div class="flex items-center justify-between py-2">
@@ -72,7 +72,7 @@
                 href="/restore-password"
                 class="text-primary hover:text-primary/80 font-medium transition-colors duration-200 underline-offset-2 hover:underline whitespace-nowrap"
               >
-                Забыли пароль?
+                {{ auth_forgot_password() }}
               </f7-link>
             </div>
 
@@ -83,7 +83,7 @@
               :loading="isLoading"
               class="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 py-4"
             >
-              <span class="relative z-10">Войти</span>
+              <span class="relative z-10">{{ auth_login() }}</span>
               <div
                 v-if="isLoading"
                 class="absolute inset-0 flex items-center justify-center bg-primary/80 rounded-xl transition-opacity duration-200"
@@ -122,18 +122,18 @@
           <div class="flex justify-center mb-6">
             <Logo class="h-14 w-auto" />
           </div>
-          <h2 class="text-2xl font-bold mb-2">Добро пожаловать на Марс!</h2>
+          <h2 class="text-2xl font-bold mb-2">{{ auth_welcome_title() }}</h2>
           <p class="text-muted-foreground">
-            Передовая образовательная экосистема будущего.
+            {{ auth_welcome_subtitle() }}
           </p>
 
           <form @submit.prevent="handleLogin" class="space-y-6 mt-8">
             <div>
-              <label class="block text-sm font-medium mb-2"> ФИО </label>
+              <label class="block text-sm font-medium mb-2"> {{ auth_full_name() }} </label>
               <f7-input
                 type="text"
                 v-model:value="username"
-                placeholder="Введите ФИО"
+                :placeholder="auth_full_name_placeholder()"
                 :error-message="errors.username"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
@@ -141,11 +141,11 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium mb-2"> Пароль </label>
+              <label class="block text-sm font-medium mb-2"> {{ auth_password() }} </label>
               <f7-input
                 :type="showPassword ? 'text' : 'password'"
                 v-model:value="password"
-                placeholder="Введите пароль"
+                :placeholder="auth_password_placeholder()"
                 :error-message="errors.password"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
@@ -157,7 +157,7 @@
                 v-model:checked="showPassword"
                 class="text-foreground flex items-center"
               >
-                Показать пароль
+                {{ auth_show_password() }}
               </f7-checkbox>
             </div>
 
@@ -170,7 +170,7 @@
               <f7-link
                 href="/restore-password"
                 class="text-primary hover:text-primary/80 font-medium whitespace-nowrap"
-                >Забыли пароль?</f7-link
+                >{{ auth_forgot_password() }}</f7-link
               >
             </div>
 
@@ -181,7 +181,7 @@
               :loading="isLoading"
               class="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-sm transition-colors duration-200"
             >
-              Войти
+              {{ auth_login() }}
             </f7-button>
 
             <!-- <div class="text-center mt-4">
@@ -205,6 +205,24 @@ import { f7 } from "framework7-vue";
 import AuthService from "../services/auth";
 import Logo from "../components/Logo/Logo.vue";
 import { useUserStore } from "../stores/userStore";
+import {
+  auth_welcome_title,
+  auth_welcome_subtitle,
+  auth_full_name,
+  auth_full_name_placeholder,
+  auth_password,
+  auth_password_placeholder,
+  auth_show_password,
+  auth_forgot_password,
+  auth_login,
+  auth_full_name_required,
+  auth_password_required,
+  auth_invalid_credentials,
+  auth_login_error,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
+
+const { locale } = useI18n();
 
 console.log("[LoginPage] Component setup initiated");
 
@@ -284,13 +302,13 @@ const validateForm = () => {
   errors.password = "";
 
   if (!username.value) {
-    errors.username = "ФИО обязательно";
+    errors.username = auth_full_name_required();
     isValid = false;
     console.log("[LoginPage] Username validation failed - empty field");
   }
 
   if (!password.value) {
-    errors.password = "Пароль обязателен";
+    errors.password = auth_password_required();
     isValid = false;
     console.log("[LoginPage] Password validation failed - empty field");
   }
@@ -331,7 +349,7 @@ const handleLogin = async (e: Event) => {
     } else {
       console.log("Login failed", response.message);
       f7.toast.show({
-        text: response.message || "Неверное имя пользователя или пароль",
+        text: response.message || auth_invalid_credentials(),
         closeTimeout: 3000,
         position: "center",
       });
@@ -339,7 +357,7 @@ const handleLogin = async (e: Event) => {
   } catch (error) {
     console.error("Login error", error);
     f7.toast.show({
-      text: "Произошла ошибка при входе. Попробуйте позже.",
+      text: auth_login_error(),
       closeTimeout: 3000,
       position: "center",
     });

@@ -7,10 +7,9 @@
         <div class="absolute inset-0 opacity-10"></div>
 
         <div class="text-white max-w-md w-full">
-          <h1 class="text-3xl font-bold mb-4">Регистрация</h1>
+          <h1 class="text-3xl font-bold mb-4">{{ auth_register_title() }}</h1>
           <p class="text-opacity-90">
-            Создайте учетную запись, чтобы начать свое образовательное
-            путешествие.
+            {{ auth_register_subtitle() }}
           </p>
         </div>
       </div>
@@ -27,12 +26,12 @@
           <form @submit.prevent="handleRegister" class="space-y-4">
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-gray-800 mb-2">
-                Фамилия
+                {{ auth_last_name() }}
               </label>
               <f7-input
                 type="text"
                 v-model:value="formData.lastName"
-                placeholder="Введите фамилию"
+                :placeholder="auth_last_name_placeholder()"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -40,12 +39,12 @@
 
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-gray-800 mb-2">
-                Имя
+                {{ auth_first_name() }}
               </label>
               <f7-input
                 type="text"
                 v-model:value="formData.firstName"
-                placeholder="Введите имя"
+                :placeholder="auth_first_name_placeholder()"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -53,24 +52,24 @@
 
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-gray-800 mb-2">
-                Отчество
+                {{ auth_middle_name() }}
               </label>
               <f7-input
                 type="text"
                 v-model:value="formData.middleName"
-                placeholder="Введите отчество"
+                :placeholder="auth_middle_name_placeholder()"
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
             </div>
 
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-gray-800 mb-2">
-                ИИН
+                {{ auth_iin() }}
               </label>
               <f7-input
                 type="text"
                 v-model:value="formData.iin"
-                placeholder="Введите ИИН"
+                :placeholder="auth_iin_placeholder()"
                 required
                 maxlength="12"
                 v-maska
@@ -86,7 +85,7 @@
               <f7-input
                 type="email"
                 v-model:value="formData.email"
-                placeholder="Введите email"
+                :placeholder="auth_email_placeholder()"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -94,12 +93,12 @@
 
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-gray-800 mb-2">
-                Пароль
+                {{ auth_password() }}
               </label>
               <f7-input
                 :type="showPassword ? 'text' : 'password'"
                 v-model:value="formData.password"
-                placeholder="Введите пароль"
+                :placeholder="auth_password_placeholder()"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -107,12 +106,12 @@
 
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-gray-800 mb-2">
-                Повторите пароль
+                {{ auth_confirm_password() }}
               </label>
               <f7-input
                 :type="showPassword ? 'text' : 'password'"
                 v-model:value="formData.confirmPassword"
-                placeholder="Повторите пароль"
+                :placeholder="auth_confirm_password_placeholder()"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -124,7 +123,7 @@
                 class="!flex-shrink-0"
               />
               <span class="text-sm text-gray-600">
-                Показать пароль
+                {{ auth_show_password() }}
               </span>
             </div>
 
@@ -134,7 +133,7 @@
                 class="!flex-shrink-0"
               />
               <span class="text-sm text-gray-600">
-                Я согласен на обработку персональных данных
+                {{ auth_accept_terms() }}
               </span>
             </div>
 
@@ -145,7 +144,7 @@
               :loading="isLoading"
               class="w-full bg-red-600 hover:bg-red-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 py-4"
             >
-              <span class="relative z-10">Зарегистрироваться</span>
+              <span class="relative z-10">{{ auth_register() }}</span>
               <div
                 v-if="isLoading"
                 class="absolute inset-0 flex items-center justify-center bg-red-700 rounded-xl transition-opacity duration-200"
@@ -156,7 +155,7 @@
 
             <div class="text-center mt-4">
               <f7-link href="/login" class="text-red-600 hover:text-red-800">
-                Уже есть аккаунт? Войти
+                {{ auth_have_account() }}
               </f7-link>
             </div>
           </form>
@@ -182,22 +181,21 @@
           <div class="flex justify-center mb-6">
             <Logo class="h-14 w-auto" />
           </div>
-          <h2 class="text-2xl font-bold text-gray-900 mb-2">Регистрация</h2>
+          <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ auth_register_title() }}</h2>
           <p class="text-gray-600">
-            Создайте учетную запись, чтобы начать свое образовательное
-            путешествие.
+            {{ auth_register_subtitle() }}
           </p>
 
           <form @submit.prevent="handleRegister" class="space-y-6 mt-8">
             <!-- Mobile form fields mirror desktop fields -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
-                Фамилия
+                {{ auth_last_name() }}
               </label>
               <f7-input
                 type="text"
                 v-model:value="formData.lastName"
-                placeholder="Введите фамилию"
+                :placeholder="auth_last_name_placeholder()"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -205,12 +203,12 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
-                Имя
+                {{ auth_first_name() }}
               </label>
               <f7-input
                 type="text"
                 v-model:value="formData.firstName"
-                placeholder="Введите имя"
+                :placeholder="auth_first_name_placeholder()"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -218,24 +216,24 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
-                Отчество
+                {{ auth_middle_name() }}
               </label>
               <f7-input
                 type="text"
                 v-model:value="formData.middleName"
-                placeholder="Введите отчество"
+                :placeholder="auth_middle_name_placeholder()"
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
-                ИИН
+                {{ auth_iin() }}
               </label>
               <f7-input
                 type="text"
                 v-model:value="formData.iin"
-                placeholder="Введите ИИН"
+                :placeholder="auth_iin_placeholder()"
                 required
                 maxlength="12"
                 v-maska
@@ -251,7 +249,7 @@
               <f7-input
                 type="email"
                 v-model:value="formData.email"
-                placeholder="Введите email"
+                :placeholder="auth_email_placeholder()"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -259,12 +257,12 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
-                Пароль
+                {{ auth_password() }}
               </label>
               <f7-input
                 :type="showPassword ? 'text' : 'password'"
                 v-model:value="formData.password"
-                placeholder="Введите пароль"
+                :placeholder="auth_password_placeholder()"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -276,18 +274,18 @@
                 class="!flex-shrink-0"
               />
               <span class="text-sm text-gray-600">
-                Показать пароль
+                {{ auth_show_password() }}
               </span>
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
-                Повторите пароль
+                {{ auth_confirm_password() }}
               </label>
               <f7-input
                 :type="showPassword ? 'text' : 'password'"
                 v-model:value="formData.confirmPassword"
-                placeholder="Повторите пароль"
+                :placeholder="auth_confirm_password_placeholder()"
                 required
                 class="!border !border-input !rounded-md !bg-transparent !px-3 !py-1 !shadow-sm"
               />
@@ -299,7 +297,7 @@
                 class="!flex-shrink-0"
               />
               <span class="text-sm text-gray-600">
-                Показать пароль
+                {{ auth_show_password() }}
               </span>
             </div>
 
@@ -309,7 +307,7 @@
                 class="!flex-shrink-0"
               />
               <span class="text-sm text-gray-600">
-                Я согласен на обработку персональных данных
+                {{ auth_accept_terms() }}
               </span>
             </div>
 
@@ -320,12 +318,12 @@
               :loading="isLoading"
               class="w-full bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition-colors duration-200"
             >
-              Зарегистрироваться
+              {{ auth_register() }}
             </f7-button>
 
             <div class="text-center">
               <f7-link href="/login" class="text-red-600 hover:text-red-800">
-                Уже есть аккаунт? Войти
+                {{ auth_have_account() }}
               </f7-link>
             </div>
           </form>
@@ -341,6 +339,44 @@ import { f7 } from "framework7-vue";
 import Logo from "../components/Logo/Logo.vue";
 import { vMaska } from "maska/vue";
 import AuthService from "../services/auth";
+import {
+  auth_register_title,
+  auth_register_subtitle,
+  auth_last_name,
+  auth_last_name_placeholder,
+  auth_first_name,
+  auth_first_name_placeholder,
+  auth_middle_name,
+  auth_middle_name_placeholder,
+  auth_iin,
+  auth_iin_placeholder,
+  auth_email_placeholder,
+  auth_password,
+  auth_password_placeholder,
+  auth_confirm_password,
+  auth_confirm_password_placeholder,
+  auth_show_password,
+  auth_accept_terms,
+  auth_register,
+  auth_have_account,
+  auth_last_name_required,
+  auth_first_name_required,
+  auth_iin_required,
+  auth_iin_invalid,
+  auth_email_required,
+  auth_email_invalid,
+  auth_password_required,
+  auth_password_min_length,
+  auth_confirm_password_required,
+  auth_passwords_mismatch,
+  auth_terms_required,
+  auth_register_success,
+  auth_register_error,
+  auth_register_error_retry,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
+
+const { locale } = useI18n();
 
 const isLoading = ref(false);
 const showPassword = ref(false);
@@ -366,49 +402,49 @@ const validateForm = (): { isValid: boolean; errorMessage: string } => {
   const errorMessages: string[] = [];
 
   if (!formData.lastName) {
-    errorMessages.push("Фамилия обязательна");
+    errorMessages.push(auth_last_name_required());
     isValid = false;
   }
 
   if (!formData.firstName) {
-    errorMessages.push("Имя обязательно");
+    errorMessages.push(auth_first_name_required());
     isValid = false;
   }
 
   if (!formData.iin) {
-    errorMessages.push("ИИН обязателен");
+    errorMessages.push(auth_iin_required());
     isValid = false;
   } else if (!validateIIN(formData.iin)) {
-    errorMessages.push("Неверный формат ИИН");
+    errorMessages.push(auth_iin_invalid());
     isValid = false;
   }
 
   if (!formData.email) {
-    errorMessages.push("Email обязателен");
+    errorMessages.push(auth_email_required());
     isValid = false;
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-    errorMessages.push("Неверный формат email");
+    errorMessages.push(auth_email_invalid());
     isValid = false;
   }
 
   if (!formData.password) {
-    errorMessages.push("Пароль обязателен");
+    errorMessages.push(auth_password_required());
     isValid = false;
   } else if (formData.password.length < 8) {
-    errorMessages.push("Пароль должен содержать минимум 8 символов");
+    errorMessages.push(auth_password_min_length());
     isValid = false;
   }
 
   if (!formData.confirmPassword) {
-    errorMessages.push("Подтвердите пароль");
+    errorMessages.push(auth_confirm_password_required());
     isValid = false;
   } else if (formData.password !== formData.confirmPassword) {
-    errorMessages.push("Пароли не совпадают");
+    errorMessages.push(auth_passwords_mismatch());
     isValid = false;
   }
 
   if (!formData.acceptTerms) {
-    errorMessages.push("Необходимо согласие на обработку данных");
+    errorMessages.push(auth_terms_required());
     isValid = false;
   }
 
@@ -445,7 +481,7 @@ const handleRegister = async (e: Event) => {
 
     if (result.success) {
       f7.toast.show({
-        text: "Регистрация успешно завершена",
+        text: auth_register_success(),
         closeTimeout: 3000,
         position: "center",
       });
@@ -453,7 +489,7 @@ const handleRegister = async (e: Event) => {
       f7.views.main.router.navigate("/login");
     } else {
       f7.toast.show({
-        text: result.message || "Произошла ошибка при регистрации",
+        text: result.message || auth_register_error(),
         closeTimeout: 3000,
         position: "center",
       });
@@ -461,7 +497,7 @@ const handleRegister = async (e: Event) => {
   } catch (error) {
     console.error("Registration error:", error);
     f7.toast.show({
-      text: "Произошла ошибка при регистрации. Попробуйте позже.",
+      text: auth_register_error_retry(),
       closeTimeout: 3000,
       position: "center",
     });
