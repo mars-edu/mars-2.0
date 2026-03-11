@@ -17,7 +17,7 @@
             class="bg-card text-card-foreground rounded-xl p-4 md:p-5 shadow-md"
           >
             <h2 class="text-lg font-semibold mb-4">
-              Отчеты по нагрузке преподавателей
+              {{ reports_workload_title() }}
             </h2>
 
             <div class="space-y-4">
@@ -26,26 +26,26 @@
                   v-if="userStore.isAdmin"
                   v-model="selectedTeacherId"
                   :options="teacherOptions"
-                  label="Преподаватель"
-                  placeholder="Выберите преподавателя"
+                  :label="reports_teacher()"
+                  :placeholder="reports_teacher_placeholder()"
                   name="teacher"
                   searchable
-                  search-placeholder="Поиск преподавателя..."
+                  :search-placeholder="reports_teacher_search()"
                 />
 
                 <Select
                   v-model="selectedAcademicYearId"
                   :options="academicYearOptions"
-                  label="Академический год"
-                  placeholder="Выберите учебный год"
+                  :label="reports_academic_year()"
+                  :placeholder="reports_academic_year_placeholder()"
                   name="academic-year"
                 />
 
                 <Select
                   v-model="selectedPeriod"
                   :options="periodOptions"
-                  label="Период"
-                  placeholder="Выберите период"
+                  :label="reports_period()"
+                  :placeholder="reports_period_placeholder()"
                   name="period"
                 />
               </div>
@@ -62,8 +62,8 @@
                   ></span>
                   <span>{{
                     isGenerating
-                      ? "Генерация..."
-                      : "Сгенерировать отчет ООД (Формы 1-3)"
+                      ? reports_generating()
+                      : reports_generate_btn()
                   }}</span>
                 </button>
               </div>
@@ -73,7 +73,7 @@
                 class="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
               >
                 <p class="text-sm text-green-800 dark:text-green-200">
-                  ✓ Отчет успешно сгенерирован и скачан
+                  {{ reports_success() }}
                 </p>
                 <p class="text-xs text-green-600 dark:text-green-300 mt-1">
                   {{ lastGeneratedReport }}
@@ -108,6 +108,26 @@ import {
   type WorkloadExportParams,
 } from "@/services/convex-excel-export";
 import { useSidebar } from "@/composables/useSidebar";
+import {
+  reports_workload_title,
+  reports_teacher,
+  reports_teacher_placeholder,
+  reports_teacher_search,
+  reports_academic_year,
+  reports_academic_year_placeholder,
+  reports_period,
+  reports_period_placeholder,
+  reports_generating,
+  reports_generate_btn,
+  reports_success,
+  reports_select_teacher,
+  reports_no_schedule,
+  reports_full_year,
+  reports_semester_period,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
+
+const { locale } = useI18n();
 
 const { contentMargin } = useSidebar();
 type WorkloadEntry = WorkloadExportParams["entries"][number];
@@ -185,14 +205,14 @@ const periodOptions = computed(() => {
   const options = [
     {
       value: "full_year",
-      text: "За весь учебный год",
+      text: reports_full_year(),
     },
   ];
 
   availableSemesters.value.forEach((semester) => {
     options.push({
       value: semester.id,
-      text: `За ${semester.semesterNumber} семестр`,
+      text: reports_semester_period({ number: semester.semesterNumber }),
     });
   });
 
@@ -205,7 +225,7 @@ const getTeacherFullName = (teacher: any) => {
 
 async function generateWorkloadReport() {
   if (!selectedTeacherId.value) {
-    f7.dialog.alert("Пожалуйста, выберите преподавателя");
+    f7.dialog.alert(reports_select_teacher());
     return;
   }
 
@@ -247,7 +267,7 @@ async function generateWorkloadReport() {
     // Final check
     if (!calendarStore.events || calendarStore.events.length === 0) {
       console.warn('[Reports] No calendar events found after waiting');
-      f7.dialog.alert('Нет данных о расписании преподавателя. Пожалуйста, убедитесь, что у преподавателя есть занятия в календаре.');
+      f7.dialog.alert(reports_no_schedule());
       return;
     }
 

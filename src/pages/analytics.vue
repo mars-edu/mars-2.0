@@ -17,23 +17,23 @@
             class="flex flex-col md:flex-row md:items-center justify-between gap-3 analytics-page-header"
           >
             <div>
-              <h1 class="text-2xl font-semibold">Аналитика</h1>
+              <h1 class="text-2xl font-semibold">{{ analytics_title() }}</h1>
               <p class="text-sm text-muted-foreground">
-                Успеваемость обучающихся
+                {{ analytics_subtitle() }}
               </p>
             </div>
             <div class="flex items-center gap-3">
               <Select
                 v-model="selectedAcademicYearModel"
                 :options="academicYearOptions"
-                placeholder="Учебный год:"
+                :placeholder="analytics_academic_year()"
                 name="academic-year"
                 class="w-44"
               />
               <Select
                 v-model="selectedSemesterId"
                 :options="semesterOptions"
-                placeholder="Семестр:"
+                :placeholder="analytics_semester()"
                 name="semester"
                 class="w-44"
               />
@@ -48,7 +48,7 @@
               <Select
                 v-model="selectedReportCategory"
                 :options="reportCategoryOptions"
-                placeholder="Категория:"
+                :placeholder="analytics_category()"
                 name="report-category"
                 class="w-full"
               />
@@ -57,7 +57,7 @@
             <!-- Expandable Sections -->
             <Accordion>
               <AccordionItem id="specialties" :default-expanded="true">
-                <template #title>Специальности:</template>
+                <template #title>{{ analytics_specialties() }}</template>
                 <template #selected-item>
                   <span
                     v-if="selectedSpecialties.length > 0"
@@ -76,7 +76,7 @@
                     }"
                     @click="toggleSelectAllSpecialties"
                   >
-                    <span class="font-medium">Все</span>
+                    <span class="font-medium">{{ common_all() }}</span>
                     <IconCircleCheck
                       v-if="
                         selectedSpecialties.length === specialties.length &&
@@ -113,13 +113,13 @@
                     v-if="specialties.length === 0"
                     class="text-muted-foreground"
                   >
-                    Нет специальностей
+                    {{ rup_no_specialties() }}
                   </div>
                 </div>
               </AccordionItem>
 
               <AccordionItem id="courses" :default-expanded="true">
-                <template #title>Курсы:</template>
+                <template #title>{{ analytics_courses() }}</template>
                 <template #selected-item>
                   <span
                     v-if="selectedCourses.length > 0"
@@ -138,7 +138,7 @@
                     }"
                     @click="toggleSelectAllCourses"
                   >
-                    <span class="font-medium">Все</span>
+                    <span class="font-medium">{{ common_all() }}</span>
                     <IconCircleCheck
                       v-if="
                         selectedCourses.length === courseNumbers.length &&
@@ -163,13 +163,13 @@
                     v-if="courseNumbers.length === 0"
                     class="text-muted-foreground"
                   >
-                    Нет курсов
+                    {{ settings_no_courses() }}
                   </div>
                 </div>
               </AccordionItem>
 
               <AccordionItem id="languages" :default-expanded="true">
-                <template #title>Языки:</template>
+                <template #title>{{ analytics_languages() }}</template>
                 <template #selected-item>
                   <span
                     v-if="selectedLanguageGroups.length > 0"
@@ -188,7 +188,7 @@
                     }"
                     @click="toggleSelectAllLanguages"
                   >
-                    <span class="font-medium">Все</span>
+                    <span class="font-medium">{{ common_all() }}</span>
                     <IconCircleCheck
                       v-if="
                         selectedLanguageGroups.length === languages.length &&
@@ -217,13 +217,13 @@
                     v-if="languages.length === 0"
                     class="text-muted-foreground"
                   >
-                    Нет языков
+                    {{ settings_no_languages() }}
                   </div>
                 </div>
               </AccordionItem>
 
               <AccordionItem id="students" :default-expanded="true">
-                <template #title>Обучающиеся:</template>
+                <template #title>{{ analytics_students() }}</template>
                 <template #selected-item>
                   <span
                     v-if="selectedStudents.length > 0"
@@ -242,8 +242,8 @@
                             @change="toggleSelectAllStudents"
                           />
                         </th>
-                        <th class="p-2 text-left font-medium">Полное имя</th>
-                        <th class="p-2 text-left font-medium">Курс</th>
+                        <th class="p-2 text-left font-medium">{{ analytics_full_name() }}</th>
+                        <th class="p-2 text-left font-medium">{{ analytics_course() }}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -267,7 +267,7 @@
                     v-if="filteredStudentsForAnalytics.length === 0"
                     class="p-4 text-center text-muted-foreground"
                   >
-                    Нет обучающихся, соответствующих фильтрам
+                    {{ analytics_no_students_filter() }}
                   </div>
                 </div>
               </AccordionItem>
@@ -315,7 +315,7 @@
                 class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
               >
                 <div>
-                  <h2 class="text-lg font-semibold">Предпросмотр отчёта</h2>
+                  <h2 class="text-lg font-semibold">{{ analytics_report_preview() }}</h2>
                   <p class="text-xs text-muted-foreground">
                     Обучающихся: {{ reportSummary.studentCount }} • Дисциплин:
                     {{ reportSummary.disciplineCount }}
@@ -343,7 +343,7 @@
                   <template #title>
                     {{
                       courseGroup.course === "—"
-                        ? "Без курса"
+                        ? analytics_no_course()
                         : `Курс ${courseGroup.course}`
                     }}
                   </template>
@@ -353,7 +353,7 @@
                     class="space-y-2 mb-4"
                   >
                     <div class="text-sm font-medium text-muted-foreground pl-4">
-                      Специальность: {{ specialtyGroup.specialtyName }}
+                      {{ analytics_specialty_label() }} {{ specialtyGroup.specialtyName }}
                     </div>
                     <AnalyticsReportTable
                       :rows="specialtyGroup.rows"
@@ -401,7 +401,7 @@
             <p class="text-sm text-foreground leading-relaxed">
               {{
                 selectedSpecialtyInfo.details ||
-                "Дополнительная информация отсутствует."
+                analytics_no_extra_info()
               }}
             </p>
           </div>
@@ -454,6 +454,36 @@ import {
   type AnalyticsExportParams,
 } from "@/services/convex-excel-export";
 import { useSidebar } from "@/composables/useSidebar";
+import {
+  analytics_title,
+  analytics_subtitle,
+  analytics_academic_year,
+  analytics_semester,
+  analytics_category,
+  analytics_specialties,
+  analytics_courses,
+  analytics_languages,
+  analytics_students,
+  analytics_full_name,
+  analytics_course,
+  analytics_no_students_filter,
+  analytics_report_preview,
+  analytics_no_course,
+  analytics_specialty_label,
+  analytics_no_extra_info,
+  analytics_final,
+  analytics_no_name,
+  analytics_no_students_error,
+  analytics_no_disciplines,
+  analytics_export_error,
+  rup_no_specialties,
+  settings_no_courses,
+  settings_no_languages,
+  common_all,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
+
+const { locale } = useI18n();
 
 const { contentMargin } = useSidebar();
 const activeNavItem = ref("analytics");
@@ -505,7 +535,7 @@ const clearReportPreview = () => {
 
 const reportCategoryOptions = computed(() => {
   const options: Array<{ value: string; text: string }> = [
-    { value: "final", text: "Итоговые" },
+    { value: "final", text: analytics_final() },
   ];
 
   const yearId = selectedItemsStore.selectedAcademicYearId;
@@ -633,7 +663,7 @@ const relevantJournals = computed<ReportJournalEntry[]>(() => {
     const title =
       journalStore.getDisciplineTitle(journal) ||
       calendarStore.getEventTitle(event) ||
-      "Без названия";
+      analytics_no_name();
 
     map.set(event.id, {
       id: event.id,
@@ -1003,7 +1033,7 @@ const getRelevantJournalsForStudents = (
     const title =
       journalStore.getDisciplineTitle(journal) ||
       calendarStore.getEventTitle(event) ||
-      "Без названия";
+      analytics_no_name();
 
     map.set(event.id, {
       id: event.id,
@@ -1293,9 +1323,7 @@ const resetFilters = () => {
 
 const generateReport = () => {
   if (!canGenerateReport.value) {
-    f7.dialog.alert(
-      "Нет обучающихся, соответствующих текущим фильтрам. Выберите хотя бы одного обучающегося."
-    );
+    f7.dialog.alert(analytics_no_students_error());
     return;
   }
 
@@ -1318,7 +1346,7 @@ const generateReport = () => {
   if (reportDisciplineColumns.value.length === 0) {
     emptyDisciplineToast?.close?.();
     emptyDisciplineToast = f7.toast.create({
-      text: "Дисциплины не найдены для выбранных фильтров — таблица может быть пустой.",
+      text: analytics_no_disciplines(),
       closeTimeout: 2500,
     });
     emptyDisciplineToast.open();
@@ -1395,21 +1423,7 @@ const exportToExcel = async () => {
     console.debug("[excel] Convex export success", { filename });
   } catch (e) {
     console.error("[excel] export failed", e);
-    f7.dialog.alert("Ошибка при экспорте в Excel. Подробности в консоли.");
+    f7.dialog.alert(analytics_export_error());
   }
 };
 </script>
-
-<style>
-.analytics-page-header .smart-select-list-container {
-  background-color: hsl(var(--card)) !important;
-}
-
-.analytics-page-header .smart-select-list-container .item-inner {
-  background-color: hsl(var(--card)) !important;
-}
-
-.specialty-info-popover.popover {
-  margin-top: -160px !important;
-}
-</style>
