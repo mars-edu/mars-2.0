@@ -14,11 +14,11 @@
       >
         <div class="flex flex-col gap-4">
           <div class="flex items-center justify-between">
-            <h1 class="text-xl font-semibold">Каталог специальностей</h1>
+            <h1 class="text-xl font-semibold">{{ catalog_specialty_title() }}</h1>
             <div class="flex gap-2">
               <f7-input
                 type="text"
-                placeholder="Поиск по специальности..."
+                :placeholder="catalog_specialty_search()"
                 v-model:value="searchTerm"
                 class="w-[250px] !bg-white h-full !py-2"
                 clear-button
@@ -33,10 +33,10 @@
               <table class="w-full border-collapse">
                 <thead>
                   <tr class="bg-muted/50">
-                    <th class="px-4 py-3 text-left">№</th>
-                    <th class="px-4 py-3 text-left">Кодовое наименование</th>
-                    <th class="px-4 py-3 text-left">Код</th>
-                    <th class="px-4 py-3 text-left">Наименование</th>
+                    <th class="px-4 py-3 text-left">{{ catalog_col_num() }}</th>
+                    <th class="px-4 py-3 text-left">{{ catalog_col_code_name() }}</th>
+                    <th class="px-4 py-3 text-left">{{ catalog_col_code() }}</th>
+                    <th class="px-4 py-3 text-left">{{ catalog_col_name() }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -89,6 +89,17 @@ import { useSpecialtyStore, type Specialty } from "@/stores/specialtyStore";
 import { storeToRefs } from "pinia";
 import Fuse from "fuse.js";
 import { useSidebar } from "@/composables/useSidebar";
+import {
+  catalog_specialty_title,
+  catalog_specialty_search,
+  catalog_col_num,
+  catalog_col_code_name,
+  catalog_col_code,
+  catalog_col_name,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
+
+const { locale } = useI18n();
 
 const { contentMargin } = useSidebar();
 const activeNavItem = ref("specialty-catalog");

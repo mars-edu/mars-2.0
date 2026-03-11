@@ -23,7 +23,7 @@
             >
               <span
                 class="text-base md:text-lg font-medium md:font-semibold mb-1 md:mb-0"
-                >График образовательного процесса:</span
+                >{{ edu_schedule_title() }}</span
               >
             </div>
             <div class="flex gap-2">
@@ -38,14 +38,14 @@
                   :is="areAllExpanded ? IconChevronUp : IconChevronDown"
                   class="w-4 h-4"
                 />
-                {{ areAllExpanded ? "Свернуть все" : "Развернуть все" }}
+                {{ areAllExpanded ? edu_schedule_collapse_all() : edu_schedule_expand_all() }}
               </f7-button>
             </div>
           </div>
 
           <Accordion v-model:expanded-items="expandedAccordions">
             <AccordionItem id="academic-years" :default-expanded="false">
-              <template #title>Учебный год:</template>
+              <template #title>{{ edu_schedule_academic_year() }}</template>
               <template #actions>
                 <AddAcademicYearButton />
               </template>
@@ -77,7 +77,7 @@
                     v-if="academicYear.isActive"
                     class="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full"
                   >
-                    Активный
+                    {{ edu_schedule_active() }}
                   </span>
                   <button
                     v-if="!academicYear.isActive"
@@ -105,7 +105,7 @@
             </AccordionItem>
 
             <AccordionItem id="semesters" :default-expanded="false">
-              <template #title>Семестры:</template>
+              <template #title>{{ edu_schedule_semesters() }}</template>
               <template #actions>
                 <AddAcademicYearSemesterButton />
               </template>
@@ -123,8 +123,8 @@
               </div>
               <div v-else-if="academicYearSemesters.length === 0">
                 <NoData
-                  title="Нет семестров"
-                  description="Для данного учебного года семестры не добавлены"
+                  :title="edu_schedule_no_semesters()"
+                  :description="edu_schedule_no_semesters_desc()"
                   :icon="IconCalendar"
                 />
               </div>
@@ -146,7 +146,7 @@
                 >
                   <div class="flex flex-col w-full">
                     <span class="font-medium">{{
-                      `Семестр ${academicYearSemester.semesterNumber}`
+                      edu_schedule_semester_label({ number: academicYearSemester.semesterNumber })
                     }}</span>
                     <span class="text-xs px-2 py-0.5"
                       >{{ formatUiDate(academicYearSemester.startDate) }}-
@@ -161,7 +161,7 @@
                     "
                     class="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full"
                   >
-                    Активный
+                    {{ edu_schedule_active() }}
                   </span>
                   <button
                     class="p-1 hover:bg-primary/10 rounded-md transition-colors"
@@ -182,7 +182,7 @@
             </AccordionItem>
 
             <AccordionItem id="schedule">
-              <template #title>Расписание звонков:</template>
+              <template #title>{{ edu_schedule_bell() }}</template>
               <template #actions>
                 <div class="flex gap-2">
                   <CopyEducationScheduleButton />
@@ -203,8 +203,8 @@
               </div>
               <div v-else-if="schedules.length === 0">
                 <NoData
-                  title="Нет расписания звонков"
-                  description="Для данного учебного года расписание звонков не добавлено"
+                  :title="edu_schedule_no_bell()"
+                  :description="edu_schedule_no_bell_desc()"
                   :icon="IconClock"
                 />
               </div>
@@ -239,7 +239,7 @@
             </AccordionItem>
 
             <AccordionItem id="vacations" :default-expanded="false">
-              <template #title>Каникулы:</template>
+              <template #title>{{ edu_schedule_vacations() }}</template>
               <template #actions>
                 <AddVacationButton />
               </template>
@@ -257,8 +257,8 @@
               </div>
               <div v-else-if="vacations.length === 0">
                 <NoData
-                  title="Нет каникул"
-                  description="Для данного учебного года каникулы не добавлены"
+                  :title="edu_schedule_no_vacations()"
+                  :description="edu_schedule_no_vacations_desc()"
                   :icon="IconSun"
                 />
               </div>
@@ -292,14 +292,14 @@
             </AccordionItem>
 
             <AccordionItem id="controls" :default-expanded="false">
-              <template #title>Контроли:</template>
+              <template #title>{{ edu_schedule_controls() }}</template>
               <Accordion v-model:expanded-items="expandedControlAccordions">
                 <!-- Scheduled Final Controls Section -->
                 <AccordionItem
                   id="scheduled-final-controls"
                   :default-expanded="false"
                 >
-                  <template #title>Форма итогового контроля:</template>
+                  <template #title>{{ edu_schedule_final_controls() }}</template>
                   <template #actions>
                     <AddScheduledFinalControlButton />
                   </template>
@@ -317,8 +317,8 @@
                   </div>
                   <div v-else-if="scheduledFinalControls.length === 0">
                     <NoData
-                      title="Нет итоговых контролей"
-                      description="Для данного учебного года итоговые контроли не добавлены"
+                      :title="edu_schedule_no_final_controls()"
+                      :description="edu_schedule_no_final_controls_desc()"
                       :icon="IconCircleCheck"
                     />
                   </div>
@@ -361,7 +361,7 @@
                   id="scheduled-intermediate-controls"
                   :default-expanded="false"
                 >
-                  <template #title>Промежуточный контроль:</template>
+                  <template #title>{{ edu_schedule_intermediate_controls() }}</template>
                   <template #actions>
                     <AddScheduledIntermediateControlButton />
                   </template>
@@ -379,8 +379,8 @@
                   </div>
                   <div v-else-if="scheduledIntermediateControls.length === 0">
                     <NoData
-                      title="Нет промежуточных контролей"
-                      description="Для данного учебного года промежуточные контроли не добавлены"
+                      :title="edu_schedule_no_intermediate_controls()"
+                      :description="edu_schedule_no_intermediate_controls_desc()"
                       :icon="IconCircleCheck"
                     />
                   </div>
@@ -474,6 +474,33 @@ import type { ScheduledIntermediateControl } from "@/stores/scheduledIntermediat
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT, DATE_UI_FORMAT } from "@/constants/calendar";
 import { useSidebar } from "@/composables/useSidebar";
+import {
+  edu_schedule_title,
+  edu_schedule_collapse_all,
+  edu_schedule_expand_all,
+  edu_schedule_academic_year,
+  edu_schedule_active,
+  edu_schedule_semesters,
+  edu_schedule_no_semesters,
+  edu_schedule_no_semesters_desc,
+  edu_schedule_bell,
+  edu_schedule_no_bell,
+  edu_schedule_no_bell_desc,
+  edu_schedule_vacations,
+  edu_schedule_no_vacations,
+  edu_schedule_no_vacations_desc,
+  edu_schedule_controls,
+  edu_schedule_final_controls,
+  edu_schedule_no_final_controls,
+  edu_schedule_no_final_controls_desc,
+  edu_schedule_intermediate_controls,
+  edu_schedule_no_intermediate_controls,
+  edu_schedule_no_intermediate_controls_desc,
+  edu_schedule_semester_label,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
+
+const { locale } = useI18n();
 
 const { contentMargin } = useSidebar();
 const activeNavItem = ref("education-schedule");

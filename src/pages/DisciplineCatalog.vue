@@ -16,12 +16,12 @@
       >
         <div class="flex flex-col gap-4">
           <div class="flex items-center justify-between">
-            <h1 class="text-xl font-semibold">Каталог дисциплин</h1>
+            <h1 class="text-xl font-semibold">{{ catalog_discipline_title() }}</h1>
             <div class="flex gap-2">
               <f7-input
                 v-model:value="searchQuery"
                 type="text"
-                placeholder="Поиск..."
+                :placeholder="catalog_discipline_search()"
                 class="border border-border rounded-lg !bg-white"
                 clear-button
               ></f7-input>
@@ -35,9 +35,9 @@
               <table class="w-full border-collapse">
                 <thead>
                   <tr class="bg-muted/50">
-                    <th class="px-4 py-3 text-left">№</th>
-                    <th class="px-4 py-3 text-left">Модуль</th>
-                    <th class="px-4 py-3 text-left">Результат обучения</th>
+                    <th class="px-4 py-3 text-left">{{ catalog_col_num() }}</th>
+                    <th class="px-4 py-3 text-left">{{ catalog_col_module() }}</th>
+                    <th class="px-4 py-3 text-left">{{ catalog_col_learning_outcome() }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -82,6 +82,16 @@ import AddDisciplineButton from "@/components/AddDisciplineButton.vue";
 import EditDisciplineButton from "@/components/EditDisciplineButton.vue";
 import { useDisciplineStore, type Discipline } from "@/stores/disciplineStore";
 import { useSidebar } from "@/composables/useSidebar";
+import {
+  catalog_discipline_title,
+  catalog_discipline_search,
+  catalog_col_num,
+  catalog_col_module,
+  catalog_col_learning_outcome,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
+
+const { locale } = useI18n();
 
 // Unique page ID that changes on each mount to track navigation
 const pageId = ref(Date.now());
