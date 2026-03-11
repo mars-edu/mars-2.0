@@ -18,13 +18,13 @@
           <!-- Header -->
           <div class="mb-6">
           <div class="flex items-center justify-between mb-2">
-            <h1 class="text-3xl font-bold text-foreground">Уведомления</h1>
+            <h1 class="text-3xl font-bold text-foreground">{{ notifications_title() }}</h1>
             <button
               v-if="unreadNotifications.length > 0"
               @click="handleMarkAllAsRead"
               class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
             >
-              Отметить все как прочитанные
+              {{ notifications_mark_all_read() }}
             </button>
           </div>
           </div>
@@ -39,7 +39,7 @@
             <IconTriangleAlert class="w-6 h-6 text-orange-600" />
             <div class="flex-1">
               <h3 class="font-semibold text-orange-900 dark:text-orange-100 mb-2">
-                Важное объявление
+                {{ notifications_important() }}
               </h3>
               <div
                 v-for="reminder in activeReminders"
@@ -48,7 +48,7 @@
               >
                 <p>{{ reminder.message }}</p>
                 <p class="text-xs text-orange-600 dark:text-orange-400 mt-1">
-                  Крайний срок: {{ formatDate(reminder.deadline) }}
+                  {{ notifications_deadline() }} {{ formatDate(reminder.deadline) }}
                 </p>
               </div>
             </div>
@@ -58,7 +58,7 @@
         <!-- Loading State -->
         <div v-if="loading" class="text-center py-12">
           <f7-preloader />
-          <p class="text-muted-foreground mt-4">Загрузка уведомлений...</p>
+          <p class="text-muted-foreground mt-4">{{ notifications_loading() }}</p>
         </div>
 
         <!-- Empty State -->
@@ -67,8 +67,8 @@
           class="text-center py-12 bg-card rounded-lg border border-border"
         >
           <IconBellOff class="w-16 h-16 text-muted-foreground mb-4" />
-          <h3 class="text-xl font-semibold text-foreground mb-2">Нет уведомлений</h3>
-          <p class="text-muted-foreground">У вас пока нет уведомлений</p>
+          <h3 class="text-xl font-semibold text-foreground mb-2">{{ notifications_empty() }}</h3>
+          <p class="text-muted-foreground">{{ notifications_empty_desc() }}</p>
         </div>
 
         <!-- Notifications List -->
@@ -108,14 +108,14 @@
                   :disabled="processing"
                   class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
                 >
-                  Принять
+                  {{ notifications_accept() }}
                 </button>
                 <button
                   @click="handleRejectSubstitution(notification.substitution._id, notification._id)"
                   :disabled="processing"
                   class="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 font-medium"
                 >
-                  Отклонить
+                  {{ notifications_reject() }}
                 </button>
               </div>
 
@@ -129,21 +129,21 @@
                   class="inline-flex items-center gap-1 text-sm font-medium text-green-600"
                 >
                   <IconCircleCheck />
-                  Принято
+                  {{ notifications_accepted() }}
                 </span>
                 <span
                   v-else-if="notification.substitution.status === 'rejected'"
                   class="inline-flex items-center gap-1 text-sm font-medium text-red-600"
                 >
                   <IconCircleX />
-                  Отклонено
+                  {{ notifications_rejected() }}
                 </span>
                 <span
                   v-else-if="notification.substitution.status === 'completed'"
                   class="inline-flex items-center gap-1 text-sm font-medium text-gray-600"
                 >
                   <IconCircleCheck />
-                  Завершено
+                  {{ notifications_completed() }}
                 </span>
               </div>
             </div>
@@ -166,7 +166,7 @@
                     v-if="notification.metadata?.deadline"
                     class="text-xs text-muted-foreground"
                   >
-                    Крайний срок: {{ formatDate(notification.metadata.deadline) }}
+                    {{ notifications_deadline() }} {{ formatDate(notification.metadata.deadline) }}
                   </p>
                 </div>
               </div>
@@ -214,7 +214,31 @@ import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
 import { useUserStore } from '@/stores/userStore';
 import { useSidebar } from "@/composables/useSidebar";
+import {
+  notifications_title,
+  notifications_mark_all_read,
+  notifications_important,
+  notifications_deadline,
+  notifications_loading,
+  notifications_empty,
+  notifications_empty_desc,
+  notifications_accept,
+  notifications_reject,
+  notifications_accepted,
+  notifications_rejected,
+  notifications_completed,
+  notifications_marked_read,
+  notifications_update_error,
+  notifications_substitution_accepted,
+  notifications_substitution_accept_error,
+  notifications_substitution_rejected,
+  notifications_substitution_reject_error,
+  notifications_reject_reason,
+  notifications_reject_title,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
 
+const { locale } = useI18n();
 const { contentMargin } = useSidebar();
 const userStore = useUserStore();
 const processing = ref(false);
@@ -260,13 +284,13 @@ const handleMarkAllAsRead = async () => {
       userId: currentUserId.value,
     });
     f7.toast.create({
-      text: "Все уведомления отмечены как прочитанные",
+      text: notifications_marked_read(),
       position: "center",
       closeTimeout: 2000,
     }).open();
   } catch (err: any) {
     f7.toast.create({
-      text: err.message || "Ошибка при обновлении уведомлений",
+      text: err.message || notifications_update_error(),
       position: "center",
       closeTimeout: 2000,
     }).open();
@@ -286,13 +310,13 @@ const handleAcceptSubstitution = async (substitutionId: Id<"substitutions">, not
     });
 
     f7.toast.create({
-      text: "Замена принята",
+      text: notifications_substitution_accepted(),
       position: "center",
       closeTimeout: 2000,
     }).open();
   } catch (err: any) {
     f7.toast.create({
-      text: err.message || "Ошибка при принятии замены",
+      text: err.message || notifications_substitution_accept_error(),
       position: "center",
       closeTimeout: 2000,
     }).open();
@@ -305,8 +329,8 @@ const handleRejectSubstitution = async (substitutionId: Id<"substitutions">, not
   if (!currentUserId.value) return;
 
   f7.dialog.prompt(
-    "Причина отклонения (необязательно):",
-    "Отклонить замену",
+    notifications_reject_reason(),
+    notifications_reject_title(),
     async (reason: string) => {
       try {
         processing.value = true;
@@ -317,13 +341,13 @@ const handleRejectSubstitution = async (substitutionId: Id<"substitutions">, not
         });
 
         f7.toast.create({
-          text: "Замена отклонена",
+          text: notifications_substitution_rejected(),
           position: "center",
           closeTimeout: 2000,
         }).open();
       } catch (err: any) {
         f7.toast.create({
-          text: err.message || "Ошибка при отклонении замены",
+          text: err.message || notifications_substitution_reject_error(),
           position: "center",
           closeTimeout: 2000,
         }).open();

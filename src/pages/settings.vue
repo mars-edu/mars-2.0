@@ -23,7 +23,7 @@
             >
               <span
                 class="text-base md:text-lg font-medium md:font-semibold mb-1 md:mb-0"
-                >Настройки</span
+                >{{ settings_title() }}</span
               >
             </div>
             <div class="flex gap-2">
@@ -38,7 +38,7 @@
                   :is="areAllExpanded ? IconChevronUp : IconChevronDown"
                   class="w-4 h-4"
                 />
-                {{ areAllExpanded ? "Свернуть все" : "Развернуть все" }}
+                {{ areAllExpanded ? settings_collapse_all() : settings_expand_all() }}
               </f7-button>
             </div>
           </div>
@@ -46,7 +46,7 @@
           <Accordion v-model:expanded-items="expandedAccordions">
             <!-- Semesters Section -->
             <AccordionItem id="semesters" :default-expanded="false">
-              <template #title>Семестры:</template>
+              <template #title>{{ settings_semesters() }}</template>
               <template #actions>
                 <AddSemesterButton />
               </template>
@@ -64,8 +64,8 @@
               </div>
               <div v-else-if="semesters.length === 0">
                 <NoData
-                  title="Нет семестров"
-                  description="Семестры не добавлены в систему"
+                  :title="settings_no_semesters()"
+                  :description="settings_no_semesters_desc()"
                   :icon="IconCalendar"
                 />
               </div>
@@ -95,7 +95,7 @@
 
             <!-- Courses Section -->
             <AccordionItem id="courses" :default-expanded="false">
-              <template #title>Курсы:</template>
+              <template #title>{{ settings_courses() }}</template>
               <template #actions>
                 <AddCourseButton />
               </template>
@@ -110,8 +110,8 @@
               </div>
               <div v-else-if="courses.length === 0">
                 <NoData
-                  title="Нет курсов"
-                  description="Курсы не добавлены в систему"
+                  :title="settings_no_courses()"
+                  :description="settings_no_courses_desc()"
                   :icon="IconBookOpen"
                 />
               </div>
@@ -143,7 +143,7 @@
 
             <!-- Languages Section -->
             <AccordionItem id="languages" :default-expanded="false">
-              <template #title>Языки:</template>
+              <template #title>{{ settings_languages() }}</template>
               <template #actions>
                 <AddLanguageButton />
               </template>
@@ -161,8 +161,8 @@
               </div>
               <div v-else-if="languages.length === 0">
                 <NoData
-                  title="Нет языков"
-                  description="Языки не добавлены в систему"
+                  :title="settings_no_languages()"
+                  :description="settings_no_languages_desc()"
                   :icon="IconGlobe"
                 />
               </div>
@@ -197,11 +197,11 @@
 
             <!-- Controls Section -->
             <AccordionItem id="controls" :default-expanded="false">
-              <template #title>Контроли:</template>
+              <template #title>{{ settings_controls() }}</template>
               <Accordion v-model:expanded-items="expandedControlAccordions">
                 <!-- Final Controls Section -->
                 <AccordionItem id="finalControls" :default-expanded="false">
-                  <template #title>Форма итогового контроля:</template>
+                  <template #title>{{ settings_final_controls() }}</template>
                   <template #actions>
                     <AddFinalControlButton />
                   </template>
@@ -219,8 +219,8 @@
                   </div>
                   <div v-else-if="sortedFinalControls.length === 0">
                     <NoData
-                      title="Нет форм контроля"
-                      description="Формы итогового контроля не добавлены в систему"
+                      :title="settings_no_final_controls()"
+                      :description="settings_no_final_controls_desc()"
                       :icon="IconCircleCheck"
                     />
                   </div>
@@ -256,7 +256,7 @@
                   id="intermediateControls"
                   :default-expanded="false"
                 >
-                  <template #title>Промежуточный контроль:</template>
+                  <template #title>{{ settings_intermediate_controls() }}</template>
                   <template #actions>
                     <AddIntermediateControlButton />
                   </template>
@@ -274,8 +274,8 @@
                   </div>
                   <div v-else-if="sortedIntermediateControls.length === 0">
                     <NoData
-                      title="Нет промежуточных контролей"
-                      description="Промежуточный контроль не добавлен в систему"
+                      :title="settings_no_intermediate_controls()"
+                      :description="settings_no_intermediate_controls_desc()"
                       :icon="IconCircleCheck"
                     />
                   </div>
@@ -351,6 +351,30 @@ import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import type { IntermediateControl } from "@/stores/intermediateControlStore";
 import { useSidebar } from "@/composables/useSidebar";
 import IconPencil from "~icons/lucide/pencil";
+import {
+  settings_title,
+  settings_collapse_all,
+  settings_expand_all,
+  settings_semesters,
+  settings_no_semesters,
+  settings_no_semesters_desc,
+  settings_courses,
+  settings_no_courses,
+  settings_no_courses_desc,
+  settings_languages,
+  settings_no_languages,
+  settings_no_languages_desc,
+  settings_controls,
+  settings_final_controls,
+  settings_no_final_controls,
+  settings_no_final_controls_desc,
+  settings_intermediate_controls,
+  settings_no_intermediate_controls,
+  settings_no_intermediate_controls_desc,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
+
+const { locale } = useI18n();
 
 console.log("[SettingsPage] Component setup initiated");
 
