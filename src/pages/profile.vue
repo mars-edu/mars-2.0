@@ -14,7 +14,7 @@
       >
         <div class="flex flex-col gap-4">
           <div class="flex items-center justify-between">
-            <h1 class="text-xl font-semibold">Профиль</h1>
+            <h1 class="text-xl font-semibold">{{ profile_title() }}</h1>
           </div>
 
           <div
@@ -40,7 +40,7 @@
                 <p class="text-sm text-muted-foreground truncate">{{ userStore.currentUser?.username }}</p>
                 <div class="flex gap-2 mt-3 flex-wrap">
                   <f7-button fill small @click="selectImage">
-                    {{ avatarUrl ? 'Изменить фото' : 'Загрузить фото' }}
+                    {{ avatarUrl ? profile_change_photo() : profile_upload_photo() }}
                   </f7-button>
                   <f7-button
                     v-if="avatarUrl"
@@ -49,7 +49,7 @@
                     color="red"
                     @click="removeAvatar"
                   >
-                    Удалить фото
+                    {{ profile_delete_photo() }}
                   </f7-button>
                 </div>
               </div>
@@ -64,22 +64,22 @@
 
             <!-- Personal Info Section -->
             <div>
-              <h2 class="text-base font-semibold text-foreground mb-3">Личные данные</h2>
+              <h2 class="text-base font-semibold text-foreground mb-3">{{ profile_personal_info() }}</h2>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div class="bg-muted rounded-lg p-3">
-                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">Имя</div>
+                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">{{ profile_first_name() }}</div>
                   <div class="text-sm font-medium text-foreground">{{ userStore.currentUser?.firstName || '—' }}</div>
                 </div>
                 <div class="bg-muted rounded-lg p-3">
-                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">Фамилия</div>
+                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">{{ profile_last_name() }}</div>
                   <div class="text-sm font-medium text-foreground">{{ userStore.currentUser?.lastName || '—' }}</div>
                 </div>
                 <div class="bg-muted rounded-lg p-3">
-                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">Email</div>
+                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">{{ profile_email() }}</div>
                   <div class="text-sm font-medium text-foreground">{{ userStore.currentUser?.email || '—' }}</div>
                 </div>
                 <div class="bg-muted rounded-lg p-3">
-                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">Имя пользователя</div>
+                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">{{ profile_username() }}</div>
                   <div class="text-sm font-medium text-foreground">{{ userStore.currentUser?.username || '—' }}</div>
                 </div>
               </div>
@@ -87,10 +87,10 @@
 
             <!-- Security Section -->
             <div>
-              <h2 class="text-base font-semibold text-foreground mb-3">Безопасность</h2>
+              <h2 class="text-base font-semibold text-foreground mb-3">{{ profile_security() }}</h2>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div class="bg-muted rounded-lg p-3">
-                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">Роли</div>
+                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">{{ profile_roles() }}</div>
                   <div class="text-sm font-medium text-foreground">{{ userStore.currentUser?.roles.join(', ') || '—' }}</div>
                 </div>
               </div>
@@ -108,8 +108,8 @@
     >
       <div class="cropper-popup-content">
         <PopoverHeader
-          title="Обрезать изображение"
-          cancel-text="Отмена"
+          :title="profile_crop_image()"
+          :cancel-text="common_cancel()"
           :on-cancel="cancelCrop"
         />
         <div class="cropper-container">
@@ -126,7 +126,7 @@
         </div>
 
         <PopoverFooter
-          save-text="Сохранить"
+          :save-text="common_save()"
           :is-loading="uploading"
           :on-cancel="cancelCrop"
           :on-save="handleCropAndUpload"
@@ -151,6 +151,34 @@ import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import { Cropper, CircleStencil } from "vue-advanced-cropper";
 import "vue-advanced-cropper/dist/style.css";
 import { useSidebar } from "@/composables/useSidebar";
+import {
+  profile_title,
+  profile_change_photo,
+  profile_upload_photo,
+  profile_delete_photo,
+  profile_personal_info,
+  profile_first_name,
+  profile_last_name,
+  profile_email,
+  profile_username,
+  profile_security,
+  profile_roles,
+  profile_crop_image,
+  profile_photo_updated,
+  profile_photo_removed,
+  profile_confirm_delete_photo,
+  profile_not_image_error,
+  profile_image_size_error,
+  profile_process_error,
+  profile_not_auth_error,
+  profile_upload_error,
+  profile_remove_error,
+  common_cancel,
+  common_save,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
+
+const { locale } = useI18n();
 
 console.log("[ProfilePage] Component setup initiated");
 
@@ -187,12 +215,12 @@ const handleFileSelect = async (event: Event) => {
   });
 
   if (!file.type.startsWith("image/")) {
-    f7.dialog.alert("Пожалуйста, выберите изображение");
+    f7.dialog.alert(profile_not_image_error());
     return;
   }
 
   if (file.size > 5 * 1024 * 1024) {
-    f7.dialog.alert("Размер изображения не должен превышать 5 МБ");
+    f7.dialog.alert(profile_image_size_error());
     return;
   }
 
@@ -214,14 +242,14 @@ const handleCropAndUpload = async () => {
   const { canvas } = cropperRef.value.getResult();
 
   if (!canvas) {
-    f7.dialog.alert("Не удалось обработать изображение");
+    f7.dialog.alert(profile_process_error());
     return;
   }
 
   // Convert canvas to blob
   canvas.toBlob(async (blob) => {
     if (!blob) {
-      f7.dialog.alert("Не удалось обработать изображение");
+      f7.dialog.alert(profile_process_error());
       return;
     }
 
@@ -250,7 +278,7 @@ const cancelCrop = () => {
 const uploadAvatar = async (file: File) => {
   if (!userStore.currentUser || !convex) {
     console.error("[ProfilePage] User not authenticated or Convex not available");
-    f7.dialog.alert("Ошибка: пользователь не авторизован");
+    f7.dialog.alert(profile_not_auth_error());
     return;
   }
 
@@ -308,7 +336,7 @@ const uploadAvatar = async (file: File) => {
 
     f7.toast
       .create({
-        text: "Фото профиля обновлено",
+        text: profile_photo_updated(),
         position: "center",
         closeTimeout: 2000,
       })
@@ -316,7 +344,7 @@ const uploadAvatar = async (file: File) => {
   } catch (error: any) {
     console.error("[ProfilePage] Error uploading avatar:", error);
     f7.dialog.alert(
-      error?.message || "Ошибка при загрузке фото. Попробуйте еще раз."
+      error?.message || profile_upload_error()
     );
   } finally {
     uploading.value = false;
@@ -332,7 +360,7 @@ const removeAvatar = async () => {
     return;
   }
 
-  f7.dialog.confirm("Вы уверены, что хотите удалить фото профиля?", async () => {
+  f7.dialog.confirm(profile_confirm_delete_photo(), async () => {
     f7.preloader.show();
 
     try {
@@ -349,7 +377,7 @@ const removeAvatar = async () => {
 
       f7.toast
         .create({
-          text: "Фото профиля удалено",
+          text: profile_photo_removed(),
           position: "center",
           closeTimeout: 2000,
         })
@@ -357,7 +385,7 @@ const removeAvatar = async () => {
     } catch (error: any) {
       console.error("[ProfilePage] Error removing avatar:", error);
       f7.dialog.alert(
-        error?.message || "Ошибка при удалении фото. Попробуйте еще раз."
+        error?.message || profile_remove_error()
       );
     } finally {
       f7.preloader.hide();

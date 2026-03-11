@@ -62,7 +62,7 @@
         :tab-active="activeNavItem === 'schedule'"
       >
         <div class="overflow-y-auto p-4 bg-background text-foreground pb-16">
-          <h2 class="text-2xl font-bold mb-4">Расписание</h2>
+          <h2 class="text-2xl font-bold mb-4">{{ home_schedule() }}</h2>
           <CalendarSchedulePanel class="min-h-[600px]" />
         </div>
       </f7-tab>
@@ -73,9 +73,9 @@
         :tab-active="activeNavItem === 'journals'"
       >
         <div class="overflow-y-auto p-4 bg-background text-foreground pb-16">
-          <h2 class="text-2xl font-bold mb-4">Журналы</h2>
+          <h2 class="text-2xl font-bold mb-4">{{ home_journals() }}</h2>
           <div class="bg-card text-card-foreground rounded-xl p-4 shadow-sm">
-            <p class="text-muted-foreground">Содержимое журналов будет здесь</p>
+            <p class="text-muted-foreground">{{ home_journals_placeholder() }}</p>
           </div>
         </div>
       </f7-tab>
@@ -86,9 +86,9 @@
         :tab-active="activeNavItem === 'rup'"
       >
         <div class="overflow-y-auto p-4 bg-background text-foreground pb-16">
-          <h2 class="text-2xl font-bold mb-4">РУП</h2>
+          <h2 class="text-2xl font-bold mb-4">{{ home_rup() }}</h2>
           <div class="bg-card text-card-foreground rounded-xl p-4 shadow-sm">
-            <p class="text-muted-foreground">Содержимое РУП будет здесь</p>
+            <p class="text-muted-foreground">{{ home_rup_placeholder() }}</p>
           </div>
         </div>
       </f7-tab>
@@ -126,15 +126,24 @@ import IconHouse from "~icons/lucide/house";
 import IconCalendar from "~icons/lucide/calendar";
 import IconFileText from "~icons/lucide/file-text";
 import IconBookOpen from "~icons/lucide/book-open";
+import {
+  home_schedule,
+  home_journals,
+  home_rup,
+  home_journals_placeholder,
+  home_rup_placeholder,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
 
+const { locale } = useI18n();
 const { contentMargin } = useSidebar();
 const pageId = ref(Date.now());
 const activeNavItem = ref("home");
 
 const navigationItems = [
   { id: "home", label: "Главная", icon: IconHouse },
-  { id: "schedule", label: "Расписание", icon: IconCalendar },
-  { id: "journals", label: "Журналы", icon: IconFileText },
-  { id: "rup", label: "РУП", icon: IconBookOpen },
+  { id: "schedule", label: home_schedule(), icon: IconCalendar },
+  { id: "journals", label: home_journals(), icon: IconFileText },
+  { id: "rup", label: home_rup(), icon: IconBookOpen },
 ];
 </script>
