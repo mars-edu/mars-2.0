@@ -135,5 +135,8 @@
   "auth_back_to_login": "Вернуться к входу",
   "auth_iin_verify_error": "Ошибка при проверке ИИН. Попробуйте позже.",
   "auth_password_changed": "Пароль успешно изменен",
-  "auth_reset_password_error": "Ошибка при сбросе пароля. Попробуйте позже."
+  "auth_reset_password_error": "Ошибка при сбросе пароля. Попробуйте позже.",
+  "auth_remember_me": "Запомнить меня",
+  "auth_no_account": "Нет аккаунта? Зарегистрироваться",
+  "auth_email": "Email"
 }

@@ -80,7 +80,7 @@
 
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-gray-800 mb-2">
-                Email
+                {{ auth_email() }}
               </label>
               <f7-input
                 type="email"
@@ -244,7 +244,7 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
-                Email
+                {{ auth_email() }}
               </label>
               <f7-input
                 type="email"
@@ -350,6 +350,7 @@ import {
   auth_middle_name_placeholder,
   auth_iin,
   auth_iin_placeholder,
+  auth_email,
   auth_email_placeholder,
   auth_password,
   auth_password_placeholder,

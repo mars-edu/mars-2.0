@@ -135,5 +135,8 @@
   "auth_back_to_login": "Back to login",
   "auth_iin_verify_error": "Error verifying IIN. Please try again later.",
   "auth_password_changed": "Password changed successfully",
-  "auth_reset_password_error": "Error resetting password. Please try again later."
+  "auth_reset_password_error": "Error resetting password. Please try again later.",
+  "auth_remember_me": "Remember me",
+  "auth_no_account": "Don't have an account? Sign up",
+  "auth_email": "Email"
 }
