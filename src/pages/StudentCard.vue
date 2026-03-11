@@ -14,11 +14,11 @@
       >
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
-            <h1 class="text-xl font-semibold">Картотека обучающихся</h1>
+            <h1 class="text-xl font-semibold">{{ student_card_title() }}</h1>
             <div class="student-card-filters flex items-center gap-2">
               <f7-input
                 type="text"
-                placeholder="Поиск по ФИО..."
+                :placeholder="student_card_search()"
                 v-model:value="searchTerm"
                 @input="handleSearchInput"
                 class="w-[250px] !bg-white h-full !py-2"
@@ -27,7 +27,7 @@
               <Select
                 v-model="selectedAcademicYear"
                 :options="academicYearOptions"
-                placeholder="Год поступления:"
+                :placeholder="student_card_year()"
                 name="academic-year"
                 class="w-[250px]"
               />
@@ -40,7 +40,7 @@
             <Select
               v-model="selectedSpecialty"
               :options="specialtyOptions"
-              placeholder="Специальность:"
+              :placeholder="student_card_specialty()"
               name="specialty"
               class="min-w-[220px]"
             />
@@ -48,7 +48,7 @@
             <Select
               v-model="selectedGender"
               :options="genderOptions"
-              placeholder="Пол:"
+              :placeholder="student_card_gender()"
               name="gender"
               class="min-w-[150px]"
             />
@@ -56,7 +56,7 @@
             <Select
               v-model="selectedBase"
               :options="baseOptions"
-              placeholder="База:"
+              :placeholder="student_card_base()"
               name="base"
               class="min-w-[150px]"
             />
@@ -67,11 +67,11 @@
               <table class="w-full border-collapse rounded-lg">
                 <thead>
                   <tr class="bg-gray-500 text-white">
-                    <th class="px-4 py-2 text-left">№</th>
-                    <th class="px-4 py-2 text-left">ФИО</th>
-                    <th class="px-4 py-2 text-left">Специальность</th>
-                    <th class="px-4 py-2 text-left">Язык</th>
-                    <th class="px-4 py-2 text-left">Курс</th>
+                    <th class="px-4 py-2 text-left">{{ student_card_col_num() }}</th>
+                    <th class="px-4 py-2 text-left">{{ student_card_col_name() }}</th>
+                    <th class="px-4 py-2 text-left">{{ student_card_col_specialty() }}</th>
+                    <th class="px-4 py-2 text-left">{{ student_card_col_language() }}</th>
+                    <th class="px-4 py-2 text-left">{{ student_card_col_course() }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -113,10 +113,10 @@
                 class="bg-primary text-primary-foreground"
                 @click="loadMoreStudents"
               >
-                Загрузить еще
+                {{ student_card_load_more() }}
               </f7-button>
               <span v-else class="text-sm text-muted-foreground">
-                Все записи загружены
+                {{ student_card_all_loaded() }}
               </span>
             </div>
           </div>
@@ -152,6 +152,24 @@ import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useBaseStore } from "@/stores/baseStore";
 import { storeToRefs } from "pinia";
 import { useSidebar } from "@/composables/useSidebar";
+import {
+  student_card_title,
+  student_card_search,
+  student_card_year,
+  student_card_specialty,
+  student_card_gender,
+  student_card_base,
+  student_card_col_num,
+  student_card_col_name,
+  student_card_col_specialty,
+  student_card_col_language,
+  student_card_col_course,
+  student_card_load_more,
+  student_card_all_loaded,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
+
+const { locale } = useI18n();
 
 const { contentMargin } = useSidebar();
 const activeNavItem = ref("student-card");

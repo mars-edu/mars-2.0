@@ -14,11 +14,11 @@
       >
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
-            <h1 class="text-xl font-semibold">Картотека преподавателей</h1>
+            <h1 class="text-xl font-semibold">{{ teacher_card_title() }}</h1>
             <div class="teacher-card-filters flex items-center gap-2">
               <f7-input
                 type="text"
-                placeholder="Поиск по ФИО..."
+                :placeholder="teacher_card_search()"
                 v-model:value="searchTerm"
                 class="w-[250px] !bg-white h-full !py-2"
                 clear-button
@@ -32,7 +32,7 @@
             <Select
               v-model="selectedPosition"
               :options="positionOptions"
-              placeholder="Должность:"
+              :placeholder="teacher_card_position()"
               name="position"
               class="min-w-[150px]"
             />
@@ -40,7 +40,7 @@
             <Select
               v-model="selectedEmploymentYear"
               :options="employmentYearOptions"
-              placeholder="Год поступления:"
+              :placeholder="teacher_card_year()"
               name="employment-year"
               class="min-w-[150px]"
             />
@@ -48,7 +48,7 @@
             <Select
               v-model="selectedGender"
               :options="genderOptions"
-              placeholder="Пол:"
+              :placeholder="teacher_card_gender()"
               name="gender"
               class="min-w-[150px]"
             />
@@ -59,13 +59,13 @@
               <table class="w-full border-collapse rounded-lg">
                 <thead>
                   <tr class="bg-gray-500 text-white">
-                    <th class="px-4 py-2 text-left">№</th>
-                    <th class="px-4 py-2 text-left">ФИО</th>
-                    <th class="px-4 py-2 text-left">Логин</th>
-                    <th class="px-4 py-2 text-left">Email</th>
-                    <th class="px-4 py-2 text-left">Должность</th>
-                    <th class="px-4 py-2 text-left">Год поступления</th>
-                    <th class="px-4 py-2 text-left">Действия</th>
+                    <th class="px-4 py-2 text-left">{{ teacher_card_col_num() }}</th>
+                    <th class="px-4 py-2 text-left">{{ teacher_card_col_name() }}</th>
+                    <th class="px-4 py-2 text-left">{{ teacher_card_col_login() }}</th>
+                    <th class="px-4 py-2 text-left">{{ teacher_card_col_email() }}</th>
+                    <th class="px-4 py-2 text-left">{{ teacher_card_col_position() }}</th>
+                    <th class="px-4 py-2 text-left">{{ teacher_card_col_year() }}</th>
+                    <th class="px-4 py-2 text-left">{{ teacher_card_col_actions() }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -98,8 +98,8 @@
                         >
                           {{
                             generatingForId === teacher.id
-                              ? "Генерация..."
-                              : "Создать учётную запись"
+                              ? teacher_card_generating()
+                              : teacher_card_create_account()
                           }}
                         </button>
                         <button
@@ -158,6 +158,34 @@ import { storeToRefs } from "pinia";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useSidebar } from "@/composables/useSidebar";
+import {
+  teacher_card_title,
+  teacher_card_search,
+  teacher_card_position,
+  teacher_card_year,
+  teacher_card_gender,
+  teacher_card_col_num,
+  teacher_card_col_name,
+  teacher_card_col_login,
+  teacher_card_col_email,
+  teacher_card_col_position,
+  teacher_card_col_year,
+  teacher_card_col_actions,
+  teacher_card_generating,
+  teacher_card_create_account,
+  teacher_card_update_password,
+  teacher_card_password_history,
+  teacher_card_credentials_created,
+  teacher_card_password_updated,
+  teacher_card_create_error,
+  teacher_card_regen_error,
+  teacher_card_no_user_error,
+  teacher_card_error_title,
+  common_cancel,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
+
+const { locale } = useI18n();
 
 const { contentMargin } = useSidebar();
 const activeNavItem = ref("teacher-card");
@@ -259,13 +287,13 @@ const generateCredentials = async (teacher: Teacher) => {
         <p class="mb-2"><strong>Пароль:</strong> ${response.password}</p>
         <p class="text-sm text-gray-600 mt-3">Пожалуйста, сохраните эти данные. Пароль больше не будет показан.</p>
       </div>`,
-      "Учётные данные созданы"
+      teacher_card_credentials_created()
     );
   } catch (error) {
     console.error("Failed to generate credentials:", error);
     f7.dialog.alert(
-      "Не удалось создать учётную запись. Попробуйте позже.",
-      "Ошибка"
+      teacher_card_create_error(),
+      teacher_card_error_title()
     );
   } finally {
     generatingForId.value = null;
@@ -297,11 +325,11 @@ const regeneratePassword = async (teacher: Teacher) => {
         <p class="mb-2"><strong>Новый пароль:</strong> ${response.password}</p>
         <p class="text-sm text-gray-600 mt-3">Пожалуйста, сохраните новый пароль. Старый пароль больше не действителен.</p>
       </div>`,
-      "Пароль обновлён"
+      teacher_card_password_updated()
     );
   } catch (error) {
     console.error("Failed to regenerate password:", error);
-    f7.dialog.alert("Не удалось обновить пароль. Попробуйте позже.", "Ошибка");
+    f7.dialog.alert(teacher_card_regen_error(), teacher_card_error_title());
   } finally {
     generatingForId.value = null;
   }
@@ -310,8 +338,8 @@ const regeneratePassword = async (teacher: Teacher) => {
 const showPasswordHistory = async (teacher: Teacher) => {
   if (!teacher.userId) {
     f7.dialog.alert(
-      "Невозможно показать историю: учётная запись не связана с пользователем",
-      "Ошибка"
+      teacher_card_no_user_error(),
+      teacher_card_error_title()
     );
     return;
   }
@@ -326,13 +354,13 @@ const openActionsMenu = (teacher: Teacher, event: Event) => {
 
   const buttons = [
     {
-      text: 'Обновить пароль',
+      text: teacher_card_update_password(),
       onClick: () => {
         regeneratePassword(teacher);
       },
     },
     {
-      text: 'История изменений',
+      text: teacher_card_password_history(),
       onClick: () => {
         showPasswordHistory(teacher);
       },
@@ -340,7 +368,7 @@ const openActionsMenu = (teacher: Teacher, event: Event) => {
   ];
 
   const actions = f7.actions.create({
-    buttons: [buttons, [{ text: "Отмена", bold: true }]],
+    buttons: [buttons, [{ text: common_cancel(), bold: true }]],
     targetEl: target,
   });
 
