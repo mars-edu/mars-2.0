@@ -63,7 +63,7 @@
                     v-if="selectedSpecialties.length > 0"
                     class="ml-2 text-xs md:text-sm px-2 py-1 rounded-md ring-2 ring-primary bg-primary/10"
                   >
-                    {{ selectedSpecialties.length }} выбрано
+                    {{ common_selected({ count: selectedSpecialties.length }) }}
                   </span>
                 </template>
                 <div class="flex flex-wrap items-center gap-2 md:gap-3">
@@ -125,7 +125,7 @@
                     v-if="selectedCourses.length > 0"
                     class="ml-2 text-xs md:text-sm px-2 py-1 rounded-md ring-2 ring-primary bg-primary/10"
                   >
-                    {{ selectedCourses.length }} выбрано
+                    {{ common_selected({ count: selectedCourses.length }) }}
                   </span>
                 </template>
                 <div class="flex flex-wrap items-center gap-2 md:gap-3">
@@ -157,7 +157,7 @@
                         selectedCourses.includes(course),
                     }"
                   >
-                    <span class="font-medium">{{ course }} курс</span>
+                    <span class="font-medium">{{ analytics_course_label({ course }) }}</span>
                   </button>
                   <div
                     v-if="courseNumbers.length === 0"
@@ -175,7 +175,7 @@
                     v-if="selectedLanguageGroups.length > 0"
                     class="ml-2 text-xs md:text-sm px-2 py-1 rounded-md ring-2 ring-primary bg-primary/10"
                   >
-                    {{ selectedLanguageGroups.length }} выбрано
+                    {{ common_selected({ count: selectedLanguageGroups.length }) }}
                   </span>
                 </template>
                 <div class="flex flex-wrap items-center gap-2 md:gap-3">
@@ -229,7 +229,7 @@
                     v-if="selectedStudents.length > 0"
                     class="ml-2 text-xs md:text-sm px-2 py-1 rounded-md ring-2 ring-primary bg-primary/10"
                   >
-                    {{ selectedStudents.length }} выбрано
+                    {{ common_selected({ count: selectedStudents.length }) }}
                   </span>
                 </template>
                 <div class="overflow-y-auto border border-input rounded-lg">
@@ -284,7 +284,7 @@
                 class="bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
               >
                 <IconRotateCw class="w-4 h-4 mr-2" />
-                Сбросить
+                {{ common_reset() }}
               </f7-button>
               <f7-button
                 small
@@ -294,7 +294,7 @@
                 class="bg-primary text-white hover:bg-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <IconCopy class="w-4 h-4 mr-2" />
-                Экспорт
+                {{ common_export() }}
               </f7-button>
               <f7-button
                 small
@@ -304,7 +304,7 @@
                 class="bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <IconFileText class="w-4 h-4 mr-2" />
-                Экспорт (Excel)
+                {{ analytics_export_excel() }}
               </f7-button>
             </div>
             <div
@@ -317,10 +317,9 @@
                 <div>
                   <h2 class="text-lg font-semibold">{{ analytics_report_preview() }}</h2>
                   <p class="text-xs text-muted-foreground">
-                    Обучающихся: {{ reportSummary.studentCount }} • Дисциплин:
-                    {{ reportSummary.disciplineCount }}
+                    {{ analytics_report_meta({ students: reportSummary.studentCount, disciplines: reportSummary.disciplineCount }) }}
                     <span v-if="reportGeneratedAtLabel">
-                      • Обновлено {{ reportGeneratedAtLabel }}
+                      {{ analytics_report_updated({ time: reportGeneratedAtLabel }) }}
                     </span>
                   </p>
                 </div>
@@ -331,7 +330,7 @@
                   class="text-muted-foreground hover:text-foreground"
                 >
                   <IconEyeOff class="w-4 h-4 mr-2" />
-                  Скрыть
+                  {{ common_hide() }}
                 </f7-button>
               </div>
               <Accordion>
@@ -344,7 +343,7 @@
                     {{
                       courseGroup.course === "—"
                         ? analytics_no_course()
-                        : `Курс ${courseGroup.course}`
+                        : analytics_course_label({ course: courseGroup.course })
                     }}
                   </template>
                   <div
@@ -369,8 +368,7 @@
                 </AccordionItem>
               </Accordion>
               <p class="text-xs text-muted-foreground">
-                Значения рассчитываются по текущим данным журналов и обновляются
-                при изменении фильтров.
+                {{ analytics_data_note() }}
               </p>
             </div>
           </div>
@@ -462,6 +460,12 @@ import {
   analytics_category,
   analytics_specialties,
   analytics_courses,
+  analytics_course_label,
+  analytics_export_excel,
+  analytics_semester_option,
+  analytics_data_note,
+  analytics_report_meta,
+  analytics_report_updated,
   analytics_languages,
   analytics_students,
   analytics_full_name,
@@ -480,6 +484,10 @@ import {
   settings_no_courses,
   settings_no_languages,
   common_all,
+  common_selected,
+  common_reset,
+  common_export,
+  common_hide,
 } from "@/paraglide/messages";
 import { useI18n } from "@/composables/useI18n";
 
@@ -580,7 +588,7 @@ const semesterOptions = computed(() => {
     : [];
   return list.map((ays) => ({
     value: ays.id,
-    text: `Семестр ${ays.semesterNumber}`,
+    text: analytics_semester_option({ semester: ays.semesterNumber }),
   }));
 });
 

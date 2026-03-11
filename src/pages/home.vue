@@ -127,6 +127,7 @@ import IconCalendar from "~icons/lucide/calendar";
 import IconFileText from "~icons/lucide/file-text";
 import IconBookOpen from "~icons/lucide/book-open";
 import {
+  home_home,
   home_schedule,
   home_journals,
   home_rup,
@@ -141,7 +142,7 @@ const pageId = ref(Date.now());
 const activeNavItem = ref("home");
 
 const navigationItems = [
-  { id: "home", label: "Главная", icon: IconHouse },
+  { id: "home", label: home_home(), icon: IconHouse },
   { id: "schedule", label: home_schedule(), icon: IconCalendar },
   { id: "journals", label: home_journals(), icon: IconFileText },
   { id: "rup", label: home_rup(), icon: IconBookOpen },

@@ -124,6 +124,27 @@ import {
   reports_no_schedule,
   reports_full_year,
   reports_semester_period,
+  reports_generate_error,
+  reports_no_months_error,
+  reports_period_full_year_label,
+  reports_period_semester_label,
+  reports_period_filename_full,
+  reports_period_filename_sem,
+  reports_period_display_full,
+  reports_period_display_sem,
+  common_not_specified,
+  f7_month_jan,
+  f7_month_feb,
+  f7_month_mar,
+  f7_month_apr,
+  f7_month_may,
+  f7_month_jun,
+  f7_month_jul,
+  f7_month_aug,
+  f7_month_sep,
+  f7_month_oct,
+  f7_month_nov,
+  f7_month_dec,
 } from "@/paraglide/messages";
 import { useI18n } from "@/composables/useI18n";
 
@@ -345,7 +366,7 @@ async function generateWorkloadReport() {
     console.log('[Reports] Computed semester months:', semesterMonths.map(m => `${m.key}(${m.year})`).join(', '));
 
     if (semesterMonths.length === 0) {
-      throw new Error("Не удалось вычислить месяцы из семестров. Проверьте настройки дат семестров для учебного года.");
+      throw new Error(reports_no_months_error());
     }
 
     // For Form 1 (daily workload), use the first month from semester date ranges
@@ -410,27 +431,28 @@ async function generateWorkloadReport() {
 
     console.log('[Reports] All months workload generated:', allMonthsWorkload.length, 'months');
 
-    let periodLabel = "за весь учебный год";
+    let periodLabel = reports_period_full_year_label();
     if (selectedPeriod.value !== "full_year") {
       const semester = availableSemesters.value.find(
         (s) => s.id === selectedPeriod.value
       );
       if (semester) {
-        periodLabel = `за ${semester.semesterNumber} семестр`;
+        periodLabel = reports_period_semester_label({ n: semester.semesterNumber });
       }
     }
 
     // Get month name for Form 1 (0-indexed)
     const monthNames = [
-      'январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
-      'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'
+      f7_month_jan(), f7_month_feb(), f7_month_mar(), f7_month_apr(),
+      f7_month_may(), f7_month_jun(), f7_month_jul(), f7_month_aug(),
+      f7_month_sep(), f7_month_oct(), f7_month_nov(), f7_month_dec(),
     ];
     const reportMonthName = monthNames[reportMonth];
 
     const payload: TeacherWorkloadExportPayload = {
       institutionName:
         `"Музыкалық колледж  - дарынды балаларға арналған музыкалық мектеп - интернат" Кешені ММ/ ГУ "Комплекс "Музыкальный колледж - музыкальная школа - интернат для одарённых детей"`,
-      teacherFullName: teacher ? getTeacherFullName(teacher) : userStore.fullName || "Не указан",
+      teacherFullName: teacher ? getTeacherFullName(teacher) : userStore.fullName || common_not_specified(),
       academicYear: academicYear
         ? `${academicYear.startYear}/${academicYear.endYear}`
         : "2024/2025",
@@ -442,16 +464,16 @@ async function generateWorkloadReport() {
       allMonthsWorkload: allMonthsWorkload,
     };
 
-    let periodForFilename = "весь_год";
-    let periodForDisplay = "весь учебный год";
+    let periodForFilename = reports_period_filename_full();
+    let periodForDisplay = reports_period_display_full();
 
     if (selectedPeriod.value !== "full_year") {
       const semester = availableSemesters.value.find(
         (s) => s.id === selectedPeriod.value
       );
       if (semester) {
-        periodForFilename = `${semester.semesterNumber}_семестр`;
-        periodForDisplay = `${semester.semesterNumber} семестр`;
+        periodForFilename = reports_period_filename_sem({ n: semester.semesterNumber });
+        periodForDisplay = reports_period_display_sem({ n: semester.semesterNumber });
       }
     }
 
@@ -468,7 +490,7 @@ async function generateWorkloadReport() {
     }_${periodForDisplay} - ${new Date().toLocaleString()}`;
   } catch (error) {
     console.error("Error generating report:", error);
-    f7.dialog.alert("Ошибка при генерации отчета");
+    f7.dialog.alert(reports_generate_error());
   } finally {
     isGenerating.value = false;
   }

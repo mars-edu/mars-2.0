@@ -181,6 +181,12 @@ import {
   teacher_card_regen_error,
   teacher_card_no_user_error,
   teacher_card_error_title,
+  teacher_card_credential_full_name,
+  teacher_card_credential_login,
+  teacher_card_credential_password,
+  teacher_card_credential_new_password,
+  teacher_card_credential_save_note,
+  teacher_card_credential_save_new_note,
   common_cancel,
 } from "@/paraglide/messages";
 import { useI18n } from "@/composables/useI18n";
@@ -281,11 +287,11 @@ const generateCredentials = async (teacher: Teacher) => {
 
     f7.dialog.alert(
       `<div class="text-left">
-        <p class="mb-2"><strong>ФИО:</strong> ${fullName}</p>
-        <p class="mb-2"><strong>Логин:</strong> ${response.username}</p>
+        <p class="mb-2"><strong>${teacher_card_credential_full_name()}</strong> ${fullName}</p>
+        <p class="mb-2"><strong>${teacher_card_credential_login()}</strong> ${response.username}</p>
         <p class="mb-2"><strong>Email:</strong> ${response.email}</p>
-        <p class="mb-2"><strong>Пароль:</strong> ${response.password}</p>
-        <p class="text-sm text-gray-600 mt-3">Пожалуйста, сохраните эти данные. Пароль больше не будет показан.</p>
+        <p class="mb-2"><strong>${teacher_card_credential_password()}</strong> ${response.password}</p>
+        <p class="text-sm text-gray-600 mt-3">${teacher_card_credential_save_note()}</p>
       </div>`,
       teacher_card_credentials_created()
     );
@@ -319,11 +325,11 @@ const regeneratePassword = async (teacher: Teacher) => {
 
     f7.dialog.alert(
       `<div class="text-left">
-        <p class="mb-2"><strong>ФИО:</strong> ${fullName}</p>
-        <p class="mb-2"><strong>Логин:</strong> ${teacher.username}</p>
+        <p class="mb-2"><strong>${teacher_card_credential_full_name()}</strong> ${fullName}</p>
+        <p class="mb-2"><strong>${teacher_card_credential_login()}</strong> ${teacher.username}</p>
         <p class="mb-2"><strong>Email:</strong> ${teacher.email}</p>
-        <p class="mb-2"><strong>Новый пароль:</strong> ${response.password}</p>
-        <p class="text-sm text-gray-600 mt-3">Пожалуйста, сохраните новый пароль. Старый пароль больше не действителен.</p>
+        <p class="mb-2"><strong>${teacher_card_credential_new_password()}</strong> ${response.password}</p>
+        <p class="text-sm text-gray-600 mt-3">${teacher_card_credential_save_new_note()}</p>
       </div>`,
       teacher_card_password_updated()
     );

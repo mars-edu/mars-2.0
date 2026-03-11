@@ -124,6 +124,14 @@ import {
   planning_tab_week,
   planning_tab_month,
   planning_tab_year,
+  f7_week_abbr_mon,
+  f7_week_abbr_tue,
+  f7_week_abbr_wed,
+  f7_week_abbr_thu,
+  f7_week_abbr_fri,
+  f7_week_abbr_sat,
+  f7_week_abbr_sun,
+  common_all,
 } from "@/paraglide/messages";
 import { useI18n } from "@/composables/useI18n";
 
@@ -184,17 +192,26 @@ const navigationTabs = [
   { value: "year", label: planning_tab_year() },
 ];
 
-const weekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+const weekdays = computed(() => {
+  void locale;
+  return [
+    f7_week_abbr_mon(), f7_week_abbr_tue(), f7_week_abbr_wed(),
+    f7_week_abbr_thu(), f7_week_abbr_fri(), f7_week_abbr_sat(), f7_week_abbr_sun()
+  ];
+});
 
 const selectedTeacherId = computed({
   get: () => calendarStore.selectedTeacherId || "all",
   set: (value: string) => calendarStore.setSelectedTeacher(value === "all" ? null : value),
 });
 
-const teacherOptions = computed(() => [
-  { value: "all", text: "Все" },
-  ...teacherStore.teacherSelectOptions,
-]);
+const teacherOptions = computed(() => {
+  void locale;
+  return [
+    { value: "all", text: common_all() },
+    ...teacherStore.teacherSelectOptions,
+  ];
+});
 
 // Note: Role-based event filtering is now handled entirely by the Convex backend.
 // - Admins can see all events or filter by selectedTeacherId using the dropdown

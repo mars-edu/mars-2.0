@@ -295,6 +295,7 @@ import {
   rup_import_no_specialty,
   rup_import_error_title,
   rup_import_done_title,
+  rup_import_done_msg,
   rup_module_duplicated,
   common_cancel,
 } from "@/paraglide/messages";
@@ -400,7 +401,7 @@ const handleImport = () => {
 
   cancelSelectMode();
   f7.dialog.alert(
-    `Импортировано ${newItems.length} элементов в выбранную специальность.`,
+    rup_import_done_msg({ count: newItems.length }),
     rup_import_done_title()
   );
 };

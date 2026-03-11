@@ -362,9 +362,22 @@ import {
   journal_export_error,
   journal_settings_dialog,
   journal_import_error,
+  journal_import_empty,
+  journal_import_preview_group,
+  journal_import_preview_course,
+  journal_import_preview_specialty,
+  journal_import_preview_year,
+  journal_import_preview_discipline,
+  journal_import_preview_teacher,
+  journal_import_preview_students,
+  journal_import_preview_dates,
+  journal_import_preview_warnings,
+  journal_import_done_msg,
+  journal_replaced_success,
   journal_share_dialog,
   journal_replace_error,
   common_cancel,
+  common_all,
 } from "@/paraglide/messages";
 import { useI18n } from "@/composables/useI18n";
 
@@ -440,10 +453,13 @@ const selectedTeacherId = computed({
   set: (value: string) => calendarStore.setSelectedTeacher(value === "all" ? null : value),
 });
 
-const teacherOptions = computed(() => [
-  { value: "all", text: "Все" },
-  ...teacherStore.teacherSelectOptions,
-]);
+const teacherOptions = computed(() => {
+  void locale;
+  return [
+    { value: "all", text: common_all() },
+    ...teacherStore.teacherSelectOptions,
+  ];
+});
 
 onMounted(async () => {
   console.log("\n\n");
@@ -1119,26 +1135,26 @@ function onUploadClick() {
 
       const result = summary.result;
       if (!result) {
-        f7.dialog.alert("Файл обработан, но данные журнала не получены");
+        f7.dialog.alert(journal_import_empty());
         return;
       }
 
       const messageParts = [
-        `<b>Группа:</b> ${result.metadata.groupName || "не указана"}`,
-        `<b>Курс:</b> ${result.metadata.courseLabel || "-"}`,
-        `<b>Специальность:</b> ${result.metadata.specialtyLabel || "-"}`,
-        `<b>Учебный год:</b> ${result.metadata.academicYearLabel || "-"}`,
-        `<b>Дисциплина:</b> ${result.metadata.disciplineTitle || "-"}`,
-        `<b>Преподаватель:</b> ${result.metadata.teacherFullName || "-"}`,
-        `<b>Студентов:</b> ${result.students.length}`,
-        `<b>Дата столбцов:</b> ${result.metadata.lessonDates.join(", ") || "-"}`,
+        `<b>${journal_import_preview_group()}</b> ${result.metadata.groupName || "-"}`,
+        `<b>${journal_import_preview_course()}</b> ${result.metadata.courseLabel || "-"}`,
+        `<b>${journal_import_preview_specialty()}</b> ${result.metadata.specialtyLabel || "-"}`,
+        `<b>${journal_import_preview_year()}</b> ${result.metadata.academicYearLabel || "-"}`,
+        `<b>${journal_import_preview_discipline()}</b> ${result.metadata.disciplineTitle || "-"}`,
+        `<b>${journal_import_preview_teacher()}</b> ${result.metadata.teacherFullName || "-"}`,
+        `<b>${journal_import_preview_students()}</b> ${result.students.length}`,
+        `<b>${journal_import_preview_dates()}</b> ${result.metadata.lessonDates.join(", ") || "-"}`,
       ];
 
       if (warnings) {
-        messageParts.push(`<br/><b>Предупреждения:</b><br/>${warnings.replace(/\n/g, "<br/>")}`);
+        messageParts.push(`<br/><b>${journal_import_preview_warnings()}</b><br/>${warnings.replace(/\n/g, "<br/>")}`);
       }
 
-      f7.dialog.alert(messageParts.join("<br/>") || "Импорт завершён");
+      f7.dialog.alert(messageParts.join("<br/>") || journal_import_done_msg());
     } catch (error) {
       f7.preloader.hide();
       const message =
@@ -1184,7 +1200,7 @@ async function handleReplaceJournals(data: ReplaceJournalData) {
     f7.popover.close("#replace-journal-popover");
 
     f7.toast.create({
-      text: `Успешно заменено ${ids.length} журнал(ов)`,
+      text: journal_replaced_success({ count: ids.length }),
       position: 'center',
       closeTimeout: 2000,
     }).open();

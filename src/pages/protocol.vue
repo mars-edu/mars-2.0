@@ -114,7 +114,7 @@
 
                     <p class="text-sm text-muted-foreground leading-relaxed mb-2">
                       {{ protocol_journal() }}
-                      <span class="font-medium text-foreground">{{ entry.disciplineName || entry.journalSnapshot?.disciplineName || 'Дисциплина' }}</span>
+                      <span class="font-medium text-foreground">{{ entry.disciplineName || entry.journalSnapshot?.disciplineName || protocol_discipline_fallback() }}</span>
                       <span v-if="entry.journal?.groupName"> {{ entry.journal.groupName }}</span>
                       {{ protocol_teacher_from() }}
                       <span class="font-medium text-foreground">{{ protocolStore.getTeacherName(entry.fromTeacher) }}</span>
@@ -296,8 +296,10 @@ import {
   protocol_confirm_reject,
   protocol_confirm_desc,
   protocol_wait,
+  protocol_discipline_fallback,
   common_cancel,
   common_confirm,
+  common_all,
 } from "@/paraglide/messages";
 import { useI18n } from "@/composables/useI18n";
 
@@ -316,10 +318,13 @@ const selectedTeacherId = computed({
   },
 });
 
-const teacherOptions = computed(() => [
-  { value: "all", text: "Все" },
-  ...teacherStore.teacherSelectOptions,
-]);
+const teacherOptions = computed(() => {
+  void locale;
+  return [
+    { value: "all", text: common_all() },
+    ...teacherStore.teacherSelectOptions,
+  ];
+});
 
 const modalOpen = ref(false);
 const pendingAction = ref<{
