@@ -20,9 +20,9 @@
           <div class="flex items-center">
             <IconInfo class="w-6 h-6 mr-3" />
             <div>
-              <p class="font-bold">Режим импорта</p>
+              <p class="font-bold">{{ rup_import_mode() }}</p>
               <p class="text-sm opacity-90">
-                Выберите элементы для импорта и нажмите кнопку 'Импорт'.
+                {{ rup_import_hint() }}
               </p>
             </div>
           </div>
@@ -32,14 +32,14 @@
               class="flex items-center gap-2 px-4 py-2 bg-primary-foreground text-primary rounded-lg shadow-lg hover:bg-primary-foreground/90 transition-colors"
             >
               <IconSquareArrowUp class="w-5 h-5" />
-              <span>Импорт</span>
+              <span>{{ rup_import_btn() }}</span>
             </button>
             <button
               @click="cancelSelectMode"
               class="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg shadow-lg hover:bg-red-600 transition-colors"
             >
               <IconX class="w-5 h-5" />
-              <span>Отмена</span>
+              <span>{{ common_cancel() }}</span>
             </button>
           </div>
         </div>
@@ -52,14 +52,14 @@
             >
               <span
                 class="text-[1.75rem] leading-tight sm:text-2xl font-bold text-foreground"
-                >Рабочие учебные планы:</span
+                >{{ rup_title() }}</span
               >
             </div>
             <div class="flex md:justify-end">
               <Select
                 v-model="selectedAcademicYear"
                 :options="academicYearOptions"
-                placeholder="Год поступления:"
+                :placeholder="rup_academic_year()"
                 name="academic-year"
                 class="w-full sm:w-[220px] md:w-[250px]"
               />
@@ -69,7 +69,7 @@
           <Accordion class="rup-accordion !space-y-4">
             <AccordionItem id="specialties" :default-expanded="true">
               <template #title>
-                <span class="text-lg font-medium">Специальности:</span>
+                <span class="text-lg font-medium">{{ rup_specialties() }}</span>
               </template>
               <template #selected-item>
                 <span
@@ -131,7 +131,7 @@
                     v-if="specialties.length === 0"
                     class="w-full text-muted-foreground rounded-lg border border-dashed border-border px-3 py-5 text-center"
                   >
-                    Нет специальностей
+                    {{ rup_no_specialties() }}
                   </div>
                 </template>
               </div>
@@ -139,7 +139,7 @@
 
             <AccordionItem id="workingPlans" :default-expanded="true">
               <template #title>
-                <span class="text-lg font-medium">Рабочий учебный план:</span>
+                <span class="text-lg font-medium">{{ rup_working_plan() }}</span>
                 <div
                   v-if="selectedAcademicYear && selectedSpecialtyId"
                   class="inline-flex items-center rounded-lg border border-border bg-muted/70 p-1 ml-2 md:ml-3"
@@ -154,7 +154,7 @@
                     "
                     @click="selectedClassLevel = 9"
                   >
-                    База 9 класса
+                    {{ rup_base_9() }}
                   </button>
                   <button
                     class="px-3.5 py-1.5 text-xs md:text-sm whitespace-nowrap rounded-md transition-all"
@@ -165,7 +165,7 @@
                     "
                     @click="selectedClassLevel = 11"
                   >
-                    База 11 класса
+                    {{ rup_base_11() }}
                   </button>
                 </div>
               </template>
@@ -189,7 +189,7 @@
               >
                 <div class="text-muted-foreground text-sm md:text-base flex items-center gap-2">
                   <IconArrowUp class="w-[18px] h-[18px]" />
-                  <span>Сначала выберите учебный год</span>
+                  <span>{{ rup_select_year_first() }}</span>
                 </div>
               </div>
               <div
@@ -198,7 +198,7 @@
               >
                 <div class="text-muted-foreground text-sm md:text-base flex items-center gap-2">
                   <IconArrowUp class="w-[18px] h-[18px]" />
-                  <span>Сначала выберите специальность</span>
+                  <span>{{ rup_select_specialty_first() }}</span>
                 </div>
               </div>
               <div v-else class="space-y-3 min-w-0">
@@ -243,7 +243,7 @@
             <p class="text-sm text-foreground leading-relaxed">
               {{
                 selectedSpecialtyInfo.details ||
-                "Дополнительная информация отсутствует."
+                rup_no_extra_info()
               }}
             </p>
           </div>
@@ -276,7 +276,31 @@ import { useClass9Store, type Class9Data } from "@/stores/class9Store";
 import { useUserStore } from "@/stores/userStore";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useSidebar } from "@/composables/useSidebar";
+import {
+  rup_title,
+  rup_academic_year,
+  rup_specialties,
+  rup_working_plan,
+  rup_base_9,
+  rup_base_11,
+  rup_no_specialties,
+  rup_select_year_first,
+  rup_select_specialty_first,
+  rup_no_extra_info,
+  rup_import_mode,
+  rup_import_hint,
+  rup_import_btn,
+  rup_import_nothing,
+  rup_import_nothing_title,
+  rup_import_no_specialty,
+  rup_import_error_title,
+  rup_import_done_title,
+  rup_module_duplicated,
+  common_cancel,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
 
+const { locale } = useI18n();
 const { contentMargin } = useSidebar();
 const activeNavItem = ref("rup");
 const specialtyStore = useSpecialtyStore();
@@ -335,7 +359,7 @@ const handleDuplicateClass9Item = (item: Class9Data) => {
   class9Store.duplicateClass9Item(item);
   f7.toast
     .create({
-      text: "Модуль дублирован",
+      text: rup_module_duplicated(),
       horizontalPosition: "center",
       closeTimeout: 2000,
       cssClass: "bg-primary",
@@ -346,7 +370,7 @@ const handleDuplicateClass9Item = (item: Class9Data) => {
 const handleImport = () => {
   const selectedIds = rupStore.selectedClass9ItemIds;
   if (selectedIds.length === 0) {
-    f7.dialog.alert("Не выбраны элементы для импорта.", "Ничего не выбрано");
+    f7.dialog.alert(rup_import_nothing(), rup_import_nothing_title());
     return;
   }
 
@@ -354,7 +378,7 @@ const handleImport = () => {
   const targetAcademicYearId = rupStore.targetAcademicYearId;
 
   if (!targetSpecialtyId) {
-    f7.dialog.alert("Не выбрана специальность для импорта.", "Ошибка импорта");
+    f7.dialog.alert(rup_import_no_specialty(), rup_import_error_title());
     return;
   }
 
@@ -377,7 +401,7 @@ const handleImport = () => {
   cancelSelectMode();
   f7.dialog.alert(
     `Импортировано ${newItems.length} элементов в выбранную специальность.`,
-    "Импорт завершен"
+    rup_import_done_title()
   );
 };
 
