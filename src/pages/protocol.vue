@@ -16,14 +16,14 @@
         <div class="flex flex-col gap-4">
           <!-- Page Header with Teacher Selector -->
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <h1 class="text-2xl font-semibold text-foreground">Протокол</h1>
+            <h1 class="text-2xl font-semibold text-foreground">{{ protocol_title() }}</h1>
 
             <!-- Admin Teacher Selector -->
             <div v-if="userStore.isAdmin">
               <Select
                 v-model="selectedTeacherId"
                 :options="teacherOptions"
-                placeholder="Преподаватель:"
+                :placeholder="protocol_teacher()"
                 name="teacher"
                 class="w-full sm:w-[250px]"
                 :searchable="true"
@@ -50,7 +50,7 @@
             class="rounded-lg bg-muted p-8 text-center"
           >
             <p class="text-muted-foreground">
-              Нет записей в протоколе
+              {{ protocol_empty() }}
             </p>
           </div>
 
@@ -106,29 +106,29 @@
                   <!-- Center: content -->
                   <div class="flex-grow min-w-0">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
-                      <h3 class="text-sm font-semibold text-foreground">Установлена замена</h3>
+                      <h3 class="text-sm font-semibold text-foreground">{{ protocol_substitution_set() }}</h3>
                       <span class="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">
-                        Замена
+                        {{ protocol_substitution_label() }}
                       </span>
                     </div>
 
                     <p class="text-sm text-muted-foreground leading-relaxed mb-2">
-                      Журнал
+                      {{ protocol_journal() }}
                       <span class="font-medium text-foreground">{{ entry.disciplineName || entry.journalSnapshot?.disciplineName || 'Дисциплина' }}</span>
                       <span v-if="entry.journal?.groupName"> {{ entry.journal.groupName }}</span>
-                      преподавателя
+                      {{ protocol_teacher_from() }}
                       <span class="font-medium text-foreground">{{ protocolStore.getTeacherName(entry.fromTeacher) }}</span>
-                      переведен преподавателю
+                      {{ protocol_teacher_to() }}
                       <span class="font-medium text-foreground">{{ protocolStore.getTeacherName(entry.toTeacher) }}</span>
-                      в период с
+                      {{ protocol_period_from() }}
                       <span class="font-medium text-foreground">{{ protocolStore.formatDate(entry.startDate) }}</span>
-                      г. по
+                      {{ protocol_period_to() }}
                       <span class="font-medium text-foreground">{{ protocolStore.formatDate(entry.endDate) }}</span>
-                      г.<span v-if="entry.serviceLetterNumber"> на основании служебного письма от <span class="font-medium text-foreground">{{ entry.serviceLetterNumber }}</span> г.</span>
+                      {{ protocol_period_end() }}<span v-if="entry.serviceLetterNumber"> {{ protocol_letter() }} <span class="font-medium text-foreground">{{ entry.serviceLetterNumber }}</span> {{ protocol_period_end() }}</span>
                     </p>
 
                     <p v-if="entry.reason" class="text-xs text-muted-foreground italic">
-                      Причина: {{ entry.reason }}
+                      {{ protocol_reason() }} {{ entry.reason }}
                     </p>
                   </div>
 
@@ -136,21 +136,21 @@
                   <div class="flex-shrink-0 md:w-44 flex flex-col justify-center items-end gap-2">
                     <!-- Pending + current user is toTeacher → show action buttons -->
                     <template v-if="entry.status === 'pending' && isCurrentUserToTeacher(entry)">
-                      <span class="text-xs font-medium text-muted-foreground self-end">Действие:</span>
+                      <span class="text-xs font-medium text-muted-foreground self-end">{{ protocol_action_label() }}</span>
                       <div class="flex gap-2">
                         <button
                           @click="openModal(entry._id, 'reject')"
                           :disabled="protocolStore.actionLoading"
                           class="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded border border-red-200 hover:bg-red-100 transition-colors text-xs font-bold disabled:opacity-50 dark:bg-red-900/20 dark:border-red-800 dark:hover:bg-red-900/30"
                         >
-                          ✕ Отклонить
+                          ✕ {{ protocol_reject() }}
                         </button>
                         <button
                           @click="openModal(entry._id, 'accept')"
                           :disabled="protocolStore.actionLoading"
                           class="flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-600 rounded border border-green-200 hover:bg-green-100 transition-colors text-xs font-bold disabled:opacity-50 dark:bg-green-900/20 dark:border-green-800 dark:hover:bg-green-900/30"
                         >
-                          ✓ Принять
+                          ✓ {{ protocol_accept() }}
                         </button>
                       </div>
                     </template>
@@ -158,14 +158,14 @@
                     <!-- Pending but not toTeacher → show waiting pill -->
                     <template v-else-if="entry.status === 'pending'">
                       <div class="flex items-center gap-1.5 text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-full">
-                        <span class="text-xs font-bold">Ожидает</span>
+                        <span class="text-xs font-bold">{{ protocol_waiting() }}</span>
                       </div>
                     </template>
 
                     <!-- Accepted -->
                     <template v-else-if="entry.status === 'accepted'">
                       <div class="flex items-center gap-1.5 text-green-600 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-full">
-                        <span class="text-xs font-bold">✓ Принято</span>
+                        <span class="text-xs font-bold">{{ protocol_accepted() }}</span>
                       </div>
                       <div v-if="entry.acceptedAt" class="text-[10px] text-muted-foreground text-right">
                         {{ formatTime(entry.acceptedAt) }}
@@ -175,7 +175,7 @@
                     <!-- Rejected -->
                     <template v-else-if="entry.status === 'rejected'">
                       <div class="flex items-center gap-1.5 text-red-600 bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-full">
-                        <span class="text-xs font-bold">✕ Отклонено</span>
+                        <span class="text-xs font-bold">{{ protocol_rejected() }}</span>
                       </div>
                       <div v-if="entry.rejectedAt" class="text-[10px] text-muted-foreground text-right">
                         {{ formatTime(entry.rejectedAt) }}
@@ -185,7 +185,7 @@
                     <!-- Completed -->
                     <template v-else-if="entry.status === 'completed'">
                       <div class="flex items-center gap-1.5 text-muted-foreground bg-muted px-3 py-1.5 rounded-full">
-                        <span class="text-xs font-bold">Завершено</span>
+                        <span class="text-xs font-bold">{{ protocol_completed() }}</span>
                       </div>
                     </template>
                   </div>
@@ -227,10 +227,10 @@
               </div>
 
               <h3 class="text-lg font-bold text-foreground mb-2">
-                {{ pendingAction?.type === 'accept' ? 'Принять замену?' : 'Отклонить замену?' }}
+                {{ pendingAction?.type === 'accept' ? protocol_confirm_accept() : protocol_confirm_reject() }}
               </h3>
               <p class="text-sm text-muted-foreground mb-6">
-                Это действие будет зафиксировано в протоколе и не может быть отменено. Статус замены будет обновлён.
+                {{ protocol_confirm_desc() }}
               </p>
 
               <div class="flex gap-3 w-full">
@@ -238,7 +238,7 @@
                   @click="closeModal"
                   class="flex-1 px-4 py-2 bg-muted text-foreground rounded-lg font-medium hover:bg-muted/80 transition-colors"
                 >
-                  Отмена
+                  {{ common_cancel() }}
                 </button>
                 <button
                   @click="confirmAction"
@@ -248,7 +248,7 @@
                     ? 'bg-green-600 hover:bg-green-700'
                     : 'bg-red-600 hover:bg-red-700'"
                 >
-                  {{ protocolStore.actionLoading ? 'Подождите...' : 'Подтвердить' }}
+                  {{ protocolStore.actionLoading ? protocol_wait() : common_confirm() }}
                 </button>
               </div>
             </div>
@@ -271,7 +271,37 @@ import { useUserStore } from "@/stores/userStore";
 import type { Id } from "@convex/_generated/dataModel";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useSidebar } from "@/composables/useSidebar";
+import {
+  protocol_title,
+  protocol_teacher,
+  protocol_empty,
+  protocol_substitution_set,
+  protocol_substitution_label,
+  protocol_journal,
+  protocol_teacher_from,
+  protocol_teacher_to,
+  protocol_period_from,
+  protocol_period_to,
+  protocol_period_end,
+  protocol_letter,
+  protocol_reason,
+  protocol_action_label,
+  protocol_reject,
+  protocol_accept,
+  protocol_waiting,
+  protocol_accepted,
+  protocol_rejected,
+  protocol_completed,
+  protocol_confirm_accept,
+  protocol_confirm_reject,
+  protocol_confirm_desc,
+  protocol_wait,
+  common_cancel,
+  common_confirm,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
 
+const { locale } = useI18n();
 const { contentMargin } = useSidebar();
 const activeNavItem = ref("protocol");
 const protocolStore = useProtocolStore();

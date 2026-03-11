@@ -14,21 +14,21 @@
 
       <div ref="calendarContainer" class="calendar-container p-2 transition-all duration-200" :class="contentMargin">
         <div class="mb-4 px-1">
-          <h1 class="text-2xl font-bold text-foreground tracking-tight">Планирование</h1>
-          <p class="text-sm text-muted-foreground font-medium mt-0.5">Календарь занятий и мероприятий</p>
+          <h1 class="text-2xl font-bold text-foreground tracking-tight">{{ planning_title() }}</h1>
+          <p class="text-sm text-muted-foreground font-medium mt-0.5">{{ planning_subtitle() }}</p>
         </div>
         <div v-if="userStore.isAdmin" class="mb-3 flex justify-end">
           <Select
             v-model="selectedTeacherId"
             :options="teacherOptions"
-            placeholder="Преподаватель:"
+            :placeholder="planning_teacher()"
             name="teacher"
             class="w-[250px]"
             :searchable="true"
           />
         </div>
         <CalendarToolbar
-          :search-placeholder="'Найти'"
+          :search-placeholder="planning_search()"
           :month-name="monthName"
           :year="year"
           :today-date="todayDate"
@@ -57,21 +57,21 @@
 
         <div v-else-if="activeTab === 'week'">
           <div class="p-4 text-center text-muted-foreground">
-            Представление недель в разработке
+            {{ planning_week_in_dev() }}
           </div>
         </div>
 
         <div v-else-if="activeTab === 'day'">
           <!-- Day view component will go here -->
           <div class="p-4 text-center text-muted-foreground">
-            Представление дня в разработке
+            {{ planning_day_in_dev() }}
           </div>
         </div>
 
         <div v-else-if="activeTab === 'year'">
           <!-- Year view component will go here -->
           <div class="p-4 text-center text-muted-foreground">
-            Представление года в разработке
+            {{ planning_year_in_dev() }}
           </div>
         </div>
       </div>
@@ -112,7 +112,22 @@ import { useCalendarStore } from "@/stores/calendarStore";
 import { useUserStore } from "@/stores/userStore";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useSidebar } from "@/composables/useSidebar";
+import {
+  planning_title,
+  planning_subtitle,
+  planning_teacher,
+  planning_search,
+  planning_week_in_dev,
+  planning_day_in_dev,
+  planning_year_in_dev,
+  planning_tab_day,
+  planning_tab_week,
+  planning_tab_month,
+  planning_tab_year,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
 
+const { locale } = useI18n();
 const { contentMargin } = useSidebar();
 const calendarContainer = ref<HTMLElement | null>(null);
 const activeNavItem = ref("calendar");
@@ -163,10 +178,10 @@ const nextMonth = () => {
 };
 
 const navigationTabs = [
-  { value: "day", label: "День" },
-  { value: "week", label: "Неделя" },
-  { value: "month", label: "Месяц" },
-  { value: "year", label: "Год" },
+  { value: "day", label: planning_tab_day() },
+  { value: "week", label: planning_tab_week() },
+  { value: "month", label: planning_tab_month() },
+  { value: "year", label: planning_tab_year() },
 ];
 
 const weekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
