@@ -18,21 +18,21 @@
           <div
             class="flex flex-col md:flex-row md:items-center justify-between gap-3 journals-page-header"
           >
-            <h1 class="text-2xl font-semibold">Журналы</h1>
+            <h1 class="text-2xl font-semibold">{{ journal_title() }}</h1>
             <div
               class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto"
             >
               <Select
                 v-model="selectedAcademicYearModel"
                 :options="academicYearOptions"
-                placeholder="Учебный год:"
+                :placeholder="journal_academic_year()"
                 name="academic-year"
                 class="w-full sm:w-44"
               />
               <Select
                 v-model="selectedSemesterId"
                 :options="semesterOptions"
-                placeholder="Семестр:"
+                :placeholder="journal_semester()"
                 name="semester"
                 class="w-full sm:w-44"
               />
@@ -40,7 +40,7 @@
                 v-if="userStore.isAdmin"
                 v-model="selectedTeacherId"
                 :options="teacherOptions"
-                placeholder="Преподаватель:"
+                :placeholder="journal_teacher()"
                 name="teacher"
                 class="w-full sm:w-[250px]"
                 :searchable="true"
@@ -55,35 +55,35 @@
               <Select
                 v-model="selectedDiscipline"
                 :options="disciplineOptions"
-                placeholder="Дисциплина"
+                :placeholder="journal_discipline()"
                 name="discipline"
                 class="flex-1 min-w-[150px] sm:min-w-[200px]"
               />
               <Select
                 v-model="selectedTerm"
                 :options="termOptions"
-                placeholder="Срок обучения"
+                :placeholder="journal_term()"
                 name="term"
                 class="flex-1 min-w-[150px] sm:min-w-[200px]"
               />
               <Select
                 v-model="selectedStatus"
                 :options="statusOptions"
-                placeholder="Статус"
+                :placeholder="journal_status()"
                 name="status"
                 class="flex-1 min-w-[150px] sm:min-w-[200px]"
               />
               <Select
                 v-model="selectedGroup"
                 :options="groupOptions"
-                placeholder="Группа"
+                :placeholder="journal_group()"
                 name="group"
                 class="flex-1 min-w-[150px] sm:min-w-[200px]"
               />
               <Select
                 v-model="selectedRole"
                 :options="roleOptions"
-                placeholder="Роль"
+                :placeholder="journal_role()"
                 name="role"
                 class="flex-1 min-w-[150px] sm:min-w-[200px]"
               />
@@ -97,7 +97,7 @@
                   class="bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex-1 sm:flex-none"
                 >
                   <IconX class="w-4 h-4 mr-2" />
-                  Отмена
+                  {{ common_cancel() }}
                 </f7-button>
                 <f7-button
                   small
@@ -106,7 +106,7 @@
                   class="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex-1 sm:flex-none"
                 >
                   <IconCircleCheck class="w-4 h-4 mr-2" />
-                  Выбрать все
+                  {{ journal_select_all() }}
                 </f7-button>
                 <f7-button
                   small
@@ -115,7 +115,7 @@
                   class="bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex-1 sm:flex-none"
                 >
                   <IconCircleX class="w-4 h-4 mr-2" />
-                  Снять все
+                  {{ journal_deselect_all() }}
                 </f7-button>
                 <f7-button
                   small
@@ -152,7 +152,7 @@
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
                   <IconSettings2 class="w-4 h-4 mr-2" />
-                  Настройки
+                  {{ journal_settings() }}
                 </f7-button>
                 <f7-button
                   small
@@ -161,7 +161,7 @@
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
                   <IconLockOpen class="w-4 h-4 mr-2" />
-                  Открыть журнал
+                  {{ journal_open() }}
                 </f7-button>
                 <f7-button
                   small
@@ -170,7 +170,7 @@
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
                   <IconCircleX class="w-4 h-4 mr-2" />
-                  Закрыть журнал
+                  {{ journal_close() }}
                 </f7-button>
                 <f7-button
                   small
@@ -179,7 +179,7 @@
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
                   <IconArrowDownToLine class="w-4 h-4 mr-2" />
-                  Скачать
+                  {{ journal_download() }}
                 </f7-button>
                 <f7-button
                   id="replace-journal-button"
@@ -189,7 +189,7 @@
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
                   <IconRefreshCw class="w-4 h-4 mr-2" />
-                  Заменить
+                  {{ journal_replace() }}
                 </f7-button>
                 <f7-button
                   small
@@ -198,7 +198,7 @@
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
                   <IconArrowUpToLine class="w-4 h-4 mr-2" />
-                  Загрузить
+                  {{ journal_upload() }}
                 </f7-button>
                 <f7-button
                   small
@@ -207,7 +207,7 @@
                   class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
                 >
                   <IconShare class="w-4 h-4 mr-2" />
-                  Поделится
+                  {{ journal_share() }}
                 </f7-button>
               </template>
             </div>
@@ -250,7 +250,7 @@
                 <div class="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                   <IconInbox class="w-6 h-6 opacity-40" />
                 </div>
-                <span class="text-sm font-medium opacity-60">В этой категории нет журналов</span>
+                <span class="text-sm font-medium opacity-60">{{ journal_empty() }}</span>
               </div>
             </div>
           </div>
@@ -325,7 +325,50 @@ import {
   prepareJournalExportMetadata,
 } from "@/utils/journalExport";
 import { useSidebar } from "@/composables/useSidebar";
+import {
+  journal_title,
+  journal_academic_year,
+  journal_semester,
+  journal_teacher,
+  journal_discipline,
+  journal_term,
+  journal_status,
+  journal_group,
+  journal_role,
+  journal_settings,
+  journal_open,
+  journal_close,
+  journal_download,
+  journal_replace,
+  journal_upload,
+  journal_share,
+  journal_select_all,
+  journal_deselect_all,
+  journal_empty,
+  journal_filter_all,
+  journal_filter_course_1,
+  journal_filter_course_2,
+  journal_filter_course_3,
+  journal_filter_course_4,
+  journal_filter_mixed,
+  journal_filter_individual,
+  journal_action_close,
+  journal_action_open,
+  journal_action_replace,
+  journal_action_download,
+  journal_select_one,
+  journal_already_closed,
+  journal_already_open,
+  journal_export_error,
+  journal_settings_dialog,
+  journal_import_error,
+  journal_share_dialog,
+  journal_replace_error,
+  common_cancel,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
 
+const { locale } = useI18n();
 const { contentMargin } = useSidebar();
 type JournalStudentRow = JournalExportParams["students"][number];
 
@@ -388,7 +431,7 @@ const semesterOptions = computed(() => {
     : [];
   return list.map((ays) => ({
     value: ays.id,
-    text: `Семестр ${ays.semesterNumber}`,
+    text: `${journal_semester()} ${ays.semesterNumber}`,
   }));
 });
 
@@ -723,13 +766,13 @@ type JournalFilter = 'all' | 'course-1' | 'course-2' | 'course-3' | 'course-4' |
 const activeFilter = ref<JournalFilter>('all')
 
 const JOURNAL_FILTERS: ReadonlyArray<{ id: JournalFilter; label: string }> = [
-  { id: 'all',        label: 'Все' },
-  { id: 'course-1',   label: '1 Курс' },
-  { id: 'course-2',   label: '2 Курс' },
-  { id: 'course-3',   label: '3 Курс' },
-  { id: 'course-4',   label: '4 Курс' },
-  { id: 'mixed',      label: 'Смешанные' },
-  { id: 'individual', label: 'Индивидуальные' },
+  { id: 'all',        label: journal_filter_all() },
+  { id: 'course-1',   label: journal_filter_course_1() },
+  { id: 'course-2',   label: journal_filter_course_2() },
+  { id: 'course-3',   label: journal_filter_course_3() },
+  { id: 'course-4',   label: journal_filter_course_4() },
+  { id: 'mixed',      label: journal_filter_mixed() },
+  { id: 'individual', label: journal_filter_individual() },
 ]
 
 const filteredByTab = computed(() => {
@@ -774,10 +817,10 @@ const selectionAction = ref<SelectionAction>("download");
 const selectedJournalIds = ref(new Set<string>());
 
 const selectionDoneText = computed(() => {
-  if (selectionAction.value === "close") return "Закрыть";
-  if (selectionAction.value === "open") return "Открыть";
-  if (selectionAction.value === "replace") return "Заменить";
-  return "Скачать";
+  if (selectionAction.value === "close") return journal_action_close();
+  if (selectionAction.value === "open") return journal_action_open();
+  if (selectionAction.value === "replace") return journal_action_replace();
+  return journal_action_download();
 });
 
 const selectionDoneButtonClass = computed(() => {
@@ -968,12 +1011,12 @@ async function downloadSelectedJournals() {
   } catch (error) {
     f7.preloader.hide();
     console.error("Failed to export journals", error);
-    f7.dialog.alert("Не удалось сформировать журналы. Попробуйте еще раз.");
+    f7.dialog.alert(journal_export_error());
   }
 }
 
 function onSettingsClick() {
-  f7.dialog.alert("Откроются настройки журнала");
+  f7.dialog.alert(journal_settings_dialog());
 }
 
 function onOpenJournalClick() {
@@ -994,7 +1037,7 @@ function onReplaceClick() {
 
 function onSelectionDone() {
   if (selectedJournalIds.value.size === 0) {
-    f7.dialog.alert("Выберите хотя бы один журнал");
+    f7.dialog.alert(journal_select_one());
     return;
   }
 
@@ -1017,7 +1060,7 @@ function onSelectionDone() {
       onNoop: () => {
         f7.toast
           .create({
-            text: "Выбранные журналы уже закрыты",
+            text: journal_already_closed(),
             position: "center",
             closeTimeout: 2000,
           })
@@ -1034,7 +1077,7 @@ function onSelectionDone() {
     onNoop: () => {
       f7.toast
         .create({
-          text: "Выбранные журналы уже открыты",
+          text: journal_already_open(),
           position: "center",
           closeTimeout: 2000,
         })
@@ -1065,7 +1108,7 @@ function onUploadClick() {
           .filter((issue) => issue.type === "error")
           .map((issue) => `• ${issue.message}`)
           .join("\n");
-        f7.dialog.alert(errorText || "Не удалось импортировать журнал");
+        f7.dialog.alert(errorText || journal_import_error());
         return;
       }
 
@@ -1099,7 +1142,7 @@ function onUploadClick() {
     } catch (error) {
       f7.preloader.hide();
       const message =
-        error instanceof Error ? error.message : "Не удалось импортировать журнал";
+        error instanceof Error ? error.message : journal_import_error();
       f7.dialog.alert(message);
     }
   };
@@ -1108,7 +1151,7 @@ function onUploadClick() {
 }
 
 function onShareClick() {
-  f7.dialog.alert("Поделиться журналами");
+  f7.dialog.alert(journal_share_dialog());
 }
 
 const isReplacingJournals = ref(false);
@@ -1150,7 +1193,7 @@ async function handleReplaceJournals(data: ReplaceJournalData) {
   } catch (error) {
     isReplacingJournals.value = false;
     console.error('Failed to replace journals', error);
-    f7.dialog.alert('Не удалось заменить журналы. Попробуйте еще раз.');
+    f7.dialog.alert(journal_replace_error());
   }
 }
 

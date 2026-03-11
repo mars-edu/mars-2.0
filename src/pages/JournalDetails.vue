@@ -47,7 +47,7 @@
                 @click="activeTab = 'journal'"
                 class="tab-link"
               >
-                Журнал
+                {{ journal_tab_journal() }}
               </f7-link>
               <f7-link
                 tab-link="#tab-participants"
@@ -55,7 +55,7 @@
                 @click="activeTab = 'participants'"
                 class="tab-link"
               >
-                Участники
+                {{ journal_tab_participants() }}
               </f7-link>
               <f7-link
                 tab-link="#tab-planning"
@@ -63,7 +63,7 @@
                 @click="activeTab = 'planning'"
                 class="tab-link"
               >
-                Тематическое<br />планирование
+                {{ journal_tab_planning() }}
               </f7-link>
               <f7-link
                 tab-link="#tab-assignments"
@@ -71,7 +71,7 @@
                 @click="activeTab = 'assignments'"
                 class="tab-link"
               >
-                Задания
+                {{ journal_tab_assignments() }}
               </f7-link>
               <f7-link
                 tab-link="#tab-chat"
@@ -79,7 +79,7 @@
                 @click="activeTab = 'chat'"
                 class="tab-link"
               >
-                Чат
+                {{ journal_tab_chat() }}
               </f7-link>
               <f7-link
                 tab-link="#tab-files"
@@ -87,7 +87,7 @@
                 @click="activeTab = 'files'"
                 class="tab-link"
               >
-                Файлы
+                {{ journal_tab_files() }}
               </f7-link>
               <f7-link
                 tab-link="#tab-testing"
@@ -95,7 +95,7 @@
                 @click="activeTab = 'testing'"
                 class="tab-link"
               >
-                Тестирование
+                {{ journal_tab_testing() }}
               </f7-link>
               <f7-link
                 tab-link="#tab-services"
@@ -103,7 +103,7 @@
                 @click="activeTab = 'services'"
                 class="tab-link"
               >
-                Сервисы
+                {{ journal_tab_services() }}
               </f7-link>
             </f7-toolbar>
 
@@ -163,7 +163,7 @@
                   />
                   <div v-else class="text-center py-8">
                     <p class="text-sm text-muted-foreground">
-                      Дисциплина не найдена
+                      {{ journal_no_discipline() }}
                     </p>
                   </div>
                 </div>
@@ -177,10 +177,10 @@
                 <div class="flex flex-col gap-4">
                   <div class="text-center py-8">
                     <h3 class="text-lg font-medium text-muted-foreground">
-                      Задания
+                      {{ journal_tab_assignments() }}
                     </h3>
                     <p class="text-sm text-muted-foreground mt-2">
-                      Здесь будут отображаться задания
+                      {{ journal_assignments_placeholder() }}
                     </p>
                   </div>
                 </div>
@@ -194,10 +194,10 @@
                 <div class="flex flex-col gap-4">
                   <div class="text-center py-8">
                     <h3 class="text-lg font-medium text-muted-foreground">
-                      Чат
+                      {{ journal_tab_chat() }}
                     </h3>
                     <p class="text-sm text-muted-foreground mt-2">
-                      Здесь будет чат
+                      {{ journal_chat_placeholder() }}
                     </p>
                   </div>
                 </div>
@@ -211,10 +211,10 @@
                 <div class="flex flex-col gap-4">
                   <div class="text-center py-8">
                     <h3 class="text-lg font-medium text-muted-foreground">
-                      Файлы
+                      {{ journal_tab_files() }}
                     </h3>
                     <p class="text-sm text-muted-foreground mt-2">
-                      Здесь будут отображаться файлы
+                      {{ journal_files_placeholder() }}
                     </p>
                   </div>
                 </div>
@@ -228,10 +228,10 @@
                 <div class="flex flex-col gap-4">
                   <div class="text-center py-8">
                     <h3 class="text-lg font-medium text-muted-foreground">
-                      Тестирование
+                      {{ journal_tab_testing() }}
                     </h3>
                     <p class="text-sm text-muted-foreground mt-2">
-                      Здесь будет тестирование
+                      {{ journal_testing_placeholder() }}
                     </p>
                   </div>
                 </div>
@@ -245,10 +245,10 @@
                 <div class="flex flex-col gap-4">
                   <div class="text-center py-8">
                     <h3 class="text-lg font-medium text-muted-foreground">
-                      Сервисы
+                      {{ journal_tab_services() }}
                     </h3>
                     <p class="text-sm text-muted-foreground mt-2">
-                      Здесь будут отображаться сервисы
+                      {{ journal_services_placeholder() }}
                     </p>
                   </div>
                 </div>
@@ -355,7 +355,31 @@ import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermediateControlStore";
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
 import { useSidebar } from "@/composables/useSidebar";
+import {
+  journal_tab_journal,
+  journal_tab_participants,
+  journal_tab_planning,
+  journal_tab_assignments,
+  journal_tab_chat,
+  journal_tab_files,
+  journal_tab_testing,
+  journal_tab_services,
+  journal_no_discipline,
+  journal_assignments_placeholder,
+  journal_chat_placeholder,
+  journal_files_placeholder,
+  journal_testing_placeholder,
+  journal_services_placeholder,
+  journal_rup_saved,
+  journal_settings_saved,
+  journal_settings_save_error,
+  journal_not_found,
+  journal_clipboard_error,
+  journal_semester,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
 
+const { locale } = useI18n();
 const { contentMargin } = useSidebar();
 const isDev = import.meta.env.DEV;
 
@@ -438,7 +462,7 @@ const currentSemesterText = computed(() => {
     : academicYearSemesterStore.academicYearSemesters.find(
         (s: any) => s.id === event.semester
       );
-  return ays ? `Семестр ${ays.semesterNumber}` : "—";
+  return ays ? `${journal_semester()} ${ays.semesterNumber}` : "—";
 });
 
 const selectedStudent = ref<any>(null);
@@ -664,7 +688,7 @@ const copyDebugInfo = async () => {
     }, 2000);
   } catch (error) {
     console.error("Failed to copy debug info:", error);
-    f7.dialog.alert("Не удалось скопировать информацию в буфер обмена");
+    f7.dialog.alert(journal_clipboard_error());
   }
 };
 
@@ -689,7 +713,7 @@ const onOpenKtpDetails = (
 const openRupDialog = () => {
   const disciplineId = currentJournal.value?.disciplineId;
   if (!disciplineId) {
-    f7.dialog.alert("Дисциплина не найдена");
+    f7.dialog.alert(journal_no_discipline());
     return;
   }
   
@@ -715,7 +739,7 @@ const handleRupSubmit = () => {
   closeRupPopup();
   // Optionally refresh the debug info or journal data
   f7.toast.create({
-    text: "РУП успешно сохранен",
+    text: journal_rup_saved(),
     position: "center",
     closeTimeout: 2000,
   }).open();
@@ -737,7 +761,7 @@ const saveJournalSettings = async (
   }
 ) => {
   if (!currentJournal.value) {
-    f7.dialog.alert("Журнал не найден");
+    f7.dialog.alert(journal_not_found());
     return;
   }
 
@@ -764,14 +788,14 @@ const saveJournalSettings = async (
     closeJournalSettings();
 
     f7.toast.create({
-      text: "Настройки сохранены",
+      text: journal_settings_saved(),
       position: "center",
       closeTimeout: 2000,
     }).open();
   } catch (error) {
     f7.preloader.hide();
     console.error("[JournalDetails] Failed to save journal settings:", error);
-    f7.dialog.alert("Не удалось сохранить настройки");
+    f7.dialog.alert(journal_settings_save_error());
   }
 };
 
