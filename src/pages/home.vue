@@ -111,7 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { f7Page, f7Link, f7Toolbar, f7Tabs, f7Tab } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -141,10 +141,13 @@ const { contentMargin } = useSidebar();
 const pageId = ref(Date.now());
 const activeNavItem = ref("home");
 
-const navigationItems = [
-  { id: "home", label: home_home(), icon: IconHouse },
-  { id: "schedule", label: home_schedule(), icon: IconCalendar },
-  { id: "journals", label: home_journals(), icon: IconFileText },
-  { id: "rup", label: home_rup(), icon: IconBookOpen },
-];
+const navigationItems = computed(() => {
+  void locale.value;
+  return [
+    { id: "home", label: home_home(), icon: IconHouse },
+    { id: "schedule", label: home_schedule(), icon: IconCalendar },
+    { id: "journals", label: home_journals(), icon: IconFileText },
+    { id: "rup", label: home_rup(), icon: IconBookOpen },
+  ];
+});
 </script>

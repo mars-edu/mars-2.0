@@ -100,7 +100,7 @@
         }"
         @click="selectWeekDay(day)"
       >
-        {{ day.russianAbbreviation }}
+        {{ day.abbreviation }}
       </div>
     </div>
 

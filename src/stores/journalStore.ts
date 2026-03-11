@@ -407,7 +407,7 @@ export const useJournalStore = defineStore(
       const ws = calendarEvent.weeklySchedules?.[0];
       if (ws) {
         const weekDay = getWeekDays().find((day) => day.weekId === ws.weekId);
-        const day = weekDay?.russianAbbreviation || "";
+        const day = weekDay?.abbreviation || "";
 
         // Get start and end times - either from direct time strings or by looking up schedule IDs
         let start = ws.startTime || "";
@@ -442,7 +442,7 @@ export const useJournalStore = defineStore(
       const jsDay = startDate.day();
       const weekId = jsDay === 0 ? 6 : jsDay - 1; // Convert Sunday from 0 to 6, and shift others down by 1
       const weekDay = getWeekDays().find((day) => day.weekId === weekId);
-      const day = weekDay?.russianAbbreviation || "";
+      const day = weekDay?.abbreviation || "";
 
       return `${day} // ${start}-${end}`.trim();
     }

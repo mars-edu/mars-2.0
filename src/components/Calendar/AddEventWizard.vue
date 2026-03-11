@@ -168,7 +168,7 @@
               }"
               @click="toggleWeekDay(day.weekId, day.name)"
             >
-              {{ day.russianAbbreviation }}
+              {{ day.abbreviation }}
             </button>
           </div>
         </div>
@@ -516,7 +516,7 @@
                   }"
                   @click="toggleJournalDay(journal.id, day.weekId, day.name)"
                 >
-                  {{ day.russianAbbreviation }}
+                  {{ day.abbreviation }}
                 </button>
               </div>
 

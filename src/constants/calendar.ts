@@ -15,13 +15,13 @@ import {
 
 export function getWeekDays() {
   return [
-    { weekId: 0, russianAbbreviation: f7_week_abbr_mon(), name: f7_day_mon() },
-    { weekId: 1, russianAbbreviation: f7_week_abbr_tue(), name: f7_day_tue() },
-    { weekId: 2, russianAbbreviation: f7_week_abbr_wed(), name: f7_day_wed() },
-    { weekId: 3, russianAbbreviation: f7_week_abbr_thu(), name: f7_day_thu() },
-    { weekId: 4, russianAbbreviation: f7_week_abbr_fri(), name: f7_day_fri() },
-    { weekId: 5, russianAbbreviation: f7_week_abbr_sat(), name: f7_day_sat() },
-    { weekId: 6, russianAbbreviation: f7_week_abbr_sun(), name: f7_day_sun() },
+    { weekId: 0, abbreviation: f7_week_abbr_mon(), name: f7_day_mon() },
+    { weekId: 1, abbreviation: f7_week_abbr_tue(), name: f7_day_tue() },
+    { weekId: 2, abbreviation: f7_week_abbr_wed(), name: f7_day_wed() },
+    { weekId: 3, abbreviation: f7_week_abbr_thu(), name: f7_day_thu() },
+    { weekId: 4, abbreviation: f7_week_abbr_fri(), name: f7_day_fri() },
+    { weekId: 5, abbreviation: f7_week_abbr_sat(), name: f7_day_sat() },
+    { weekId: 6, abbreviation: f7_week_abbr_sun(), name: f7_day_sun() },
   ];
 }
 
