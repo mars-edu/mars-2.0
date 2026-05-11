@@ -30,12 +30,21 @@
 
 <script setup lang="ts">
 import { useThemeStore } from "../stores/themeStore";
+import type { Theme } from "@/types/theme";
 
 const themeStore = useThemeStore();
 
-const themes = [
-  { value: 'light',   color: '#ffffff',  label: 'Светлая' },
-  { value: 'dark',    color: '#1f2937',  label: 'Темная' },
-  { value: 'lavanda', color: '#e9d5ff',  label: 'Лавандовая' },
-] as const;
+interface ThemeOption {
+  value: Theme;
+  color: string;
+  label: string;
+}
+
+const themes: ThemeOption[] = [
+  { value: 'light',    color: '#ffffff',  label: 'Светлая' },
+  { value: 'dark',     color: '#1f2937',  label: 'Темная' },
+  { value: 'lavanda',  color: '#e9d5ff',  label: 'Лавандовая' },
+  { value: 'coral',    color: '#fff7ed',  label: 'Коралловая' },
+  { value: 'graphite', color: '#f1f5f9',  label: 'Графитовая' },
+];
 </script>

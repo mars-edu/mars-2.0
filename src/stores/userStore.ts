@@ -22,24 +22,13 @@ export const useUserStore = defineStore(
     });
 
     const hasRole = (role: Role) => {
-      const result = currentUser.value?.roles.includes(role) || false;
-      console.log("[UserStore] Checking role:", {
-        role,
-        hasRole: result,
-        userRoles: currentUser.value?.roles,
-      });
-      return result;
+      return currentUser.value?.roles.includes(role) || false;
     };
 
     const hasAnyRole = (roles: Role[]) => {
-      const result =
-        currentUser.value?.roles.some((role) => roles.includes(role)) || false;
-      console.log("[UserStore] Checking any role:", {
-        roles,
-        hasAnyRole: result,
-        userRoles: currentUser.value?.roles,
-      });
-      return result;
+      return (
+        currentUser.value?.roles.some((role) => roles.includes(role)) || false
+      );
     };
 
     const fullName = computed((): string => {

@@ -10,6 +10,7 @@
     "dev": "cross-env NODE_ENV=development vite",
     "dev:convex": "npx convex dev",
     "dev:all": "npm run dev:convex & npm run dev",
+    "build:paraglide": "paraglide-js compile --project project.inlang",
     "build": "cross-env NODE_ENV=production vite build",
     "build:convex": "npx convex codegen && npx convex deploy --cmd 'npm run build' && ./scripts/run-migrations.sh",
     "migrate": "./scripts/run-migrations.sh",
@@ -34,7 +35,9 @@
     "test:component": "playwright test -c playwright-ct.config.ts",
     "test:all": "npm run test:e2e && npm run test:component",
     "test:report": "playwright show-report",
-    "test:install": "playwright install --with-deps"
+    "test:install": "playwright install --with-deps",
+    "lint": "npm run tsc",
+    "tsc": "./node_modules/.bin/tsc --noEmit -p tsconfig.app.json"
   },
   "browserslist": [
     "IOS >= 15",

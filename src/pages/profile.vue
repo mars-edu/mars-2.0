@@ -5,100 +5,150 @@
   >
     <Header class="hidden md:block flex-shrink-0 border-b border-border" />
 
-    <div class="flex flex-1 overflow-hidden">
+    <div class="flex flex-1 overflow-hidden bg-background">
       <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
       <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 transition-all duration-200"
+        class="flex-1 flex items-center justify-center p-4 md:p-8 overflow-y-auto no-scrollbar transition-all duration-200"
         :class="contentMargin"
       >
-        <div class="flex flex-col gap-4">
-          <div class="flex items-center justify-between">
-            <h1 class="text-xl font-semibold">{{ profile_title() }}</h1>
-          </div>
-
-          <div
-            class="bg-card text-card-foreground rounded-xl p-4 md:p-6 shadow-sm space-y-6"
-          >
-            <!-- Avatar Row -->
-            <div class="flex items-center gap-4 pb-6 border-b border-border">
-              <div class="avatar-wrapper flex-shrink-0">
-                <img
-                  v-if="avatarUrl"
-                  :src="avatarUrl"
-                  alt="Profile Picture"
-                  class="profile-avatar"
-                />
-                <div v-else class="profile-avatar-placeholder">
-                  <IconCircleUser class="w-10 h-10 text-muted-foreground opacity-40" />
-                </div>
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-lg font-semibold text-foreground truncate">
-                  {{ userStore.currentUser?.firstName }} {{ userStore.currentUser?.lastName }}
-                </p>
-                <p class="text-sm text-muted-foreground truncate">{{ userStore.currentUser?.username }}</p>
-                <div class="flex gap-2 mt-3 flex-wrap">
-                  <f7-button fill small @click="selectImage">
-                    {{ avatarUrl ? profile_change_photo() : profile_upload_photo() }}
-                  </f7-button>
-                  <f7-button
+        <div
+          class="flex flex-col w-full max-w-4xl rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-border bg-card overflow-hidden"
+        >
+          <div class="overflow-y-auto no-scrollbar">
+          <!-- Concept Header Gradient -->
+          <div class="h-48 bg-gradient-to-r from-gray-800 to-gray-900 relative">
+            <div class="absolute -bottom-16 left-8">
+              <div class="w-32 h-32 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg">
+                <div class="w-full h-full rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                  <img
                     v-if="avatarUrl"
-                    fill
-                    small
-                    color="red"
-                    @click="removeAvatar"
-                  >
-                    {{ profile_delete_photo() }}
-                  </f7-button>
+                    :src="avatarUrl"
+                    alt="Profile Picture"
+                    class="w-full h-full object-cover"
+                  />
+                  <div v-else class="w-full h-full flex items-center justify-center text-4xl font-bold bg-muted text-muted-foreground">
+                    {{ userStore.currentUser?.firstName?.[0] }}{{ userStore.currentUser?.lastName?.[0] }}
+                  </div>
                 </div>
-              </div>
-              <input
-                ref="fileInput"
-                type="file"
-                accept="image/*"
-                style="display: none"
-                @change="handleFileSelect"
-              />
-            </div>
-
-            <!-- Personal Info Section -->
-            <div>
-              <h2 class="text-base font-semibold text-foreground mb-3">{{ profile_personal_info() }}</h2>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="bg-muted rounded-lg p-3">
-                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">{{ profile_first_name() }}</div>
-                  <div class="text-sm font-medium text-foreground">{{ userStore.currentUser?.firstName || '—' }}</div>
-                </div>
-                <div class="bg-muted rounded-lg p-3">
-                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">{{ profile_last_name() }}</div>
-                  <div class="text-sm font-medium text-foreground">{{ userStore.currentUser?.lastName || '—' }}</div>
-                </div>
-                <div class="bg-muted rounded-lg p-3">
-                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">{{ profile_email() }}</div>
-                  <div class="text-sm font-medium text-foreground">{{ userStore.currentUser?.email || '—' }}</div>
-                </div>
-                <div class="bg-muted rounded-lg p-3">
-                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">{{ profile_username() }}</div>
-                  <div class="text-sm font-medium text-foreground">{{ userStore.currentUser?.username || '—' }}</div>
-                </div>
+                <!-- Mini edit button for avatar -->
+                <button 
+                  @click="selectImage"
+                  class="absolute bottom-1 right-1 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform"
+                >
+                  <IconCamera class="w-4 h-4" />
+                </button>
+                <!-- Mini delete button for avatar -->
+                <button 
+                  v-if="avatarUrl"
+                  @click="removeAvatar"
+                  class="absolute top-1 right-1 w-8 h-8 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform"
+                >
+                  <IconTrash class="w-4 h-4" />
+                </button>
               </div>
             </div>
+          </div>
 
-            <!-- Security Section -->
-            <div>
-              <h2 class="text-base font-semibold text-foreground mb-3">{{ profile_security() }}</h2>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="bg-muted rounded-lg p-3">
-                  <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">{{ profile_roles() }}</div>
-                  <div class="text-sm font-medium text-foreground">{{ userStore.currentUser?.roles.join(', ') || '—' }}</div>
+          <!-- Main Profile Content -->
+          <div class="pt-20 px-8 pb-8">
+            <div class="flex flex-col md:flex-row justify-between items-start mb-8 gap-4">
+              <div>
+                <h1 class="text-3xl font-bold text-foreground mb-2">
+                  {{ userStore.currentUser?.lastName }} {{ userStore.currentUser?.firstName }} {{ userStore.currentUser?.middleName || '' }}
+                </h1>
+                <p class="text-lg text-muted-foreground font-medium">
+                  {{ userStore.currentUser?.roles.join(', ') }}
+                </p>
+              </div>
+              <div class="flex gap-2">
+                <button 
+                  @click="openEditPopup"
+                  class="bg-muted hover:bg-muted/80 text-foreground font-bold py-2 px-6 rounded-xl transition-colors text-sm"
+                >
+                  {{ common_edit() }}
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <!-- Left Column: Contact Info -->
+              <div class="space-y-8">
+                <h3 class="text-xl font-bold text-foreground mb-4">{{ profile_contact_info() }}</h3>
+                
+                <div class="space-y-6">
+                  <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-muted rounded-full flex items-center justify-center text-muted-foreground">
+                      <IconMail class="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p class="text-sm text-muted-foreground font-medium uppercase tracking-wide">{{ profile_email() }}</p>
+                      <p class="font-medium text-foreground">{{ userStore.currentUser?.email || '—' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-muted rounded-full flex items-center justify-center text-muted-foreground">
+                      <IconPhone class="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p class="text-sm text-muted-foreground font-medium uppercase tracking-wide">{{ profile_phone() }}</p>
+                      <p class="font-medium text-foreground">{{ userStore.currentUser?.phone || common_not_specified() }}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-muted rounded-full flex items-center justify-center text-muted-foreground">
+                      <IconMapPin class="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p class="text-sm text-muted-foreground font-medium uppercase tracking-wide">{{ profile_office() }}</p>
+                      <p class="font-medium text-foreground">{{ userStore.currentUser?.office || common_not_specified() }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column: Academic Info -->
+              <div class="space-y-8">
+                <h3 class="text-xl font-bold text-foreground mb-4">{{ profile_academic_info() }}</h3>
+                
+                <div class="space-y-6">
+                  <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-muted rounded-full flex items-center justify-center text-muted-foreground">
+                      <IconBriefcase class="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p class="text-sm text-muted-foreground font-medium uppercase tracking-wide">{{ profile_department() }}</p>
+                      <p class="font-medium text-foreground">{{ userStore.currentUser?.department || common_not_specified() }}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-emerald-50 dark:bg-emerald-950/20 rounded-full flex items-center justify-center text-emerald-500">
+                      <IconAward class="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p class="text-sm text-muted-foreground font-medium uppercase tracking-wide">{{ profile_degree() }}</p>
+                      <p class="font-medium text-emerald-600 dark:text-emerald-500">{{ userStore.currentUser?.degree || common_not_specified() }}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            style="display: none"
+            @change="handleFileSelect"
+          />
         </div>
       </div>
     </div>
+  </div>
 
     <!-- Image Cropper Popup -->
     <f7-popup
@@ -133,13 +183,114 @@
         />
       </div>
     </f7-popup>
+
+    <!-- Edit Profile Popup -->
+    <f7-popup
+      :opened="showEditPopup"
+      @popup:closed="showEditPopup = false"
+      class="edit-profile-popup"
+    >
+      <div class="edit-profile-content bg-card text-card-foreground">
+        <div class="fixed-header">
+          <PopoverHeader
+            :title="currentStep === 1 ? 'Основные данные' : 'Академические данные'"
+            :cancel-text="common_cancel()"
+            :on-cancel="() => showEditPopup = false"
+          >
+            <p class="text-sm text-muted-foreground mt-0.5">
+              {{ currentStep === 1 ? 'Личная информация' : 'Профессиональная информация' }}
+            </p>
+            <div class="flex gap-1.5 mt-2.5">
+              <div
+                v-for="step in 2"
+                :key="step"
+                class="h-1 flex-1 rounded-full overflow-hidden bg-muted"
+              >
+                <div
+                  class="h-full bg-primary transition-all duration-200"
+                  :class="step <= currentStep ? 'w-full' : 'w-0'"
+                />
+              </div>
+            </div>
+          </PopoverHeader>
+        </div>
+
+        <div class="wizard-content p-4 space-y-5 flex-1 overflow-y-auto">
+          <!-- Step 1: Basic Info -->
+          <section v-if="currentStep === 1" class="space-y-4">
+            <Input
+              label="Имя"
+              placeholder="Введите имя"
+              v-model="editForm.firstName"
+            />
+            <Input
+              label="Фамилия"
+              placeholder="Введите фамилию"
+              v-model="editForm.lastName"
+            />
+            <Input
+              label="Отчество"
+              placeholder="Введите отчество"
+              v-model="editForm.middleName"
+            />
+            <Input
+              label="Email"
+              type="email"
+              placeholder="example@mars.edu"
+              v-model="editForm.email"
+            />
+            <Input
+              label="Телефон"
+              placeholder="+7 (___) ___-__-__"
+              v-model="editForm.phone"
+            />
+          </section>
+
+          <!-- Step 2: Academic Info -->
+          <section v-if="currentStep === 2" class="space-y-4">
+            <Input
+              label="Кабинет"
+              placeholder="Напр: 315"
+              v-model="editForm.office"
+            />
+            <Input
+              label="Кафедра"
+              placeholder="Введите название кафедры"
+              v-model="editForm.department"
+            />
+            <Input
+              label="Степень"
+              placeholder="Введите ученую степень"
+              v-model="editForm.degree"
+            />
+          </section>
+        </div>
+
+        <PopoverFooter
+          :cancel-text="currentStep === 1 ? common_cancel() : 'Назад'"
+          :save-text="currentStep === 2 ? common_save() : 'Далее'"
+          :on-cancel="currentStep === 1 ? () => showEditPopup = false : () => currentStep--"
+          :on-save="currentStep === 2 ? handleSaveProfile : () => currentStep++"
+        />
+      </div>
+    </f7-popup>
   </f7-page>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, reactive, computed, onMounted } from "vue";
 import { f7Page, f7Button, f7Popup } from "framework7-vue";
-import IconCircleUser from "~icons/lucide/circle-user";
+import IconUser from "~icons/lucide/user";
+import IconMail from "~icons/lucide/mail";
+import IconPhone from "~icons/lucide/phone";
+import IconMapPin from "~icons/lucide/map-pin";
+import IconBriefcase from "~icons/lucide/briefcase";
+import IconAward from "~icons/lucide/award";
+import IconCamera from "~icons/lucide/camera";
+import IconTrash from "~icons/lucide/trash-2";
+import IconChevronRight from "~icons/lucide/chevron-right";
+import IconArrowLeft from "~icons/lucide/arrow-left";
+import IconSettings from "~icons/lucide/settings";
 import { useUserStore } from "../stores/userStore";
 import { f7 } from "framework7-vue";
 import { convex } from "../lib/convexClient";
@@ -148,6 +299,7 @@ import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
+import Input from "@/components/ui/Input.vue";
 import { Cropper, CircleStencil } from "vue-advanced-cropper";
 import "vue-advanced-cropper/dist/style.css";
 import { useSidebar } from "@/composables/useSidebar";
@@ -156,13 +308,13 @@ import {
   profile_change_photo,
   profile_upload_photo,
   profile_delete_photo,
-  profile_personal_info,
-  profile_first_name,
-  profile_last_name,
   profile_email,
-  profile_username,
-  profile_security,
-  profile_roles,
+  profile_contact_info,
+  profile_phone,
+  profile_office,
+  profile_academic_info,
+  profile_department,
+  profile_degree,
   profile_crop_image,
   profile_photo_updated,
   profile_photo_removed,
@@ -175,6 +327,8 @@ import {
   profile_remove_error,
   common_cancel,
   common_save,
+  common_not_specified,
+  common_edit,
 } from "@/paraglide/messages";
 import { useI18n } from "@/composables/useI18n";
 
@@ -189,8 +343,64 @@ const userStore = useUserStore();
 const fileInput = ref<HTMLInputElement | null>(null);
 const uploading = ref(false);
 const showCropperPopup = ref(false);
+const showEditPopup = ref(false);
 const selectedImageSrc = ref<string>("");
 const cropperRef = ref<InstanceType<typeof Cropper> | null>(null);
+
+const currentStep = ref(1);
+const editForm = reactive({
+  firstName: "",
+  lastName: "",
+  middleName: "",
+  email: "",
+  phone: "",
+  office: "",
+  department: "",
+  degree: "",
+});
+
+const openEditPopup = () => {
+  if (userStore.currentUser) {
+    editForm.firstName = userStore.currentUser.firstName || "";
+    editForm.lastName = userStore.currentUser.lastName || "";
+    editForm.middleName = userStore.currentUser.middleName || "";
+    editForm.email = userStore.currentUser.email || "";
+    editForm.phone = userStore.currentUser.phone || "";
+    editForm.office = userStore.currentUser.office || "";
+    editForm.department = userStore.currentUser.department || "";
+    editForm.degree = userStore.currentUser.degree || "";
+  }
+  currentStep.value = 1;
+  showEditPopup.value = true;
+};
+
+const handleSaveProfile = async () => {
+  if (!userStore.currentUser || !convex) return;
+
+  f7.preloader.show();
+  try {
+    await convex.mutation(api.users.mutations.updateProfile, {
+      userId: userStore.currentUser.id as any,
+      ...editForm,
+    });
+
+    await userStore.initialize();
+    showEditPopup.value = false;
+
+    f7.toast
+      .create({
+        text: "Профиль успешно обновлен",
+        position: "center",
+        closeTimeout: 2000,
+      })
+      .open();
+  } catch (error: any) {
+    console.error("[ProfilePage] Error updating profile:", error);
+    f7.dialog.alert(error?.message || "Ошибка при обновлении профиля");
+  } finally {
+    f7.preloader.hide();
+  }
+};
 
 const avatarUrl = computed(() => userStore.currentUser?.avatar);
 
@@ -399,41 +609,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.avatar-wrapper {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  overflow: hidden;
-  background: hsl(var(--muted));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 3px solid hsl(var(--border));
-  flex-shrink: 0;
-}
-
-.profile-avatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.profile-avatar-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: hsl(var(--muted));
-}
-
-.profile-avatar-placeholder .icon {
-  font-size: 40px;
-  color: hsl(var(--muted-foreground));
-  opacity: 0.4;
-}
-
 /* Cropper Popup Styles */
 .cropper-popup {
   --f7-popup-tablet-width: 95%;
@@ -459,6 +634,34 @@ onMounted(() => {
   height: 100%;
   width: 100%;
   background: hsl(var(--muted));
+}
+
+.edit-profile-popup {
+  --f7-popup-tablet-width: 540px;
+  --f7-popup-tablet-height: 800px;
+}
+
+.edit-profile-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.fixed-header {
+  flex-shrink: 0;
+}
+
+.wizard-content {
+  background: hsl(var(--background));
+}
+
+@media (min-width: 768px) {
+  .edit-profile-popup {
+    max-width: 540px;
+    max-height: 800px;
+    border-radius: 32px;
+    overflow: hidden;
+  }
 }
 
 @media (min-width: 768px) {

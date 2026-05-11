@@ -42,6 +42,20 @@
     </script>
 
     <script>
+      (function() {
+        try {
+          const themeData = localStorage.getItem('theme');
+          if (themeData) {
+            const theme = JSON.parse(themeData).currentTheme;
+            if (theme && theme !== 'light') {
+              document.documentElement.classList.add(theme);
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
+
+    <script>
       function forceReload() {
         return true;
         if (window.__BUILD_INFO__.environment == "production") {

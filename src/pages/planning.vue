@@ -12,11 +12,29 @@
     <f7-page-content class="planning-content">
       <Sidebar v-model:activeNavItem="activeNavItem" />
 
-      <div ref="calendarContainer" class="calendar-container p-2 transition-all duration-200" :class="contentMargin">
-        <div class="mb-4 px-1">
-          <h1 class="text-2xl font-bold text-foreground tracking-tight">{{ planning_title() }}</h1>
-          <p class="text-sm text-muted-foreground font-medium mt-0.5">{{ planning_subtitle() }}</p>
+      <div ref="calendarContainer" class="calendar-container p-6 md:p-8 transition-all duration-200" :class="contentMargin">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-3xl font-bold text-foreground tracking-tight">{{ planning_title() }}</h1>
+            <p class="text-sm text-muted-foreground font-medium mt-1">
+              {{ planning_subtitle() }} • {{ activeAcademicYearName }} • {{ activeSemesterName }}
+            </p>
+          </div>
+          <div class="flex items-center gap-3">
+            <CalendarToolbar
+              :search-placeholder="planning_search()"
+              :month-name="monthName"
+              :year="year"
+              :today-date="todayDate"
+              @search="handleSearch"
+              @event-added="addEvent"
+              @today="goToToday"
+              @previous-month="previousMonth"
+              @next-month="nextMonth"
+            />
+          </div>
         </div>
+
         <div v-if="userStore.isAdmin" class="mb-3 flex justify-end">
           <Select
             v-model="selectedTeacherId"
@@ -27,26 +45,9 @@
             :searchable="true"
           />
         </div>
-        <CalendarToolbar
-          :search-placeholder="planning_search()"
-          :month-name="monthName"
-          :year="year"
-          :today-date="todayDate"
-          @search="handleSearch"
-          @event-added="addEvent"
-          @today="goToToday"
-          @previous-month="previousMonth"
-          @next-month="nextMonth"
-        >
-          <template #navigation>
-            <CalendarNavigation v-model="activeTab" :tabs="navigationTabs" />
-          </template>
-        </CalendarToolbar>
-
-        <!-- Calendar header removed -->
 
         <!-- Calendar views based on active tab -->
-        <div v-if="activeTab === 'month'">
+        <div v-if="activeTab === 'month'" class="flex-1 flex flex-col min-h-0">
           <CalendarGrid
             :days="calendarDays"
             :weekdays="weekdays"
@@ -55,24 +56,18 @@
           />
         </div>
 
-        <div v-else-if="activeTab === 'week'">
-          <div class="p-4 text-center text-muted-foreground">
-            {{ planning_week_in_dev() }}
-          </div>
+        <div v-else-if="activeTab === 'week'" class="flex-1 bg-card rounded-[24px] shadow-sm border border-border p-4 text-center text-muted-foreground">
+          {{ planning_week_in_dev() }}
         </div>
 
-        <div v-else-if="activeTab === 'day'">
+        <div v-else-if="activeTab === 'day'" class="flex-1 bg-card rounded-[24px] shadow-sm border border-border p-4 text-center text-muted-foreground">
           <!-- Day view component will go here -->
-          <div class="p-4 text-center text-muted-foreground">
-            {{ planning_day_in_dev() }}
-          </div>
+          {{ planning_day_in_dev() }}
         </div>
 
-        <div v-else-if="activeTab === 'year'">
+        <div v-else-if="activeTab === 'year'" class="flex-1 bg-card rounded-[24px] shadow-sm border border-border p-4 text-center text-muted-foreground">
           <!-- Year view component will go here -->
-          <div class="p-4 text-center text-muted-foreground">
-            {{ planning_year_in_dev() }}
-          </div>
+          {{ planning_year_in_dev() }}
         </div>
       </div>
     </f7-page-content>
@@ -111,7 +106,11 @@ import { type CalendarEvent as StoreCalendarEvent } from "@/stores/calendarStore
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useUserStore } from "@/stores/userStore";
 import { useTeacherStore } from "@/stores/teacherStore";
+import { useAcademicYearStore } from "@/stores/academicYearStore";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useSidebar } from "@/composables/useSidebar";
+import * as m from "@/paraglide/messages";
+import dayjs from "dayjs";
 import {
   planning_title,
   planning_subtitle,
@@ -145,6 +144,31 @@ const selectedEventId = ref<string | null>(null);
 const calendarStore = useCalendarStore();
 const userStore = useUserStore();
 const teacherStore = useTeacherStore();
+const academicYearStore = useAcademicYearStore();
+const academicYearSemesterStore = useAcademicYearSemesterStore();
+
+const activeAcademicYearName = computed(() => {
+  return academicYearStore.getActiveAcademicYear?.name || `${dayjs().year()}-${dayjs().year() + 1}`;
+});
+
+const activeSemesterName = computed(() => {
+  const currentSemester = academicYearSemesterStore.academicYearSemesters.find((s) =>
+    academicYearSemesterStore.isSemesterActive(s)
+  );
+
+  if (currentSemester) {
+    return m.journal_semester_label({ number: currentSemester.semesterNumber });
+  }
+
+  const activeYearSemester = academicYearSemesterStore.getActiveAcademicYearSemester;
+  if (activeYearSemester) {
+    return m.journal_semester_label({ number: activeYearSemester.semesterNumber });
+  }
+
+  const month = dayjs().month();
+  const fallbackNumber = month >= 8 || month <= 0 ? 1 : 2;
+  return m.journal_semester_label({ number: fallbackNumber });
+});
 
 const {
   year,
@@ -299,7 +323,9 @@ const openEditPopoverFromPreview = async () => {
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   flex: 1;
   min-width: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 </style>

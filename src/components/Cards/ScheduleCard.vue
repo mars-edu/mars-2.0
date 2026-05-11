@@ -60,14 +60,15 @@ import Card from "@/components/ui/Card.vue";
 import EmptyState from "@/components/ui/EmptyState.vue";
 import IconCalendar from "~icons/lucide/calendar";
 import IconChevronRight from "~icons/lucide/chevron-right";
+import type { Theme } from "@/types/theme";
 
 interface Props {
   /** @deprecated Theme is now handled by CSS custom properties. */
-  theme?: "white" | "dark" | "lavanda";
+  theme?: Theme;
 }
 
 withDefaults(defineProps<Props>(), {
-  theme: "white",
+  theme: "light",
 });
 
 const scheduleStore = useScheduleStore();

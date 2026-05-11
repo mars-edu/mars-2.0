@@ -1,16 +1,18 @@
 <template>
-  <div class="border-t border-input flex items-stretch flex-shrink-0">
+  <div class="border-t border-input flex items-center justify-between px-8 py-6 flex-shrink-0 bg-white/80 backdrop-blur-xl">
     <button
       v-if="onCancel"
-      class="flex-1 py-4 text-sm font-medium transition-colors border-r border-input"
+      class="py-3.5 px-6 text-[15px] font-semibold transition-colors rounded-2xl"
       :class="disabledCancel
         ? 'text-muted-foreground/40 cursor-not-allowed'
-        : 'text-secondary-foreground hover:bg-muted/60'"
+        : 'text-gray-500 hover:bg-gray-50'"
       :disabled="disabledCancel"
       @click="handleCancel"
     >
       {{ cancelText }}
     </button>
+    <div v-else />
+
     <slot
       v-if="$slots.save"
       name="save"
@@ -21,20 +23,19 @@
     />
     <button
       v-else-if="onSave"
-      class="flex-1 py-4 text-sm font-semibold transition-colors"
-      :class="disabled
-        ? 'text-muted-foreground/40 cursor-not-allowed'
-        : 'bg-green-500 text-white hover:bg-green-600'"
+      class="py-3.5 px-8 text-[15px] font-bold transition-all rounded-xl flex items-center gap-2 shadow-lg active:scale-95"
+      :class="saveButtonClasses"
       :disabled="disabled"
       @click="handleSave"
     >
+      <slot name="save-icon" />
       {{ saveText }}
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { PropType } from "vue";
+import { computed, type PropType } from "vue";
 
 const props = defineProps({
   cancelText: {
@@ -57,6 +58,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  saveVariant: {
+    type: String as PropType<"primary" | "success" | "neutral">,
+    default: "success",
+  },
   onCancel: {
     type: Function as PropType<(event: MouseEvent) => void>,
   },
@@ -69,6 +74,22 @@ const emit = defineEmits<{
   (e: "save", event: MouseEvent): void;
   (e: "cancel", event: MouseEvent): void;
 }>();
+
+const saveButtonClasses = computed(() => {
+  if (props.disabled) {
+    return "bg-[#F2F2F7] text-gray-400 cursor-not-allowed shadow-none";
+  }
+
+  switch (props.saveVariant) {
+    case "primary":
+      return "bg-[#FFCC00] text-black hover:bg-[#F5C300] shadow-yellow-500/20";
+    case "neutral":
+      return "bg-[#F2F2F7] text-gray-900 hover:bg-[#E5E5EA] shadow-none";
+    case "success":
+    default:
+      return "bg-[#2ECC71] text-white hover:bg-[#27AE60] shadow-green-500/20";
+  }
+});
 
 function handleSave(event: MouseEvent) {
   if (props.disabled) return;

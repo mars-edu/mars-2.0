@@ -1,63 +1,63 @@
 <template>
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
     <!-- Students -->
     <div
-      class="bg-card rounded-3xl p-6 shadow-sm border border-border flex flex-col justify-between h-36 hover:shadow-md transition-all"
+      class="bg-card rounded-[24px] p-6 shadow-sm border border-border flex flex-col justify-between h-36 hover:shadow-md transition-all cursor-default"
     >
       <div class="flex justify-between items-start">
-        <div class="p-2.5 bg-blue-50 text-blue-600 rounded-full">
+        <div class="p-2.5 bg-yellow-50 text-yellow-600 rounded-full">
           <IconUsers class="text-xl w-5 h-5" />
         </div>
-        <span class="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded-full">
-          {{ studentCount }} всего
+        <span class="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1">
+          <IconTrendingUp class="w-3 h-3" /> +2.4%
         </span>
       </div>
       <div>
-        <div class="text-2xl font-bold text-foreground">{{ studentCount }}</div>
-        <div class="text-xs text-muted-foreground font-medium uppercase tracking-wide mt-1">
-          Студентов
+        <div class="text-2xl font-bold text-foreground">305</div>
+        <div class="text-[10px] text-muted-foreground font-bold uppercase tracking-wide mt-1">
+          {{ m.home_stats_students() }}
         </div>
       </div>
     </div>
 
     <!-- Current Week -->
     <div
-      class="bg-card rounded-3xl p-6 shadow-sm border border-border flex flex-col justify-between h-36 hover:shadow-md transition-all"
+      class="bg-card rounded-[24px] p-6 shadow-sm border border-border flex flex-col justify-between h-36 hover:shadow-md transition-all cursor-default"
     >
       <div class="flex justify-between items-start">
         <div class="p-2.5 bg-orange-50 text-orange-600 rounded-full">
           <IconCalendar class="text-xl w-5 h-5" />
         </div>
-        <span class="text-xs font-bold bg-muted text-muted-foreground px-2 py-1 rounded-full">
+        <span class="text-[10px] font-bold bg-muted text-muted-foreground px-2 py-1 rounded-full">
           {{ semesterLabel }}
         </span>
       </div>
       <div>
         <div class="text-2xl font-bold text-foreground">
-          {{ currentWeek > 0 ? `${currentWeek} неделя` : "—" }}
+          {{ currentWeek > 0 ? m.home_stats_week_number({ number: currentWeek }) : "—" }}
         </div>
-        <div class="text-xs text-muted-foreground font-medium uppercase tracking-wide mt-1">
-          Текущая неделя
+        <div class="text-[10px] text-muted-foreground font-bold uppercase tracking-wide mt-1">
+          {{ m.home_stats_current_week() }}
         </div>
       </div>
     </div>
 
     <!-- Attendance -->
     <div
-      class="bg-card rounded-3xl p-6 shadow-sm border border-border flex flex-col justify-between h-36 hover:shadow-md transition-all"
+      class="bg-card rounded-[24px] p-6 shadow-sm border border-border flex flex-col justify-between h-36 hover:shadow-md transition-all cursor-default"
     >
       <div class="flex justify-between items-start">
         <div class="p-2.5 bg-red-50 text-red-500 rounded-full">
-          <IconBarChart class="text-xl w-5 h-5" />
+          <IconClock class="text-xl w-5 h-5" />
         </div>
-        <span class="text-xs font-bold text-red-500 bg-red-50 px-2 py-1 rounded-full">
+        <span class="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-1 rounded-full">
           -1.2%
         </span>
       </div>
       <div>
         <div class="text-2xl font-bold text-foreground">94%</div>
-        <div class="text-xs text-muted-foreground font-medium uppercase tracking-wide mt-1">
-          Посещаемость
+        <div class="text-[10px] text-muted-foreground font-bold uppercase tracking-wide mt-1">
+          {{ m.home_stats_attendance() }}
         </div>
       </div>
     </div>
@@ -71,7 +71,10 @@ import { useStudentStore } from "@/stores/studentStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import IconUsers from "~icons/lucide/users";
 import IconCalendar from "~icons/lucide/calendar";
-import IconBarChart from "~icons/lucide/bar-chart-2";
+import IconClock from "~icons/lucide/clock";
+import IconTrendingUp from "~icons/lucide/trending-up";
+import * as m from "@/paraglide/messages";
+import { getSemesterLabel, getCurrentWeekNumber } from "@/utils/homeUtils";
 
 const studentStore = useStudentStore();
 const studentCount = computed(() => studentStore.students?.length ?? 0);
@@ -79,17 +82,6 @@ const studentCount = computed(() => studentStore.students?.length ?? 0);
 const academicStore = useAcademicYearSemesterStore();
 const { getActiveAcademicYearSemester } = storeToRefs(academicStore);
 
-const semesterLabel = computed(() => {
-  const s = getActiveAcademicYearSemester.value;
-  return s ? `Семестр` : "Нет семестра";
-});
-
-const currentWeek = computed(() => {
-  const s = getActiveAcademicYearSemester.value;
-  if (!s?.startDate) return 0;
-  const start = new Date(s.startDate);
-  const today = new Date();
-  const diff = today.getTime() - start.getTime();
-  return Math.max(1, Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1);
-});
+const semesterLabel = computed(() => getSemesterLabel(getActiveAcademicYearSemester.value));
+const currentWeek = computed(() => getCurrentWeekNumber(getActiveAcademicYearSemester.value?.startDate));
 </script>

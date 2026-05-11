@@ -2,10 +2,10 @@
   <div>
     <button
       id="add-button"
-      class="flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-full transition-colors"
+      class="bg-primary hover:opacity-90 text-primary-foreground px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all flex items-center gap-2 active:scale-95"
       @click="openAddEventPopover"
     >
-      <IconPlus class="text-[16px]" />
+      <IconPlus class="text-[20px]" />
       <span>Создать</span>
     </button>
 

@@ -1,21 +1,27 @@
 <template>
-  <Suspense @pending="onPending" @resolve="onResolve">
-    <template #default>
-      <component :is="asyncComponent" v-bind="$attrs" />
-    </template>
+  <div :key="reloadKey">
+    <Suspense @pending="onPending" @resolve="onResolve">
+      <template #default>
+        <component :is="asyncComponent" v-bind="$attrs" />
+      </template>
 
-    <template #fallback>
-      <f7-page>
-        <div
-          class="display-flex justify-content-center align-items-center"
-          style="min-height: 200px"
-        >
-          <f7-preloader v-if="!isError" />
-          <ErrorDisplay v-else :message="errorMessage" />
-        </div>
-      </f7-page>
-    </template>
-  </Suspense>
+      <template #fallback>
+        <f7-page>
+          <div
+            class="display-flex justify-content-center align-items-center"
+            style="min-height: 100vh"
+          >
+            <f7-preloader v-if="!isError" />
+            <ErrorDisplay 
+              v-else 
+              :message="errorMessage" 
+              :on-retry="retry"
+            />
+          </div>
+        </f7-page>
+      </template>
+    </Suspense>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -26,6 +32,7 @@ import ErrorDisplay from "./ErrorDisplay.vue";
 const isError = ref(false);
 const errorMessage = ref("Произошла ошибка при загрузке компонента");
 const isLoading = ref(false);
+const reloadKey = ref(0);
 
 defineOptions({
   name: "AsyncRouteWrapper",
@@ -48,13 +55,18 @@ function onResolve() {
   }
 }
 
+function retry() {
+  isError.value = false;
+  reloadKey.value++;
+}
+
 onUnmounted(() => {
   if (isLoading.value) {
     f7.preloader.hide();
   }
 });
 
-onErrorCaptured((error, instance, info) => {
+onErrorCaptured((error) => {
   console.error('[AsyncRouteWrapper] Error loading component:', error);
   isError.value = true;
   if (isLoading.value) {

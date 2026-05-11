@@ -1,59 +1,77 @@
 <template>
-  <div class="error-display">
-    <f7-card class="error-card margin-horizontal">
-      <f7-card-content class="text-align-center">
-        <div class="error-icon-container">
-          <IconTriangleAlert class="w-[50px] h-[50px] text-red-500" />
-        </div>
-        <h3 class="error-title">Ошибка</h3>
-        <p class="error-message">{{ message }}</p>
-        <f7-button v-if="onDismiss" fill color="red" @click="onDismiss"
-          >Закрыть</f7-button
+  <div class="error-display-container">
+    <div class="error-card animate-in fade-in zoom-in duration-300">
+      <div class="error-icon-wrapper">
+        <IconTriangleAlert class="w-8 h-8" />
+      </div>
+      
+      <h2 class="error-title">Ошибка</h2>
+      <p class="error-message">{{ message }}</p>
+      
+      <div class="error-actions">
+        <button 
+          v-if="onRetry" 
+          class="btn-retry" 
+          @click="onRetry"
         >
-      </f7-card-content>
-    </f7-card>
+          <IconRefreshCcw class="w-4 h-4 mr-2" />
+          Попробовать снова
+        </button>
+        
+        <button 
+          v-if="onDismiss" 
+          class="btn-dismiss" 
+          @click="onDismiss"
+        >
+          Закрыть
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { f7Button, f7Card, f7CardContent } from "framework7-vue";
 import IconTriangleAlert from "~icons/lucide/triangle-alert";
+import IconRefreshCcw from "~icons/lucide/refresh-ccw";
 
 defineProps<{
   message: string;
   onDismiss?: () => void;
+  onRetry?: () => void;
 }>();
 </script>
 
 <style scoped>
-.error-display {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 16px;
+.error-display-container {
+  @apply w-full flex justify-center items-center p-6;
 }
 
 .error-card {
-  width: 100%;
-  max-width: 350px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  @apply w-full max-w-[380px] bg-white rounded-[32px] p-8 text-center;
+  @apply shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-white/50;
 }
 
-.error-icon-container {
-  margin: 8px 0;
+.error-icon-wrapper {
+  @apply w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6;
 }
 
 .error-title {
-  margin: 8px 0;
-  font-weight: 600;
-  color: #ff3b30;
+  @apply text-xl font-bold text-gray-900 mb-2 tracking-tight;
 }
 
 .error-message {
-  margin: 12px 0 20px;
-  color: #666;
-  line-height: 1.5;
+  @apply text-gray-500 mb-8 leading-relaxed text-sm;
+}
+
+.error-actions {
+  @apply flex flex-col gap-3;
+}
+
+.btn-retry {
+  @apply w-full flex items-center justify-center px-4 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-red-200 active:scale-[0.98];
+}
+
+.btn-dismiss {
+  @apply w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold rounded-2xl transition-all active:scale-[0.98];
 }
 </style>

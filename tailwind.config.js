@@ -3,6 +3,13 @@ module.exports = {
   darkMode: ["class"],
   content: ["./src/**/*.{vue,js,ts,jsx,tsx,html}"],
   theme: {
+    screens: {
+      sm: "640px",
+      md: "922px",
+      lg: "1024px",
+      xl: "1280px",
+      "2xl": "1536px",
+    },
     extend: {
       colors: {
         sun: "#f3a334",
@@ -64,6 +71,8 @@ module.exports = {
     require("tailwindcss-animate"),
     function ({ addVariant }) {
       addVariant("lavanda", ".lavanda &");
+      addVariant("coral", ".coral &");
+      addVariant("graphite", ".graphite &");
     },
   ],
 };

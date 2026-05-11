@@ -1,20 +1,18 @@
 <template>
-  <div class="bg-card min-h-[120px] p-2 relative group" :class="dayClasses">
-    <div class="flex justify-between items-start mb-1.5">
+  <div class="bg-card min-h-[140px] p-2 relative group transition-colors hover:bg-muted/50" :class="dayClasses">
+    <div class="flex justify-between items-start mb-2">
       <div
         :class="{
-          'text-muted-foreground/40': !day.isCurrentMonth,
-          'text-primary-foreground': day.isToday,
-          'text-foreground': day.isCurrentMonth && !day.isToday,
+          'opacity-30': !day.isCurrentMonth,
         }"
       >
         <span
           v-if="day.isToday"
-          class="w-6 h-6 bg-primary text-primary-foreground rounded-lg inline-flex items-center justify-center font-black text-[11px] shadow-md"
+          class="w-7 h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold shadow-sm"
         >
           {{ day.dayNumber }}
         </span>
-        <span v-else class="font-black text-[11px]">
+        <span v-else class="text-sm font-semibold text-foreground/70 w-7 h-7 flex items-center justify-center">
           {{ day.dayNumber }}
         </span>
       </div>
@@ -64,7 +62,6 @@ const props = defineProps<{
 
 const dayClasses = computed(() => {
   return {
-    "hover:bg-primary/5 transition-colors": !props.day.isToday,
     "bg-primary/10": props.day.isToday,
   } as Record<string, boolean>;
 });

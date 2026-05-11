@@ -6,6 +6,22 @@
   --f7-theme-color-shade: #d32f2f;
   --f7-theme-color-tint: #ef5350;
 
+  /* iOS Color Palette */
+  --ios-red: #FF3B30;
+  --ios-orange: #FF9500;
+  --ios-yellow: #FFCC00;
+  --ios-green: #34C759;
+  --ios-mint: #00C7BE;
+  --ios-teal: #30B0C7;
+  --ios-cyan: #32ADE6;
+  --ios-blue: #007AFF;
+  --ios-indigo: #5856D6;
+  --ios-purple: #AF52DE;
+  --ios-pink: #FF2D55;
+  --ios-brown: #A2845E;
+  --ios-gray: #8E8E93;
+  --ios-black: #1C1C1E;
+
   --f7-page-transition-duration: 300ms;
   /* Default 400ms */
   --f7-dialog-transition-duration: 250ms;
@@ -132,10 +148,10 @@ body {
 /* Left corner detector */
 .left-corner-detector {
   position: fixed;
-  top: 64px;
+  top: 0;
   left: 0;
   width: 20px;
-  height: calc(100vh - 64px);
+  height: 100vh;
   z-index: 10;
 }
 

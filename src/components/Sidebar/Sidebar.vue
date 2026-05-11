@@ -1,9 +1,12 @@
 <template>
   <aside
-    class="fixed top-[64px] left-0 bottom-0 bg-card border-r border-border z-50 shadow-sm transition-all duration-300 overflow-visible"
+    class="fixed top-0 left-0 bottom-0 bg-card border-r border-border z-[110] shadow-sm transition-all duration-300 overflow-visible"
     :class="sidebarWidth"
-    style="display: grid; grid-template-rows: 1fr auto"
+    style="display: grid; grid-template-rows: auto 1fr auto"
   >
+    <!-- Logo Area -->
+    <Logo variant="sidebar" :isExpanded="!collapsed" />
+
     <!-- Toggle button on right edge -->
     <button
       class="absolute -right-3 top-6 z-[100] flex h-6 w-6 items-center justify-center rounded-full bg-card border border-border shadow-sm hover:bg-muted transition-colors"
@@ -18,10 +21,10 @@
 
     <!-- Nav items -->
     <div
-      class="w-full pt-4 pb-4"
+      class="w-full px-2 pt-2 pb-4 space-y-2"
       :class="collapsed ? 'overflow-visible' : 'overflow-y-auto overflow-x-hidden'"
     >
-      <nav class="flex flex-col space-y-2 w-full">
+      <nav class="flex flex-col space-y-1 w-full">
         <SidebarItem
           v-for="item in navigationItems"
           :key="item.id"
@@ -30,14 +33,14 @@
           :collapsed="collapsed"
           @click="handleNavItemClick(item.id)"
         >
-          <component :is="navIconMap[item.id]" class="w-5 h-5" />
+          <component :is="navIconMap[item.id]" class="w-[22px] h-[22px]" />
         </SidebarItem>
       </nav>
     </div>
 
     <!-- Profile / bottom items -->
-    <div class="border-t border-border bg-card py-3">
-      <div class="flex flex-col space-y-2">
+    <div v-if="profileMenuItems.length > 0" class="border-t border-border bg-card px-2 py-3">
+      <div class="flex flex-col space-y-1">
         <SidebarItem
           v-for="item in profileMenuItems"
           :key="item.id"
@@ -46,7 +49,7 @@
           :collapsed="collapsed"
           @click="handleProfileItemClick(item.id)"
         >
-          <component :is="profileIconMap[item.id]" class="w-5 h-5" />
+          <component :is="profileIconMap[item.id]" class="w-[22px] h-[22px]" />
         </SidebarItem>
       </div>
     </div>
@@ -62,6 +65,7 @@ import { f7 } from "framework7-vue";
 import AuthService from "@/services/auth";
 import type { NavigationItem } from "@/composables/useRBAC";
 import SidebarItem from "./SidebarItem.vue";
+import Logo from "../Logo/Logo.vue";
 
 // Lucide icons via unplugin-icons
 import IconHouse from "~icons/lucide/house";
@@ -81,25 +85,35 @@ import IconSettings from "~icons/lucide/settings";
 import IconLogOut from "~icons/lucide/log-out";
 import IconChevronLeft from "~icons/lucide/chevron-left";
 import IconChevronRight from "~icons/lucide/chevron-right";
+import IconLayoutGrid from "~icons/lucide/layout-grid";
+import IconLayout from "~icons/lucide/layout";
+import IconPieChart from "~icons/lucide/pie-chart";
+import IconClock from "~icons/lucide/clock";
+import IconBook from "~icons/lucide/book";
 
 const navIconMap: Record<string, Component> = {
   "home": IconHouse,
-  "specialty-catalog": IconGraduationCap,
-  "discipline-catalog": IconBookOpen,
-  "schedule": IconCalendar,
-  "protocol": IconFileText,
-  "journals": IconClipboardList,
-  "rup": IconLayoutList,
-  "analytics": IconBarChart2,
+  "planning": IconCalendarDays,
+  "journals": IconBook,
+  "ktp": IconLayoutGrid,
   "reports": IconFileBarChart,
-  "education-schedule": IconCalendarDays,
+  "testing": IconLayout,
+  "courses": IconGraduationCap,
+  "protocol": IconLayout,
+  "analytics": IconPieChart,
+  "rup": IconFileText,
+  "schedule": IconCalendar,
+  "timetable": IconClock,
+  "workload": IconLayoutGrid,
+  "specialty-catalog": IconBookOpen,
   "student-card": IconUsers,
+  "discipline-catalog": IconBook,
   "teacher-card": IconUserCheck,
+  "settings": IconSettings,
 };
 
 const profileIconMap: Record<string, Component> = {
   "profile": IconCircleUser,
-  "settings": IconSettings,
   "logout": IconLogOut,
 };
 

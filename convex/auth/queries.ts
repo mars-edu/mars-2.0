@@ -24,6 +24,10 @@ export const getUser = query({
         )
       ),
       avatar: v.optional(v.string()),
+      phone: v.optional(v.string()),
+      office: v.optional(v.string()),
+      department: v.optional(v.string()),
+      degree: v.optional(v.string()),
       createdAt: v.number(),
       updatedAt: v.number(),
     }),

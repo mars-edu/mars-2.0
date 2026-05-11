@@ -1,23 +1,26 @@
 <template>
   <div
-    class="border-b border-input"
-    :class="$slots.default ? 'px-4 pt-3 pb-3' : 'flex items-center px-4 py-3 min-h-[56px]'"
+    class="border-b border-input px-8 pt-8 pb-4"
   >
-    <div class="flex items-center w-full min-h-[32px]">
-      <span
-        class="text-foreground font-semibold text-lg leading-none flex-1"
-        :class="{ 'pointer-events-none': !$slots.title }"
-      >
-        <slot name="title" v-if="$slots.title"></slot>
-        <template v-else>{{ title }}</template>
-      </span>
+    <div class="flex justify-between items-center mb-8 min-h-[32px]">
+      <div>
+        <h2 class="text-2xl font-bold text-foreground tracking-tight leading-none">
+          <slot name="title" v-if="$slots.title"></slot>
+          <template v-else>{{ title }}</template>
+        </h2>
+        <div v-if="$slots.subtitle || subtitle" class="text-[15px] font-medium text-muted-foreground mt-0.5">
+          <slot name="subtitle" v-if="$slots.subtitle"></slot>
+          <template v-else>{{ subtitle }}</template>
+        </div>
+      </div>
       <slot name="actions"></slot>
       <button
         v-if="onCancel"
-        class="ml-auto w-8 h-8 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center text-muted-foreground transition-colors"
+        class="w-9 h-9 rounded-full bg-[#F2F2F7] flex items-center justify-center text-muted-foreground hover:bg-[#E5E5EA] transition-colors"
         @click="handleCancel"
+        :title="cancelText"
       >
-        <IconX class="w-4 h-4" />
+        <IconX class="w-5 h-5" />
       </button>
     </div>
     <slot></slot>
@@ -30,6 +33,11 @@ import IconX from "~icons/lucide/x";
 
 const props = defineProps({
   title: {
+    type: String,
+    required: false,
+    default: "",
+  },
+  subtitle: {
     type: String,
     required: false,
     default: "",

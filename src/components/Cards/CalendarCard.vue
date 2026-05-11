@@ -78,14 +78,15 @@ import Card from "@/components/ui/Card.vue";
 import IconCalendarPlus from "~icons/lucide/calendar-plus";
 import IconChevronLeft from "~icons/lucide/chevron-left";
 import IconChevronRight from "~icons/lucide/chevron-right";
+import type { Theme } from "@/types/theme";
 
 interface Props {
   /** @deprecated Theme is now handled by CSS custom properties. */
-  theme?: "white" | "dark" | "lavanda";
+  theme?: Theme;
 }
 
 withDefaults(defineProps<Props>(), {
-  theme: "white",
+  theme: "light",
 });
 
 interface CalendarDate {

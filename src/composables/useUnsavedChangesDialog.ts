@@ -1,3 +1,5 @@
+import * as m from "@/paraglide/messages";
+
 interface ConfirmDiscardOptions {
   title?: string;
   message?: string;
@@ -5,18 +7,11 @@ interface ConfirmDiscardOptions {
   cancelText?: string;
 }
 
-const DEFAULT_TITLE = "Закрыть форму?";
-const DEFAULT_MESSAGE =
-  "Все несохраненные данные будут потеряны. Вы действительно хотите закрыть окно?";
-const DEFAULT_CONFIRM_TEXT = "Закрыть";
-const DEFAULT_CANCEL_TEXT = "Продолжить редактирование";
-
 let resolveCurrent: ((value: boolean) => void) | null = null;
 let isHandlingResult = false;
 let currentContainer: HTMLElement | null = null;
 
 function findParentPopup(): HTMLElement | null {
-  // Find the topmost open Framework7 popup to overlay the dialog on top of it
   const openPopups = document.querySelectorAll<HTMLElement>(".popup.modal-in");
   return openPopups.length > 0 ? openPopups[openPopups.length - 1] : null;
 }
@@ -31,85 +26,75 @@ function createDialogDOM(options: {
 }): HTMLElement {
   const container = document.createElement("div");
 
+  // Base backdrop style
+  container.style.cssText =
+    "position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);padding:1rem;";
+
   const parentPopup = findParentPopup();
   if (parentPopup) {
-    // Position inside the popup: white frosted overlay centered within the popup
-    container.style.cssText =
-      "position:absolute;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.65);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:1rem;";
-  } else {
-    // Fallback: viewport-level overlay
-    container.style.cssText =
-      "position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.65);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:1rem;";
+    container.style.position = "absolute";
   }
 
   container.setAttribute("role", "dialog");
   container.setAttribute("aria-modal", "true");
 
-  // Click on backdrop → cancel
   container.addEventListener("click", (e) => {
     if (e.target === container) options.onCancel();
   });
 
   const card = document.createElement("div");
   card.style.cssText =
-    "width:100%;max-width:352px;border-radius:14px;border:1px solid #e7e7eb;background:#f2f2f4;padding:18px 16px 16px;text-align:center;box-shadow:0 14px 40px rgba(0,0,0,0.18);";
-
-  // Warning icon circle
-  const iconWrap = document.createElement("div");
-  iconWrap.style.cssText =
-    "margin:0 auto 10px;display:flex;width:44px;height:44px;align-items:center;justify-content:center;border-radius:9999px;background:#f8dfe1;color:#ef4444;";
-
-  // SVG warning triangle
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("width", "20");
-  svg.setAttribute("height", "20");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("fill", "currentColor");
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute(
-    "d",
-    "M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2zm0-6h2v5h-2z"
-  );
-  svg.appendChild(path);
-  iconWrap.appendChild(svg);
-  card.appendChild(iconWrap);
-
+    "position:relative;background:#fff;border-radius:24px;padding:2rem;width:100%;max-width:20rem;text-align:center;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);";
+  
   // Title
   const h3 = document.createElement("h3");
   h3.style.cssText =
-    "margin:0;font-size:30px;font-weight:700;line-height:1.2;color:#1f2937;";
+    "margin:0 0 1rem;font-size:19px;font-weight:700;color:#111827;letter-spacing:-0.01em;";
   h3.textContent = options.title;
   card.appendChild(h3);
 
   // Message
   const p = document.createElement("p");
   p.style.cssText =
-    "margin:10px 0 16px;font-size:14px;line-height:1.45;color:#6b7280;";
+    "margin:0 0 1.5rem;font-size:15px;color:#6b7280;line-height:1.625;";
   p.textContent = options.message;
   card.appendChild(p);
 
   // Buttons row
   const btnRow = document.createElement("div");
-  btnRow.style.cssText = "display:flex;gap:10px;";
+  btnRow.style.cssText = "display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:0.75rem;padding-top:0.5rem;";
 
   const cancelBtn = document.createElement("button");
   cancelBtn.type = "button";
   cancelBtn.style.cssText =
-    "flex:1;min-height:48px;border-radius:8px;border:0;background:#e5e7eb;padding:12px 10px;font-size:16px;font-weight:500;line-height:1.25;color:#374151;cursor:pointer;";
+    "padding:0.75rem 0;border-radius:0.75rem;border:0;background:#F2F2F7;color:#111827;font-size:15px;font-weight:600;cursor:pointer;transition:background 0.2s;";
   cancelBtn.textContent = options.cancelText;
   cancelBtn.addEventListener("click", options.onCancel);
+  cancelBtn.addEventListener("mouseenter", () => cancelBtn.style.background = "#E5E5EA");
+  cancelBtn.addEventListener("mouseleave", () => cancelBtn.style.background = "#F2F2F7");
   btnRow.appendChild(cancelBtn);
 
   const confirmBtn = document.createElement("button");
   confirmBtn.type = "button";
   confirmBtn.style.cssText =
-    "width:110px;min-height:48px;border-radius:8px;border:0;background:#ef4444;padding:12px 10px;font-size:16px;font-weight:500;line-height:1.25;color:#fff;cursor:pointer;";
+    "padding:0.75rem 0;border-radius:0.75rem;border:0;background:#ef4444;color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:background 0.2s;";
   confirmBtn.textContent = options.confirmText;
   confirmBtn.addEventListener("click", options.onConfirm);
+  confirmBtn.addEventListener("mouseenter", () => confirmBtn.style.background = "#dc2626");
+  confirmBtn.addEventListener("mouseleave", () => confirmBtn.style.background = "#ef4444");
   btnRow.appendChild(confirmBtn);
 
   card.appendChild(btnRow);
   container.appendChild(card);
+
+  // Add animation class if possible, otherwise simple fade in
+  container.animate([
+    { opacity: 0, transform: 'scale(0.95)' },
+    { opacity: 1, transform: 'scale(1)' }
+  ], {
+    duration: 200,
+    easing: 'ease-out'
+  });
 
   return container;
 }
@@ -124,14 +109,13 @@ function removeDialog() {
 export function useUnsavedChangesDialog() {
   const confirmDiscard = (options: ConfirmDiscardOptions = {}) => {
     if (resolveCurrent) {
-      // Keep behavior deterministic; do not stack multiple unsaved dialogs.
       return Promise.resolve(false);
     }
 
-    const title = options.title ?? DEFAULT_TITLE;
-    const message = options.message ?? DEFAULT_MESSAGE;
-    const confirmText = options.confirmText ?? DEFAULT_CONFIRM_TEXT;
-    const cancelText = options.cancelText ?? DEFAULT_CANCEL_TEXT;
+    const title = options.title ?? m.unsaved_changes_title();
+    const message = options.message ?? m.unsaved_changes_message();
+    const confirmText = options.confirmText ?? m.unsaved_changes_confirm();
+    const cancelText = options.cancelText ?? m.unsaved_changes_cancel();
 
     if (typeof window === "undefined") return Promise.resolve(false);
 
@@ -157,11 +141,8 @@ export function useUnsavedChangesDialog() {
         onCancel: () => finish(false),
       });
 
-      // Append inside the parent popup so the dialog is centered within it,
-      // falling back to document.body if no popup is open.
       const parentPopup = findParentPopup();
       if (parentPopup) {
-        // Ensure the popup can serve as a containing block for position:absolute
         const pos = getComputedStyle(parentPopup).position;
         if (pos === "static") {
           parentPopup.style.position = "relative";

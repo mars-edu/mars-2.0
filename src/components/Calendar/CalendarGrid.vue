@@ -1,12 +1,12 @@
 <template>
   <div
-    class="grid grid-cols-7 auto-rows-[minmax(2rem,auto)] gap-px bg-border border border-border rounded-[32px] overflow-hidden shadow-2xl"
+    class="flex-1 grid grid-cols-7 grid-rows-[auto_repeat(6,1fr)] gap-px bg-border border border-border rounded-[24px] overflow-hidden shadow-sm"
   >
     <!-- Weekday headers -->
     <div
       v-for="day in weekdays"
       :key="day"
-      class="bg-muted p-4 text-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border"
+      class="bg-card p-4 text-center text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border"
     >
       {{ day }}
     </div>

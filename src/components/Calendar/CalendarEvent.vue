@@ -1,25 +1,27 @@
 <template>
   <div
-    class="text-xs p-2 rounded-md border-l-2 transition-shadow duration-200 hover:shadow-md cursor-pointer calendar-event overflow-hidden"
+    class="bg-card border border-border rounded-lg p-2 shadow-sm hover:shadow-md transition-all cursor-pointer group border-l-4 overflow-hidden"
     :style="eventStyles"
     :class="{
       'ring-2': isSelected,
     }"
     @click="handleClick"
   >
-    <div class="font-bold calendar-event-title" :style="{ color: textColor }">
+    <div class="text-[11px] font-bold text-foreground line-clamp-1 leading-tight mb-1" :style="{ color: textColor }">
       {{ event.title }}
     </div>
-    <div class="flex items-center gap-1 text-opacity-80" :style="{ color: textColor }">
-      <IconClock class="w-2.5 h-2.5 shrink-0" />
-      <span class="truncate">{{ event.time }}</span>
-    </div>
-    <div
-      v-if="event.group"
-      class="text-opacity-70 text-[10px] mt-0.5 truncate"
-      :style="{ color: textColor }"
-    >
-      {{ event.group }}
+    <div class="flex items-center gap-2 text-[10px] text-muted-foreground">
+      <div class="flex items-center gap-1" :style="{ color: textColor }">
+        <IconClock class="w-2.5 h-2.5 shrink-0" />
+        <span>{{ event.time }}</span>
+      </div>
+      <div
+        v-if="event.group"
+        class="flex items-center gap-1 truncate"
+        :style="{ color: textColor }"
+      >
+        <span>{{ event.group }}</span>
+      </div>
     </div>
   </div>
 </template>
@@ -69,26 +71,11 @@ const eventStyles = computed(() => {
 
   const styles: { [key: string]: string } = {};
 
-  if (!props.event.color) {
-    // Use CSS variables for primary color theming
-    styles.backgroundColor = "hsl(var(--primary) / 0.2)";
-    styles.borderLeftColor = "hsl(var(--primary))";
-    styles["--hover-bg"] = "hsl(var(--primary) / 0.3)";
-  } else {
-    // Use custom color with increased base opacity
-    styles.backgroundColor = `${baseColor}4D`; // ~30% opacity
-    styles.borderLeftColor = baseColor;
-    styles["--hover-bg"] = `${baseColor}66`; // ~40% opacity on hover
-  }
+  styles.borderLeftColor = baseColor;
 
-  // If selected, darken (increase opacity) for all occurrences of this event
   if (props.isSelected) {
-    if (!props.event.color) {
-      styles.backgroundColor = "hsl(var(--primary) / 0.45)"; // darker overlay
-    } else {
-      styles.backgroundColor = `${baseColor}99`; // ~60% opacity
-      styles["--hover-bg"] = `${baseColor}B3`; // ~70% opacity on hover
-    }
+    styles.boxShadow = `0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)`;
+    styles.borderColor = baseColor;
     styles["--tw-ring-color"] = baseColor;
   }
 

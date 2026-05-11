@@ -2,10 +2,14 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 
 export interface Lesson {
+  id?: string | number;
   startTime: string;
   endTime: string;
   subject: string;
   room: string;
+  group: string;
+  type: 'lecture' | 'seminar' | 'lab';
+  color: string;
 }
 
 export interface ScheduleState {
@@ -16,42 +20,46 @@ export interface ScheduleState {
 const DEFAULT_SCHEDULE_DATA: Record<string, Lesson[]> = {
   "2025-03-09": [
     {
-      startTime: "8:00",
-      endTime: "9:35",
+      id: 1,
+      startTime: "09:00",
+      endTime: "10:15",
       subject: "История Казахстана",
-      room: "305 каб.",
+      group: "2 ВаВэСФ",
+      room: "213",
+      type: "lecture",
+      color: "bg-primary",
     },
     {
-      startTime: "9:45",
-      endTime: "11:20",
-      subject: "Всемирная история",
-      room: "205 каб.",
-    },
-    {
-      startTime: "11:30",
-      endTime: "13:05",
-      subject: "Всемирная история",
-      room: "404 каб.",
-    },
-    {
-      startTime: "13:15",
-      endTime: "14:50",
-      subject: "Всемирная история",
-      room: "404 каб.",
+      id: 2,
+      startTime: "10:30",
+      endTime: "11:45",
+      subject: "Философия",
+      group: "3 РЭХТ",
+      room: "101",
+      type: "seminar",
+      color: "bg-orange-500",
     },
   ],
   "2025-03-10": [
     {
-      startTime: "8:00",
-      endTime: "9:35",
-      subject: "Культорология",
-      room: "101 каб.",
+      id: 3,
+      startTime: "13:00",
+      endTime: "14:15",
+      subject: "Культурология",
+      group: "1 ИС",
+      room: "205",
+      type: "lecture",
+      color: "bg-purple-500",
     },
     {
-      startTime: "9:45",
-      endTime: "11:20",
-      subject: "История Казахстана",
-      room: "302 каб.",
+      id: 4,
+      startTime: "14:30",
+      endTime: "15:45",
+      subject: "История (Консультация)",
+      group: "2 ВаВэСФ",
+      room: "Кафедра",
+      type: "lab",
+      color: "bg-green-500",
     },
   ],
 };

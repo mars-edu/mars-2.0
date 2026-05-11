@@ -1,12 +1,19 @@
+import type { Theme } from "./theme";
+
 export interface User {
   id: string;
   firstName: string;
   lastName: string;
+  middleName?: string;
   email: string;
   roles: Role[];
   avatar?: string;
-  theme?: "light" | "dark" | "lavanda";
+  theme?: Theme;
   username?: string;
+  phone?: string;
+  office?: string;
+  department?: string;
+  degree?: string;
 }
 
 export enum Role {

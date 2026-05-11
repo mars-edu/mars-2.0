@@ -10,6 +10,7 @@ import {
   generateUsername,
   generateRandomPassword,
 } from "./helpers";
+import type { Id } from "../_generated/dataModel";
 
 /**
  * Internal mutation to create a user (called from actions)
@@ -18,6 +19,7 @@ export const createUserInternal = internalMutation({
   args: {
     firstName: v.string(),
     lastName: v.string(),
+    middleName: v.optional(v.string()),
     username: v.string(),
     email: v.string(),
     passwordHash: v.string(),
@@ -61,6 +63,7 @@ export const register = action({
   args: {
     firstName: v.string(),
     lastName: v.string(),
+    middleName: v.optional(v.string()),
     username: v.string(),
     email: v.string(),
     password: v.string(),
@@ -82,10 +85,15 @@ export const register = action({
       id: string;
       firstName: string;
       lastName: string;
+      middleName?: string;
       username: string;
       email: string;
       roles: string[];
       avatar?: string;
+      phone?: string;
+      office?: string;
+      department?: string;
+      degree?: string;
     };
   }> => {
     // Check if username is available
@@ -113,6 +121,7 @@ export const register = action({
     const userId = await ctx.runMutation(internal.auth.mutations.createUserInternal, {
       firstName: args.firstName,
       lastName: args.lastName,
+      middleName: args.middleName,
       username: args.username,
       email: args.email,
       passwordHash,
@@ -137,10 +146,15 @@ export const register = action({
         id: userId,
         firstName: args.firstName,
         lastName: args.lastName,
+        middleName: args.middleName,
         username: args.username,
         email: args.email,
         roles: args.roles || ["STUDENT"],
         avatar: undefined,
+        phone: undefined,
+        office: undefined,
+        department: undefined,
+        degree: undefined,
       },
     };
   },
@@ -160,10 +174,15 @@ export const login = action({
       id: string;
       firstName: string;
       lastName: string;
+      middleName?: string;
       username: string;
       email: string;
       roles: string[];
       avatar?: string;
+      phone?: string;
+      office?: string;
+      department?: string;
+      degree?: string;
     };
   }> => {
     // Get user by username
@@ -199,10 +218,15 @@ export const login = action({
         id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
+        middleName: user.middleName,
         username: user.username,
         email: user.email,
         roles: user.roles,
         avatar: user.avatar,
+        phone: user.phone,
+        office: user.office,
+        department: user.department,
+        degree: user.degree,
       },
     };
   },
@@ -248,10 +272,15 @@ export const validateTokenAction = action({
           id: user._id,
           firstName: user.firstName,
           lastName: user.lastName,
+          middleName: user.middleName,
           username: user.username,
           email: user.email,
           roles: user.roles,
           avatar: user.avatar,
+          phone: user.phone,
+          office: user.office,
+          department: user.department,
+          degree: user.degree,
         },
       };
     } catch (error) {
@@ -310,6 +339,7 @@ export const registerTeacher = action({
     const userId = await ctx.runMutation(internal.auth.mutations.createUserInternal, {
       firstName: args.firstName,
       lastName: args.lastName,
+      middleName: args.middleName,
       username,
       email,
       passwordHash,

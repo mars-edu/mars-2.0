@@ -8,30 +8,32 @@
     <Header class="hidden md:block flex-shrink-0" />
 
     <!-- Desktop Layout -->
-    <div class="hidden md:flex overflow-hidden flex-1">
+    <div class="hidden md:flex overflow-hidden flex-1 bg-background">
       <Sidebar v-model:activeNavItem="activeNavItem" />
 
       <div
-        class="flex-1 overflow-y-auto p-6 bg-background text-foreground transition-all duration-200"
+        class="flex-1 flex flex-col min-w-0 m-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-border bg-card overflow-hidden"
         :class="contentMargin"
       >
-        <WelcomeSection />
-        <StatsRow />
+        <div class="flex-1 flex gap-6 p-6 text-foreground transition-all duration-200 overflow-hidden">
+          <!-- Left: Welcome + Stats + Activity + QuickActions + Announcements -->
+          <div class="flex-1 flex flex-col overflow-y-auto pr-2 no-scrollbar space-y-8">
+            <WelcomeSection />
+            <StatsRow />
 
-        <div class="flex flex-col xl:flex-row gap-6">
-          <!-- Left: Activity + QuickActions + Announcements -->
-          <div class="flex-1 space-y-6 min-w-0">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div class="lg:col-span-2">
-                <ActivityCard />
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+              <div class="lg:col-span-2 h-full">
+                <ActivityCard class="h-full" />
               </div>
-              <QuickActionsCard />
+              <div class="h-full">
+                <QuickActionsCard class="h-full" />
+              </div>
             </div>
             <AnnouncementsCard />
           </div>
 
           <!-- Right: Calendar + Schedule panel -->
-          <div class="w-full xl:w-[380px] xl:flex-shrink-0">
+          <div class="w-[400px] flex-shrink-0 h-full overflow-hidden">
             <CalendarSchedulePanel />
           </div>
         </div>
@@ -125,7 +127,7 @@ import { useSidebar } from "@/composables/useSidebar";
 import IconHouse from "~icons/lucide/house";
 import IconCalendar from "~icons/lucide/calendar";
 import IconFileText from "~icons/lucide/file-text";
-import IconBookOpen from "~icons/lucide/book-open";
+import IconBook from "~icons/lucide/book";
 import {
   home_home,
   home_schedule,
@@ -146,8 +148,8 @@ const navigationItems = computed(() => {
   return [
     { id: "home", label: home_home(), icon: IconHouse },
     { id: "schedule", label: home_schedule(), icon: IconCalendar },
-    { id: "journals", label: home_journals(), icon: IconFileText },
-    { id: "rup", label: home_rup(), icon: IconBookOpen },
+    { id: "journals", label: home_journals(), icon: IconBook },
+    { id: "rup", label: home_rup(), icon: IconFileText },
   ];
 });
 </script>

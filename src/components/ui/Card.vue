@@ -24,15 +24,17 @@
 </template>
 
 <script setup lang="ts">
+import type { Theme } from "@/types/theme";
+
 interface Props {
   /** @deprecated Theme is now handled by CSS custom properties. This prop is ignored. */
-  theme?: "white" | "dark" | "lavanda";
+  theme?: Theme;
   title?: string;
   clickable?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  theme: "white",
+  theme: "light",
   clickable: false,
 });
 

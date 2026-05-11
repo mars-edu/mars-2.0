@@ -1,8 +1,8 @@
 <template>
-  <div class="bg-card rounded-3xl shadow-sm border border-border h-full flex flex-col p-6">
+  <div class="bg-card rounded-[32px] shadow-sm border border-border h-full flex flex-col p-6">
     <!-- Header -->
     <div class="flex justify-between items-center mb-6 px-2">
-      <h2 class="text-lg font-bold text-foreground">Календарь</h2>
+      <h2 class="text-lg font-bold text-foreground">{{ m.home_calendar_title() }}</h2>
     </div>
 
     <!-- Calendar -->
@@ -40,33 +40,36 @@
         <div
           v-for="date in calendarDays"
           :key="`${date.date.getFullYear()}-${date.date.getMonth()}-${date.day}`"
-          class="h-8 flex items-center justify-center"
+          class="h-8 flex items-center justify-center relative"
         >
           <button
             class="w-8 h-8 flex items-center justify-center text-xs rounded-full transition-all duration-200"
             :class="[
-              date.isToday
+              isSelectedDate(date)
                 ? 'bg-primary text-primary-foreground shadow-md font-bold'
-                : isSelectedDate(date)
-                ? 'bg-primary/20 text-primary font-bold'
+                : date.isToday
+                ? 'text-primary font-bold'
                 : date.isCurrentMonth
                 ? 'text-foreground hover:bg-muted'
                 : 'text-muted-foreground/40',
-              date.hasSchedule && !date.isToday ? 'font-bold' : '',
             ]"
             :disabled="!date.isCurrentMonth"
             @click="selectDate(date)"
           >
             {{ date.day }}
           </button>
+          <div
+            v-if="date.hasSchedule && !date.isToday && !isSelectedDate(date)"
+            class="absolute bottom-1 w-1 h-1 bg-muted-foreground/30 rounded-full"
+          ></div>
         </div>
       </div>
     </div>
 
     <!-- Schedule -->
-    <div class="flex-1 overflow-y-auto">
+    <div class="flex-1 overflow-y-auto no-scrollbar">
       <div class="flex justify-between items-end mb-4 px-2">
-        <h3 class="text-base font-bold text-foreground">Расписание</h3>
+        <h3 class="text-base font-bold text-foreground">{{ m.home_schedule() }}</h3>
         <span class="text-xs text-muted-foreground font-medium uppercase">{{ scheduleLabel }}</span>
       </div>
 
@@ -74,66 +77,86 @@
         <div
           v-for="(lesson, index) in schedule"
           :key="index"
-          class="group p-4 rounded-2xl bg-muted hover:bg-card border border-transparent hover:border-border hover:shadow-sm cursor-default transition-all duration-200 flex items-stretch gap-4"
+          @click="selectedLesson = lesson"
+          class="group p-4 rounded-2xl bg-muted hover:bg-card border border-transparent hover:border-border hover:shadow-sm cursor-pointer transition-all duration-200 flex items-stretch gap-4"
         >
           <div class="flex flex-col justify-center min-w-[48px]">
             <span class="text-sm font-bold text-foreground leading-none">{{ lesson.startTime }}</span>
             <span class="text-xs text-muted-foreground font-medium mt-1">{{ lesson.endTime }}</span>
           </div>
-          <div class="w-1 rounded-full bg-primary opacity-40 group-hover:opacity-100 transition-opacity flex-shrink-0"></div>
+          
+          <div
+            class="w-1 rounded-full opacity-40 group-hover:opacity-100 transition-opacity flex-shrink-0"
+            :class="lesson.color || 'bg-primary'"
+          ></div>
+
           <div class="flex-1 py-0.5">
             <div class="text-sm font-bold text-foreground mb-0.5 leading-tight group-hover:text-primary transition-colors">
               {{ lesson.subject }}
             </div>
             <div class="flex items-center justify-between mt-2">
-              <div class="text-xs text-muted-foreground bg-card group-hover:bg-muted px-2 py-1 rounded-md transition-colors">
-                {{ lesson.room }}
+              <div class="flex items-center gap-1.5 text-[11px] text-muted-foreground bg-card group-hover:bg-muted px-2 py-1 rounded-md transition-colors font-medium">
+                <IconUsers class="w-3 h-3" />
+                {{ lesson.group }}
+              </div>
+              <div class="text-[11px] text-muted-foreground font-medium">
+                {{ m.home_schedule_room_prefix() }} {{ lesson.room }}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <EmptyState
-        v-else
-        :icon="IconCalendar"
-        title="Нет занятий на этот день"
-      />
+      <div v-else>
+        <div 
+          @click="f7.views.main.router.navigate('/journals')"
+          class="p-4 rounded-[20px] border border-dashed border-border flex items-center justify-center text-muted-foreground text-xs font-medium cursor-pointer hover:bg-card hover:border-primary/50 hover:text-primary transition-all"
+        >
+          <IconPlus class="w-3.5 h-3.5 mr-2" /> {{ m.home_schedule_add_lesson() }}
+        </div>
+      </div>
     </div>
+
+    <ScheduleItemModal
+      :lesson="selectedLesson"
+      @close="selectedLesson = null"
+      @openJournal="handleOpenJournal"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { useScheduleStore } from "@/stores/scheduleStore";
-import EmptyState from "@/components/ui/EmptyState.vue";
-import IconCalendar from "~icons/lucide/calendar";
+import { f7 } from "framework7-vue";
+import { useScheduleStore, type Lesson } from "@/stores/scheduleStore";
+import ScheduleItemModal from "@/components/Home/ScheduleItemModal.vue";
 import IconChevronLeft from "~icons/lucide/chevron-left";
 import IconChevronRight from "~icons/lucide/chevron-right";
+import IconUsers from "~icons/lucide/users";
+import IconPlus from "~icons/lucide/plus";
+import * as m from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
+import { generateCalendarDays, isSameDate, type CalendarDate } from "@/utils/calendarUtils";
 
+const { locale } = useI18n();
 const scheduleStore = useScheduleStore();
-const weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const currentDate = ref(new Date());
+const selectedLesson = ref<Lesson | null>(null);
 
-interface CalendarDate {
-  day: number;
-  isCurrentMonth: boolean;
-  isToday: boolean;
-  date: Date;
-  hasSchedule?: boolean;
-}
-
-const checkHasSchedule = (date: Date): boolean => {
-  const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-  return !!scheduleStore.scheduleData[key]?.length;
-};
+const weekDays = computed(() => {
+  const days = {
+    ru: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
+    en: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+    kk: ["Дс", "Сс", "Ср", "Бс", "Жм", "Сб", "Жк"]
+  };
+  return days[locale.value as keyof typeof days] || days.ru;
+});
 
 const isSelectedDate = (date: CalendarDate): boolean => {
   if (!date.isCurrentMonth) return false;
   const sel = scheduleStore.selectedDate;
   if (!sel) return false;
-  const s = new Date(sel);
-  return date.date.getDate() === s.getDate() && date.date.getMonth() === s.getMonth() && date.date.getFullYear() === s.getFullYear();
+  return isSameDate(date.date, new Date(sel));
 };
 
 const selectDate = (date: CalendarDate) => {
@@ -145,64 +168,39 @@ const changeMonth = (delta: number) => {
   const d = new Date(currentDate.value);
   d.setMonth(d.getMonth() + delta);
   currentDate.value = d;
+  
   const sel = new Date(scheduleStore.selectedDate);
-  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-  scheduleStore.setSelectedDate(new Date(d.getFullYear(), d.getMonth(), Math.min(sel.getDate(), last)));
+  const lastDayOfNewMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  scheduleStore.setSelectedDate(new Date(d.getFullYear(), d.getMonth(), Math.min(sel.getDate(), lastDayOfNewMonth)));
 };
 
 const previousMonth = () => changeMonth(-1);
 const nextMonth = () => changeMonth(1);
 
 const currentMonthYear = computed(() => {
-  const months = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
-  return `${months[currentDate.value.getMonth()]} ${currentDate.value.getFullYear()}`;
+  return currentDate.value.toLocaleDateString(locale.value, { month: "long", year: "numeric" });
 });
 
-const calendarDays = computed(() => {
-  const year = currentDate.value.getFullYear();
-  const month = currentDate.value.getMonth();
-  const today = new Date();
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-  const startOffset = (firstDay.getDay() || 7) - 1;
-
-  const prev: CalendarDate[] = [];
-  if (startOffset > 0) {
-    const prevLastDay = new Date(year, month, 0).getDate();
-    const prevMonth = month - 1 < 0 ? 11 : month - 1;
-    const prevYear = prevMonth === 11 ? year - 1 : year;
-    for (let i = prevLastDay - startOffset + 1; i <= prevLastDay; i++) {
-      const d = new Date(prevYear, prevMonth, i);
-      prev.push({ day: i, isCurrentMonth: false, isToday: false, date: d, hasSchedule: checkHasSchedule(d) });
-    }
-  }
-
-  const curr: CalendarDate[] = Array.from({ length: lastDay.getDate() }, (_, i) => {
-    const d = new Date(year, month, i + 1);
-    return { day: i + 1, isCurrentMonth: true, isToday: today.getDate() === i + 1 && today.getMonth() === month && today.getFullYear() === year, date: d, hasSchedule: checkHasSchedule(d) };
-  });
-
-  const total = 42;
-  const next: CalendarDate[] = [];
-  for (let i = 1; i <= total - prev.length - curr.length; i++) {
-    const d = new Date(year, month + 1, i);
-    next.push({ day: i, isCurrentMonth: false, isToday: false, date: d, hasSchedule: checkHasSchedule(d) });
-  }
-
-  return [...prev, ...curr, ...next];
-});
-
+const calendarDays = computed(() => generateCalendarDays(currentDate.value, scheduleStore));
 const schedule = computed(() => scheduleStore.selectedDateSchedule);
+
+const handleOpenJournal = (lesson: Lesson) => {
+  f7.views.main.router.navigate("/journals");
+};
 
 const scheduleLabel = computed(() => {
   const sel = scheduleStore.selectedDate;
-  if (!sel) return "Сегодня";
+  if (!sel) return m.home_schedule_today();
+  
   const d = new Date(sel);
   const today = new Date();
-  if (d.toDateString() === today.toDateString()) return "Сегодня";
-  const tomorrow = new Date(); tomorrow.setDate(today.getDate() + 1);
-  if (d.toDateString() === tomorrow.toDateString()) return "Завтра";
-  return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+  if (isSameDate(d, today)) return m.home_schedule_today();
+  
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
+  if (isSameDate(d, tomorrow)) return m.home_schedule_tomorrow();
+  
+  return d.toLocaleDateString(locale.value, { day: "numeric", month: "short" });
 });
 
 onMounted(() => {

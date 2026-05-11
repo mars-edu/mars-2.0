@@ -85,14 +85,15 @@ import { computed } from "vue";
 import { storeToRefs } from "pinia";
 import Card from "@/components/ui/Card.vue";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
+import type { Theme } from "@/types/theme";
 
 interface Props {
   /** @deprecated Theme is now handled by CSS custom properties. */
-  theme?: "white" | "dark" | "lavanda";
+  theme?: Theme;
 }
 
 withDefaults(defineProps<Props>(), {
-  theme: "white",
+  theme: "light",
 });
 
 // Initialize store to get active semester data

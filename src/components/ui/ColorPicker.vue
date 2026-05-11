@@ -1,29 +1,116 @@
 <template>
-  <div class="flex justify-between items-center">
-    <span class="text-sm text-foreground">{{ label }}</span>
-    <div
-      class="flex items-center gap-2 cursor-pointer"
-      :id="targetId"
-      @click="openColorPicker"
-    >
-      <div
-        :style="`background-color: ${modelValue.hex || '#3F51B5'}`"
-        class="w-8 h-8 rounded-lg border border-input shadow-sm"
-      ></div>
+  <div class="space-y-1.5 relative" ref="containerRef">
+    <div v-if="label" class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70 ml-1">
+      {{ label }}
     </div>
+    
+    <!-- Trigger Button -->
+    <button
+      type="button"
+      @click="isOpen = !isOpen"
+      class="w-full flex items-center justify-between px-4 py-3 rounded-xl min-h-[52px] transition-all border-2"
+      :class="isOpen ? 'bg-white border-black shadow-sm' : 'bg-[#F2F2F7] border-transparent hover:bg-[#E5E5EA]'"
+    >
+      <div class="flex items-center gap-3">
+        <div
+          class="w-6 h-6 rounded-full shadow-sm border border-black/5"
+          :style="{ backgroundColor: `var(${currentColor?.var || '--ios-gray'})` }"
+        ></div>
+        <span class="text-[17px] font-medium text-foreground tracking-tight">{{ currentColor?.name || 'Gray' }}</span>
+      </div>
+      <IconChevronDown 
+        class="w-5 h-5 text-muted-foreground/50 transition-transform duration-200"
+        :class="{ 'rotate-180': isOpen }"
+      />
+    </button>
 
-    <f7-input
-      v-model:value="colorValue"
-      type="colorpicker"
-      class="hidden"
-      :color-picker-params="colorPickerParams"
-    />
+    <!-- Custom Dropdown Palette -->
+    <div
+      v-if="isOpen"
+      class="absolute z-[100] top-[calc(100%+8px)] left-0 right-0 bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-black/5 p-6 animate-in fade-in zoom-in-95 duration-200"
+    >
+      <div class="flex flex-col gap-6">
+        <!-- Row 1: 11 Primary Colors -->
+        <div class="flex justify-between items-center gap-1">
+          <button
+            v-for="color in row1"
+            :key="color.hex"
+            type="button"
+            @click="selectColor(color)"
+            class="w-7 h-7 rounded-full transition-all hover:scale-110 active:scale-95 shadow-sm border border-black/5 relative"
+            :style="{ backgroundColor: `var(${color.var})` }"
+            :title="color.name"
+          >
+            <!-- Selection Indicator (Double border style) -->
+            <template v-if="isColorSelected(color)">
+              <div
+                class="absolute inset-[-4px] rounded-full border-2"
+                :style="{ borderColor: `var(${color.var})` }"
+              ></div>
+              <div
+                class="absolute inset-[-2px] rounded-full border-2 border-white"
+              ></div>
+            </template>
+          </button>
+        </div>
+        
+        <!-- Row 2: 2 Centered Colors -->
+        <div class="flex justify-center items-center gap-4">
+          <button
+            v-for="color in row2"
+            :key="color.hex"
+            type="button"
+            @click="selectColor(color)"
+            class="w-7 h-7 rounded-full transition-all hover:scale-110 active:scale-95 shadow-sm border border-black/5 relative"
+            :style="{ backgroundColor: `var(${color.var})` }"
+            :title="color.name"
+          >
+            <!-- Selection Indicator -->
+            <template v-if="isColorSelected(color)">
+              <div
+                class="absolute inset-[-4px] rounded-full border-2"
+                :style="{ borderColor: `var(${color.var})` }"
+              ></div>
+              <div
+                class="absolute inset-[-2px] rounded-full border-2 border-white"
+              ></div>
+            </template>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
-import { f7 } from "framework7-vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import IconChevronDown from "~icons/lucide/chevron-down";
+import * as m from "@/paraglide/messages";
+
+interface Color {
+  name: string;
+  hex: string;
+  var: string;
+}
+
+const COLORS = computed((): Color[] => [
+  { name: m.color_red(), hex: '#FF3B30', var: '--ios-red' },
+  { name: m.color_orange(), hex: '#FF9500', var: '--ios-orange' },
+  { name: m.color_yellow(), hex: '#FFCC00', var: '--ios-yellow' },
+  { name: m.color_green(), hex: '#34C759', var: '--ios-green' },
+  { name: m.color_mint(), hex: '#00C7BE', var: '--ios-mint' },
+  { name: m.color_teal(), hex: '#30B0C7', var: '--ios-teal' },
+  { name: m.color_cyan(), hex: '#32ADE6', var: '--ios-cyan' },
+  { name: m.color_blue(), hex: '#007AFF', var: '--ios-blue' },
+  { name: m.color_indigo(), hex: '#5856D6', var: '--ios-indigo' },
+  { name: m.color_purple(), hex: '#AF52DE', var: '--ios-purple' },
+  { name: m.color_pink(), hex: '#FF2D55', var: '--ios-pink' },
+  { name: m.color_brown(), hex: '#A2845E', var: '--ios-brown' },
+  { name: m.color_gray(), hex: '#8E8E93', var: '--ios-gray' },
+]);
+
+const row1 = computed(() => COLORS.value.slice(0, 11));
+const row2 = computed(() => COLORS.value.slice(11));
 
 interface Props {
   modelValue: { hex: string };
@@ -32,149 +119,45 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  label: "Цвет",
+  label: () => m.color_picker_label(),
 });
 
 const emit = defineEmits<{
   "update:modelValue": [value: { hex: string }];
 }>();
 
-const colorValue = ref({ hex: props.modelValue.hex || "#3F51B5" });
+const isOpen = ref(false);
+const containerRef = ref<HTMLElement | null>(null);
 
-const colorPickerParams = computed(() => ({
-  modules: ["palette"],
-  openIn: "auto",
-  openInPhone: "sheet",
-  targetEl: `#${props.targetId}`,
-  palette: [
-    [
-      "#FFEBEE",
-      "#FFCDD2",
-      "#EF9A9A",
-      "#E57373",
-      "#EF5350",
-      "#F44336",
-      "#E53935",
-      "#D32F2F",
-      "#C62828",
-      "#B71C1C",
-    ],
-    [
-      "#F3E5F5",
-      "#E1BEE7",
-      "#CE93D8",
-      "#BA68C8",
-      "#AB47BC",
-      "#9C27B0",
-      "#8E24AA",
-      "#7B1FA2",
-      "#6A1B9A",
-      "#4A148C",
-    ],
-    [
-      "#E8EAF6",
-      "#C5CAE9",
-      "#9FA8DA",
-      "#7986CB",
-      "#5C6BC0",
-      "#3F51B5",
-      "#3949AB",
-      "#303F9F",
-      "#283593",
-      "#1A237E",
-    ],
-    [
-      "#E1F5FE",
-      "#B3E5FC",
-      "#81D4FA",
-      "#4FC3F7",
-      "#29B6F6",
-      "#03A9F4",
-      "#039BE5",
-      "#0288D1",
-      "#0277BD",
-      "#01579B",
-    ],
-    [
-      "#E0F2F1",
-      "#B2DFDB",
-      "#80CBC4",
-      "#4DB6AC",
-      "#26A69A",
-      "#009688",
-      "#00897B",
-      "#00796B",
-      "#00695C",
-      "#004D40",
-    ],
-    [
-      "#F1F8E9",
-      "#DCEDC8",
-      "#C5E1A5",
-      "#AED581",
-      "#9CCC65",
-      "#8BC34A",
-      "#7CB342",
-      "#689F38",
-      "#558B2F",
-      "#33691E",
-    ],
-    [
-      "#FFFDE7",
-      "#FFF9C4",
-      "#FFF59D",
-      "#FFF176",
-      "#FFEE58",
-      "#FFEB3B",
-      "#FDD835",
-      "#FBC02D",
-      "#F9A825",
-      "#F57F17",
-    ],
-    [
-      "#FFF3E0",
-      "#FFE0B2",
-      "#FFCC80",
-      "#FFB74D",
-      "#FFA726",
-      "#FF9800",
-      "#FB8C00",
-      "#F57C00",
-      "#EF6C00",
-      "#E65100",
-    ],
-  ],
-  formatValue(value: any) {
-    return value.hex;
-  },
-}));
+const currentColor = computed(() => {
+  const currentHex = (props.modelValue.hex || '#8E8E93').toUpperCase();
+  return COLORS.value.find(c => c.hex.toUpperCase() === currentHex) || COLORS.value[12];
+});
 
-const openColorPicker = () => {
-  // The Framework7 color picker will be triggered automatically via targetEl
+const isColorSelected = (color: Color) => {
+  return props.modelValue.hex.toUpperCase() === color.hex.toUpperCase();
 };
 
-watch(
-  colorValue,
-  (newVal) => {
-    if (newVal && (newVal as any).hex) {
-      try {
-        (f7 as any).colorPicker?.close?.();
-      } catch {
-        console.error("🔴 [ColorPicker] Error closing color picker");
-      }
-      emit("update:modelValue", newVal);
-    }
-  },
-  { deep: false }
-);
+const selectColor = (color: Color) => {
+  emit('update:modelValue', { hex: color.hex });
+  isOpen.value = false;
+};
 
-watch(
-  () => props.modelValue,
-  (newVal) => {
-    if (newVal && newVal.hex !== colorValue.value.hex) {
-      colorValue.value = { hex: newVal.hex };
-    }
-  },
-  { immediate: true }
-);
+const handleOutsideClick = (event: MouseEvent) => {
+  if (containerRef.value && !containerRef.value.contains(event.target as Node)) {
+    isOpen.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('mousedown', handleOutsideClick);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('mousedown', handleOutsideClick);
+});
 </script>
+
+<style scoped>
+/* No component-specific vars needed, using global ones */
+</style>

@@ -3,11 +3,11 @@
     <div class="fixed-header">
       <PopoverHeader
         :title="currentStepMeta.title"
+        :subtitle="currentStepMeta.subtitle"
         cancel-text="Закрыть"
-        :on-cancel="requestClose"
+        :on-cancel="handleExit"
       >
-        <p class="text-sm text-muted-foreground mt-0.5">{{ currentStepMeta.subtitle }}</p>
-        <div class="flex gap-1.5 mt-2.5">
+        <div class="flex gap-1.5">
           <div
             v-for="step in steps"
             :key="step.id"
@@ -26,41 +26,46 @@
       </div>
     </div>
 
-    <div class="wizard-content p-4 space-y-5">
-      <section v-if="currentStep === 1" class="space-y-4">
-        <Select
-          id="event-class9-generic"
-          label="Дисциплина"
-          placeholder="Выберите дисциплину"
-          name="event-class9-generic"
-          v-model="class9IdModel"
-          :options="class9Options"
-          searchable
-          v-bind="selectHandlers"
-        />
+    <div class="wizard-content px-8 py-4 space-y-5">
+      <section v-if="currentStep === 1" class="space-y-5">
+        <div class="space-y-1.5">
+          <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70 ml-1">
+            Дисциплина
+          </div>
+          <Select
+            id="event-class9-generic"
+            label=""
+            placeholder="Выберите дисциплину"
+            name="event-class9-generic"
+            v-model="class9IdModel"
+            :options="class9Options"
+            searchable
+            v-bind="selectHandlers"
+          />
+        </div>
 
         <div class="space-y-2">
-          <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+          <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70 ml-1">
             Нагрузка
           </div>
           <div class="grid grid-cols-2 gap-3">
-            <div class="rounded-2xl border border-input bg-secondary/40 p-4">
+            <div class="rounded-2xl border border-input bg-[#F2F2F7] p-4">
               <div class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 План
               </div>
-              <div class="mt-1 text-4xl font-bold text-foreground leading-none">
+              <div class="mt-1 text-[34px] font-bold text-foreground leading-none">
                 {{ totalPlannedHours }} ч.
               </div>
-              <div class="mt-1 text-xs text-muted-foreground">Полный курс</div>
+              <div class="mt-1 text-xs text-muted-foreground font-medium">Полный курс</div>
             </div>
-            <div class="rounded-2xl border border-orange-200 bg-orange-50/50 p-4">
+            <div class="rounded-2xl border border-orange-100 bg-orange-50/50 p-4">
               <div class="text-[11px] font-semibold uppercase tracking-wide text-orange-600">
                 Семестр
               </div>
-              <div class="mt-1 text-4xl font-bold text-orange-600 leading-none">
+              <div class="mt-1 text-[34px] font-bold text-orange-600 leading-none">
                 {{ semesterPlannedHours }} ч.
               </div>
-              <div class="mt-1 text-xs text-orange-500">К распределению</div>
+              <div class="mt-1 text-xs text-orange-500 font-medium">К распределению</div>
             </div>
           </div>
         </div>
@@ -69,6 +74,7 @@
           v-model="colorModel"
           target-id="color-picker-generic"
           label="Цвет"
+          vertical
         />
       </section>
 
@@ -609,6 +615,7 @@
       :cancel-text="isFirstStep ? 'Отмена' : 'Назад'"
       :save-text="isLastStep ? 'Создать' : 'Далее'"
       :disabled="!isPrimaryEnabled"
+      :save-variant="isLastStep ? 'success' : 'primary'"
       :on-cancel="handleBack"
       :on-save="handlePrimaryAction"
     />
@@ -621,12 +628,42 @@
       :on-next="handleKtpNext"
       @update:opened="handleKtpPopupClosed"
     />
+
+    <!-- Exit Confirmation Dialog -->
+    <f7-popup
+      :opened="showExitConfirm"
+      @popup:closed="showExitConfirm = false"
+      class="exit-confirm-popup"
+    >
+      <div class="fixed inset-0 z-[160] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/20 backdrop-blur-sm" @click="showExitConfirm = false" />
+        <div class="relative bg-white rounded-[24px] p-8 w-full max-w-[320px] text-center space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
+          <h3 class="text-[19px] font-bold text-gray-900">{{ m.unsaved_changes_title() }}</h3>
+          <p class="text-[15px] text-gray-500 leading-relaxed">{{ m.unsaved_changes_message() }}</p>
+          <div class="grid grid-cols-2 gap-3 pt-2">
+            <button 
+              @click="showExitConfirm = false" 
+              class="py-3 rounded-xl bg-[#F2F2F7] text-gray-900 font-semibold text-[15px] hover:bg-[#E5E5EA] transition-colors"
+            >
+              {{ m.unsaved_changes_cancel() }}
+            </button>
+            <button 
+              @click="handleConfirmExit" 
+              class="py-3 rounded-xl bg-[#ef4444] text-white font-semibold text-[15px] hover:bg-red-600 transition-colors"
+            >
+              {{ m.unsaved_changes_confirm() }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </f7-popup>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, toRefs, watch, type Ref } from "vue";
 import { f7 } from "framework7-vue";
+import * as m from "@/paraglide/messages";
 import IconX from "~icons/lucide/x";
 import IconChevronRight from "~icons/lucide/chevron-right";
 import IconChevronUp from "~icons/lucide/chevron-up";
@@ -765,8 +802,8 @@ const selectedWeekDaysModel = computed<WeekDaySchedule[]>({
 });
 
 const colorModel = computed({
-  get: () => ({ hex: props.color || "#3F51B5" }),
-  set: (v: { hex: string }) => emit("update:color", v?.hex || "#3F51B5"),
+  get: () => ({ hex: props.color || "#8E8E93" }),
+  set: (v: { hex: string }) => emit("update:color", v?.hex || "#8E8E93"),
 });
 
 const useIndividualJournalsModel = computed({
@@ -1052,7 +1089,19 @@ function toggleSelectAllStudents() {
 }
 
 const isKtpPopupOpen = ref(false);
+const showExitConfirm = ref(false);
 const currentKtpIdRef = ref<string | null>(null);
+
+const handleExit = () => {
+  // In concept: if (JSON.stringify(formData) !== JSON.stringify(initialData)) setShowExitConfirm(true);
+  // Here we can simplify to always show if not at first step or just always show if the user wants it to look like concept
+  showExitConfirm.value = true;
+};
+
+const handleConfirmExit = () => {
+  showExitConfirm.value = false;
+  props.requestClose();
+};
 
 const semesterForKtp = computed(() => {
   if (!props.semesterId) return null;
@@ -1375,7 +1424,7 @@ const isPrimaryEnabled = computed(() => {
 
 function handleBack() {
   if (isFirstStep.value) {
-    props.requestClose();
+    handleExit();
     return;
   }
   previousStep();
@@ -1421,6 +1470,15 @@ defineExpose<{
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+}
+
+.exit-confirm-popup {
+  --f7-popup-bg-color: transparent;
+  box-shadow: none !important;
+}
+
+:deep(.exit-confirm-popup.modal-in) {
+  transition-duration: 0ms !important;
 }
 
 .students-table-header,

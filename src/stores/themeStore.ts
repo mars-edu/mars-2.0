@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-
-type Theme = "light" | "dark" | "lavanda";
+import { THEMES } from "@/types/theme";
+import type { Theme } from "@/types/theme";
 
 export const useThemeStore = defineStore(
   "theme",
@@ -11,7 +11,10 @@ export const useThemeStore = defineStore(
     function setTheme(theme: Theme) {
       currentTheme.value = theme;
 
-      document.documentElement.classList.remove("dark", "lavanda");
+      // Remove all theme classes except 'light' which is the default (no class)
+      THEMES.forEach(t => {
+        if (t !== "light") document.documentElement.classList.remove(t);
+      });
 
       if (theme !== "light") {
         document.documentElement.classList.add(theme);
@@ -28,7 +31,9 @@ export const useThemeStore = defineStore(
 
     function reset() {
       currentTheme.value = "light";
-      document.documentElement.classList.remove("dark", "lavanda");
+      THEMES.forEach(t => {
+        if (t !== "light") document.documentElement.classList.remove(t);
+      });
     }
 
     return {
@@ -39,6 +44,8 @@ export const useThemeStore = defineStore(
     };
   },
   {
-    persist: true,
+    persist: {
+      storage: localStorage,
+    },
   }
 );

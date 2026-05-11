@@ -2,12 +2,13 @@
   <div>
     <button
       :id="buttonId"
-      class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-primary hover:bg-primary/90 rounded-full transition-colors"
+      class="bg-primary hover:opacity-90 text-primary-foreground px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all flex items-center gap-2 active:scale-95"
       aria-label="Добавить семестр"
       type="button"
       @click.stop="openAddSemesterPopover"
     >
-      <IconPlus class="w-4 h-4 text-white" />
+      <IconPlus class="text-[20px]" />
+      <span>Добавить</span>
     </button>
 
     <GuardedPopover

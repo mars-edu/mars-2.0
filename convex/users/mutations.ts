@@ -1,7 +1,7 @@
 import { mutation, action } from "../_generated/server";
 import { v } from "convex/values";
 import { api } from "../_generated/api";
-import { Id } from "../_generated/dataModel";
+import type { Id } from "../_generated/dataModel";
 
 /**
  * Update user's profile picture
@@ -90,7 +90,7 @@ export const removeProfilePicture = mutation({
 export const updateTheme = mutation({
   args: {
     userId: v.id("users"),
-    theme: v.union(v.literal("light"), v.literal("dark"), v.literal("lavanda")),
+    theme: v.union(v.literal("light"), v.literal("dark"), v.literal("lavanda"), v.literal("coral"), v.literal("graphite")),
   },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
@@ -107,6 +107,41 @@ export const updateTheme = mutation({
     return {
       success: true,
       theme: args.theme,
+    };
+  },
+});
+
+/**
+ * Update user's profile information
+ */
+export const updateProfile = mutation({
+  args: {
+    userId: v.id("users"),
+    firstName: v.string(),
+    lastName: v.string(),
+    middleName: v.optional(v.string()),
+    email: v.string(),
+    phone: v.optional(v.string()),
+    office: v.optional(v.string()),
+    department: v.optional(v.string()),
+    degree: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const { userId, ...profileData } = args;
+
+    await ctx.db.patch(args.userId, {
+      ...profileData,
+      updatedAt: Date.now(),
+    });
+
+    return {
+      success: true,
     };
   },
 });

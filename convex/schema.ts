@@ -31,7 +31,11 @@ export default defineSchema({
       )
     ),
     avatar: v.optional(v.string()), // Profile picture URL or storage ID
-    theme: v.optional(v.union(v.literal("light"), v.literal("dark"), v.literal("lavanda"))), // User theme preference
+    theme: v.optional(v.union(v.literal("light"), v.literal("dark"), v.literal("lavanda"), v.literal("coral"), v.literal("graphite"))), // User theme preference
+    phone: v.optional(v.string()),
+    office: v.optional(v.string()),
+    department: v.optional(v.string()),
+    degree: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

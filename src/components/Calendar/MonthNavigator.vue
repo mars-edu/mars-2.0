@@ -1,19 +1,19 @@
 <template>
-  <div class="flex items-center" @wheel="handleWheel" ref="monthNavArea">
+  <div class="flex items-center bg-card rounded-lg p-1 shadow-sm border border-border" @wheel="handleWheel" ref="monthNavArea">
     <button
-      class="p-1 hover:bg-secondary rounded transition-colors"
+      class="p-1.5 hover:bg-muted rounded-md text-muted-foreground transition-colors"
       @click="$emit('previous-month')"
     >
-      <IconChevronLeft class="text-muted-foreground text-sm" />
+      <IconChevronLeft class="text-xl" />
     </button>
-    <h1 class="text-xl text-foreground px-2 select-none min-w-fit">
+    <div class="px-4 font-semibold text-foreground min-w-[140px] text-center select-none">
       {{ monthName }} {{ year }}
-    </h1>
+    </div>
     <button
-      class="p-1 hover:bg-secondary rounded transition-colors"
+      class="p-1.5 hover:bg-muted rounded-md text-muted-foreground transition-colors"
       @click="$emit('next-month')"
     >
-      <IconChevronRight class="text-muted-foreground text-sm" />
+      <IconChevronRight class="text-xl" />
     </button>
   </div>
 </template>

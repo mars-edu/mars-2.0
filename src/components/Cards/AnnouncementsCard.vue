@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-card rounded-3xl p-8 shadow-sm border border-border">
+  <div class="bg-card rounded-[32px] p-8 shadow-sm border border-border">
     <!-- Header -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
       <div class="flex items-center gap-3">
@@ -7,6 +7,13 @@
           <IconMegaphone class="text-xl w-5 h-5" />
         </div>
         <h3 class="text-lg font-bold text-foreground">Объявления и новости</h3>
+        <button
+          @click="isAddModalOpen = true"
+          class="ml-2 flex-none w-8 h-8 flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl transition-all active:scale-95"
+          title="Создать объявление"
+        >
+          <IconPlus class="w-4 h-4" />
+        </button>
       </div>
 
       <!-- Filter Tabs -->
@@ -55,25 +62,34 @@
         </div>
       </template>
       <div v-else class="col-span-full text-center py-8 text-muted-foreground text-sm">
-        Нет объявлений в этой категории
+        {{ m.home_announcements_empty() }}
       </div>
     </div>
+
+    <AddAnnouncementModal
+      v-model:opened="isAddModalOpen"
+      @add="handleAddAnnouncement"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import IconMegaphone from "~icons/lucide/megaphone";
+import IconPlus from "~icons/lucide/plus";
+import AddAnnouncementModal from "@/components/Home/AddAnnouncementModal.vue";
+import * as m from "@/paraglide/messages";
 
 const activeFilter = ref("all");
+const isAddModalOpen = ref(false);
 
-const filters = [
-  { id: "all", label: "Все" },
-  { id: "academic", label: "Учебная часть" },
-  { id: "contests", label: "Конкурсы" },
-  { id: "events", label: "Мероприятия" },
-  { id: "system", label: "Система" },
-];
+const filters = computed(() => [
+  { id: "all", label: m.home_announcements_filter_all() },
+  { id: "academic", label: m.home_announcements_filter_academic() },
+  { id: "contests", label: m.home_announcements_filter_contests() },
+  { id: "events", label: m.home_announcements_filter_events() },
+  { id: "system", label: m.home_announcements_filter_system() },
+]);
 
 // TODO: replace with real data from notificationStore or a dedicated announcements API
 interface AnnouncementItem {
@@ -86,7 +102,7 @@ interface AnnouncementItem {
   badgeClass: string;
 }
 
-const items: AnnouncementItem[] = [
+const items = ref<AnnouncementItem[]>([
   {
     id: 1,
     title: "Заседание кафедры",
@@ -132,11 +148,35 @@ const items: AnnouncementItem[] = [
     badgeClass: "bg-purple-50 text-purple-600",
     description: "Праздничное мероприятие в актовом зале в 17:00.",
   },
-];
+]);
 
 const filteredItems = computed(() =>
   activeFilter.value === "all"
-    ? items
-    : items.filter((i) => i.category === activeFilter.value)
+    ? items.value
+    : items.value.filter((i) => i.category === activeFilter.value)
 );
+
+const handleAddAnnouncement = (newAnnouncement: any) => {
+  const badgeClass =
+    newAnnouncement.type === "alert"
+      ? "bg-red-50 text-red-600"
+      : newAnnouncement.type === "system"
+      ? "bg-muted text-muted-foreground border border-border"
+      : newAnnouncement.category === "contests"
+      ? "bg-yellow-50 text-yellow-600"
+      : newAnnouncement.category === "events"
+      ? "bg-purple-50 text-purple-600"
+      : "bg-blue-50 text-blue-600";
+
+  items.value.unshift({
+    ...newAnnouncement,
+    badge:
+      newAnnouncement.type === "alert"
+        ? "Важно"
+        : newAnnouncement.type === "system"
+        ? "Система"
+        : "Инфо",
+    badgeClass,
+  });
+};
 </script>

@@ -1,6 +1,8 @@
 <template>
-  <div v-bind="$attrs" class="desktop-header desktop-only">
-    <Logo class="header-left" />
+  <div v-bind="$attrs" class="desktop-header desktop-only" :class="contentMargin">
+    <div class="header-left">
+      <!-- Left spacer or search can start here if needed -->
+    </div>
     <div class="header-center">
       <SearchBar />
     </div>
@@ -28,7 +30,11 @@
         <ThemeToggle />
       </div>
       <div class="avatar-container flex-shrink-0">
-        <button class="flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full hover:bg-muted transition-colors border border-transparent hover:border-border">
+        <button
+          id="profile-menu-button"
+          @click="openProfileMenu"
+          class="flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full hover:bg-muted transition-colors border border-transparent hover:border-border"
+        >
           <img
             v-if="userStore.currentUser?.avatar"
             :src="userStore.currentUser.avatar"
@@ -45,6 +51,9 @@
 
     <!-- Notification Center Popover -->
     <NotificationCenterPopover />
+
+    <!-- Profile Popover -->
+    <ProfilePopover />
   </div>
 </template>
 
@@ -52,9 +61,9 @@
 import { f7 } from "framework7-vue";
 import SearchBar from "../SearchBar.vue";
 import LanguageSelector from "../LanguageSelector.vue";
-import Logo from "../Logo/Logo.vue";
 import ThemeToggle from "../ThemeToggle.vue";
 import NotificationCenterPopover from "../NotificationCenterPopover.vue";
+import ProfilePopover from "./ProfilePopover.vue";
 import IconBell from "~icons/lucide/bell";
 import IconCircleUser from "~icons/lucide/circle-user";
 import IconChevronDown from "~icons/lucide/chevron-down";
@@ -64,6 +73,7 @@ import { onMounted, computed } from "vue";
 import { useConvexQuery } from "convex-vue";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import { useSidebar } from "@/composables/useSidebar";
 
 defineOptions({
   inheritAttrs: false,
@@ -73,6 +83,7 @@ console.log("[Header] Component setup initiated");
 
 const themeStore = useThemeStore();
 const userStore = useUserStore();
+const { contentMargin } = useSidebar();
 
 console.log("[Header] Theme store initialized");
 console.log("[Header] Current theme:", themeStore.currentTheme);
@@ -89,6 +100,10 @@ const unreadCount = computed(() => (unreadCountResult as any).data.value ?? 0);
 
 const openNotificationCenter = () => {
   f7.popover.open("#notification-center-popover", "#notification-bell-button");
+};
+
+const openProfileMenu = () => {
+  f7.popover.open("#profile-popover", "#profile-menu-button");
 };
 
 onMounted(() => {
@@ -114,9 +129,6 @@ onMounted(() => {
   top: 0;
   z-index: 100;
   transition: all 0.3s ease;
-  width: 100%;
-  border-bottom-left-radius: 0.5rem;
-  border-bottom-right-radius: 0.5rem;
 }
 
 .header-left {
