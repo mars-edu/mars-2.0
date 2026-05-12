@@ -1,12 +1,12 @@
 <template>
   <div class="bg-card rounded-[32px] p-8 shadow-sm border border-border flex flex-col h-full overflow-hidden">
     <div class="flex justify-between items-center mb-6">
-      <h3 class="text-xl font-bold text-foreground truncate mr-4">Последняя активность</h3>
+      <h3 class="text-xl font-bold text-foreground truncate mr-4">{{ m.home_activity_title() }}</h3>
       <button
         class="text-primary text-sm font-medium hover:opacity-70 transition-opacity flex-shrink-0 whitespace-nowrap"
         @click="navigateToProtocol"
       >
-        Показать все
+        {{ m.home_activity_show_all() }}
       </button>
     </div>
 

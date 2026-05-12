@@ -6,9 +6,9 @@
     class="rounded-3xl"
   >
     <f7-page>
-      <f7-navbar :title="lesson?.subject || 'Занятие'">
+      <f7-navbar :title="lesson?.subject || m.home_schedule_modal_default_title()">
         <f7-nav-right>
-          <f7-link @click="$emit('close')">Закрыть</f7-link>
+          <f7-link @click="$emit('close')">{{ m.common_close() }}</f7-link>
         </f7-nav-right>
       </f7-navbar>
 
@@ -40,7 +40,7 @@
           
           <div class="mt-4 text-sm text-muted-foreground flex items-center gap-2">
             <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            Аудитория {{ lesson.room }}
+            {{ m.home_schedule_room_prefix() }} {{ lesson.room }}
           </div>
         </div>
 
@@ -52,7 +52,7 @@
             @click="openJournal"
           >
             <IconFileText class="w-5 h-5" />
-            Открыть журнал
+            {{ m.home_schedule_modal_open_journal() }}
           </f7-button>
           <f7-button
             large
@@ -60,7 +60,7 @@
             class="rounded-xl font-bold"
             @click="$emit('close')"
           >
-            Закрыть
+            {{ m.common_close() }}
           </f7-button>
         </div>
       </div>
@@ -76,6 +76,7 @@ import IconPaperclip from "~icons/lucide/paperclip";
 import IconClock from "~icons/lucide/clock";
 import IconUsers from "~icons/lucide/users";
 import IconFileText from "~icons/lucide/file-text";
+import * as m from '@/paraglide/messages';
 
 const props = defineProps<{
   lesson: Lesson | null;
@@ -86,10 +87,10 @@ const emit = defineEmits(['close', 'openJournal']);
 const lessonTypeLabel = computed(() => {
   if (!props.lesson) return '';
   switch (props.lesson.type) {
-    case 'lecture': return 'Лекция';
-    case 'seminar': return 'Семинар';
-    case 'lab': return 'Лабораторная';
-    default: return 'Занятие';
+    case 'lecture': return m.home_schedule_type_lecture();
+    case 'seminar': return m.home_schedule_type_seminar();
+    case 'lab': return m.home_schedule_type_lab();
+    default: return m.home_schedule_modal_default_title();
   }
 });
 

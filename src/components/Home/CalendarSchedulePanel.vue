@@ -144,12 +144,12 @@ const currentDate = ref(new Date());
 const selectedLesson = ref<Lesson | null>(null);
 
 const weekDays = computed(() => {
-  const days = {
-    ru: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
-    en: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
-    kk: ["Дс", "Сс", "Ср", "Бс", "Жм", "Сб", "Жк"]
-  };
-  return days[locale.value as keyof typeof days] || days.ru;
+  const baseDate = new Date(2024, 0, 1); // Monday
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(baseDate);
+    d.setDate(baseDate.getDate() + i);
+    return d.toLocaleDateString(locale.value, { weekday: "short" });
+  });
 });
 
 const isSelectedDate = (date: CalendarDate): boolean => {

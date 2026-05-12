@@ -6,11 +6,11 @@
         <div class="bg-orange-100 text-orange-600 p-2 rounded-xl">
           <IconMegaphone class="text-xl w-5 h-5" />
         </div>
-        <h3 class="text-lg font-bold text-foreground">Объявления и новости</h3>
+        <h3 class="text-lg font-bold text-foreground">{{ m.home_announcements_title() }}</h3>
         <button
           @click="isAddModalOpen = true"
           class="ml-2 flex-none w-8 h-8 flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl transition-all active:scale-95"
-          title="Создать объявление"
+          :title="m.home_announcements_create_tooltip()"
         >
           <IconPlus class="w-4 h-4" />
         </button>
