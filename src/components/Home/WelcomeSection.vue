@@ -1,5 +1,5 @@
 <template>
-  <div class="mb-8">
+  <div class="mb-8" :key="locale">
     <h1 class="text-3xl font-bold text-foreground tracking-tight">
       {{ greeting }}, {{ fullName }}!
     </h1>
@@ -30,7 +30,7 @@ onMounted(() => {
 
 onUnmounted(() => clearInterval(timer));
 
-const fullName = computed(() => getUserFullName(userStore.currentUser));
-const greeting = computed(() => getGreeting(now.value));
+const fullName = computed(() => getUserFullName(userStore.currentUser, locale.value));
+const greeting = computed(() => getGreeting(now.value, locale.value));
 const formattedDate = computed(() => formatWelcomeDate(now.value, locale.value));
 </script>

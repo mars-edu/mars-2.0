@@ -5,9 +5,9 @@
   >
     <Header class="hidden md:block flex-shrink-0 border-b border-border" />
 
-    <div class="flex flex-1 overflow-hidden">
-      <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
+    <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
+    <div class="flex flex-1 overflow-hidden">
       <div
         class="flex-1 overflow-y-auto px-2 py-3 sm:px-3 md:p-4 bg-background pb-16 md:pb-6 relative transition-all duration-200"
         :class="contentMargin"

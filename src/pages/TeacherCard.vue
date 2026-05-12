@@ -4,118 +4,138 @@
     class="flex flex-col h-screen bg-background text-foreground"
   >
     <Header class="hidden md:block flex-shrink-0 border-b border-border" />
+    <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
-    <div class="flex flex-1 overflow-hidden">
-      <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
+    <div
+      class="flex flex-1 overflow-hidden p-2 md:p-4 transition-all duration-200"
+      :class="contentMargin"
+    >
+      <div class="flex-1 flex flex-col min-h-0 rounded-2xl border border-border/10 overflow-hidden bg-card shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
 
-      <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 transition-all duration-200"
-        :class="contentMargin"
-      >
-        <div class="flex flex-col gap-2">
-          <div class="flex items-center justify-between">
-            <h1 class="text-xl font-semibold">{{ teacher_card_title() }}</h1>
-            <div class="teacher-card-filters flex items-center gap-2">
-              <f7-input
-                type="text"
-                :placeholder="teacher_card_search()"
-                v-model:value="searchTerm"
-                class="w-[250px] !bg-white h-full !py-2"
-                clear-button
-              />
+        <!-- Title row -->
+        <div class="flex items-center px-8 py-6 pb-2 shrink-0">
+          <h1 class="text-xl font-bold text-foreground whitespace-nowrap">{{ teacher_card_title() }}</h1>
+        </div>
+
+        <!-- Scrollable content -->
+        <div class="flex-1 overflow-y-auto p-6 pb-16 md:pb-6">
+          <div class="w-full space-y-6 pb-8">
+
+            <!-- Controls Card -->
+            <div class="teacher-card-filters space-y-3 p-4 rounded-lg shadow-sm border border-border bg-card">
+              <!-- Row 1: search + add -->
+              <div class="flex items-center gap-3">
+                <div class="relative flex-1 max-w-sm">
+                  <IconSearch class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 w-[18px] h-[18px]" />
+                  <input
+                    v-model="searchTerm"
+                    type="text"
+                    :placeholder="teacher_card_search()"
+                    class="teacher-search-input w-full pl-10 pr-4 py-2 rounded-lg text-sm text-foreground transition-all"
+                  />
+                </div>
+                <button
+                  @click="triggerAddTeacher"
+                  class="w-auto flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors shadow-sm"
+                >
+                  <IconPlus class="w-[18px] h-[18px]" />
+                  <span class="hidden sm:inline">{{ common_add() }}</span>
+                </button>
+              </div>
+              <!-- Row 2: filter selects -->
+              <div class="flex flex-wrap gap-3 items-center">
+                <Select
+                  v-model="selectedPosition"
+                  :options="positionOptions"
+                  :placeholder="teacher_card_position()"
+                  name="position"
+                  class="w-44"
+                />
+                <Select
+                  v-model="selectedEmploymentYear"
+                  :options="employmentYearOptions"
+                  :placeholder="teacher_card_year()"
+                  name="employment-year"
+                  class="w-36"
+                />
+                <Select
+                  v-model="selectedGender"
+                  :options="genderOptions"
+                  :placeholder="teacher_card_gender()"
+                  name="gender"
+                  class="w-36"
+                />
+              </div>
             </div>
-          </div>
 
-          <div
-            class="flex flex-wrap gap-x-4 gap-y-2 items-center teacher-card-filters"
-          >
-            <Select
-              v-model="selectedPosition"
-              :options="positionOptions"
-              :placeholder="teacher_card_position()"
-              name="position"
-              class="min-w-[150px]"
-            />
-
-            <Select
-              v-model="selectedEmploymentYear"
-              :options="employmentYearOptions"
-              :placeholder="teacher_card_year()"
-              name="employment-year"
-              class="min-w-[150px]"
-            />
-
-            <Select
-              v-model="selectedGender"
-              :options="genderOptions"
-              :placeholder="teacher_card_gender()"
-              name="gender"
-              class="min-w-[150px]"
-            />
-          </div>
-
-          <div class="bg-card text-card-foreground rounded-xl p-3 shadow-sm">
-            <div class="overflow-x-auto">
-              <table class="w-full border-collapse rounded-lg">
-                <thead>
-                  <tr class="bg-gray-500 text-white">
-                    <th class="px-4 py-2 text-left">{{ teacher_card_col_num() }}</th>
-                    <th class="px-4 py-2 text-left">{{ teacher_card_col_name() }}</th>
-                    <th class="px-4 py-2 text-left">{{ teacher_card_col_login() }}</th>
-                    <th class="px-4 py-2 text-left">{{ teacher_card_col_email() }}</th>
-                    <th class="px-4 py-2 text-left">{{ teacher_card_col_position() }}</th>
-                    <th class="px-4 py-2 text-left">{{ teacher_card_col_year() }}</th>
-                    <th class="px-4 py-2 text-left">{{ teacher_card_col_actions() }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(teacher, index) in filteredTeachers"
-                    :key="teacher.id"
-                    :id="`teacher-item-${teacher.id}`"
-                    class="border-b border-border hover:bg-muted/30"
-                    :class="{
-                      'bg-blue-100': teacher.gender === 'male',
-                      'bg-pink-100': teacher.gender === 'female',
-                    }"
-                    @click="selectTeacher(teacher)"
-                  >
-                    <td class="px-4 py-3">{{ index + 1 }}</td>
-                    <td class="px-4 py-3">
-                      {{ teacherStore.getTeacherFullName(teacher.id) }}
-                    </td>
-                    <td class="px-4 py-3">{{ teacher.username || "-" }}</td>
-                    <td class="px-4 py-3">{{ teacher.email || "-" }}</td>
-                    <td class="px-4 py-3">{{ teacher.position }}</td>
-                    <td class="px-4 py-3">{{ teacher.employmentYear }}</td>
-                    <td class="px-4 py-3">
-                      <div class="flex gap-2 items-center justify-center">
-                        <button
-                          v-if="!teacher.email"
-                          @click.stop="generateCredentials(teacher)"
-                          :disabled="generatingForId === teacher.id"
-                          class="px-3 py-1 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        >
-                          {{
-                            generatingForId === teacher.id
-                              ? teacher_card_generating()
-                              : teacher_card_create_account()
-                          }}
-                        </button>
-                        <button
-                          v-else
-                          @click.stop="openActionsMenu(teacher, $event)"
-                          class="p-2 hover:bg-gray-200 rounded-full transition-colors"
-                          :id="`teacher-actions-${teacher.id}`"
-                        >
-                          <IconEllipsisVertical class="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <!-- Table Card -->
+            <div class="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead class="bg-muted/50 border-b border-border">
+                    <tr>
+                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-14">{{ teacher_card_col_num() }}</th>
+                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{{ teacher_card_col_name() }}</th>
+                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{{ teacher_card_col_login() }}</th>
+                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{{ teacher_card_col_email() }}</th>
+                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{{ teacher_card_col_position() }}</th>
+                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-20">{{ teacher_card_col_year() }}</th>
+                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right w-40">{{ teacher_card_col_actions() }}</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-border">
+                    <tr
+                      v-for="(teacher, index) in filteredTeachers"
+                      :key="teacher.id"
+                      :id="`teacher-item-${teacher.id}`"
+                      class="group hover:bg-muted/40 transition-colors cursor-pointer"
+                      @click="selectTeacher(teacher)"
+                    >
+                      <td class="px-6 py-4 text-sm text-muted-foreground/70 font-medium">{{ index + 1 }}</td>
+                      <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                          <span
+                            class="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                            :class="teacher.gender === 'male' ? 'bg-sky-400' : 'bg-pink-400'"
+                          />
+                          <span class="font-medium text-foreground text-sm">{{ teacherStore.getTeacherFullName(teacher.id) }}</span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 text-sm text-muted-foreground">{{ teacher.username || "—" }}</td>
+                      <td class="px-6 py-4 text-sm text-muted-foreground">{{ teacher.email || "—" }}</td>
+                      <td class="px-6 py-4 text-sm text-foreground">{{ teacher.position }}</td>
+                      <td class="px-6 py-4 text-sm text-muted-foreground">{{ teacher.employmentYear }}</td>
+                      <td class="px-6 py-4 text-right">
+                        <div class="flex items-center justify-end gap-1" @click.stop>
+                          <button
+                            v-if="!teacher.email"
+                            @click="generateCredentials(teacher)"
+                            :disabled="generatingForId === teacher.id"
+                            class="px-3 py-1.5 text-xs font-medium bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                          >
+                            {{ generatingForId === teacher.id ? teacher_card_generating() : teacher_card_create_account() }}
+                          </button>
+                          <button
+                            v-else
+                            @click="openActionsMenu(teacher, $event)"
+                            class="p-2 text-muted-foreground/40 hover:text-foreground hover:bg-muted/60 rounded-lg transition-colors"
+                            :id="`teacher-actions-${teacher.id}`"
+                          >
+                            <IconEllipsisVertical class="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr v-if="filteredTeachers.length === 0">
+                      <td colspan="7" class="px-8 py-24 text-center text-muted-foreground/40 text-sm italic">
+                        Преподаватели не найдены
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
+
           </div>
         </div>
       </div>
@@ -142,7 +162,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick } from "vue";
-import { f7Page, f7Input, f7 } from "framework7-vue";
+import { f7Page, f7 } from "framework7-vue";
+import IconSearch from "~icons/lucide/search";
+import IconPlus from "~icons/lucide/plus";
 import IconEllipsisVertical from "~icons/lucide/ellipsis-vertical";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -188,6 +210,7 @@ import {
   teacher_card_credential_save_note,
   teacher_card_credential_save_new_note,
   common_cancel,
+  common_add,
 } from "@/paraglide/messages";
 import { useI18n } from "@/composables/useI18n";
 
@@ -255,10 +278,12 @@ watch(searchTerm, (newValue) => {
 const selectTeacher = async (teacher: Teacher) => {
   selectedTeacherId.value = teacher.id;
   await nextTick();
-  f7.popover.open(
-    `#edit-teacher-popover-${teacher.id}`,
-    `#teacher-item-${teacher.id}`
-  );
+  f7.popover.open(`#edit-teacher-popover-${teacher.id}`);
+};
+
+const triggerAddTeacher = () => {
+  const btn = document.getElementById("add-teacher-button");
+  if (btn) btn.click();
 };
 
 const generateCredentials = async (teacher: Teacher) => {
@@ -297,10 +322,7 @@ const generateCredentials = async (teacher: Teacher) => {
     );
   } catch (error) {
     console.error("Failed to generate credentials:", error);
-    f7.dialog.alert(
-      teacher_card_create_error(),
-      teacher_card_error_title()
-    );
+    f7.dialog.alert(teacher_card_create_error(), teacher_card_error_title());
   } finally {
     generatingForId.value = null;
   }
@@ -343,10 +365,7 @@ const regeneratePassword = async (teacher: Teacher) => {
 
 const showPasswordHistory = async (teacher: Teacher) => {
   if (!teacher.userId) {
-    f7.dialog.alert(
-      teacher_card_no_user_error(),
-      teacher_card_error_title()
-    );
+    f7.dialog.alert(teacher_card_no_user_error(), teacher_card_error_title());
     return;
   }
 
@@ -361,15 +380,11 @@ const openActionsMenu = (teacher: Teacher, event: Event) => {
   const buttons = [
     {
       text: teacher_card_update_password(),
-      onClick: () => {
-        regeneratePassword(teacher);
-      },
+      onClick: () => { regeneratePassword(teacher); },
     },
     {
       text: teacher_card_password_history(),
-      onClick: () => {
-        showPasswordHistory(teacher);
-      },
+      onClick: () => { showPasswordHistory(teacher); },
     },
   ];
 
@@ -382,21 +397,44 @@ const openActionsMenu = (teacher: Teacher, event: Event) => {
 };
 </script>
 
-<style lang="postcss">
-.teacher-card-filters .smart-select-list-container {
-  @apply !bg-white;
+<style scoped>
+.teacher-search-input {
+  background-color: rgb(243, 244, 246) !important;
+  border: 1px solid rgb(229, 231, 235) !important;
+  color: hsl(var(--foreground)) !important;
+  outline: none !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  padding: 0.5rem 1rem 0.5rem 2.5rem !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+  border-radius: 0.5rem !important;
+  width: 100% !important;
+}
+.teacher-search-input::placeholder {
+  color: rgb(156, 163, 175) !important;
+}
+.teacher-search-input:focus {
+  background-color: rgb(255, 255, 255) !important;
+  border-color: rgb(209, 213, 219) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08) !important;
+}
+</style>
+
+<style>
+@media (min-width: 768px) {
+  #add-teacher-button {
+    display: none !important;
+  }
 }
 
-/* Remove gray space in action sheet */
-:global(.actions-modal .actions-group) {
+/* Remove gray gap in action sheet */
+.actions-modal .actions-group {
   margin: 0 !important;
 }
-
-:global(.actions-modal) {
+.actions-modal {
   background: transparent !important;
 }
-
-:global(.actions-modal .actions-button) {
+.actions-modal .actions-button {
   display: flex;
   align-items: center;
   justify-content: flex-start;

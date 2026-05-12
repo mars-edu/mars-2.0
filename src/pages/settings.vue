@@ -7,9 +7,9 @@
       <Header />
     </div>
 
-    <f7-page-content class="settings-content">
-      <Sidebar v-model:activeNavItem="activeNavItem" />
+    <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
+    <f7-page-content class="settings-content">
       <div 
         class="flex-1 flex flex-col min-w-0 bg-background overflow-hidden transition-all duration-200"
         :class="contentMargin"

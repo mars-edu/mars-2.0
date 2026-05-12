@@ -9,9 +9,9 @@
       <Header />
     </div>
 
-    <f7-page-content class="planning-content">
-      <Sidebar v-model:activeNavItem="activeNavItem" />
+    <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
+    <f7-page-content class="planning-content">
       <div ref="calendarContainer" class="calendar-container p-6 md:p-8 transition-all duration-200" :class="contentMargin">
         <div class="flex items-center justify-between mb-6">
           <div>
@@ -109,7 +109,6 @@ import { useTeacherStore } from "@/stores/teacherStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useSidebar } from "@/composables/useSidebar";
-import * as m from "@/paraglide/messages";
 import dayjs from "dayjs";
 import {
   planning_title,
@@ -131,6 +130,7 @@ import {
   f7_week_abbr_sat,
   f7_week_abbr_sun,
   common_all,
+  journal_semester_label,
 } from "@/paraglide/messages";
 import { useI18n } from "@/composables/useI18n";
 
@@ -157,17 +157,17 @@ const activeSemesterName = computed(() => {
   );
 
   if (currentSemester) {
-    return m.journal_semester_label({ number: currentSemester.semesterNumber });
+    return journal_semester_label({ number: currentSemester.semesterNumber });
   }
 
   const activeYearSemester = academicYearSemesterStore.getActiveAcademicYearSemester;
   if (activeYearSemester) {
-    return m.journal_semester_label({ number: activeYearSemester.semesterNumber });
+    return journal_semester_label({ number: activeYearSemester.semesterNumber });
   }
 
   const month = dayjs().month();
   const fallbackNumber = month >= 8 || month <= 0 ? 1 : 2;
-  return m.journal_semester_label({ number: fallbackNumber });
+  return journal_semester_label({ number: fallbackNumber });
 });
 
 const {
@@ -217,7 +217,8 @@ const navigationTabs = [
 ];
 
 const weekdays = computed(() => {
-  void locale;
+  // Explicit dependency on locale.value ensures reactivity
+  locale.value;
   return [
     f7_week_abbr_mon(), f7_week_abbr_tue(), f7_week_abbr_wed(),
     f7_week_abbr_thu(), f7_week_abbr_fri(), f7_week_abbr_sat(), f7_week_abbr_sun()
@@ -230,7 +231,7 @@ const selectedTeacherId = computed({
 });
 
 const teacherOptions = computed(() => {
-  void locale;
+  locale.value;
   return [
     { value: "all", text: common_all() },
     ...teacherStore.teacherSelectOptions,

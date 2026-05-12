@@ -4,24 +4,26 @@
     class="reports-page flex flex-col h-screen bg-background text-foreground"
   >
     <Header class="hidden md:block flex-shrink-0 border-b border-border" />
+    <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
-    <div class="flex flex-1 overflow-hidden">
-      <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
+    <div
+      class="flex flex-1 overflow-hidden p-2 md:p-4 transition-all duration-200"
+      :class="contentMargin"
+    >
+      <div class="flex-1 flex flex-col min-h-0 rounded-2xl border border-border/10 overflow-hidden bg-card shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
 
-      <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 transition-all duration-200"
-        :class="contentMargin"
-      >
-        <div class="flex flex-col gap-4">
-          <div
-            class="bg-card text-card-foreground rounded-xl p-4 md:p-5 shadow-md"
-          >
-            <h2 class="text-lg font-semibold mb-4">
-              {{ reports_workload_title() }}
-            </h2>
+        <!-- Title row -->
+        <div class="flex items-center justify-between px-8 py-6 pb-2 shrink-0">
+          <h1 class="text-xl font-bold text-foreground whitespace-nowrap">{{ reports_workload_title() }}</h1>
+        </div>
 
-            <div class="space-y-4">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Scrollable content -->
+        <div class="flex-1 overflow-y-auto p-6 pb-16 md:pb-6">
+          <div class="w-full space-y-6 pb-8 max-w-6xl mx-auto">
+
+            <!-- Controls Card -->
+            <div class="p-4 rounded-lg shadow-sm border border-border bg-card space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <Select
                   v-if="userStore.isAdmin"
                   v-model="selectedTeacherId"
@@ -48,40 +50,234 @@
                   :placeholder="reports_period_placeholder()"
                   name="period"
                 />
-              </div>
 
-              <div class="flex gap-3">
-                <button
-                  @click="generateWorkloadReport"
-                  :disabled="isGenerating || !selectedTeacherId"
-                  class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <span
-                    v-if="isGenerating"
-                    class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full"
-                  ></span>
-                  <span>{{
-                    isGenerating
-                      ? reports_generating()
-                      : reports_generate_btn()
-                  }}</span>
-                </button>
+                <div class="flex flex-col gap-2">
+                  <button
+                    @click="generateWorkloadReport"
+                    :disabled="isGenerating || !selectedTeacherId"
+                    class="w-auto flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                  >
+                    <span
+                      v-if="isGenerating"
+                      class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full"
+                    ></span>
+                    <FileText v-else class="w-4 h-4" />
+                    <span>{{ isGenerating ? reports_generating() : reports_generate_btn() }}</span>
+                  </button>
+
+                  <button
+                    v-if="reportData"
+                    @click="downloadReport"
+                    class="w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors shadow-sm"
+                  >
+                    <Download class="w-4 h-4" />
+                    <span>{{ journal_download() }}</span>
+                  </button>
+                </div>
               </div>
 
               <div
                 v-if="lastGeneratedReport"
-                class="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+                class="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
               >
-                <p class="text-sm text-green-800 dark:text-green-200">
-                  {{ reports_success() }}
-                </p>
-                <p class="text-xs text-green-600 dark:text-green-300 mt-1">
-                  {{ lastGeneratedReport }}
-                </p>
+                <p class="text-sm text-green-800 dark:text-green-200">{{ reports_success() }}</p>
+                <p class="text-xs text-green-600 dark:text-green-300 mt-1">{{ lastGeneratedReport }}</p>
               </div>
             </div>
+
+            <!-- Report Preview -->
+            <Transition name="fade" mode="out-in">
+              <div v-if="reportData" class="space-y-6">
+
+                <!-- Report Header Paper -->
+                <div class="bg-card p-6 md:p-10 rounded-lg shadow-sm border border-border text-center space-y-6 relative overflow-hidden">
+                  <div class="absolute -right-10 -top-10 opacity-5 rotate-12 pointer-events-none">
+                    <span class="text-9xl font-black italic tracking-tighter">MARS</span>
+                  </div>
+                  <div class="space-y-4 max-w-3xl mx-auto">
+                    <p class="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-muted-foreground font-semibold leading-relaxed">
+                      {{ institutionName }}
+                    </p>
+                    <h2 class="text-xl md:text-2xl font-bold tracking-tight text-foreground">
+                      Ведомость учета учебного времени педагога за год
+                    </h2>
+                    <div class="pt-6 flex flex-col items-center gap-2">
+                      <p class="font-bold text-lg md:text-xl text-primary">{{ reportData.teacherFullName }}</p>
+                      <p class="text-muted-foreground font-medium bg-muted px-4 py-1 rounded-full text-sm">
+                        {{ reportData.academicYear }} учебный год
+                      </p>
+                    </div>
+                    <div v-if="subjectsList" class="mt-4 p-4 bg-muted/30 rounded-lg border border-border/50">
+                      <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Перечисление основных предметов проведенных:</p>
+                      <p class="text-xs md:text-sm text-foreground/80 leading-relaxed italic">{{ subjectsList }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Table 1: Monthly Breakdown -->
+                <div class="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
+                  <div class="p-5 border-b border-border flex items-center justify-between bg-muted/50">
+                    <h3 class="font-bold text-sm md:text-base">Таблица 1. Распределение часов по месяцам</h3>
+                    <span class="text-xs font-bold px-3 py-1 bg-primary/10 text-primary rounded-full border border-primary/20">Ф-1</span>
+                  </div>
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left border-collapse min-w-[800px]">
+                      <thead>
+                        <tr class="bg-muted/50 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
+                          <th class="px-4 py-4 border-b border-r border-border min-w-[200px]">Группы / Дисциплины</th>
+                          <th v-for="m in reportData.months" :key="m.key" class="px-2 py-4 border-b border-r border-border text-center w-14">
+                            {{ getShortMonthName(m.month) }}
+                          </th>
+                          <th class="px-4 py-4 border-b border-border text-center bg-muted/80 w-20">Итого</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-border">
+                        <tr v-for="(row, idx) in reportData.monthlyDistribution" :key="idx" class="hover:bg-muted/40 transition-colors">
+                          <td class="px-4 py-3 border-r border-border">
+                            <div class="font-bold text-foreground text-sm">{{ row.groupName }}</div>
+                            <div class="text-[11px] text-muted-foreground/70 leading-tight mt-0.5">{{ getSubjectNamesForGroup(row.groupName) }}</div>
+                          </td>
+                          <td v-for="m in reportData.months" :key="m.key" class="px-2 py-3 border-r border-border text-center font-medium text-sm">
+                            {{ row.monthlyHours[m.key] || '-' }}
+                          </td>
+                          <td class="px-4 py-3 text-center font-bold bg-muted/20 text-sm">{{ row.total }}</td>
+                        </tr>
+                        <tr class="bg-muted/50 font-bold">
+                          <td class="px-4 py-4 border-r border-border uppercase text-[10px]">Всего выполнено:</td>
+                          <td v-for="m in reportData.months" :key="m.key" class="px-2 py-4 border-r border-border text-center text-primary text-sm">
+                            {{ calculateColumnTotal(m.key) }}
+                          </td>
+                          <td class="px-4 py-4 text-center text-base text-primary">{{ reportData.monthlyDistribution.reduce((s, r) => s + r.total, 0) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- Summary Footer -->
+                  <div class="p-6 bg-muted/10 border-t border-border">
+                    <div class="max-w-2xl space-y-3">
+                      <div class="flex justify-between items-center py-2 border-b border-border/50">
+                        <span class="text-sm text-muted-foreground">Всего часов по плану:</span>
+                        <span class="font-bold text-base">{{ totalPlannedHours }}</span>
+                      </div>
+                      <div class="flex justify-between items-center py-2 border-b border-border/50">
+                        <span class="text-sm text-muted-foreground">Не выполнено часов:</span>
+                        <span class="font-bold text-destructive">{{ Math.max(0, totalPlannedHours - totalFactHours) }}</span>
+                      </div>
+                      <div class="flex justify-between items-center py-2 border-b border-border/50">
+                        <span class="text-sm text-muted-foreground">Выполнено часов:</span>
+                        <div class="flex items-center gap-2">
+                          <span class="font-bold text-base">{{ totalFactHours }}</span>
+                          <span v-if="totalFactHours > totalPlannedHours" class="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-bold">
+                            +{{ totalFactHours - totalPlannedHours }}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="flex justify-between items-center py-4 bg-card px-6 rounded-lg shadow-sm border border-border mt-4">
+                        <span class="font-bold text-foreground">Всего дано за год часов:</span>
+                        <span class="text-2xl font-black text-primary">{{ totalFactHours }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Table 2: Additional Details -->
+                <div class="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
+                  <div class="p-5 border-b border-border flex items-center justify-between bg-muted/50">
+                    <h3 class="font-bold text-sm md:text-base">Таблица 2. Дополнительные сведения к годовому учету</h3>
+                    <span class="text-xs font-bold px-3 py-1 bg-primary/10 text-primary rounded-full border border-primary/20">Ф-2</span>
+                  </div>
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left border-collapse min-w-[800px]">
+                      <thead>
+                        <tr class="bg-muted/50 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
+                          <th rowspan="2" class="px-4 py-4 border-b border-r border-border min-w-[150px]">Группа / ФИО студента</th>
+                          <th rowspan="2" class="px-4 py-4 border-b border-r border-border min-w-[200px]">Дисциплина</th>
+                          <th colspan="2" class="px-4 py-2 border-b border-r border-border text-center">Часы</th>
+                          <th colspan="2" class="px-4 py-2 border-b border-r border-border text-center">Консультации</th>
+                          <th colspan="2" class="px-4 py-2 border-b border-r border-border text-center">Экзамены</th>
+                          <th rowspan="2" class="px-4 py-4 border-b border-border text-center bg-muted/80">Общее</th>
+                        </tr>
+                        <tr class="bg-muted/50 text-muted-foreground text-[9px] font-bold">
+                          <th class="px-2 py-2 border-b border-r border-border text-center">План</th>
+                          <th class="px-2 py-2 border-b border-r border-border text-center">Факт</th>
+                          <th class="px-2 py-2 border-b border-r border-border text-center">План</th>
+                          <th class="px-2 py-2 border-b border-r border-border text-center">Факт</th>
+                          <th class="px-2 py-2 border-b border-r border-border text-center">План</th>
+                          <th class="px-2 py-2 border-b border-r border-border text-center">Факт</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-border">
+                        <tr v-for="(row, idx) in reportData.summaryEntries" :key="idx" class="hover:bg-muted/40 transition-colors">
+                          <td class="px-4 py-3 border-r border-border font-bold text-sm">{{ row.groupName }}</td>
+                          <td class="px-4 py-3 border-r border-border text-[11px] text-muted-foreground/70 leading-snug">{{ row.subjectName }}</td>
+                          <td class="px-2 py-3 border-r border-border text-center text-sm">{{ row.plannedHours }}</td>
+                          <td class="px-2 py-3 border-r border-border text-center font-bold text-sm">{{ row.actualHours }}</td>
+                          <td class="px-2 py-3 border-r border-border text-center text-muted-foreground/50 text-sm">{{ row.consultationsPlanned || '-' }}</td>
+                          <td class="px-2 py-3 border-r border-border text-center text-muted-foreground/50 text-sm">{{ row.consultationsActual || '-' }}</td>
+                          <td class="px-2 py-3 border-r border-border text-center text-muted-foreground/50 text-sm">{{ row.examsPlanned || '-' }}</td>
+                          <td class="px-2 py-3 border-r border-border text-center text-muted-foreground/50 text-sm">{{ row.examsActual || '-' }}</td>
+                          <td class="px-4 py-3 text-center font-bold bg-muted/20 text-sm">{{ row.totalHours }}</td>
+                        </tr>
+                        <tr class="bg-muted/50 font-bold">
+                          <td colspan="2" class="px-4 py-4 border-r border-border uppercase text-[10px]">Итого:</td>
+                          <td class="px-2 py-4 border-r border-border text-center text-sm">{{ totalPlannedHours }}</td>
+                          <td class="px-2 py-4 border-r border-border text-center text-primary text-sm">{{ totalFactHours }}</td>
+                          <td class="px-2 py-4 border-r border-border text-center text-muted-foreground text-sm">-</td>
+                          <td class="px-2 py-4 border-r border-border text-center text-muted-foreground text-sm">-</td>
+                          <td class="px-2 py-4 border-r border-border text-center text-muted-foreground text-sm">-</td>
+                          <td class="px-2 py-4 border-r border-border text-center text-muted-foreground text-sm">-</td>
+                          <td class="px-4 py-4 text-center text-base text-primary">{{ totalFactHours }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Footer Signatures -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-10 pb-8">
+                  <div class="space-y-1">
+                    <p class="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Оқытушы / Преподаватель</p>
+                    <div class="border-b-2 border-border/50 flex justify-between items-end pb-1 pt-4">
+                      <span class="text-sm font-semibold">{{ reportData.teacherFullName }}</span>
+                      <span class="text-[10px] text-muted-foreground/60 italic tracking-wide">қолы / подпись</span>
+                    </div>
+                  </div>
+                  <div class="space-y-1">
+                    <p class="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Оқу ісі жөніндегі басшының орынбасары / Заместитель руководителя по учебной работе</p>
+                    <div class="border-b-2 border-border/50 flex justify-between items-end pb-1 pt-4">
+                      <span class="text-sm font-semibold opacity-30">______________________________________</span>
+                      <span class="text-[10px] text-muted-foreground/60 italic tracking-wide">қолы / подпись</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Empty State -->
+              <div v-else class="bg-card p-12 md:p-20 rounded-lg shadow-sm border border-border flex flex-col items-center justify-center text-center space-y-6">
+                <div class="w-20 h-20 md:w-28 md:h-28 bg-primary/5 rounded-full flex items-center justify-center text-primary/40 ring-1 ring-primary/10">
+                  <FileSpreadsheet class="w-10 h-10 md:w-14 md:h-14" />
+                </div>
+                <div class="space-y-2">
+                  <h3 class="text-xl md:text-2xl font-bold text-foreground">Готов к формированию</h3>
+                  <p class="text-muted-foreground max-w-sm mx-auto text-sm md:text-base leading-relaxed">
+                    {{ reports_select_teacher() }}
+                  </p>
+                </div>
+                <button
+                  @click="generateWorkloadReport"
+                  :disabled="isGenerating || !selectedTeacherId"
+                  class="w-auto flex items-center gap-2 px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FileText class="w-4 h-4" />
+                  {{ reports_generate_btn() }}
+                </button>
+              </div>
+            </Transition>
+
           </div>
         </div>
+
       </div>
     </div>
   </f7-page>
@@ -90,6 +286,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watchEffect } from "vue";
 import { f7Page, f7 } from "framework7-vue";
+import { FileText, Download, FileSpreadsheet } from "lucide-vue-next";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
@@ -133,6 +330,7 @@ import {
   reports_period_display_full,
   reports_period_display_sem,
   common_not_specified,
+  journal_download,
   f7_month_jan,
   f7_month_feb,
   f7_month_mar,
@@ -147,14 +345,6 @@ import {
   f7_month_dec,
 } from "@/paraglide/messages";
 import { useI18n } from "@/composables/useI18n";
-
-const { locale } = useI18n();
-
-const { contentMargin } = useSidebar();
-type WorkloadEntry = WorkloadExportParams["entries"][number];
-type WorkloadSummaryEntry = WorkloadExportParams["summaryEntries"][number];
-type MonthlyDistributionEntry = WorkloadExportParams["monthlyDistribution"][number];
-type TeacherWorkloadExportPayload = WorkloadExportParams;
 import {
   generateDailyWorkload,
   generateWorkloadSummary,
@@ -162,6 +352,14 @@ import {
   computeMonthsFromSemesters,
   generateAllMonthsWorkload,
 } from "@/services/teacher-workload-calculator";
+
+const { locale } = useI18n();
+const { contentMargin } = useSidebar();
+
+type WorkloadEntry = WorkloadExportParams["entries"][number];
+type WorkloadSummaryEntry = WorkloadExportParams["summaryEntries"][number];
+type MonthlyDistributionEntry = WorkloadExportParams["monthlyDistribution"][number];
+type TeacherWorkloadExportPayload = WorkloadExportParams;
 
 const activeNavItem = ref("reports");
 const userStore = useUserStore();
@@ -180,6 +378,9 @@ const selectedAcademicYearId = ref("");
 const selectedPeriod = ref("full_year");
 const isGenerating = ref(false);
 const lastGeneratedReport = ref("");
+const reportData = ref<TeacherWorkloadExportPayload | null>(null);
+
+const institutionName = '"Музыкалық колледж - дарынды балаларға арналған музыкалық мектеп - интернат" Кешені ММ / ГУ "Комплекс "Музыкальный колледж - музыкальная школа - интернат для одарённых детей"';
 
 const teachers = computed(() => teacherStore.teachers);
 const academicYears = computed(() => academicYearStore.academicYears);
@@ -244,6 +445,44 @@ const getTeacherFullName = (teacher: any) => {
   return teacherStore.getTeacherFullName(teacher);
 };
 
+const subjectsList = computed(() => {
+  if (!reportData.value) return "";
+  const subjects = [...new Set(reportData.value.summaryEntries.map(e => e.subjectName))];
+  return subjects.join(", ");
+});
+
+const totalPlannedHours = computed(() => {
+  if (!reportData.value) return 0;
+  return reportData.value.summaryEntries.reduce((sum, entry) => sum + entry.plannedHours, 0);
+});
+
+const totalFactHours = computed(() => {
+  if (!reportData.value) return 0;
+  return reportData.value.summaryEntries.reduce((sum, entry) => sum + entry.actualHours, 0);
+});
+
+function getShortMonthName(month: number) {
+  const names = [
+    f7_month_jan(), f7_month_feb(), f7_month_mar(), f7_month_apr(),
+    f7_month_may(), f7_month_jun(), f7_month_jul(), f7_month_aug(),
+    f7_month_sep(), f7_month_oct(), f7_month_nov(), f7_month_dec(),
+  ];
+  const name = names[month];
+  // Return first 3-4 chars or formatted version
+  return name.length > 5 ? name.substring(0, 4) + '.' : name;
+}
+
+function calculateColumnTotal(monthKey: string) {
+  if (!reportData.value) return 0;
+  return reportData.value.monthlyDistribution.reduce((sum, row) => sum + (row.monthlyHours[monthKey] || 0), 0);
+}
+
+function getSubjectNamesForGroup(groupName: string) {
+  if (!reportData.value) return "";
+  const entries = reportData.value.summaryEntries.filter(e => e.groupName === groupName);
+  return entries.map(e => e.subjectName).join(", ");
+}
+
 async function generateWorkloadReport() {
   if (!selectedTeacherId.value) {
     f7.dialog.alert(reports_select_teacher());
@@ -251,60 +490,27 @@ async function generateWorkloadReport() {
   }
 
   isGenerating.value = true;
+  reportData.value = null;
 
   try {
-    // Ensure all required stores are loaded
-    console.log('[Reports] Checking data availability before export...');
-    console.log('[Reports] Calendar events:', calendarStore.events?.length ?? 0);
-    console.log('[Reports] Class9 items:', class9Store.items?.length ?? 0);
-    console.log('[Reports] Students:', studentStore.students?.length ?? 0);
-
     // Wait for required data to load
     let attempts = 0;
-    const maxAttempts = 30; // 30 * 100ms = 3 seconds
+    const maxAttempts = 30;
 
     while (attempts < maxAttempts) {
       const eventsLoaded = calendarStore.events && calendarStore.events.length > 0;
       const class9Loaded = class9Store.items && class9Store.items.length > 0;
       const studentsLoaded = studentStore.students && studentStore.students.length > 0;
 
-      if (eventsLoaded && class9Loaded && studentsLoaded) {
-        console.log('[Reports] All required data loaded successfully');
-        break;
-      }
-
-      if (attempts === 0) {
-        console.log('[Reports] Waiting for data to load...', {
-          events: eventsLoaded,
-          class9: class9Loaded,
-          students: studentsLoaded
-        });
-      }
-
+      if (eventsLoaded && class9Loaded && studentsLoaded) break;
       await new Promise(resolve => setTimeout(resolve, 100));
       attempts++;
     }
 
-    // Final check
     if (!calendarStore.events || calendarStore.events.length === 0) {
-      console.warn('[Reports] No calendar events found after waiting');
       f7.dialog.alert(reports_no_schedule());
       return;
     }
-
-    if (!class9Store.items || class9Store.items.length === 0) {
-      console.warn('[Reports] No class9 items found');
-    }
-
-    if (!studentStore.students || studentStore.students.length === 0) {
-      console.warn('[Reports] No students found');
-    }
-
-    console.log('[Reports] Final data counts:', {
-      events: calendarStore.events.length,
-      class9: class9Store.items?.length ?? 0,
-      students: studentStore.students?.length ?? 0
-    });
 
     const teacher = selectedTeacher.value;
     const academicYear = selectedAcademicYearId.value
@@ -355,60 +561,31 @@ async function generateWorkloadReport() {
       };
     });
 
-    // Get all class9 items
     const class9Items = class9Store.class9Items;
-
-    // Compute months from semester date ranges first
     const semesterMonths = computeMonthsFromSemesters(availableSemesters.value);
-
-    console.log('[Reports] Semester selection:', selectedPeriod.value);
-    console.log('[Reports] Academic year:', academicYear?.name);
-    console.log('[Reports] Computed semester months:', semesterMonths.map(m => `${m.key}(${m.year})`).join(', '));
 
     if (semesterMonths.length === 0) {
       throw new Error(reports_no_months_error());
     }
 
-    // For Form 1 (daily workload), use the first month from semester date ranges
     const firstMonth = semesterMonths[0];
     const reportMonth = firstMonth.month;
     const reportYear = firstMonth.year;
-    console.log(`[Reports] Using first semester month: ${firstMonth.key} (month=${reportMonth}, year=${reportYear})`);
-
-    const monthNamesEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    console.log(`[Reports] Report month selected: ${reportMonth} (${monthNamesEn[reportMonth]}), year: ${reportYear}`);
-    console.log('[Reports] Teacher events count:', teacherEvents.length);
-    console.log('[Reports] Class9 items count:', class9Items.length);
-
-    // Flatten journals from computed property
+    
     const allJournals = Object.values(journalStore.journalsByCourse).flat();
-    console.log('[Reports] Total journals available:', allJournals.length);
-    console.log('[Reports] JournalMarks keys count:', Object.keys(marksStore.journalMarks).length);
 
-    // Generate real data using calculator service
-    const entries: WorkloadEntry[] = generateDailyWorkload(
+    const entries = generateDailyWorkload(
       teacherEvents,
       class9Items,
       enrichedStudents,
       reportMonth,
       reportYear,
-      academicYear?.startYear || new Date().getFullYear(), // Academic year start for cumulative calculation
+      academicYear?.startYear || new Date().getFullYear(),
       allJournals,
       marksStore.journalMarks
     );
 
-    console.log('[Reports] Form 1 entries generated:', entries.length);
-    if (entries.length > 0) {
-      console.log('[Reports] First entry sample:', {
-        subject: entries[0].subjectName,
-        group: entries[0].groupName,
-        monthTotal: entries[0].monthTotal,
-        actualHours: entries[0].actualHours,
-        dailyHoursCount: entries[0].dailyHours.filter(h => h !== null).length
-      });
-    }
-
-    const summaryEntries: WorkloadSummaryEntry[] = generateWorkloadSummary(
+    const summaryEntries = generateWorkloadSummary(
       teacherEvents,
       class9Items,
       enrichedStudents,
@@ -419,7 +596,6 @@ async function generateWorkloadReport() {
     const { distributions: monthlyDistribution, months: reportMonths } =
       generateMonthlyDistribution(teacherEvents, class9Items, enrichedStudents, availableSemesters.value);
 
-    // Generate workload data for all months (Form 1 multi-month structure)
     const allMonthsWorkload = generateAllMonthsWorkload(
       teacherEvents,
       class9Items,
@@ -429,61 +605,35 @@ async function generateWorkloadReport() {
       marksStore.journalMarks
     );
 
-    console.log('[Reports] All months workload generated:', allMonthsWorkload.length, 'months');
-
-    let periodLabel = reports_period_full_year_label();
-    if (selectedPeriod.value !== "full_year") {
-      const semester = availableSemesters.value.find(
-        (s) => s.id === selectedPeriod.value
-      );
-      if (semester) {
-        periodLabel = reports_period_semester_label({ n: semester.semesterNumber });
-      }
-    }
-
-    // Get month name for Form 1 (0-indexed)
     const monthNames = [
       f7_month_jan(), f7_month_feb(), f7_month_mar(), f7_month_apr(),
       f7_month_may(), f7_month_jun(), f7_month_jul(), f7_month_aug(),
       f7_month_sep(), f7_month_oct(), f7_month_nov(), f7_month_dec(),
     ];
-    const reportMonthName = monthNames[reportMonth];
 
-    const payload: TeacherWorkloadExportPayload = {
-      institutionName:
-        `"Музыкалық колледж  - дарынды балаларға арналған музыкалық мектеп - интернат" Кешені ММ/ ГУ "Комплекс "Музыкальный колледж - музыкальная школа - интернат для одарённых детей"`,
+    reportData.value = {
+      institutionName,
       teacherFullName: teacher ? getTeacherFullName(teacher) : userStore.fullName || common_not_specified(),
       academicYear: academicYear
         ? `${academicYear.startYear}/${academicYear.endYear}`
         : "2024/2025",
-      month: reportMonthName,
-      entries: entries,
-      summaryEntries: summaryEntries,
-      monthlyDistribution: monthlyDistribution,
+      month: monthNames[reportMonth],
+      entries,
+      summaryEntries,
+      monthlyDistribution,
       months: reportMonths,
-      allMonthsWorkload: allMonthsWorkload,
+      allMonthsWorkload,
     };
 
-    let periodForFilename = reports_period_filename_full();
     let periodForDisplay = reports_period_display_full();
-
     if (selectedPeriod.value !== "full_year") {
       const semester = availableSemesters.value.find(
         (s) => s.id === selectedPeriod.value
       );
       if (semester) {
-        periodForFilename = reports_period_filename_sem({ n: semester.semesterNumber });
         periodForDisplay = reports_period_display_sem({ n: semester.semesterNumber });
       }
     }
-
-    const academicYearForFilename = (academicYear?.name || payload.academicYear).replace(
-      /\//g,
-      "-"
-    );
-    const filename = `ООД_${teacher?.surname || "teacher"}_${academicYearForFilename}_${periodForFilename}.xlsx`;
-
-    await exportTeacherWorkloadViaConvex(payload, filename);
 
     lastGeneratedReport.value = `ООД_${teacher?.surname || "teacher"}_${
       academicYear?.name
@@ -494,6 +644,33 @@ async function generateWorkloadReport() {
   } finally {
     isGenerating.value = false;
   }
+}
+
+async function downloadReport() {
+  if (!reportData.value) return;
+  
+  const teacher = selectedTeacher.value;
+  const academicYear = selectedAcademicYearId.value
+      ? academicYears.value.find((y) => y.id === selectedAcademicYearId.value)
+      : academicYears.value.find((y) => y.isActive);
+
+  let periodForFilename = reports_period_filename_full();
+  if (selectedPeriod.value !== "full_year") {
+    const semester = availableSemesters.value.find(
+      (s) => s.id === selectedPeriod.value
+    );
+    if (semester) {
+      periodForFilename = reports_period_filename_sem({ n: semester.semesterNumber });
+    }
+  }
+
+  const academicYearForFilename = (academicYear?.name || reportData.value.academicYear).replace(
+    /\//g,
+    "-"
+  );
+  const filename = `ООД_${teacher?.surname || "teacher"}_${academicYearForFilename}_${periodForFilename}.xlsx`;
+
+  await exportTeacherWorkloadViaConvex(reportData.value, filename);
 }
 
 onMounted(() => {
@@ -524,9 +701,14 @@ watchEffect(() => {
 </script>
 
 <style scoped>
-.reports-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 </style>

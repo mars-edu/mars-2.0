@@ -1,4 +1,9 @@
-import * as m from "@/paraglide/messages";
+import {
+  unsaved_changes_title,
+  unsaved_changes_message,
+  unsaved_changes_confirm,
+  unsaved_changes_cancel,
+} from "@/paraglide/messages";
 
 interface ConfirmDiscardOptions {
   title?: string;
@@ -112,10 +117,10 @@ export function useUnsavedChangesDialog() {
       return Promise.resolve(false);
     }
 
-    const title = options.title ?? m.unsaved_changes_title();
-    const message = options.message ?? m.unsaved_changes_message();
-    const confirmText = options.confirmText ?? m.unsaved_changes_confirm();
-    const cancelText = options.cancelText ?? m.unsaved_changes_cancel();
+    const title = options.title ?? unsaved_changes_title();
+    const message = options.message ?? unsaved_changes_message();
+    const confirmText = options.confirmText ?? unsaved_changes_confirm();
+    const cancelText = options.cancelText ?? unsaved_changes_cancel();
 
     if (typeof window === "undefined") return Promise.resolve(false);
 

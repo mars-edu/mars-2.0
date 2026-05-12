@@ -7,163 +7,153 @@
   >
     <Header class="hidden md:block flex-shrink-0 border-b border-border" />
 
-    <div class="flex flex-1 overflow-hidden">
-      <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
+    <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
-      <div
-        class="flex-1 overflow-y-auto p-6 md:p-8 bg-[#F3F4F6] pb-16 md:pb-8 transition-all duration-200"
-        :class="contentMargin"
-      >
-        <div class="max-w-7xl mx-auto space-y-6">
-          <!-- Top Level Title -->
-          <div class="flex justify-between items-center px-1">
-            <h1 class="text-xl font-bold text-[#1F2937]">{{ catalog_discipline_title() }}:</h1>
-            <div class="text-sm font-medium text-muted-foreground/60">
-              {{ activeAcademicYearName.split('-')[0] }}
-            </div>
-          </div>
+    <!-- Outer padding area — creates the floating card gap like concept's m-4 -->
+    <div
+      class="flex flex-1 overflow-hidden p-2 md:p-4 transition-all duration-200"
+      :class="contentMargin"
+    >
+      <!-- Big outer card — matches concept's rounded-2xl shadow wrapper -->
+      <div class="flex-1 flex flex-col min-h-0 rounded-2xl border border-border/10 overflow-hidden bg-card shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
 
-          <!-- Main Content Card -->
-          <div class="bg-white rounded-2xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05),0_1px_2px_0_rgba(0,0,0,0.03)] border border-border/40 overflow-hidden">
-            <!-- Actions Bar inside the card -->
-            <div class="p-8 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <!-- Search on the left -->
-              <div class="relative w-full md:w-[450px]">
-                <IconSearch class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/40 w-4 h-4" />
-                <f7-input
-                  v-model:value="searchQuery"
+        <!-- Title row — matches concept's px-8 py-6 pb-2 -->
+        <div class="flex items-center justify-between px-8 py-6 pb-2 shrink-0">
+          <h1 class="text-xl font-bold text-foreground whitespace-nowrap">{{ catalog_discipline_title() }}:</h1>
+          <button class="flex w-fit items-center gap-1 text-muted-foreground font-medium hover:text-foreground px-3 py-1.5 rounded-md hover:bg-muted/60 transition-colors">
+            <span class="text-lg">{{ activeAcademicYearName }}</span>
+            <IconChevronDown class="w-4 h-4" />
+          </button>
+        </div>
+
+        <!-- Scrollable content — matches concept's flex-1 overflow-y-auto p-6 -->
+        <div class="flex-1 overflow-y-auto p-6 pb-16 md:pb-6">
+          <div class="w-full space-y-6 pb-8">
+
+            <!-- Controls Card — matches concept's p-4 rounded-lg shadow-sm border -->
+            <div class="flex flex-col md:flex-row gap-4 items-center justify-between p-4 rounded-lg shadow-sm border border-border bg-card">
+              <div class="relative w-full md:w-96">
+                <IconSearch class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 w-[18px] h-[18px]" />
+                <input
+                  v-model="searchQuery"
                   type="text"
                   placeholder="Поиск по коду или названию..."
-                  class="search-input !bg-white border border-[#E5E7EB] rounded-xl pl-10 h-11 w-full text-sm placeholder:text-muted-foreground/40"
-                  clear-button
-                ></f7-input>
+                  class="catalog-search-input w-full pl-10 pr-4 py-2 rounded-lg text-sm text-foreground transition-all"
+                />
               </div>
-              
-              <div class="flex items-center gap-4">
-                <!-- Base Filter Toggle -->
-                <div class="flex items-center p-1 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB]">
-                  <button 
+
+              <div class="flex items-center gap-3 w-full md:w-auto">
+                <div class="flex items-center gap-2 p-1 rounded-lg border border-border bg-muted/50">
+                  <button
                     @click="baseFilter = 'all'"
-                    class="px-4 py-1.5 text-[10px] font-bold rounded-lg transition-all uppercase tracking-wider"
-                    :class="baseFilter === 'all' ? 'bg-white text-[#1F2937] shadow-sm ring-1 ring-black/5' : 'text-muted-foreground/60 hover:text-foreground'"
-                  >
-                    {{ catalog_base_all() }}
-                  </button>
-                  <button 
+                    class="px-3 py-1.5 text-sm font-medium rounded-md transition-all whitespace-nowrap"
+                    :class="baseFilter === 'all' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground/60 hover:text-foreground'"
+                  >{{ catalog_base_all() }}</button>
+                  <button
                     @click="baseFilter = '9'"
-                    class="px-4 py-1.5 text-[10px] font-bold rounded-lg transition-all uppercase tracking-wider"
-                    :class="baseFilter === '9' ? 'bg-white text-[#1F2937] shadow-sm ring-1 ring-black/5' : 'text-muted-foreground/60 hover:text-foreground'"
-                  >
-                    {{ catalog_base_9() }}
-                  </button>
-                  <button 
+                    class="px-3 py-1.5 text-sm font-medium rounded-md transition-all whitespace-nowrap"
+                    :class="baseFilter === '9' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground/60 hover:text-foreground'"
+                  >{{ catalog_base_9() }}</button>
+                  <button
                     @click="baseFilter = '11'"
-                    class="px-4 py-1.5 text-[10px] font-bold rounded-lg transition-all uppercase tracking-wider"
-                    :class="baseFilter === '11' ? 'bg-white text-[#1F2937] shadow-sm ring-1 ring-black/5' : 'text-muted-foreground/60 hover:text-foreground'"
-                  >
-                    {{ catalog_base_11() }}
-                  </button>
+                    class="px-3 py-1.5 text-sm font-medium rounded-md transition-all whitespace-nowrap"
+                    :class="baseFilter === '11' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground/60 hover:text-foreground'"
+                  >{{ catalog_base_11() }}</button>
                 </div>
 
-                <!-- Add Button -->
                 <button
                   @click="openAddPopup"
-                  class="flex items-center justify-center gap-2 px-6 py-2 bg-[#22C55E] hover:bg-[#16A34A] text-white font-bold rounded-xl transition-all shadow-sm active:scale-[0.98] h-11"
+                  class="w-auto flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors shadow-sm"
                 >
-                  <IconPlus class="w-4 h-4" />
-                  <span class="text-sm font-bold tracking-wide">{{ catalog_discipline_add() }}</span>
+                  <IconPlus class="w-[18px] h-[18px]" />
+                  <span class="hidden sm:inline">{{ catalog_discipline_add() }}</span>
                 </button>
               </div>
             </div>
 
-            <!-- Table Content -->
-            <div class="overflow-x-auto px-2">
-              <table class="w-full border-collapse">
-                <thead>
-                  <tr class="border-b border-[#F3F4F6]">
-                    <th class="px-8 py-5 text-left text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em] w-32">индекс</th>
-                    <th class="px-8 py-5 text-left text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">наименование дисциплины</th>
-                    <th class="px-8 py-5 text-center text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em] w-32">кредиты</th>
-                    <th class="px-8 py-5 text-center text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em] w-32">часы</th>
-                    <th class="px-8 py-5 text-center text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em] w-32">языки</th>
-                    <th class="px-8 py-5 text-right text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em] w-32">действия</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-[#F3F4F6]">
-                  <tr
-                    v-for="item in filteredItems"
-                    :key="item.id"
-                    class="group hover:bg-[#F9FAFB]/50 transition-colors"
-                  >
-                    <td class="px-8 py-10 align-top">
-                      <div class="font-bold text-[#1F2937] text-sm uppercase tracking-tight">{{ item.moduleIndex }}</div>
-                    </td>
-                    <td class="px-8 py-10 align-top">
-                      <div class="font-bold text-[#1F2937] text-[15px] tracking-tight leading-none mb-2">{{ item.moduleName }}</div>
-                      <div class="text-[11px] text-muted-foreground/70 leading-relaxed max-w-xl">{{ item.learningOutcome }}</div>
-                      <div v-if="item.baseClass && item.baseClass.length" class="mt-3 flex gap-1">
-                        <span 
-                          v-for="base in item.baseClass" 
-                          :key="base"
-                          class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#FFF1E7] text-[#FF823C] border border-[#FFD8C4]"
-                        >
-                          База {{ base }} кл
+            <!-- Table Card — matches concept's rounded-lg shadow-sm border -->
+            <div class="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead class="bg-muted/50 border-b border-border">
+                    <tr>
+                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-32">{{ catalog_col_index() }}</th>
+                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{{ catalog_col_name() }}</th>
+                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-center w-32">{{ catalog_col_credits() }}</th>
+                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-center w-32">{{ catalog_col_hours() }}</th>
+                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-center w-32">{{ catalog_col_languages() }}</th>
+                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right w-32">{{ catalog_col_actions() }}</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-border">
+                    <tr
+                      v-for="item in filteredItems"
+                      :key="item.id"
+                      class="group hover:bg-muted/40 transition-colors"
+                    >
+                      <td class="px-6 py-4 font-bold text-foreground text-sm">{{ item.moduleIndex }}</td>
+                      <td class="px-6 py-4">
+                        <div class="font-medium text-foreground text-sm leading-tight">{{ item.moduleName }}</div>
+                        <div class="text-[11px] text-muted-foreground/70 mt-0.5 leading-relaxed max-w-xl">{{ item.learningOutcome }}</div>
+                        <div v-if="item.baseClass && item.baseClass.length" class="mt-1 flex gap-1">
+                          <span
+                            v-for="base in item.baseClass"
+                            :key="base"
+                            class="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide"
+                            :class="base === 9 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-400'"
+                          >База {{ base }} кл</span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 text-center">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-400">
+                          {{ item.totalCredits || 0 }}
                         </span>
-                      </div>
-                    </td>
-                    <td class="px-8 py-10 text-center align-top">
-                       <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-bold bg-[#FEF9C3] text-[#A16207]">
-                        {{ item.totalCredits || 0 }}
-                      </span>
-                    </td>
-                    <td class="px-8 py-10 text-center align-top text-[13px] font-medium text-muted-foreground/70 whitespace-nowrap">
-                      {{ item.totalHours || 0 }} ч.
-                    </td>
-                    <td class="px-8 py-10 text-center align-top">
-                      <div class="flex flex-wrap justify-center gap-1">
-                        <span 
-                          v-if="item.language"
-                          class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border"
-                          :class="{
-                            'bg-[#E0E7FF] text-[#4338CA] border-[#C7D2FE]': item.language === 'ru',
-                            'bg-[#CCFBF1] text-[#0F766E] border-[#99F6E4]': item.language === 'kk',
-                            'bg-[#F3E8FF] text-[#7E22CE] border-[#E9D5FF]': item.language === 'en',
-                          }"
-                        >
-                          {{ item.language.toUpperCase() }}
-                        </span>
-                        <span v-else class="text-xs text-muted-foreground/40">-</span>
-                      </div>
-                    </td>
-                    <td class="px-8 py-10 text-right align-top">
-                      <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                        <button 
-                          @click="openEditPopup(item)"
-                          class="p-2 text-muted-foreground/60 hover:text-[#1F2937] transition-colors"
-                          :title="common_edit()"
-                        >
-                          <IconEdit class="w-4 h-4" />
-                        </button>
-                        <button 
-                          @click="handleDelete(item)"
-                          class="p-2 text-muted-foreground/60 hover:text-destructive transition-colors"
-                          :title="common_delete()"
-                        >
-                          <IconTrash class="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr v-if="filteredItems.length === 0">
-                    <td colspan="6" class="px-8 py-24 text-center text-muted-foreground/40 text-sm italic">
-                      {{ catalog_no_disciplines() }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                      </td>
+                      <td class="px-6 py-4 text-center text-sm font-medium text-muted-foreground/70 whitespace-nowrap">
+                        {{ item.totalHours || 0 }} ч.
+                      </td>
+                      <td class="px-6 py-4">
+                        <div class="flex flex-wrap justify-center gap-1">
+                          <span
+                            v-if="item.language"
+                            class="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide"
+                            :class="{
+                              'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400': item.language === 'ru',
+                              'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-400': item.language === 'kk',
+                              'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400': item.language === 'en',
+                            }"
+                          >{{ item.language === 'kk' ? 'Kz' : item.language === 'ru' ? 'Ru' : 'En' }}</span>
+                          <span v-else class="text-xs text-muted-foreground/40">-</span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 text-right">
+                        <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            @click="openEditPopup(item)"
+                            class="p-2 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
+                            :title="common_edit()"
+                          ><IconEdit class="w-4 h-4" /></button>
+                          <button
+                            @click="handleDelete(item)"
+                            class="p-2 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                            :title="common_delete()"
+                          ><IconTrash class="w-4 h-4" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr v-if="filteredItems.length === 0">
+                      <td colspan="6" class="px-8 py-24 text-center text-muted-foreground/40 text-sm italic">
+                        {{ catalog_no_disciplines() }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
+
           </div>
         </div>
+
       </div>
     </div>
 
@@ -182,7 +172,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from "vue";
-import { f7Page, f7Input, f7 } from "framework7-vue";
+import { f7Page, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Class9Popup from "@/components/Class9Popup.vue";
@@ -213,6 +203,7 @@ import IconSearch from "~icons/lucide/search";
 import IconPlus from "~icons/lucide/plus";
 import IconEdit from "~icons/lucide/edit";
 import IconTrash from "~icons/lucide/trash-2";
+import IconChevronDown from "~icons/lucide/chevron-down";
 
 const { locale } = useI18n();
 const pageId = ref(Date.now());
@@ -311,12 +302,25 @@ const handleDelete = (item: Class9Data) => {
 </script>
 
 <style scoped>
-:deep(.search-input .input-outline) {
-  border-radius: 0.75rem !important;
-}
-
-:deep(.search-input input) {
-  height: 2.5rem !important;
+.catalog-search-input {
+  background-color: rgb(243, 244, 246) !important;
+  border: 1px solid rgb(229, 231, 235) !important;
+  color: hsl(var(--foreground)) !important;
+  outline: none !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  padding: 0.5rem 1rem 0.5rem 2.5rem !important;
   font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+  border-radius: 0.5rem !important;
+  width: 100% !important;
+}
+.catalog-search-input::placeholder {
+  color: rgb(156, 163, 175) !important;
+}
+.catalog-search-input:focus {
+  background-color: rgb(255, 255, 255) !important;
+  border-color: rgb(209, 213, 219) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08) !important;
 }
 </style>
+

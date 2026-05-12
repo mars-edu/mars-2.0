@@ -8,10 +8,9 @@
     <!-- Desktop Header -->
     <Header class="hidden md:block flex-shrink-0 border-b border-border" />
 
-    <div class="flex flex-1 overflow-hidden">
-      <!-- Sidebar -->
-      <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
+    <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
+    <div class="flex flex-1 overflow-hidden">
       <!-- Page Content -->
       <div class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 transition-all duration-200" :class="contentMargin">
         <div class="max-w-4xl mx-auto">

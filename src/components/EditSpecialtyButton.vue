@@ -5,8 +5,7 @@
       v-if="specialty"
       :id="'edit-specialty-popover-' + specialty.id"
       style="width: 600px !important"
-      :target="`#specialty-item-${specialty.id}`"
-    
+      positioning="center"
       :on-closed="resetForm">
       <div class="specialty-popover bg-card text-card-foreground">
         <PopoverHeader

@@ -7,27 +7,25 @@
       <SearchBar />
     </div>
     <div class="header-right">
-      <div class="flex-shrink-0">
-        <button
-          id="notification-bell-button"
-          @click="openNotificationCenter"
-          class="relative p-2 rounded-full transition-colors hover:bg-primary/10 text-primary"
-        >
-          <IconBell class="text-[22px]" />
-          <span
-            v-if="unreadCount > 0"
-            class="absolute top-1 right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-medium rounded-full flex items-center justify-center px-1"
-          >
-            {{ unreadCount > 99 ? '99+' : unreadCount }}
-          </span>
-        </button>
-      </div>
       <div class="flex-shrink-0 min-w-[100px]">
         <LanguageSelector />
       </div>
       <div class="h-6 w-px bg-border flex-shrink-0"></div>
       <div class="flex-shrink-0">
         <ThemeToggle />
+      </div>
+      <div class="flex-shrink-0">
+        <button
+          id="notification-bell-button"
+          @click="openNotificationCenter"
+          class="relative w-10 h-10 flex items-center justify-center rounded-full transition-all hover:bg-primary/10 text-muted-foreground hover:text-primary active:scale-95"
+        >
+          <IconBell class="text-[20px]" />
+          <span
+            v-if="unreadCount > 0"
+            class="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-card"
+          ></span>
+        </button>
       </div>
       <div class="avatar-container flex-shrink-0">
         <button

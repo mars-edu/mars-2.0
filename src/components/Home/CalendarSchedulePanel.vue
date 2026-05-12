@@ -1,8 +1,8 @@
 <template>
-  <div class="bg-card rounded-[32px] shadow-sm border border-border h-full flex flex-col p-6">
+  <div class="bg-card rounded-[32px] shadow-sm border border-border h-full flex flex-col p-6" :key="locale">
     <!-- Header -->
     <div class="flex justify-between items-center mb-6 px-2">
-      <h2 class="text-lg font-bold text-foreground">{{ m.home_calendar_title() }}</h2>
+      <h2 class="text-lg font-bold text-foreground">{{ home_calendar_title() }}</h2>
     </div>
 
     <!-- Calendar -->
@@ -69,7 +69,7 @@
     <!-- Schedule -->
     <div class="flex-1 overflow-y-auto no-scrollbar">
       <div class="flex justify-between items-end mb-4 px-2">
-        <h3 class="text-base font-bold text-foreground">{{ m.home_schedule() }}</h3>
+        <h3 class="text-base font-bold text-foreground">{{ home_schedule() }}</h3>
         <span class="text-xs text-muted-foreground font-medium uppercase">{{ scheduleLabel }}</span>
       </div>
 
@@ -100,7 +100,7 @@
                 {{ lesson.group }}
               </div>
               <div class="text-[11px] text-muted-foreground font-medium">
-                {{ m.home_schedule_room_prefix() }} {{ lesson.room }}
+                {{ home_schedule_room_prefix() }} {{ lesson.room }}
               </div>
             </div>
           </div>
@@ -112,7 +112,7 @@
           @click="f7.views.main.router.navigate('/journals')"
           class="p-4 rounded-[20px] border border-dashed border-border flex items-center justify-center text-muted-foreground text-xs font-medium cursor-pointer hover:bg-card hover:border-primary/50 hover:text-primary transition-all"
         >
-          <IconPlus class="w-3.5 h-3.5 mr-2" /> {{ m.home_schedule_add_lesson() }}
+          <IconPlus class="w-3.5 h-3.5 mr-2" /> {{ home_schedule_add_lesson() }}
         </div>
       </div>
     </div>
@@ -134,7 +134,14 @@ import IconChevronLeft from "~icons/lucide/chevron-left";
 import IconChevronRight from "~icons/lucide/chevron-right";
 import IconUsers from "~icons/lucide/users";
 import IconPlus from "~icons/lucide/plus";
-import * as m from "@/paraglide/messages";
+import {
+  home_calendar_title,
+  home_schedule,
+  home_schedule_room_prefix,
+  home_schedule_add_lesson,
+  home_schedule_today,
+  home_schedule_tomorrow,
+} from "@/paraglide/messages";
 import { useI18n } from "@/composables/useI18n";
 import { generateCalendarDays, isSameDate, type CalendarDate } from "@/utils/calendarUtils";
 
@@ -190,15 +197,15 @@ const handleOpenJournal = (lesson: Lesson) => {
 
 const scheduleLabel = computed(() => {
   const sel = scheduleStore.selectedDate;
-  if (!sel) return m.home_schedule_today();
+  if (!sel) return home_schedule_today();
   
   const d = new Date(sel);
   const today = new Date();
-  if (isSameDate(d, today)) return m.home_schedule_today();
+  if (isSameDate(d, today)) return home_schedule_today();
   
   const tomorrow = new Date();
   tomorrow.setDate(today.getDate() + 1);
-  if (isSameDate(d, tomorrow)) return m.home_schedule_tomorrow();
+  if (isSameDate(d, tomorrow)) return home_schedule_today();
   
   return d.toLocaleDateString(locale.value, { day: "numeric", month: "short" });
 });

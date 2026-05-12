@@ -1,16 +1,16 @@
 <template>
-  <div class="bg-card rounded-[32px] p-8 shadow-sm border border-border">
+  <div class="bg-card rounded-[32px] p-6 md:p-8 shadow-sm border border-border" :key="locale">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 md:mb-6 gap-4">
       <div class="flex items-center gap-3">
         <div class="bg-orange-100 text-orange-600 p-2 rounded-xl">
           <IconMegaphone class="text-xl w-5 h-5" />
         </div>
-        <h3 class="text-lg font-bold text-foreground">{{ m.home_announcements_title() }}</h3>
+        <h3 class="text-lg font-bold text-foreground">{{ home_announcements_title() }}</h3>
         <button
           @click="isAddModalOpen = true"
           class="ml-2 flex-none w-8 h-8 flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl transition-all active:scale-95"
-          :title="m.home_announcements_create_tooltip()"
+          :title="home_announcements_create_tooltip()"
         >
           <IconPlus class="w-4 h-4" />
         </button>
@@ -62,7 +62,7 @@
         </div>
       </template>
       <div v-else class="col-span-full text-center py-8 text-muted-foreground text-sm">
-        {{ m.home_announcements_empty() }}
+        {{ home_announcements_empty() }}
       </div>
     </div>
 
@@ -78,18 +78,19 @@ import { ref, computed } from "vue";
 import IconMegaphone from "~icons/lucide/megaphone";
 import IconPlus from "~icons/lucide/plus";
 import AddAnnouncementModal from "@/components/Home/AddAnnouncementModal.vue";
-import * as m from "@/paraglide/messages";
+import {
+  home_announcements_title,
+  home_announcements_create_tooltip,
+  home_announcements_empty,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
+import { getAnnouncementFilters } from "@/utils/homeUtils";
 
+const { locale } = useI18n();
 const activeFilter = ref("all");
 const isAddModalOpen = ref(false);
 
-const filters = computed(() => [
-  { id: "all", label: m.home_announcements_filter_all() },
-  { id: "academic", label: m.home_announcements_filter_academic() },
-  { id: "contests", label: m.home_announcements_filter_contests() },
-  { id: "events", label: m.home_announcements_filter_events() },
-  { id: "system", label: m.home_announcements_filter_system() },
-]);
+const filters = computed(() => getAnnouncementFilters(locale.value));
 
 // TODO: replace with real data from notificationStore or a dedicated announcements API
 interface AnnouncementItem {

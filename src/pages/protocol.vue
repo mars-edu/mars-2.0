@@ -9,9 +9,9 @@
       <Header />
     </div>
 
-    <f7-page-content class="protocol-content">
-      <Sidebar v-model:activeNavItem="activeNavItem" />
+    <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
 
+    <f7-page-content class="protocol-content">
       <div class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 transition-all duration-200" :class="contentMargin">
         <div class="flex flex-col gap-4">
           <!-- Page Header with Teacher Selector -->

@@ -125,6 +125,7 @@ function internalClose() {
 }
 
 function onPopupClosed() {
+  isPopupOpen.value = false;
   emit("close");
 }
 

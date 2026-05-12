@@ -5,8 +5,7 @@
       v-if="teacher"
       :id="'edit-teacher-popover-' + teacher.id"
       style="width: 600px !important"
-      :target="`#teacher-item-${teacher.id}`"
-    
+      positioning="center"
       :on-closed="resetForm">
       <div class="teacher-popover bg-card text-card-foreground">
         <PopoverHeader

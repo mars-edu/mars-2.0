@@ -85,7 +85,22 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import IconChevronDown from "~icons/lucide/chevron-down";
-import * as m from "@/paraglide/messages";
+import {
+  color_red,
+  color_orange,
+  color_yellow,
+  color_green,
+  color_mint,
+  color_teal,
+  color_cyan,
+  color_blue,
+  color_indigo,
+  color_purple,
+  color_pink,
+  color_brown,
+  color_gray,
+  color_picker_label,
+} from "@/paraglide/messages";
 
 interface Color {
   name: string;
@@ -94,19 +109,19 @@ interface Color {
 }
 
 const COLORS = computed((): Color[] => [
-  { name: m.color_red(), hex: '#FF3B30', var: '--ios-red' },
-  { name: m.color_orange(), hex: '#FF9500', var: '--ios-orange' },
-  { name: m.color_yellow(), hex: '#FFCC00', var: '--ios-yellow' },
-  { name: m.color_green(), hex: '#34C759', var: '--ios-green' },
-  { name: m.color_mint(), hex: '#00C7BE', var: '--ios-mint' },
-  { name: m.color_teal(), hex: '#30B0C7', var: '--ios-teal' },
-  { name: m.color_cyan(), hex: '#32ADE6', var: '--ios-cyan' },
-  { name: m.color_blue(), hex: '#007AFF', var: '--ios-blue' },
-  { name: m.color_indigo(), hex: '#5856D6', var: '--ios-indigo' },
-  { name: m.color_purple(), hex: '#AF52DE', var: '--ios-purple' },
-  { name: m.color_pink(), hex: '#FF2D55', var: '--ios-pink' },
-  { name: m.color_brown(), hex: '#A2845E', var: '--ios-brown' },
-  { name: m.color_gray(), hex: '#8E8E93', var: '--ios-gray' },
+  { name: color_red(), hex: '#FF3B30', var: '--ios-red' },
+  { name: color_orange(), hex: '#FF9500', var: '--ios-orange' },
+  { name: color_yellow(), hex: '#FFCC00', var: '--ios-yellow' },
+  { name: color_green(), hex: '#34C759', var: '--ios-green' },
+  { name: color_mint(), hex: '#00C7BE', var: '--ios-mint' },
+  { name: color_teal(), hex: '#30B0C7', var: '--ios-teal' },
+  { name: color_cyan(), hex: '#32ADE6', var: '--ios-cyan' },
+  { name: color_blue(), hex: '#007AFF', var: '--ios-blue' },
+  { name: color_indigo(), hex: '#5856D6', var: '--ios-indigo' },
+  { name: color_purple(), hex: '#AF52DE', var: '--ios-purple' },
+  { name: color_pink(), hex: '#FF2D55', var: '--ios-pink' },
+  { name: color_brown(), hex: '#A2845E', var: '--ios-brown' },
+  { name: color_gray(), hex: '#8E8E93', var: '--ios-gray' },
 ]);
 
 const row1 = computed(() => COLORS.value.slice(0, 11));
@@ -119,7 +134,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  label: () => m.color_picker_label(),
+  label: () => color_picker_label(),
 });
 
 const emit = defineEmits<{

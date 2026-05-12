@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full">
+  <div class="h-full" :key="locale">
     <!-- Report Card -->
     <div
       class="bg-card rounded-[32px] p-8 shadow-sm border border-border cursor-pointer hover:bg-muted transition-colors group flex flex-col justify-between min-h-[180px] h-full"
@@ -17,15 +17,15 @@
           />
         </div>
         <h3 class="text-xl font-bold text-foreground">
-          {{ m.home_quick_actions_report_title() }}
+          {{ home_quick_actions_report_title() }}
         </h3>
         <p class="text-muted-foreground text-sm mt-2 leading-relaxed">
-          {{ m.home_quick_actions_report_desc() }}
+          {{ home_quick_actions_report_desc() }}
         </p>
       </div>
       <div class="mt-4 pt-4 border-t border-border">
         <span class="text-primary text-sm font-bold flex items-center gap-1">
-          {{ m.home_quick_actions_report_start() }}
+          {{ home_quick_actions_report_start() }}
           <IconChevronRight class="text-xs w-3 h-3" />
         </span>
       </div>
@@ -38,7 +38,14 @@ import { f7 } from "framework7-vue";
 import IconFileText from "~icons/lucide/file-text";
 import IconArrowUpRight from "~icons/lucide/arrow-up-right";
 import IconChevronRight from "~icons/lucide/chevron-right";
-import * as m from "@/paraglide/messages";
+import {
+  home_quick_actions_report_title,
+  home_quick_actions_report_desc,
+  home_quick_actions_report_start,
+} from "@/paraglide/messages";
+import { useI18n } from "@/composables/useI18n";
+
+const { locale } = useI18n();
 
 const navigate = (path: string) => {
   f7.views.main.router.navigate(path);

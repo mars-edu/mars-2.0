@@ -21,8 +21,8 @@ export const useLocaleStore = defineStore(
     const locale = ref<LocaleCode>("ru");
 
     function setLocale(code: LocaleCode) {
-      locale.value = code;
       setParaglideLocale(code, { reload: false });
+      locale.value = code;
     }
 
     function initialize() {

@@ -14,8 +14,7 @@
       v-slot="{ requestClose }"
       id="add-student-popover"
       style="width: 600px !important"
-      target="#add-student-button"
-    
+      positioning="center"
       :on-closed="resetForm">
       <div class="student-popover bg-card text-card-foreground">
         <PopoverHeader

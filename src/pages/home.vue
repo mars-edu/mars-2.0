@@ -7,12 +7,12 @@
   >
     <Header class="hidden md:block flex-shrink-0" />
 
+    <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
+
     <!-- Desktop Layout -->
     <div class="hidden md:flex overflow-hidden flex-1 bg-background">
-      <Sidebar v-model:activeNavItem="activeNavItem" />
-
       <div
-        class="flex-1 flex flex-col min-w-0 m-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-border bg-card overflow-hidden"
+        class="flex-1 flex flex-col min-w-0 overflow-hidden"
         :class="contentMargin"
       >
         <div class="flex-1 flex gap-6 p-6 text-foreground transition-all duration-200 overflow-hidden">
@@ -49,8 +49,8 @@
       >
         <div class="overflow-y-auto p-4 bg-background text-foreground pb-16">
           <WelcomeSection />
-          <StatsRow />
           <div class="flex flex-col gap-4">
+            <StatsRow />
             <ActivityCard />
             <AnnouncementsCard />
             <CalendarSchedulePanel class="min-h-[600px]" />
@@ -144,7 +144,8 @@ const pageId = ref(Date.now());
 const activeNavItem = ref("home");
 
 const navigationItems = computed(() => {
-  void locale.value;
+  // Explicit dependency on locale.value ensures reactivity
+  locale.value;
   return [
     { id: "home", label: home_home(), icon: IconHouse },
     { id: "schedule", label: home_schedule(), icon: IconCalendar },

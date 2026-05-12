@@ -638,20 +638,20 @@
       <div class="fixed inset-0 z-[160] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/20 backdrop-blur-sm" @click="showExitConfirm = false" />
         <div class="relative bg-white rounded-[24px] p-8 w-full max-w-[320px] text-center space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
-          <h3 class="text-[19px] font-bold text-gray-900">{{ m.unsaved_changes_title() }}</h3>
-          <p class="text-[15px] text-gray-500 leading-relaxed">{{ m.unsaved_changes_message() }}</p>
+          <h3 class="text-[19px] font-bold text-gray-900">{{ unsaved_changes_title() }}</h3>
+          <p class="text-[15px] text-gray-500 leading-relaxed">{{ unsaved_changes_message() }}</p>
           <div class="grid grid-cols-2 gap-3 pt-2">
             <button 
               @click="showExitConfirm = false" 
               class="py-3 rounded-xl bg-[#F2F2F7] text-gray-900 font-semibold text-[15px] hover:bg-[#E5E5EA] transition-colors"
             >
-              {{ m.unsaved_changes_cancel() }}
+              {{ unsaved_changes_cancel() }}
             </button>
             <button 
               @click="handleConfirmExit" 
               class="py-3 rounded-xl bg-[#ef4444] text-white font-semibold text-[15px] hover:bg-red-600 transition-colors"
             >
-              {{ m.unsaved_changes_confirm() }}
+              {{ unsaved_changes_confirm() }}
             </button>
           </div>
         </div>
@@ -663,7 +663,12 @@
 <script setup lang="ts">
 import { computed, reactive, ref, toRefs, watch, type Ref } from "vue";
 import { f7 } from "framework7-vue";
-import * as m from "@/paraglide/messages";
+import {
+  unsaved_changes_title,
+  unsaved_changes_message,
+  unsaved_changes_cancel,
+  unsaved_changes_confirm,
+} from "@/paraglide/messages";
 import IconX from "~icons/lucide/x";
 import IconChevronRight from "~icons/lucide/chevron-right";
 import IconChevronUp from "~icons/lucide/chevron-up";
