@@ -98,6 +98,55 @@
                 </template>
               </div>
             </div>
+
+            <!-- Action menu -->
+            <div class="relative flex-shrink-0 mt-1">
+              <button
+                class="p-2.5 bg-card rounded-xl shadow-sm border border-border hover:border-primary hover:text-primary transition-all flex items-center justify-center"
+                @click="isActionMenuOpen = !isActionMenuOpen"
+              >
+                <IconMoreVertical class="w-5 h-5" />
+              </button>
+              <div v-if="isActionMenuOpen" class="fixed inset-0 z-40" @click="isActionMenuOpen = false" />
+              <div v-if="isActionMenuOpen" class="absolute right-0 top-full mt-2 w-56 bg-card rounded-2xl shadow-2xl border border-border py-2 z-50">
+                <button class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-muted hover:text-primary transition-colors flex items-center gap-2"
+                  @click="onSettingsClick(); isActionMenuOpen = false">
+                  <IconSettings2 class="w-4 h-4" />
+                  {{ journal_settings() }}
+                </button>
+                <button class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-muted hover:text-primary transition-colors flex items-center gap-2"
+                  @click="onOpenJournalClick(); isActionMenuOpen = false">
+                  <IconLockOpen class="w-4 h-4" />
+                  {{ journal_open() }}
+                </button>
+                <button class="w-full text-left px-4 py-2.5 text-sm font-bold text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-2"
+                  @click="onCloseJournalClick(); isActionMenuOpen = false">
+                  <IconCircleX class="w-4 h-4" />
+                  {{ journal_close() }}
+                </button>
+                <button class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-muted hover:text-primary transition-colors flex items-center gap-2"
+                  @click="onDownloadClick(); isActionMenuOpen = false">
+                  <IconArrowDownToLine class="w-4 h-4" />
+                  {{ journal_download() }}
+                </button>
+                <div class="h-px bg-border my-1" />
+                <button class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-muted hover:text-primary transition-colors flex items-center gap-2"
+                  @click="onReplaceClick(); isActionMenuOpen = false">
+                  <IconRefreshCw class="w-4 h-4" />
+                  {{ journal_replace() }}
+                </button>
+                <button class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-muted hover:text-primary transition-colors flex items-center gap-2"
+                  @click="onUploadClick(); isActionMenuOpen = false">
+                  <IconArrowUpToLine class="w-4 h-4" />
+                  {{ journal_upload() }}
+                </button>
+                <button class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-muted hover:text-primary transition-colors flex items-center gap-2"
+                  @click="onShareClick(); isActionMenuOpen = false">
+                  <IconShare class="w-4 h-4" />
+                  {{ journal_share() }}
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="flex flex-wrap gap-4 mb-6">
@@ -192,73 +241,6 @@
                   {{ selectionDoneText }} ({{ selectedJournalIds.size }})
                 </f7-button>
               </template>
-              <template v-else>
-                <f7-button
-                  id="journal-settings-button"
-                  small
-                  default
-                  @click="onSettingsClick"
-                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
-                >
-                  <IconSettings2 class="w-4 h-4 mr-2" />
-                  {{ journal_settings() }}
-                </f7-button>
-                <f7-button
-                  small
-                  default
-                  @click="onOpenJournalClick"
-                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
-                >
-                  <IconLockOpen class="w-4 h-4 mr-2" />
-                  {{ journal_open() }}
-                </f7-button>
-                <f7-button
-                  small
-                  default
-                  @click="onCloseJournalClick"
-                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
-                >
-                  <IconCircleX class="w-4 h-4 mr-2" />
-                  {{ journal_close() }}
-                </f7-button>
-                <f7-button
-                  small
-                  default
-                  @click="onDownloadClick"
-                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
-                >
-                  <IconArrowDownToLine class="w-4 h-4 mr-2" />
-                  {{ journal_download() }}
-                </f7-button>
-                <f7-button
-                  id="replace-journal-button"
-                  small
-                  default
-                  @click="onReplaceClick"
-                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
-                >
-                  <IconRefreshCw class="w-4 h-4 mr-2" />
-                  {{ journal_replace() }}
-                </f7-button>
-                <f7-button
-                  small
-                  default
-                  @click="onUploadClick"
-                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
-                >
-                  <IconArrowUpToLine class="w-4 h-4 mr-2" />
-                  {{ journal_upload() }}
-                </f7-button>
-                <f7-button
-                  small
-                  default
-                  @click="onShareClick"
-                  class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors flex-1 sm:flex-none"
-                >
-                  <IconShare class="w-4 h-4 mr-2" />
-                  {{ journal_share() }}
-                </f7-button>
-              </template>
             </div>
             <!-- Filter bar -->
             <div class="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl overflow-x-auto max-w-full mb-5">
@@ -291,6 +273,7 @@
                 :selected="selectedJournalIds.has(journal.id)"
                 @click="goToJournalDetails(journal.id)"
                 @toggle-select="toggleJournalSelection(journal.id)"
+                @download="handleCardDownload(journal.id)"
               />
               <div
                 v-if="filteredByTab.length === 0"
@@ -322,7 +305,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
-import { f7Page, f7Input, f7, f7Button } from "framework7-vue";
+import { f7Page, f7Input, f7 } from "framework7-vue";
 import IconX from "~icons/lucide/x";
 import IconCircleCheck from "~icons/lucide/circle-check";
 import IconCircleX from "~icons/lucide/circle-x";
@@ -857,6 +840,7 @@ const activeFilter = ref<JournalFilter>('all')
 const isYearPillOpen = ref(false)
 const isSemesterPillOpen = ref(false)
 const isTeacherPillOpen = ref(false)
+const isActionMenuOpen = ref(false)
 
 const JOURNAL_FILTERS: ReadonlyArray<{ id: JournalFilter; label: string }> = [
   { id: 'all',        label: journal_filter_all() },
@@ -1126,6 +1110,12 @@ function onDownloadClick() {
 
 function onReplaceClick() {
   startSelectionMode("replace");
+}
+
+function handleCardDownload(journalId: string) {
+  selectedJournalIds.value = new Set([journalId])
+  selectionAction.value = 'download'
+  onSelectionDone()
 }
 
 function onSelectionDone() {
