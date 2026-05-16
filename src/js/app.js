@@ -11,6 +11,7 @@ import App from "../app.vue";
 import localforage from "localforage";
 import { convexPlugin, convexUrl } from "../lib/convexClient";
 import { useLocaleStore } from "../stores/localeStore";
+import VueApexCharts from "vue3-apexcharts";
 
 Framework7.use(Framework7Vue);
 
@@ -44,6 +45,7 @@ pinia.use(
 );
 
 app.use(pinia);
+app.use(VueApexCharts);
 
 // Initialize Paraglide locale from persisted preference before first render.
 // localeStore uses localStorage (sync), so it's already hydrated here.
