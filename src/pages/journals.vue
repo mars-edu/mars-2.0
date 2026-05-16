@@ -285,6 +285,7 @@
                 @click="goToJournalDetails(journal.id)"
                 @toggle-select="toggleJournalSelection(journal.id)"
                 @download="handleCardDownload(journal.id)"
+                @delete="handleCardDelete(journal.id)"
               />
               <div
                 v-if="isDataReady && filteredByTab.length === 0"
@@ -1142,6 +1143,12 @@ function onReplaceClick() {
 function handleCardDownload(journalId: string) {
   selectedJournalIds.value = new Set([journalId])
   selectionAction.value = 'download'
+  onSelectionDone()
+}
+
+function handleCardDelete(journalId: string) {
+  selectedJournalIds.value = new Set([journalId])
+  selectionAction.value = 'delete'
   onSelectionDone()
 }
 

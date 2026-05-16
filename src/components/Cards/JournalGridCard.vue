@@ -47,6 +47,14 @@
             <IconDownload class="w-4 h-4" />
             Скачать журнал
           </button>
+          <div class="h-px bg-border my-1" />
+          <button
+            class="w-full text-left px-4 py-2.5 text-sm font-bold text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-2"
+            @click="emit('delete'); isMenuOpen = false"
+          >
+            <IconTrash2 class="w-4 h-4" />
+            Удалить журнал
+          </button>
         </div>
       </div>
     </div>
@@ -81,6 +89,7 @@ import { ref, computed, watch } from 'vue'
 import IconCheck from "~icons/lucide/check"
 import IconMoreVertical from "~icons/lucide/more-vertical"
 import IconDownload from "~icons/lucide/download"
+import IconTrash2 from "~icons/lucide/trash-2"
 
 interface AccentColor {
   bg: string
@@ -107,6 +116,7 @@ const emit = defineEmits<{
   click: []
   'toggle-select': []
   download: []
+  delete: []
 }>()
 
 const isMenuOpen = ref(false)
