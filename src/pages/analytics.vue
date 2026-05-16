@@ -16,13 +16,31 @@
           <div
             class="flex flex-col md:flex-row md:items-center justify-between gap-3 analytics-page-header"
           >
-            <div>
-              <h1 class="text-2xl font-semibold">{{ analytics_title() }}</h1>
-              <p class="text-sm text-muted-foreground">
-                {{ analytics_subtitle() }}
-              </p>
+            <div class="flex items-center gap-4">
+              <div>
+                <h1 class="text-2xl font-semibold">{{ analytics_title() }}</h1>
+                <p class="text-sm text-muted-foreground">
+                  {{ analytics_subtitle() }}
+                </p>
+              </div>
+              <div class="flex items-center bg-muted p-1 rounded-xl">
+                <button
+                  class="px-4 py-1.5 text-sm font-medium rounded-lg transition-all"
+                  :class="viewMode === 'ведомость' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                  @click="viewMode = 'ведомость'"
+                >
+                  Ведомость
+                </button>
+                <button
+                  class="px-4 py-1.5 text-sm font-medium rounded-lg transition-all"
+                  :class="viewMode === 'транскрипт' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                  @click="viewMode = 'транскрипт'"
+                >
+                  Транскрипт
+                </button>
+              </div>
             </div>
-            <div class="flex items-center gap-3">
+            <div v-if="viewMode === 'ведомость'" class="flex items-center gap-3">
               <Select
                 v-model="selectedAcademicYearModel"
                 :options="academicYearOptions"
@@ -39,6 +57,19 @@
               />
             </div>
           </div>
+
+          <template v-if="viewMode === 'ведомость'">
+          <AnalyticsStatCards
+            :average-score="analyticsAverageScore"
+            :student-count="selectedAnalyticsStudents.length"
+            :discipline-count="relevantJournals.length"
+            :attendance-percent="analyticsAttendancePercent"
+          />
+
+          <AnalyticsCharts
+            :monthly-data="analyticsMonthlyData"
+            :overall-averages="analyticsOverallAverages"
+          />
 
           <div
             class="bg-card text-card-foreground rounded-xl p-4 md:p-5 shadow-md"
@@ -308,7 +339,7 @@
               </f7-button>
             </div>
             <div
-              v-if="hasGeneratedReport"
+              v-if="hasGeneratedReport && sheetType === 'успеваемость'"
               class="mt-6 space-y-3 border-t border-border pt-4"
             >
               <div
@@ -372,6 +403,43 @@
               </p>
             </div>
           </div>
+
+          <!-- Sheet type toggle -->
+          <div class="flex items-center gap-3">
+            <div class="flex items-center bg-muted p-1 rounded-xl">
+              <button
+                class="px-4 py-1.5 text-sm font-medium rounded-lg transition-all"
+                :class="sheetType === 'успеваемость' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                @click="sheetType = 'успеваемость'"
+              >
+                Ведомость успеваемости
+              </button>
+              <button
+                class="px-4 py-1.5 text-sm font-medium rounded-lg transition-all"
+                :class="sheetType === 'посещаемость' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                @click="sheetType = 'посещаемость'"
+              >
+                Ведомость посещаемости
+              </button>
+            </div>
+          </div>
+
+          <AnalyticsAttendanceSheet
+            v-if="sheetType === 'посещаемость'"
+            :students="attendanceStudents"
+            :journals="attendanceJournals"
+            :get-student-marks="marksStore.getStudentMarks"
+          />
+
+          </template>
+
+          <template v-if="viewMode === 'транскрипт'">
+            <AnalyticsTranscriptView
+              :students="transcriptStudents"
+              :journals="attendanceJournals"
+              :get-student-marks="marksStore.getStudentMarks"
+            />
+          </template>
         </div>
       </div>
     </div>
@@ -430,6 +498,10 @@ import Select from "@/components/ui/Select.vue";
 import Accordion from "@/components/ui/accordion/Accordion.vue";
 import AccordionItem from "@/components/ui/accordion/AccordionItem.vue";
 import AnalyticsReportTable from "@/components/AnalyticsReportTable.vue";
+import AnalyticsStatCards from "@/components/AnalyticsStatCards.vue";
+import AnalyticsCharts from "@/components/AnalyticsCharts.vue";
+import AnalyticsAttendanceSheet from "@/components/AnalyticsAttendanceSheet.vue";
+import AnalyticsTranscriptView from "@/components/AnalyticsTranscriptView.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { useCourseStore } from "@/stores/courseStore";
@@ -530,6 +602,8 @@ const selectedLanguageGroups = ref<string[]>([]);
 const selectedSpecialtyInfo = ref<any>(null);
 const selectedStudents = ref<string[]>([]);
 const hasGeneratedReport = ref(false);
+const viewMode = ref<"ведомость" | "транскрипт">("ведомость");
+const sheetType = ref<"успеваемость" | "посещаемость">("успеваемость");
 const reportGeneratedAt = ref<Date | null>(null);
 let emptyDisciplineToast: any = null;
 
@@ -700,6 +774,98 @@ const reportFinalForms = computed(() =>
   }))
 );
 
+const analyticsAverageScore = computed<number | null>(() => {
+  const scores = reportRows.value
+    .map((r) => r.overallAverage)
+    .filter((s): s is number => s !== null);
+  return scores.length
+    ? scores.reduce((a, b) => a + b, 0) / scores.length
+    : null;
+});
+
+const analyticsAttendancePercent = computed<number | null>(() => {
+  let present = 0;
+  let total = 0;
+  selectedAnalyticsStudents.value.forEach((student) => {
+    relevantJournals.value.forEach((journal) => {
+      const marks = marksStore.getStudentMarks(journal.id, student.id);
+      if (!marks) return;
+      marks
+        .filter((m: Mark) => m.type === "date")
+        .forEach((m: Mark) => {
+          if (!Array.isArray(m.values)) return;
+          m.values.forEach((v) => {
+            if (v === null || v === undefined || v === "") return;
+            total++;
+            const s = String(v).trim().toLowerCase();
+            if (s !== "н" && s !== "б" && s !== "0" && s !== "0.0") {
+              present++;
+            }
+          });
+        });
+    });
+  });
+  return total > 0 ? (present / total) * 100 : null;
+});
+
+const analyticsMonthlyData = computed<{ month: string; avgScore: number }[]>(() => {
+  const monthNames = [
+    "Янв","Фев","Мар","Апр","Май","Июн",
+    "Июл","Авг","Сен","Окт","Ноя","Дек",
+  ];
+  const byMonth: Record<number, number[]> = {};
+
+  selectedAnalyticsStudents.value.forEach((student) => {
+    relevantJournals.value.forEach((journal) => {
+      const marks = marksStore.getStudentMarks(journal.id, student.id);
+      if (!marks) return;
+      marks
+        .filter((m: Mark) => m.type === "date" && m.isoDate)
+        .forEach((m: Mark) => {
+          const month = new Date(m.isoDate!).getMonth();
+          if (!Array.isArray(m.values)) return;
+          m.values.forEach((v) => {
+            const n =
+              typeof v === "number"
+                ? v
+                : parseFloat(String(v).replace(",", "."));
+            if (Number.isFinite(n)) {
+              if (!byMonth[month]) byMonth[month] = [];
+              byMonth[month].push(n);
+            }
+          });
+        });
+    });
+  });
+
+  return Object.entries(byMonth)
+    .sort(([a], [b]) => Number(a) - Number(b))
+    .map(([monthIdx, values]) => ({
+      month: monthNames[Number(monthIdx)],
+      avgScore: values.reduce((a, b) => a + b, 0) / values.length,
+    }));
+});
+
+const analyticsOverallAverages = computed<(number | null)[]>(() =>
+  reportRows.value.map((r) => r.overallAverage)
+);
+
+const attendanceStudents = computed(() =>
+  selectedAnalyticsStudents.value.map((s) => ({
+    id: s.id,
+    fullName: s.fullName,
+  }))
+);
+
+const attendanceJournals = computed(() =>
+  relevantJournals.value.map((j) => ({ id: j.id, title: j.title }))
+);
+
+const transcriptStudents = computed(() =>
+  selectedAnalyticsStudents.value.map((s) => {
+    return { id: s.id, fullName: s.fullName, enrollmentYear: "—" };
+  })
+);
 
 const getDisciplinesForSemester = computed(() => {
   const hasData = new Set<string>();
