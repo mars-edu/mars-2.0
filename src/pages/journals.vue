@@ -272,8 +272,28 @@
 
             <!-- Journal grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              <!-- Loading skeleton (shown until disciplines and active year are ready) -->
+              <template v-if="!isDataReady">
+                <div
+                  v-for="i in 8"
+                  :key="`skeleton-${i}`"
+                  class="rounded-[20px] bg-card border border-transparent shadow-sm p-4 flex flex-col gap-3 animate-pulse"
+                >
+                  <div class="flex justify-between items-start">
+                    <div class="w-12 h-12 rounded-xl bg-muted" />
+                  </div>
+                  <div class="flex-1 space-y-2">
+                    <div class="h-5 bg-muted rounded w-3/4" />
+                    <div class="h-3 bg-muted rounded w-1/2" />
+                  </div>
+                  <div class="flex gap-2">
+                    <div class="h-6 w-16 bg-muted rounded-md" />
+                    <div class="h-6 w-14 bg-muted rounded-md" />
+                  </div>
+                </div>
+              </template>
               <JournalGridCard
-                v-for="journal in filteredByTab"
+                v-for="journal in (isDataReady ? filteredByTab : [])"
                 :key="journal.id"
                 :title="journalStore.getDisciplineTitle(journal)"
                 :subtitle="journalStore.getJournalSubtitle(journal)"
@@ -287,7 +307,7 @@
                 @download="handleCardDownload(journal.id)"
               />
               <div
-                v-if="filteredByTab.length === 0"
+                v-if="isDataReady && filteredByTab.length === 0"
                 class="col-span-full rounded-2xl border-2 border-dashed border-border flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground"
               >
                 <div class="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
@@ -849,6 +869,10 @@ function getJournalAccentColor(id: string): { bg: string; text: string } {
   }
   return JOURNAL_CARD_PALETTE[hash % JOURNAL_CARD_PALETTE.length]
 }
+
+const isDataReady = computed(() =>
+  class9Store.class9Items.length > 0 && !!selectedItemsStore.selectedAcademicYearId
+)
 
 type JournalFilter = 'all' | 'course-1' | 'course-2' | 'course-3' | 'course-4' | 'mixed' | 'individual'
 const activeFilter = ref<JournalFilter>('all')
