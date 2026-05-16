@@ -1,5 +1,5 @@
 <template>
-  <div class="mb-8" :key="locale">
+  <div class="mb-8">
     <h1 class="text-3xl font-bold text-foreground tracking-tight">
       {{ greeting }}, {{ fullName }}!
     </h1>

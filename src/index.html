@@ -55,51 +55,7 @@
       })();
     </script>
 
-    <script>
-      function forceReload() {
-        return true;
-        if (window.__BUILD_INFO__.environment == "production") {
-          console.log(
-            "[forceReload] Production environment detected, reloading page"
-          );
-          const form = document.createElement("form");
-          form.method = "POST";
-          form.action = location.href;
-          document.body.appendChild(form);
-          form.submit();
-        } else {
-          console.log(
-            "[forceReload] Development environment detected, reloading page"
-          );
-          window.location.reload();
-        }
-      }
-    </script>
-
     <!-- Legacy hash-based routing redirect removed - now using clean URLs -->
-
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const storedBuildInfo = localStorage.getItem("buildInfo");
-        console.log(
-          "[DOMContentLoaded] Stored build info found, checking version"
-        );
-        if (storedBuildInfo) {
-          console.log(
-            "[DOMContentLoaded] Stored build info found, checking version"
-          );
-          const buildInfo = JSON.parse(storedBuildInfo);
-          if (buildInfo.version !== window.__BUILD_INFO__.version) {
-            localStorage.setItem(
-              "buildInfo",
-              JSON.stringify(window.__BUILD_INFO__)
-            );
-            forceReload();
-          }
-        }
-        forceReload();
-      });
-    </script>
 
     <meta name="mobile-web-app-capable" content="yes" />
     <meta

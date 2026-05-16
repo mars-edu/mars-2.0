@@ -404,6 +404,8 @@ import {
   journal_action_download,
   journal_action_delete,
   journal_delete,
+  journal_delete_confirm_title,
+  journal_delete_confirm_message,
   journal_select_one,
   journal_already_closed,
   journal_already_open,
@@ -1158,13 +1160,26 @@ function onSelectionDone() {
 
   if (selectionAction.value === "delete") {
     f7.dialog.confirm(
-      `Вы действительно хотите безвозвратно удалить выбранные журналы (${ids.length})?`,
-      "Удаление журналов",
+      `${journal_delete_confirm_message()} (${ids.length})`,
+      journal_delete_confirm_title(),
       async () => {
-        for (const id of ids) {
-          await journalStore.deleteJournal(id);
+        try {
+          await Promise.all(ids.map((id) => journalStore.deleteJournal(id)));
+          f7.toast
+            .create({
+              text: `${journal_delete_confirm_title()}: ${ids.length}`,
+              position: "center",
+              closeTimeout: 2000,
+            })
+            .open();
+        } catch (err) {
+          f7.dialog.alert(
+            err instanceof Error ? err.message : String(err),
+            journal_delete_confirm_title()
+          );
+        } finally {
+          exitSelectionMode();
         }
-        exitSelectionMode();
       }
     );
     return;

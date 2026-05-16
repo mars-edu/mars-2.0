@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-card rounded-[32px] p-6 md:p-8 shadow-sm border border-border" :key="locale">
+  <div class="bg-card rounded-[32px] p-6 md:p-8 shadow-sm border border-border">
     <!-- Header -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 md:mb-6 gap-4">
       <div class="flex items-center gap-3">

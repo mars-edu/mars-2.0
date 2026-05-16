@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-card rounded-[32px] shadow-sm border border-border h-full flex flex-col p-6" :key="locale">
+  <div class="bg-card rounded-[32px] shadow-sm border border-border h-full flex flex-col p-6">
     <!-- Header -->
     <div class="flex justify-between items-center mb-6 px-2">
       <h2 class="text-lg font-bold text-foreground">{{ home_calendar_title() }}</h2>

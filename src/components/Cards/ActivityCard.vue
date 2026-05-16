@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-card rounded-[32px] p-6 md:p-8 shadow-sm border border-border flex flex-col" :key="locale">
+  <div class="bg-card rounded-[32px] p-6 md:p-8 shadow-sm border border-border flex flex-col">
     <div class="grid grid-cols-[1fr_auto] items-center mb-6 md:mb-8">
       <div class="text-xl font-bold text-foreground leading-[1.1]">
         {{ home_activity_title() }}
@@ -45,9 +45,6 @@
 import { f7 } from "framework7-vue";
 import IconFileText from "~icons/lucide/file-text";
 import { home_activity_title, home_activity_show_all } from "@/paraglide/messages";
-import { useI18n } from "@/composables/useI18n";
-
-const { locale } = useI18n();
 
 const navigateToProtocol = () => {
   f7.views.main.router.navigate("/protocol");

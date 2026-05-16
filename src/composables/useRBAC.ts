@@ -17,6 +17,11 @@ import {
   nav_profile,
   nav_settings,
   nav_logout,
+  nav_ktp,
+  nav_testing,
+  nav_courses,
+  nav_timetable,
+  nav_workload,
 } from "@/paraglide/messages";
 import { useLocaleStore } from "@/stores/localeStore";
 
@@ -55,7 +60,7 @@ export function useRBAC() {
       },
       {
         id: "planning",
-        label: "Планирование",
+        label: nav_schedule(),
         icon: "calendar-days",
         roles: [Role.ADMIN, Role.TEACHER],
         route: "/planning",
@@ -69,7 +74,7 @@ export function useRBAC() {
       },
       {
         id: "ktp",
-        label: "КТП",
+        label: nav_ktp(),
         icon: "layout-grid",
         roles: [Role.ADMIN, Role.TEACHER],
         route: "/journals/", // Redirect to journals for now as KTP is often linked
@@ -83,14 +88,14 @@ export function useRBAC() {
       },
       {
         id: "testing",
-        label: "Тестирование",
+        label: nav_testing(),
         icon: "layout",
         roles: [Role.ADMIN, Role.TEACHER],
         route: "/home",
       },
       {
         id: "courses",
-        label: "Курсы",
+        label: nav_courses(),
         icon: "graduation-cap",
         roles: [Role.ADMIN, Role.TEACHER],
         route: "/home",
@@ -118,49 +123,49 @@ export function useRBAC() {
       },
       {
         id: "schedule",
-        label: "График",
+        label: nav_education_schedule(),
         icon: "calendar",
         roles: [Role.ADMIN, Role.TEACHER],
         route: "/education-schedule/",
       },
       {
         id: "timetable",
-        label: "Управление расписанием",
+        label: nav_timetable(),
         icon: "clock",
         roles: [Role.ADMIN],
         route: "/home",
       },
       {
         id: "workload",
-        label: "Управление нагрузкой",
+        label: nav_workload(),
         icon: "layout-grid",
         roles: [Role.ADMIN],
         route: "/workload-management",
       },
       {
         id: "specialty-catalog",
-        label: "Специальности",
+        label: nav_specialty_catalog(),
         icon: "book-open",
         roles: [Role.ADMIN],
         route: "/specialty-catalog/",
       },
       {
         id: "student-card",
-        label: "Обучающиеся",
+        label: nav_student_card(),
         icon: "users",
         roles: [Role.ADMIN],
         route: "/student-card/",
       },
       {
         id: "discipline-catalog",
-        label: "Дисциплины",
+        label: nav_discipline_catalog(),
         icon: "book",
         roles: [Role.ADMIN],
         route: "/discipline-catalog/",
       },
       {
         id: "teacher-card",
-        label: "Преподаватели",
+        label: nav_teacher_card(),
         icon: "user-check",
         roles: [Role.ADMIN],
         route: "/teacher-card/",

@@ -1,5 +1,5 @@
 <template>
-  <f7-app v-bind="f7params">
+  <f7-app :key="locale" v-bind="f7params">
     <f7-view
       class="safe-areas"
       :main="true"
@@ -30,6 +30,7 @@ import { f7, f7ready } from "framework7-vue";
 import type { Framework7Parameters } from "framework7/types";
 import { useUserStore } from "./stores/userStore";
 import { useThemeStore } from "./stores/themeStore";
+import { useI18n } from "./composables/useI18n";
 import {
   f7_dialog_ok,
   f7_dialog_cancel,
@@ -55,6 +56,8 @@ import { initVisibilityDetector } from "./composables/useVisibility";
 
 const userStore = useUserStore();
 const themeStore = useThemeStore();
+const { locale } = useI18n();
+
 console.log("[App] Component setup initiated");
 
 /**
@@ -77,75 +80,80 @@ const initialUrl = computed(() => {
   return url || "/";
 });
 
-const f7params: Framework7Parameters = {
-  name: "Mars",
-  theme: "ios",
-  store: store,
-  routes: routes,
+const f7params = computed<Framework7Parameters>(() => {
+  // Access locale to ensure reactivity
+  const _ = locale.value;
 
-  dialog: {
-    buttonOk: f7_dialog_ok(),
-    buttonCancel: f7_dialog_cancel(),
-  },
+  return {
+    name: "Mars",
+    theme: "ios",
+    store: store,
+    routes: routes,
 
-  picker: {
-    toolbarCloseText: f7_picker_done(),
-  },
-
-  calendar: {
-    monthNames: [
-      f7_month_jan(), f7_month_feb(), f7_month_mar(), f7_month_apr(),
-      f7_month_may(), f7_month_jun(), f7_month_jul(), f7_month_aug(),
-      f7_month_sep(), f7_month_oct(), f7_month_nov(), f7_month_dec(),
-    ],
-    monthNamesShort: [
-      f7_month_jan_short(), f7_month_feb_short(), f7_month_mar_short(), f7_month_apr_short(),
-      f7_month_may_short(), f7_month_jun_short(), f7_month_jul_short(), f7_month_aug_short(),
-      f7_month_sep_short(), f7_month_oct_short(), f7_month_nov_short(), f7_month_dec_short(),
-    ],
-    dayNames: [
-      f7_day_sun(), f7_day_mon(), f7_day_tue(), f7_day_wed(),
-      f7_day_thu(), f7_day_fri(), f7_day_sat(),
-    ],
-    dayNamesShort: [
-      f7_day_sun_short(), f7_day_mon_short(), f7_day_tue_short(), f7_day_wed_short(),
-      f7_day_thu_short(), f7_day_fri_short(), f7_day_sat_short(),
-    ],
-    firstDay: 1,
-  },
-
-  smartSelect: {
-    popupCloseLinkText: f7_smart_select_close(),
-    searchbarPlaceholder: f7_smart_select_search_placeholder(),
-    searchbarDisableText: f7_smart_select_search_cancel(),
-  },
-
-  popover: {
-    closeByBackdropClick: true,
-    closeOnEscape: true,
-  },
-
-  popup: {
-    closeByBackdropClick: true,
-    closeOnEscape: true,
-  },
-
-  view: {
-    browserHistory: true,
-    browserHistorySeparator: '',  // Empty string removes #!/ prefix
-    browserHistoryOnLoad: true,
-    browserHistoryTabs: "push",
-    preloadPreviousPage: false,
-    reloadPages: true,
-    removeElements: true,
-  },
-
-  on: {
-    init() {
-      console.log("[Framework7] Framework7 initialized");
+    dialog: {
+      buttonOk: f7_dialog_ok(),
+      buttonCancel: f7_dialog_cancel(),
     },
-  },
-};
+
+    picker: {
+      toolbarCloseText: f7_picker_done(),
+    },
+
+    calendar: {
+      monthNames: [
+        f7_month_jan(), f7_month_feb(), f7_month_mar(), f7_month_apr(),
+        f7_month_may(), f7_month_jun(), f7_month_jul(), f7_month_aug(),
+        f7_month_sep(), f7_month_oct(), f7_month_nov(), f7_month_dec(),
+      ],
+      monthNamesShort: [
+        f7_month_jan_short(), f7_month_feb_short(), f7_month_mar_short(), f7_month_apr_short(),
+        f7_month_may_short(), f7_month_jun_short(), f7_month_jul_short(), f7_month_aug_short(),
+        f7_month_sep_short(), f7_month_oct_short(), f7_month_nov_short(), f7_month_dec_short(),
+      ],
+      dayNames: [
+        f7_day_sun(), f7_day_mon(), f7_day_tue(), f7_day_wed(),
+        f7_day_thu(), f7_day_fri(), f7_day_sat(),
+      ],
+      dayNamesShort: [
+        f7_day_sun_short(), f7_day_mon_short(), f7_day_tue_short(), f7_day_wed_short(),
+        f7_day_thu_short(), f7_day_fri_short(), f7_day_sat_short(),
+      ],
+      firstDay: 1,
+    },
+
+    smartSelect: {
+      popupCloseLinkText: f7_smart_select_close(),
+      searchbarPlaceholder: f7_smart_select_search_placeholder(),
+      searchbarDisableText: f7_smart_select_search_cancel(),
+    },
+
+    popover: {
+      closeByBackdropClick: true,
+      closeOnEscape: true,
+    },
+
+    popup: {
+      closeByBackdropClick: true,
+      closeOnEscape: true,
+    },
+
+    view: {
+      browserHistory: true,
+      browserHistorySeparator: '',  // Empty string removes #!/ prefix
+      browserHistoryOnLoad: true,
+      browserHistoryTabs: "push",
+      preloadPreviousPage: false,
+      reloadPages: true,
+      removeElements: true,
+    },
+
+    on: {
+      init() {
+        console.log("[Framework7] Framework7 initialized");
+      },
+    },
+  };
+});
 
 onBeforeMount(async () => {
   // Initialize user store before mounting so route guards have access to auth state

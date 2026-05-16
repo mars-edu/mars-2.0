@@ -8,7 +8,7 @@
   >
     <div class="replace-journal-popover bg-card text-card-foreground">
       <PopoverHeader
-        title="Заменить журналы"
+        title="Добавить замену"
         :on-cancel="requestClose"
       />
       <div class="p-4 space-y-4">

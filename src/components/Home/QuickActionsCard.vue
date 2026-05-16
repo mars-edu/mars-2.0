@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full" :key="locale">
+  <div class="h-full">
     <!-- Report Card -->
     <div
       class="bg-card rounded-[32px] p-8 shadow-sm border border-border cursor-pointer hover:bg-muted transition-colors group flex flex-col justify-between min-h-[180px] h-full"
@@ -43,9 +43,6 @@ import {
   home_quick_actions_report_desc,
   home_quick_actions_report_start,
 } from "@/paraglide/messages";
-import { useI18n } from "@/composables/useI18n";
-
-const { locale } = useI18n();
 
 const navigate = (path: string) => {
   f7.views.main.router.navigate(path);

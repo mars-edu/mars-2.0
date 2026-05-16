@@ -21,7 +21,7 @@
     <button
       class="hidden md:flex absolute -right-3 top-6 z-[100] h-6 w-6 items-center justify-center rounded-full bg-card border border-border shadow-sm hover:bg-muted transition-colors"
       @click="toggle"
-      :title="collapsed ? 'Развернуть' : 'Свернуть'"
+      :title="collapsed ? sidebar_expand() : sidebar_collapse()"
     >
       <component
         :is="collapsed ? IconChevronRight : IconChevronLeft"
@@ -76,6 +76,7 @@ import AuthService from "@/services/auth";
 import type { NavigationItem } from "@/composables/useRBAC";
 import SidebarItem from "./SidebarItem.vue";
 import Logo from "../Logo/Logo.vue";
+import { sidebar_expand, sidebar_collapse } from "@/paraglide/messages";
 
 // Lucide icons via unplugin-icons
 import IconHouse from "~icons/lucide/house";

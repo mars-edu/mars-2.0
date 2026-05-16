@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-6" :key="locale">
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
     <!-- Students -->
     <div
       class="bg-card rounded-[24px] p-6 shadow-sm border border-border flex flex-col justify-between h-36 hover:shadow-md transition-all cursor-default"
