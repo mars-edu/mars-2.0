@@ -24,7 +24,8 @@
       <!-- Per-card action menu (normal mode, visible on hover) -->
       <div v-else class="relative" @click.stop>
         <button
-          class="p-1.5 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors opacity-0 group-hover:opacity-100"
+          :class="isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
+          class="p-1.5 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
           @click="isMenuOpen = !isMenuOpen"
         >
           <IconMoreVertical class="w-4 h-4" />
@@ -76,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import IconCheck from "~icons/lucide/check"
 import IconMoreVertical from "~icons/lucide/more-vertical"
 import IconDownload from "~icons/lucide/download"
@@ -118,4 +119,8 @@ const handleClick = () => {
     emit('click')
   }
 }
+
+watch(() => props.selectionMode, (val) => {
+  if (val) isMenuOpen.value = false
+})
 </script>
