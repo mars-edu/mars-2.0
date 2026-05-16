@@ -11,10 +11,10 @@
 
     <div class="flex flex-1 overflow-hidden">
       <div
-        class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 transition-all duration-200"
+        class="flex-1 overflow-y-auto p-6 md:p-8 bg-muted/40 pb-16 md:pb-6 transition-all duration-200"
         :class="contentMargin"
       >
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-6">
           <div
             class="flex flex-col md:flex-row md:items-center justify-between gap-3 journals-page-header"
           >
@@ -48,10 +48,7 @@
             </div>
           </div>
 
-          <div
-            class="bg-card text-card-foreground rounded-xl p-4 md:p-5 shadow-md"
-          >
-            <div class="flex flex-wrap gap-4 mb-6">
+          <div class="flex flex-wrap gap-4 mb-6">
               <Select
                 v-model="selectedDiscipline"
                 :options="disciplineOptions"
@@ -253,7 +250,6 @@
                 <span class="text-sm font-medium opacity-60">{{ journal_empty() }}</span>
               </div>
             </div>
-          </div>
         </div>
       </div>
     </div>
@@ -379,25 +375,11 @@ import {
   common_cancel,
   common_all,
   common_menu,
-  home_home,
-  home_schedule,
-  home_journals,
-  home_rup,
 } from "@/paraglide/messages";
 import { useI18n } from "@/composables/useI18n";
 
 const { locale } = useI18n();
 const { contentMargin, openMobile } = useSidebar();
-
-const navigationItems = computed(() => {
-  void locale.value;
-  return [
-    { id: "home", label: home_home(), icon: IconHouse, route: "/home" },
-    { id: "schedule", label: home_schedule(), icon: IconCalendar, route: "/education-schedule/" },
-    { id: "journals", label: home_journals(), icon: IconBook, route: "/journals/" },
-    { id: "rup", label: home_rup(), icon: IconFileText, route: "/rup/" },
-  ];
-});
 
 const handleTabClick = (item: any) => {
   activeNavItem.value = item.id;
