@@ -5,7 +5,7 @@
   >
     <Header class="hidden md:block flex-shrink-0 border-b border-border" />
 
-    <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
+    <Sidebar v-model:activeNavItem="activeNavItem" />
 
     <!-- Outer padding area — floating card gap, same as DisciplineCatalog -->
     <div

@@ -128,9 +128,21 @@ export function useUnsavedChangesDialog() {
       resolveCurrent = resolve;
       isHandlingResult = false;
 
+      const parentPopup = findParentPopup();
+      const backdrop = document.querySelector<HTMLElement>(".popup-backdrop");
+
+      if (parentPopup) {
+        parentPopup.style.visibility = "hidden";
+        if (backdrop) backdrop.style.visibility = "hidden";
+      }
+
       const finish = (value: boolean) => {
         if (!resolveCurrent || isHandlingResult) return;
         isHandlingResult = true;
+        if (parentPopup) {
+          parentPopup.style.visibility = "";
+          if (backdrop) backdrop.style.visibility = "";
+        }
         const resolver = resolveCurrent;
         resolveCurrent = null;
         removeDialog();
@@ -146,16 +158,10 @@ export function useUnsavedChangesDialog() {
         onCancel: () => finish(false),
       });
 
-      const parentPopup = findParentPopup();
-      if (parentPopup) {
-        const pos = getComputedStyle(parentPopup).position;
-        if (pos === "static") {
-          parentPopup.style.position = "relative";
-        }
-        parentPopup.appendChild(currentContainer);
-      } else {
-        document.body.appendChild(currentContainer);
-      }
+      currentContainer.style.cssText =
+        "position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);padding:1rem;";
+
+      document.body.appendChild(currentContainer);
     });
   };
 

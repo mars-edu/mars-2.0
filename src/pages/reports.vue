@@ -4,7 +4,7 @@
     class="reports-page flex flex-col h-screen bg-background text-foreground"
   >
     <Header class="hidden md:block flex-shrink-0 border-b border-border" />
-    <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
+    <Sidebar v-model:activeNavItem="activeNavItem" />
 
     <div
       class="flex flex-1 overflow-hidden p-2 md:p-4 transition-all duration-200"
@@ -24,16 +24,16 @@
             <!-- Controls Card -->
             <div class="p-4 rounded-lg shadow-sm border border-border bg-card space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                <Select
-                  v-if="userStore.isAdmin"
-                  v-model="selectedTeacherId"
-                  :options="teacherOptions"
-                  :label="reports_teacher()"
-                  :placeholder="reports_teacher_placeholder()"
-                  name="teacher"
-                  searchable
-                  :search-placeholder="reports_teacher_search()"
-                />
+                <div v-if="userStore.isAdmin" class="flex flex-col">
+                  <div class="text-xs font-medium text-muted-foreground mb-1">{{ reports_teacher() }}</div>
+                  <SearchableSelectPopover
+                    id="reports-teacher-select"
+                    v-model="selectedTeacherId"
+                    :options="teacherOptions"
+                    :placeholder="reports_teacher_placeholder()"
+                    :search-placeholder="reports_teacher_search()"
+                  />
+                </div>
 
                 <Select
                   v-model="selectedAcademicYearId"
@@ -290,6 +290,7 @@ import { FileText, Download, FileSpreadsheet } from "lucide-vue-next";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
+import SearchableSelectPopover from "@/components/ui/SearchableSelectPopover.vue";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useCalendarStore } from "@/stores/calendarStore";

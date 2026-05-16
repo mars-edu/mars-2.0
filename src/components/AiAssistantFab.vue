@@ -33,6 +33,12 @@ function openAssistant() {
   z-index: 6000 !important;
 }
 
+@media (max-width: 767px) {
+  .ai-assistant-fab.fab {
+    bottom: calc(64px + 16px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
 /* Position as floating panel in the bottom-right */
 #ai-assistant-popup.popup {
   width: 380px !important;

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="border-b border-input px-8 pt-8 pb-4"
+    class="px-8 pt-8"
   >
     <div class="flex justify-between items-center mb-8 min-h-[32px]">
       <div>

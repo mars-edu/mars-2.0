@@ -14,6 +14,7 @@ import type {
 
 // Constants
 const AUTH_TOKEN_KEY = "auth_token";
+const STORED_USER_KEY = "stored_user";
 
 /**
  * Session Manager handles token and user session storage
@@ -45,6 +46,14 @@ class SessionManager {
     sessionStorage.removeItem(AUTH_TOKEN_KEY);
   }
 
+  static setUser(user: User): void {
+    localStorage.setItem(STORED_USER_KEY, JSON.stringify(user));
+  }
+
+  static clearUser(): void {
+    localStorage.removeItem(STORED_USER_KEY);
+  }
+
   /**
    * Setup user session with token and user data
    */
@@ -53,6 +62,7 @@ class SessionManager {
     userStore.setUser(user);
     userStore.setToken(token);
     this.setToken(token, remember);
+    this.setUser(user);
   }
 
   /**
@@ -60,6 +70,7 @@ class SessionManager {
    */
   static clearSession(): void {
     this.clearToken();
+    this.clearUser();
     const userStore = useUserStore();
     userStore.logout();
   }

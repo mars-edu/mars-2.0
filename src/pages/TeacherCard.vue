@@ -4,7 +4,7 @@
     class="flex flex-col h-screen bg-background text-foreground"
   >
     <Header class="hidden md:block flex-shrink-0 border-b border-border" />
-    <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
+    <Sidebar v-model:activeNavItem="activeNavItem" />
 
     <div
       class="flex flex-1 overflow-hidden p-2 md:p-4 transition-all duration-200"
@@ -44,26 +44,26 @@
               </div>
               <!-- Row 2: filter selects -->
               <div class="flex flex-wrap gap-3 items-center">
-                <Select
+                <SearchableSelectPopover
+                  id="teacher-filter-position"
                   v-model="selectedPosition"
                   :options="positionOptions"
                   :placeholder="teacher_card_position()"
-                  name="position"
-                  class="w-44"
+                  class="w-48"
                 />
-                <Select
+                <SearchableSelectPopover
+                  id="teacher-filter-year"
                   v-model="selectedEmploymentYear"
                   :options="employmentYearOptions"
                   :placeholder="teacher_card_year()"
-                  name="employment-year"
-                  class="w-36"
+                  class="w-40"
                 />
-                <Select
+                <SearchableSelectPopover
+                  id="teacher-filter-gender"
                   v-model="selectedGender"
                   :options="genderOptions"
                   :placeholder="teacher_card_gender()"
-                  name="gender"
-                  class="w-36"
+                  class="w-40"
                 />
               </div>
             </div>
@@ -171,7 +171,7 @@ import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddTeacherButton from "@/components/AddTeacherButton.vue";
 import EditTeacherButton from "@/components/EditTeacherButton.vue";
 import PasswordHistoryPopup from "@/components/PasswordHistoryPopup.vue";
-import Select from "@/components/ui/Select.vue";
+import SearchableSelectPopover from "@/components/ui/SearchableSelectPopover.vue";
 import { useTeacherStore, type Teacher } from "@/stores/teacherStore";
 import { getGenderOptions } from "@/lib/utils";
 import { usePositionStore } from "@/stores/positionStore";

@@ -9,7 +9,7 @@
       <Header />
     </div>
 
-    <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
+    <Sidebar v-model:activeNavItem="activeNavItem" />
 
     <f7-page-content class="planning-content">
       <div ref="calendarContainer" class="calendar-container p-6 md:p-8 transition-all duration-200" :class="contentMargin">
@@ -36,13 +36,11 @@
         </div>
 
         <div v-if="userStore.isAdmin" class="mb-3 flex justify-end">
-          <Select
+          <SearchableSelectPopover
             v-model="selectedTeacherId"
             :options="teacherOptions"
             :placeholder="planning_teacher()"
-            name="teacher"
             class="w-[250px]"
-            :searchable="true"
           />
         </div>
 
@@ -100,7 +98,7 @@ import CalendarGrid from "@/components/Calendar/CalendarGrid.vue";
 import EditEventPopover from "@/components/Calendar/EditEventPopover.vue";
 import JournalPreviewPopover from "@/components/Calendar/JournalPreviewPopover.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
-import Select from "@/components/ui/Select.vue";
+import SearchableSelectPopover from "@/components/ui/SearchableSelectPopover.vue";
 import { type CalendarEvent as UseCalendarEvent } from "@/composables/useCalendar";
 import { type CalendarEvent as StoreCalendarEvent } from "@/stores/calendarStore";
 import { useCalendarStore } from "@/stores/calendarStore";
@@ -131,13 +129,33 @@ import {
   f7_week_abbr_sun,
   common_all,
   journal_semester_label,
+  common_menu,
+  home_home,
+  home_schedule,
+  home_journals,
+  home_rup,
 } from "@/paraglide/messages";
 import { useI18n } from "@/composables/useI18n";
 
 const { locale } = useI18n();
-const { contentMargin } = useSidebar();
+const { contentMargin, openMobile } = useSidebar();
 const calendarContainer = ref<HTMLElement | null>(null);
 const activeNavItem = ref("calendar");
+
+const navigationItems = computed(() => {
+  void locale.value;
+  return [
+    { id: "home", label: home_home(), icon: IconHouse, route: "/home" },
+    { id: "schedule", label: home_schedule(), icon: IconCalendar, route: "/education-schedule/" },
+    { id: "journals", label: home_journals(), icon: IconBook, route: "/journals/" },
+    { id: "rup", label: home_rup(), icon: IconFileText, route: "/rup/" },
+  ];
+});
+
+const handleTabClick = (item: any) => {
+  activeNavItem.value = item.id;
+  f7.views.main.router.navigate(item.route);
+};
 
 const selectedEvent = ref<StoreCalendarEvent | null>(null);
 const selectedEventId = ref<string | null>(null);

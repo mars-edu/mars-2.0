@@ -180,6 +180,16 @@ body {
   line-height: 1.5;
 }
 
+/* Ensure global footer doesn't obscure content on mobile */
+@media (max-width: 767px) {
+  .page-content,
+  .mobile-content-area,
+  [data-skeleton-page] .flex-1.overflow-y-auto,
+  .journals-page .flex-1.overflow-y-auto {
+    padding-bottom: calc(72px + 24px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
 .unsaved-changes-dialog {
   @apply !w-[324px] !max-w-[calc(100vw-24px)] !rounded-[28px];
 }

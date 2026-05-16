@@ -5,7 +5,7 @@
   >
     <Header class="hidden md:block flex-shrink-0 border-b border-border" />
 
-    <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
+    <Sidebar v-model:activeNavItem="activeNavItem" />
 
     <div class="flex flex-1 overflow-hidden">
       <div
@@ -298,12 +298,32 @@ import {
   rup_import_done_msg,
   rup_module_duplicated,
   common_cancel,
+  common_menu,
+  home_home,
+  home_schedule,
+  home_journals,
+  home_rup,
 } from "@/paraglide/messages";
 import { useI18n } from "@/composables/useI18n";
 
 const { locale } = useI18n();
-const { contentMargin } = useSidebar();
+const { contentMargin, openMobile } = useSidebar();
 const activeNavItem = ref("rup");
+
+const navigationItems = computed(() => {
+  void locale.value;
+  return [
+    { id: "home", label: home_home(), icon: IconHouse, route: "/home" },
+    { id: "schedule", label: home_schedule(), icon: IconCalendar, route: "/education-schedule/" },
+    { id: "journals", label: home_journals(), icon: IconBook, route: "/journals/" },
+    { id: "rup", label: home_rup(), icon: IconFileText, route: "/rup/" },
+  ];
+});
+
+const handleTabClick = (item: any) => {
+  activeNavItem.value = item.id;
+  f7.views.main.router.navigate(item.route);
+};
 const specialtyStore = useSpecialtyStore();
 const academicYearStore = useAcademicYearStore();
 const userStore = useUserStore();

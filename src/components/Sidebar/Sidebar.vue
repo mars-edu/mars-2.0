@@ -1,15 +1,25 @@
 <template>
+  <!-- Backdrop for mobile -->
+  <div
+    v-if="isMobileOpen"
+    class="fixed inset-0 bg-black/50 z-[105] md:hidden backdrop-blur-sm transition-opacity duration-300"
+    @click="closeMobile"
+  ></div>
+
   <aside
-    class="fixed top-0 left-0 bottom-0 bg-card border-r border-border z-[110] shadow-sm transition-all duration-300 overflow-visible"
-    :class="sidebarWidth"
+    class="fixed top-0 bottom-0 bg-card border-r border-border z-[110] shadow-sm transition-all duration-300 overflow-visible"
+    :class="[
+      sidebarWidth,
+      isMobileOpen ? 'left-0' : '-left-64 md:left-0'
+    ]"
     style="display: grid; grid-template-rows: auto 1fr auto"
   >
     <!-- Logo Area -->
-    <Logo variant="sidebar" :isExpanded="!collapsed" />
+    <Logo variant="sidebar" :isExpanded="!collapsed || isMobileOpen" />
 
-    <!-- Toggle button on right edge -->
+    <!-- Toggle button on right edge - Hidden on mobile -->
     <button
-      class="absolute -right-3 top-6 z-[100] flex h-6 w-6 items-center justify-center rounded-full bg-card border border-border shadow-sm hover:bg-muted transition-colors"
+      class="hidden md:flex absolute -right-3 top-6 z-[100] h-6 w-6 items-center justify-center rounded-full bg-card border border-border shadow-sm hover:bg-muted transition-colors"
       @click="toggle"
       :title="collapsed ? 'Развернуть' : 'Свернуть'"
     >
@@ -22,7 +32,7 @@
     <!-- Nav items -->
     <div
       class="w-full px-2 pt-2 pb-4 space-y-2"
-      :class="collapsed ? 'overflow-visible' : 'overflow-y-auto overflow-x-hidden'"
+      :class="(collapsed && !isMobileOpen) ? 'overflow-visible' : 'overflow-y-auto overflow-x-hidden'"
     >
       <nav class="flex flex-col space-y-1 w-full">
         <SidebarItem
@@ -30,7 +40,7 @@
           :key="item.id"
           :label="item.label"
           :active="item.id === activeItem"
-          :collapsed="collapsed"
+          :collapsed="collapsed && !isMobileOpen"
           @click="handleNavItemClick(item.id)"
         >
           <component :is="navIconMap[item.id]" class="w-[22px] h-[22px]" />
@@ -46,7 +56,7 @@
           :key="item.id"
           :label="item.label"
           :active="false"
-          :collapsed="collapsed"
+          :collapsed="collapsed && !isMobileOpen"
           @click="handleProfileItemClick(item.id)"
         >
           <component :is="profileIconMap[item.id]" class="w-[22px] h-[22px]" />
@@ -125,7 +135,7 @@ const props = withDefaults(defineProps<Props>(), {
   activeNavItem: "home",
 });
 
-const { collapsed, sidebarWidth, toggle } = useSidebar();
+const { collapsed, sidebarWidth, toggle, isMobileOpen, closeMobile } = useSidebar();
 const { getNavigationItems, getProfileMenuItems } = useRBAC();
 
 const navigationItems = computed(() => getNavigationItems.value);
@@ -142,6 +152,9 @@ const activeItem = computed({
 
 const handleNavItemClick = (itemId: string): void => {
   activeItem.value = itemId;
+  if (isMobileOpen.value) {
+    closeMobile();
+  }
   const item = navigationItems.value.find((item) => item.id === itemId);
   if (item && item.route) {
     f7.views.main.router.navigate(item.route);
@@ -149,6 +162,9 @@ const handleNavItemClick = (itemId: string): void => {
 };
 
 const handleProfileItemClick = async (itemId: string): Promise<void> => {
+  if (isMobileOpen.value) {
+    closeMobile();
+  }
   if (itemId === "logout") {
     await AuthService.logout();
     f7.views.main.router.navigate("/login");
@@ -161,7 +177,10 @@ const handleProfileItemClick = async (itemId: string): Promise<void> => {
 };
 
 const updateActiveItem = () => {
+  if (!f7.views.main || !f7.views.main.router || !f7.views.main.router.currentRoute) return;
   const currentPath = f7.views.main.router.currentRoute.path;
+  if (!currentPath) return;
+
   const matchingItem = navigationItems.value.reduce((best, item) => {
     if (
       item.route &&

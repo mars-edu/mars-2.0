@@ -7,7 +7,7 @@
       <Header />
     </div>
 
-    <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
+    <Sidebar v-model:activeNavItem="activeNavItem" />
 
     <f7-page-content class="settings-content">
       <div 

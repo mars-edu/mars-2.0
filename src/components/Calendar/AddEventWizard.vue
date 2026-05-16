@@ -7,7 +7,7 @@
         cancel-text="Закрыть"
         :on-cancel="handleExit"
       >
-        <div class="flex gap-1.5">
+        <div class="flex gap-1.5 pt-4">
           <div
             v-for="step in steps"
             :key="step.id"
@@ -32,15 +32,11 @@
           <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70 ml-1">
             Дисциплина
           </div>
-          <Select
+          <SearchableSelectPopover
             id="event-class9-generic"
-            label=""
             placeholder="Выберите дисциплину"
-            name="event-class9-generic"
             v-model="class9IdModel"
             :options="class9Options"
-            searchable
-            v-bind="selectHandlers"
           />
         </div>
 
@@ -78,8 +74,8 @@
         />
       </section>
 
-      <section v-if="currentStep === 2" class="space-y-4">
-        <div class="rounded-xl border border-input bg-card p-3 space-y-3">
+      <section v-if="currentStep === 2" class="space-y-6">
+        <div class="bg-card rounded-2xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-border/60 space-y-3">
           <div class="flex items-center justify-between">
             <label for="use-custom-period" class="text-base text-foreground">
               Свой период
@@ -156,21 +152,21 @@
 
         <div>
           <div class="flex items-center justify-between mb-3">
-            <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Расписание</div>
+            <div class="text-[13px] font-semibold uppercase tracking-widest text-foreground opacity-70">Расписание</div>
             <span
-              class="rounded-md px-2 py-0.5 text-xs font-semibold"
-              :class="isSelectedHoursExceeded ? 'bg-destructive/15 text-destructive' : 'bg-primary/10 text-primary'"
+              class="rounded-lg px-2 py-1 text-[12px] font-medium"
+              :class="isSelectedHoursExceeded ? 'bg-red-100 text-red-600' : (selectedHours === semesterPlannedHours && semesterPlannedHours > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600')"
             >{{ selectedHours }} / {{ semesterPlannedHours }} ч.</span>
           </div>
-          <div class="flex justify-between gap-1">
+          <div class="grid grid-cols-7 gap-1.5 w-full">
             <button
               v-for="day in weekDays"
               :id="`event-weekday-${day.weekId}`"
               :key="day.weekId"
-              class="flex-1 py-2 rounded-xl text-sm font-medium flex items-center justify-center cursor-pointer transition-colors"
+              class="w-full h-10 rounded-xl text-[12px] font-semibold flex items-center justify-center cursor-pointer transition-all duration-200 active:scale-95"
               :class="{
-                'bg-primary text-primary-foreground shadow-sm': day.isSelected,
-                'bg-secondary text-secondary-foreground hover:bg-secondary/80': !day.isSelected,
+                'bg-foreground text-background shadow-md scale-[1.02]': day.isSelected,
+                'bg-muted text-muted-foreground hover:bg-muted/80': !day.isSelected,
               }"
               @click="toggleWeekDay(day.weekId, day.name)"
             >
@@ -180,68 +176,68 @@
         </div>
 
         <template v-for="day in groupedWeekSchedules" :key="day.weekId">
-          <div class="rounded-xl border border-input p-3 space-y-2 bg-card">
-            <div class="text-sm font-semibold text-foreground">
-              {{ day.russianWeekDay }}
-            </div>
-
-            <div
-              v-for="slot in day.slots"
-              :key="slot.index"
-              class="flex items-center gap-2 w-full"
-            >
-              <div class="flex-1 min-w-0">
-                <Select
-                  :id="`event-weekday-start-${day.weekId}-${slot.slotOrder}`"
-                  :modelValue="slot.value.startId"
-                  :options="startTimeOptions"
-                  placeholder="Начало"
-                  class="w-full"
-                  v-bind="selectHandlers"
-                  @update:modelValue="
-                    (v) => {
-                      updateWeekDayTime(slot.index, 'startId', v);
-                      // Clear end if it's no longer after the new start
-                      const newStartIdx = startTimeOptions.findIndex((o) => o.value === v);
-                      const curEndIdx = endTimeOptions.findIndex((o) => o.value === slot.value.endId);
-                      if (curEndIdx !== -1 && curEndIdx < newStartIdx) {
-                        updateWeekDayTime(slot.index, 'endId', '');
-                      }
-                    }
-                  "
-                />
-              </div>
-              <span class="text-muted-foreground text-sm shrink-0">—</span>
-              <div class="flex-1 min-w-0">
-                <Select
-                  :id="`event-weekday-end-${day.weekId}-${slot.slotOrder}`"
-                  :modelValue="slot.value.endId"
-                  :options="getEndTimeOptionsForStart(slot.value.startId)"
-                  placeholder="Конец"
-                  class="w-full"
-                  v-bind="selectHandlers"
-                  @update:modelValue="
-                    (v) => updateWeekDayTime(slot.index, 'endId', v)
-                  "
-                />
-              </div>
+          <div class="p-4 bg-card rounded-2xl shadow-sm border border-border/60 flex gap-4 items-start animate-in slide-in-from-bottom-2 fade-in duration-300">
+            <!-- Left col: day name + add button -->
+            <div class="flex flex-col items-center gap-2 pt-1 shrink-0">
+              <span class="font-semibold text-foreground text-[13px] w-8 text-center">{{ weekDays.find(d => d.weekId === day.weekId)?.abbreviation }}</span>
               <button
-                class="w-7 h-7 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors flex items-center justify-center shrink-0"
-                @click="removeWeekDaySlot(day.weekId, slot.index)"
-                title="Удалить время"
+                :id="`event-weekday-add-${day.weekId}`"
+                class="w-8 h-8 rounded-full bg-muted text-primary hover:bg-primary/10 flex items-center justify-center transition-colors"
+                @click="addWeekDaySlot(day.weekId, day.russianWeekDay)"
+                title="Добавить время"
               >
-                <IconX class="text-sm" />
+                <IconPlus class="text-sm" />
               </button>
             </div>
 
-            <button
-              :id="`event-weekday-add-${day.weekId}`"
-              class="flex items-center justify-center gap-1 text-primary text-sm font-medium hover:bg-primary/10 transition-colors rounded-md px-2 py-1"
-              @click="addWeekDaySlot(day.weekId, day.russianWeekDay)"
-              title="Добавить время"
-            >
-              <span class="text-base leading-none">+</span>
-            </button>
+            <!-- Right col: time slots -->
+            <div class="flex-1 space-y-3">
+              <div
+                v-for="slot in day.slots"
+                :key="slot.index"
+                class="flex items-center gap-2 w-full"
+              >
+                <div class="flex-1 min-w-0">
+                  <Select
+                    :id="`event-weekday-start-${day.weekId}-${slot.slotOrder}`"
+                    :modelValue="slot.value.startId"
+                    :options="startTimeOptions"
+                    placeholder="Начало"
+                    class="w-full"
+                    v-bind="selectHandlers"
+                    @update:modelValue="
+                      (v) => {
+                        updateWeekDayTime(slot.index, 'startId', v);
+                        const newStartIdx = startTimeOptions.findIndex((o) => o.value === v);
+                        const curEndIdx = endTimeOptions.findIndex((o) => o.value === slot.value.endId);
+                        if (curEndIdx !== -1 && curEndIdx < newStartIdx) {
+                          updateWeekDayTime(slot.index, 'endId', '');
+                        }
+                      }
+                    "
+                  />
+                </div>
+                <span class="text-muted-foreground text-sm shrink-0">—</span>
+                <div class="flex-1 min-w-0">
+                  <Select
+                    :id="`event-weekday-end-${day.weekId}-${slot.slotOrder}`"
+                    :modelValue="slot.value.endId"
+                    :options="slot.value.startId ? getEndTimeOptionsForStart(slot.value.startId) : endTimeOptions"
+                    placeholder="Конец"
+                    class="w-full"
+                    v-bind="selectHandlers"
+                    @update:modelValue="(v) => updateWeekDayTime(slot.index, 'endId', v)"
+                  />
+                </div>
+                <button
+                  class="w-7 h-7 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors flex items-center justify-center shrink-0"
+                  @click="removeWeekDaySlot(day.weekId, slot.index)"
+                  title="Удалить время"
+                >
+                  <IconX class="text-sm" />
+                </button>
+              </div>
+            </div>
           </div>
         </template>
 
@@ -563,7 +559,7 @@
                       <Select
                         :id="`journal-${journal.id}-end-${dayGroup.weekId}-${slot.slotOrder}`"
                         :modelValue="slot.value.endId"
-                        :options="getEndTimeOptionsForStart(slot.value.startId)"
+                        :options="slot.value.startId ? getEndTimeOptionsForStart(slot.value.startId) : endTimeOptions"
                         placeholder="Конец"
                         class="w-full"
                         v-bind="selectHandlers"
@@ -629,47 +625,15 @@
       @update:opened="handleKtpPopupClosed"
     />
 
-    <!-- Exit Confirmation Dialog -->
-    <f7-popup
-      :opened="showExitConfirm"
-      @popup:closed="showExitConfirm = false"
-      class="exit-confirm-popup"
-    >
-      <div class="fixed inset-0 z-[160] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/20 backdrop-blur-sm" @click="showExitConfirm = false" />
-        <div class="relative bg-white rounded-[24px] p-8 w-full max-w-[320px] text-center space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
-          <h3 class="text-[19px] font-bold text-gray-900">{{ unsaved_changes_title() }}</h3>
-          <p class="text-[15px] text-gray-500 leading-relaxed">{{ unsaved_changes_message() }}</p>
-          <div class="grid grid-cols-2 gap-3 pt-2">
-            <button 
-              @click="showExitConfirm = false" 
-              class="py-3 rounded-xl bg-[#F2F2F7] text-gray-900 font-semibold text-[15px] hover:bg-[#E5E5EA] transition-colors"
-            >
-              {{ unsaved_changes_cancel() }}
-            </button>
-            <button 
-              @click="handleConfirmExit" 
-              class="py-3 rounded-xl bg-[#ef4444] text-white font-semibold text-[15px] hover:bg-red-600 transition-colors"
-            >
-              {{ unsaved_changes_confirm() }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </f7-popup>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, toRefs, watch, type Ref } from "vue";
 import { f7 } from "framework7-vue";
-import {
-  unsaved_changes_title,
-  unsaved_changes_message,
-  unsaved_changes_cancel,
-  unsaved_changes_confirm,
-} from "@/paraglide/messages";
+import { useUnsavedChangesDialog } from "@/composables/useUnsavedChangesDialog";
 import IconX from "~icons/lucide/x";
+import IconPlus from "~icons/lucide/plus";
 import IconChevronRight from "~icons/lucide/chevron-right";
 import IconChevronUp from "~icons/lucide/chevron-up";
 import IconChevronDown from "~icons/lucide/chevron-down";
@@ -680,6 +644,7 @@ import { storeToRefs } from "pinia";
 import { withAllOption, getGenderOptions } from "@/lib/utils";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
+import SearchableSelectPopover from "@/components/ui/SearchableSelectPopover.vue";
 import Select from "@/components/ui/Select.vue";
 import ColorPicker from "@/components/ui/ColorPicker.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
@@ -1094,18 +1059,13 @@ function toggleSelectAllStudents() {
 }
 
 const isKtpPopupOpen = ref(false);
-const showExitConfirm = ref(false);
 const currentKtpIdRef = ref<string | null>(null);
 
-const handleExit = () => {
-  // In concept: if (JSON.stringify(formData) !== JSON.stringify(initialData)) setShowExitConfirm(true);
-  // Here we can simplify to always show if not at first step or just always show if the user wants it to look like concept
-  showExitConfirm.value = true;
-};
+const { confirmDiscard } = useUnsavedChangesDialog();
 
-const handleConfirmExit = () => {
-  showExitConfirm.value = false;
-  props.requestClose();
+const handleExit = async () => {
+  const confirmed = await confirmDiscard();
+  if (confirmed) props.requestClose();
 };
 
 const semesterForKtp = computed(() => {
@@ -1475,15 +1435,6 @@ defineExpose<{
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-}
-
-.exit-confirm-popup {
-  --f7-popup-bg-color: transparent;
-  box-shadow: none !important;
-}
-
-:deep(.exit-confirm-popup.modal-in) {
-  transition-duration: 0ms !important;
 }
 
 .students-table-header,

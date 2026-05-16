@@ -80,6 +80,7 @@ export const useUserStore = defineStore(
       isAuthenticated.value = false;
       token.value = null;
       localStorage.removeItem("auth_token");
+      localStorage.removeItem("stored_user");
 
       console.log("[UserStore] Logout completed:", {
         previousUser: previousUser
@@ -94,32 +95,62 @@ export const useUserStore = defineStore(
       console.log("[UserStore] Initializing user store");
       const storedToken = localStorage.getItem("auth_token");
 
-      if (storedToken) {
-        console.log("[UserStore] Found stored token, validating");
-        token.value = storedToken;
-        try {
-          const response = await AuthService.validateToken(storedToken);
-          console.log("[UserStore] Token validation response:", {
-            success: response.success,
-            hasUser: !!response.user,
-          });
-
-          if (response.success && response.user) {
-            console.log("[UserStore] Token valid, setting user");
-            setUser(response.user);
-          } else {
-            console.log("[UserStore] Token invalid, logging out");
-            logout();
-          }
-        } catch (error) {
-          console.error("[UserStore] Token validation error:", error);
-          logout();
-        }
-      } else {
+      if (!storedToken) {
         console.log("[UserStore] No stored token found");
+        return;
       }
 
-      console.log("[UserStore] Initialization completed");
+      token.value = storedToken;
+
+      // Check expiry locally via base64-decoded JWT payload — no network needed
+      try {
+        const payloadBase64 = storedToken.split(".")[1];
+        if (!payloadBase64) throw new Error("Invalid token format");
+        const payload = JSON.parse(atob(payloadBase64));
+        if (payload.exp && Math.floor(Date.now() / 1000) >= payload.exp) {
+          console.log("[UserStore] Stored token is expired, logging out");
+          logout();
+          return;
+        }
+      } catch {
+        console.log("[UserStore] Failed to decode token, logging out");
+        logout();
+        return;
+      }
+
+      // Restore from cache for instant render — no network round-trip
+      const storedUser = localStorage.getItem("stored_user");
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          if (user?.id && Array.isArray(user?.roles)) {
+            console.log("[UserStore] Restored user from cache");
+            setUser(user);
+          }
+        } catch {
+          // ignore malformed cache
+        }
+      }
+
+      console.log("[UserStore] Initialization completed, validating token in background");
+      // Background validation — does not block render
+      validateTokenInBackground(storedToken);
+    }
+
+    async function validateTokenInBackground(storedToken: string) {
+      try {
+        const response = await AuthService.validateToken(storedToken);
+        if (response.success && response.user) {
+          setUser(response.user);
+          localStorage.setItem("stored_user", JSON.stringify(response.user));
+        } else {
+          console.log("[UserStore] Background validation failed, logging out");
+          logout();
+        }
+      } catch {
+        // Network error: keep existing auth state, don't log out
+        console.log("[UserStore] Background validation network error, keeping session");
+      }
     }
 
     function updateRoles(roles: Role[]) {
@@ -175,6 +206,7 @@ export const useUserStore = defineStore(
       isAuthenticated.value = false;
       token.value = null;
       localStorage.removeItem("auth_token");
+      localStorage.removeItem("stored_user");
 
       console.log("[UserStore] Store reset completed:", {
         previousState,
@@ -201,6 +233,7 @@ export const useUserStore = defineStore(
       setToken,
       logout,
       initialize,
+      validateTokenInBackground,
       updateRoles,
       addRole,
       removeRole,

@@ -246,14 +246,9 @@ const hasUnsavedChanges = () => isDirty.value;
 
 <style scoped>
 .add-event-popup {
-  width: auto;
-  min-width: 500px;
-  max-width: 90vw;
-  max-height: 90vh;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 1rem;
+  --f7-popup-tablet-width: 672px;
+  --f7-popup-tablet-height: min(900px, calc(100vh - 80px));
+  border-radius: 2rem !important;
   overflow: hidden;
 }
 

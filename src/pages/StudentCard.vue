@@ -4,7 +4,7 @@
     class="flex flex-col h-screen bg-background text-foreground"
   >
     <Header class="hidden md:block flex-shrink-0 border-b border-border" />
-    <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
+    <Sidebar v-model:activeNavItem="activeNavItem" />
 
     <div
       class="flex flex-1 overflow-hidden p-2 md:p-4 transition-all duration-200"
@@ -95,33 +95,33 @@
               </div>
               <!-- Row 2: filter selects -->
               <div class="flex flex-wrap gap-3 items-center">
-                <Select
+                <SearchableSelectPopover
+                  id="student-filter-year"
                   v-model="selectedAcademicYear"
                   :options="academicYearOptions"
                   :placeholder="student_card_year()"
-                  name="academic-year"
-                  class="w-52"
+                  class="w-56"
                 />
-                <Select
+                <SearchableSelectPopover
+                  id="student-filter-specialty"
                   v-model="selectedSpecialty"
                   :options="specialtyOptions"
                   :placeholder="student_card_specialty()"
-                  name="specialty"
-                  class="w-56"
+                  class="w-60"
                 />
-                <Select
+                <SearchableSelectPopover
+                  id="student-filter-gender"
                   v-model="selectedGender"
                   :options="genderOptions"
                   :placeholder="student_card_gender()"
-                  name="gender"
-                  class="w-36"
+                  class="w-40"
                 />
-                <Select
+                <SearchableSelectPopover
+                  id="student-filter-base"
                   v-model="selectedBase"
                   :options="baseOptions"
                   :placeholder="student_card_base()"
-                  name="base"
-                  class="w-36"
+                  class="w-40"
                 />
               </div>
             </div>
@@ -249,7 +249,7 @@ import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddStudentButton from "@/components/AddStudentButton.vue";
 import EditStudentButton from "@/components/EditStudentButton.vue";
-import Select from "@/components/ui/Select.vue";
+import SearchableSelectPopover from "@/components/ui/SearchableSelectPopover.vue";
 import { useStudentStore, type Student } from "@/stores/studentStore";
 import { withAllOption, getGenderOptions } from "@/lib/utils";
 import { useSpecialtyStore } from "@/stores/specialtyStore";

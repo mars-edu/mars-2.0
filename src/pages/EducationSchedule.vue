@@ -5,7 +5,7 @@
   >
     <Header class="hidden md:block flex-shrink-0 border-b border-border" />
 
-    <Sidebar v-model:activeNavItem="activeNavItem" class="hidden md:block" />
+    <Sidebar v-model:activeNavItem="activeNavItem" />
 
     <div class="flex flex-1 overflow-hidden">
       <div
