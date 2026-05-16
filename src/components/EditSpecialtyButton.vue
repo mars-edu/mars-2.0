@@ -70,6 +70,32 @@
             ></f7-input>
           </div>
 
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="text-sm text-foreground" for="specialty-year">
+                Год основания
+              </label>
+              <f7-input
+                id="specialty-year"
+                type="number"
+                v-model:value="specialtyYear"
+                placeholder="2024"
+              ></f7-input>
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-sm text-foreground" for="specialty-order-number">
+                Приказ
+              </label>
+              <f7-input
+                id="specialty-order-number"
+                type="text"
+                v-model:value="specialtyOrderNumber"
+                placeholder="№..."
+              ></f7-input>
+            </div>
+          </div>
+
           <div class="pt-4 border-t border-border">
             <button
               class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
@@ -114,6 +140,8 @@ const specialtyCode = ref("");
 const specialtyName = ref("");
 const specialtyDetails = ref("");
 const specialtyCodeName = ref("");
+const specialtyYear = ref<number | undefined>(undefined);
+const specialtyOrderNumber = ref("");
 
 // Update form fields whenever specialty data changes
 watchEffect(() => {
@@ -122,6 +150,8 @@ watchEffect(() => {
     specialtyName.value = specialty.value.name;
     specialtyDetails.value = specialty.value.details;
     specialtyCodeName.value = specialty.value.codeName;
+    specialtyYear.value = specialty.value.year;
+    specialtyOrderNumber.value = specialty.value.orderNumber || "";
   }
 });
 
@@ -130,6 +160,8 @@ const specialtySchema = z.object({
   name: z.string().min(1, "Пожалуйста, введите наименование специальности"),
   details: z.string().optional().default(""),
   codeName: z.string().optional().default(""),
+  year: z.number().optional(),
+  orderNumber: z.string().optional().default(""),
 });
 
 const validationResult = computed(() => {
@@ -138,6 +170,8 @@ const validationResult = computed(() => {
     name: specialtyName.value,
     details: specialtyDetails.value,
     codeName: specialtyCodeName.value,
+    year: specialtyYear.value,
+    orderNumber: specialtyOrderNumber.value,
   });
 });
 
@@ -166,6 +200,8 @@ const handleUpdateSpecialty = async () => {
       name: specialtyName.value,
       details: specialtyDetails.value,
       codeName: specialtyCodeName.value,
+      year: specialtyYear.value,
+      orderNumber: specialtyOrderNumber.value,
     });
     closeEditSpecialtyPopover();
   } catch (error) {
@@ -199,6 +235,8 @@ const resetForm = () => {
   specialtyName.value = specialty.value.name;
   specialtyDetails.value = specialty.value.details;
   specialtyCodeName.value = specialty.value.codeName;
+  specialtyYear.value = specialty.value.year;
+  specialtyOrderNumber.value = specialty.value.orderNumber || "";
   specialtyStore.clearError();
 };
 

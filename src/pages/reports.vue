@@ -26,7 +26,7 @@
               <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div v-if="userStore.isAdmin" class="flex flex-col">
                   <div class="text-xs font-medium text-muted-foreground mb-1">{{ reports_teacher() }}</div>
-                  <SearchableSelectPopover
+                  <Select
                     id="reports-teacher-select"
                     v-model="selectedTeacherId"
                     :options="teacherOptions"
@@ -290,7 +290,6 @@ import { FileText, Download, FileSpreadsheet } from "lucide-vue-next";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
-import SearchableSelectPopover from "@/components/ui/SearchableSelectPopover.vue";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useCalendarStore } from "@/stores/calendarStore";

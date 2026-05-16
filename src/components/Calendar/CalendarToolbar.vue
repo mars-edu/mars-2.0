@@ -8,7 +8,7 @@
     />
     <slot name="navigation"></slot>
     <div class="h-6 w-px bg-border mx-1"></div>
-    <SearchableSelectPopover
+    <Select
       id="calendar-search"
       :options="disciplineOptions"
       :placeholder="searchPlaceholder"
@@ -23,7 +23,7 @@
 import { onMounted, ref, computed } from "vue";
 import AddEventButton from "./AddEventButton.vue";
 import MonthNavigator from "./MonthNavigator.vue";
-import SearchableSelectPopover from "@/components/ui/SearchableSelectPopover.vue";
+import Select from "@/components/ui/Select.vue";
 import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
 import { useClass9Store } from "@/stores/class9Store";
 import { storeToRefs } from "pinia";

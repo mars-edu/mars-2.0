@@ -17,13 +17,17 @@ export const list = query({
  */
 export const listPaginated = query({
   args: {
-    paginationOpts: paginationOptsValidator,
+    page: v.number(),
+    pageSize: v.number(),
     specialty: v.optional(v.string()),
     specialtyLegacyId: v.optional(v.string()),
     language: v.optional(v.string()),
     gender: v.optional(v.string()),
     base: v.optional(v.number()),
     academicYearId: v.optional(v.string()),
+    searchTerm: v.optional(v.string()),
+    course: v.optional(v.number()),
+    activeStartYear: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     let query = ctx.db.query("students").order("asc");
@@ -59,7 +63,41 @@ export const listPaginated = query({
       );
     }
 
-    return await query.paginate(args.paginationOpts);
+    const results = await query.collect();
+    
+    // We need to join with academicYears to filter by course if activeStartYear is provided
+    const academicYears = await ctx.db.query("academicYears").collect();
+    const ayMap = new Map(academicYears.map(ay => [ay._id, ay]));
+    const ayLegacyMap = new Map(academicYears.filter(ay => ay.legacyId).map(ay => [ay.legacyId!, ay]));
+
+    // Apply filters that require computed values or manual search
+    let filteredResults = results;
+    
+    if (args.course !== undefined && args.activeStartYear && args.activeStartYear > 0) {
+      filteredResults = filteredResults.filter((s) => {
+        const studentAy = s.academicYearId ? (ayMap.get(s.academicYearId as any) || ayLegacyMap.get(s.academicYearId)) : undefined;
+        if (!studentAy) return false;
+        const course = args.activeStartYear! - studentAy.startYear + 1;
+        return course === args.course;
+      });
+    }
+
+    if (args.searchTerm) {
+      const term = args.searchTerm.toLowerCase();
+      filteredResults = filteredResults.filter((s) => {
+        const fullName = `${s.surname} ${s.firstName} ${s.patronymic}`.toLowerCase();
+        return fullName.includes(term);
+      });
+    }
+
+    const totalCount = filteredResults.length;
+    const start = (args.page - 1) * args.pageSize;
+    const items = filteredResults.slice(start, start + args.pageSize);
+    
+    return {
+      items,
+      totalCount,
+    };
   },
 });
 

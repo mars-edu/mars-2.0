@@ -15,6 +15,31 @@ export const create = mutation({
     gender: v.union(v.literal("male"), v.literal("female")),
     base: v.optional(v.number()),
     academicYearId: v.optional(v.string()),
+    status: v.optional(
+      v.union(
+        v.literal("active"),
+        v.literal("expelled"),
+        v.literal("academic_leave"),
+        v.literal("debt"),
+        v.literal("graduated")
+      )
+    ),
+    history: v.optional(
+      v.array(
+        v.object({
+          date: v.string(),
+          type: v.union(
+            v.literal("transfer"),
+            v.literal("expulsion"),
+            v.literal("status_change"),
+            v.literal("admission"),
+            v.literal("restoration")
+          ),
+          orderNumber: v.string(),
+          description: v.string(),
+        })
+      )
+    ),
   },
   handler: async (ctx, args) => {
     const timestamps = createTimestamps();
@@ -39,6 +64,31 @@ export const update = mutation({
     gender: v.optional(v.union(v.literal("male"), v.literal("female"))),
     base: v.optional(v.number()),
     academicYearId: v.optional(v.string()),
+    status: v.optional(
+      v.union(
+        v.literal("active"),
+        v.literal("expelled"),
+        v.literal("academic_leave"),
+        v.literal("debt"),
+        v.literal("graduated")
+      )
+    ),
+    history: v.optional(
+      v.array(
+        v.object({
+          date: v.string(),
+          type: v.union(
+            v.literal("transfer"),
+            v.literal("expulsion"),
+            v.literal("status_change"),
+            v.literal("admission"),
+            v.literal("restoration")
+          ),
+          orderNumber: v.string(),
+          description: v.string(),
+        })
+      )
+    ),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
@@ -83,6 +133,31 @@ export const batchCreate = mutation({
         gender: v.union(v.literal("male"), v.literal("female")),
         base: v.optional(v.number()),
         academicYearId: v.optional(v.string()),
+        status: v.optional(
+          v.union(
+            v.literal("active"),
+            v.literal("expelled"),
+            v.literal("academic_leave"),
+            v.literal("debt"),
+            v.literal("graduated")
+          )
+        ),
+        history: v.optional(
+          v.array(
+            v.object({
+              date: v.string(),
+              type: v.union(
+                v.literal("transfer"),
+                v.literal("expulsion"),
+                v.literal("status_change"),
+                v.literal("admission"),
+                v.literal("restoration")
+              ),
+              orderNumber: v.string(),
+              description: v.string(),
+            })
+          )
+        ),
       })
     ),
   },

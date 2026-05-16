@@ -13,114 +13,147 @@
     <GuardedPopover
       v-slot="{ requestClose }"
       id="add-student-popover"
-      style="width: 600px !important"
+      style="width: 800px !important; height: auto !important;"
+      kind="popup"
       positioning="center"
       :on-closed="resetForm">
-      <div class="student-popover bg-card text-card-foreground">
+      <div class="student-popover bg-card text-card-foreground flex flex-col">
         <PopoverHeader
-          title="Создать"
+          title="Зачисление абитуриента"
           :on-cancel="requestClose"
         />
         <div
           v-if="formError || studentStore.getError"
-          class="px-4 pt-2 text-destructive text-sm"
+          class="px-8 pt-2 text-destructive text-sm"
         >
           {{ formError || studentStore.getError }}
         </div>
 
-        <div class="p-4 space-y-2">
-          <div class="space-y-2">
-            <label class="text-sm text-foreground" for="student-surname">
-              Фамилия
-            </label>
-            <f7-input
-              id="student-surname"
-              type="text"
-              v-model:value="surname"
-              placeholder="Введите фамилию студента"
-            ></f7-input>
+        <div class="px-8 py-4 space-y-6">
+          <!-- Order Info Section -->
+          <div class="bg-muted/30 p-6 rounded-2xl border border-border mb-4">
+              <h3 class="text-sm font-bold text-foreground mb-4">Данные приказа о зачислении</h3>
+              <div class="grid grid-cols-2 gap-6">
+                  <div class="space-y-2">
+                      <label class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Номер приказа</label>
+                      <f7-input 
+                          type="text" 
+                          class="student-order-input"
+                          placeholder="Например: №234-К"
+                          v-model:value="orderNumber"
+                      />
+                  </div>
+                  <div class="space-y-2">
+                      <label class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Дата приказа</label>
+                      <f7-input 
+                          type="date" 
+                          class="student-order-input"
+                          v-model:value="orderDate"
+                      />
+                  </div>
+              </div>
           </div>
 
-          <div class="space-y-2">
-            <label class="text-sm text-foreground" for="student-firstname">
-              Имя
-            </label>
-            <f7-input
-              id="student-firstname"
-              type="text"
-              v-model:value="firstName"
-              placeholder="Введите имя студента"
-            ></f7-input>
+          <div class="grid grid-cols-3 gap-4">
+            <div class="space-y-2">
+              <label class="text-sm text-foreground" for="student-surname">
+                Фамилия
+              </label>
+              <f7-input
+                id="student-surname"
+                type="text"
+                v-model:value="surname"
+                placeholder="Введите фамилию"
+              ></f7-input>
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-sm text-foreground" for="student-firstname">
+                Имя
+              </label>
+              <f7-input
+                id="student-firstname"
+                type="text"
+                v-model:value="firstName"
+                placeholder="Введите имя"
+              ></f7-input>
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-sm text-foreground" for="student-patronymic">
+                Отчество
+              </label>
+              <f7-input
+                id="student-patronymic"
+                type="text"
+                v-model:value="patronymic"
+                placeholder="Введите отчество"
+              ></f7-input>
+            </div>
           </div>
 
-          <div class="space-y-2">
-            <label class="text-sm text-foreground" for="student-patronymic">
-              Отчество
-            </label>
-            <f7-input
-              id="student-patronymic"
-              type="text"
-              v-model:value="patronymic"
-              placeholder="Введите отчество студента"
-            ></f7-input>
+          <div class="grid grid-cols-2 gap-4">
+            <Select
+              label="Год поступления"
+              name="academic-year"
+              placeholder="Выберите год"
+              v-model="academicYear"
+              :options="academicYearOptions"
+              id="student-academic-year-add"
+            />
+
+            <Select
+              label="База образования"
+              name="base"
+              placeholder="Выберите базу"
+              v-model="base"
+              :options="baseOptions"
+              id="student-base-add"
+            />
           </div>
 
-          <Select
-            label="Год поступления"
-            name="academic-year"
-            placeholder="Выберите год поступления"
-            v-model="academicYear"
-            :options="academicYearOptions"
-            id="student-academic-year-add"
-          />
+          <div class="grid grid-cols-2 gap-4">
+            <Select
+              label="Специальность"
+              name="specialty"
+              placeholder="Выберите специальность"
+              v-model="specialty"
+              :options="specialtyOptions"
+              id="student-specialty-add"
+            />
 
-          <Select
-            label="Специальность"
-            name="specialty"
-            placeholder="Выберите специальность"
-            v-model="specialty"
-            :options="specialtyOptions"
-            id="student-specialty-add"
-          />
-
-          <Select
-            label="Язык обучения"
-            name="language"
-            placeholder="Выберите язык обучения"
-            v-model="language"
-            :options="languageOptions"
-            id="student-language-add"
-          />
-
-          <Select
-            label="База"
-            name="base"
-            placeholder="Выберите базу"
-            v-model="base"
-            :options="baseOptions"
-            id="student-base-add"
-          />
+            <Select
+              label="Язык обучения"
+              name="language"
+              placeholder="Выберите язык"
+              v-model="language"
+              :options="languageOptions"
+              id="student-language-add"
+            />
+          </div>
 
           <div class="space-y-2">
             <label class="text-sm text-foreground" for="student-gender">
               Пол
             </label>
-            <div class="flex gap-2">
+            <div class="flex gap-4">
               <f7-button
                 :fill="gender === 'male'"
                 @click="gender = 'male'"
-                class="flex-1 !border-solid !border-2"
+                class="flex-1 !h-11 !rounded-xl !border-solid !border-2 !font-semibold transition-all"
                 :class="{
-                  '!border-gray-500 !text-gray-500': gender !== 'male',
+                  '!border-border !text-muted-foreground': gender !== 'male',
+                  '!border-primary !text-primary-foreground': gender === 'male',
                 }"
                 >Мужской</f7-button
               >
               <f7-button
                 :fill="gender === 'female'"
                 @click="gender = 'female'"
-                class="flex-1 !border-solid !border-2"
+                class="flex-1 !h-11 !rounded-xl !border-solid !border-2 !font-semibold transition-all"
                 :class="{
-                  '!border-gray-500 !text-gray-500': gender !== 'female',
+                  '!border-border !text-muted-foreground': gender !== 'female',
+                  '!border-pink-500 !text-pink-600': gender === 'female' && false, /* Custom pink style if needed */
                 }"
                 >Женский</f7-button
               >
@@ -129,6 +162,7 @@
         </div>
 
         <PopoverFooter
+          save-text="Зачислить"
           :on-save="handleSaveStudent"
           :disabled="!isFormValid || studentStore.isLoading"
           :is-loading="studentStore.isLoading"
@@ -172,6 +206,8 @@ const specialty = ref("");
 const language = ref("");
 const base = ref("");
 const gender = ref<"male" | "female" | null>(null);
+const orderNumber = ref("");
+const orderDate = ref(new Date().toISOString().split("T")[0]);
 const formError = ref("");
 
 import { onMounted } from "vue";
@@ -191,6 +227,8 @@ const studentSchema = z.object({
   gender: z.enum(["male", "female"], {
     error: "Пожалуйста, выберите пол",
   }),
+  orderNumber: z.string().min(1, "Пожалуйста, введите номер приказа"),
+  orderDate: z.string().min(1, "Пожалуйста, выберите дату приказа"),
 });
 
 const validationResult = computed(() => {
@@ -203,17 +241,19 @@ const validationResult = computed(() => {
     language: language.value,
     base: base.value,
     gender: gender.value,
+    orderNumber: orderNumber.value,
+    orderDate: orderDate.value,
   });
 });
 
 const isFormValid = computed(() => validationResult.value.success);
 
 const openAddStudentPopover = () => {
-  f7.popover.open("#add-student-popover", "#add-student-button");
+  f7.popup.open("#add-student-popover");
 };
 
 const closeAddStudentPopover = () => {
-  f7.popover.close("#add-student-popover");
+  f7.popup.close("#add-student-popover");
   resetForm();
 };
 
@@ -238,6 +278,14 @@ const handleSaveStudent = async () => {
       language: language.value,
       base: parseInt(base.value),
       gender: gender.value!,
+      history: [
+        {
+          date: orderDate.value,
+          type: "admission",
+          orderNumber: orderNumber.value,
+          description: `Зачисление на 1 курс. ${specialtyStore.getSpecialtyById(specialty.value)?.name || ''}`
+        }
+      ]
     });
     closeAddStudentPopover();
   } catch (error) {
@@ -258,7 +306,30 @@ const resetForm = () => {
   language.value = "";
   base.value = "";
   gender.value = null;
+  orderNumber.value = "";
+  orderDate.value = new Date().toISOString().split("T")[0];
   formError.value = "";
   studentStore.clearError();
 };
 </script>
+
+<style scoped>
+.student-order-input :deep(input) {
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 0.75rem !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.875rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.student-order-input :deep(input:focus) {
+  border-color: hsl(var(--primary)) !important;
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.1) !important;
+}
+
+.student-popover {
+  border-radius: 2rem !important;
+  overflow: clip;
+}
+</style>

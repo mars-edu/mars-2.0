@@ -259,6 +259,14 @@ const routes: RouteConfig[] = [
     },
   },
   {
+    path: "/workload-management",
+    asyncComponent: () => import("../pages/suspense/WorkloadManagementPage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN])],
+    options: {
+      roles: [Role.ADMIN],
+    },
+  },
+  {
     path: "/profile",
     asyncComponent: () => import("../pages/suspense/ProfilePage.vue"),
     beforeEnter: [createAuthGuard([Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT])],
@@ -282,7 +290,7 @@ const routes: RouteConfig[] = [
   },
   {
     path: "(.*)",
-    asyncComponent: NotFoundPage,
+    component: NotFoundPage,
   },
 ];
 

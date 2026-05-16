@@ -78,6 +78,32 @@
               placeholder="Для удобного отображения можно обозначить кодом, буквой или цифрой"
             ></f7-input>
           </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="text-sm text-foreground" for="specialty-year">
+                Год основания
+              </label>
+              <f7-input
+                id="specialty-year"
+                type="number"
+                v-model:value="specialtyYear"
+                placeholder="2024"
+              ></f7-input>
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-sm text-foreground" for="specialty-order-number">
+                Приказ
+              </label>
+              <f7-input
+                id="specialty-order-number"
+                type="text"
+                v-model:value="specialtyOrderNumber"
+                placeholder="№..."
+              ></f7-input>
+            </div>
+          </div>
         </div>
 
         <PopoverFooter
@@ -105,12 +131,16 @@ const specialtyCode = ref("");
 const specialtyName = ref("");
 const specialtyDetails = ref("");
 const specialtyCodeName = ref("");
+const specialtyYear = ref<number | undefined>(undefined);
+const specialtyOrderNumber = ref("");
 
 const specialtySchema = z.object({
   code: z.string().min(1, "Пожалуйста, введите шифр специальности"),
   name: z.string().min(1, "Пожалуйста, введите наименование специальности"),
   details: z.string().optional().default(""),
   codeName: z.string().optional().default(""),
+  year: z.number().optional(),
+  orderNumber: z.string().optional().default(""),
 });
 
 const validationResult = computed(() => {
@@ -119,6 +149,8 @@ const validationResult = computed(() => {
     name: specialtyName.value,
     details: specialtyDetails.value,
     codeName: specialtyCodeName.value,
+    year: specialtyYear.value,
+    orderNumber: specialtyOrderNumber.value,
   });
 });
 
@@ -150,6 +182,8 @@ async function handleSaveSpecialty() {
       name: specialtyName.value,
       details: specialtyDetails.value,
       codeName: specialtyCodeName.value,
+      year: specialtyYear.value,
+      orderNumber: specialtyOrderNumber.value,
     });
     closeAddSpecialtyPopover();
   } catch (error) {
@@ -162,6 +196,8 @@ const resetForm = () => {
   specialtyName.value = "";
   specialtyDetails.value = "";
   specialtyCodeName.value = "";
+  specialtyYear.value = undefined;
+  specialtyOrderNumber.value = "";
   specialtyStore.clearError();
 };
 

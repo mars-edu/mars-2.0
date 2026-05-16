@@ -95,28 +95,28 @@
               </div>
               <!-- Row 2: filter selects -->
               <div class="flex flex-wrap gap-3 items-center">
-                <SearchableSelectPopover
+                <Select
                   id="student-filter-year"
                   v-model="selectedAcademicYear"
                   :options="academicYearOptions"
                   :placeholder="student_card_year()"
                   class="w-56"
                 />
-                <SearchableSelectPopover
+                <Select
                   id="student-filter-specialty"
                   v-model="selectedSpecialty"
                   :options="specialtyOptions"
                   :placeholder="student_card_specialty()"
                   class="w-60"
                 />
-                <SearchableSelectPopover
+                <Select
                   id="student-filter-gender"
                   v-model="selectedGender"
                   :options="genderOptions"
                   :placeholder="student_card_gender()"
                   class="w-40"
                 />
-                <SearchableSelectPopover
+                <Select
                   id="student-filter-base"
                   v-model="selectedBase"
                   :options="baseOptions"
@@ -127,7 +127,15 @@
             </div>
 
             <!-- Table Card -->
-            <div class="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
+            <div class="bg-card rounded-lg shadow-sm border border-border overflow-hidden relative">
+              <div 
+                v-if="isPaginatedLoading"
+                class="absolute inset-0 z-10 bg-background/40 backdrop-blur-[1px] flex items-center justify-center transition-all duration-300"
+              >
+                <div class="flex flex-col items-center gap-3">
+                  <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              </div>
               <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                   <thead class="bg-muted/50 border-b border-border">
@@ -143,6 +151,7 @@
                       <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-14">{{ student_card_col_num() }}</th>
                       <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{{ student_card_col_name() }}</th>
                       <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{{ student_card_col_specialty() }}</th>
+                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-32 text-center">{{ student_card_col_status() }}</th>
                       <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24 text-center">{{ student_card_col_language() }}</th>
                       <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-20 text-center">{{ student_card_col_course() }}</th>
                     </tr>
@@ -165,7 +174,7 @@
                           @change="toggleSelect(student.id)"
                         />
                       </td>
-                      <td class="px-6 py-4 text-sm text-muted-foreground/70 font-medium">{{ index + 1 }}</td>
+                      <td class="px-6 py-4 text-sm text-muted-foreground/70 font-medium">{{ (currentPage - 1) * pageSize + index + 1 }}</td>
                       <td class="px-6 py-4">
                         <div class="flex items-center gap-2">
                           <span
@@ -183,6 +192,14 @@
                         </span>
                       </td>
                       <td class="px-6 py-4 text-center">
+                        <div 
+                          class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+                          :class="getStatusBadgeClass(student.status)"
+                        >
+                          {{ getStatusText(student.status) }}
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 text-center">
                         <span
                           class="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide"
                           :class="{
@@ -195,7 +212,7 @@
                       <td class="px-6 py-4 text-center text-sm font-medium text-muted-foreground/70">{{ student.course }}</td>
                     </tr>
                     <tr v-if="paginatedFilteredStudents.length === 0">
-                      <td :colspan="isPromotionMode ? 6 : 5" class="px-8 py-24 text-center text-muted-foreground/40 text-sm italic">
+                      <td :colspan="isPromotionMode ? 7 : 6" class="px-8 py-24 text-center text-muted-foreground/40 text-sm italic">
                         Обучающиеся не найдены
                       </td>
                     </tr>
@@ -203,23 +220,13 @@
                 </table>
               </div>
 
-              <!-- Load more -->
-              <div class="flex items-center justify-center py-4 border-t border-border">
-                <f7-button
-                  v-if="!paginationDone"
-                  fill
-                  small
-                  :loading="paginationLoading"
-                  :disabled="paginationLoading"
-                  class="bg-primary text-primary-foreground"
-                  @click="loadMoreStudents"
-                >
-                  {{ student_card_load_more() }}
-                </f7-button>
-                <span v-else class="text-sm text-muted-foreground/50 italic">
-                  {{ student_card_all_loaded() }}
-                </span>
-              </div>
+              <!-- Pagination -->
+              <Pagination
+                v-if="filteredStudents.length > 0"
+                v-model:currentPage="currentPage"
+                :total-items="filteredStudents.length"
+                :page-size="pageSize"
+              />
             </div>
 
           </div>
@@ -231,10 +238,11 @@
       <AddStudentButton />
     </template>
 
-    <EditStudentButton
+    <StudentDetailsDialog
       v-if="selectedStudentId"
-      :key="`edit-${selectedStudentId}`"
+      :key="`details-${selectedStudentId}`"
       :student-id="selectedStudentId"
+      @closed="selectedStudentId = null"
     />
   </f7-page>
 </template>
@@ -248,8 +256,9 @@ import IconGraduationCap from "~icons/lucide/graduation-cap";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddStudentButton from "@/components/AddStudentButton.vue";
-import EditStudentButton from "@/components/EditStudentButton.vue";
-import SearchableSelectPopover from "@/components/ui/SearchableSelectPopover.vue";
+import StudentDetailsDialog from "@/components/StudentDetailsDialog.vue";
+import Select from "@/components/ui/Select.vue";
+import Pagination from "@/components/ui/Pagination.vue";
 import { useStudentStore, type Student } from "@/stores/studentStore";
 import { withAllOption, getGenderOptions } from "@/lib/utils";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
@@ -258,6 +267,8 @@ import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useBaseStore } from "@/stores/baseStore";
 import { storeToRefs } from "pinia";
 import { useSidebar } from "@/composables/useSidebar";
+import type { StudentStatus } from "@/types/student";
+import { useStudentHelpers } from "@/composables/useStudentHelpers";
 import {
   student_card_title,
   student_card_search,
@@ -270,8 +281,7 @@ import {
   student_card_col_specialty,
   student_card_col_language,
   student_card_col_course,
-  student_card_load_more,
-  student_card_all_loaded,
+  student_card_col_status,
   common_add,
 } from "@/paraglide/messages";
 import { useI18n } from "@/composables/useI18n";
@@ -285,9 +295,10 @@ const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
 const academicYearStore = useAcademicYearStore();
 const baseStore = useBaseStore();
+const { getStatusText, getStatusBadgeClass } = useStudentHelpers();
 
 const { academicYearOptions } = storeToRefs(academicYearStore);
-const { paginatedFilteredStudents, paginationDone, paginationLoading } = storeToRefs(studentStore);
+const { paginatedFilteredStudents, filteredStudents, currentPage, pageSize, isPaginatedLoading } = storeToRefs(studentStore);
 const { specialtyOptions: storeSpecialtyOptions } = storeToRefs(specialtyStore);
 const { baseOptions: storeBaseOptions } = storeToRefs(baseStore);
 
@@ -315,7 +326,6 @@ onMounted(async () => {
     selectedAcademicYear.value = "";
     searchTerm.value = "";
     selectedStudentId.value = null;
-    await studentStore.refreshPagination();
   } finally {
     isInitializing.value = false;
   }
@@ -329,22 +339,18 @@ selectedAcademicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
 
 watch(selectedSpecialty, (newValue) => {
   studentStore.setFilter("specialty", newValue);
-  if (!isInitializing.value) studentStore.refreshPagination();
 });
 
 watch(selectedGender, (newValue) => {
   studentStore.setFilter("gender", newValue);
-  if (!isInitializing.value) studentStore.refreshPagination();
 });
 
 watch(selectedBase, (newValue) => {
   studentStore.setFilter("base", newValue);
-  if (!isInitializing.value) studentStore.refreshPagination();
 });
 
 watch(selectedAcademicYear, (newValue) => {
   studentStore.setFilter("academicYearId", newValue);
-  if (!isInitializing.value) studentStore.refreshPagination();
 });
 
 watch(searchTerm, (newValue) => {
@@ -398,16 +404,12 @@ const handleBulkPromotion = () => {
 const selectStudent = async (student: Student) => {
   selectedStudentId.value = student.id;
   await nextTick();
-  f7.popover.open(`#edit-student-popover-${student.id}`);
+  f7.popup.open(`#student-details-popup-${student.id}`);
 };
 
 const handleSearchInput = (event: Event) => {
   const target = event.target as HTMLInputElement;
   searchTerm.value = target.value;
-};
-
-const loadMoreStudents = async () => {
-  await studentStore.loadNextPage();
 };
 
 const triggerAddStudent = () => {

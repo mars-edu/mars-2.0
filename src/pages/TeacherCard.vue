@@ -44,21 +44,21 @@
               </div>
               <!-- Row 2: filter selects -->
               <div class="flex flex-wrap gap-3 items-center">
-                <SearchableSelectPopover
+                <Select
                   id="teacher-filter-position"
                   v-model="selectedPosition"
                   :options="positionOptions"
                   :placeholder="teacher_card_position()"
                   class="w-48"
                 />
-                <SearchableSelectPopover
+                <Select
                   id="teacher-filter-year"
                   v-model="selectedEmploymentYear"
                   :options="employmentYearOptions"
                   :placeholder="teacher_card_year()"
                   class="w-40"
                 />
-                <SearchableSelectPopover
+                <Select
                   id="teacher-filter-gender"
                   v-model="selectedGender"
                   :options="genderOptions"
@@ -69,9 +69,16 @@
             </div>
 
             <!-- Table Card -->
-            <div class="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
-              <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+            <div class="bg-card rounded-lg shadow-sm border border-border overflow-hidden relative">
+              <div 
+                v-if="isPaginatedLoading"
+                class="absolute inset-0 z-10 bg-background/40 backdrop-blur-[1px] flex items-center justify-center transition-all duration-300"
+              >
+                <div class="flex flex-col items-center gap-3">
+                  <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              </div>
+              <div class="overflow-x-auto">                <table class="w-full text-left border-collapse">
                   <thead class="bg-muted/50 border-b border-border">
                     <tr>
                       <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-14">{{ teacher_card_col_num() }}</th>
@@ -85,13 +92,13 @@
                   </thead>
                   <tbody class="divide-y divide-border">
                     <tr
-                      v-for="(teacher, index) in filteredTeachers"
+                      v-for="(teacher, index) in paginatedFilteredTeachers"
                       :key="teacher.id"
                       :id="`teacher-item-${teacher.id}`"
                       class="group hover:bg-muted/40 transition-colors cursor-pointer"
                       @click="selectTeacher(teacher)"
                     >
-                      <td class="px-6 py-4 text-sm text-muted-foreground/70 font-medium">{{ index + 1 }}</td>
+                      <td class="px-6 py-4 text-sm text-muted-foreground/70 font-medium">{{ (currentPage - 1) * pageSize + index + 1 }}</td>
                       <td class="px-6 py-4">
                         <div class="flex items-center gap-2">
                           <span
@@ -126,7 +133,7 @@
                         </div>
                       </td>
                     </tr>
-                    <tr v-if="filteredTeachers.length === 0">
+                    <tr v-if="paginatedFilteredTeachers.length === 0">
                       <td colspan="7" class="px-8 py-24 text-center text-muted-foreground/40 text-sm italic">
                         Преподаватели не найдены
                       </td>
@@ -134,6 +141,14 @@
                   </tbody>
                 </table>
               </div>
+
+              <!-- Pagination -->
+              <Pagination
+                v-if="filteredTeachers.length > 0"
+                v-model:currentPage="currentPage"
+                :total-items="filteredTeachers.length"
+                :page-size="pageSize"
+              />
             </div>
 
           </div>
@@ -171,7 +186,8 @@ import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddTeacherButton from "@/components/AddTeacherButton.vue";
 import EditTeacherButton from "@/components/EditTeacherButton.vue";
 import PasswordHistoryPopup from "@/components/PasswordHistoryPopup.vue";
-import SearchableSelectPopover from "@/components/ui/SearchableSelectPopover.vue";
+import Select from "@/components/ui/Select.vue";
+import Pagination from "@/components/ui/Pagination.vue";
 import { useTeacherStore, type Teacher } from "@/stores/teacherStore";
 import { getGenderOptions } from "@/lib/utils";
 import { usePositionStore } from "@/stores/positionStore";
@@ -224,7 +240,7 @@ const academicYearStore = useAcademicYearStore();
 
 const { positions } = storeToRefs(positionStore);
 const { academicYearsAsNumbers } = storeToRefs(academicYearStore);
-const { filteredTeachers } = storeToRefs(teacherStore);
+const { paginatedFilteredTeachers, filteredTeachers, currentPage, pageSize, isPaginatedLoading } = storeToRefs(teacherStore);
 
 const selectedPosition = ref("");
 const selectedEmploymentYear = ref("");

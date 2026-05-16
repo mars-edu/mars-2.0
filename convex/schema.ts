@@ -103,6 +103,8 @@ export default defineSchema({
     code: v.string(),
     codeName: v.string(),
     details: v.optional(v.string()),
+    year: v.optional(v.number()),
+    orderNumber: v.optional(v.string()),
     hasModule: v.optional(v.boolean()),
     isHighlighted: v.optional(v.boolean()),
     createdAt: v.number(),
@@ -183,6 +185,31 @@ export default defineSchema({
     gender: v.union(v.literal("male"), v.literal("female")),
     base: v.optional(v.number()), // 9 or 11
     academicYearId: v.optional(v.string()), // academic year ID reference
+    status: v.optional(
+      v.union(
+        v.literal("active"),
+        v.literal("expelled"),
+        v.literal("academic_leave"),
+        v.literal("debt"),
+        v.literal("graduated")
+      )
+    ),
+    history: v.optional(
+      v.array(
+        v.object({
+          date: v.string(),
+          type: v.union(
+            v.literal("transfer"),
+            v.literal("expulsion"),
+            v.literal("status_change"),
+            v.literal("admission"),
+            v.literal("restoration")
+          ),
+          orderNumber: v.string(),
+          description: v.string(),
+        })
+      )
+    ),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -759,4 +786,48 @@ export default defineSchema({
     .index("by_semester", ["semesterId"])
     .index("by_isActive", ["isActive"])
     .index("by_deadline", ["deadline"]),
+
+  // ==========================================================================
+  // WORKLOAD MANAGEMENT
+  // ==========================================================================
+
+  /**
+   * Workload management records
+   * Ported from: concept/components/WorkloadView.tsx
+   */
+  workloads: defineTable({
+    teacherId: v.optional(v.id("teachers")),
+    teacherName: v.string(), // Keep for display/fallback
+    academicYearId: v.string(), // academic year ID reference
+    totalHours: v.number(),
+    items: v.array(
+      v.object({
+        id: v.string(),
+        subjectId: v.string(), // Convex ID of the class9Item or other source
+        department: v.string(),
+        course: v.string(),
+        studentCount: v.string(),
+        weeks1: v.string(),
+        weeks2: v.string(),
+        weeks3: v.optional(v.string()),
+        hours1: v.string(),
+        hours2: v.string(),
+        hours3: v.optional(v.string()),
+        hoursPerGroup1: v.string(),
+        hoursPerGroup2: v.string(),
+        hoursPerGroup3: v.optional(v.string()),
+        groupCount1: v.string(),
+        groupCount2: v.string(),
+        groupCount3: v.optional(v.string()),
+        totalHours: v.string(),
+        teacherName: v.optional(v.string()),
+        index: v.optional(v.string()),
+        description: v.optional(v.string()),
+      })
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_academicYear", ["academicYearId"])
+    .index("by_teacher", ["teacherId"]),
 });

@@ -1,5 +1,19 @@
 import type { Mark } from './marks';
 
+export type StudentStatus =
+  | "active"
+  | "expelled"
+  | "academic_leave"
+  | "debt"
+  | "graduated";
+
+export interface MovementHistory {
+  date: string;
+  type: "transfer" | "expulsion" | "status_change" | "admission" | "restoration";
+  orderNumber: string;
+  description: string;
+}
+
 export interface Student {
   id: string;
   surname: string;
@@ -10,6 +24,8 @@ export interface Student {
   base?: number;
   gender: "male" | "female";
   academicYearId?: string;
+  status?: StudentStatus;
+  history?: MovementHistory[];
 }
 
 export interface StudentWithCourse extends Student {
@@ -32,6 +48,8 @@ export interface AddStudentPayload {
   base?: number;
   gender: "male" | "female";
   academicYearId?: string;
+  status?: StudentStatus;
+  history?: MovementHistory[];
 }
 
 export interface StudentFilters {

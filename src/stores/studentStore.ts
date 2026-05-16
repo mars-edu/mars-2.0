@@ -16,13 +16,15 @@ import { useConvexQuery } from "convex-vue";
 
 export type { Student } from "@/types/student";
 
+interface PaginatedStudentsResponse {
+  items: any[];
+  totalCount: number;
+}
+
 export const useStudentStore = defineStore("student", () => {
   const students = ref<Student[]>([]);
-  const paginatedStudents = ref<Student[]>([]);
-  const paginationCursor = ref<string | null>(null);
-  const paginationDone = ref(false);
-  const paginationLoading = ref(false);
-  const pageSize = ref(50);
+  const pageSize = ref(20);
+  const currentPage = ref(1);
   const isLoading = ref(false);
   const error = ref<string | null>(null);
   const filters = ref<StudentFilters>({
@@ -39,7 +41,44 @@ export const useStudentStore = defineStore("student", () => {
   const specialtyStore = useSpecialtyStore();
   const { specialties } = storeToRefs(specialtyStore);
 
-  // Reactive subscription to Convex
+  // Reactive arguments for paginated query
+  const paginatedArgs = computed(() => {
+    const activeStartYear = academicYearStore.getActiveAcademicYear?.startYear;
+
+    const selectedSpecialtyRecord = filters.value.specialty
+      ? specialtyStore.getSpecialtyById(filters.value.specialty)
+      : undefined;
+    const specialtyLegacyId =
+      selectedSpecialtyRecord?.legacyId &&
+      selectedSpecialtyRecord.legacyId !== filters.value.specialty
+        ? selectedSpecialtyRecord.legacyId
+        : undefined;
+
+    return {
+      page: currentPage.value,
+      pageSize: pageSize.value,
+      specialty: filters.value.specialty || undefined,
+      specialtyLegacyId,
+      language: filters.value.language || undefined,
+      gender: filters.value.gender || undefined,
+      base: filters.value.base ? Number(filters.value.base) : undefined,
+      academicYearId: filters.value.academicYearId || undefined,
+      searchTerm: filters.value.searchTerm || undefined,
+      course: filters.value.course ? Number(filters.value.course) : undefined,
+      activeStartYear: activeStartYear ?? 0,
+    };
+  });
+
+  // Reactive paginated query
+  const paginatedResult = useConvexQuery(
+    api.students.queries.listPaginated,
+    paginatedArgs
+  );
+
+  const paginatedData = computed(() => paginatedResult.data.value as PaginatedStudentsResponse | undefined);
+  const isPaginatedLoading = computed(() => paginatedResult.isPending.value);
+
+  // Full list for lookups
   const { data: convexStudents } = useConvexQuery(
     api.students.queries.list,
     ref({})
@@ -66,6 +105,8 @@ export const useStudentStore = defineStore("student", () => {
     gender: "male" | "female";
     base?: number;
     academicYearId?: string;
+    status?: any;
+    history?: any[];
   }) => {
     const specialtyMap = buildSpecialtyMap();
     return {
@@ -78,6 +119,8 @@ export const useStudentStore = defineStore("student", () => {
       gender: student.gender,
       base: student.base,
       academicYearId: student.academicYearId,
+      status: student.status || "active",
+      history: student.history || [],
     };
   };
 
@@ -89,37 +132,15 @@ export const useStudentStore = defineStore("student", () => {
 
   const getAllStudents = computed(() => students.value);
 
-  const filteredStudents = computed((): StudentWithCourse[] => {
-    let studentsToFilter: Student[] = [...students.value];
+  const paginatedFilteredStudents = computed((): StudentWithCourse[] => {
+    if (!paginatedData.value) return [];
 
-    studentsToFilter = studentsToFilter.filter((student) => {
-      const specialtyMatch =
-        !filters.value.specialty ||
-        student.specialty === filters.value.specialty;
-      const languageMatch =
-        !filters.value.language || student.language === filters.value.language;
-      const genderMatch =
-        !filters.value.gender || student.gender === filters.value.gender;
-      const baseMatch =
-        !filters.value.base ||
-        (student.base ?? 9).toString() === filters.value.base;
-      const academicYearMatch =
-        !filters.value.academicYearId ||
-        student.academicYearId === filters.value.academicYearId;
+    const activeAcademicYear = academicYearStore.getActiveAcademicYear;
 
-      return (
-        specialtyMatch &&
-        languageMatch &&
-        genderMatch &&
-        baseMatch &&
-        academicYearMatch
-      );
-    });
-
-    let studentsWithCourse = studentsToFilter.map((student) => {
-      const activeAcademicYear = academicYearStore.getActiveAcademicYear;
+    return paginatedData.value.items.map((student: any) => {
+      const normalized = normalizeStudent(student);
       const studentAcademicYear = academicYearStore.getAcademicYearById(
-        student.academicYearId || ""
+        normalized.academicYearId || ""
       );
 
       let course = 0;
@@ -130,103 +151,23 @@ export const useStudentStore = defineStore("student", () => {
       }
 
       return {
-        ...student,
-        course: course,
+        ...normalized,
+        course,
       };
     });
-
-    if (filters.value.course) {
-      studentsWithCourse = studentsWithCourse.filter(
-        (student) => student.course.toString() === filters.value.course
-      );
-    }
-
-    if (filters.value.searchTerm) {
-      const studentsWithFio = studentsWithCourse.map((student) => ({
-        ...student,
-        fio: `${student.surname} ${student.firstName} ${student.patronymic}`,
-      }));
-
-      const fuse = new Fuse(studentsWithFio, {
-        keys: ["surname", "firstName", "patronymic", "fio"],
-        threshold: 0.3,
-      });
-      return fuse.search(filters.value.searchTerm).map((result) => result.item);
-    }
-
-    return studentsWithCourse;
   });
 
-  const paginatedFilteredStudents = computed((): StudentWithCourse[] => {
-    let studentsToFilter: Student[] = [...paginatedStudents.value];
+  const totalItemsCount = computed(() => paginatedData.value?.totalCount || 0);
+  const totalPages = computed(() => Math.ceil(totalItemsCount.value / pageSize.value) || 1);
 
-    studentsToFilter = studentsToFilter.filter((student) => {
-      const specialtyMatch =
-        !filters.value.specialty ||
-        student.specialty === filters.value.specialty;
-      const languageMatch =
-        !filters.value.language || student.language === filters.value.language;
-      const genderMatch =
-        !filters.value.gender || student.gender === filters.value.gender;
-      const baseMatch =
-        !filters.value.base ||
-        (student.base ?? 9).toString() === filters.value.base;
-      const academicYearMatch =
-        !filters.value.academicYearId ||
-        student.academicYearId === filters.value.academicYearId;
-
-      return (
-        specialtyMatch &&
-        languageMatch &&
-        genderMatch &&
-        baseMatch &&
-        academicYearMatch
-      );
-    });
-
-    let studentsWithCourse = studentsToFilter.map((student) => {
-      const activeAcademicYear = academicYearStore.getActiveAcademicYear;
-      const studentAcademicYear = academicYearStore.getAcademicYearById(
-        student.academicYearId || ""
-      );
-
-      let course = 0;
-      if (activeAcademicYear && studentAcademicYear) {
-        const diff =
-          activeAcademicYear.startYear - studentAcademicYear.startYear + 1;
-        course = Math.max(0, diff);
-      }
-
-      return {
-        ...student,
-        course: course,
-      };
-    });
-
-    if (filters.value.course) {
-      studentsWithCourse = studentsWithCourse.filter(
-        (student) => student.course.toString() === filters.value.course
-      );
-    }
-
-    if (filters.value.searchTerm) {
-      const studentsWithFio = studentsWithCourse.map((student) => ({
-        ...student,
-        fio: `${student.surname} ${student.firstName} ${student.patronymic}`,
-      }));
-
-      const fuse = new Fuse(studentsWithFio, {
-        keys: ["surname", "firstName", "patronymic", "fio"],
-        threshold: 0.3,
-      });
-      return fuse.search(filters.value.searchTerm).map((result) => result.item);
-    }
-
-    return studentsWithCourse;
+  const filteredStudents = computed((): { length: number } => {
+    // Return an object with length for compatibility with the Pagination component's props
+    return { length: totalItemsCount.value };
   });
 
   const setFilter = (key: keyof StudentFilters, value: string) => {
     filters.value[key] = value;
+    currentPage.value = 1; // Reset to first page on filter change
   };
 
   const clearFilters = () => {
@@ -239,6 +180,7 @@ export const useStudentStore = defineStore("student", () => {
       searchTerm: "",
       course: "",
     };
+    currentPage.value = 1;
   };
 
   const addStudent = async (payload: AddStudentPayload) => {
@@ -256,6 +198,8 @@ export const useStudentStore = defineStore("student", () => {
         gender: payload.gender,
         base: payload.base,
         academicYearId: payload.academicYearId,
+        status: payload.status,
+        history: payload.history,
       });
       // No need to manually push - the watch on convexStudents handles it
     } catch (e) {
@@ -285,6 +229,8 @@ export const useStudentStore = defineStore("student", () => {
         gender: payload.gender as any,
         base: payload.base,
         academicYearId: payload.academicYearId,
+        status: payload.status,
+        history: payload.history,
       });
       // No need to manually update - the watch on convexStudents handles it
     } catch (e) {
@@ -331,67 +277,9 @@ export const useStudentStore = defineStore("student", () => {
     error.value = null;
   };
 
-  const resetPagination = () => {
-    paginatedStudents.value = [];
-    paginationCursor.value = null;
-    paginationDone.value = false;
-  };
-
-  const loadNextPage = async () => {
-    if (paginationLoading.value || paginationDone.value) return;
-    paginationLoading.value = true;
-    try {
-      const baseValue = filters.value.base
-        ? Number(filters.value.base)
-        : undefined;
-      const selectedSpecialty = filters.value.specialty;
-      const selectedSpecialtyRecord = selectedSpecialty
-        ? specialtyStore.getSpecialtyById(selectedSpecialty)
-        : undefined;
-      const specialtyLegacyId =
-        selectedSpecialtyRecord?.legacyId &&
-        selectedSpecialtyRecord.legacyId !== selectedSpecialty
-          ? selectedSpecialtyRecord.legacyId
-          : undefined;
-      const response = await convex.query(
-        api.students.queries.listPaginated,
-        {
-          paginationOpts: {
-            numItems: pageSize.value,
-            cursor: paginationCursor.value,
-          },
-          specialty: selectedSpecialty || undefined,
-          specialtyLegacyId,
-          language: filters.value.language || undefined,
-          gender: filters.value.gender || undefined,
-          base: Number.isNaN(baseValue) ? undefined : baseValue,
-          academicYearId: filters.value.academicYearId || undefined,
-        }
-      );
-
-      const mapped = response.page.map(normalizeStudent);
-      paginatedStudents.value = paginatedStudents.value.concat(mapped);
-      paginationCursor.value = response.continueCursor;
-      paginationDone.value = response.isDone;
-    } catch (err) {
-      console.error("[studentStore] Failed to load paginated students:", err);
-      error.value = "Failed to load students";
-    } finally {
-      paginationLoading.value = false;
-    }
-  };
-
-  const refreshPagination = async () => {
-    resetPagination();
-    await loadNextPage();
-  };
-
   const reset = () => {
     students.value = [];
-    paginatedStudents.value = [];
-    paginationCursor.value = null;
-    paginationDone.value = false;
-    paginationLoading.value = false;
+    currentPage.value = 1;
     isLoading.value = false;
     error.value = null;
     filters.value = {
@@ -437,11 +325,11 @@ export const useStudentStore = defineStore("student", () => {
 
   return {
     students,
-    paginatedStudents,
-    paginationDone,
-    paginationLoading,
     pageSize,
+    currentPage,
+    totalPages,
     isLoading,
+    isPaginatedLoading,
     filters,
     getAllStudents,
     filteredStudents,
@@ -452,9 +340,6 @@ export const useStudentStore = defineStore("student", () => {
     updateStudent,
     deleteStudent,
     clearError,
-    resetPagination,
-    loadNextPage,
-    refreshPagination,
     reset,
     getError,
     getCourseByStudentId,

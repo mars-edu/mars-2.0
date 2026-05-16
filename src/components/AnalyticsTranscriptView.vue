@@ -1,28 +1,25 @@
 <template>
   <div class="space-y-6">
     <!-- Filters -->
-    <div class="bg-card border border-border rounded-xl p-5 flex flex-wrap items-end gap-4">
-      <div>
-        <label class="text-sm font-medium text-foreground block mb-1">Год поступления (с)</label>
-        <input
-          v-model="yearFrom"
-          type="number"
-          placeholder="2020"
-          class="border border-border rounded-lg px-3 py-2 bg-background text-foreground text-sm outline-none focus:border-primary w-28"
-        />
-      </div>
-      <div>
-        <label class="text-sm font-medium text-foreground block mb-1">Год поступления (по)</label>
-        <input
-          v-model="yearTo"
-          type="number"
-          placeholder="2025"
-          class="border border-border rounded-lg px-3 py-2 bg-background text-foreground text-sm outline-none focus:border-primary w-28"
-        />
-      </div>
-      <div class="flex-1 min-w-[220px]">
-        <label class="text-sm font-medium text-foreground block mb-1">Обучающийся</label>
-        <div class="relative" ref="dropdownRef">
+    <div class="bg-card border border-border rounded-xl px-5 py-4 flex flex-wrap items-center gap-3">
+      <span class="text-sm font-medium text-foreground">Год обучения от:</span>
+      <select
+        v-model="yearFrom"
+        class="border border-border rounded-xl px-4 py-2 bg-background text-foreground text-sm outline-none focus:border-primary transition-colors shadow-sm"
+      >
+        <option value="">Не выбрано</option>
+        <option v-for="y in yearFromOptions" :key="y" :value="String(y)">{{ y }}</option>
+      </select>
+      <span class="text-sm font-medium text-foreground">до:</span>
+      <select
+        v-model="yearTo"
+        class="border border-border rounded-xl px-4 py-2 bg-background text-foreground text-sm outline-none focus:border-primary transition-colors shadow-sm"
+      >
+        <option value="">Не выбрано</option>
+        <option v-for="y in yearToOptions" :key="y" :value="String(y)">{{ y }}</option>
+      </select>
+      <span class="text-sm font-medium text-foreground ml-4">Обучающийся:</span>
+      <div class="relative min-w-[300px]" ref="dropdownRef">
           <button
             class="w-full border border-border rounded-xl px-4 py-2 bg-background text-foreground text-sm flex items-center justify-between gap-2"
             @click="dropdownOpen = !dropdownOpen"
@@ -70,7 +67,6 @@
             </div>
           </div>
         </div>
-      </div>
     </div>
 
     <!-- Transcripts -->
@@ -184,6 +180,8 @@ const props = defineProps<{
 const yearFrom = ref("");
 const yearTo = ref("");
 const search = ref("");
+const yearFromOptions = [2021, 2022, 2023, 2024, 2025];
+const yearToOptions = [2022, 2023, 2024, 2025, 2026, 2027];
 const selectedIds = ref<string[]>([]);
 const dropdownOpen = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);

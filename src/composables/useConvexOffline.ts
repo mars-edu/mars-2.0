@@ -51,19 +51,19 @@ export function useConvexQuery<T>(
   });
 
   // Convex query
-  const convexQuery = useQuery(queryRef, args) as any;
+  const convexQuery = useQuery(queryRef, args);
 
   // Combined data (Convex data or cached data)
-  const data = computed<T | null>(() => {
+  const data = computed<T | undefined>(() => {
     if (convexQuery.data.value !== undefined) {
       return convexQuery.data.value as T;
     }
-    return cachedData.value;
+    return (cachedData.value as T) ?? undefined;
   });
 
   // Loading state
   const loading = computed(() => {
-    return shouldQuery.value && convexQuery.isPending.value;
+    return (shouldQuery.value && convexQuery.isPending.value) || false;
   });
 
   // Cache data when it changes

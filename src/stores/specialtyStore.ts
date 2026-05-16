@@ -10,6 +10,8 @@ export interface Specialty {
   name: string;
   codeName: string;
   code: string;
+  year?: number;
+  orderNumber?: string;
   hasModule: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -22,6 +24,8 @@ export interface AddSpecialtyPayload {
   name: string;
   details: string;
   codeName: string;
+  year?: number;
+  orderNumber?: string;
 }
 
 export const useSpecialtyStore = defineStore(
@@ -45,6 +49,8 @@ export const useSpecialtyStore = defineStore(
           name: s.name,
           codeName: s.codeName,
           code: s.code,
+          year: s.year,
+          orderNumber: s.orderNumber,
           hasModule: s.hasModule || false,
           details: s.details || "",
           isHighlighted: s.isHighlighted,
@@ -100,6 +106,8 @@ export const useSpecialtyStore = defineStore(
           code: payload.code,
           codeName: payload.codeName,
           details: payload.details,
+          year: payload.year,
+          orderNumber: payload.orderNumber,
           hasModule: false,
           isHighlighted: false,
         });
@@ -128,6 +136,8 @@ export const useSpecialtyStore = defineStore(
           code: payload.code,
           codeName: payload.codeName,
           details: payload.details,
+          year: payload.year,
+          orderNumber: payload.orderNumber,
         });
         // No need to manually update - the watch on convexSpecialties handles it
       } catch (e) {
@@ -168,6 +178,8 @@ export const useSpecialtyStore = defineStore(
           name: specialty.name,
           code: specialty.code,
           codeName: specialty.codeName,
+          year: specialty.year,
+          orderNumber: specialty.orderNumber,
           details: specialty.details || "",
           hasModule: specialty.hasModule || false,
           isHighlighted: specialty.isHighlighted,

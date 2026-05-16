@@ -32,7 +32,7 @@
           <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70 ml-1">
             Дисциплина
           </div>
-          <SearchableSelectPopover
+          <Select
             id="event-class9-generic"
             placeholder="Выберите дисциплину"
             v-model="class9IdModel"
@@ -644,7 +644,6 @@ import { storeToRefs } from "pinia";
 import { withAllOption, getGenderOptions } from "@/lib/utils";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
-import SearchableSelectPopover from "@/components/ui/SearchableSelectPopover.vue";
 import Select from "@/components/ui/Select.vue";
 import ColorPicker from "@/components/ui/ColorPicker.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";

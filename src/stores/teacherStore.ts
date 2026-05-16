@@ -37,8 +37,15 @@ export interface TeacherFilters {
   searchTerm: string;
 }
 
+interface PaginatedTeachersResponse {
+  items: Teacher[];
+  totalCount: number;
+}
+
 export const useTeacherStore = defineStore("teacher", () => {
   const teachers = ref<Teacher[]>([]);
+  const pageSize = ref(20);
+  const currentPage = ref(1);
   const isLoading = ref(false);
   const error = ref<string | null>(null);
   const filters = ref<TeacherFilters>({
@@ -48,7 +55,36 @@ export const useTeacherStore = defineStore("teacher", () => {
     searchTerm: "",
   });
 
-  // Reactive subscription to Convex
+  // Reactive arguments for paginated query
+  const paginatedArgs = computed(() => {
+    // Basic skip logic if needed, for now teachers query doesn't depend on other stores as much
+    return {
+      page: currentPage.value,
+      pageSize: pageSize.value,
+      position: filters.value.position || undefined,
+      employmentYear: filters.value.employmentYear ? Number(filters.value.employmentYear) : undefined,
+      gender: filters.value.gender || undefined,
+      searchTerm: filters.value.searchTerm || undefined,
+    };
+  });
+
+  // Reactive paginated query
+  const paginatedResult = useConvexQuery(
+    api.teachers.queries.listPaginated,
+    paginatedArgs
+  );
+
+  const paginatedData = computed(() => paginatedResult.data.value as PaginatedTeachersResponse | undefined);
+  const isPaginatedLoading = computed(() => paginatedResult.isPending.value);
+
+  const paginatedFilteredTeachers = computed(() => {
+    return paginatedData.value?.items || [];
+  });
+
+  const totalItemsCount = computed(() => paginatedData.value?.totalCount || 0);
+  const totalPages = computed(() => Math.ceil(totalItemsCount.value / pageSize.value) || 1);
+
+  // Full list for lookups
   const { data: convexTeachers } = useConvexQuery(
     api.teachers.queries.list,
     ref({})
@@ -104,39 +140,14 @@ export const useTeacherStore = defineStore("teacher", () => {
     return teacher ? getTeacherFullName(teacher) : "";
   };
 
-  const filteredTeachers = computed(() => {
-    let teachersToFilter = [...teachers.value];
-
-    teachersToFilter = teachersToFilter.filter((teacher) => {
-      const positionMatch =
-        !filters.value.position || teacher.position === filters.value.position;
-      const employmentYearMatch =
-        !filters.value.employmentYear ||
-        teacher.employmentYear.toString() === filters.value.employmentYear;
-      const genderMatch =
-        !filters.value.gender || teacher.gender === filters.value.gender;
-
-      return positionMatch && employmentYearMatch && genderMatch;
-    });
-
-    if (filters.value.searchTerm) {
-      const teachersWithFio = teachersToFilter.map((teacher) => ({
-        ...teacher,
-        fio: getTeacherFullName(teacher).toLowerCase(),
-      }));
-
-      const fuse = new Fuse(teachersWithFio, {
-        keys: ["surname", "firstName", "patronymic", "fio"],
-        threshold: 0.3,
-      });
-      return fuse.search(filters.value.searchTerm).map((result) => result.item);
-    }
-
-    return teachersToFilter;
+  const filteredTeachers = computed((): { length: number } => {
+    // Return an object with length for compatibility
+    return { length: totalItemsCount.value };
   });
 
   const setFilter = (key: keyof TeacherFilters, value: string) => {
     filters.value[key] = value;
+    currentPage.value = 1;
   };
 
   const clearFilters = () => {
@@ -146,6 +157,7 @@ export const useTeacherStore = defineStore("teacher", () => {
       gender: "",
       searchTerm: "",
     };
+    currentPage.value = 1;
   };
 
   const addTeacher = async (payload: AddTeacherPayload) => {
@@ -259,6 +271,7 @@ export const useTeacherStore = defineStore("teacher", () => {
 
   const reset = () => {
     teachers.value = [];
+    currentPage.value = 1;
     isLoading.value = false;
     error.value = null;
     filters.value = {
@@ -273,11 +286,16 @@ export const useTeacherStore = defineStore("teacher", () => {
 
   return {
     teachers,
+    pageSize,
+    currentPage,
+    totalPages,
     isLoading,
+    isPaginatedLoading,
     filters,
     getAllTeachers,
     teacherSelectOptions,
     filteredTeachers,
+    paginatedFilteredTeachers,
     setFilter,
     clearFilters,
     addTeacher,

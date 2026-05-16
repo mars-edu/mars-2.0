@@ -26,14 +26,29 @@
 
             <!-- Controls Card -->
             <div class="flex flex-col md:flex-row gap-4 items-center justify-between p-4 rounded-lg shadow-sm border border-border bg-card">
-              <div class="relative w-full md:w-96">
-                <IconSearch class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 w-[18px] h-[18px]" />
-                <input
-                  v-model="searchTerm"
-                  type="text"
-                  :placeholder="catalog_specialty_search()"
-                  class="specialty-search-input w-full pl-10 pr-4 py-2 rounded-lg text-sm text-foreground transition-all"
-                />
+              <div class="flex flex-1 flex-col md:flex-row items-center gap-4 w-full">
+                <div class="relative w-full md:w-96">
+                  <IconSearch class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 w-[18px] h-[18px]" />
+                  <input
+                    v-model="searchTerm"
+                    type="text"
+                    :placeholder="catalog_specialty_search()"
+                    class="specialty-search-input w-full pl-10 pr-4 py-2 rounded-lg text-sm text-foreground transition-all"
+                  />
+                </div>
+
+                <div class="flex items-center gap-2 w-full md:w-auto">
+                  <span class="text-xs font-medium text-muted-foreground whitespace-nowrap">{{ catalog_filter_year_foundation() }}:</span>
+                  <select
+                    v-model="selectedYear"
+                    class="bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer min-w-[120px]"
+                  >
+                    <option value="all">{{ catalog_base_all() }}</option>
+                    <option v-for="year in foundationYears" :key="year" :value="year">
+                      {{ year }}
+                    </option>
+                  </select>
+                </div>
               </div>
 
               <div class="flex items-center gap-3 w-full md:w-auto justify-end">
@@ -58,6 +73,8 @@
                       <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-28">{{ catalog_col_code_name() }}</th>
                       <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-36">{{ catalog_col_code() }}</th>
                       <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{{ catalog_col_name() }}</th>
+                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24 text-center">{{ catalog_col_year() }}</th>
+                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-36">{{ catalog_col_order_number() }}</th>
                       <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right w-24">{{ catalog_col_actions() }}</th>
                     </tr>
                   </thead>
@@ -81,6 +98,12 @@
                         <div class="font-medium text-foreground text-sm leading-tight">{{ specialty.name }}</div>
                         <div v-if="specialty.details" class="text-[11px] text-muted-foreground/70 mt-0.5 leading-relaxed max-w-xl">{{ specialty.details }}</div>
                       </td>
+                      <td class="px-6 py-4 text-center">
+                        <span class="text-sm font-medium text-muted-foreground">{{ specialty.year || '—' }}</span>
+                      </td>
+                      <td class="px-6 py-4">
+                        <span class="text-sm font-medium text-muted-foreground">{{ specialty.orderNumber || '—' }}</span>
+                      </td>
                       <td class="px-6 py-4 text-right">
                         <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
@@ -92,7 +115,7 @@
                       </td>
                     </tr>
                     <tr v-if="filteredSpecialties.length === 0">
-                      <td colspan="5" class="px-8 py-24 text-center text-muted-foreground/40 text-sm italic">
+                      <td colspan="7" class="px-8 py-24 text-center text-muted-foreground/40 text-sm italic">
                         Специальности не найдены
                       </td>
                     </tr>
@@ -137,7 +160,11 @@ import {
   catalog_col_code_name,
   catalog_col_code,
   catalog_col_name,
+  catalog_col_year,
+  catalog_col_order_number,
   catalog_col_actions,
+  catalog_filter_year_foundation,
+  catalog_base_all,
   common_edit,
   common_add,
 } from "@/paraglide/messages";
@@ -155,14 +182,29 @@ const specialtyStore = useSpecialtyStore();
 const { specialties } = storeToRefs(specialtyStore);
 const selectedSpecialtyId = ref<string | null>(null);
 const searchTerm = ref("");
+const selectedYear = ref<number | string>("all");
+
+const foundationYears = computed(() => {
+  const years = specialties.value
+    .map((s) => s.year)
+    .filter((y): y is number => !!y);
+  return [...new Set(years)].sort((a, b) => b - a);
+});
 
 const filteredSpecialties = computed(() => {
-  if (!searchTerm.value) return specialties.value;
-  const fuse = new Fuse(specialties.value, {
+  let result = specialties.value;
+
+  if (selectedYear.value !== "all") {
+    result = result.filter((s) => s.year === selectedYear.value);
+  }
+
+  if (!searchTerm.value) return result;
+
+  const fuse = new Fuse(result, {
     keys: ["name", "code", "codeName"],
     threshold: 0.3,
   });
-  return fuse.search(searchTerm.value).map((result) => result.item);
+  return fuse.search(searchTerm.value).map((res) => res.item);
 });
 
 const selectSpecialty = async (specialty: Specialty) => {

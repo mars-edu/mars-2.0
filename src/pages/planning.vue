@@ -36,7 +36,7 @@
         </div>
 
         <div v-if="userStore.isAdmin" class="mb-3 flex justify-end">
-          <SearchableSelectPopover
+          <Select
             v-model="selectedTeacherId"
             :options="teacherOptions"
             :placeholder="planning_teacher()"
@@ -98,7 +98,7 @@ import CalendarGrid from "@/components/Calendar/CalendarGrid.vue";
 import EditEventPopover from "@/components/Calendar/EditEventPopover.vue";
 import JournalPreviewPopover from "@/components/Calendar/JournalPreviewPopover.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
-import SearchableSelectPopover from "@/components/ui/SearchableSelectPopover.vue";
+import Select from "@/components/ui/Select.vue";
 import { type CalendarEvent as UseCalendarEvent } from "@/composables/useCalendar";
 import { type CalendarEvent as StoreCalendarEvent } from "@/stores/calendarStore";
 import { useCalendarStore } from "@/stores/calendarStore";

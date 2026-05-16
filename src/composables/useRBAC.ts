@@ -135,7 +135,7 @@ export function useRBAC() {
         label: "Управление нагрузкой",
         icon: "layout-grid",
         roles: [Role.ADMIN],
-        route: "/home",
+        route: "/workload-management",
       },
       {
         id: "specialty-catalog",
