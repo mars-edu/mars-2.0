@@ -180,6 +180,7 @@ export default defineSchema({
     firstName: v.string(),
     surname: v.string(),
     patronymic: v.string(),
+    searchName: v.optional(v.string()), // denormalized for Convex text search
     specialty: v.string(), // specialty ID reference
     language: v.string(),
     gender: v.union(v.literal("male"), v.literal("female")),
@@ -215,7 +216,11 @@ export default defineSchema({
   })
     .index("by_specialty", ["specialty"])
     .index("by_academicYear", ["academicYearId"])
-    .index("by_specialty_academicYear", ["specialty", "academicYearId"]),
+    .index("by_specialty_academicYear", ["specialty", "academicYearId"])
+    .searchIndex("search_by_name", {
+      searchField: "searchName",
+      filterFields: ["gender", "specialty", "language"],
+    }),
 
   /**
    * Teachers/Instructors
@@ -225,6 +230,7 @@ export default defineSchema({
     firstName: v.string(),
     surname: v.string(),
     patronymic: v.string(),
+    searchName: v.optional(v.string()), // denormalized for Convex text search
     position: v.string(),
     employmentYear: v.number(),
     gender: v.union(v.literal("male"), v.literal("female")),
@@ -235,7 +241,11 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_userId", ["userId"])
-    .index("by_position", ["position"]),
+    .index("by_position", ["position"])
+    .searchIndex("search_by_name", {
+      searchField: "searchName",
+      filterFields: ["gender", "position"],
+    }),
 
   // ==========================================================================
   // CURRICULUM (CLASS9 - Learning Outcomes)

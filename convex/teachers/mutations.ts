@@ -20,7 +20,10 @@ export const createTeacherInternal = internalMutation({
     updatedAt: v.number(),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("teachers", args);
+    return await ctx.db.insert("teachers", {
+      ...args,
+      searchName: `${args.surname} ${args.firstName} ${args.patronymic}`,
+    });
   },
 });
 
@@ -41,6 +44,7 @@ export const create = mutation({
     const timestamps = createTimestamps();
     return await ctx.db.insert("teachers", {
       ...args,
+      searchName: `${args.surname} ${args.firstName} ${args.patronymic}`,
       ...timestamps,
     });
   },
@@ -68,8 +72,12 @@ export const update = mutation({
       Object.entries(updates).filter(([_, v]) => v !== undefined)
     );
 
+    const existing = await ctx.db.get(id);
+    if (!existing) throw new Error("Teacher not found");
+    const merged = { ...existing, ...cleanUpdates };
     await ctx.db.patch(id, {
       ...cleanUpdates,
+      searchName: `${merged.surname} ${merged.firstName} ${merged.patronymic}`,
       ...updateTimestamp(),
     });
 

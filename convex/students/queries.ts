@@ -30,51 +30,79 @@ export const listPaginated = query({
     activeStartYear: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    let query = ctx.db.query("students").order("asc");
+    let results;
 
-    if (args.specialty || args.specialtyLegacyId) {
-      query = query.filter((q) => {
-        const field = q.field("specialty");
-        if (
-          args.specialty &&
-          args.specialtyLegacyId &&
-          args.specialty !== args.specialtyLegacyId
-        ) {
-          return q.or(
-            q.eq(field, args.specialty),
-            q.eq(field, args.specialtyLegacyId)
-          );
-        }
-        return q.eq(field, args.specialty ?? args.specialtyLegacyId!);
-      });
-    }
-    if (args.language) {
-      query = query.filter((q) => q.eq(q.field("language"), args.language));
-    }
-    if (args.gender) {
-      query = query.filter((q) => q.eq(q.field("gender"), args.gender));
-    }
-    if (args.base !== undefined) {
-      query = query.filter((q) => q.eq(q.field("base"), args.base));
-    }
-    if (args.academicYearId) {
-      query = query.filter((q) =>
-        q.eq(q.field("academicYearId"), args.academicYearId)
-      );
+    if (args.searchTerm) {
+      // Use Convex text search when a search term is provided
+      results = await ctx.db
+        .query("students")
+        .withSearchIndex("search_by_name", (q) => {
+          let sq = q.search("searchName", args.searchTerm!);
+          if (args.gender) sq = sq.eq("gender", args.gender as "male" | "female");
+          // Use the primary specialty value as filterField if no legacy ID ambiguity
+          if (args.specialty && !args.specialtyLegacyId) {
+            sq = sq.eq("specialty", args.specialty);
+          }
+          if (args.language) sq = sq.eq("language", args.language);
+          return sq;
+        })
+        .collect();
+
+      // Post-filter for cases that can't be in filterFields
+      if (args.specialtyLegacyId && args.specialty && args.specialty !== args.specialtyLegacyId) {
+        results = results.filter(
+          (s) => s.specialty === args.specialty || s.specialty === args.specialtyLegacyId
+        );
+      }
+      if (args.base !== undefined) {
+        results = results.filter((s) => s.base === args.base);
+      }
+      if (args.academicYearId) {
+        results = results.filter((s) => s.academicYearId === args.academicYearId);
+      }
+    } else {
+      // No search term — use regular index-based query
+      let query = ctx.db.query("students").order("asc");
+
+      if (args.specialty || args.specialtyLegacyId) {
+        query = query.filter((q) => {
+          const field = q.field("specialty");
+          if (
+            args.specialty &&
+            args.specialtyLegacyId &&
+            args.specialty !== args.specialtyLegacyId
+          ) {
+            return q.or(
+              q.eq(field, args.specialty),
+              q.eq(field, args.specialtyLegacyId)
+            );
+          }
+          return q.eq(field, args.specialty ?? args.specialtyLegacyId!);
+        });
+      }
+      if (args.language) {
+        query = query.filter((q) => q.eq(q.field("language"), args.language));
+      }
+      if (args.gender) {
+        query = query.filter((q) => q.eq(q.field("gender"), args.gender));
+      }
+      if (args.base !== undefined) {
+        query = query.filter((q) => q.eq(q.field("base"), args.base));
+      }
+      if (args.academicYearId) {
+        query = query.filter((q) =>
+          q.eq(q.field("academicYearId"), args.academicYearId)
+        );
+      }
+      results = await query.collect();
     }
 
-    const results = await query.collect();
-    
-    // We need to join with academicYears to filter by course if activeStartYear is provided
-    const academicYears = await ctx.db.query("academicYears").collect();
-    const ayMap = new Map(academicYears.map(ay => [ay._id, ay]));
-    const ayLegacyMap = new Map(academicYears.filter(ay => ay.legacyId).map(ay => [ay.legacyId!, ay]));
-
-    // Apply filters that require computed values or manual search
-    let filteredResults = results;
-    
+    // Course filter requires joining with academicYears (always post-query)
     if (args.course !== undefined && args.activeStartYear && args.activeStartYear > 0) {
-      filteredResults = filteredResults.filter((s) => {
+      const academicYears = await ctx.db.query("academicYears").collect();
+      const ayMap = new Map(academicYears.map(ay => [ay._id, ay]));
+      const ayLegacyMap = new Map(academicYears.filter(ay => ay.legacyId).map(ay => [ay.legacyId!, ay]));
+      results = results.filter((s) => {
         const studentAy = s.academicYearId ? (ayMap.get(s.academicYearId as any) || ayLegacyMap.get(s.academicYearId)) : undefined;
         if (!studentAy) return false;
         const course = args.activeStartYear! - studentAy.startYear + 1;
@@ -82,18 +110,10 @@ export const listPaginated = query({
       });
     }
 
-    if (args.searchTerm) {
-      const term = args.searchTerm.toLowerCase();
-      filteredResults = filteredResults.filter((s) => {
-        const fullName = `${s.surname} ${s.firstName} ${s.patronymic}`.toLowerCase();
-        return fullName.includes(term);
-      });
-    }
-
-    const totalCount = filteredResults.length;
+    const totalCount = results.length;
     const start = (args.page - 1) * args.pageSize;
-    const items = filteredResults.slice(start, start + args.pageSize);
-    
+    const items = results.slice(start, start + args.pageSize);
+
     return {
       items,
       totalCount,
@@ -158,23 +178,18 @@ export const getBySpecialtyAndAcademicYear = query({
 });
 
 /**
- * Search students by name
+ * Search students by name using Convex full-text search
  */
 export const search = query({
   args: { searchTerm: v.string() },
   handler: async (ctx, args) => {
-    const students = await ctx.db.query("students").collect();
-
-    const term = args.searchTerm.toLowerCase();
-    return students.filter((s) => {
-      const fullName =
-        `${s.surname} ${s.firstName} ${s.patronymic}`.toLowerCase();
-      return (
-        fullName.includes(term) ||
-        s.surname.toLowerCase().includes(term) ||
-        s.firstName.toLowerCase().includes(term)
-      );
-    });
+    if (!args.searchTerm.trim()) return [];
+    return await ctx.db
+      .query("students")
+      .withSearchIndex("search_by_name", (q) =>
+        q.search("searchName", args.searchTerm)
+      )
+      .collect();
   },
 });
 

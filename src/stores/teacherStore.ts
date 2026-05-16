@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
-import Fuse from "fuse.js";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";

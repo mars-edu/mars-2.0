@@ -48,23 +48,18 @@ export const getByPosition = query({
 });
 
 /**
- * Search teachers by name
+ * Search teachers by name using Convex full-text search
  */
 export const search = query({
   args: { searchTerm: v.string() },
   handler: async (ctx, args) => {
-    const teachers = await ctx.db.query("teachers").collect();
-
-    const term = args.searchTerm.toLowerCase();
-    return teachers.filter((t) => {
-      const fullName =
-        `${t.surname} ${t.firstName} ${t.patronymic}`.toLowerCase();
-      return (
-        fullName.includes(term) ||
-        t.surname.toLowerCase().includes(term) ||
-        t.firstName.toLowerCase().includes(term)
-      );
-    });
+    if (!args.searchTerm.trim()) return [];
+    return await ctx.db
+      .query("teachers")
+      .withSearchIndex("search_by_name", (q) =>
+        q.search("searchName", args.searchTerm)
+      )
+      .collect();
   },
 });
 
@@ -81,40 +76,44 @@ export const listPaginated = query({
     searchTerm: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    let query = ctx.db.query("teachers").order("asc");
+    let results;
 
-    if (args.position) {
-      query = query.filter((q) => q.eq(q.field("position"), args.position));
-    }
-    if (args.employmentYear) {
-      query = query.filter((q) =>
-        q.eq(q.field("employmentYear"), args.employmentYear)
-      );
-    }
-    if (args.gender) {
-      query = query.filter((q) => q.eq(q.field("gender"), args.gender));
-    }
-
-    const results = await query.collect();
-
-    // Apply search filter if present
-    let filteredResults = results;
     if (args.searchTerm) {
-      const term = args.searchTerm.toLowerCase();
-      filteredResults = results.filter((t) => {
-        const fullName =
-          `${t.surname} ${t.firstName} ${t.patronymic}`.toLowerCase();
-        return (
-          fullName.includes(term) ||
-          t.surname.toLowerCase().includes(term) ||
-          t.firstName.toLowerCase().includes(term)
+      // Use Convex text search when a search term is provided
+      results = await ctx.db
+        .query("teachers")
+        .withSearchIndex("search_by_name", (q) => {
+          let sq = q.search("searchName", args.searchTerm!);
+          if (args.gender) sq = sq.eq("gender", args.gender as "male" | "female");
+          if (args.position) sq = sq.eq("position", args.position);
+          return sq;
+        })
+        .collect();
+
+      // employmentYear isn't a filterField, apply post-search
+      if (args.employmentYear) {
+        results = results.filter((t) => t.employmentYear === args.employmentYear);
+      }
+    } else {
+      // No search term — use regular index-based query
+      let query = ctx.db.query("teachers").order("asc");
+      if (args.position) {
+        query = query.filter((q) => q.eq(q.field("position"), args.position));
+      }
+      if (args.employmentYear) {
+        query = query.filter((q) =>
+          q.eq(q.field("employmentYear"), args.employmentYear)
         );
-      });
+      }
+      if (args.gender) {
+        query = query.filter((q) => q.eq(q.field("gender"), args.gender));
+      }
+      results = await query.collect();
     }
 
-    const totalCount = filteredResults.length;
+    const totalCount = results.length;
     const start = (args.page - 1) * args.pageSize;
-    const items = filteredResults.slice(start, start + args.pageSize);
+    const items = results.slice(start, start + args.pageSize);
 
     return {
       items,

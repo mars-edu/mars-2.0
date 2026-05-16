@@ -1,6 +1,5 @@
 import { defineStore, storeToRefs } from "pinia";
 import { ref, computed, watch } from "vue";
-import Fuse from "fuse.js";
 import { useAcademicYearStore } from "./academicYearStore";
 import { useCourseStore, type Course } from "./courseStore";
 import { useSpecialtyStore } from "./specialtyStore";

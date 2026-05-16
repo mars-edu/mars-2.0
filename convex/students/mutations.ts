@@ -45,6 +45,7 @@ export const create = mutation({
     const timestamps = createTimestamps();
     return await ctx.db.insert("students", {
       ...args,
+      searchName: `${args.surname} ${args.firstName} ${args.patronymic}`,
       ...timestamps,
     });
   },
@@ -98,8 +99,12 @@ export const update = mutation({
       Object.entries(updates).filter(([_, v]) => v !== undefined)
     );
 
+    const existing = await ctx.db.get(id);
+    if (!existing) throw new Error("Student not found");
+    const merged = { ...existing, ...cleanUpdates };
     await ctx.db.patch(id, {
       ...cleanUpdates,
+      searchName: `${merged.surname} ${merged.firstName} ${merged.patronymic}`,
       ...updateTimestamp(),
     });
 
@@ -168,6 +173,7 @@ export const batchCreate = mutation({
     for (const student of args.students) {
       const id = await ctx.db.insert("students", {
         ...student,
+        searchName: `${student.surname} ${student.firstName} ${student.patronymic}`,
         ...timestamps,
       });
       ids.push(id);
