@@ -605,6 +605,14 @@ const hasGeneratedReport = ref(false);
 const viewMode = ref<"ведомость" | "транскрипт">("ведомость");
 const sheetType = ref<"успеваемость" | "посещаемость">("успеваемость");
 const reportGeneratedAt = ref<Date | null>(null);
+
+watch(viewMode, async (mode) => {
+  if (mode === "транскрипт") {
+    for (const journal of relevantJournals.value) {
+      await marksStore.loadJournalMarks(journal.id);
+    }
+  }
+});
 let emptyDisciplineToast: any = null;
 
 const clearReportPreview = () => {
@@ -862,9 +870,11 @@ const attendanceJournals = computed(() =>
 );
 
 const transcriptStudents = computed(() =>
-  selectedAnalyticsStudents.value.map((s) => {
-    return { id: s.id, fullName: s.fullName, enrollmentYear: "—" };
-  })
+  students.value.map((s) => ({
+    id: s.id,
+    fullName: studentStore.getStudentFullName(s.id),
+    enrollmentYear: "—",
+  }))
 );
 
 const getDisciplinesForSemester = computed(() => {
