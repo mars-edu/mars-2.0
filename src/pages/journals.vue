@@ -194,9 +194,9 @@
             </div>
           -->
             <div v-if="isSelectionMode" class="mb-3 flex items-center gap-3 bg-card p-2 rounded-xl border border-primary/20 shadow-sm">
-              <div class="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg text-primary font-bold text-sm">
-                <IconCircleCheck class="w-4 h-4" />
-                <span>Выбрано: {{ selectedJournalIds.size }}</span>
+              <div class="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg text-primary font-bold text-sm whitespace-nowrap flex-shrink-0">
+                <IconCircleCheck class="w-4 h-4 flex-shrink-0" />
+                <span class="whitespace-nowrap">Выбрано: {{ selectedJournalIds.size }}</span>
               </div>
               <div class="h-6 w-px bg-border mx-1" />
               <button
@@ -853,7 +853,7 @@ function getJournalAccentColor(id: string): { bg: string; text: string } {
 }
 
 const pageReady = ref(false)
-const isDataReady = computed(() => pageReady.value)
+const isDataReady = computed(() => pageReady.value && class9Store.class9Items.length > 0)
 
 type JournalFilter = 'all' | 'course-1' | 'course-2' | 'course-3' | 'course-4' | 'mixed' | 'individual'
 const activeFilter = ref<JournalFilter>('all')
