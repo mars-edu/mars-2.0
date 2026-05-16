@@ -305,7 +305,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
-import { f7Page, f7Input, f7 } from "framework7-vue";
+import { f7Page, f7Input, f7, f7Button } from "framework7-vue";
 import IconX from "~icons/lucide/x";
 import IconCircleCheck from "~icons/lucide/circle-check";
 import IconCircleX from "~icons/lucide/circle-x";
