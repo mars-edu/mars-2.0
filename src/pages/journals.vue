@@ -193,65 +193,45 @@
               />
             </div>
           -->
-            <div class="mb-3 flex flex-wrap gap-2 items-center justify-end">
-              <template v-if="isSelectionMode">
-                <f7-button
-                  small
-                  default
-                  @click="exitSelectionMode"
-                  class="bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex-1 sm:flex-none"
-                >
-                  <IconX class="w-4 h-4 mr-2" />
-                  {{ common_cancel() }}
-                </f7-button>
-                <f7-button
-                  small
-                  default
-                  @click="selectAll"
-                  class="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex-1 sm:flex-none"
-                >
-                  <IconCircleCheck class="w-4 h-4 mr-2" />
-                  {{ journal_select_all() }}
-                </f7-button>
-                <f7-button
-                  small
-                  default
-                  @click="deselectAll"
-                  class="bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex-1 sm:flex-none"
-                >
-                  <IconCircleX class="w-4 h-4 mr-2" />
-                  {{ journal_deselect_all() }}
-                </f7-button>
-                <f7-button
-                  small
-                  default
-                  @click="onSelectionDone"
-                  :class="selectionDoneButtonClass"
-                  :disabled="selectedJournalIds.size === 0"
-                >
-                  <IconArrowDownToLine
-                    v-if="selectionAction === 'download'"
-                    class="w-4 h-4 mr-2"
-                  />
-                  <IconCircleX
-                    v-else-if="selectionAction === 'close'"
-                    class="w-4 h-4 mr-2"
-                  />
-                  <IconRefreshCw
-                    v-else-if="selectionAction === 'replace'"
-                    class="w-4 h-4 mr-2"
-                  />
-                  <IconTrash2
-                    v-else-if="selectionAction === 'delete'"
-                    class="w-4 h-4 mr-2"
-                  />
-                  <IconLockOpen
-                    v-else
-                    class="w-4 h-4 mr-2"
-                  />
-                  {{ selectionDoneText }} ({{ selectedJournalIds.size }})
-                </f7-button>
-              </template>
+            <div v-if="isSelectionMode" class="mb-3 flex items-center gap-3 bg-card p-2 rounded-xl border border-primary/20 shadow-sm">
+              <div class="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg text-primary font-bold text-sm">
+                <IconCircleCheck class="w-4 h-4" />
+                <span>Выбрано: {{ selectedJournalIds.size }}</span>
+              </div>
+              <div class="h-6 w-px bg-border mx-1" />
+              <button
+                @click="selectAll"
+                class="px-4 py-1.5 text-sm font-bold text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg transition-colors"
+              >
+                {{ journal_select_all() }}
+              </button>
+              <button
+                @click="deselectAll"
+                class="px-4 py-1.5 text-sm font-bold text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg transition-colors"
+              >
+                {{ journal_deselect_all() }}
+              </button>
+              <div class="flex-1" />
+              <button
+                @click="exitSelectionMode"
+                class="px-4 py-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {{ common_cancel() }}
+              </button>
+              <button
+                @click="onSelectionDone"
+                :disabled="selectedJournalIds.size === 0"
+                :class="[
+                  'px-6 py-1.5 text-sm font-bold rounded-lg shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed',
+                  selectionAction === 'delete' || selectionAction === 'close'
+                    ? 'bg-red-500 hover:bg-red-600 text-white'
+                    : selectionAction === 'open'
+                      ? 'bg-green-500 hover:bg-green-600 text-white'
+                      : 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                ]"
+              >
+                {{ selectionDoneText }}
+              </button>
             </div>
             <!-- Filter bar -->
             <div class="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl overflow-x-auto max-w-full mb-5">
@@ -615,6 +595,8 @@ onMounted(async () => {
 
   console.log("\n" + "═".repeat(60));
   console.log("\n\n");
+
+  pageReady.value = true;
 });
 
 // Watch for semester changes
@@ -870,9 +852,8 @@ function getJournalAccentColor(id: string): { bg: string; text: string } {
   return JOURNAL_CARD_PALETTE[hash % JOURNAL_CARD_PALETTE.length]
 }
 
-const isDataReady = computed(() =>
-  class9Store.class9Items.length > 0 && !!selectedItemsStore.selectedAcademicYearId
-)
+const pageReady = ref(false)
+const isDataReady = computed(() => pageReady.value)
 
 type JournalFilter = 'all' | 'course-1' | 'course-2' | 'course-3' | 'course-4' | 'mixed' | 'individual'
 const activeFilter = ref<JournalFilter>('all')
