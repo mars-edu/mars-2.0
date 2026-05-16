@@ -204,7 +204,6 @@
                     :options="startTimeOptions"
                     placeholder="Начало"
                     class="w-full"
-                    v-bind="selectHandlers"
                     @update:modelValue="
                       (v) => {
                         updateWeekDayTime(slot.index, 'startId', v);
@@ -225,7 +224,6 @@
                     :options="slot.value.startId ? getEndTimeOptionsForStart(slot.value.startId) : endTimeOptions"
                     placeholder="Конец"
                     class="w-full"
-                    v-bind="selectHandlers"
                     @update:modelValue="(v) => updateWeekDayTime(slot.index, 'endId', v)"
                   />
                 </div>
@@ -541,7 +539,6 @@
                         :options="startTimeOptions"
                         placeholder="Начало"
                         class="w-full"
-                        v-bind="selectHandlers"
                         @update:modelValue="
                           (v) => {
                             updateJournalSlotTime(journal.id, slot.index, 'startId', v);
@@ -562,7 +559,6 @@
                         :options="slot.value.startId ? getEndTimeOptionsForStart(slot.value.startId) : endTimeOptions"
                         placeholder="Конец"
                         class="w-full"
-                        v-bind="selectHandlers"
                         @update:modelValue="
                           (v) => updateJournalSlotTime(journal.id, slot.index, 'endId', v)
                         "
