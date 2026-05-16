@@ -1,76 +1,85 @@
 <template>
   <div
-    class="group relative overflow-hidden rounded-[18px] bg-card border border-border shadow-sm hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer select-none flex flex-col p-4 gap-2.5"
+    class="group relative overflow-hidden rounded-[20px] bg-card border border-transparent shadow-sm hover:border-yellow-400 hover:shadow-[0_12px_32px_rgba(250,204,21,0.12)] hover:-translate-y-1 transition-all duration-200 cursor-pointer select-none flex flex-col p-4 gap-3"
     @click="handleClick"
   >
-    <!-- Selection checkbox -->
-    <div
-      v-if="selectionMode"
-      class="absolute top-3 right-3 z-10 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all duration-200"
-      :class="selected ? 'bg-primary border-primary' : 'bg-card border-border'"
-    >
-      <IconCheck v-if="selected" class="w-3.5 h-3.5 text-white" />
-    </div>
-
-    <!-- Top row: icon + badges -->
+    <!-- Top row: icon + hover menu OR selection checkbox -->
     <div class="flex justify-between items-start">
       <div
-        class="w-[38px] h-[38px] rounded-[11px] flex items-center justify-center text-[17px] font-extrabold flex-shrink-0"
+        class="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-extrabold flex-shrink-0"
         :style="{ background: accentColor.bg, color: accentColor.text }"
       >
         {{ titleInitial }}
       </div>
-      <div class="flex flex-col items-end gap-1">
-        <div
-          v-if="courseNumber !== undefined"
-          class="bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-[5px]"
+
+      <!-- Selection checkbox (replaces menu in selection mode) -->
+      <div
+        v-if="selectionMode"
+        class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0"
+        :class="selected ? 'bg-primary border-primary' : 'bg-card border-border'"
+      >
+        <IconCheck v-if="selected" class="w-3.5 h-3.5 text-white" />
+      </div>
+
+      <!-- Per-card action menu (normal mode, visible on hover) -->
+      <div v-else class="relative" @click.stop>
+        <button
+          class="p-1.5 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors opacity-0 group-hover:opacity-100"
+          @click="isMenuOpen = !isMenuOpen"
         >
-          {{ courseNumber }} Курс
-        </div>
-        <div class="bg-muted text-muted-foreground text-[9px] font-bold px-1.5 py-0.5 rounded-[5px]">
-          {{ studentCount }} студ.
+          <IconMoreVertical class="w-4 h-4" />
+        </button>
+        <!-- Backdrop -->
+        <div
+          v-if="isMenuOpen"
+          class="fixed inset-0 z-40"
+          @click="isMenuOpen = false"
+        />
+        <div
+          v-if="isMenuOpen"
+          class="absolute right-0 top-full mt-1 w-48 bg-card rounded-2xl shadow-2xl border border-border py-2 z-50"
+        >
+          <button
+            class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-2"
+            @click="emit('download'); isMenuOpen = false"
+          >
+            <IconDownload class="w-4 h-4" />
+            Скачать журнал
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Title + subtitle -->
-    <div>
-      <p class="text-[13px] font-bold text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+    <div class="flex-1">
+      <p class="text-[22px] font-bold text-foreground leading-tight line-clamp-4 group-hover:text-primary transition-colors">
         {{ title }}
       </p>
-      <p class="text-[11px] text-muted-foreground leading-relaxed line-clamp-1 mt-0.5">
+      <p class="text-sm text-muted-foreground leading-relaxed line-clamp-1 mt-1">
         {{ subtitle }}
       </p>
     </div>
 
-    <!-- Hover chevron -->
-    <div
-      v-if="!selectionMode"
-      class="absolute bottom-3 right-3 w-6 h-6 bg-muted rounded-full flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity"
-    >
-      <IconChevronRight class="w-3 h-3" />
-    </div>
-
-    <!--
-      Progress ring (commented out — preserved for future use)
-      <div class="shrink-0 w-10 h-10 relative self-end">
-        <svg viewBox="0 0 44 44" class="w-10 h-10 -rotate-90">
-          <circle cx="22" cy="22" r="18" stroke="rgba(156,163,175,0.2)" stroke-width="4" fill="none" stroke-linecap="round" />
-          <circle cx="22" cy="22" r="18" :stroke="progressColor" stroke-width="4" fill="none" stroke-linecap="round"
-            :stroke-dasharray="circumference" :stroke-dashoffset="dashOffset" class="transition-all duration-500" />
-        </svg>
-        <div class="absolute inset-0 flex items-center justify-center">
-          <span class="text-[10px] font-bold text-foreground">{{ percent }}%</span>
-        </div>
+    <!-- Bottom badges -->
+    <div class="flex flex-wrap items-center gap-2 mt-auto">
+      <div
+        v-if="courseNumber !== undefined"
+        class="bg-primary/10 text-primary text-[13px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-md"
+      >
+        {{ courseNumber }} Курс
       </div>
-    -->
+      <div class="bg-muted text-muted-foreground text-[13px] font-bold px-3 py-1.5 rounded-md">
+        {{ studentCount }} студ.
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import IconCheck from "~icons/lucide/check"
-import IconChevronRight from "~icons/lucide/chevron-right"
+import IconMoreVertical from "~icons/lucide/more-vertical"
+import IconDownload from "~icons/lucide/download"
 
 interface AccentColor {
   bg: string
@@ -96,8 +105,10 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   click: []
   'toggle-select': []
+  download: []
 }>()
 
+const isMenuOpen = ref(false)
 const titleInitial = computed(() => props.title.charAt(0).toUpperCase())
 
 const handleClick = () => {
