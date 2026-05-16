@@ -112,7 +112,7 @@ export default async () => {
       rolldownOptions: {
         treeshake: true,
         output: {
-          advancedChunks: {
+          codeSplitting: {
             minSize: 20000, // 20KB minimum chunk size
             groups: [
               {
