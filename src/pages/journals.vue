@@ -109,33 +109,40 @@
               </button>
               <div v-if="isActionMenuOpen" class="fixed inset-0 z-40" @click="isActionMenuOpen = false" />
               <div v-if="isActionMenuOpen" class="absolute right-0 top-full mt-2 w-64 bg-card rounded-2xl shadow-2xl border border-border py-2 z-50">
-                <button class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
                   @click="onDownloadClick(); isActionMenuOpen = false">
+                  <IconArrowDownToLine class="w-4 h-4 flex-shrink-0" />
                   {{ journal_download() }}
                 </button>
-                <button class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
                   @click="onCloseJournalClick(); isActionMenuOpen = false">
+                  <IconCircleX class="w-4 h-4 flex-shrink-0" />
                   {{ journal_close() }}
                 </button>
-                <button class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
                   @click="onOpenJournalClick(); isActionMenuOpen = false">
+                  <IconLockOpen class="w-4 h-4 flex-shrink-0" />
                   {{ journal_open() }}
                 </button>
                 <div class="h-px bg-border my-1" />
-                <button class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
                   @click="onReplaceClick(); isActionMenuOpen = false">
+                  <IconRefreshCw class="w-4 h-4 flex-shrink-0" />
                   {{ journal_replace() }}
                 </button>
-                <button class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
                   @click="onUploadClick(); isActionMenuOpen = false">
+                  <IconArrowUpToLine class="w-4 h-4 flex-shrink-0" />
                   {{ journal_upload() }}
                 </button>
-                <button class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
                   @click="onShareClick(); isActionMenuOpen = false">
+                  <IconShare class="w-4 h-4 flex-shrink-0" />
                   {{ journal_share() }}
                 </button>
-                <button class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
                   @click="onSettingsClick(); isActionMenuOpen = false">
+                  <IconSettings2 class="w-4 h-4 flex-shrink-0" />
                   {{ journal_settings() }}
                 </button>
               </div>
