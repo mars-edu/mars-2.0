@@ -15,36 +15,88 @@
         :class="contentMargin"
       >
         <div class="flex flex-col gap-6">
-          <div
-            class="flex flex-col md:flex-row md:items-center justify-between gap-3 journals-page-header"
-          >
-            <h1 class="text-2xl font-semibold">{{ journal_title() }}</h1>
-            <div
-              class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto"
-            >
-              <Select
-                v-model="selectedAcademicYearModel"
-                :options="academicYearOptions"
-                :placeholder="journal_academic_year()"
-                name="academic-year"
-                class="w-full sm:w-44"
-              />
-              <Select
-                v-model="selectedSemesterId"
-                :options="semesterOptions"
-                :placeholder="journal_semester()"
-                name="semester"
-                class="w-full sm:w-44"
-              />
-              <Select
-                v-if="userStore.isAdmin"
-                v-model="selectedTeacherId"
-                :options="teacherOptions"
-                :placeholder="journal_teacher()"
-                name="teacher"
-                class="w-full sm:w-[250px]"
-                :searchable="true"
-              />
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h1 class="text-4xl font-bold tracking-tight text-foreground">{{ journal_title() }}</h1>
+              <div class="flex flex-wrap items-center gap-2 text-muted-foreground font-medium mt-2 text-[15px]">
+                <span>Выберите журнал для работы</span>
+                <span class="text-border">•</span>
+
+                <!-- Year pill -->
+                <div class="relative">
+                  <button
+                    class="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-xl text-sm font-bold hover:border-primary hover:text-primary transition-all shadow-sm"
+                    @click="isYearPillOpen = !isYearPillOpen; isSemesterPillOpen = false; isTeacherPillOpen = false"
+                  >
+                    <span>{{ currentYearLabel }}</span>
+                    <IconChevronDown class="w-3.5 h-3.5 text-muted-foreground transition-transform duration-200" :class="{ 'rotate-180': isYearPillOpen }" />
+                  </button>
+                  <div v-if="isYearPillOpen" class="fixed inset-0 z-40" @click="isYearPillOpen = false" />
+                  <div v-if="isYearPillOpen" class="absolute left-0 top-full mt-2 w-44 bg-card rounded-xl shadow-xl border border-border py-2 z-50">
+                    <button
+                      v-for="opt in academicYearOptions"
+                      :key="opt.value"
+                      class="w-full text-left px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted flex items-center justify-between"
+                      @click="selectedAcademicYearModel = opt.value; isYearPillOpen = false"
+                    >
+                      <span>{{ opt.text }}</span>
+                      <IconCheck v-if="selectedAcademicYearModel === opt.value" class="w-3.5 h-3.5 text-primary" />
+                    </button>
+                  </div>
+                </div>
+
+                <span class="text-border">•</span>
+
+                <!-- Semester pill -->
+                <div class="relative">
+                  <button
+                    class="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-xl text-sm font-bold hover:border-primary hover:text-primary transition-all shadow-sm"
+                    @click="isSemesterPillOpen = !isSemesterPillOpen; isYearPillOpen = false; isTeacherPillOpen = false"
+                  >
+                    <span>{{ currentSemesterLabel }}</span>
+                    <IconChevronDown class="w-3.5 h-3.5 text-muted-foreground transition-transform duration-200" :class="{ 'rotate-180': isSemesterPillOpen }" />
+                  </button>
+                  <div v-if="isSemesterPillOpen" class="fixed inset-0 z-40" @click="isSemesterPillOpen = false" />
+                  <div v-if="isSemesterPillOpen" class="absolute left-0 top-full mt-2 w-44 bg-card rounded-xl shadow-xl border border-border py-2 z-50">
+                    <button
+                      v-for="opt in semesterOptions"
+                      :key="opt.value"
+                      class="w-full text-left px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted flex items-center justify-between"
+                      @click="selectedSemesterId = opt.value; isSemesterPillOpen = false"
+                    >
+                      <span>{{ opt.text }}</span>
+                      <IconCheck v-if="selectedSemesterId === opt.value" class="w-3.5 h-3.5 text-primary" />
+                    </button>
+                  </div>
+                </div>
+
+                <template v-if="userStore.isAdmin">
+                  <span class="text-border">•</span>
+
+                  <!-- Teacher pill -->
+                  <div class="relative">
+                    <button
+                      class="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-xl text-sm font-bold hover:border-primary hover:text-primary transition-all shadow-sm"
+                      @click="isTeacherPillOpen = !isTeacherPillOpen; isYearPillOpen = false; isSemesterPillOpen = false"
+                    >
+                      <span>{{ currentTeacherLabel }}</span>
+                      <IconChevronDown class="w-3.5 h-3.5 text-muted-foreground transition-transform duration-200" :class="{ 'rotate-180': isTeacherPillOpen }" />
+                    </button>
+                    <div v-if="isTeacherPillOpen" class="fixed inset-0 z-40" @click="isTeacherPillOpen = false" />
+                    <div v-if="isTeacherPillOpen" class="absolute left-0 top-full mt-2 w-64 bg-card rounded-xl shadow-xl border border-border py-2 z-50 max-h-72 overflow-y-auto">
+                      <button
+                        v-for="opt in teacherOptions"
+                        :key="opt.value"
+                        class="w-full text-left px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted flex items-center justify-between"
+                        @click="selectedTeacherId = opt.value; isTeacherPillOpen = false"
+                      >
+                        <span class="truncate">{{ opt.text }}</span>
+                        <IconCheck v-if="selectedTeacherId === opt.value" class="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                      </button>
+                    </div>
+                  </div>
+                </template>
+              </div>
             </div>
           </div>
 
@@ -280,6 +332,9 @@ import IconRefreshCw from "~icons/lucide/refresh-cw";
 import IconLockOpen from "~icons/lucide/lock-open";
 import IconSettings2 from "~icons/lucide/settings-2";
 import IconShare from "~icons/lucide/share-2";
+import IconChevronDown from "~icons/lucide/chevron-down";
+import IconMoreVertical from "~icons/lucide/more-vertical";
+import IconCheck from "~icons/lucide/check";
 import IconInbox from "~icons/lucide/inbox";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -463,6 +518,21 @@ const teacherOptions = computed(() => {
     ...teacherStore.teacherSelectOptions,
   ];
 });
+
+const currentYearLabel = computed(() => {
+  const found = academicYearOptions.value.find(o => o.value === selectedAcademicYearModel.value)
+  return found?.text ?? journal_academic_year()
+})
+
+const currentSemesterLabel = computed(() => {
+  const found = semesterOptions.value.find(o => o.value === selectedSemesterId.value)
+  return found?.text ?? journal_semester()
+})
+
+const currentTeacherLabel = computed(() => {
+  const found = teacherOptions.value.find(o => o.value === selectedTeacherId.value)
+  return found?.text ?? journal_teacher()
+})
 
 onMounted(async () => {
   console.log("\n\n");
@@ -783,6 +853,10 @@ function getJournalAccentColor(id: string): { bg: string; text: string } {
 
 type JournalFilter = 'all' | 'course-1' | 'course-2' | 'course-3' | 'course-4' | 'mixed' | 'individual'
 const activeFilter = ref<JournalFilter>('all')
+
+const isYearPillOpen = ref(false)
+const isSemesterPillOpen = ref(false)
+const isTeacherPillOpen = ref(false)
 
 const JOURNAL_FILTERS: ReadonlyArray<{ id: JournalFilter; label: string }> = [
   { id: 'all',        label: journal_filter_all() },
