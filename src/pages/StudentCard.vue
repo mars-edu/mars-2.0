@@ -127,100 +127,18 @@
             </div>
 
             <!-- Table Card -->
-            <div class="bg-card rounded-lg shadow-sm border border-border overflow-hidden relative">
-              <div 
-                v-if="isPaginatedLoading"
-                class="absolute inset-0 z-10 bg-background/40 backdrop-blur-[1px] flex items-center justify-center transition-all duration-300"
-              >
-                <div class="flex flex-col items-center gap-3">
-                  <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                </div>
-              </div>
-              <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                  <thead class="bg-muted/50 border-b border-border">
-                    <tr>
-                      <th v-if="isPromotionMode" class="px-4 py-4 w-10">
-                        <input
-                          type="checkbox"
-                          class="rounded border-border w-4 h-4 cursor-pointer"
-                          :checked="allOnPageSelected"
-                          @change="toggleAll"
-                        />
-                      </th>
-                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-14">{{ student_card_col_num() }}</th>
-                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{{ student_card_col_name() }}</th>
-                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{{ student_card_col_specialty() }}</th>
-                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-32 text-center">{{ student_card_col_status() }}</th>
-                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24 text-center">{{ student_card_col_language() }}</th>
-                      <th class="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-20 text-center">{{ student_card_col_course() }}</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-border">
-                    <tr
-                      v-for="(student, index) in paginatedFilteredStudents"
-                      :key="student.id"
-                      :id="`student-item-${student.id}`"
-                      class="group hover:bg-muted/40 transition-colors cursor-pointer"
-                      :class="{ 'bg-green-50/60 dark:bg-green-950/20': isPromotionMode && selectedStudentIds.includes(student.id) }"
-                      @click="isPromotionMode ? toggleSelect(student.id) : selectStudent(student)"
-                    >
-                      <td v-if="isPromotionMode" class="px-4 py-4">
-                        <input
-                          type="checkbox"
-                          class="rounded border-border w-4 h-4 cursor-pointer"
-                          :checked="selectedStudentIds.includes(student.id)"
-                          @click.stop
-                          @change="toggleSelect(student.id)"
-                        />
-                      </td>
-                      <td class="px-6 py-4 text-sm text-muted-foreground/70 font-medium">{{ (currentPage - 1) * pageSize + index + 1 }}</td>
-                      <td class="px-6 py-4">
-                        <div class="flex items-center gap-2">
-                          <span
-                            class="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                            :class="student.gender === 'male' ? 'bg-sky-400' : 'bg-pink-400'"
-                          />
-                          <span class="font-medium text-foreground text-sm">
-                            {{ student.surname }} {{ student.firstName }} {{ student.patronymic }}
-                          </span>
-                        </div>
-                      </td>
-                      <td class="px-6 py-4">
-                        <span class="text-sm font-medium text-foreground">
-                          {{ specialtyStore.getSpecialtyById(student.specialty)?.codeName || "—" }}
-                        </span>
-                      </td>
-                      <td class="px-6 py-4 text-center">
-                        <div 
-                          class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
-                          :class="getStatusBadgeClass(student.status)"
-                        >
-                          {{ getStatusText(student.status) }}
-                        </div>
-                      </td>
-                      <td class="px-6 py-4 text-center">
-                        <span
-                          class="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide"
-                          :class="{
-                            'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400': student.language === 'ru',
-                            'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-400': student.language === 'kk',
-                            'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400': student.language === 'en',
-                          }"
-                        >{{ student.language === 'kk' ? 'Kz' : student.language === 'ru' ? 'Ru' : student.language || '—' }}</span>
-                      </td>
-                      <td class="px-6 py-4 text-center text-sm font-medium text-muted-foreground/70">{{ student.course }}</td>
-                    </tr>
-                    <tr v-if="paginatedFilteredStudents.length === 0">
-                      <td :colspan="isPromotionMode ? 7 : 6" class="px-8 py-24 text-center text-muted-foreground/40 text-sm italic">
-                        Обучающиеся не найдены
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Pagination -->
+            <div>
+              <StudentTable
+                :students="paginatedFilteredStudents"
+                :start-index="(currentPage - 1) * pageSize"
+                :loading="isPaginatedLoading"
+                :selection-mode="isPromotionMode"
+                :selected-ids="selectedStudentIds"
+                :all-on-page-selected="allOnPageSelected"
+                @row-click="selectStudent"
+                @toggle-select="toggleSelect"
+                @toggle-all="toggleAll"
+              />
               <Pagination
                 v-if="filteredStudents.length > 0"
                 v-model:currentPage="currentPage"
@@ -259,6 +177,7 @@ import AddStudentButton from "@/components/AddStudentButton.vue";
 import StudentDetailsDialog from "@/components/StudentDetailsDialog.vue";
 import Select from "@/components/ui/Select.vue";
 import Pagination from "@/components/ui/Pagination.vue";
+import StudentTable from "@/components/StudentTable.vue";
 import { useStudentStore, type Student } from "@/stores/studentStore";
 import { withAllOption, getGenderOptions } from "@/lib/utils";
 import { useSpecialtyStore } from "@/stores/specialtyStore";

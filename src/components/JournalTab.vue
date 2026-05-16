@@ -7,95 +7,147 @@
     >
       Журнал закрыт. Доступен только просмотр.
     </div>
-    <div class="mb-3 flex flex-wrap gap-2 items-center justify-end">
-      <f7-button
-        small
-        default
-        @click="onOpenRupClick"
-        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
-      >
-        <IconFileText class="w-4 h-4 mr-2" />
-        РУП
-      </f7-button>
-      <f7-button
-        id="journal-settings-button"
-        small
-        default
-        @click="onSettingsClick"
-        :disabled="isViewOnly"
-        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
-      >
-        <IconSettings class="w-4 h-4 mr-2" />
-        Настройки
-      </f7-button>
-      <f7-button
-        id="journal-history-button"
-        small
-        default
-        @click="onHistoryClick"
-        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
-      >
-        <IconClock class="w-4 h-4 mr-2" />
-        История
-      </f7-button>
-      <f7-button
-        v-if="!isViewOnly"
-        small
-        default
-        @click="onCloseJournalClick"
-        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
-      >
-        <IconCircleX class="w-4 h-4 mr-2" />
-        Закрыть журнал
-      </f7-button>
-      <f7-button
-        v-else
-        small
-        default
-        @click="onOpenJournalClick"
-        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
-      >
-        <IconLockOpen class="w-4 h-4 mr-2" />
-        Открыть журнал
-      </f7-button>
-      <f7-button
-        small
-        default
-        @click="onDownloadClick"
-        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
-      >
-        <IconArrowDownToLine class="w-4 h-4 mr-2" />
-        Скачать
-      </f7-button>
-      <f7-button
-        small
-        default
-        @click="onUploadClick"
-        :disabled="isViewOnly"
-        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
-      >
-        <IconArrowUpToLine class="w-4 h-4 mr-2" />
-        Загрузить
-      </f7-button>
-      <f7-button
-        small
-        default
-        @click="onShareClick"
-        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
-      >
-        <IconShare class="w-4 h-4 mr-2" />
-        Поделится
-      </f7-button>
-      <f7-button
-        id="recalc-button"
-        small
-        default
-        @click.stop="onRecalcClick"
-        :disabled="isViewOnly"
-        class="bg-gray-200 text-gray-700 hover:bg-primary hover:text-white transition-colors"
-      >
-        Рассчитать
-      </f7-button>
+    <div class="mb-3 flex items-center justify-between gap-4 flex-wrap">
+      <div class="flex items-center bg-muted p-1 rounded-lg">
+        <button
+          type="button"
+          @click="viewMode = 'general'"
+          :class="[
+            'px-4 py-1.5 rounded-[6px] text-[13px] font-medium transition-all',
+            viewMode === 'general'
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground',
+          ]"
+        >
+          Общий
+        </button>
+        <button
+          type="button"
+          @click="viewMode = 'monitoring'"
+          :class="[
+            'px-4 py-1.5 rounded-[6px] text-[13px] font-medium transition-all',
+            viewMode === 'monitoring'
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground',
+          ]"
+        >
+          Мониторинг
+        </button>
+      </div>
+      <div class="flex items-center gap-3">
+        <template v-if="viewMode === 'monitoring'">
+          <button
+            type="button"
+            @click="onDownloadClick"
+            class="flex items-center gap-1.5 px-3 py-1.5 bg-card border border-border text-foreground hover:bg-muted rounded-lg text-[13px] font-medium transition-all shadow-sm"
+          >
+            <IconFileSpreadsheet class="w-4 h-4" />
+            <span>Экспорт</span>
+          </button>
+          <div class="w-px h-6 bg-border mx-1" />
+        </template>
+      <div class="relative" @click.stop>
+        <button
+          id="journal-tools-button"
+          type="button"
+          @click="isToolsMenuOpen = !isToolsMenuOpen"
+          class="w-12 h-12 bg-card rounded-2xl border border-border flex items-center justify-center text-muted-foreground hover:text-yellow-600 hover:border-yellow-200 hover:bg-yellow-50 transition-all shadow-sm"
+        >
+          <IconMoreVertical class="w-7 h-7" />
+        </button>
+        <div
+          v-if="isToolsMenuOpen"
+          class="fixed inset-0 z-40"
+          @click="isToolsMenuOpen = false"
+        />
+        <div
+          v-if="isToolsMenuOpen"
+          class="absolute right-0 top-full mt-2 w-72 bg-card rounded-2xl shadow-2xl border border-border py-2 z-50"
+        >
+          <button
+            type="button"
+            class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3"
+            @click="isToolsMenuOpen = false; onOpenRupClick()"
+          >
+            <IconFileText class="w-4 h-4" />
+            РУП
+          </button>
+          <button
+            id="journal-history-button"
+            type="button"
+            class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3"
+            @click="isToolsMenuOpen = false; onHistoryClick()"
+          >
+            <IconClock class="w-4 h-4" />
+            История изменений
+          </button>
+          <button
+            id="journal-settings-button"
+            type="button"
+            :disabled="isViewOnly"
+            class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="isToolsMenuOpen = false; onSettingsClick()"
+          >
+            <IconSettings class="w-4 h-4" />
+            Настройки
+          </button>
+          <button
+            type="button"
+            class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3"
+            @click="isToolsMenuOpen = false; onDownloadClick()"
+          >
+            <IconArrowDownToLine class="w-4 h-4" />
+            Скачать журнал
+          </button>
+          <button
+            type="button"
+            :disabled="isViewOnly"
+            class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="isToolsMenuOpen = false; onUploadClick()"
+          >
+            <IconArrowUpToLine class="w-4 h-4" />
+            Загрузить журнал
+          </button>
+          <button
+            type="button"
+            class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3"
+            @click="isToolsMenuOpen = false; onShareClick()"
+          >
+            <IconShare class="w-4 h-4" />
+            Поделиться
+          </button>
+          <button
+            id="recalc-button"
+            type="button"
+            :disabled="isViewOnly"
+            class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+            @click.stop="isToolsMenuOpen = false; onRecalcClick()"
+          >
+            <IconCalculator class="w-4 h-4" />
+            Рассчитать контроли
+          </button>
+          <div class="h-px bg-border my-1" />
+          <button
+            v-if="!isViewOnly"
+            type="button"
+            class="w-full text-left px-4 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-3"
+            @click="isToolsMenuOpen = false; onCloseJournalClick()"
+          >
+            <IconCircleX class="w-4 h-4" />
+            Закрыть журнал
+          </button>
+          <button
+            v-else
+            type="button"
+            class="w-full text-left px-4 py-2.5 text-sm font-medium text-green-600 hover:bg-green-50 transition-colors flex items-center gap-3"
+            @click="isToolsMenuOpen = false; onOpenJournalClick()"
+          >
+            <IconLockOpen class="w-4 h-4" />
+            Открыть журнал
+          </button>
+        </div>
+      </div>
+      </div>
     </div>
 
     <!-- Academic Year Mismatch Warning Banner -->
@@ -160,21 +212,54 @@
       </div>
     </div>
 
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse">
-        <thead>
-          <tr class="bg-muted/50">
-            <th class="p-2 text-left w-12 border-r border-border align-top">
+    <div
+      v-if="viewMode === 'monitoring' && monitoringGradeStats.totalGraded > 0"
+      class="mb-4 bg-card rounded-2xl shadow-sm border border-border p-6"
+    >
+      <div class="flex items-baseline justify-between mb-4">
+        <h3 class="text-[13px] font-bold text-foreground uppercase tracking-wide">
+          Статистика по оценкам
+        </h3>
+        <span class="text-[12px] text-muted-foreground font-medium">
+          Оценено: {{ monitoringGradeStats.totalGraded }} / {{ students.length }}
+        </span>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div
+          v-for="entry in monitoringGradeStats.entries"
+          :key="entry.letter"
+          class="flex justify-between items-center bg-muted p-3 rounded-xl"
+        >
+          <span class="text-sm font-bold text-foreground">{{ entry.letter }}</span>
+          <span
+            :class="[
+              'text-[12px] font-bold px-2 py-0.5 rounded-md',
+              entry.count > 0
+                ? 'bg-foreground text-background'
+                : 'bg-border text-muted-foreground',
+            ]"
+          >
+            {{ entry.count }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
+      <table class="w-full text-sm border-collapse">
+        <thead class="bg-muted/80 backdrop-blur sticky top-0 z-20 shadow-sm">
+          <tr>
+            <th class="border-r border-b border-border p-3 w-12 text-center text-[11px] uppercase tracking-wide text-muted-foreground font-bold sticky left-0 bg-muted z-30 align-top">
               №
             </th>
             <th
-              class="p-2 text-left w-12 border-r border-border align-top min-w-[250px]"
+              class="border-r border-b border-border p-3 text-left min-w-[250px] text-[11px] uppercase tracking-wide text-muted-foreground font-bold sticky left-12 bg-muted z-30 align-top"
             >
               Обучающийся
             </th>
             <!-- Dynamic date columns -->
             <th
-              v-for="(header, index) in visibleHeaders"
+              v-for="(header, index) in displayedHeaders"
               :key="header.isFinalSummary ? 'final-summary' : header.index"
               class="px-1 py-2 text-center text-xs border-r border-border w-16 min-w-[56px]"
               :class="[
@@ -234,7 +319,7 @@
               </div>
             </td>
             <td
-              v-for="(header, vColIdx) in visibleHeaders"
+              v-for="(header, vColIdx) in displayedHeaders"
               :key="header.isFinalSummary ? 'final-summary' : header.index"
               class="px-1 py-2 text-center border-r border-border min-w-[56px]"
               :class="[
@@ -446,6 +531,9 @@ import IconArrowUpToLine from "~icons/lucide/arrow-up-to-line";
 import IconShare from "~icons/lucide/share-2";
 import IconTriangleAlert from "~icons/lucide/triangle-alert";
 import IconPaperclip from "~icons/lucide/paperclip";
+import IconMoreVertical from "~icons/lucide/more-vertical";
+import IconCalculator from "~icons/lucide/calculator";
+import IconFileSpreadsheet from "~icons/lucide/file-spreadsheet";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
@@ -569,6 +657,58 @@ const editingCell = ref<{
   markIndex: number;
 } | null>(null);
 const editedValue = ref("");
+const isToolsMenuOpen = ref(false);
+const viewMode = ref<"general" | "monitoring">("general");
+
+const LETTER_GRADE_BUCKETS: Array<{ letter: string; min: number }> = [
+  { letter: "A", min: 95 },
+  { letter: "A-", min: 90 },
+  { letter: "B+", min: 85 },
+  { letter: "B", min: 80 },
+  { letter: "B-", min: 75 },
+  { letter: "C+", min: 70 },
+  { letter: "C", min: 65 },
+  { letter: "C-", min: 60 },
+  { letter: "D+", min: 55 },
+  { letter: "D", min: 50 },
+  { letter: "F", min: 0 },
+];
+
+const scoreToLetter = (score: number): string => {
+  for (const bucket of LETTER_GRADE_BUCKETS) {
+    if (score >= bucket.min) return bucket.letter;
+  }
+  return "F";
+};
+
+const monitoringGradeStats = computed(() => {
+  const counts: Record<string, number> = {};
+  for (const bucket of LETTER_GRADE_BUCKETS) counts[bucket.letter] = 0;
+  let totalGraded = 0;
+  for (const student of students.value) {
+    const finalRaw = getStudentFinalGrade(student.studentId);
+    const finalNum = Number(finalRaw);
+    if (!finalRaw || finalRaw === "—" || isNaN(finalNum)) continue;
+    counts[scoreToLetter(finalNum)] += 1;
+    totalGraded += 1;
+  }
+  return {
+    entries: LETTER_GRADE_BUCKETS.map((b) => ({
+      letter: b.letter,
+      count: counts[b.letter],
+    })),
+    totalGraded,
+  };
+});
+
+const displayedHeaders = computed(() => {
+  if (viewMode.value === "monitoring") {
+    return visibleHeaders.value.filter(
+      (h) => h.type === "session" || h.isFinalSummary,
+    );
+  }
+  return visibleHeaders.value;
+});
 
 const currentJournal = computed(() => {
   if (!props.journalId) return null;

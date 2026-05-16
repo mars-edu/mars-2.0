@@ -18,6 +18,8 @@
             :discipline-text="currentClass9Text"
             :group="currentJournal?.group"
             :group-language="currentJournalGroupLanguage"
+            :course="currentJournal?.courseNumber"
+            :teacher-name="currentJournalTeacherName"
             :academic-year="currentAcademicYearText"
             :semester="currentSemesterText"
             @back="handleBackClick"
@@ -25,7 +27,7 @@
 
           <!-- Debug Information Panel (dev mode only) -->
           <JournalDebugPanel
-            v-if="isDev"
+            v-if="false && isDev"
             :journal-id="journalId"
             :discipline-id="currentJournal?.disciplineId"
             :group="currentJournal?.group"
@@ -40,72 +42,26 @@
           <div
             class="bg-card text-card-foreground rounded-xl p-3 md:p-4 shadow-sm"
           >
-            <f7-toolbar tabbar>
-              <f7-link
-                tab-link="#tab-journal"
-                :tab-link-active="activeTab === 'journal'"
-                @click="activeTab = 'journal'"
-                class="tab-link"
-              >
-                {{ journal_tab_journal() }}
-              </f7-link>
-              <f7-link
-                tab-link="#tab-participants"
-                :tab-link-active="activeTab === 'participants'"
-                @click="activeTab = 'participants'"
-                class="tab-link"
-              >
-                {{ journal_tab_participants() }}
-              </f7-link>
-              <f7-link
-                tab-link="#tab-planning"
-                :tab-link-active="activeTab === 'planning'"
-                @click="activeTab = 'planning'"
-                class="tab-link"
-              >
-                {{ journal_tab_planning() }}
-              </f7-link>
-              <f7-link
-                tab-link="#tab-assignments"
-                :tab-link-active="activeTab === 'assignments'"
-                @click="activeTab = 'assignments'"
-                class="tab-link"
-              >
-                {{ journal_tab_assignments() }}
-              </f7-link>
-              <f7-link
-                tab-link="#tab-chat"
-                :tab-link-active="activeTab === 'chat'"
-                @click="activeTab = 'chat'"
-                class="tab-link"
-              >
-                {{ journal_tab_chat() }}
-              </f7-link>
-              <f7-link
-                tab-link="#tab-files"
-                :tab-link-active="activeTab === 'files'"
-                @click="activeTab = 'files'"
-                class="tab-link"
-              >
-                {{ journal_tab_files() }}
-              </f7-link>
-              <f7-link
-                tab-link="#tab-testing"
-                :tab-link-active="activeTab === 'testing'"
-                @click="activeTab = 'testing'"
-                class="tab-link"
-              >
-                {{ journal_tab_testing() }}
-              </f7-link>
-              <f7-link
-                tab-link="#tab-services"
-                :tab-link-active="activeTab === 'services'"
-                @click="activeTab = 'services'"
-                class="tab-link"
-              >
-                {{ journal_tab_services() }}
-              </f7-link>
-            </f7-toolbar>
+            <div class="flex overflow-x-auto no-scrollbar border-b border-border mb-3 md:mb-4 -mx-3 md:-mx-4 px-3 md:px-4">
+              <div class="flex w-full justify-between gap-2 sm:gap-4 min-w-max">
+                <button
+                  v-for="tab in tabDefs"
+                  :key="tab.id"
+                  type="button"
+                  @click="activeTab = tab.id"
+                  :class="[
+                    'pb-3 pt-1 text-[13px] sm:text-[14px] font-bold transition-all relative flex-1 text-center whitespace-nowrap tracking-tight',
+                    activeTab === tab.id ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                  ]"
+                >
+                  <span class="relative z-10">{{ tab.label }}</span>
+                  <div
+                    v-if="activeTab === tab.id"
+                    class="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 sm:w-12 h-[3px] bg-yellow-400 rounded-t-full shadow-[0_-2px_10px_rgba(250,204,21,0.5)]"
+                  />
+                </button>
+              </div>
+            </div>
 
             <f7-tabs>
               <f7-tab
@@ -138,15 +94,38 @@
                 :tab-active="activeTab === 'participants'"
               >
                 <div class="flex flex-col gap-4 p-4">
-                  <StudentListTable
-                    :student-ids="currentJournal?.students || []"
-                    :show-filters="true"
+                  <div
+                    class="flex flex-wrap items-center justify-between gap-3 bg-card border border-border rounded-lg shadow-sm p-4"
+                  >
+                    <div class="flex items-baseline gap-3">
+                      <h2 class="text-base font-bold text-foreground">
+                        Участники
+                      </h2>
+                      <span class="text-sm text-muted-foreground font-medium">
+                        {{ participantsFiltered.length }} из {{ participantsAll.length }}
+                      </span>
+                    </div>
+                    <div class="relative w-full sm:w-72">
+                      <IconSearch
+                        class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
+                      />
+                      <input
+                        v-model="participantsSearch"
+                        type="text"
+                        placeholder="Поиск по имени или специальности"
+                        class="w-full pl-9 pr-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground"
+                      />
+                    </div>
+                  </div>
+                  <StudentTable
+                    :students="participantsFiltered"
                     :show-row-number="true"
-                    :show-course="true"
                     :show-specialty="true"
+                    :show-status="true"
                     :show-language="true"
+                    :show-course="true"
                     :clickable="true"
-                    @student-click="handleStudentClick"
+                    @row-click="handleStudentClick"
                   />
                 </div>
               </f7-tab>
@@ -156,15 +135,31 @@
                 class="page-content"
                 :tab-active="activeTab === 'planning'"
               >
-                <div class="h-full">
-                  <KtpDetailPopupBody
-                    v-if="ktpIdForJournal"
-                    :ktp-id="ktpIdForJournal"
-                  />
-                  <div v-else class="text-center py-8">
-                    <p class="text-sm text-muted-foreground">
-                      {{ journal_no_discipline() }}
-                    </p>
+                <div class="p-4 md:p-6 flex flex-col gap-4">
+                  <div
+                    v-if="currentEvent?.isClosed"
+                    class="p-4 bg-yellow-50 border border-yellow-200 rounded-2xl flex items-center gap-3 text-yellow-800"
+                  >
+                    <IconCircleAlert class="w-5 h-5 flex-shrink-0" />
+                    <span class="text-sm font-medium">
+                      Режим просмотра. Журнал закрыт.
+                    </span>
+                  </div>
+                  <div
+                    class="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-4 md:p-8"
+                    :class="currentEvent?.isClosed ? 'pointer-events-none opacity-80' : ''"
+                  >
+                    <KtpDetailPopupBody
+                      v-if="ktpIdForJournal"
+                      :ktp-id="ktpIdForJournal"
+                    />
+                    <div
+                      v-else
+                      class="text-center py-12 text-muted-foreground"
+                    >
+                      <IconBookOpen class="w-10 h-10 mx-auto mb-3 opacity-40" />
+                      <p class="text-sm">{{ journal_no_discipline() }}</p>
+                    </div>
                   </div>
                 </div>
               </f7-tab>
@@ -174,16 +169,7 @@
                 class="page-content"
                 :tab-active="activeTab === 'assignments'"
               >
-                <div class="flex flex-col gap-4">
-                  <div class="text-center py-8">
-                    <h3 class="text-lg font-medium text-muted-foreground">
-                      {{ journal_tab_assignments() }}
-                    </h3>
-                    <p class="text-sm text-muted-foreground mt-2">
-                      {{ journal_assignments_placeholder() }}
-                    </p>
-                  </div>
-                </div>
+                <AssignmentsView :is-view-only="!!currentEvent?.isClosed" />
               </f7-tab>
 
               <f7-tab
@@ -340,6 +326,11 @@ import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
 import KtpDetailPopupBody from "@/components/KtpDetailPopupBody.vue";
 import Class9Popup from "@/components/Class9Popup.vue";
 import StudentListTable from "@/components/StudentListTable.vue";
+import StudentTable from "@/components/StudentTable.vue";
+import AssignmentsView from "@/components/AssignmentsView.vue";
+import IconCircleAlert from "~icons/lucide/circle-alert";
+import IconBookOpen from "~icons/lucide/book-open";
+import IconSearch from "~icons/lucide/search";
 import EditStudentButton from "@/components/EditStudentButton.vue";
 import { storeToRefs } from "pinia";
 import JournalImportConfirmDialog from "@/components/JournalImportConfirmDialog.vue";
@@ -390,6 +381,17 @@ const journalId = computed(() => {
 const activeNavItem = ref("journal-details");
 const activeTab = ref("journal");
 
+const tabDefs = computed(() => [
+  { id: "journal", label: journal_tab_journal() },
+  { id: "participants", label: journal_tab_participants() },
+  { id: "planning", label: journal_tab_planning() },
+  { id: "assignments", label: journal_tab_assignments() },
+  { id: "chat", label: journal_tab_chat() },
+  { id: "files", label: journal_tab_files() },
+  { id: "testing", label: journal_tab_testing() },
+  { id: "services", label: journal_tab_services() },
+]);
+
 const { confirmCloseJournal, confirmOpenJournal } = useJournalOpenClose();
 
 const handleBackClick = () => {
@@ -432,6 +434,34 @@ const { students: studentStoreStudents } = storeToRefs(studentStore);
 const currentJournal = computed(() => {
   if (!journalId.value) return null;
   return journalStore.getJournalById(journalId.value);
+});
+
+const participantsSearch = ref("");
+
+const participantsAll = computed(() => {
+  const ids = currentJournal.value?.students || [];
+  const byId = new Map(studentStoreStudents.value.map((s: any) => [s.id, s]));
+  return ids
+    .map((id: string) => byId.get(id))
+    .filter((s): s is any => Boolean(s));
+});
+
+const participantsFiltered = computed(() => {
+  const q = participantsSearch.value.trim().toLowerCase();
+  if (!q) return participantsAll.value;
+  return participantsAll.value.filter((s: any) => {
+    const hay = [s.surname, s.firstName, s.patronymic, s.specialty, s.language]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return hay.includes(q);
+  });
+});
+
+const currentJournalTeacherName = computed(() => {
+  const teacherId = currentEvent.value?.teacherId;
+  if (!teacherId) return "";
+  return teacherStore.getTeacherFullName(teacherId);
 });
 
 const currentJournalGroupLanguage = computed(() => {
