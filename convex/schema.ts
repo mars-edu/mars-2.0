@@ -787,6 +787,56 @@ export default defineSchema({
     .index("by_isActive", ["isActive"])
     .index("by_deadline", ["deadline"]),
 
+  /**
+   * Announcements and news - public feed content managed by admins
+   */
+  announcements: defineTable({
+    kind: v.union(v.literal("announcement"), v.literal("news")),
+    category: v.string(),
+    type: v.union(v.literal("info"), v.literal("alert"), v.literal("system")),
+    titles: v.object({
+      ru: v.optional(v.string()),
+      kk: v.optional(v.string()),
+      en: v.optional(v.string()),
+    }),
+    descriptions: v.object({
+      ru: v.optional(v.string()),
+      kk: v.optional(v.string()),
+      en: v.optional(v.string()),
+    }),
+    displayDate: v.string(),
+    publishAt: v.optional(v.number()),
+    expiresAt: v.optional(v.number()),
+    isPublished: v.boolean(),
+    createdBy: v.id("users"),
+    updatedBy: v.optional(v.id("users")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_isPublished", ["isPublished"])
+    .index("by_category", ["category"])
+    .index("by_kind", ["kind"])
+    .index("by_createdAt", ["createdAt"]),
+
+  announcementCategories: defineTable({
+    slug: v.string(),
+    label: v.optional(v.string()),
+    labels: v.optional(
+      v.object({
+        ru: v.optional(v.string()),
+        kk: v.optional(v.string()),
+        en: v.optional(v.string()),
+      })
+    ),
+    position: v.number(),
+    createdBy: v.id("users"),
+    updatedBy: v.optional(v.id("users")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_position", ["position"]),
+
   // ==========================================================================
   // WORKLOAD MANAGEMENT
   // ==========================================================================

@@ -7,13 +7,24 @@
           <IconMegaphone class="text-xl w-5 h-5" />
         </div>
         <h3 class="text-lg font-bold text-foreground">{{ home_announcements_title() }}</h3>
-        <button
-          @click="isAddModalOpen = true"
-          class="ml-2 flex-none w-8 h-8 flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl transition-all active:scale-95"
-          :title="home_announcements_create_tooltip()"
-        >
-          <IconPlus class="w-4 h-4" />
-        </button>
+        <div class="flex items-center gap-1.5 ml-2">
+          <button
+            v-if="canManageAnnouncements"
+            @click="isAddModalOpen = true"
+            class="flex-none w-8 h-8 flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl transition-all active:scale-95"
+            :title="home_announcements_create_tooltip()"
+          >
+            <IconPlus class="w-4 h-4" />
+          </button>
+          <button
+            v-if="canManageAnnouncements"
+            @click="isSettingsModalOpen = true"
+            class="flex-none w-8 h-8 flex items-center justify-center bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl transition-all active:scale-95 border border-border/50"
+            title="Настройки"
+          >
+            <IconSettings class="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       <!-- Filter Tabs -->
@@ -36,7 +47,10 @@
 
     <!-- Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <template v-if="filteredItems.length > 0">
+      <div v-if="loading" class="col-span-full text-center py-8 text-muted-foreground text-sm">
+        Загрузка...
+      </div>
+      <template v-else-if="filteredItems.length > 0">
         <div
           v-for="item in filteredItems"
           :key="item.id"
@@ -68,116 +82,152 @@
 
     <AddAnnouncementModal
       v-model:opened="isAddModalOpen"
+      :categories="customCategories"
       @add="handleAddAnnouncement"
+    />
+
+    <AnnouncementSettingsModal
+      v-model:opened="isSettingsModalOpen"
+      :initial-categories="customCategories"
+      @save="handleSaveCategories"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
+import { storeToRefs } from "pinia";
+import { f7 } from "framework7-vue";
 import IconMegaphone from "~icons/lucide/megaphone";
 import IconPlus from "~icons/lucide/plus";
+import IconSettings from "~icons/lucide/settings";
 import AddAnnouncementModal from "@/components/Home/AddAnnouncementModal.vue";
+import AnnouncementSettingsModal from "@/components/Home/AnnouncementSettingsModal.vue";
 import {
   home_announcements_title,
   home_announcements_create_tooltip,
   home_announcements_empty,
 } from "@/paraglide/messages";
 import { useI18n } from "@/composables/useI18n";
-import { getAnnouncementFilters } from "@/utils/homeUtils";
+import { getAnnouncementFilters, getAnnouncementTypes } from "@/utils/homeUtils";
+import { useUserStore } from "@/stores/userStore";
+import { useAnnouncementStore } from "@/stores/announcementStore";
+import type { AnnouncementCardItem, AnnouncementCategory } from "@/types/announcement";
 
 const { locale } = useI18n();
+const userStore = useUserStore();
+const announcementStore = useAnnouncementStore();
+const { categories, announcements, loading } = storeToRefs(announcementStore);
 const activeFilter = ref("all");
 const isAddModalOpen = ref(false);
+const isSettingsModalOpen = ref(false);
 
-const filters = computed(() => getAnnouncementFilters(locale.value));
+const staticFilters = computed(() => getAnnouncementFilters(locale.value));
+const typeLabels = computed(() => getAnnouncementTypes(locale.value));
+const canManageAnnouncements = computed(() => userStore.isAdmin);
 
-// TODO: replace with real data from notificationStore or a dedicated announcements API
-interface AnnouncementItem {
-  id: number;
-  title: string;
-  description: string;
-  date: string;
-  category: string;
-  badge: string;
-  badgeClass: string;
-}
-
-const items = ref<AnnouncementItem[]>([
-  {
-    id: 1,
-    title: "Заседание кафедры",
-    date: "5 марта, 15:00",
-    category: "academic",
-    badge: "Инфо",
-    badgeClass: "bg-blue-50 text-blue-600",
-    description: "Обсуждение плана на 2 семестр. Явка обязательна.",
-  },
-  {
-    id: 2,
-    title: "Срок сдачи ведомостей",
-    date: "до 10 марта",
-    category: "academic",
-    badge: "Важно",
-    badgeClass: "bg-red-50 text-red-600",
-    description: "Необходимо закрыть все электронные журналы до конца недели.",
-  },
-  {
-    id: 3,
-    title: "Обновление системы",
-    date: "11 марта",
-    category: "system",
-    badge: "Система",
-    badgeClass: "bg-muted text-muted-foreground border border-border",
-    description: "Плановые технические работы с 22:00 до 00:00.",
-  },
-  {
-    id: 4,
-    title: "Конкурс «Лучший куратор»",
-    date: "Заявки до 20.03",
-    category: "contests",
-    badge: "Конкурс",
-    badgeClass: "bg-yellow-50 text-yellow-600",
-    description: "Открыт приём заявок на ежегодный конкурс.",
-  },
-  {
-    id: 5,
-    title: "Весенний концерт",
-    date: "22 марта",
-    category: "events",
-    badge: "Мероприятие",
-    badgeClass: "bg-purple-50 text-purple-600",
-    description: "Праздничное мероприятие в актовом зале в 17:00.",
-  },
-]);
-
-const filteredItems = computed(() =>
-  activeFilter.value === "all"
-    ? items.value
-    : items.value.filter((i) => i.category === activeFilter.value)
+const defaultCategories = computed(() =>
+  staticFilters.value
+    .filter((filter) => filter.id !== "all")
+    .map((filter, index) => ({
+      id: filter.id,
+      label: filter.label,
+      labels: { [locale.value]: filter.label },
+      position: index,
+    }))
 );
 
-const handleAddAnnouncement = (newAnnouncement: any) => {
-  const badgeClass =
-    newAnnouncement.type === "alert"
+const customCategories = computed(() => {
+  const backendCategories = categories.value;
+  return backendCategories.length > 0 ? backendCategories : defaultCategories.value;
+});
+
+const filters = computed(() => {
+  const allFilter = staticFilters.value.find(f => f.id === 'all') || { id: "all", label: "Все" };
+  return [allFilter, ...customCategories.value.map(c => ({ id: c.id, label: getLocalizedValue(c.labels) || c.label || c.id }))];
+});
+
+const getLocalizedValue = (values: Record<string, string | undefined> | undefined) => {
+  if (!values) return "";
+  return values[locale.value] || values.ru || values.kk || values.en || "";
+};
+
+const getBadge = (type: string) => {
+  return typeLabels.value.find((item) => item.id === type)?.label || typeLabels.value[0]?.label || "Инфо";
+};
+
+const getBadgeClass = (type: string, category: string) => {
+  return type === "alert"
       ? "bg-red-50 text-red-600"
-      : newAnnouncement.type === "system"
+      : type === "system"
       ? "bg-muted text-muted-foreground border border-border"
-      : newAnnouncement.category === "contests"
+      : category === "contests"
       ? "bg-yellow-50 text-yellow-600"
-      : newAnnouncement.category === "events"
+      : category === "events"
       ? "bg-purple-50 text-purple-600"
       : "bg-blue-50 text-blue-600";
+};
 
-  items.value.unshift({
-    ...newAnnouncement,
-    badge:
-      newAnnouncement.type === "alert"
-        ? "Важно"
-        : newAnnouncement.type === "system"
-        ? "Система"
-        : "Инфо",
-    badgeClass,
-  });
+const filteredItems = computed<AnnouncementCardItem[]>(() =>
+  announcements.value.map((item: any) => ({
+    id: item._id,
+    title: getLocalizedValue(item.titles),
+    description: getLocalizedValue(item.descriptions),
+    date: item.displayDate,
+    category: item.category,
+    badge: getBadge(item.type),
+    badgeClass: getBadgeClass(item.type, item.category),
+  }))
+);
+
+watch(customCategories, (categories) => {
+  if (
+    activeFilter.value !== "all" &&
+    !categories.some((category) => category.id === activeFilter.value)
+  ) {
+    activeFilter.value = "all";
+  }
+});
+
+watch(
+  activeFilter,
+  (category) => {
+    announcementStore.setActiveCategory(category);
+  },
+  { immediate: true }
+);
+
+const showToast = (text: string, cssClass?: string) => {
+  f7.toast.create({ text, closeTimeout: 2500, cssClass }).open();
+};
+
+const handleSaveCategories = async (newCategories: AnnouncementCategory[]) => {
+  try {
+    await announcementStore.saveCategories(newCategories);
+    showToast("Категории сохранены", "color-green");
+  } catch (error) {
+    console.error("[AnnouncementsCard] Failed to save categories:", error);
+    showToast("Не удалось сохранить категории", "color-red");
+  }
+};
+
+const handleAddAnnouncement = async (newAnnouncement: any) => {
+  try {
+    await announcementStore.createAnnouncement({
+      kind: "announcement",
+      category: newAnnouncement.category,
+      type: newAnnouncement.type,
+      titles: newAnnouncement.titles,
+      descriptions: newAnnouncement.descriptions,
+      displayDate:
+        newAnnouncement.date ||
+        new Date().toLocaleDateString(locale.value, { day: "numeric", month: "long" }),
+      isPublished: true,
+    });
+    showToast("Объявление опубликовано", "color-green");
+  } catch (error) {
+    console.error("[AnnouncementsCard] Failed to create announcement:", error);
+    showToast("Не удалось опубликовать объявление", "color-red");
+  }
 };
 </script>
