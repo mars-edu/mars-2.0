@@ -1116,6 +1116,7 @@ function handleCardDownload(journalId: string) {
   selectedJournalIds.value = new Set([journalId])
   selectionAction.value = 'download'
   onSelectionDone()
+  selectedJournalIds.value.clear()
 }
 
 function onSelectionDone() {
