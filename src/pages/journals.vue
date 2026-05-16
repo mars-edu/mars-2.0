@@ -124,6 +124,11 @@
                   <IconLockOpen class="w-4 h-4 flex-shrink-0" />
                   {{ journal_open() }}
                 </button>
+                <button class="w-full text-left px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-3"
+                  @click="onDeleteClick(); isActionMenuOpen = false">
+                  <IconTrash2 class="w-4 h-4 flex-shrink-0" />
+                  {{ journal_delete() }}
+                </button>
                 <div class="h-px bg-border my-1" />
                 <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
                   @click="onReplaceClick(); isActionMenuOpen = false">
@@ -236,6 +241,10 @@
                     v-else-if="selectionAction === 'replace'"
                     class="w-4 h-4 mr-2"
                   />
+                  <IconTrash2
+                    v-else-if="selectionAction === 'delete'"
+                    class="w-4 h-4 mr-2"
+                  />
                   <IconLockOpen
                     v-else
                     class="w-4 h-4 mr-2"
@@ -315,6 +324,7 @@ import IconArrowDownToLine from "~icons/lucide/arrow-down-to-line";
 import IconArrowUpToLine from "~icons/lucide/arrow-up-to-line";
 import IconRefreshCw from "~icons/lucide/refresh-cw";
 import IconLockOpen from "~icons/lucide/lock-open";
+import IconTrash2 from "~icons/lucide/trash-2";
 import IconSettings2 from "~icons/lucide/settings-2";
 import IconShare from "~icons/lucide/share-2";
 import IconChevronDown from "~icons/lucide/chevron-down";
@@ -392,6 +402,8 @@ import {
   journal_action_open,
   journal_action_replace,
   journal_action_download,
+  journal_action_delete,
+  journal_delete,
   journal_select_one,
   journal_already_closed,
   journal_already_open,
@@ -889,7 +901,7 @@ const groupOptions = ref([{ value: "pi-1-21", text: "ПИ-1-21" }]);
 const selectedRole = ref("");
 const roleOptions = ref([{ value: "student", text: "Студент" }]);
 
-type SelectionAction = "download" | "close" | "open" | "replace";
+type SelectionAction = "download" | "close" | "open" | "replace" | "delete";
 
 const isSelectionMode = ref(false);
 const selectionAction = ref<SelectionAction>("download");
@@ -899,6 +911,7 @@ const selectionDoneText = computed(() => {
   if (selectionAction.value === "close") return journal_action_close();
   if (selectionAction.value === "open") return journal_action_open();
   if (selectionAction.value === "replace") return journal_action_replace();
+  if (selectionAction.value === "delete") return journal_action_delete();
   return journal_action_download();
 });
 
@@ -907,6 +920,7 @@ const selectionDoneButtonClass = computed(() => {
   if (selectionAction.value === "close") return `bg-red-500 hover:bg-red-600 ${base}`;
   if (selectionAction.value === "open") return `bg-green-500 hover:bg-green-600 ${base}`;
   if (selectionAction.value === "replace") return `bg-orange-500 hover:bg-orange-600 ${base}`;
+  if (selectionAction.value === "delete") return `bg-red-500 hover:bg-red-600 ${base}`;
   return `bg-primary hover:bg-primary-dark ${base}`;
 });
 
@@ -1106,6 +1120,10 @@ function onCloseJournalClick() {
   startSelectionMode("close");
 }
 
+function onDeleteClick() {
+  startSelectionMode("delete");
+}
+
 function onDownloadClick() {
   startSelectionMode("download");
 }
@@ -1135,6 +1153,20 @@ function onSelectionDone() {
 
   if (selectionAction.value === "replace") {
     f7.popover.open("#replace-journal-popover");
+    return;
+  }
+
+  if (selectionAction.value === "delete") {
+    f7.dialog.confirm(
+      `Вы действительно хотите безвозвратно удалить выбранные журналы (${ids.length})?`,
+      "Удаление журналов",
+      async () => {
+        for (const id of ids) {
+          await journalStore.deleteJournal(id);
+        }
+        exitSelectionMode();
+      }
+    );
     return;
   }
 
