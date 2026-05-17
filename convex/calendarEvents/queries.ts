@@ -229,6 +229,33 @@ export const getById = query({
 });
 
 /**
+ * Get calendar event by ID with participant names resolved server-side.
+ * Eliminates the client-side race where participant rows render before the
+ * global student store has loaded.
+ */
+export const getByIdWithParticipants = query({
+  args: { id: v.id("calendarEvents") },
+  handler: async (ctx, args) => {
+    const event = await ctx.db.get(args.id);
+    if (!event) return null;
+    const participants = await Promise.all(
+      (event.participants ?? []).map((sid: string) =>
+        ctx.db.get(sid as any),
+      ),
+    );
+    const participantsResolved = participants
+      .filter((s: any): s is any => Boolean(s))
+      .map((s: any) => ({
+        id: s._id,
+        surname: s.surname ?? "",
+        firstName: s.firstName ?? "",
+        patronymic: s.patronymic ?? "",
+      }));
+    return { ...event, participantsResolved };
+  },
+});
+
+/**
  * Get calendar events by semester
  */
 export const getBySemester = query({

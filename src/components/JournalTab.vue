@@ -249,11 +249,11 @@
       <table class="w-full text-sm border-collapse">
         <thead class="bg-muted/80 backdrop-blur sticky top-0 z-20 shadow-sm">
           <tr>
-            <th class="border-r border-b border-border p-3 w-12 text-center text-[11px] uppercase tracking-wide text-muted-foreground font-bold sticky left-0 bg-muted z-30 align-top">
+            <th class="border-r border-b border-border p-2 w-14 min-w-[56px] max-w-[56px] text-center text-[11px] uppercase tracking-wide text-muted-foreground font-bold sticky left-0 bg-muted z-30 align-middle">
               №
             </th>
             <th
-              class="border-r border-b border-border p-3 text-left min-w-[250px] text-[11px] uppercase tracking-wide text-muted-foreground font-bold sticky left-12 bg-muted z-30 align-top"
+              class="border-r border-b border-border p-3 text-left min-w-[250px] text-[11px] uppercase tracking-wide text-muted-foreground font-bold sticky left-14 bg-muted z-30 align-middle"
             >
               Обучающийся
             </th>
@@ -261,14 +261,13 @@
             <th
               v-for="(header, index) in displayedHeaders"
               :key="header.isFinalSummary ? 'final-summary' : header.index"
-              class="px-1 py-2 text-center text-xs border-r border-border w-16 min-w-[56px]"
+              class="px-1 py-2 text-center text-[12px] font-medium text-foreground border-r border-b border-border w-14 min-w-[50px] relative"
               :class="[
                 header.isFinalSummary
-                  ? 'bg-primary/10 text-primary font-semibold cursor-default'
-                  : 'cursor-pointer hover:bg-muted',
+                  ? 'bg-destructive/5 text-destructive font-bold cursor-default w-20'
+                  : 'cursor-pointer hover:bg-muted/80',
                 {
-                  'bg-muted/50 text-muted-foreground':
-                    header.type === 'session',
+                  'bg-muted/70 text-foreground font-bold w-16': header.type === 'session',
                 },
               ]"
               @click="
@@ -293,21 +292,32 @@
           <tr
             v-for="(student, studentIndex) in students"
             :key="student.id"
-            class="border-b border-border"
+            class="border-b border-border group hover:bg-muted/60 transition-colors"
           >
             <td
-              class="px-2 py-2 text-center border-r border-border text-sm align-top"
+              class="px-2 py-2 w-14 min-w-[56px] max-w-[56px] text-center border-r border-border text-[12px] font-medium text-muted-foreground align-middle sticky left-0 bg-card group-hover:bg-muted z-10 transition-colors"
             >
               {{ studentIndex + 1 }}
             </td>
             <td
-              class="px-2 py-2 border-r border-border text-sm align-top cursor-pointer hover:bg-muted/50 transition-colors min-w-[250px]"
+              class="px-3 py-2 border-r border-border align-middle cursor-pointer bg-card group-hover:bg-muted transition-colors min-w-[250px] sticky left-14 z-10"
               @click="showFloatingRow(student, studentIndex)"
             >
-              <div class="flex items-center justify-between">
-                <span>{{ student.name }}</span>
+              <div class="flex items-center justify-between gap-2">
+                <span
+                  v-if="student.name"
+                  class="truncate max-w-[180px] font-medium text-[13px] text-foreground"
+                  :title="student.name"
+                >
+                  {{ student.name }}
+                </span>
+                <span
+                  v-else
+                  class="block h-4 w-32 rounded bg-muted animate-pulse"
+                  aria-hidden="true"
+                />
                 <div
-                  class="ml-2 px-2 py-1 rounded-full text-xs font-medium text-white min-w-[24px] text-center"
+                  class="ml-2 px-1.5 py-0.5 rounded-md text-[10px] font-bold text-white shadow-sm min-w-[28px] text-center flex-shrink-0"
                   :class="
                     getScoreBadgeClass(
                       getStudentAverageScore(student.studentId)
@@ -321,12 +331,12 @@
             <td
               v-for="(header, vColIdx) in displayedHeaders"
               :key="header.isFinalSummary ? 'final-summary' : header.index"
-              class="px-1 py-2 text-center border-r border-border min-w-[56px]"
+              class="px-1 py-1.5 text-center text-[12px] font-medium border-r border-b border-border min-w-[50px] align-middle"
               :class="[
-                header.isFinalSummary ? 'bg-primary/5' : '',
+                header.isFinalSummary ? 'bg-destructive/5 text-destructive font-bold' : '',
                 {
-                  'bg-muted/90': header.type === 'session',
-                  'bg-gray-100 cursor-not-allowed': header.type === 'date' && header.isoDate && isFutureDate(header.isoDate),
+                  'bg-muted/40': header.type === 'session',
+                  'bg-muted/30 cursor-not-allowed': header.type === 'date' && header.isoDate && isFutureDate(header.isoDate),
                 },
               ]"
             >
@@ -357,14 +367,20 @@
                   <div
                     v-else
                     @click="
-                      !header.isFinalSummary
+                      !header.isFinalSummary &&
+                      !(header.type === 'date' && header.isoDate && isFutureDate(header.isoDate))
                         ? handleCellClick(studentIndex, header.index, mIdx)
                         : null
+                    "
+                    :title="
+                      header.type === 'date' && header.isoDate && isFutureDate(header.isoDate)
+                        ? 'Этот день ещё не наступил'
+                        : ''
                     "
                     :class="[
                       header.isFinalSummary ? 'w-full' : 'cursor-pointer w-full',
                       {
-                        'cursor-not-allowed': header.type === 'date' && header.isoDate && isFutureDate(header.isoDate),
+                        'cursor-not-allowed opacity-50': header.type === 'date' && header.isoDate && isFutureDate(header.isoDate),
                       }
                     ]"
                   >
@@ -404,67 +420,89 @@
           title="Настройки журнала"
           :on-cancel="requestClose"
         />
-        <div class="p-4 space-y-6">
-          <div class="space-y-3">
-            <h3 class="text-sm font-medium text-foreground">
-              Тип расчета сессии
-            </h3>
+        <div class="px-6 py-6 space-y-6">
+          <div class="space-y-2">
+            <label
+              class="block text-[12px] font-semibold text-muted-foreground uppercase tracking-wide ml-1"
+            >
+              Расчет контролей (кроме итоговой)
+            </label>
+            <div class="bg-muted rounded-xl p-1 flex text-sm font-medium">
+              <button
+                type="button"
+                @click="localJournalSettings.calculationType = 'calculated'"
+                :class="[
+                  'flex-1 py-2.5 rounded-lg transition-all duration-200',
+                  localJournalSettings.calculationType === 'calculated'
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground',
+                ]"
+              >
+                Рассчитываемая
+              </button>
+              <button
+                type="button"
+                @click="localJournalSettings.calculationType = 'manual'"
+                :class="[
+                  'flex-1 py-2.5 rounded-lg transition-all duration-200',
+                  localJournalSettings.calculationType === 'manual'
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground',
+                ]"
+              >
+                Выставляемая
+              </button>
+            </div>
+          </div>
 
-            <div class="space-y-3">
-              <div class="space-y-2">
-                <label class="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="calculation-type"
-                    value="calculated"
-                    v-model="localJournalSettings.calculationType"
-                    class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary"
-                  />
-                  <span class="text-sm text-foreground">Расчитываемая</span>
-                </label>
-
-                <div
-                  v-if="localJournalSettings.calculationType === 'calculated'"
-                  class="ml-7 space-y-2"
-                >
-                  <label class="flex items-center space-x-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="calculation-method"
-                      value="only-assigned"
-                      v-model="localJournalSettings.calculationMethod"
-                      class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary"
-                    />
-                    <span class="text-sm text-muted-foreground"
-                      >Только выставленных дней</span
-                    >
-                  </label>
-
-                  <label class="flex items-center space-x-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="calculation-method"
-                      value="all-days"
-                      v-model="localJournalSettings.calculationMethod"
-                      class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary"
-                    />
-                    <span class="text-sm text-muted-foreground">Всех дней</span>
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label class="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="calculation-type"
-                    value="manual"
-                    v-model="localJournalSettings.calculationType"
-                    class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary"
-                  />
-                  <span class="text-sm text-foreground">Выставляемая</span>
-                </label>
-              </div>
+          <div
+            v-if="localJournalSettings.calculationType === 'calculated'"
+            class="space-y-2"
+          >
+            <label
+              class="block text-[12px] font-semibold text-muted-foreground uppercase tracking-wide ml-1"
+            >
+              Учитывать оценки за
+            </label>
+            <div class="space-y-2">
+              <label
+                :class="[
+                  'flex items-center justify-between px-4 py-3 rounded-xl border cursor-pointer transition-all',
+                  localJournalSettings.calculationMethod === 'only-assigned'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border bg-muted/40 hover:bg-muted',
+                ]"
+              >
+                <span class="text-[14px] font-medium text-foreground">
+                  Только выставленные дни
+                </span>
+                <input
+                  type="radio"
+                  name="calculation-method"
+                  value="only-assigned"
+                  v-model="localJournalSettings.calculationMethod"
+                  class="w-4 h-4 text-primary focus:ring-primary"
+                />
+              </label>
+              <label
+                :class="[
+                  'flex items-center justify-between px-4 py-3 rounded-xl border cursor-pointer transition-all',
+                  localJournalSettings.calculationMethod === 'all-days'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border bg-muted/40 hover:bg-muted',
+                ]"
+              >
+                <span class="text-[14px] font-medium text-foreground">
+                  Все дни
+                </span>
+                <input
+                  type="radio"
+                  name="calculation-method"
+                  value="all-days"
+                  v-model="localJournalSettings.calculationMethod"
+                  class="w-4 h-4 text-primary focus:ring-primary"
+                />
+              </label>
             </div>
           </div>
         </div>
@@ -598,6 +636,13 @@ const exportHeaderLabelFor = (mark: any): string => {
   return typeof label === "string" ? label.replace(/\n/g, " ").trim() : "";
 };
 
+interface ResolvedParticipant {
+  id: string;
+  surname: string;
+  firstName: string;
+  patronymic: string;
+}
+
 interface Props {
   journalId: string;
   journalSettings?: {
@@ -605,6 +650,7 @@ interface Props {
     calculationMethod: "only-assigned" | "all-days";
   };
   ktpId?: string | null;
+  resolvedParticipants?: ResolvedParticipant[];
 }
 
 const props = defineProps<Props>();
@@ -1727,15 +1773,22 @@ const getStudentIdByIndex = (index: number): string | null => {
 const students = computed(() => {
   if (!props.journalId || !currentJournal.value?.students?.length) return [];
 
+  const resolvedById = new Map(
+    (props.resolvedParticipants ?? []).map((p) => [p.id, p]),
+  );
   return currentJournal.value.students.map(
     (studentId: string, index: number) => {
       const studentMarks = marksStore.getStudentMarks(
         props.journalId,
         studentId
       );
+      const resolved = resolvedById.get(studentId);
+      const name = resolved
+        ? `${resolved.surname} ${resolved.firstName} ${resolved.patronymic}`.trim()
+        : getStudentFullName(studentId);
       return {
         id: index + 1,
-        name: getStudentFullName(studentId),
+        name: name === studentId ? "" : name,
         marks: studentMarks || [],
         studentId: studentId,
       };

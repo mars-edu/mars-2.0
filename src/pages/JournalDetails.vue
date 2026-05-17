@@ -74,6 +74,7 @@
                   :journal-id="journalId"
                   :ktp-id="ktpIdForJournal"
                   :journal-settings="journalSettings"
+                  :resolved-participants="resolvedParticipants"
                   @close-journal="handleCloseJournal"
                   @open-journal="handleOpenJournal"
                   @download="onDownloadClick"
@@ -331,6 +332,8 @@ import AssignmentsView from "@/components/AssignmentsView.vue";
 import IconCircleAlert from "~icons/lucide/circle-alert";
 import IconBookOpen from "~icons/lucide/book-open";
 import IconSearch from "~icons/lucide/search";
+import { useConvexQuery } from "convex-vue";
+import { api } from "@convex/_generated/api";
 import EditStudentButton from "@/components/EditStudentButton.vue";
 import { storeToRefs } from "pinia";
 import JournalImportConfirmDialog from "@/components/JournalImportConfirmDialog.vue";
@@ -548,6 +551,22 @@ const currentEvent = computed(() => {
   if (!journalId.value) return null;
   return calendarStore.getEventById(journalId.value) || null;
 });
+
+const eventWithParticipantsResult = useConvexQuery(
+  api.calendarEvents.queries.getByIdWithParticipants,
+  computed(() =>
+    journalId.value ? { id: journalId.value as any } : "skip",
+  ),
+) as any;
+
+const resolvedParticipants = computed<
+  Array<{
+    id: string;
+    surname: string;
+    firstName: string;
+    patronymic: string;
+  }>
+>(() => eventWithParticipantsResult?.data?.value?.participantsResolved ?? []);
 
 watch(
   () => [
