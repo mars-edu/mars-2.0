@@ -131,6 +131,13 @@ export const useStudentStore = defineStore("student", () => {
 
   const getAllStudents = computed(() => students.value);
 
+  // O(1) lookup index — rebuilt only when students reactively change.
+  const studentsById = computed(() => {
+    const map = new Map<string, (typeof students.value)[number]>();
+    for (const s of students.value) map.set(s.id, s);
+    return map;
+  });
+
   const paginatedFilteredStudents = computed((): StudentWithCourse[] => {
     if (!paginatedData.value) return [];
 
@@ -295,7 +302,7 @@ export const useStudentStore = defineStore("student", () => {
   const getError = computed(() => error.value);
 
   const getCourseByStudentId = (id: string): number | null => {
-    const student = students.value.find((s) => s.id === id);
+    const student = studentsById.value.get(id);
     if (!student) return null;
 
     const activeAcademicYear = academicYearStore.getActiveAcademicYear;
@@ -313,13 +320,13 @@ export const useStudentStore = defineStore("student", () => {
   };
 
   const getStudentFullName = (idOrName: string): string => {
-    const student = students.value.find((s) => s.id === idOrName);
+    const student = studentsById.value.get(idOrName);
     if (!student) return idOrName;
     return `${student.surname} ${student.firstName} ${student.patronymic}`;
   };
 
   const getStudentById = (id: string): Student | undefined => {
-    return students.value.find((s) => s.id === id);
+    return studentsById.value.get(id);
   };
 
   return {

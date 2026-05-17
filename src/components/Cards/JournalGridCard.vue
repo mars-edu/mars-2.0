@@ -45,7 +45,7 @@
             @click="emit('download'); isMenuOpen = false"
           >
             <IconDownload class="w-4 h-4" />
-            Скачать журнал
+            {{ journal_card_download() }}
           </button>
           <div class="h-px bg-border my-1" />
           <button
@@ -53,7 +53,7 @@
             @click="emit('delete'); isMenuOpen = false"
           >
             <IconTrash2 class="w-4 h-4" />
-            Удалить журнал
+            {{ journal_card_delete() }}
           </button>
         </div>
       </div>
@@ -90,6 +90,7 @@ import IconCheck from "~icons/lucide/check"
 import IconMoreVertical from "~icons/lucide/more-vertical"
 import IconDownload from "~icons/lucide/download"
 import IconTrash2 from "~icons/lucide/trash-2"
+import { journal_card_download, journal_card_delete } from "@/paraglide/messages"
 
 interface AccentColor {
   bg: string

@@ -100,10 +100,10 @@
                   >
                     <div class="flex items-baseline gap-3">
                       <h2 class="text-base font-bold text-foreground">
-                        Участники
+                        {{ journal_participants_title() }}
                       </h2>
                       <span class="text-sm text-muted-foreground font-medium">
-                        {{ participantsFiltered.length }} из {{ participantsAll.length }}
+                        {{ journal_participants_count({ filtered: participantsFiltered.length, total: participantsAll.length }) }}
                       </span>
                     </div>
                     <div class="relative w-full sm:w-72">
@@ -113,7 +113,7 @@
                       <input
                         v-model="participantsSearch"
                         type="text"
-                        placeholder="Поиск по имени или специальности"
+                        :placeholder="journal_participants_search()"
                         class="w-full pl-9 pr-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground"
                       />
                     </div>
@@ -143,7 +143,7 @@
                   >
                     <IconCircleAlert class="w-5 h-5 flex-shrink-0" />
                     <span class="text-sm font-medium">
-                      Режим просмотра. Журнал закрыт.
+                      {{ journal_planning_view_only() }}
                     </span>
                   </div>
                   <div
@@ -357,6 +357,10 @@ import {
   journal_tab_chat,
   journal_tab_files,
   journal_tab_testing,
+  journal_participants_title,
+  journal_participants_search,
+  journal_participants_count,
+  journal_planning_view_only,
   journal_tab_services,
   journal_no_discipline,
   journal_assignments_placeholder,

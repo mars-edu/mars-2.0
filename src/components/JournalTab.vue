@@ -19,7 +19,7 @@
               : 'text-muted-foreground hover:text-foreground',
           ]"
         >
-          Общий
+          {{ journal_view_general() }}
         </button>
         <button
           type="button"
@@ -31,7 +31,7 @@
               : 'text-muted-foreground hover:text-foreground',
           ]"
         >
-          Мониторинг
+          {{ journal_view_monitoring() }}
         </button>
       </div>
       <div class="flex items-center gap-3">
@@ -42,7 +42,7 @@
             class="flex items-center gap-1.5 px-3 py-1.5 bg-card border border-border text-foreground hover:bg-muted rounded-lg text-[13px] font-medium transition-all shadow-sm"
           >
             <IconFileSpreadsheet class="w-4 h-4" />
-            <span>Экспорт</span>
+            <span>{{ journal_export() }}</span>
           </button>
           <div class="w-px h-6 bg-border mx-1" />
         </template>
@@ -79,7 +79,7 @@
             @click="isToolsMenuOpen = false; onHistoryClick()"
           >
             <IconClock class="w-4 h-4" />
-            История изменений
+            {{ journal_history_changes() }}
           </button>
           <button
             id="journal-settings-button"
@@ -124,7 +124,7 @@
             @click.stop="isToolsMenuOpen = false; onRecalcClick()"
           >
             <IconCalculator class="w-4 h-4" />
-            Рассчитать контроли
+            {{ journal_recalc_controls() }}
           </button>
           <div class="h-px bg-border my-1" />
           <button
@@ -218,10 +218,10 @@
     >
       <div class="flex items-baseline justify-between mb-4">
         <h3 class="text-[13px] font-bold text-foreground uppercase tracking-wide">
-          Статистика по оценкам
+          {{ journal_grade_stats_title() }}
         </h3>
         <span class="text-[12px] text-muted-foreground font-medium">
-          Оценено: {{ monitoringGradeStats.totalGraded }} / {{ students.length }}
+          {{ journal_grade_stats_count({ graded: monitoringGradeStats.totalGraded, total: students.length }) }}
         </span>
       </div>
       <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -374,7 +374,7 @@
                     "
                     :title="
                       header.type === 'date' && header.isoDate && isFutureDate(header.isoDate)
-                        ? 'Этот день ещё не наступил'
+                        ? journal_future_date_tooltip()
                         : ''
                     "
                     :class="[
@@ -425,7 +425,7 @@
             <label
               class="block text-[12px] font-semibold text-muted-foreground uppercase tracking-wide ml-1"
             >
-              Расчет контролей (кроме итоговой)
+              {{ journal_settings_field_calculation() }}
             </label>
             <div class="bg-muted rounded-xl p-1 flex text-sm font-medium">
               <button
@@ -438,7 +438,7 @@
                     : 'text-muted-foreground hover:text-foreground',
                 ]"
               >
-                Рассчитываемая
+                {{ journal_settings_calc_calculated() }}
               </button>
               <button
                 type="button"
@@ -450,7 +450,7 @@
                     : 'text-muted-foreground hover:text-foreground',
                 ]"
               >
-                Выставляемая
+                {{ journal_settings_calc_manual() }}
               </button>
             </div>
           </div>
@@ -462,7 +462,7 @@
             <label
               class="block text-[12px] font-semibold text-muted-foreground uppercase tracking-wide ml-1"
             >
-              Учитывать оценки за
+              {{ journal_settings_field_account_for() }}
             </label>
             <div class="space-y-2">
               <label
@@ -474,7 +474,7 @@
                 ]"
               >
                 <span class="text-[14px] font-medium text-foreground">
-                  Только выставленные дни
+                  {{ journal_settings_account_assigned() }}
                 </span>
                 <input
                   type="radio"
@@ -493,7 +493,7 @@
                 ]"
               >
                 <span class="text-[14px] font-medium text-foreground">
-                  Все дни
+                  {{ journal_settings_account_all() }}
                 </span>
                 <input
                   type="radio"
@@ -572,6 +572,22 @@ import IconPaperclip from "~icons/lucide/paperclip";
 import IconMoreVertical from "~icons/lucide/more-vertical";
 import IconCalculator from "~icons/lucide/calculator";
 import IconFileSpreadsheet from "~icons/lucide/file-spreadsheet";
+import {
+  journal_view_general,
+  journal_view_monitoring,
+  journal_export,
+  journal_history_changes,
+  journal_recalc_controls,
+  journal_grade_stats_title,
+  journal_grade_stats_count,
+  journal_future_date_tooltip,
+  journal_settings_field_calculation,
+  journal_settings_field_account_for,
+  journal_settings_calc_calculated,
+  journal_settings_calc_manual,
+  journal_settings_account_assigned,
+  journal_settings_account_all,
+} from "@/paraglide/messages";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";

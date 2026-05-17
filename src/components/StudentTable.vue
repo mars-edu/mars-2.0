@@ -150,7 +150,7 @@
               :colspan="totalColumns"
               class="px-8 py-24 text-center text-muted-foreground/40 text-sm italic"
             >
-              {{ emptyText || "Обучающиеся не найдены" }}
+              {{ emptyText || student_table_not_found() }}
             </td>
           </tr>
         </tbody>
@@ -170,6 +170,7 @@ import {
   student_card_col_status,
   student_card_col_language,
   student_card_col_course,
+  student_table_not_found,
 } from "@/paraglide/messages";
 
 interface StudentRow {

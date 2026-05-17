@@ -6,7 +6,7 @@
     >
       <IconCircleAlert class="w-5 h-5 flex-shrink-0" />
       <span class="text-sm font-medium">
-        Режим просмотра. Создание и управление заданиями недоступно.
+        {{ journal_assignments_view_only() }}
       </span>
     </div>
 
@@ -20,7 +20,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Поиск задания..."
+          :placeholder="journal_assignments_search()"
           class="w-full pl-9 pr-3 py-2.5 text-sm bg-card border border-border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground"
         />
       </div>
@@ -31,7 +31,7 @@
         class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-xl text-[15px] font-bold shadow-lg shadow-green-500/20 transition-all active:scale-95"
       >
         <IconPlus class="w-4 h-4" stroke-width="2.5" />
-        <span>Новое задание</span>
+        <span>{{ journal_assignments_create() }}</span>
       </button>
     </div>
 
@@ -41,13 +41,17 @@
     >
       <IconClipboardList class="w-12 h-12 mx-auto mb-3 opacity-40" />
       <p class="text-base font-semibold text-foreground">
-        {{ assignments.length === 0 ? "Заданий пока нет" : "Ничего не найдено" }}
+        {{
+          assignments.length === 0
+            ? journal_assignments_empty_title()
+            : journal_assignments_no_results()
+        }}
       </p>
       <p class="text-sm mt-2">
         {{
           assignments.length === 0
-            ? "Создайте первое задание для группы — оно появится здесь."
-            : "Попробуйте изменить поисковый запрос."
+            ? journal_assignments_empty_message()
+            : journal_assignments_no_results_hint()
         }}
       </p>
     </div>
@@ -84,7 +88,7 @@
           <div
             class="text-[11px] font-bold text-foreground uppercase tracking-wide mb-1.5 truncate opacity-80"
           >
-            Тема: {{ assignment.topic }}
+            {{ journal_assignments_topic_label() }} {{ assignment.topic }}
           </div>
           <h3
             class="font-bold text-foreground text-[19px] mb-2 leading-tight group-hover:text-primary transition-colors line-clamp-2"
@@ -96,7 +100,7 @@
           >
             <div class="flex items-center gap-1.5">
               <IconFileText class="w-3.5 h-3.5" />
-              {{ assignment.submissionsCount }}/{{ assignment.totalStudents }} сдано
+              {{ journal_assignments_submissions({ count: assignment.submissionsCount, total: assignment.totalStudents }) }}
             </div>
           </div>
         </div>
@@ -108,7 +112,7 @@
             class="flex items-center gap-2 text-xs font-medium text-muted-foreground bg-muted px-3 py-1.5 rounded-lg"
           >
             <IconCalendar class="w-3.5 h-3.5 text-foreground" />
-            <span>Дедлайн: {{ assignment.deadline }}</span>
+            <span>{{ journal_assignments_deadline_label({ deadline: assignment.deadline }) }}</span>
           </div>
         </div>
       </div>
@@ -126,6 +130,22 @@ import IconFileText from "~icons/lucide/file-text";
 import IconMoreHorizontal from "~icons/lucide/more-horizontal";
 import IconClipboardList from "~icons/lucide/clipboard-list";
 import IconCircleAlert from "~icons/lucide/circle-alert";
+import {
+  journal_assignments_view_only,
+  journal_assignments_search,
+  journal_assignments_create,
+  journal_assignments_empty_title,
+  journal_assignments_empty_message,
+  journal_assignments_no_results,
+  journal_assignments_no_results_hint,
+  journal_assignments_topic_label,
+  journal_assignments_submissions,
+  journal_assignments_deadline_label,
+  journal_assignments_status_active,
+  journal_assignments_status_closed,
+  journal_assignments_status_draft,
+  journal_assignments_create_toast,
+} from "@/paraglide/messages";
 
 interface Assignment {
   id: string;
@@ -159,9 +179,9 @@ const filteredAssignments = computed(() => {
 });
 
 const statusLabel = (status: Assignment["status"]) => {
-  if (status === "active") return "Активно";
-  if (status === "closed") return "Закрыто";
-  return "Черновик";
+  if (status === "active") return journal_assignments_status_active();
+  if (status === "closed") return journal_assignments_status_closed();
+  return journal_assignments_status_draft();
 };
 
 const statusBadgeClass = (status: Assignment["status"]) => {
@@ -173,7 +193,7 @@ const statusBadgeClass = (status: Assignment["status"]) => {
 const onCreateClick = () => {
   f7.toast
     .create({
-      text: "Создание заданий скоро будет доступно",
+      text: journal_assignments_create_toast(),
       closeTimeout: 2500,
       position: "bottom",
     })

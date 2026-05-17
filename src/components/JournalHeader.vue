@@ -13,7 +13,7 @@
           </f7-link>
           <div class="space-y-0.5 min-w-0">
             <div class="text-[13px] text-muted-foreground font-medium">
-              Дисциплина
+              {{ journal_header_discipline_eyebrow() }}
             </div>
             <div
               class="text-[17px] font-semibold text-foreground tracking-tight leading-snug break-words"
@@ -28,11 +28,11 @@
               </template>
               <template v-if="course !== undefined && course !== null">
                 <span class="text-border">•</span>
-                <span>{{ course }} курс</span>
+                <span>{{ course }} {{ journal_header_course_suffix() }}</span>
               </template>
               <template v-if="teacherName">
                 <span class="text-border">•</span>
-                <span>Преподаватель: {{ teacherName }}</span>
+                <span>{{ journal_header_teacher_prefix() }} {{ teacherName }}</span>
               </template>
               <template v-if="groupLanguage">
                 <span class="text-border">•</span>
@@ -58,7 +58,7 @@
             <span
               class="text-[12px] font-medium text-muted-foreground uppercase tracking-wider ml-1"
             >
-              Учебный год
+              {{ journal_header_academic_year_eyebrow() }}
             </span>
           </div>
           <div
@@ -82,6 +82,12 @@ import { f7Link } from "framework7-vue";
 import IconChevronLeft from "~icons/lucide/chevron-left";
 import IconCalendar from "~icons/lucide/calendar";
 import IconClock from "~icons/lucide/clock";
+import {
+  journal_header_discipline_eyebrow,
+  journal_header_academic_year_eyebrow,
+  journal_header_course_suffix,
+  journal_header_teacher_prefix,
+} from "@/paraglide/messages";
 
 defineProps<{
   disciplineText: string;
