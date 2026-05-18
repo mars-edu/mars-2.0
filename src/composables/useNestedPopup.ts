@@ -42,11 +42,6 @@ export function useNestedPopup(options: NestedPopupOptions) {
     }) as T;
   };
 
-  const selectHandlers = {
-    onBeforeOpen: closeParent,
-    onAfterClose: openParent,
-  };
-
   const openDialogWithParent = (
     dialogFn: () => ReturnType<typeof f7.dialog.create>,
     buttonKinds: Array<"confirm" | "cancel">,
@@ -117,7 +112,6 @@ export function useNestedPopup(options: NestedPopupOptions) {
     closeParent,
     openParent,
     withParentToggle,
-    selectHandlers,
     openDialogWithParent,
     confirmWithParent,
   };

@@ -59,7 +59,6 @@
             label="Семестры"
             placeholder="Выберите семестры"
             :multiple="true"
-            v-bind="selectHandlers"
           />
         </div>
 
@@ -80,7 +79,6 @@ import IconPlus from "~icons/lucide/plus";
 import { z } from "zod";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSemesterStore } from "@/stores/semesterStore";
-import { useNestedPopover } from "@/composables/useNestedPopover";
 import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
@@ -88,12 +86,6 @@ import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const courseStore = useCourseStore();
 const semesterStore = useSemesterStore();
-
-// Nested popover management
-const { selectHandlers } = useNestedPopover({
-  parentPopoverId: "#add-settings-course-popover",
-  parentTargetSelector: "#add-settings-course-button",
-});
 
 const semesterOptions = computed(() =>
   semesterStore.sortedSemesters.map((p) => ({ value: p.id, text: p.shortName }))

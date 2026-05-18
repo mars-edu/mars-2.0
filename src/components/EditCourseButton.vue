@@ -48,7 +48,6 @@
             label="Семестры"
             placeholder="Выберите семестры"
             :multiple="true"
-            v-bind="selectHandlers"
           />
 
           <div class="pt-4 border-t border-border">
@@ -97,7 +96,7 @@ const semesterStore = useSemesterStore();
 const popoverId = computed(() => `#edit-settings-course-popover-${props.courseId}`);
 const targetSelector = computed(() => `#course-item-${props.courseId}`);
 
-const { selectHandlers, confirmWithParent } = useNestedPopover({
+const { confirmWithParent } = useNestedPopover({
   parentPopoverId: popoverId,
   parentTargetSelector: targetSelector,
 });

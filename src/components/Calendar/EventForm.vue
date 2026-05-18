@@ -8,7 +8,6 @@
       name="event-class9-generic"
       id="event-class9-generic"
       searchable
-      v-bind="selectHandlers"
     />
 
     <div class="flex items-center">
@@ -289,11 +288,6 @@ const withParentToggle = <T extends (...args: any[]) => any>(fn: T): T => {
     closeParent();
     return fn(...args);
   }) as T;
-};
-
-const selectHandlers = {
-  onBeforeOpen: closeParent,
-  onAfterClose: openParent,
 };
 
 const checkboxId = computed(() => {

@@ -32,9 +32,6 @@ export interface NestedPopoverOptions {
  *   openParent();
  * }
  *
- * // Or use with Select components
- * <Select @before-open="closeParent" @after-close="openParent" />
- *
  * // Or wrap any function to auto-manage parent
  * const openChild = withParentToggle(() => {
  *   childPopup.value?.open();
@@ -87,15 +84,6 @@ export function useNestedPopover(options: NestedPopoverOptions) {
       closeParent();
       return fn(...args);
     }) as T;
-  };
-
-  /**
-   * Event handlers for Select components
-   * Usage: v-bind="selectHandlers" or spread individual handlers
-   */
-  const selectHandlers = {
-    onBeforeOpen: closeParent,
-    onAfterClose: openParent,
   };
 
   /**
@@ -183,7 +171,6 @@ export function useNestedPopover(options: NestedPopoverOptions) {
     closeParent,
     openParent,
     withParentToggle,
-    selectHandlers,
     openDialogWithParent,
     confirmWithParent,
   };
