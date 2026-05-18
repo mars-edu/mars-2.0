@@ -297,6 +297,7 @@
   "journal_download": "Скачивание журналов",
   "journal_delete": "Удаление журналов",
   "journal_merge": "Объединение журналов",
+  "journal_split": "Разъединение журналов",
   "journal_replace": "Добавить замену",
   "journal_delete_confirm_title": "Удаление журналов",
   "journal_delete_confirm_message": "Вы действительно хотите безвозвратно удалить выбранные журналы?",

@@ -120,6 +120,11 @@
                   {{ journal_merge() }}
                 </button>
                 <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
+                  @click="onSplitClick(); isActionMenuOpen = false">
+                  <IconUngroup class="w-4 h-4 flex-shrink-0" />
+                  {{ journal_split() }}
+                </button>
+                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
                   @click="onCloseJournalClick(); isActionMenuOpen = false">
                   <IconCircleX class="w-4 h-4 flex-shrink-0" />
                   {{ journal_close() }}
@@ -139,16 +144,6 @@
                   @click="onReplaceClick(); isActionMenuOpen = false">
                   <IconRefreshCw class="w-4 h-4 flex-shrink-0" />
                   {{ journal_replace() }}
-                </button>
-                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
-                  @click="onUploadClick(); isActionMenuOpen = false">
-                  <IconArrowUpToLine class="w-4 h-4 flex-shrink-0" />
-                  {{ journal_upload() }}
-                </button>
-                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
-                  @click="onShareClick(); isActionMenuOpen = false">
-                  <IconShare class="w-4 h-4 flex-shrink-0" />
-                  {{ journal_share() }}
                 </button>
                 <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
                   @click="onSettingsClick(); isActionMenuOpen = false">
@@ -288,6 +283,7 @@
                 :selection-mode="isSelectionMode"
                 :selected="selectedJournalIds.has(journal.id)"
                 :is-merged="!!journal.mergedJournalIds?.length"
+                :disabled="isSelectionMode && selectionAction === 'split' && !journal.mergedJournalIds?.length"
                 @click="goToJournalDetails(journal.id)"
                 @toggle-select="toggleJournalSelection(journal.id)"
                 @download="handleCardDownload(journal.id)"
@@ -334,9 +330,9 @@ import IconArrowUpToLine from "~icons/lucide/arrow-up-to-line";
 import IconRefreshCw from "~icons/lucide/refresh-cw";
 import IconLockOpen from "~icons/lucide/lock-open";
 import IconGitMerge from "~icons/lucide/git-merge";
+import IconUngroup from "~icons/lucide/ungroup";
 import IconTrash2 from "~icons/lucide/trash-2";
 import IconSettings2 from "~icons/lucide/settings-2";
-import IconShare from "~icons/lucide/share-2";
 import IconChevronDown from "~icons/lucide/chevron-down";
 import IconMoreVertical from "~icons/lucide/more-vertical";
 import IconCheck from "~icons/lucide/check";
@@ -369,7 +365,6 @@ import { useJournalOpenClose } from "@/composables/useJournalOpenClose";
 import { saveAs } from "file-saver";
 import {
   exportJournalViaConvex,
-  importJournalViaConvex,
   type JournalExportParams,
 } from "@/services/convex-excel-export";
 import { convex } from "@/lib/convexClient";
@@ -396,12 +391,11 @@ import {
   journal_close,
   journal_download,
   journal_replace,
-  journal_upload,
-  journal_share,
   journal_select_all,
   journal_deselect_all,
   journal_empty,
   journal_merge,
+  journal_split,
   journal_merge_confirm_title,
   journal_merge_confirm_message,
   journal_split_confirm_title,
@@ -427,20 +421,7 @@ import {
   journal_already_open,
   journal_export_error,
   journal_settings_dialog,
-  journal_import_error,
-  journal_import_empty,
-  journal_import_preview_group,
-  journal_import_preview_course,
-  journal_import_preview_specialty,
-  journal_import_preview_year,
-  journal_import_preview_discipline,
-  journal_import_preview_teacher,
-  journal_import_preview_students,
-  journal_import_preview_dates,
-  journal_import_preview_warnings,
-  journal_import_done_msg,
   journal_replaced_success,
-  journal_share_dialog,
   journal_replace_error,
   common_cancel,
   common_all,
@@ -924,7 +905,7 @@ const groupOptions = ref([{ value: "pi-1-21", text: "ПИ-1-21" }]);
 const selectedRole = ref("");
 const roleOptions = ref([{ value: "student", text: "Студент" }]);
 
-type SelectionAction = "download" | "close" | "open" | "replace" | "delete" | "merge";
+type SelectionAction = "download" | "close" | "open" | "replace" | "delete" | "merge" | "split";
 
 const isSelectionMode = ref(false);
 const selectionAction = ref<SelectionAction>("download");
@@ -936,6 +917,7 @@ const selectionDoneText = computed(() => {
   if (selectionAction.value === "replace") return journal_action_replace();
   if (selectionAction.value === "delete") return journal_action_delete();
   if (selectionAction.value === "merge") return journal_action_merge();
+  if (selectionAction.value === "split") return "Разъединить";
   return journal_action_download();
 });
 
@@ -946,6 +928,7 @@ const selectionDoneButtonClass = computed(() => {
   if (selectionAction.value === "replace") return `bg-orange-500 hover:bg-orange-600 ${base}`;
   if (selectionAction.value === "delete") return `bg-red-500 hover:bg-red-600 ${base}`;
   if (selectionAction.value === "merge") return `bg-primary hover:bg-primary-dark ${base}`;
+  if (selectionAction.value === "split") return `bg-yellow-500 hover:bg-yellow-600 ${base}`;
   return `bg-primary hover:bg-primary-dark ${base}`;
 });
 
@@ -981,6 +964,14 @@ function deselectAll() {
 }
 
 function toggleJournalSelection(id: string) {
+  if (selectionAction.value === "split") {
+    const journal = journalStore.getJournalById(id);
+    if (!journal?.mergedJournalIds?.length) {
+      f7.toast.create({ text: "Можно выбрать только объединенные журналы", position: "center", closeTimeout: 1000 }).open();
+      return;
+    }
+  }
+
   if (selectedJournalIds.value.has(id)) {
     selectedJournalIds.value.delete(id);
   } else {
@@ -1157,6 +1148,10 @@ function onMergeClick() {
   startSelectionMode("merge");
 }
 
+function onSplitClick() {
+  startSelectionMode("split");
+}
+
 function onReplaceClick() {
   startSelectionMode("replace");
 }
@@ -1205,6 +1200,35 @@ function onSelectionDone() {
           f7.dialog.alert(
             err instanceof Error ? err.message : String(err),
             journal_merge_confirm_title()
+          );
+        } finally {
+          f7.preloader.hide();
+          exitSelectionMode();
+        }
+      }
+    );
+    return;
+  }
+
+  if (selectionAction.value === "split") {
+    f7.dialog.confirm(
+      journal_split_confirm_message(),
+      journal_split_confirm_title(),
+      async () => {
+        try {
+          f7.preloader.show();
+          await Promise.all(ids.map((id) => journalStore.splitJournal(id)));
+          f7.toast
+            .create({
+              text: `${journal_split_confirm_title()}: ${ids.length}`,
+              position: "center",
+              closeTimeout: 2000,
+            })
+            .open();
+        } catch (err) {
+          f7.dialog.alert(
+            err instanceof Error ? err.message : String(err),
+            journal_split_confirm_title()
           );
         } finally {
           f7.preloader.hide();
@@ -1279,73 +1303,6 @@ function onSelectionDone() {
       exitSelectionMode();
     },
   });
-}
-
-function onUploadClick() {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = ".xlsx,.xls";
-  input.multiple = false;
-
-  input.onchange = async (event) => {
-    const target = event.target as HTMLInputElement;
-    const file = target.files?.[0];
-    if (!file) return;
-
-    try {
-      f7.preloader.show();
-      const summary = await importJournalViaConvex(file);
-      f7.preloader.hide();
-
-      if (summary.issues.some((issue) => issue.type === "error")) {
-        const errorText = summary.issues
-          .filter((issue) => issue.type === "error")
-          .map((issue) => `• ${issue.message}`)
-          .join("\n");
-        f7.dialog.alert(errorText || journal_import_error());
-        return;
-      }
-
-      const warnings = summary.issues
-        .filter((issue) => issue.type === "warning")
-        .map((issue) => `• ${issue.message}`)
-        .join("\n");
-
-      const result = summary.result;
-      if (!result) {
-        f7.dialog.alert(journal_import_empty());
-        return;
-      }
-
-      const messageParts = [
-        `<b>${journal_import_preview_group()}</b> ${result.metadata.groupName || "-"}`,
-        `<b>${journal_import_preview_course()}</b> ${result.metadata.courseLabel || "-"}`,
-        `<b>${journal_import_preview_specialty()}</b> ${result.metadata.specialtyLabel || "-"}`,
-        `<b>${journal_import_preview_year()}</b> ${result.metadata.academicYearLabel || "-"}`,
-        `<b>${journal_import_preview_discipline()}</b> ${result.metadata.disciplineTitle || "-"}`,
-        `<b>${journal_import_preview_teacher()}</b> ${result.metadata.teacherFullName || "-"}`,
-        `<b>${journal_import_preview_students()}</b> ${result.students.length}`,
-        `<b>${journal_import_preview_dates()}</b> ${result.metadata.lessonDates.join(", ") || "-"}`,
-      ];
-
-      if (warnings) {
-        messageParts.push(`<br/><b>${journal_import_preview_warnings()}</b><br/>${warnings.replace(/\n/g, "<br/>")}`);
-      }
-
-      f7.dialog.alert(messageParts.join("<br/>") || journal_import_done_msg());
-    } catch (error) {
-      f7.preloader.hide();
-      const message =
-        error instanceof Error ? error.message : journal_import_error();
-      f7.dialog.alert(message);
-    }
-  };
-
-  input.click();
-}
-
-function onShareClick() {
-  f7.dialog.alert(journal_share_dialog());
 }
 
 function onEditJournal(journalId: string) {

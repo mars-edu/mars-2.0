@@ -1,6 +1,11 @@
 <template>
   <div
-    class="group relative overflow-hidden rounded-[20px] bg-card border border-transparent shadow-sm hover:border-yellow-400 hover:shadow-[0_12px_32px_rgba(250,204,21,0.12)] hover:-translate-y-1 transition-all duration-200 cursor-pointer select-none flex flex-col p-4 gap-3"
+    class="group relative overflow-hidden rounded-[20px] bg-card border border-transparent shadow-sm transition-all duration-200 select-none flex flex-col p-4 gap-3"
+    :class="[
+      disabled 
+        ? 'opacity-40 grayscale cursor-not-allowed border-border' 
+        : 'hover:border-yellow-400 hover:shadow-[0_12px_32px_rgba(250,204,21,0.12)] hover:-translate-y-1 cursor-pointer'
+    ]"
     @click="handleClick"
   >
     <!-- Top row: icon + hover menu OR selection checkbox -->
@@ -123,6 +128,7 @@ interface Props {
   selectionMode?: boolean
   selected?: boolean
   isMerged?: boolean
+  disabled?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -130,6 +136,7 @@ const props = withDefaults(defineProps<Props>(), {
   selectionMode: false,
   selected: false,
   isMerged: false,
+  disabled: false,
 })
 
 const emit = defineEmits<{
