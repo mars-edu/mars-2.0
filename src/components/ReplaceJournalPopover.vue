@@ -20,7 +20,6 @@
           :options="teacherOptions"
           name="replace-teacher"
           searchable
-          v-bind="selectHandlers"
         />
 
         <div class="flex justify-between items-center">
@@ -83,7 +82,6 @@ import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import Select from "@/components/ui/Select.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { useTeacherStore } from "@/stores/teacherStore";
-import { useNestedPopover } from "@/composables/useNestedPopover";
 import { getDatePickerParams, DATE_STORAGE_FORMAT } from "@/constants/calendar";
 
 const DATE_PICKER_PARAMS = getDatePickerParams();
@@ -108,11 +106,6 @@ const emit = defineEmits<{
 
 const teacherStore = useTeacherStore();
 const { teacherSelectOptions } = storeToRefs(teacherStore);
-
-// Nested popover management
-const { selectHandlers } = useNestedPopover({
-  parentPopoverId: "#replace-journal-popover",
-});
 
 const teacherOptions = computed(() => teacherSelectOptions.value);
 

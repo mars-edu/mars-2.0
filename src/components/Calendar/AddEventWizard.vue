@@ -258,7 +258,6 @@
             placeholder="Все"
             v-model="studentFilters.language"
             :options="studentLanguageOptions"
-            v-bind="selectHandlers"
           />
           <Select
             id="event-student-specialty"
@@ -267,7 +266,6 @@
             v-model="studentFilters.specialty"
             :multiple="true"
             :options="studentSpecialtyOptions"
-            v-bind="selectHandlers"
           />
           <Select
             id="event-student-course"
@@ -275,7 +273,6 @@
             placeholder="Все"
             v-model="studentFilters.course"
             :options="studentCourseOptions"
-            v-bind="selectHandlers"
           />
           <Select
             id="event-student-gender"
@@ -283,7 +280,6 @@
             placeholder="Все"
             v-model="studentFilters.gender"
             :options="studentGenderOptions"
-            v-bind="selectHandlers"
           />
         </div>
 
@@ -742,7 +738,7 @@ const { languageOptions: storeLanguageOptions } = storeToRefs(languageStore);
 const { courseOptions: storeCourseOptions } = storeToRefs(courseStore);
 const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
 
-const { closeParent, openParent, selectHandlers } = useNestedPopup({
+const { closeParent, openParent } = useNestedPopup({
   parentPopupId: "#add-event-popup",
 });
 
