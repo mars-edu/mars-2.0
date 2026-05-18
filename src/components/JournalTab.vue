@@ -386,8 +386,9 @@
       :detail="selectedKtpDetail"
     />
 
-    <!-- Journal History Popover -->
-    <JournalHistoryPopover
+    <!-- Journal History Dialog -->
+    <JournalHistoryDialog
+      v-model:opened="isHistoryDialogOpen"
       :journal-id="props.journalId"
     />
 
@@ -576,7 +577,7 @@ import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import MarkCell from "@/components/ui/MarkCell.vue";
 import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
 import KtpDetailViewPopover from "@/components/KtpDetailViewPopover.vue";
-import JournalHistoryPopover from "@/components/JournalHistoryPopover.vue";
+import JournalHistoryDialog from "@/components/JournalHistoryDialog.vue";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useStudentStore } from "@/stores/studentStore";
 import { useMarksStore } from "@/stores/marksStore";
@@ -2058,6 +2059,7 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 };
 
 const ktpViewPopoverOpened = ref(false);
+const isHistoryDialogOpen = ref(false);
 const ktpViewPopoverTarget = ref("");
 const selectedKtpDetail = ref<KtpDetail | null>(null);
 
@@ -2194,7 +2196,7 @@ const onPaperclipClick = async (
 const onOpenRupClick = () => emit("open-rup");
 const onSettingsClick = () => emit("open-settings");
 const onHistoryClick = () => {
-  f7.popover.open('#journal-history-popover', '#journal-history-button');
+  isHistoryDialogOpen.value = true;
 };
 const onCloseJournalClick = () => {
   if (isViewOnly.value) {

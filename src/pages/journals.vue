@@ -115,6 +115,11 @@
                   {{ journal_download() }}
                 </button>
                 <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
+                  @click="onMergeClick(); isActionMenuOpen = false">
+                  <IconGitMerge class="w-4 h-4 flex-shrink-0" />
+                  {{ journal_merge() }}
+                </button>
+                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
                   @click="onCloseJournalClick(); isActionMenuOpen = false">
                   <IconCircleX class="w-4 h-4 flex-shrink-0" />
                   {{ journal_close() }}
@@ -282,10 +287,13 @@
                 :student-count="journal.students?.length ?? 0"
                 :selection-mode="isSelectionMode"
                 :selected="selectedJournalIds.has(journal.id)"
+                :is-merged="!!journal.mergedJournalIds?.length"
                 @click="goToJournalDetails(journal.id)"
                 @toggle-select="toggleJournalSelection(journal.id)"
                 @download="handleCardDownload(journal.id)"
                 @delete="handleCardDelete(journal.id)"
+                @edit="onEditJournal(journal.id)"
+                @split="onSplitJournal(journal.id)"
               />
               <div
                 v-if="isDataReady && filteredByTab.length === 0"
@@ -325,6 +333,7 @@ import IconArrowDownToLine from "~icons/lucide/arrow-down-to-line";
 import IconArrowUpToLine from "~icons/lucide/arrow-up-to-line";
 import IconRefreshCw from "~icons/lucide/refresh-cw";
 import IconLockOpen from "~icons/lucide/lock-open";
+import IconGitMerge from "~icons/lucide/git-merge";
 import IconTrash2 from "~icons/lucide/trash-2";
 import IconSettings2 from "~icons/lucide/settings-2";
 import IconShare from "~icons/lucide/share-2";
@@ -392,6 +401,11 @@ import {
   journal_select_all,
   journal_deselect_all,
   journal_empty,
+  journal_merge,
+  journal_merge_confirm_title,
+  journal_merge_confirm_message,
+  journal_split_confirm_title,
+  journal_split_confirm_message,
   journal_filter_all,
   journal_filter_course_1,
   journal_filter_course_2,
@@ -401,6 +415,7 @@ import {
   journal_filter_individual,
   journal_action_close,
   journal_action_open,
+  journal_action_merge,
   journal_action_replace,
   journal_action_download,
   journal_action_delete,
@@ -909,7 +924,7 @@ const groupOptions = ref([{ value: "pi-1-21", text: "ПИ-1-21" }]);
 const selectedRole = ref("");
 const roleOptions = ref([{ value: "student", text: "Студент" }]);
 
-type SelectionAction = "download" | "close" | "open" | "replace" | "delete";
+type SelectionAction = "download" | "close" | "open" | "replace" | "delete" | "merge";
 
 const isSelectionMode = ref(false);
 const selectionAction = ref<SelectionAction>("download");
@@ -920,6 +935,7 @@ const selectionDoneText = computed(() => {
   if (selectionAction.value === "open") return journal_action_open();
   if (selectionAction.value === "replace") return journal_action_replace();
   if (selectionAction.value === "delete") return journal_action_delete();
+  if (selectionAction.value === "merge") return journal_action_merge();
   return journal_action_download();
 });
 
@@ -929,6 +945,7 @@ const selectionDoneButtonClass = computed(() => {
   if (selectionAction.value === "open") return `bg-green-500 hover:bg-green-600 ${base}`;
   if (selectionAction.value === "replace") return `bg-orange-500 hover:bg-orange-600 ${base}`;
   if (selectionAction.value === "delete") return `bg-red-500 hover:bg-red-600 ${base}`;
+  if (selectionAction.value === "merge") return `bg-primary hover:bg-primary-dark ${base}`;
   return `bg-primary hover:bg-primary-dark ${base}`;
 });
 
@@ -1136,6 +1153,10 @@ function onDownloadClick() {
   startSelectionMode("download");
 }
 
+function onMergeClick() {
+  startSelectionMode("merge");
+}
+
 function onReplaceClick() {
   startSelectionMode("replace");
 }
@@ -1162,6 +1183,35 @@ function onSelectionDone() {
 
   if (selectionAction.value === "download") {
     void downloadSelectedJournals();
+    return;
+  }
+
+  if (selectionAction.value === "merge") {
+    f7.dialog.confirm(
+      `${journal_merge_confirm_message({ count: ids.length })}`,
+      journal_merge_confirm_title(),
+      async () => {
+        try {
+          f7.preloader.show();
+          await journalStore.mergeJournals(ids);
+          f7.toast
+            .create({
+              text: `${journal_merge_confirm_title()}: ${ids.length}`,
+              position: "center",
+              closeTimeout: 2000,
+            })
+            .open();
+        } catch (err) {
+          f7.dialog.alert(
+            err instanceof Error ? err.message : String(err),
+            journal_merge_confirm_title()
+          );
+        } finally {
+          f7.preloader.hide();
+          exitSelectionMode();
+        }
+      }
+    );
     return;
   }
 
@@ -1296,6 +1346,44 @@ function onUploadClick() {
 
 function onShareClick() {
   f7.dialog.alert(journal_share_dialog());
+}
+
+function onEditJournal(journalId: string) {
+  const journal = journalStore.getJournalById(journalId);
+  if (!journal) return;
+
+  if (journal.isIndividualJournal) {
+    onEditIndividualJournal(journalId);
+  } else {
+    f7.dialog.alert("Редактирование обычных журналов будет доступно в следующем обновлении. Используйте РУП/КТП для изменения программы.");
+  }
+}
+
+function onSplitJournal(journalId: string) {
+  f7.dialog.confirm(
+    journal_split_confirm_message(),
+    journal_split_confirm_title(),
+    async () => {
+      try {
+        f7.preloader.show();
+        await journalStore.splitJournal(journalId);
+        f7.toast
+          .create({
+            text: journal_split_confirm_title(),
+            position: "center",
+            closeTimeout: 2000,
+          })
+          .open();
+      } catch (err) {
+        f7.dialog.alert(
+          err instanceof Error ? err.message : String(err),
+          journal_split_confirm_title()
+        );
+      } finally {
+        f7.preloader.hide();
+      }
+    }
+  );
 }
 
 const isReplacingJournals = ref(false);

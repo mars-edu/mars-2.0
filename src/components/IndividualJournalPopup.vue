@@ -68,7 +68,7 @@
           <!-- No Available Journals Message -->
           <div v-else class="text-center py-8 text-muted-foreground border border-input rounded-lg bg-muted/20">
             <p class="text-sm">
-              {{ searchTerm ? 'Журналы не найдены' : 'Нет доступных журналов с одним студентом' }}
+              {{ searchTerm ? 'Журналы не найдены' : 'Нет доступных журналов для объединения' }}
             </p>
           </div>
 
@@ -180,19 +180,24 @@ const availableJournals = computed((): LocalJournalDisplay[] => {
     // Skip the current individual journal itself
     if (currentJournalId.value && journal.id === currentJournalId.value) return;
 
-    // Must have exactly 1 student
-    if (journal.students.length !== 1) return;
-
     // Skip if already added (prevent duplicates)
     if (journalMap.has(journal.id)) return;
 
     // Skip if already merged into a different individual journal
     if (journal.parentIndividualJournalId && journal.parentIndividualJournalId !== currentJournalId.value) return;
 
-    const student = studentStore.students.find(s => s.id === journal.students[0]);
+    const studentNames = journal.students.map(sid => {
+      const s = studentStore.students.find(st => st.id === sid);
+      return s ? studentStore.getStudentFullName(s.id) : sid;
+    });
+
+    const studentDisplay = studentNames.length === 1
+      ? studentNames[0]
+      : `${studentNames.length} студентов`;
+
     journalMap.set(journal.id, {
       id: journal.id,
-      studentName: student ? studentStore.getStudentFullName(student.id) : 'Неизвестный студент',
+      studentName: studentDisplay,
       discipline: journalStore.getDisciplineTitle(journal),
       courseAndGroup: journalStore.getJournalSubtitle(journal),
       schedule: journalStore.getJournalScheduleText(journal),

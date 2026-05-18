@@ -138,6 +138,11 @@ export const useJournalStore = defineStore(
       calendarStore.filteredEvents.forEach((event: any) => {
         const actualEvent = event._custom?.value || event;
 
+        // Skip journals that are part of a merge
+        if (actualEvent.parentIndividualJournalId) {
+          return;
+        }
+
         // Only process events WITH participants
         if (
           !actualEvent.participants ||
@@ -185,6 +190,11 @@ export const useJournalStore = defineStore(
 
       calendarStore.filteredEvents.forEach((event: any) => {
         const actualEvent = event._custom?.value || event;
+
+        // Skip journals that are part of a merge
+        if (actualEvent.parentIndividualJournalId) {
+          return;
+        }
 
         if (!actualEvent.participants || actualEvent.participants.length === 0)
           return;
@@ -320,6 +330,89 @@ export const useJournalStore = defineStore(
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to add journal";
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    async function mergeJournals(journalIds: string[]) {
+      loading.value = true;
+      try {
+        const journalsToMerge = journalIds
+          .map((id) => getJournalById.value(id))
+          .filter((j): j is Journal => !!j);
+
+        if (journalsToMerge.length === 0) return;
+
+        // Collect all unique students
+        const allStudents = [
+          ...new Set(journalsToMerge.flatMap((j) => j.students)),
+        ];
+
+        // Take discipline and other props from the first journal
+        const firstJournal = journalsToMerge[0];
+        const event = calendarStore.getEventById(firstJournal.id);
+        if (!event) throw new Error("Source event not found");
+
+        const newEvent = await calendarStore.addEvent({
+          class9Id: firstJournal.disciplineId,
+          participants: allStudents,
+          semester: event.semester,
+          isIndividualJournal: true,
+          mergedJournalIds: journalIds,
+          teacherId: event.teacherId,
+          startDate: event.startDate,
+          endDate: event.endDate,
+          startTime: event.startTime,
+          endTime: event.endTime,
+          weeklySchedules: event.weeklySchedules || [],
+          useCustomPeriod: event.useCustomPeriod,
+          color: event.color,
+        });
+
+        // Update children with parent ID
+        await Promise.all(
+          journalIds.map((id) =>
+            calendarStore.updateEvent(id, {
+              parentIndividualJournalId: newEvent.id,
+            })
+          )
+        );
+
+        error.value = null;
+        return newEvent.id;
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to merge journals";
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    async function splitJournal(id: string) {
+      loading.value = true;
+      try {
+        const journal = getJournalById.value(id);
+        if (!journal || !journal.mergedJournalIds) return;
+
+        // Clear parent reference on children
+        await Promise.all(
+          journal.mergedJournalIds.map((childId) =>
+            calendarStore.updateEvent(childId, {
+              parentIndividualJournalId: undefined,
+            })
+          )
+        );
+
+        // Delete the merged journal
+        await calendarStore.deleteEvent(id);
+
+        error.value = null;
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to split journal";
         throw err;
       } finally {
         loading.value = false;
@@ -481,6 +574,8 @@ export const useJournalStore = defineStore(
       getJournalTitle,
       getJournalById,
       addJournal,
+      mergeJournals,
+      splitJournal,
       updateJournal,
       deleteJournal,
       reset,

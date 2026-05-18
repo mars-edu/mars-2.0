@@ -42,6 +42,21 @@
         >
           <button
             class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-2"
+            @click="emit('edit'); isMenuOpen = false"
+          >
+            <IconPencil class="w-4 h-4" />
+            {{ journal_card_edit() }}
+          </button>
+          <button
+            v-if="isMerged"
+            class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-2"
+            @click="emit('split'); isMenuOpen = false"
+          >
+            <IconUngroup class="w-4 h-4" />
+            {{ journal_card_split() }}
+          </button>
+          <button
+            class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-2"
             @click="emit('download'); isMenuOpen = false"
           >
             <IconDownload class="w-4 h-4" />
@@ -90,7 +105,9 @@ import IconCheck from "~icons/lucide/check"
 import IconMoreVertical from "~icons/lucide/more-vertical"
 import IconDownload from "~icons/lucide/download"
 import IconTrash2 from "~icons/lucide/trash-2"
-import { journal_card_download, journal_card_delete } from "@/paraglide/messages"
+import IconPencil from "~icons/lucide/pencil"
+import IconUngroup from "~icons/lucide/ungroup"
+import { journal_card_download, journal_card_delete, journal_card_edit, journal_card_split } from "@/paraglide/messages"
 
 interface AccentColor {
   bg: string
@@ -105,12 +122,14 @@ interface Props {
   studentCount?: number
   selectionMode?: boolean
   selected?: boolean
+  isMerged?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   studentCount: 0,
   selectionMode: false,
   selected: false,
+  isMerged: false,
 })
 
 const emit = defineEmits<{
@@ -118,6 +137,8 @@ const emit = defineEmits<{
   'toggle-select': []
   download: []
   delete: []
+  edit: []
+  split: []
 }>()
 
 const isMenuOpen = ref(false)
