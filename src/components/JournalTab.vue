@@ -100,23 +100,6 @@
             Скачать журнал
           </button>
           <button
-            type="button"
-            :disabled="isViewOnly"
-            class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-            @click="isToolsMenuOpen = false; onUploadClick()"
-          >
-            <IconArrowUpToLine class="w-4 h-4" />
-            Загрузить журнал
-          </button>
-          <button
-            type="button"
-            class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3"
-            @click="isToolsMenuOpen = false; onShareClick()"
-          >
-            <IconShare class="w-4 h-4" />
-            Поделиться
-          </button>
-          <button
             id="recalc-button"
             type="button"
             :disabled="isViewOnly"
@@ -565,8 +548,7 @@ import IconClock from "~icons/lucide/clock";
 import IconCircleX from "~icons/lucide/circle-x";
 import IconLockOpen from "~icons/lucide/lock-open";
 import IconArrowDownToLine from "~icons/lucide/arrow-down-to-line";
-import IconArrowUpToLine from "~icons/lucide/arrow-up-to-line";
-import IconShare from "~icons/lucide/share-2";
+
 import IconTriangleAlert from "~icons/lucide/triangle-alert";
 import IconPaperclip from "~icons/lucide/paperclip";
 import IconMoreVertical from "~icons/lucide/more-vertical";
@@ -681,8 +663,7 @@ const emit = defineEmits<{
   "close-journal": [];
   "open-journal": [];
   download: [];
-  upload: [];
-  share: [];
+
   "save-journal-settings": [any];
 }>();
 
@@ -2224,14 +2205,7 @@ const onCloseJournalClick = () => {
 };
 const onOpenJournalClick = () => emit("open-journal");
 const onDownloadClick = () => emit("download");
-const onUploadClick = () => {
-  if (isViewOnly.value) {
-    notifyViewOnly();
-    return;
-  }
-  emit("upload");
-};
-const onShareClick = () => emit("share");
+
 const onRecalcClick = () => {
   if (isViewOnly.value) {
     notifyViewOnly();

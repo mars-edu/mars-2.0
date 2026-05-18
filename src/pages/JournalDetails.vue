@@ -78,7 +78,7 @@
                   @close-journal="handleCloseJournal"
                   @open-journal="handleOpenJournal"
                   @download="onDownloadClick"
-                  @upload="onUploadClick"
+
                   @show-floating-row="showFloatingRow"
                   @open-date-focus="openDateFocus"
                   @update-students="updateStudents"
@@ -277,18 +277,6 @@
       @submit="handleRupSubmit"
     />
 
-    <!-- Journal Import Confirmation Dialog -->
-    <JournalImportConfirmDialog
-      v-if="isImportDialogOpened && importPreparedData && importMapping"
-      v-model:opened="isImportDialogOpened"
-      v-model:overwrite-mode="importOverwriteMode"
-      :stats="importPreparedData.stats"
-      :warnings="importPreparedData.warnings"
-      :unmatched-students="importMapping.unmatchedStudents"
-      :unmatched-dates="importMapping.unmatchedDates"
-      @confirm="onImportConfirm"
-      @cancel="onImportCancel"
-    />
 
 
     <!-- Student Edit Popover -->
@@ -336,7 +324,7 @@ import { useConvexQuery } from "convex-vue";
 import { api } from "@convex/_generated/api";
 import EditStudentButton from "@/components/EditStudentButton.vue";
 import { storeToRefs } from "pinia";
-import JournalImportConfirmDialog from "@/components/JournalImportConfirmDialog.vue";
+
 import { useJournalOpenClose } from "@/composables/useJournalOpenClose";
 import { useJournalExportImport } from "@/composables/useJournalExportImport";
 import { useStudentStore } from "@/stores/studentStore";
@@ -664,15 +652,7 @@ const debugCopied = ref(false);
 
 // Export/Import composable
 const {
-  isImportDialogOpened,
-  importOverwriteMode,
-  importPreparedData,
-  importMapping,
-  importResult,
   onDownloadClick,
-  onUploadClick,
-  onImportConfirm,
-  onImportCancel,
 } = useJournalExportImport(journalId, currentJournal, journalTabRef);
 
 const openDateFocus = (
