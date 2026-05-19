@@ -125,6 +125,7 @@ export interface ReplaceJournalData {
 const props = defineProps<{
   data?: ReplaceJournalData;
   isLoading?: boolean;
+  excludedTeacherIds?: string[];
 }>();
 
 const emit = defineEmits<{
@@ -134,7 +135,11 @@ const emit = defineEmits<{
 
 const teacherStore = useTeacherStore();
 const { teacherSelectOptions } = storeToRefs(teacherStore);
-const teacherOptions = computed(() => teacherSelectOptions.value);
+const teacherOptions = computed(() => {
+  const excluded = new Set(props.excludedTeacherIds ?? []);
+  if (excluded.size === 0) return teacherSelectOptions.value;
+  return teacherSelectOptions.value.filter((o) => !excluded.has(o.value));
+});
 
 const educationScheduleStore = useEducationScheduleStore();
 const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);

@@ -314,6 +314,7 @@
 
     <ReplaceJournalPopover
       :is-loading="isReplacingJournals"
+      :excluded-teacher-ids="selectedJournalTeacherIds"
       @save="handleReplaceJournals"
       @cancel="handleReplaceCancel"
     />
@@ -911,6 +912,15 @@ type SelectionAction = "download" | "close" | "open" | "replace" | "delete" | "m
 const isSelectionMode = ref(false);
 const selectionAction = ref<SelectionAction>("download");
 const selectedJournalIds = ref(new Set<string>());
+
+const selectedJournalTeacherIds = computed(() => {
+  const ids: string[] = [];
+  for (const id of selectedJournalIds.value) {
+    const event = calendarStore.getEventById(id);
+    if (event?.teacherId) ids.push(event.teacherId);
+  }
+  return [...new Set(ids)];
+});
 
 const selectionDoneText = computed(() => {
   if (selectionAction.value === "close") return journal_action_close();
