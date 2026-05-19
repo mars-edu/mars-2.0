@@ -78,10 +78,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useAttrs, nextTick, onUnmounted } from "vue";
+import { computed, ref, useAttrs, nextTick } from "vue";
 import IconChevronDown from "~icons/lucide/chevron-down";
 import IconSearch from "~icons/lucide/search";
 import IconCheck from "~icons/lucide/check";
+import { useAnchoredDropdown } from "@/composables/useAnchoredDropdown";
 
 defineOptions({ inheritAttrs: false });
 
@@ -112,7 +113,7 @@ const searchQuery = ref("");
 const searchInput = ref<HTMLInputElement | null>(null);
 const rootRef = ref<HTMLElement | null>(null);
 const triggerRef = ref<HTMLButtonElement | null>(null);
-const dropdownStyle = ref<Record<string, string>>({});
+const { dropdownStyle } = useAnchoredDropdown(triggerRef, isOpened, { maxHeight: 300, matchWidth: true, zIndex: 99999 });
 
 const triggerId = computed(() => props.id || `select-trigger-${Math.random().toString(36).substr(2, 9)}`);
 
@@ -144,51 +145,19 @@ const filteredOptions = computed(() => {
   return props.options.filter((o) => o.text.toLowerCase().includes(query));
 });
 
-const DROPDOWN_MAX_HEIGHT = 300;
-
-const computeDropdownStyle = () => {
-  const el = triggerRef.value;
-  if (!el) return;
-  const rect = el.getBoundingClientRect();
-  const spaceBelow = window.innerHeight - rect.bottom;
-  const showAbove = spaceBelow < DROPDOWN_MAX_HEIGHT + 8 && rect.top > DROPDOWN_MAX_HEIGHT;
-  dropdownStyle.value = {
-    position: "fixed",
-    left: `${rect.left}px`,
-    width: `${rect.width}px`,
-    zIndex: "99999",
-    ...(showAbove
-      ? { bottom: `${window.innerHeight - rect.top + 8}px` }
-      : { top: `${rect.bottom + 8}px` }),
-  };
-};
-
 const open = () => {
   if (props.disabled) return;
   emit("before-open");
   isOpened.value = true;
-  nextTick(() => {
-    computeDropdownStyle();
-    searchInput.value?.focus();
-    window.addEventListener("resize", computeDropdownStyle);
-    window.addEventListener("scroll", computeDropdownStyle, true);
-  });
+  nextTick(() => searchInput.value?.focus());
 };
 
 const close = () => {
   if (!isOpened.value) return;
   isOpened.value = false;
   searchQuery.value = "";
-  window.removeEventListener("resize", computeDropdownStyle);
-  window.removeEventListener("scroll", computeDropdownStyle, true);
   emit("after-close");
 };
-
-onUnmounted(() => {
-  isOpened.value = false;
-  window.removeEventListener("resize", computeDropdownStyle);
-  window.removeEventListener("scroll", computeDropdownStyle, true);
-});
 
 const toggle = () => {
   if (isOpened.value) close();

@@ -12,6 +12,9 @@ export const createSubstitution = mutation({
     toUserId: v.id("users"),
     startDate: v.string(),
     endDate: v.string(),
+    startTime: v.optional(v.string()),
+    endTime: v.optional(v.string()),
+    isPrimary: v.optional(v.boolean()),
     reason: v.optional(v.string()),
     serviceLetterNumber: v.optional(v.string()),
     createdBy: v.id("users"),
@@ -24,14 +27,8 @@ export const createSubstitution = mutation({
     }
 
     // Get discipline name from class9Items
-    let disciplineName = "Неизвестная дисциплина";
-    if (journal.disciplineId) {
-      const class9Items = await ctx.db.query("class9Items").collect();
-      const class9Item = class9Items.find((c) => c._id === journal.disciplineId);
-      if (class9Item) {
-        disciplineName = class9Item.learningOutcome;
-      }
-    }
+    const class9Item = journal.disciplineId ? await ctx.db.get(journal.disciplineId) : null;
+    const disciplineName = class9Item?.learningOutcome ?? "Неизвестная дисциплина";
 
     // Get semester info
     const semester = await ctx.db.get(journal.semesterId);
@@ -52,6 +49,9 @@ export const createSubstitution = mutation({
       toUserId: args.toUserId,
       startDate: args.startDate,
       endDate: args.endDate,
+      startTime: args.startTime,
+      endTime: args.endTime,
+      isPrimary: args.isPrimary,
       status: "pending",
       reason: args.reason,
       serviceLetterNumber: args.serviceLetterNumber,
@@ -62,8 +62,7 @@ export const createSubstitution = mutation({
     });
 
     // Create notification for the receiving teacher
-    const fromTeachers = await ctx.db.query("teachers").collect();
-    const fromTeacher = fromTeachers.find((t) => t._id === args.fromTeacherId);
+    const fromTeacher = await ctx.db.get(args.fromTeacherId as any);
     const fromTeacherName = fromTeacher
       ? `${fromTeacher.surname} ${fromTeacher.firstName} ${fromTeacher.patronymic}`
       : "Неизвестный преподаватель";
@@ -82,6 +81,83 @@ export const createSubstitution = mutation({
     });
 
     return substitutionId;
+  },
+});
+
+/**
+ * Create substitutions for multiple journals in one mutation (single roundtrip).
+ * Hoists teacher/semester lookups outside the per-journal loop.
+ */
+export const createBulkSubstitutions = mutation({
+  args: {
+    journalIds: v.array(v.id("journals")),
+    fromTeacherId: v.string(),
+    toTeacherId: v.string(),
+    toUserId: v.id("users"),
+    startDate: v.string(),
+    endDate: v.string(),
+    startTime: v.optional(v.string()),
+    endTime: v.optional(v.string()),
+    isPrimary: v.optional(v.boolean()),
+    reason: v.optional(v.string()),
+    serviceLetterNumber: v.optional(v.string()),
+    createdBy: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const fromTeacher = await ctx.db.get(args.fromTeacherId as any);
+    const fromTeacherName = fromTeacher
+      ? `${fromTeacher.surname} ${fromTeacher.firstName} ${fromTeacher.patronymic}`
+      : "Неизвестный преподаватель";
+
+    const now = Date.now();
+    const substitutionIds: string[] = [];
+
+    for (const journalId of args.journalIds) {
+      const journal = await ctx.db.get(journalId);
+      if (!journal) continue;
+
+      const class9Item = journal.disciplineId ? await ctx.db.get(journal.disciplineId) : null;
+      const disciplineName = class9Item?.learningOutcome ?? "Неизвестная дисциплина";
+      const semester = await ctx.db.get(journal.semesterId);
+
+      const substitutionId = await ctx.db.insert("substitutions", {
+        journalId,
+        fromTeacherId: args.fromTeacherId,
+        toTeacherId: args.toTeacherId,
+        toUserId: args.toUserId,
+        startDate: args.startDate,
+        endDate: args.endDate,
+        startTime: args.startTime,
+        endTime: args.endTime,
+        isPrimary: args.isPrimary,
+        status: "pending",
+        reason: args.reason,
+        serviceLetterNumber: args.serviceLetterNumber,
+        journalSnapshot: {
+          disciplineName,
+          groupName: journal.groupName,
+          course: undefined,
+          semester: semester?.semesterDefinitionId,
+        },
+        createdBy: args.createdBy,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      await ctx.db.insert("notifications", {
+        userId: args.toUserId,
+        type: "substitution",
+        status: "unread",
+        title: "Установлена замена",
+        message: `Журнал "${disciplineName}" преподавателя ${fromTeacherName} переведен в период с ${args.startDate} по ${args.endDate}${args.reason ? ` на основании: ${args.reason}` : ""}.`,
+        metadata: { substitutionId, journalId },
+        createdAt: now,
+      });
+
+      substitutionIds.push(substitutionId);
+    }
+
+    return substitutionIds;
   },
 });
 

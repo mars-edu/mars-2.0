@@ -378,6 +378,7 @@
   "journal_settings_calc_manual": "Manual",
   "journal_settings_account_assigned": "Assigned days only",
   "journal_settings_account_all": "All days",
+  "journal_card_add_substitute": "Add substitute",
   "journal_card_download": "Download journal",
   "journal_card_delete": "Delete journal",
   "journal_card_action_open": "Open journal",

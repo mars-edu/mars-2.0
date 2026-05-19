@@ -1,6 +1,6 @@
 <template>
   <div
-    class="group relative overflow-hidden rounded-[20px] bg-card border border-transparent shadow-sm transition-all duration-200 select-none flex flex-col p-4 gap-3"
+    class="group relative rounded-[20px] bg-card border border-transparent shadow-sm transition-all duration-200 select-none flex flex-col p-4 gap-3"
     :class="[
       disabled 
         ? 'opacity-40 grayscale cursor-not-allowed border-border' 
@@ -29,21 +29,24 @@
       <!-- Per-card action menu (normal mode, visible on hover) -->
       <div v-else class="relative" @click.stop>
         <button
+          ref="menuButtonRef"
           :class="isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
           class="p-1.5 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-          @click="isMenuOpen = !isMenuOpen"
+          @click="openMenu"
         >
           <IconMoreVertical class="w-4 h-4" />
         </button>
+        <Teleport to="body">
         <!-- Backdrop -->
         <div
           v-if="isMenuOpen"
-          class="fixed inset-0 z-40"
+          class="fixed inset-0 z-[9998]"
           @click="isMenuOpen = false"
         />
         <div
           v-if="isMenuOpen"
-          class="absolute right-0 top-full mt-1 w-48 bg-card rounded-2xl shadow-2xl border border-border py-2 z-50"
+          class="fixed w-48 bg-card rounded-2xl shadow-2xl border border-border py-2 z-[9999]"
+          :style="menuStyle"
         >
           <button
             class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-2"
@@ -62,6 +65,13 @@
           </button>
           <button
             class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-2"
+            @click="emit('substitute'); isMenuOpen = false"
+          >
+            <IconUserRoundCog class="w-4 h-4" />
+            {{ journal_card_add_substitute() }}
+          </button>
+          <button
+            class="w-full text-left px-4 py-2.5 text-sm font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-2"
             @click="emit('download'); isMenuOpen = false"
           >
             <IconDownload class="w-4 h-4" />
@@ -76,6 +86,7 @@
             {{ journal_card_delete() }}
           </button>
         </div>
+        </Teleport>
       </div>
     </div>
 
@@ -112,7 +123,9 @@ import IconDownload from "~icons/lucide/download"
 import IconTrash2 from "~icons/lucide/trash-2"
 import IconPencil from "~icons/lucide/pencil"
 import IconUngroup from "~icons/lucide/ungroup"
-import { journal_card_download, journal_card_delete, journal_card_edit, journal_card_split } from "@/paraglide/messages"
+import IconUserRoundCog from "~icons/lucide/user-round-cog"
+import { journal_card_download, journal_card_delete, journal_card_edit, journal_card_split, journal_card_add_substitute } from "@/paraglide/messages"
+import { useAnchoredDropdown } from "@/composables/useAnchoredDropdown"
 
 interface AccentColor {
   bg: string
@@ -146,10 +159,17 @@ const emit = defineEmits<{
   delete: []
   edit: []
   split: []
+  substitute: []
 }>()
 
 const isMenuOpen = ref(false)
+const menuButtonRef = ref<HTMLElement | null>(null)
+const { dropdownStyle: menuStyle } = useAnchoredDropdown(menuButtonRef, isMenuOpen, { align: 'right' })
 const titleInitial = computed(() => props.title.charAt(0).toUpperCase())
+
+function openMenu() {
+  isMenuOpen.value = !isMenuOpen.value
+}
 
 const handleClick = () => {
   if (props.selectionMode) {

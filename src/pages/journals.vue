@@ -290,6 +290,7 @@
                 @delete="handleCardDelete(journal.id)"
                 @edit="onEditJournal(journal.id)"
                 @split="onSplitJournal(journal.id)"
+                @substitute="handleCardSubstitute(journal.id)"
               />
               <div
                 v-if="isDataReady && filteredByTab.length === 0"
@@ -1168,6 +1169,12 @@ function handleCardDelete(journalId: string) {
   onSelectionDone()
 }
 
+function handleCardSubstitute(journalId: string) {
+  selectedJournalIds.value = new Set([journalId])
+  selectionAction.value = 'replace'
+  f7.popover.open("#replace-journal-popover")
+}
+
 function onSelectionDone() {
   if (selectedJournalIds.value.size === 0) {
     f7.dialog.alert(journal_select_one());
@@ -1349,27 +1356,39 @@ async function handleReplaceJournals(data: ReplaceJournalData) {
   try {
     isReplacingJournals.value = true;
 
-    // Get selected journal IDs
     const ids = Array.from(selectedJournalIds.value);
+    const currentUserId = userStore.currentUser?.id;
+    if (!currentUserId) throw new Error("Пользователь не авторизован");
 
-    // TODO: Implement the actual replace logic here
-    // This would typically involve calling a backend API to replace journals
-    // with the specified teacher, period, and reason
+    // Resolve the substitute teacher record
+    const toTeacher = teacherStore.getTeacherById(data.teacherId);
+    if (!toTeacher?.userId) throw new Error("Преподаватель на замену не найден");
 
-    console.log('Replacing journals:', {
-      journalIds: ids,
-      teacherId: data.teacherId,
+    // Resolve the current (from) teacher — selectedTeacherId may be a teacher record ID or user ID
+    const selectedTeacherId = calendarStore.selectedTeacherId;
+    let fromTeacherId: string | undefined;
+    if (selectedTeacherId) {
+      fromTeacherId = teacherStore.getTeacherById(selectedTeacherId)?.id
+        ?? teacherStore.getTeacherByUserId(selectedTeacherId)?.id;
+    }
+    fromTeacherId ??= teacherStore.getTeacherByUserId(currentUserId)?.id;
+    if (!fromTeacherId) throw new Error("Текущий преподаватель не определён");
+
+    await convex.mutation(api.substitutions.mutations.createBulkSubstitutions, {
+      journalIds: ids as Id<"journals">[],
+      fromTeacherId,
+      toTeacherId: data.teacherId,
+      toUserId: toTeacher.userId as Id<"users">,
       startDate: data.startDate,
       endDate: data.endDate,
-      reason: data.reason
+      startTime: data.startTime,
+      endTime: data.endTime,
+      isPrimary: data.isPrimary,
+      reason: data.reason || undefined,
+      createdBy: currentUserId as Id<"users">,
     });
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
     isReplacingJournals.value = false;
-
-    // Close the popover
     f7.popover.close("#replace-journal-popover");
 
     f7.toast.create({

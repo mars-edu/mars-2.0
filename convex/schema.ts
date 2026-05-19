@@ -747,6 +747,9 @@ export default defineSchema({
     toUserId: v.id("users"), // User account of receiving teacher
     startDate: v.string(), // ISO date - substitution period start
     endDate: v.string(), // ISO date - substitution period end
+    startTime: v.optional(v.string()), // Optional time restriction start (HH:mm)
+    endTime: v.optional(v.string()), // Optional time restriction end (HH:mm)
+    isPrimary: v.optional(v.boolean()), // Whether substitute becomes primary teacher
     status: v.union(
       v.literal("pending"), // Awaiting acceptance
       v.literal("accepted"), // Teacher accepted

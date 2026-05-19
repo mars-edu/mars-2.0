@@ -6,15 +6,16 @@
     style="width: 500px !important"
     :is-dirty="isDirty"
     :on-closed="resetLocalData"
+    :close-by-outside-click="false"
   >
     <div class="replace-journal-popover bg-card text-card-foreground">
       <PopoverHeader
         title="Добавить замену"
         :on-cancel="requestClose"
       />
-      <div class="p-4 space-y-4">
+      <div class="px-6 py-3 space-y-2">
         <Select
-          label="Укажите преподавателя"
+          label="Преподаватель на замену"
           placeholder="Выберите преподавателя"
           v-model="localData.teacherId"
           :options="teacherOptions"
@@ -22,27 +23,22 @@
           searchable
         />
 
-        <div class="flex justify-between items-center">
-          <span class="text-sm text-foreground">Начало</span>
-          <div class="w-1/2">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm font-normal mb-1 block text-muted-foreground">Дата с</label>
             <f7-input
-              class="text-right"
               type="datepicker"
-              placeholder="Дата"
+              placeholder="дд.мм.гггг"
               v-model:value="localData.startDate"
               readonly
               :calendar-params="DATE_PICKER_PARAMS"
             ></f7-input>
           </div>
-        </div>
-
-        <div class="flex justify-between items-center">
-          <span class="text-sm text-foreground">Конец</span>
-          <div class="w-1/2">
+          <div>
+            <label class="text-sm font-normal mb-1 block text-muted-foreground">Дата по</label>
             <f7-input
-              class="text-right"
               type="datepicker"
-              placeholder="Дата"
+              placeholder="дд.мм.гггг"
               v-model:value="localData.endDate"
               readonly
               :calendar-params="DATE_PICKER_PARAMS"
@@ -50,24 +46,50 @@
           </div>
         </div>
 
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm font-normal mb-1 block text-muted-foreground">Время с <span class="font-normal text-muted-foreground">(необяз.)</span></label>
+            <f7-input
+              type="time"
+              placeholder="чч:мм"
+              v-model:value="localData.startTime"
+            ></f7-input>
+          </div>
+          <div>
+            <label class="text-sm font-normal mb-1 block text-muted-foreground">Время по <span class="font-normal text-muted-foreground">(необяз.)</span></label>
+            <f7-input
+              type="time"
+              placeholder="чч:мм"
+              v-model:value="localData.endTime"
+            ></f7-input>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 px-4 py-2.5 bg-muted/50 rounded-xl border border-input">
+          <Switch v-model="localData.isPrimary" />
+          <span class="text-sm text-foreground">Сделать выбранного преподавателя основным</span>
+        </div>
+
         <div>
-          <label class="text-sm font-normal mb-1 block text-foreground">
-            Укажите основание
+          <label class="text-sm font-normal mb-1 block text-muted-foreground">
+            Основание
           </label>
           <textarea
             v-model="localData.reason"
-            placeholder="Например: на основании служебного письма от 16.01.2025 года"
-            rows="4"
-            class="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground resize-vertical"
+            placeholder="Например: на основании выхода на больничный..."
+            rows="3"
+            class="w-full px-4 py-2.5 text-sm bg-muted/50 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-foreground resize-none transition-all"
           ></textarea>
         </div>
       </div>
 
       <PopoverFooter
+        :on-cancel="requestClose"
         :on-save="onSave"
         :disabled="!isFormValid"
         :is-loading="isLoading"
-        save-text="Добавить"
+        cancel-text="Отмена"
+        save-text="Отправить на модерацию"
       />
     </div>
   </GuardedPopover>
@@ -80,6 +102,7 @@ import dayjs from "dayjs";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import Select from "@/components/ui/Select.vue";
+import Switch from "@/components/ui/Switch.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { getDatePickerParams, DATE_STORAGE_FORMAT } from "@/constants/calendar";
@@ -91,7 +114,10 @@ export interface ReplaceJournalData {
   teacherId: string;
   startDate: string;
   endDate: string;
+  startTime?: string;
+  endTime?: string;
   reason: string;
+  isPrimary: boolean;
 }
 
 const props = defineProps<{
@@ -113,20 +139,29 @@ const localData = ref<{
   teacherId: string;
   startDate: Date[];
   endDate: Date[];
+  startTime: string;
+  endTime: string;
   reason: string;
+  isPrimary: boolean;
 }>({
-  teacherId: props.data?.teacherId || "",
+  teacherId: props.data?.teacherId ?? "",
   startDate: props.data?.startDate ? [dayjs(props.data.startDate).toDate()] : [],
   endDate: props.data?.endDate ? [dayjs(props.data.endDate).toDate()] : [],
-  reason: props.data?.reason || "",
+  startTime: props.data?.startTime ?? "",
+  endTime: props.data?.endTime ?? "",
+  reason: props.data?.reason ?? "",
+  isPrimary: props.data?.isPrimary ?? false,
 });
 
 const resetLocalData = () => {
   localData.value = {
-    teacherId: props.data?.teacherId || "",
+    teacherId: props.data?.teacherId ?? "",
     startDate: props.data?.startDate ? [dayjs(props.data.startDate).toDate()] : [],
     endDate: props.data?.endDate ? [dayjs(props.data.endDate).toDate()] : [],
-    reason: props.data?.reason || "",
+    startTime: props.data?.startTime ?? "",
+    endTime: props.data?.endTime ?? "",
+    reason: props.data?.reason ?? "",
+    isPrimary: props.data?.isPrimary ?? false,
   };
 };
 
@@ -143,7 +178,10 @@ const isDirty = () => {
     localData.value.teacherId !== (props.data?.teacherId || "") ||
     startDate !== (props.data?.startDate || "") ||
     endDate !== (props.data?.endDate || "") ||
-    localData.value.reason !== (props.data?.reason || "")
+    localData.value.startTime !== (props.data?.startTime || "") ||
+    localData.value.endTime !== (props.data?.endTime || "") ||
+    localData.value.reason !== (props.data?.reason || "") ||
+    localData.value.isPrimary !== (props.data?.isPrimary || false)
   );
 };
 
@@ -172,7 +210,10 @@ const onSave = () => {
     endDate: localData.value.endDate.length > 0
       ? dayjs(localData.value.endDate[0]).format(DATE_STORAGE_FORMAT)
       : "",
+    startTime: localData.value.startTime || undefined,
+    endTime: localData.value.endTime || undefined,
     reason: localData.value.reason,
+    isPrimary: localData.value.isPrimary,
   };
 
   emit("save", saveData);
