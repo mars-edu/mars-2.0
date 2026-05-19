@@ -85,14 +85,9 @@ export const createSubstitution = mutation({
   },
 });
 
-/**
- * Create substitutions for multiple journals in one mutation (single roundtrip).
- * Hoists teacher/semester lookups outside the per-journal loop.
- */
 export const createBulkSubstitutions = mutation({
   args: {
     journalIds: v.array(v.id("journals")),
-    fromTeacherId: v.string(),
     toTeacherId: v.string(),
     toUserId: v.id("users"),
     startDate: v.string(),
@@ -105,11 +100,6 @@ export const createBulkSubstitutions = mutation({
     createdBy: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const fromTeacher = await ctx.db.get(args.fromTeacherId as Id<"teachers">);
-    const fromTeacherName = fromTeacher
-      ? `${fromTeacher.surname} ${fromTeacher.firstName} ${fromTeacher.patronymic}`
-      : "Неизвестный преподаватель";
-
     const now = Date.now();
     const substitutionIds: string[] = [];
 
@@ -117,13 +107,26 @@ export const createBulkSubstitutions = mutation({
       const journal = await ctx.db.get(journalId);
       if (!journal) continue;
 
-      const class9Item = journal.disciplineId ? await ctx.db.get(journal.disciplineId as Id<"class9Items">) : null;
+      const event = journal.calendarEventId
+        ? await ctx.db.get(journal.calendarEventId as Id<"calendarEvents">)
+        : null;
+      if (!event?.teacherId) throw new Error(`Не удалось определить преподавателя для журнала ${journalId}`);
+      const fromTeacherId = event.teacherId;
+
+      const [class9Item, semester, fromTeacher] = await Promise.all([
+        journal.disciplineId ? ctx.db.get(journal.disciplineId as Id<"class9Items">) : null,
+        ctx.db.get(journal.semesterId),
+        ctx.db.get(fromTeacherId as Id<"teachers">),
+      ]);
+
       const disciplineName = class9Item?.learningOutcome ?? "Неизвестная дисциплина";
-      const semester = await ctx.db.get(journal.semesterId);
+      const fromTeacherName = fromTeacher
+        ? `${fromTeacher.surname} ${fromTeacher.firstName} ${fromTeacher.patronymic}`
+        : "Неизвестный преподаватель";
 
       const substitutionId = await ctx.db.insert("substitutions", {
         journalId,
-        fromTeacherId: args.fromTeacherId,
+        fromTeacherId,
         toTeacherId: args.toTeacherId,
         toUserId: args.toUserId,
         startDate: args.startDate,

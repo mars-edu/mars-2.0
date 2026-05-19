@@ -1360,23 +1360,11 @@ async function handleReplaceJournals(data: ReplaceJournalData) {
     const currentUserId = userStore.currentUser?.id;
     if (!currentUserId) throw new Error("Пользователь не авторизован");
 
-    // Resolve the substitute teacher record
     const toTeacher = teacherStore.getTeacherById(data.teacherId);
     if (!toTeacher?.userId) throw new Error("Преподаватель на замену не найден");
 
-    // Resolve the current (from) teacher — selectedTeacherId may be a teacher record ID or user ID
-    const selectedTeacherId = calendarStore.selectedTeacherId;
-    let fromTeacherId: string | undefined;
-    if (selectedTeacherId) {
-      fromTeacherId = teacherStore.getTeacherById(selectedTeacherId)?.id
-        ?? teacherStore.getTeacherByUserId(selectedTeacherId)?.id;
-    }
-    fromTeacherId ??= teacherStore.getTeacherByUserId(currentUserId)?.id;
-    if (!fromTeacherId) throw new Error("Текущий преподаватель не определён");
-
     await convex.mutation(api.substitutions.mutations.createBulkSubstitutions, {
       journalIds: ids as Id<"journals">[],
-      fromTeacherId,
       toTeacherId: data.teacherId,
       toUserId: toTeacher.userId as Id<"users">,
       startDate: data.startDate,

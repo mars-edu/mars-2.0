@@ -13,7 +13,7 @@
         title="Добавить замену"
         :on-cancel="requestClose"
       />
-      <div class="px-6 py-3 space-y-2">
+      <div class="px-8 pb-8 space-y-4">
         <Select
           label="Преподаватель на замену"
           placeholder="Выберите преподавателя"
@@ -48,20 +48,21 @@
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="text-sm font-normal mb-1 block text-muted-foreground">Время с <span class="font-normal text-muted-foreground">(необяз.)</span></label>
-            <f7-input
-              type="time"
-              placeholder="чч:мм"
-              v-model:value="localData.startTime"
-            ></f7-input>
+            <label class="text-sm font-normal mb-1 block text-muted-foreground">Время с</label>
+            <Select
+              placeholder="Начало"
+              v-model="localData.startScheduleId"
+              :options="startTimeOptions"
+              @update:modelValue="onStartTimeChange"
+            />
           </div>
           <div>
-            <label class="text-sm font-normal mb-1 block text-muted-foreground">Время по <span class="font-normal text-muted-foreground">(необяз.)</span></label>
-            <f7-input
-              type="time"
-              placeholder="чч:мм"
-              v-model:value="localData.endTime"
-            ></f7-input>
+            <label class="text-sm font-normal mb-1 block text-muted-foreground">Время по</label>
+            <Select
+              placeholder="Конец"
+              v-model="localData.endScheduleId"
+              :options="endTimeOptions"
+            />
           </div>
         </div>
 
@@ -97,7 +98,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-import { f7Popover, f7Input } from "framework7-vue";
+import { f7Input } from "framework7-vue";
 import dayjs from "dayjs";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
@@ -105,10 +106,11 @@ import Select from "@/components/ui/Select.vue";
 import Switch from "@/components/ui/Switch.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { useTeacherStore } from "@/stores/teacherStore";
+import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { getDatePickerParams, DATE_STORAGE_FORMAT } from "@/constants/calendar";
+import { storeToRefs } from "pinia";
 
 const DATE_PICKER_PARAMS = getDatePickerParams();
-import { storeToRefs } from "pinia";
 
 export interface ReplaceJournalData {
   teacherId: string;
@@ -132,77 +134,102 @@ const emit = defineEmits<{
 
 const teacherStore = useTeacherStore();
 const { teacherSelectOptions } = storeToRefs(teacherStore);
-
 const teacherOptions = computed(() => teacherSelectOptions.value);
 
-const localData = ref<{
-  teacherId: string;
-  startDate: Date[];
-  endDate: Date[];
-  startTime: string;
-  endTime: string;
-  reason: string;
-  isPrimary: boolean;
-}>({
+const educationScheduleStore = useEducationScheduleStore();
+const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
+
+const startTimeOptions = computed(() =>
+  getActiveYearSchedules.value.map((s) => ({ value: s.id, text: s.startTime }))
+);
+
+const endTimeOptions = computed(() => {
+  const schedules = getActiveYearSchedules.value;
+  const startIdx = schedules.findIndex((s) => s.id === localData.value.startScheduleId);
+  const from = startIdx === -1 ? 0 : startIdx;
+  return schedules.slice(from).map((s) => ({ value: s.id, text: s.endTime }));
+});
+
+function defaultStartId() {
+  return getActiveYearSchedules.value[0]?.id ?? "";
+}
+
+function defaultEndId() {
+  const schedules = getActiveYearSchedules.value;
+  return schedules[schedules.length - 1]?.id ?? "";
+}
+
+const localData = ref({
   teacherId: props.data?.teacherId ?? "",
-  startDate: props.data?.startDate ? [dayjs(props.data.startDate).toDate()] : [],
-  endDate: props.data?.endDate ? [dayjs(props.data.endDate).toDate()] : [],
-  startTime: props.data?.startTime ?? "",
-  endTime: props.data?.endTime ?? "",
+  startDate: props.data?.startDate ? [dayjs(props.data.startDate).toDate()] : [] as Date[],
+  endDate: props.data?.endDate ? [dayjs(props.data.endDate).toDate()] : [] as Date[],
+  startScheduleId: defaultStartId(),
+  endScheduleId: defaultEndId(),
   reason: props.data?.reason ?? "",
   isPrimary: props.data?.isPrimary ?? false,
 });
+
+// Set defaults once schedules load (in case store wasn't ready at init)
+watch(getActiveYearSchedules, (schedules) => {
+  if (schedules.length > 0 && !localData.value.startScheduleId) {
+    localData.value.startScheduleId = schedules[0].id;
+    localData.value.endScheduleId = schedules[schedules.length - 1].id;
+  }
+}, { immediate: false });
+
+function onStartTimeChange(newStartId: string) {
+  const schedules = getActiveYearSchedules.value;
+  const startIdx = schedules.findIndex((s) => s.id === newStartId);
+  const endIdx = schedules.findIndex((s) => s.id === localData.value.endScheduleId);
+  if (endIdx !== -1 && endIdx < startIdx) {
+    localData.value.endScheduleId = newStartId;
+  }
+}
 
 const resetLocalData = () => {
   localData.value = {
     teacherId: props.data?.teacherId ?? "",
     startDate: props.data?.startDate ? [dayjs(props.data.startDate).toDate()] : [],
     endDate: props.data?.endDate ? [dayjs(props.data.endDate).toDate()] : [],
-    startTime: props.data?.startTime ?? "",
-    endTime: props.data?.endTime ?? "",
+    startScheduleId: defaultStartId(),
+    endScheduleId: defaultEndId(),
     reason: props.data?.reason ?? "",
     isPrimary: props.data?.isPrimary ?? false,
   };
 };
 
 const isDirty = () => {
-  const startDate =
-    localData.value.startDate.length > 0
-      ? dayjs(localData.value.startDate[0]).format(DATE_STORAGE_FORMAT)
-      : "";
-  const endDate =
-    localData.value.endDate.length > 0
-      ? dayjs(localData.value.endDate[0]).format(DATE_STORAGE_FORMAT)
-      : "";
+  const startDate = localData.value.startDate.length > 0
+    ? dayjs(localData.value.startDate[0]).format(DATE_STORAGE_FORMAT)
+    : "";
+  const endDate = localData.value.endDate.length > 0
+    ? dayjs(localData.value.endDate[0]).format(DATE_STORAGE_FORMAT)
+    : "";
   return (
     localData.value.teacherId !== (props.data?.teacherId || "") ||
     startDate !== (props.data?.startDate || "") ||
     endDate !== (props.data?.endDate || "") ||
-    localData.value.startTime !== (props.data?.startTime || "") ||
-    localData.value.endTime !== (props.data?.endTime || "") ||
     localData.value.reason !== (props.data?.reason || "") ||
     localData.value.isPrimary !== (props.data?.isPrimary || false)
   );
 };
 
-const isFormValid = computed(() => {
-  return localData.value.teacherId.trim().length > 0;
-});
+const isFormValid = computed(() => localData.value.teacherId.trim().length > 0);
 
 watch(
   () => props.data,
-  (newData) => {
-    if (newData) {
-      resetLocalData();
-    }
-  },
+  (newData) => { if (newData) resetLocalData(); },
   { deep: true }
 );
 
 const onSave = () => {
   if (!isFormValid.value) return;
 
-  const saveData: ReplaceJournalData = {
+  const schedules = getActiveYearSchedules.value;
+  const startSchedule = schedules.find((s) => s.id === localData.value.startScheduleId);
+  const endSchedule = schedules.find((s) => s.id === localData.value.endScheduleId);
+
+  emit("save", {
     teacherId: localData.value.teacherId,
     startDate: localData.value.startDate.length > 0
       ? dayjs(localData.value.startDate[0]).format(DATE_STORAGE_FORMAT)
@@ -210,18 +237,11 @@ const onSave = () => {
     endDate: localData.value.endDate.length > 0
       ? dayjs(localData.value.endDate[0]).format(DATE_STORAGE_FORMAT)
       : "",
-    startTime: localData.value.startTime || undefined,
-    endTime: localData.value.endTime || undefined,
+    startTime: startSchedule?.startTime,
+    endTime: endSchedule?.endTime,
     reason: localData.value.reason,
     isPrimary: localData.value.isPrimary,
-  };
-
-  emit("save", saveData);
-};
-
-const onCancel = () => {
-  resetLocalData();
-  emit("cancel");
+  });
 };
 </script>
 
@@ -231,6 +251,13 @@ const onCancel = () => {
   overflow-y: auto;
 }
 
+/* Strip F7 block margin/padding so datepickers align with other fields */
+:deep(.block) {
+  padding-left: 0;
+  padding-right: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+}
 
 /* Datepicker input styling */
 :deep(.datepicker-input input) {
@@ -255,7 +282,6 @@ const onCancel = () => {
   color: hsl(var(--muted-foreground));
 }
 
-/* Remove default Framework7 list styling for datepickers */
 :deep(.datepicker-input .list) {
   margin: 0;
   padding: 0;
