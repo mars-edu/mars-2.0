@@ -233,6 +233,26 @@
                 {{ selectionDoneText }}
               </button>
             </div>
+            <!-- Замещаемые журналы -->
+            <div v-if="activeSubstitutions.length > 0" class="flex flex-col gap-3 mb-2">
+              <div class="flex items-center gap-2">
+                <h2 class="text-base font-bold text-foreground">Замещаемые журналы</h2>
+                <span class="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-700 rounded-full">{{ activeSubstitutions.length }}</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                <JournalGridCard
+                  v-for="sub in activeSubstitutions"
+                  :key="sub._id"
+                  :title="sub.journalSnapshot?.disciplineName ?? 'Неизвестная дисциплина'"
+                  :subtitle="[sub.fromTeacher ? `${sub.fromTeacher.surname} ${sub.fromTeacher.firstName}` : '', sub.journalSnapshot?.groupName].filter(Boolean).join(' · ')"
+                  :accent-color="{ bg: 'bg-amber-100', text: 'text-amber-700' }"
+                  :student-count="0"
+                  :selection-mode="false"
+                  @click="sub.journal?.calendarEventId && goToJournalDetails(sub.journal.calendarEventId)"
+                />
+              </div>
+            </div>
+
             <!-- Filter bar -->
             <div class="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl overflow-x-auto max-w-full mb-5">
               <button
@@ -324,6 +344,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
 import { f7Page, f7, f7Button } from "framework7-vue";
+import { useConvexQuery } from "convex-vue";
 import IconX from "~icons/lucide/x";
 import IconCircleCheck from "~icons/lucide/circle-check";
 import IconCircleX from "~icons/lucide/circle-x";
@@ -912,6 +933,20 @@ type SelectionAction = "download" | "close" | "open" | "replace" | "delete" | "m
 const isSelectionMode = ref(false);
 const selectionAction = ref<SelectionAction>("download");
 const selectedJournalIds = ref(new Set<string>());
+
+const substitutionsResult = useConvexQuery(
+  api.substitutions.queries.getTeacherSubstitutions,
+  computed(() => userStore.currentUser?.id
+    ? { toUserId: userStore.currentUser.id as Id<"users"> }
+    : "skip"
+  )
+) as any;
+
+const activeSubstitutions = computed(() =>
+  (substitutionsResult.data.value ?? []).filter(
+    (s: any) => s.status === "pending" || s.status === "accepted"
+  )
+);
 
 const selectedJournalTeacherIds = computed(() => {
   const ids: string[] = [];
