@@ -344,7 +344,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
 import { f7Page, f7, f7Button } from "framework7-vue";
-import { useConvexQuery } from "convex-vue";
 import IconX from "~icons/lucide/x";
 import IconCircleCheck from "~icons/lucide/circle-check";
 import IconCircleX from "~icons/lucide/circle-x";
@@ -377,6 +376,7 @@ import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { useUserStore } from "@/stores/userStore";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useTeacherStore } from "@/stores/teacherStore";
+import { useSubstitutionStore } from "@/stores/substitutionStore";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useClass9Store, type DistributionEntry } from "@/stores/class9Store";
@@ -580,6 +580,10 @@ onMounted(async () => {
   if (userStore.isTeacher && userStore.currentUser?.id) {
     calendarStore.setSelectedTeacher(userStore.currentUser.id);
     console.log("\n👨‍🏫 Teacher mode - filtered by:", userStore.currentUser.id);
+  }
+
+  if (userStore.currentUser?.id) {
+    substitutionStore.loadForUser(userStore.currentUser.id as Id<"users">);
   }
 
   console.log("\n📊 Total journals by course:", Object.keys(journalsByCourse.value).length);
@@ -934,19 +938,8 @@ const isSelectionMode = ref(false);
 const selectionAction = ref<SelectionAction>("download");
 const selectedJournalIds = ref(new Set<string>());
 
-const substitutionsResult = useConvexQuery(
-  api.substitutions.queries.getTeacherSubstitutions,
-  computed(() => userStore.currentUser?.id
-    ? { toUserId: userStore.currentUser.id as Id<"users"> }
-    : "skip"
-  )
-) as any;
-
-const activeSubstitutions = computed(() =>
-  (substitutionsResult.data.value ?? []).filter(
-    (s: any) => s.status === "pending" || s.status === "accepted"
-  )
-);
+const substitutionStore = useSubstitutionStore();
+const { activeSubstitutions } = storeToRefs(substitutionStore);
 
 const selectedJournalTeacherIds = computed(() => {
   const ids: string[] = [];
