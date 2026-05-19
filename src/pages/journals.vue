@@ -1364,7 +1364,7 @@ async function handleReplaceJournals(data: ReplaceJournalData) {
     if (!toTeacher?.userId) throw new Error("Преподаватель на замену не найден");
 
     await convex.mutation(api.substitutions.mutations.createBulkSubstitutions, {
-      journalIds: ids as Id<"journals">[],
+      calendarEventIds: ids as Id<"calendarEvents">[],
       toTeacherId: data.teacherId,
       toUserId: toTeacher.userId as Id<"users">,
       startDate: data.startDate,

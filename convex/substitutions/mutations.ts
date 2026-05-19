@@ -87,7 +87,7 @@ export const createSubstitution = mutation({
 
 export const createBulkSubstitutions = mutation({
   args: {
-    journalIds: v.array(v.id("journals")),
+    calendarEventIds: v.array(v.id("calendarEvents")),
     toTeacherId: v.string(),
     toUserId: v.id("users"),
     startDate: v.string(),
@@ -103,14 +103,16 @@ export const createBulkSubstitutions = mutation({
     const now = Date.now();
     const substitutionIds: string[] = [];
 
-    for (const journalId of args.journalIds) {
-      const journal = await ctx.db.get(journalId);
-      if (!journal) continue;
+    for (const calendarEventId of args.calendarEventIds) {
+      const event = await ctx.db.get(calendarEventId);
+      if (!event?.teacherId) throw new Error(`Не удалось определить преподавателя для события ${calendarEventId}`);
 
-      const event = journal.calendarEventId
-        ? await ctx.db.get(journal.calendarEventId as Id<"calendarEvents">)
-        : null;
-      if (!event?.teacherId) throw new Error(`Не удалось определить преподавателя для журнала ${journalId}`);
+      const journal = await ctx.db
+        .query("journals")
+        .withIndex("by_calendarEvent", (q) => q.eq("calendarEventId", calendarEventId))
+        .first();
+      if (!journal) continue;
+      const journalId = journal._id;
       const fromTeacherId = event.teacherId;
 
       const [class9Item, semester, fromTeacher] = await Promise.all([
