@@ -1,5 +1,6 @@
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
+import { Id } from "../_generated/dataModel";
 
 /**
  * Create a new substitution assignment
@@ -27,7 +28,7 @@ export const createSubstitution = mutation({
     }
 
     // Get discipline name from class9Items
-    const class9Item = journal.disciplineId ? await ctx.db.get(journal.disciplineId) : null;
+    const class9Item = journal.disciplineId ? await ctx.db.get(journal.disciplineId as Id<"class9Items">) : null;
     const disciplineName = class9Item?.learningOutcome ?? "Неизвестная дисциплина";
 
     // Get semester info
@@ -62,7 +63,7 @@ export const createSubstitution = mutation({
     });
 
     // Create notification for the receiving teacher
-    const fromTeacher = await ctx.db.get(args.fromTeacherId as any);
+    const fromTeacher = await ctx.db.get(args.fromTeacherId as Id<"teachers">);
     const fromTeacherName = fromTeacher
       ? `${fromTeacher.surname} ${fromTeacher.firstName} ${fromTeacher.patronymic}`
       : "Неизвестный преподаватель";
@@ -104,7 +105,7 @@ export const createBulkSubstitutions = mutation({
     createdBy: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const fromTeacher = await ctx.db.get(args.fromTeacherId as any);
+    const fromTeacher = await ctx.db.get(args.fromTeacherId as Id<"teachers">);
     const fromTeacherName = fromTeacher
       ? `${fromTeacher.surname} ${fromTeacher.firstName} ${fromTeacher.patronymic}`
       : "Неизвестный преподаватель";
@@ -116,7 +117,7 @@ export const createBulkSubstitutions = mutation({
       const journal = await ctx.db.get(journalId);
       if (!journal) continue;
 
-      const class9Item = journal.disciplineId ? await ctx.db.get(journal.disciplineId) : null;
+      const class9Item = journal.disciplineId ? await ctx.db.get(journal.disciplineId as Id<"class9Items">) : null;
       const disciplineName = class9Item?.learningOutcome ?? "Неизвестная дисциплина";
       const semester = await ctx.db.get(journal.semesterId);
 
