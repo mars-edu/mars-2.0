@@ -47,11 +47,15 @@
           <!-- Empty State -->
           <div
             v-else-if="protocolStore.entries.length === 0"
-            class="rounded-lg bg-muted p-8 text-center"
+            class="flex flex-col items-center justify-center py-20"
           >
-            <p class="text-muted-foreground">
-              {{ protocol_empty() }}
-            </p>
+            <div class="bg-card p-12 rounded-3xl shadow-sm border border-border flex flex-col items-center gap-4 max-w-md text-center">
+              <div class="w-20 h-20 bg-muted rounded-full flex items-center justify-center text-muted-foreground/40">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+              </div>
+              <h2 class="text-xl font-bold text-foreground">Записей пока нет</h2>
+              <p class="text-muted-foreground text-sm">{{ protocol_empty() }}</p>
+            </div>
           </div>
 
           <!-- Protocol Entries Grouped by Date -->
@@ -127,28 +131,32 @@
                       {{ protocol_period_end() }}<span v-if="entry.serviceLetterNumber"> {{ protocol_letter() }} <span class="font-medium text-foreground">{{ entry.serviceLetterNumber }}</span> {{ protocol_period_end() }}</span>
                     </p>
 
-                    <p v-if="entry.reason" class="text-xs text-muted-foreground italic">
+                    <p v-if="entry.reason" class="text-xs text-muted-foreground italic mb-1">
                       {{ protocol_reason() }} {{ entry.reason }}
                     </p>
+                    <div v-if="entry.serviceLetterNumber" class="text-xs text-muted-foreground flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      {{ protocol_letter() }} {{ entry.serviceLetterNumber }}
+                    </div>
                   </div>
 
                   <!-- Right: actions / status -->
                   <div class="flex-shrink-0 md:w-44 flex flex-col justify-center items-end gap-2">
                     <!-- Pending + current user is toTeacher → show action buttons -->
                     <template v-if="entry.status === 'pending' && isCurrentUserToTeacher(entry)">
-                      <span class="text-xs font-medium text-muted-foreground self-end">{{ protocol_action_label() }}</span>
+                      <span class="text-xs font-semibold text-muted-foreground self-end">{{ protocol_action_label() }}</span>
                       <div class="flex gap-2">
                         <button
                           @click="openModal(entry._id, 'reject')"
                           :disabled="protocolStore.actionLoading"
-                          class="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded border border-red-200 hover:bg-red-100 transition-colors text-xs font-bold disabled:opacity-50 dark:bg-red-900/20 dark:border-red-800 dark:hover:bg-red-900/30"
+                          class="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs font-bold shadow-sm disabled:opacity-50"
                         >
                           ✕ {{ protocol_reject() }}
                         </button>
                         <button
                           @click="openModal(entry._id, 'accept')"
                           :disabled="protocolStore.actionLoading"
-                          class="flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-600 rounded border border-green-200 hover:bg-green-100 transition-colors text-xs font-bold disabled:opacity-50 dark:bg-green-900/20 dark:border-green-800 dark:hover:bg-green-900/30"
+                          class="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-bold shadow-sm disabled:opacity-50"
                         >
                           ✓ {{ protocol_accept() }}
                         </button>
@@ -210,7 +218,8 @@
       <Teleport to="body">
         <div
           v-if="modalOpen"
-          class="fixed inset-0 z-50 flex items-center justify-center p-4"
+          class="fixed inset-0 flex items-center justify-center p-4"
+          style="z-index: 99999"
           @click.self="closeModal"
         >
           <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeModal"></div>
@@ -229,9 +238,20 @@
               <h3 class="text-lg font-bold text-foreground mb-2">
                 {{ pendingAction?.type === 'accept' ? protocol_confirm_accept() : protocol_confirm_reject() }}
               </h3>
-              <p class="text-sm text-muted-foreground mb-6">
+              <p class="text-sm text-muted-foreground mb-4">
                 {{ protocol_confirm_desc() }}
               </p>
+
+              <!-- Reject reason textarea -->
+              <div v-if="pendingAction?.type === 'reject'" class="w-full mb-4">
+                <label class="block text-sm font-semibold text-foreground mb-1.5 text-left">{{ protocol_reason() }}</label>
+                <textarea
+                  v-model="rejectReason"
+                  placeholder="Укажите причину..."
+                  rows="3"
+                  class="w-full px-4 py-2.5 bg-muted/50 border border-input rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-foreground resize-none transition-all"
+                ></textarea>
+              </div>
 
               <div class="flex gap-3 w-full">
                 <button
@@ -242,8 +262,8 @@
                 </button>
                 <button
                   @click="confirmAction"
-                  :disabled="protocolStore.actionLoading"
-                  class="flex-1 px-4 py-2 text-white rounded-lg font-bold shadow-sm transition-colors disabled:opacity-50"
+                  :disabled="protocolStore.actionLoading || (pendingAction?.type === 'reject' && !rejectReason.trim())"
+                  class="flex-1 px-4 py-2 text-white rounded-lg font-bold shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   :class="pendingAction?.type === 'accept'
                     ? 'bg-green-600 hover:bg-green-700'
                     : 'bg-red-600 hover:bg-red-700'"
@@ -331,15 +351,18 @@ const pendingAction = ref<{
   id: Id<"substitutions">;
   type: "accept" | "reject";
 } | null>(null);
+const rejectReason = ref("");
 
 function openModal(id: Id<"substitutions">, type: "accept" | "reject") {
   pendingAction.value = { id, type };
+  rejectReason.value = "";
   modalOpen.value = true;
 }
 
 function closeModal() {
   modalOpen.value = false;
   pendingAction.value = null;
+  rejectReason.value = "";
 }
 
 async function confirmAction() {
@@ -349,7 +372,7 @@ async function confirmAction() {
   if (type === "accept") {
     await protocolStore.acceptEntry(id);
   } else {
-    await protocolStore.rejectEntry(id);
+    await protocolStore.rejectEntry(id, rejectReason.value || undefined);
   }
 }
 
@@ -372,27 +395,17 @@ function formatTime(timestamp: number): string {
  * Page initialization
  */
 function onPageInit() {
-  console.log("[protocol] Page initialized");
+  protocolStore.fetchProtocolWithRoleAccess();
 }
 
-/**
- * Page mounted
- */
 function onPageMounted() {
-  console.log("[protocol] Page mounted");
-
   f7ready(() => {
-    // Fetch protocol entries when page is ready
     protocolStore.fetchProtocolWithRoleAccess();
   });
 }
 
-// Cleanup on unmount
 onMounted(() => {
-  return () => {
-    // Optional: reset store on unmount
-    // protocolStore.reset();
-  };
+  protocolStore.fetchProtocolWithRoleAccess();
 });
 </script>
 

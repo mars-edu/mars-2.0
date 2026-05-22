@@ -73,7 +73,7 @@ export const createSubstitution = mutation({
       type: "substitution",
       status: "unread",
       title: "Установлена замена",
-      message: `Журнал БМД Владеть основами философских знаний 3 Курса - 9 РХЯТ (русская группа) преподавателя ${fromTeacherName} переведен преподавателю Садвакасова Динара Балтабековна в период с ${args.startDate} г. по ${args.endDate} г. на основании служебного письма от ${args.serviceLetterNumber || "не указано"} г.`,
+      message: `Журнал "${disciplineName}" преподавателя ${fromTeacherName} переведен в период с ${args.startDate} по ${args.endDate}${args.reason ? ` на основании: ${args.reason}` : ""}.`,
       metadata: {
         substitutionId,
         journalId: args.journalId,
@@ -107,11 +107,28 @@ export const createBulkSubstitutions = mutation({
       const event = await ctx.db.get(calendarEventId);
       if (!event?.teacherId) throw new Error(`Не удалось определить преподавателя для события ${calendarEventId}`);
 
-      const journal = await ctx.db
+      let journal = await ctx.db
         .query("journals")
         .withIndex("by_calendarEvent", (q) => q.eq("calendarEventId", calendarEventId))
         .first();
-      if (!journal) continue;
+
+      if (!journal) {
+        const semesterRecord = event.semester ? await ctx.db.get(event.semester as Id<"academicYearSemesters">) : null;
+        if (!semesterRecord) throw new Error(`Не удалось определить семестр для события ${calendarEventId}`);
+
+        const newJournalId = await ctx.db.insert("journals", {
+          calendarEventId,
+          disciplineId: event.class9Id,
+          semesterId: semesterRecord._id,
+          academicYearId: semesterRecord.academicYearId as string,
+          createdAt: now,
+          updatedAt: now,
+        });
+        journal = await ctx.db.get(newJournalId);
+      }
+
+      if (!journal) throw new Error(`Не удалось создать журнал для события ${calendarEventId}`);
+
       const journalId = journal._id;
       const fromTeacherId = event.teacherId;
 

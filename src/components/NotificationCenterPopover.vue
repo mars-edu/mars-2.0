@@ -4,7 +4,7 @@
     class="notification-popover"
     @popover:open="refresh"
   >
-    <div class="bg-card text-card-foreground overflow-hidden flex flex-col" style="width: 380px; max-height: 600px;">
+    <div class="bg-card text-card-foreground overflow-hidden flex flex-col" style="width: 440px; max-width: calc(100vw - 32px); max-height: 600px;">
       <!-- Header -->
       <div class="p-6 border-b border-border flex items-center justify-between bg-muted/30">
         <div>
@@ -244,7 +244,7 @@ const markAsRead = async (notificationId: Id<"notifications">) => {
   if (!notification || notification.status === 'read') return;
 
   try {
-    await markAsReadMutation({ notificationId });
+    await markAsReadMutation.mutate({ notificationId });
   } catch (err) {
     console.error("Failed to mark notification as read:", err);
   }
@@ -255,7 +255,7 @@ const markAllAsRead = async () => {
 
   try {
     processing.value = true;
-    await markAllAsReadMutation({
+    await markAllAsReadMutation.mutate({
       userId: currentUserId.value,
     });
     f7.toast.create({
@@ -279,7 +279,7 @@ const acceptSubstitution = async (substitutionId: Id<"substitutions">, notificat
 
   try {
     processing.value = true;
-    await acceptSubstitutionMutation({
+    await acceptSubstitutionMutation.mutate({
       substitutionId,
       userId: currentUserId.value,
     });
@@ -309,7 +309,7 @@ const rejectSubstitution = async (substitutionId: Id<"substitutions">, notificat
     async (reason: string) => {
       try {
         processing.value = true;
-        await rejectSubstitutionMutation({
+        await rejectSubstitutionMutation.mutate({
           substitutionId,
           userId: currentUserId.value!,
           rejectionReason: reason || undefined,
@@ -341,7 +341,8 @@ const openNotificationsTab = () => {
 
 <style scoped>
 .notification-popover {
-  width: 380px !important;
+  width: 440px !important;
+  max-width: calc(100vw - 32px) !important;
   border-radius: 32px !important;
   overflow: hidden;
 }

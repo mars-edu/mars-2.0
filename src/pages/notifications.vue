@@ -21,7 +21,7 @@
             <button
               v-if="unreadNotifications.length > 0"
               @click="handleMarkAllAsRead"
-              class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+              class="w-fit px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium whitespace-nowrap"
             >
               {{ notifications_mark_all_read() }}
             </button>
@@ -279,7 +279,7 @@ const handleMarkAllAsRead = async () => {
 
   try {
     processing.value = true;
-    await markAllAsReadMutation({
+    await markAllAsReadMutation.mutate({
       userId: currentUserId.value,
     });
     f7.toast.create({
@@ -303,7 +303,7 @@ const handleAcceptSubstitution = async (substitutionId: Id<"substitutions">, not
 
   try {
     processing.value = true;
-    await acceptSubstitutionMutation({
+    await acceptSubstitutionMutation.mutate({
       substitutionId,
       userId: currentUserId.value,
     });
@@ -333,7 +333,7 @@ const handleRejectSubstitution = async (substitutionId: Id<"substitutions">, not
     async (reason: string) => {
       try {
         processing.value = true;
-        await rejectSubstitutionMutation({
+        await rejectSubstitutionMutation.mutate({
           substitutionId,
           userId: currentUserId.value!,
           rejectionReason: reason || undefined,

@@ -179,15 +179,17 @@ export const useProtocolStore = defineStore("protocol", () => {
    * Format date for display
    */
   function formatDate(dateString: string): string {
+    if (!dateString) return "—";
     try {
       const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "—";
       return date.toLocaleDateString("ru-RU", {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
       });
     } catch {
-      return dateString;
+      return "—";
     }
   }
 
