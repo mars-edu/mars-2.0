@@ -278,9 +278,10 @@ export const rejectSubstitution = mutation({
       throw new Error("Замена не найдена");
     }
 
-    // Verify the user is the receiving teacher
-    if (substitution.toUserId !== args.userId) {
-      throw new Error("Вы не можете отклонить эту замену");
+    // Verify the user is an admin
+    const actingUser = await ctx.db.get(args.userId);
+    if (!actingUser || !actingUser.roles.includes("ADMIN")) {
+      throw new Error("Только администратор может отклонить замену");
     }
 
     // Verify status is pending
@@ -293,9 +294,10 @@ export const rejectSubstitution = mutation({
       status: "rejected",
       rejectedAt: Date.now(),
       updatedAt: Date.now(),
+      rejectionReason: args.rejectionReason,
     });
 
-    // Notify the original teacher about the rejection
+    // Notify original teacher about rejection
     const fromTeacher = await ctx.db
       .query("teachers")
       .collect()
@@ -307,7 +309,7 @@ export const rejectSubstitution = mutation({
         type: "system",
         status: "unread",
         title: "Замена отклонена",
-        message: `Преподаватель отклонил замену журнала${args.rejectionReason ? `: ${args.rejectionReason}` : ""}`,
+        message: `Замена журнала "${substitution.journalSnapshot?.disciplineName ?? ""}" отклонена администратором${args.rejectionReason ? `: ${args.rejectionReason}` : "."}`,
         createdAt: Date.now(),
       });
     }
