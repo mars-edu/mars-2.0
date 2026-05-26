@@ -100,58 +100,60 @@
             </div>
 
             <!-- Action menu -->
-            <div class="relative flex-shrink-0 mt-1">
-              <button
-                class="p-2.5 bg-card rounded-xl shadow-sm border border-border hover:border-primary hover:text-primary transition-all flex items-center justify-center"
-                @click="isActionMenuOpen = !isActionMenuOpen"
-              >
-                <IconMoreVertical class="w-5 h-5" />
-              </button>
-              <div v-if="isActionMenuOpen" class="fixed inset-0 z-40" @click="isActionMenuOpen = false" />
-              <div v-if="isActionMenuOpen" class="absolute right-0 top-full mt-2 w-64 bg-card rounded-2xl shadow-2xl border border-border py-2 z-50">
+            <DropdownMenu align="right" class="flex-shrink-0 mt-1">
+              <template #trigger="{ toggle, isOpen }">
+                <button
+                  class="p-2.5 bg-card rounded-xl shadow-sm border border-border hover:border-primary hover:text-primary transition-all flex items-center justify-center"
+                  :class="{ 'border-primary text-primary': isOpen }"
+                  @click="toggle"
+                >
+                  <IconMoreVertical class="w-5 h-5" />
+                </button>
+              </template>
+              <template #default="{ close }">
                 <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
-                  @click="onDownloadClick(); isActionMenuOpen = false">
+                  @click="onDownloadClick(); close()">
                   <IconArrowDownToLine class="w-4 h-4 flex-shrink-0" />
                   {{ journal_download() }}
                 </button>
                 <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
-                  @click="onMergeClick(); isActionMenuOpen = false">
+                  @click="onMergeClick(); close()">
                   <IconGitMerge class="w-4 h-4 flex-shrink-0" />
                   {{ journal_merge() }}
                 </button>
                 <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
-                  @click="onSplitClick(); isActionMenuOpen = false">
+                  @click="onSplitClick(); close()">
                   <IconUngroup class="w-4 h-4 flex-shrink-0" />
                   {{ journal_split() }}
                 </button>
                 <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
-                  @click="onCloseJournalClick(); isActionMenuOpen = false">
+                  @click="onCloseJournalClick(); close()">
                   <IconCircleX class="w-4 h-4 flex-shrink-0" />
                   {{ journal_close() }}
                 </button>
                 <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
-                  @click="onOpenJournalClick(); isActionMenuOpen = false">
+                  @click="onOpenJournalClick(); close()">
                   <IconLockOpen class="w-4 h-4 flex-shrink-0" />
                   {{ journal_open() }}
                 </button>
                 <button class="w-full text-left px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-3"
-                  @click="onDeleteClick(); isActionMenuOpen = false">
+                  @click="onDeleteClick(); close()">
                   <IconTrash2 class="w-4 h-4 flex-shrink-0" />
                   {{ journal_delete() }}
                 </button>
                 <div class="h-px bg-border my-1" />
                 <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
-                  @click="onReplaceClick(); isActionMenuOpen = false">
+                  @click="onReplaceClick(); close()">
                   <IconRefreshCw class="w-4 h-4 flex-shrink-0" />
                   {{ journal_replace() }}
                 </button>
                 <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
-                  @click="onSettingsClick(); isActionMenuOpen = false">
+                  @click="onSettingsClick(); close()">
                   <IconSettings2 class="w-4 h-4 flex-shrink-0" />
                   {{ journal_settings() }}
                 </button>
-              </div>
-            </div>
+              </template>
+            </DropdownMenu>
           </div>
 
           <!-- Filter selects commented out — not in concept design
@@ -370,6 +372,7 @@ import IconInbox from "~icons/lucide/inbox";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
+import DropdownMenu from "@/components/ui/DropdownMenu.vue";
 import IndividualJournalPopup from "@/components/IndividualJournalPopup.vue";
 import EditJournalPopup from "@/components/Calendar/EditJournalPopup.vue";
 import ReplaceJournalPopover from "@/components/ReplaceJournalPopover.vue";
@@ -909,7 +912,6 @@ const activeFilter = ref<JournalFilter>('all')
 const isYearPillOpen = ref(false)
 const isSemesterPillOpen = ref(false)
 const isTeacherPillOpen = ref(false)
-const isActionMenuOpen = ref(false)
 
 const JOURNAL_FILTERS: ReadonlyArray<{ id: JournalFilter; label: string }> = [
   { id: 'all',        label: journal_filter_all() },

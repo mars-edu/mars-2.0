@@ -46,28 +46,23 @@
           </button>
           <div class="w-px h-6 bg-border mx-1" />
         </template>
-      <div class="relative" @click.stop>
-        <button
-          id="journal-tools-button"
-          type="button"
-          @click="isToolsMenuOpen = !isToolsMenuOpen"
-          class="w-12 h-12 bg-card rounded-2xl border border-border flex items-center justify-center text-muted-foreground hover:text-yellow-600 hover:border-yellow-200 hover:bg-yellow-50 transition-all shadow-sm"
-        >
-          <IconMoreVertical class="w-7 h-7" />
-        </button>
-        <div
-          v-if="isToolsMenuOpen"
-          class="fixed inset-0 z-40"
-          @click="isToolsMenuOpen = false"
-        />
-        <div
-          v-if="isToolsMenuOpen"
-          class="absolute right-0 top-full mt-2 w-72 bg-card rounded-2xl shadow-2xl border border-border py-2 z-50"
-        >
+      <DropdownMenu align="right" width="18rem" @click.stop>
+        <template #trigger="{ toggle, isOpen }">
+          <button
+            id="journal-tools-button"
+            type="button"
+            @click="toggle"
+            class="w-12 h-12 bg-card rounded-2xl border border-border flex items-center justify-center text-muted-foreground hover:text-yellow-600 hover:border-yellow-200 hover:bg-yellow-50 transition-all shadow-sm"
+            :class="{ 'text-yellow-600 border-yellow-200 bg-yellow-50': isOpen }"
+          >
+            <IconMoreVertical class="w-7 h-7" />
+          </button>
+        </template>
+        <template #default="{ close }">
           <button
             type="button"
             class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3"
-            @click="isToolsMenuOpen = false; onOpenRupClick()"
+            @click="close(); onOpenRupClick()"
           >
             <IconFileText class="w-4 h-4" />
             РУП
@@ -76,7 +71,7 @@
             id="journal-history-button"
             type="button"
             class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3"
-            @click="isToolsMenuOpen = false; onHistoryClick()"
+            @click="close(); onHistoryClick()"
           >
             <IconClock class="w-4 h-4" />
             {{ journal_history_changes() }}
@@ -86,7 +81,7 @@
             type="button"
             :disabled="isViewOnly"
             class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-            @click="isToolsMenuOpen = false; onSettingsClick()"
+            @click="close(); onSettingsClick()"
           >
             <IconSettings class="w-4 h-4" />
             Настройки
@@ -94,7 +89,7 @@
           <button
             type="button"
             class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3"
-            @click="isToolsMenuOpen = false; onDownloadClick()"
+            @click="close(); onDownloadClick()"
           >
             <IconArrowDownToLine class="w-4 h-4" />
             Скачать журнал
@@ -104,7 +99,7 @@
             type="button"
             :disabled="isViewOnly"
             class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-            @click.stop="isToolsMenuOpen = false; onRecalcClick()"
+            @click.stop="close(); onRecalcClick()"
           >
             <IconCalculator class="w-4 h-4" />
             {{ journal_recalc_controls() }}
@@ -114,7 +109,7 @@
             v-if="!isViewOnly"
             type="button"
             class="w-full text-left px-4 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-3"
-            @click="isToolsMenuOpen = false; onCloseJournalClick()"
+            @click="close(); onCloseJournalClick()"
           >
             <IconCircleX class="w-4 h-4" />
             Закрыть журнал
@@ -123,13 +118,13 @@
             v-else
             type="button"
             class="w-full text-left px-4 py-2.5 text-sm font-medium text-green-600 hover:bg-green-50 transition-colors flex items-center gap-3"
-            @click="isToolsMenuOpen = false; onOpenJournalClick()"
+            @click="close(); onOpenJournalClick()"
           >
             <IconLockOpen class="w-4 h-4" />
             Открыть журнал
           </button>
-        </div>
-      </div>
+        </template>
+      </DropdownMenu>
       </div>
     </div>
 
@@ -573,6 +568,7 @@ import {
 } from "@/paraglide/messages";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
+import DropdownMenu from "@/components/ui/DropdownMenu.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import MarkCell from "@/components/ui/MarkCell.vue";
 import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
@@ -701,7 +697,6 @@ const editingCell = ref<{
   markIndex: number;
 } | null>(null);
 const editedValue = ref("");
-const isToolsMenuOpen = ref(false);
 const viewMode = ref<"general" | "monitoring">("general");
 
 const LETTER_GRADE_BUCKETS: Array<{ letter: string; min: number }> = [
