@@ -105,7 +105,6 @@
     "@iconify/vue": "^5.0.1",
     "@playwright/experimental-ct-vue": "^1.60.0",
     "@playwright/test": "^1.60.0",
-    "@types/bcryptjs": "^3.0.0",
     "@types/file-saver": "^2.0.7",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.7.0",
