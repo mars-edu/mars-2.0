@@ -214,7 +214,7 @@ export const listProtocolWithRoleAccessInternal = internalQuery({
 
     let substitutions;
 
-    // For teachers: only their own substitutions (both sent and received)
+    // For teachers: only their own submitted requests (sent), not received ones
     if (isTeacher && !isAdmin) {
       // Get teacher record to find teacher ID
       const teacherRecord = await ctx.db
@@ -226,28 +226,11 @@ export const listProtocolWithRoleAccessInternal = internalQuery({
         return [];
       }
 
-      // Get both sent and received substitutions
-      const [sentSubstitutions, receivedSubstitutions] = await Promise.all([
-        ctx.db
-          .query("substitutions")
-          .withIndex("by_fromTeacher", (q) =>
-            q.eq("fromTeacherId", teacherRecord._id)
-          )
-          .collect(),
-        ctx.db
-          .query("substitutions")
-          .withIndex("by_toTeacher", (q) =>
-            q.eq("toTeacherId", teacherRecord._id)
-          )
-          .collect(),
-      ]);
-
-      // Merge and deduplicate by _id
-      const substitutionMap = new Map();
-      for (const sub of [...sentSubstitutions, ...receivedSubstitutions]) {
-        substitutionMap.set(sub._id, sub);
-      }
-      substitutions = Array.from(substitutionMap.values());
+      // Teachers only see their own submitted requests (sent), not received ones
+      substitutions = await ctx.db
+        .query("substitutions")
+        .withIndex("by_fromTeacher", (q) => q.eq("fromTeacherId", teacherRecord._id))
+        .collect();
     } else {
       // For admins: all substitutions OR filtered by selectedTeacherId
       if (selectedTeacherId && selectedTeacherId !== "all") {
