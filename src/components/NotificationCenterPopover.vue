@@ -85,7 +85,7 @@
 
                 <!-- Actions for Substitutions -->
                 <div
-                  v-if="notification.type === 'substitution' && notification.substitution && notification.substitution.status === 'pending'"
+                  v-if="isAdmin && notification.type === 'substitution' && notification.substitution && notification.substitution.status === 'pending'"
                   class="flex gap-2"
                   @click.stop
                 >
@@ -182,6 +182,7 @@ import IconArrowRight from "~icons/lucide/arrow-right";
 const userStore = useUserStore();
 
 const currentUserId = computed(() => userStore.currentUser?.id as Id<"users"> | undefined);
+const isAdmin = computed(() => userStore.isAdmin);
 
 const processing = ref(false);
 
