@@ -377,10 +377,6 @@ async function confirmAction() {
   }
 }
 
-function isCurrentUserToTeacher(entry: ProtocolEntry): boolean {
-  return userStore.currentUser?.id === entry.toUserId;
-}
-
 /**
  * Format timestamp to time string (HH:MM)
  */
