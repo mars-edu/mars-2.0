@@ -99,6 +99,7 @@ interface UseAddEventWizardOptions {
   slotTimeError: MaybeComputed<string | null>;
   isProgramReady: MaybeComputed<boolean>;
   isStep5Valid: MaybeComputed<boolean>;
+  lastStep?: MaybeComputed<AddWizardStep>;
 }
 
 export function useAddEventWizard(options: UseAddEventWizardOptions) {
@@ -139,8 +140,12 @@ export function useAddEventWizard(options: UseAddEventWizardOptions) {
     () => ADD_WIZARD_STEPS.find((step) => step.id === currentStep.value)!
   );
 
+  const resolvedLastStep = computed(() =>
+    options.lastStep ? options.lastStep.value : 5
+  );
+
   const isFirstStep = computed(() => currentStep.value === 1);
-  const isLastStep = computed(() => currentStep.value === 5);
+  const isLastStep = computed(() => currentStep.value === resolvedLastStep.value);
 
   const isCurrentStepValid = computed(
     () => stepValidity.value[currentStep.value]

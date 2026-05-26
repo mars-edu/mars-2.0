@@ -15,7 +15,7 @@
           >
             <div
               class="h-full bg-primary transition-all duration-200"
-              :class="step.id <= currentStep ? 'w-full' : 'w-0'"
+              :class="steps.findIndex(s => s.id === step.id) <= currentStepIndex ? 'w-full' : 'w-0'"
             />
           </div>
         </div>
@@ -601,7 +601,7 @@
 
     <PopoverFooter
       :cancel-text="isFirstStep ? 'Отмена' : 'Назад'"
-      :save-text="isLastStep ? 'Создать' : 'Далее'"
+      :save-text="isLastStep ? (props.mode === 'edit' ? 'Сохранить' : 'Создать') : 'Далее'"
       :disabled="!isPrimaryEnabled"
       :save-variant="isLastStep ? 'success' : 'primary'"
       :on-cancel="handleBack"
@@ -666,7 +666,7 @@ import type { SemesterDates, WeekDaySchedule } from "./useEventFormDerived";
 dayjs.extend(customParseFormat);
 dayjs.locale("ru");
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   class9Id: string;
   useCustomPeriod: boolean;
   startDate?: string;
@@ -691,7 +691,10 @@ const props = defineProps<{
   individualJournals: IndividualJournalDraft[];
   requestClose: () => void;
   sessionKey: number;
-}>();
+  mode?: "add" | "edit";
+}>(), {
+  mode: "add",
+});
 
 const {
   semesterDates,
@@ -738,8 +741,12 @@ const { languageOptions: storeLanguageOptions } = storeToRefs(languageStore);
 const { courseOptions: storeCourseOptions } = storeToRefs(courseStore);
 const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
 
+const parentPopupId = computed(() =>
+  props.mode === "edit" ? "#edit-journal-popup" : "#add-event-popup"
+);
+
 const { closeParent, openParent } = useNestedPopup({
-  parentPopupId: "#add-event-popup",
+  parentPopupId,
 });
 
 const class9IdModel = computed({
@@ -1344,6 +1351,10 @@ watch(
   }
 );
 
+const lastStepRef = computed<AddWizardStep>(() =>
+  props.mode === "edit" ? 4 : 5
+);
+
 const {
   currentStep,
   currentStepMeta,
@@ -1364,9 +1375,18 @@ const {
   slotTimeError: computed(() => slotTimeError.value || null),
   isProgramReady,
   isStep5Valid,
+  lastStep: lastStepRef,
 });
 
-const steps = ADD_WIZARD_STEPS;
+const steps = computed(() =>
+  props.mode === "edit"
+    ? ADD_WIZARD_STEPS.filter((s) => s.id !== 5)
+    : ADD_WIZARD_STEPS
+);
+
+const currentStepIndex = computed(() =>
+  steps.value.findIndex((s) => s.id === currentStep.value)
+);
 
 const isSelectedHoursExceeded = computed(() => {
   return Number(selectedHours.value || "0") > Number(semesterPlannedHours.value || "0");

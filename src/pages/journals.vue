@@ -332,6 +332,14 @@
       @close="onIndividualJournalClose"
     />
 
+    <EditJournalPopup
+      v-if="editingEventId"
+      ref="editJournalPopupRef"
+      :event-id="editingEventId"
+      @updated="onEditEventUpdated"
+      @cancel="editingEventId = null"
+    />
+
     <ReplaceJournalPopover
       :is-loading="isReplacingJournals"
       :excluded-teacher-ids="selectedJournalTeacherIds"
@@ -342,7 +350,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch, nextTick } from "vue";
 import { f7Page, f7, f7Button } from "framework7-vue";
 import IconX from "~icons/lucide/x";
 import IconCircleCheck from "~icons/lucide/circle-check";
@@ -363,6 +371,7 @@ import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
 import IndividualJournalPopup from "@/components/IndividualJournalPopup.vue";
+import EditJournalPopup from "@/components/Calendar/EditJournalPopup.vue";
 import ReplaceJournalPopover from "@/components/ReplaceJournalPopover.vue";
 import type { ReplaceJournalData } from "@/components/ReplaceJournalPopover.vue";
 import JournalGridCard from '@/components/Cards/JournalGridCard.vue'
@@ -868,7 +877,22 @@ const JOURNAL_CARD_PALETTE = [
   { bg: '#ECFDF5', text: '#059669' },
 ] as const
 
+function hexToAccent(hex: string): { bg: string; text: string } {
+  // Convert hex to a light tint (10% opacity equivalent) for the background
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return {
+    bg: `rgba(${r}, ${g}, ${b}, 0.1)`,
+    text: hex,
+  };
+}
+
 function getJournalAccentColor(id: string): { bg: string; text: string } {
+  const event = calendarStore.getEventById(id);
+  if (event?.color) {
+    return hexToAccent(event.color);
+  }
   let hash = 0
   for (let i = 0; i < id.length; i++) {
     hash = (hash * 31 + id.charCodeAt(i)) & 0xfffffff
@@ -1350,6 +1374,9 @@ function onSelectionDone() {
   });
 }
 
+const editingEventId = ref<string | null>(null);
+const editJournalPopupRef = ref<InstanceType<typeof EditJournalPopup> | null>(null);
+
 function onEditJournal(journalId: string) {
   const journal = journalStore.getJournalById(journalId);
   if (!journal) return;
@@ -1357,8 +1384,18 @@ function onEditJournal(journalId: string) {
   if (journal.isIndividualJournal) {
     onEditIndividualJournal(journalId);
   } else {
-    f7.dialog.alert("Редактирование обычных журналов будет доступно в следующем обновлении. Используйте РУП/КТП для изменения программы.");
+    openEditJournalPopup(journalId);
   }
+}
+
+async function openEditJournalPopup(journalId: string) {
+  editingEventId.value = journalId;
+  await nextTick();
+  editJournalPopupRef.value?.open();
+}
+
+function onEditEventUpdated() {
+  editingEventId.value = null;
 }
 
 function onSplitJournal(journalId: string) {
@@ -1401,7 +1438,8 @@ async function handleReplaceJournals(data: ReplaceJournalData) {
     const toTeacher = teacherStore.getTeacherById(data.teacherId);
     if (!toTeacher?.userId) throw new Error("Преподаватель на замену не найден");
 
-    await convex.mutation(api.substitutions.mutations.createBulkSubstitutions, {
+    console.log('[DEBUG] calling mutation with:', { calendarEventIds: ids, toTeacherId: data.teacherId, toUserId: toTeacher.userId });
+    const result = await convex.mutation(api.substitutions.mutations.createBulkSubstitutions, {
       calendarEventIds: ids as Id<"calendarEvents">[],
       toTeacherId: data.teacherId,
       toUserId: toTeacher.userId as Id<"users">,
@@ -1413,6 +1451,7 @@ async function handleReplaceJournals(data: ReplaceJournalData) {
       reason: data.reason || undefined,
       createdBy: currentUserId as Id<"users">,
     });
+    console.log('[DEBUG] mutation result:', result);
 
     isReplacingJournals.value = false;
     f7.popover.close("#replace-journal-popover");
