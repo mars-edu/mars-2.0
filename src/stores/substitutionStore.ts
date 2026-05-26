@@ -45,7 +45,7 @@ export const useSubstitutionStore = defineStore("substitutions", () => {
 
   const activeSubstitutions = computed(() =>
     receivedSubstitutions.value.filter(
-      (s) => s.status === "pending" || s.status === "accepted"
+      (s) => s.status === "accepted"
     )
   );
 
