@@ -109,6 +109,10 @@ export const createBulkSubstitutions = mutation({
     const now = Date.now();
     const substitutionIds: string[] = [];
 
+    // Fetch admin users once before the loop
+    const allUsers = await ctx.db.query("users").collect();
+    const adminUsers = allUsers.filter((u) => u.roles.includes("ADMIN"));
+
     for (const calendarEventId of args.calendarEventIds) {
       const event = await ctx.db.get(calendarEventId);
       if (!event?.teacherId) throw new Error(`Не удалось определить преподавателя для события ${calendarEventId}`);
@@ -173,15 +177,18 @@ export const createBulkSubstitutions = mutation({
         updatedAt: now,
       });
 
-      await ctx.db.insert("notifications", {
-        userId: args.toUserId,
-        type: "substitution",
-        status: "unread",
-        title: "Установлена замена",
-        message: `Журнал "${disciplineName}" преподавателя ${fromTeacherName} переведен в период с ${args.startDate} по ${args.endDate}${args.reason ? ` на основании: ${args.reason}` : ""}.`,
-        metadata: { substitutionId, journalId },
-        createdAt: now,
-      });
+      // Notify admins (not replacement teacher) about the pending request
+      for (const admin of adminUsers) {
+        await ctx.db.insert("notifications", {
+          userId: admin._id,
+          type: "substitution",
+          status: "unread",
+          title: "Запрос замены",
+          message: `${fromTeacherName} запрашивает замену журнала "${disciplineName}" на ${args.startDate}–${args.endDate}.`,
+          metadata: { substitutionId, journalId },
+          createdAt: now,
+        });
+      }
 
       substitutionIds.push(substitutionId);
     }
