@@ -757,6 +757,7 @@ export default defineSchema({
       v.literal("completed") // Substitution period ended
     ),
     reason: v.optional(v.string()), // Reason for substitution
+    rejectionReason: v.optional(v.string()), // Admin rejection reason
     serviceLetterNumber: v.optional(v.string()), // Official letter/order number (служебное письмо)
     // Journal snapshot at time of transfer
     journalSnapshot: v.optional(
