@@ -212,9 +212,10 @@ export const acceptSubstitution = mutation({
       throw new Error("Замена не найдена");
     }
 
-    // Verify the user is the receiving teacher
-    if (substitution.toUserId !== args.userId) {
-      throw new Error("Вы не можете принять эту замену");
+    // Verify the user is an admin
+    const actingUser = await ctx.db.get(args.userId);
+    if (!actingUser || !actingUser.roles.includes("ADMIN")) {
+      throw new Error("Только администратор может одобрить замену");
     }
 
     // Verify status is pending
@@ -229,22 +230,31 @@ export const acceptSubstitution = mutation({
       updatedAt: Date.now(),
     });
 
-    // Mark the related notification as read
-    const notifications = await ctx.db
-      .query("notifications")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
-      .collect();
+    // Notify replacement teacher
+    await ctx.db.insert("notifications", {
+      userId: substitution.toUserId,
+      type: "substitution",
+      status: "unread",
+      title: "Замена одобрена",
+      message: `Администратор одобрил замену журнала "${substitution.journalSnapshot?.disciplineName ?? ""}". Вы назначены заместителем с ${substitution.startDate} по ${substitution.endDate}.`,
+      metadata: { substitutionId: args.substitutionId, journalId: substitution.journalId },
+      createdAt: Date.now(),
+    });
 
-    const relatedNotification = notifications.find(
-      (n) =>
-        n.type === "substitution" &&
-        n.metadata?.substitutionId === args.substitutionId
-    );
+    // Notify original teacher
+    const fromTeacher = await ctx.db
+      .query("teachers")
+      .collect()
+      .then((teachers) => teachers.find((t) => t._id === substitution.fromTeacherId));
 
-    if (relatedNotification) {
-      await ctx.db.patch(relatedNotification._id, {
-        status: "read",
-        readAt: Date.now(),
+    if (fromTeacher?.userId) {
+      await ctx.db.insert("notifications", {
+        userId: fromTeacher.userId,
+        type: "system",
+        status: "unread",
+        title: "Замена одобрена",
+        message: `Замена журнала "${substitution.journalSnapshot?.disciplineName ?? ""}" одобрена администратором.`,
+        createdAt: Date.now(),
       });
     }
 
