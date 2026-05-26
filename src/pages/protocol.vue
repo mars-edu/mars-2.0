@@ -142,8 +142,8 @@
 
                   <!-- Right: actions / status -->
                   <div class="flex-shrink-0 md:w-44 flex flex-col justify-center items-end gap-2">
-                    <!-- Pending + current user is toTeacher → show action buttons -->
-                    <template v-if="entry.status === 'pending' && isCurrentUserToTeacher(entry)">
+                    <!-- Pending + admin → show action buttons -->
+                    <template v-if="isAdmin && entry.status === 'pending'">
                       <span class="text-xs font-semibold text-muted-foreground self-end">{{ protocol_action_label() }}</span>
                       <div class="flex gap-2">
                         <button
@@ -328,6 +328,7 @@ const { contentMargin } = useSidebar();
 const activeNavItem = ref("protocol");
 const protocolStore = useProtocolStore();
 const userStore = useUserStore();
+const isAdmin = computed(() => userStore.isAdmin);
 const teacherStore = useTeacherStore();
 
 // Teacher selection for admins
