@@ -62,24 +62,30 @@ export const createSubstitution = mutation({
       updatedAt: Date.now(),
     });
 
-    // Create notification for the receiving teacher
+    // Get teacher name for notification message
     const fromTeacher = await ctx.db.get(args.fromTeacherId as Id<"teachers">);
     const fromTeacherName = fromTeacher
       ? `${fromTeacher.surname} ${fromTeacher.firstName} ${fromTeacher.patronymic}`
       : "Неизвестный преподаватель";
 
-    await ctx.db.insert("notifications", {
-      userId: args.toUserId,
-      type: "substitution",
-      status: "unread",
-      title: "Установлена замена",
-      message: `Журнал "${disciplineName}" преподавателя ${fromTeacherName} переведен в период с ${args.startDate} по ${args.endDate}${args.reason ? ` на основании: ${args.reason}` : ""}.`,
-      metadata: {
-        substitutionId,
-        journalId: args.journalId,
-      },
-      createdAt: Date.now(),
-    });
+    // Notify all admins about the pending substitution request
+    const allUsers = await ctx.db.query("users").collect();
+    const adminUsers = allUsers.filter((u) => u.roles.includes("ADMIN"));
+
+    for (const admin of adminUsers) {
+      await ctx.db.insert("notifications", {
+        userId: admin._id,
+        type: "substitution",
+        status: "unread",
+        title: "Запрос замены",
+        message: `${fromTeacherName} запрашивает замену журнала "${disciplineName}" на ${args.startDate}–${args.endDate}.`,
+        metadata: {
+          substitutionId,
+          journalId: args.journalId,
+        },
+        createdAt: Date.now(),
+      });
+    }
 
     return substitutionId;
   },
