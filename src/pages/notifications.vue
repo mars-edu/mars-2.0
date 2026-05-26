@@ -99,7 +99,7 @@
 
               <!-- Substitution Actions -->
               <div
-                v-if="notification.substitution && notification.substitution.status === 'pending'"
+                v-if="isAdmin && notification.substitution && notification.substitution.status === 'pending'"
                 class="flex gap-2 mt-3 pt-3 border-t border-border"
               >
                 <button
@@ -245,6 +245,7 @@ const pageId = ref(Date.now());
 const activeNavItem = ref("notifications");
 
 const currentUserId = computed(() => userStore.currentUser?.id as Id<"users"> | undefined);
+const isAdmin = computed(() => userStore.isAdmin);
 
 // Convex Reactive Queries - reusing same functionality as NotificationCenterPopover
 const notificationsResult = useConvexQuery(
