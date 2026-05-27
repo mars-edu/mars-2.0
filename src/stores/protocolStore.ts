@@ -7,16 +7,19 @@ import type { Id } from "@convex/_generated/dataModel";
 import type { SubstitutionStatus } from "@/constants/substitution";
 import { SUBSTITUTION_STATUS_LABELS } from "@/constants/substitution";
 
-export interface ProtocolEntry {
+export interface SubstitutionEntry {
+  type: "substitution";
   _id: Id<"substitutions">;
-  type: "substitution"; // Future: add "appeal" | "retake" etc.
   journalId: Id<"journals">;
   fromTeacherId: string;
   toTeacherId: string;
   toUserId: Id<"users">;
   startDate: string;
   endDate: string;
-  status: SubstitutionStatus;
+  startTime?: string;
+  endTime?: string;
+  isPrimary?: boolean;
+  status: "pending" | "accepted" | "rejected" | "completed";
   reason?: string;
   serviceLetterNumber?: string;
   journalSnapshot?: {
@@ -30,22 +33,34 @@ export interface ProtocolEntry {
   rejectedAt?: number;
   createdAt: number;
   updatedAt: number;
-  // Enriched fields from query
   journal?: any;
-  fromTeacher?: {
-    _id: string;
-    firstName: string;
-    surname: string;
-    patronymic: string;
-  };
-  toTeacher?: {
-    _id: string;
-    firstName: string;
-    surname: string;
-    patronymic: string;
-  };
+  fromTeacher?: { _id: string; firstName: string; surname: string; patronymic: string };
+  toTeacher?: { _id: string; firstName: string; surname: string; patronymic: string };
   disciplineName?: string;
 }
+
+export interface MakeupRequestEntry {
+  type: "makeup_request";
+  _id: Id<"makeupRequests">;
+  journalId: Id<"journals">;
+  teacherId: string;
+  createdBy: Id<"users">;
+  reason?: string;
+  dates: Array<{
+    existingDate: string;
+    newDate: string;
+    startScheduleId: string;
+    endScheduleId: string;
+  }>;
+  status: "pending" | "accepted" | "rejected";
+  rejectionReason?: string;
+  journalSnapshot?: { disciplineName: string; groupName?: string };
+  teacher?: { _id: string; firstName: string; surname: string; patronymic: string };
+  createdAt: number;
+  updatedAt: number;
+}
+
+export type ProtocolEntry = SubstitutionEntry | MakeupRequestEntry;
 
 export const useProtocolStore = defineStore("protocol", () => {
   const entries = ref<ProtocolEntry[]>([]);
@@ -74,22 +89,27 @@ export const useProtocolStore = defineStore("protocol", () => {
     error.value = null;
 
     try {
-      const data = await convex.action(
-        api.substitutions.queries.listProtocolWithRoleAccess,
-        {
+      const [substitutionsData, makeupData] = await Promise.all([
+        convex.action(api.substitutions.queries.listProtocolWithRoleAccess, {
           token,
           selectedTeacherId: selectedTeacherId.value,
-        }
+        }),
+        convex.action(api.makeupRequests.queries.listMakeupRequestsWithRoleAccess, {
+          token,
+          selectedTeacherId: selectedTeacherId.value,
+        }),
+      ]);
+
+      const substitutions: SubstitutionEntry[] = substitutionsData.map(
+        (entry: any) => ({ ...entry, type: "substitution" as const })
+      );
+      const makeupRequests: MakeupRequestEntry[] = makeupData.map(
+        (entry: any) => ({ ...entry, type: "makeup_request" as const })
       );
 
-      console.log("[protocolStore] Fetched protocol entries:", {
-        entriesCount: data.length,
-      });
-
-      entries.value = data.map((entry: any) => ({
-        ...entry,
-        type: "substitution" as const,
-      }));
+      const merged: ProtocolEntry[] = [...substitutions, ...makeupRequests];
+      merged.sort((a, b) => b.createdAt - a.createdAt);
+      entries.value = merged;
     } catch (err) {
       console.error("[protocolStore] Failed to fetch protocol entries:", err);
       error.value = "Не удалось загрузить протоколы";
@@ -160,6 +180,50 @@ export const useProtocolStore = defineStore("protocol", () => {
     } catch (err: any) {
       console.error("[protocolStore] rejectEntry failed:", err);
       actionError.value = err?.message || "Не удалось отклонить замену";
+    } finally {
+      actionLoading.value = false;
+    }
+  }
+
+  async function acceptMakeupRequest(makeupRequestId: Id<"makeupRequests">) {
+    const userId = userStore.currentUser?.id as Id<"users">;
+    if (!userId) return;
+
+    actionLoading.value = true;
+    actionError.value = null;
+
+    try {
+      await convex.mutation(api.makeupRequests.mutations.acceptMakeupRequest, {
+        makeupRequestId,
+        userId,
+      });
+      await fetchProtocolWithRoleAccess();
+    } catch (err: any) {
+      actionError.value = err?.message ?? "Не удалось принять запрос на отработку";
+    } finally {
+      actionLoading.value = false;
+    }
+  }
+
+  async function rejectMakeupRequest(
+    makeupRequestId: Id<"makeupRequests">,
+    reason?: string
+  ) {
+    const userId = userStore.currentUser?.id as Id<"users">;
+    if (!userId) return;
+
+    actionLoading.value = true;
+    actionError.value = null;
+
+    try {
+      await convex.mutation(api.makeupRequests.mutations.rejectMakeupRequest, {
+        makeupRequestId,
+        userId,
+        rejectionReason: reason,
+      });
+      await fetchProtocolWithRoleAccess();
+    } catch (err: any) {
+      actionError.value = err?.message ?? "Не удалось отклонить запрос на отработку";
     } finally {
       actionLoading.value = false;
     }
@@ -252,6 +316,8 @@ export const useProtocolStore = defineStore("protocol", () => {
     setSelectedTeacher,
     acceptEntry,
     rejectEntry,
+    acceptMakeupRequest,
+    rejectMakeupRequest,
     getTeacherName,
     formatDate,
     entriesByDate,
