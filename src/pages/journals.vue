@@ -286,7 +286,8 @@
                 :selected="selectedJournalIds.has(journal.id)"
                 :is-merged="!!journal.mergedJournalIds?.length"
                 :merged-count="journal.mergedJournalIds?.length ?? 0"
-                :disabled="isSelectionMode && selectionAction === 'split' && !journal.mergedJournalIds?.length"
+                :disabled="(isSelectionMode && selectionAction === 'split' && !journal.mergedJournalIds?.length) || (isSelectionMode && selectionAction === 'merge' && (journal.students?.length ?? 0) > 4)"
+                :tooltip="isSelectionMode && selectionAction === 'merge' && (journal.students?.length ?? 0) > 4 ? journal_merge_ineligible_tooltip() : undefined"
                 @click="goToJournalDetails(journal.id)"
                 @toggle-select="toggleJournalSelection(journal.id)"
                 @download="handleCardDownload(journal.id)"
@@ -434,6 +435,7 @@ import {
   journal_split,
   journal_merge_confirm_title,
   journal_merge_confirm_message,
+  journal_merge_ineligible_tooltip,
   journal_split_confirm_title,
   journal_split_confirm_message,
   journal_filter_all,
