@@ -18,6 +18,11 @@ export interface WeeklySchedule {
 export interface JournalSettings {
   calculationType: "calculated" | "manual";
   calculationMethod: "only-assigned" | "all-days";
+  finalControlForm?: "written" | "oral" | "mixed";
+  finalGradeFormula?: {
+    intermediateWeight: number;
+    finalWeight: number;
+  };
 }
 
 export interface CalendarEvent {

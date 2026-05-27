@@ -13,6 +13,11 @@ const weeklyScheduleValidator = v.object({
 const journalSettingsValidator = v.object({
   calculationType: v.union(v.literal("calculated"), v.literal("manual")),
   calculationMethod: v.union(v.literal("only-assigned"), v.literal("all-days")),
+  finalControlForm: v.optional(v.union(v.literal("written"), v.literal("oral"), v.literal("mixed"))),
+  finalGradeFormula: v.optional(v.object({
+    intermediateWeight: v.number(),
+    finalWeight: v.number(),
+  })),
 });
 
 /**

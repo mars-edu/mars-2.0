@@ -581,50 +581,6 @@ const selectedAcademicYearSemesterId = ref<string | null>(null);
 const selectedVacationId = ref<string | null>(null);
 const selectedScheduledFinalControlId = ref<string | null>(null);
 const selectedScheduledIntermediateControlId = ref<string | null>(null);
-const selectedScheduleId = ref<string | null>(null);
-const selectedSchedule = computed(() =>
-  selectedScheduleId.value
-    ? schedules.value.find((s) => s.id === selectedScheduleId.value) ?? null
-    : null
-);
-
-const schedulesGridRef = ref<HTMLElement | null>(null);
-let sortableInstance: Sortable | null = null;
-
-const initSortable = () => {
-  if (schedulesGridRef.value && !sortableInstance) {
-    sortableInstance = new Sortable(schedulesGridRef.value, {
-      animation: 150,
-      onEnd: async (evt) => {
-        if (evt.oldIndex !== undefined && evt.newIndex !== undefined && evt.oldIndex !== evt.newIndex) {
-          const newOrderIds = Array.from(schedulesGridRef.value!.children)
-            .map((child) => (child as HTMLElement).dataset.id)
-            .filter((id): id is string => !!id);
-          
-          try {
-            await educationScheduleStore.reorderSchedules(newOrderIds);
-          } catch (error) {
-            console.error("Failed to reorder:", error);
-          }
-        }
-      },
-    });
-  }
-};
-
-watch(() => schedules.value, () => {
-  nextTick(() => {
-    if (schedulesGridRef.value && !sortableInstance) {
-      initSortable();
-    }
-  });
-}, { deep: true });
-
-onBeforeUnmount(() => {
-  if (sortableInstance) {
-    sortableInstance.destroy();
-  }
-});
 
 // Accordion IDs for expand/collapse all functionality
 const accordionIds = [
@@ -691,6 +647,51 @@ const scheduledIntermediateControls = computed(() => {
   return scheduledIntermediateControlStore.getScheduledIntermediateControlsByAcademicYear(
     activeAcademicYear.id
   );
+});
+
+const selectedScheduleId = ref<string | null>(null);
+const selectedSchedule = computed(() =>
+  selectedScheduleId.value
+    ? schedules.value.find((s) => s.id === selectedScheduleId.value) ?? null
+    : null
+);
+
+const schedulesGridRef = ref<HTMLElement | null>(null);
+let sortableInstance: Sortable | null = null;
+
+const initSortable = () => {
+  if (schedulesGridRef.value && !sortableInstance) {
+    sortableInstance = new Sortable(schedulesGridRef.value, {
+      animation: 150,
+      onEnd: async (evt) => {
+        if (evt.oldIndex !== undefined && evt.newIndex !== undefined && evt.oldIndex !== evt.newIndex) {
+          const newOrderIds = Array.from(schedulesGridRef.value!.children)
+            .map((child) => (child as HTMLElement).dataset.id)
+            .filter((id): id is string => !!id);
+          
+          try {
+            await educationScheduleStore.reorderSchedules(newOrderIds);
+          } catch (error) {
+            console.error("Failed to reorder:", error);
+          }
+        }
+      },
+    });
+  }
+};
+
+watch(() => schedules.value, () => {
+  nextTick(() => {
+    if (schedulesGridRef.value && !sortableInstance) {
+      initSortable();
+    }
+  });
+}, { deep: true });
+
+onBeforeUnmount(() => {
+  if (sortableInstance) {
+    sortableInstance.destroy();
+  }
 });
 
 const openEditSchedule = async (schedule: EducationSchedule) => {
