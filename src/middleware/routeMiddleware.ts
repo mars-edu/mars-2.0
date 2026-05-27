@@ -1,5 +1,4 @@
 import { useUserStore } from "../stores/userStore";
-import { Role } from "../types/user";
 import { useRouteGuard } from "../composables/useRouteGuard";
 
 interface RouteParams {
@@ -16,7 +15,7 @@ interface RouteParams {
   to: {
     route: {
       options?: {
-        roles?: Role[];
+        resource?: string;
       };
     };
     url: string;
@@ -29,11 +28,11 @@ export function routeMiddleware({ router, to, resolve, reject }: RouteParams) {
   const userStore = useUserStore();
   const { guardRoute } = useRouteGuard();
 
-  // Check if route requires authentication
-  const roles = to.route.options?.roles || [];
+  // Check if route requires a resource permission
+  const resource = to.route.options?.resource;
 
-  // If no roles are required, allow access
-  if (roles.length === 0) {
+  // If no resource is required, allow access (auth-only routes handled by createAuthGuard)
+  if (!resource) {
     resolve();
     return;
   }
@@ -51,8 +50,8 @@ export function routeMiddleware({ router, to, resolve, reject }: RouteParams) {
     return;
   }
 
-  // Check role-based access
-  const hasAccess = guardRoute({ roles });
+  // Check resource-based access
+  const hasAccess = guardRoute({ resource });
   if (!hasAccess) {
     // Access denied - redirect to home or show error
     resolve({

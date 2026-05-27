@@ -1,33 +1,21 @@
-import { Role } from "../types/user";
-import { useUserStore } from "../stores/userStore";
+import { useRBAC } from "./useRBAC";
 import { f7 } from "framework7-vue";
 
 export interface RouteGuard {
-  roles: Role[];
+  resource: string;
   redirect?: string;
 }
 
 export function useRouteGuard() {
-  const userStore = useUserStore();
+  const { canNavigate } = useRBAC();
 
   const guardRoute = (guard: RouteGuard): boolean => {
-    if (guard.roles.length === 0) {
-      return true;
-    }
+    if (canNavigate(guard.resource)) return true;
 
-    const hasAccess =
-      userStore.isAuthenticated && userStore.hasAnyRole(guard.roles);
-
-    if (!hasAccess) {
-      const redirectPath = guard.redirect || "/";
-      f7.views.main.router.navigate(redirectPath);
-      return false;
-    }
-
-    return true;
+    const redirectPath = guard.redirect ?? "/home";
+    f7.views.main.router.navigate(redirectPath);
+    return false;
   };
 
-  return {
-    guardRoute,
-  };
+  return { guardRoute };
 }
