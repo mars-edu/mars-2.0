@@ -104,6 +104,14 @@
             <IconCalculator class="w-4 h-4" />
             {{ journal_recalc_controls() }}
           </button>
+          <button
+            type="button"
+            class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3"
+            @click="close(); onMakeupHoursClick()"
+          >
+            <IconClock class="w-4 h-4" />
+            {{ makeup_hours_title() }}
+          </button>
           <div class="h-px bg-border my-1" />
           <button
             v-if="!isViewOnly"
@@ -268,7 +276,7 @@
         </thead>
         <tbody>
           <tr
-            v-for="(student, studentIndex) in students"
+            v-for="(student, studentIndex) in displayedStudents"
             :key="student.id"
             class="border-b border-border group hover:bg-muted/60 transition-colors"
           >
@@ -284,7 +292,7 @@
               <div class="flex items-center justify-between gap-2">
                 <span
                   v-if="student.name"
-                  class="truncate max-w-[180px] font-medium text-[13px] text-foreground"
+                  class="whitespace-nowrap font-medium text-[13px] text-foreground"
                   :title="student.name"
                 >
                   {{ student.name }}
@@ -344,12 +352,12 @@
                   />
                   <div
                     v-else
-                    @click="
-                      !header.isFinalSummary &&
-                      !(header.type === 'date' && header.isoDate && isFutureDate(header.isoDate))
-                        ? handleCellClick(studentIndex, header.index, mIdx)
-                        : null
-                    "
+                      @click="
+                        !header.isFinalSummary &&
+                        !(header.type === 'date' && header.isoDate && isFutureDate(header.isoDate))
+                          ? handleCellClick(studentIndex, header.index, mIdx)
+                          : null
+                      "
                     :title="
                       header.type === 'date' && header.isoDate && isFutureDate(header.isoDate)
                         ? journal_future_date_tooltip()
@@ -362,9 +370,28 @@
                       }
                     ]"
                   >
-                    <MarkCell
-                      :mark="getMark(studentIndex, header.index, mIdx)"
-                    />
+                    <!-- Inlined MarkCell -->
+                    <div
+                      class="h-6 w-full rounded-md border border-border flex items-center justify-center text-xs group relative"
+                      :class="(marksMatrix[studentIndex]?.[header.index]?.[mIdx] ?? '') !== '' ? 'font-semibold' : 'hover:bg-muted/30 cursor-pointer'"
+                    >
+                      <span v-if="(marksMatrix[studentIndex]?.[header.index]?.[mIdx] ?? '') !== ''" class="font-semibold relative z-10">
+                        {{ marksMatrix[studentIndex][header.index][mIdx] }}
+                      </span>
+                      <span
+                        v-else
+                        class="text-green-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      >+</span>
+                      <!-- Pencil icon overlay -->
+                      <div
+                        v-if="(marksMatrix[studentIndex]?.[header.index]?.[mIdx] ?? '') !== ''"
+                        class="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-md"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3 text-primary">
+                          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                        </svg>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -386,6 +413,12 @@
       v-model:opened="isHistoryDialogOpen"
       :journal-id="props.journalId"
     />
+
+      <MakeupHoursPopover
+        :journal-dates="journalDatesForMakeup"
+        :is-loading="isMakeupRequestLoading"
+        @save="onMakeupHoursSave"
+      />
 
     <!-- Journal Settings Popover (moved here for correct positioning) -->
     <GuardedPopover
@@ -611,7 +644,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted, watch } from "vue";
+import { ref, computed, nextTick, onMounted, onUnmounted, watch, onUpdated } from "vue";
 import { debounce } from "es-toolkit";
 import dayjs from "dayjs";
 import {
@@ -649,16 +682,22 @@ import {
   journal_settings_calc_manual,
   journal_settings_account_assigned,
   journal_settings_account_all,
+  makeup_hours_title,
 } from "@/paraglide/messages";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import DropdownMenu from "@/components/ui/DropdownMenu.vue";
 import Select from "@/components/ui/Select.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
-import MarkCell from "@/components/ui/MarkCell.vue";
+// Inlined MarkCell
 import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
 import KtpDetailViewPopover from "@/components/KtpDetailViewPopover.vue";
 import JournalHistoryDialog from "@/components/JournalHistoryDialog.vue";
+import MakeupHoursPopover from "@/components/MakeupHoursPopover.vue";
+import type { MakeupHoursData } from "@/components/MakeupHoursPopover.vue";
+import { useMakeupRequestStore } from "@/stores/makeupRequestStore";
+import { useUserStore } from "@/stores/userStore";
+import { useTeacherStore } from "@/stores/teacherStore";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useStudentStore } from "@/stores/studentStore";
 import { useMarksStore } from "@/stores/marksStore";
@@ -1870,12 +1909,19 @@ const students = computed(() => {
   const resolvedById = new Map(
     (props.resolvedParticipants ?? []).map((p) => [p.id, p]),
   );
+
+  // O(1) lookup map for student marks to prevent O(N^2) fetching overhead
+  const journalMarksEntry = marksStore.journalMarks[props.journalId];
+  const marksMap = new Map();
+  if (journalMarksEntry && journalMarksEntry.studentMarks) {
+    for (const sm of journalMarksEntry.studentMarks) {
+      marksMap.set(sm.studentId, sm.marks);
+    }
+  }
+
   return currentJournal.value.students.map(
     (studentId: string, index: number) => {
-      const studentMarks = marksStore.getStudentMarks(
-        props.journalId,
-        studentId
-      );
+      const studentMarks = marksMap.get(studentId) || [];
       const resolved = resolvedById.get(studentId);
       const name = resolved
         ? `${resolved.surname} ${resolved.firstName} ${resolved.patronymic}`.trim()
@@ -1883,12 +1929,31 @@ const students = computed(() => {
       return {
         id: index + 1,
         name: name === studentId ? "" : name,
-        marks: studentMarks || [],
+        marks: studentMarks,
         studentId: studentId,
       };
     }
   );
 });
+
+// --- TIME SLICING OPTIMIZATION ---
+const visibleStudentsCount = ref(15);
+const displayedStudents = computed(() => {
+  return students.value.slice(0, visibleStudentsCount.value);
+});
+
+let renderInterval: any = null;
+const startChunkedRendering = () => {
+  if (renderInterval) clearInterval(renderInterval);
+  renderInterval = setInterval(() => {
+    if (visibleStudentsCount.value >= students.value.length) {
+      clearInterval(renderInterval);
+      return;
+    }
+    visibleStudentsCount.value += 15;
+  }, 50); // Yield thread every 15 students
+};
+// ---------------------------------
 
 const marksByStudentId = computed(() => {
   const map = new Map<string, any>();
@@ -1899,24 +1964,47 @@ const marksByStudentId = computed(() => {
 });
 
 const getMark = (studentIndex: number, colIndex: number, markIndex: number) => {
-  const student = students.value[studentIndex];
-  if (!student || !props.journalId) return "";
-
-  if (colIndex < 0) {
-    // Final summary column - use getStudentFinalGrade instead of average
-    return markIndex === 0 ? getStudentFinalGrade(student.studentId) : "";
-  }
-
-  // Map canonical column index to store column index
-  const storeColIndex = getStoreIndexForCanonicalIndex(colIndex);
-  const studentMarks = student.marks;
-  if (!studentMarks || storeColIndex == null || storeColIndex < 0) return "";
-  if (storeColIndex >= studentMarks.length) return "";
-
-  const mark = studentMarks[storeColIndex].values[markIndex];
-  if (mark === null) return "";
-  return String(mark ?? "");
+  return marksMatrix.value[studentIndex]?.[colIndex]?.[markIndex] ?? "";
 };
+
+const marksMatrix = computed(() => {
+  const matrix: Record<number, Record<number, string[]>> = {};
+  const canonical = canonicalTemplate.value;
+  const numCols = canonical ? canonical.length : 0;
+  
+  // Precompute storeColIndex for each cIdx
+  const colIndexMap: Record<number, number | null> = {};
+  for (let cIdx = 0; cIdx < numCols; cIdx++) {
+    colIndexMap[cIdx] = getStoreIndexForCanonicalIndex(cIdx);
+  }
+  
+  const currentStudents = students.value;
+  for (let sIdx = 0; sIdx < currentStudents.length; sIdx++) {
+    const student = currentStudents[sIdx];
+    matrix[sIdx] = {};
+    if (!student || !props.journalId) continue;
+    
+    // Fill final summary column (-1)
+    matrix[sIdx][-1] = [getStudentFinalGrade(student.studentId)];
+    
+    // Fill standard columns
+    for (let cIdx = 0; cIdx < numCols; cIdx++) {
+      matrix[sIdx][cIdx] = [];
+      const storeColIndex = colIndexMap[cIdx];
+      const studentMarks = student.marks;
+      if (!studentMarks || storeColIndex == null || storeColIndex < 0 || storeColIndex >= studentMarks.length) {
+        continue;
+      }
+      
+      const values = studentMarks[storeColIndex].values;
+      for (let mIdx = 0; mIdx < values.length; mIdx++) {
+        const val = values[mIdx];
+        matrix[sIdx][cIdx][mIdx] = val === null ? "" : String(val ?? "");
+      }
+    }
+  }
+  return matrix;
+});
 
 // Pending updates map for optimistic UI (no longer needed with direct tRPC)
 const userEditInProgress = ref(false);
@@ -2362,6 +2450,59 @@ const onRecalcPopupClosed = () => {
   recalcPopupOpen.value = false;
   selectedRecalcControl.value = '';
   selectedRecalcStudentIds.value = [];
+};
+
+// Makeup Hours
+const makeupRequestStore = useMakeupRequestStore();
+const userStore = useUserStore();
+const teacherStore = useTeacherStore();
+const isMakeupRequestLoading = computed(() => makeupRequestStore.loading);
+
+const journalDatesForMakeup = computed(() =>
+  (canonicalTemplate.value ?? [])
+    .filter((m: any) => m.type === "date" && m.isoDate)
+    .map((m: any) => ({
+      isoDate: m.isoDate as string,
+      label: String(m.label).replace("\n", " "),
+    }))
+);
+
+const onMakeupHoursClick = () => {
+  f7.popover.open("#makeup-hours-popover", "#journal-tools-button");
+};
+
+const onMakeupHoursSave = async (data: MakeupHoursData) => {
+  const userId = userStore.currentUser?.id;
+  if (!userId) {
+    f7.dialog.alert("Пользователь не авторизован");
+    return;
+  }
+  const teacher = teacherStore.getTeacherByUserId(userId);
+  if (!teacher) {
+    f7.dialog.alert("Преподаватель не найден");
+    return;
+  }
+
+  try {
+    await makeupRequestStore.createMakeupRequest({
+      journalId: props.journalId,
+      teacherId: teacher.id,
+      createdBy: userId,
+      reason: data.reason || undefined,
+      dates: data.dates,
+    });
+    f7.toast
+      .create({
+        text: "Запрос на отработку часов отправлен на модерацию",
+        position: "center",
+        closeTimeout: 2500,
+      })
+      .open();
+  } catch {
+    f7.dialog.alert(
+      makeupRequestStore.error ?? "Не удалось отправить запрос"
+    );
+  }
 };
 
 const toggleRecalcStudent = (studentId: string) => {
@@ -3277,10 +3418,16 @@ defineExpose({
 
 onMounted(() => {
   scheduleRebuildMarks();
+  startChunkedRendering();
   window.addEventListener("keydown", handleGlobalKeydown);
 });
 
+onUpdated(() => {
+  // Empty
+});
+
 onUnmounted(() => {
+  if (renderInterval) clearInterval(renderInterval);
   window.removeEventListener("keydown", handleGlobalKeydown);
 });
 
