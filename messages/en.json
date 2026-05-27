@@ -694,5 +694,18 @@
   "cabinet_filter_type": "Cabinet type",
   "cabinet_not_found": "No cabinets found",
   "cabinet_delete_title": "Delete cabinet?",
-  "cabinet_delete_confirm": "Are you sure you want to delete cabinet \"{name}\"?"
+  "cabinet_delete_confirm": "Are you sure you want to delete cabinet \"{name}\"?",
+  "makeup_hours_title": "Add Makeup Hours",
+  "makeup_hours_reason_label": "Reason for Makeup",
+  "makeup_hours_reason_placeholder": "Specify the reason for all selected dates...",
+  "makeup_hours_scheduled_date": "Scheduled Date",
+  "makeup_hours_new_date": "New Makeup Date",
+  "makeup_hours_time_from": "Time From",
+  "makeup_hours_time_to": "Time To",
+  "makeup_hours_add_date": "Add Another Date",
+  "makeup_hours_submit": "Submit for Review",
+  "makeup_hours_select_date": "Select date...",
+  "protocol_makeup_request_label": "MAKEUP",
+  "protocol_makeup_request_title": "Makeup Hours Request",
+  "protocol_makeup_dates_label": "Makeup Dates"
 }

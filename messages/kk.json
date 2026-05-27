@@ -694,5 +694,18 @@
   "cabinet_filter_type": "Кабинет түрі",
   "cabinet_not_found": "Кабинеттер табылмады",
   "cabinet_delete_title": "Кабинетті жою?",
-  "cabinet_delete_confirm": "Сіз \"{name}\" кабинетін жойғыңыз келетініне сенімдісіз бе?"
+  "cabinet_delete_confirm": "Сіз \"{name}\" кабинетін жойғыңыз келетініне сенімдісіз бе?",
+  "makeup_hours_title": "Сағаттарды өтеу қосу",
+  "makeup_hours_reason_label": "Өтеудің тағайындалу негізі",
+  "makeup_hours_reason_placeholder": "Барлық таңдалған күндер үшін себепті көрсетіңіз...",
+  "makeup_hours_scheduled_date": "Кесте бойынша күн",
+  "makeup_hours_new_date": "Өтеудің жаңа күні",
+  "makeup_hours_time_from": "Уақыттан",
+  "makeup_hours_time_to": "Уақытқа дейін",
+  "makeup_hours_add_date": "Тағы бір күн қосу",
+  "makeup_hours_submit": "Модерацияға жіберу",
+  "makeup_hours_select_date": "Күнді таңдаңыз...",
+  "protocol_makeup_request_label": "ӨТЕУ",
+  "protocol_makeup_request_title": "Сағаттарды өтеу сұранысы",
+  "protocol_makeup_dates_label": "Өтеу күндері"
 }

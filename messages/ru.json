@@ -703,5 +703,18 @@
   "cabinet_filter_type": "Тип кабинета",
   "cabinet_not_found": "Кабинеты не найдены",
   "cabinet_delete_title": "Удалить кабинет?",
-  "cabinet_delete_confirm": "Вы уверены, что хотите удалить кабинет \"{name}\"?"
+  "cabinet_delete_confirm": "Вы уверены, что хотите удалить кабинет \"{name}\"?",
+  "makeup_hours_title": "Добавить отработку часов",
+  "makeup_hours_reason_label": "Основание назначения отработки",
+  "makeup_hours_reason_placeholder": "Укажите причину для всех выбранных дат...",
+  "makeup_hours_scheduled_date": "Дата по расписанию",
+  "makeup_hours_new_date": "Новая дата отработки",
+  "makeup_hours_time_from": "Время от",
+  "makeup_hours_time_to": "Время до",
+  "makeup_hours_add_date": "Добавить ещё дату",
+  "makeup_hours_submit": "Отправить на модерацию",
+  "makeup_hours_select_date": "Выберите дату...",
+  "protocol_makeup_request_label": "ОТРАБОТКА",
+  "protocol_makeup_request_title": "Запрос на отработку часов",
+  "protocol_makeup_dates_label": "Даты отработки"
 }
