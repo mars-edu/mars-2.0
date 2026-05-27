@@ -35,7 +35,7 @@
           </div>
 
           <Accordion v-model:expanded-items="expandedAccordions">
-            <AccordionItem id="academic-years" :default-expanded="false">
+            <AccordionItem id="academic-years" >
               <template #title>{{ edu_schedule_academic_year() }}</template>
               <template #actions>
                 <AddAcademicYearButton />
@@ -100,7 +100,7 @@
               </div>
             </AccordionItem>
 
-            <AccordionItem id="semesters" :default-expanded="false">
+            <AccordionItem id="semesters" >
               <template #title>{{ edu_schedule_semesters() }}</template>
               <template #actions>
                 <AddAcademicYearSemesterButton />
@@ -227,7 +227,7 @@
               </div>
             </AccordionItem>
 
-            <AccordionItem id="vacations" :default-expanded="false">
+            <AccordionItem id="vacations" >
               <template #title>{{ edu_schedule_vacations() }}</template>
               <template #actions>
                 <AddVacationButton />
@@ -289,13 +289,13 @@
               </div>
             </AccordionItem>
 
-            <AccordionItem id="controls" :default-expanded="false">
+            <AccordionItem id="controls" >
               <template #title>{{ edu_schedule_controls() }}</template>
               <Accordion v-model:expanded-items="expandedControlAccordions">
                 <!-- Scheduled Final Controls Section -->
                 <AccordionItem
                   id="scheduled-final-controls"
-                  :default-expanded="false"
+                  
                 >
                   <template #title>{{ edu_schedule_final_controls() }}</template>
                   <template #actions>
@@ -364,7 +364,7 @@
                 <!-- Scheduled Intermediate Controls Section -->
                 <AccordionItem
                   id="scheduled-intermediate-controls"
-                  :default-expanded="false"
+                  
                 >
                   <template #title>{{ edu_schedule_intermediate_controls() }}</template>
                   <template #actions>
@@ -545,8 +545,11 @@ const accordionIds = [
 ];
 
 // State for tracking expanded accordions
-const expandedAccordions = ref<string[]>([]);
-const expandedControlAccordions = ref<string[]>([]);
+const expandedAccordions = ref<string[]>([...accordionIds]);
+const expandedControlAccordions = ref<string[]>([
+  "scheduled-final-controls",
+  "scheduled-intermediate-controls",
+]);
 
 // Computed property to check if all accordions are expanded
 const areAllExpanded = computed(() => {
