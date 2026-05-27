@@ -17,7 +17,9 @@ Two changes shipped together:
 
 ## Data Model
 
-New table in `convex/schema.ts`:
+Two new tables in `convex/schema.ts`:
+
+### `permissions`
 
 ```ts
 permissions: defineTable({
@@ -29,6 +31,8 @@ permissions: defineTable({
   ),
   roles: v.array(roleValidator),
   description: v.optional(v.string()),
+  activeFrom: v.optional(v.number()),  // ms timestamp — null means always active from start
+  activeTo: v.optional(v.number()),    // ms timestamp — null means never expires
 })
   .index("by_resource_action", ["resource", "action"])
 ```
@@ -36,6 +40,31 @@ permissions: defineTable({
 - `resource` — logical feature name matching nav item IDs and Convex module names (e.g. `"journals"`, `"analytics"`, `"marks"`)
 - `action` — `"navigate"` for route/nav guards, `"read"` for query-level enforcement, `"write"` for mutation-level enforcement
 - `roles` — subset of `["ADMIN", "TEACHER", "STUDENT", "PARENT"]` that are allowed
+- `activeFrom` / `activeTo` — optional date range; permission is enforced only while `now` falls within the window. Both fields absent means always active.
+
+### `permissionHistory`
+
+```ts
+permissionHistory: defineTable({
+  permissionId: v.id("permissions"),
+  resource: v.string(),       // denormalized for query convenience after deletion
+  action: v.string(),
+  changedBy: v.id("users"),
+  changedAt: v.number(),      // ms timestamp
+  previousRoles: v.array(roleValidator),
+  newRoles: v.array(roleValidator),
+  previousActiveFrom: v.optional(v.number()),
+  previousActiveTo: v.optional(v.number()),
+  newActiveFrom: v.optional(v.number()),
+  newActiveTo: v.optional(v.number()),
+  changeType: v.union(v.literal("created"), v.literal("updated"), v.literal("deleted")),
+})
+  .index("by_permission", ["permissionId"])
+  .index("by_changedBy", ["changedBy"])
+  .index("by_changedAt", ["changedAt"])
+```
+
+Written inside every permissions mutation (create/update/delete). `resource` and `action` are denormalized so history remains queryable even after the permission row is deleted.
 
 ### Initial Seed
 
@@ -98,8 +127,17 @@ export async function requirePermission(
 
   if (!user.roles.some(r => (rule.roles as string[]).includes(r)))
     throw new ConvexError({ code: "FORBIDDEN" });
+
+  // Time-range check
+  const now = Date.now();
+  if (rule.activeFrom && now < rule.activeFrom)
+    throw new ConvexError({ code: "PERMISSION_NOT_YET_ACTIVE" });
+  if (rule.activeTo && now > rule.activeTo)
+    throw new ConvexError({ code: "PERMISSION_EXPIRED" });
 }
 ```
+
+The same time-range logic is applied in `getMyPermissions` so the frontend nav also reflects expired/future permissions correctly.
 
 ### Phase 1 — High-risk mutations (this sprint)
 
@@ -131,15 +169,34 @@ export const getMyPermissions = query({
     const user = await ctx.db.get(userId);
     if (!user) return [];
 
+    const now = Date.now();
     const all = await ctx.db.query("permissions").collect();
     return all
-      .filter(p => p.action === "navigate" && user.roles.some(r => p.roles.includes(r)))
+      .filter(p =>
+        p.action === "navigate" &&
+        user.roles.some(r => p.roles.includes(r)) &&
+        (!p.activeFrom || now >= p.activeFrom) &&
+        (!p.activeTo || now <= p.activeTo)
+      )
       .map(p => p.resource);
+  }
+});
+
+export const getPermissionHistory = query({
+  args: { permissionId: v.id("permissions") },
+  handler: async (ctx, { permissionId }) => {
+    return await ctx.db
+      .query("permissionHistory")
+      .withIndex("by_permission", q => q.eq("permissionId", permissionId))
+      .order("desc")
+      .collect();
   }
 });
 ```
 
-Returns the list of navigable resources for the authenticated user (e.g. `["home", "journals", "planning"]`). Frontend uses this list exclusively — no role logic lives in the frontend.
+`getMyPermissions` filters out permissions that haven't started yet or have already expired. Frontend nav and route guards automatically reflect time-bounded access with no extra logic.
+
+`getPermissionHistory` returns the full audit trail for a given permission, newest first.
 
 ---
 
@@ -225,6 +282,28 @@ All backend functionality already exists in Convex:
 
 ---
 
+## Permissions Mutations
+
+### `convex/permissions/mutations.ts`
+
+Three mutations, each writing a history row atomically:
+
+**`updatePermission`** — changes `roles`, `activeFrom`, or `activeTo` on an existing rule:
+```ts
+// 1. read current rule
+// 2. patch fields
+// 3. insert permissionHistory row with changeType: "updated", previousRoles, newRoles, etc.
+// 4. requirePermission(ctx, args.changedBy, "users", "write") — only admins can mutate permissions
+```
+
+**`createPermission`** — inserts a new rule + history row with `changeType: "created"`, `previousRoles: []`.
+
+**`deletePermission`** — removes the rule + history row with `changeType: "deleted"`, `newRoles: []`.
+
+All three require the caller to pass `changedBy: v.id("users")` and verify admin access via `requirePermission` before writing.
+
+---
+
 ## Seed Mutation
 
 A one-time `convex/permissions/mutations.ts` internal mutation `seedPermissions` inserts the initial permission rows if the table is empty. Called once via Convex dashboard or a deploy hook.
@@ -233,6 +312,8 @@ A one-time `convex/permissions/mutations.ts` internal mutation `seedPermissions`
 
 ## Out of Scope
 
-- Admin UI for editing permissions at runtime (future work)
+- Admin UI for editing permissions at runtime (future work — mutations exist, UI is not part of this spec)
 - Phase 2 sweep of remaining queries/mutations (incremental, per-module)
 - Custom role creation (only 4 fixed roles: ADMIN, TEACHER, STUDENT, PARENT)
+- Time-of-day or day-of-week windows (only date-range `activeFrom`/`activeTo` is in scope)
+- Access log (per-user resource access events — not in scope, only permission change history is tracked)
