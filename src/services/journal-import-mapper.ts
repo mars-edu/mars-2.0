@@ -7,6 +7,7 @@ import type { JournalImportResult, JournalImportStudent } from "@/types/journal-
 import type { Mark, StudentMark } from "@/types/marks";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 
 dayjs.extend(customParseFormat);
 
@@ -162,7 +163,7 @@ function parseDateToISO(dateStr: string): string | null {
   for (const format of formats) {
     const parsed = dayjs(cleaned, format, true);
     if (parsed.isValid()) {
-      return parsed.format("YYYY-MM-DD");
+      return parsed.format(DATE_STORAGE_FORMAT);
     }
   }
 

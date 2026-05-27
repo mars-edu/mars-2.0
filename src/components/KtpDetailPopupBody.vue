@@ -196,6 +196,7 @@ import { useCalendarStore } from "@/stores/calendarStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useClass9Store } from "@/stores/class9Store";
 import { getEventDays } from "@/utils/eventDate";
+import { DATE_UI_FORMAT } from "@/constants/calendar";
 import KtpDetailFormPopover from "@/components/KtpDetailFormPopover.vue";
 import DownloadTemplateDialog from "@/components/DownloadTemplateDialog.vue";
 import RupImportDialog from "@/components/RupImportDialog.vue";
@@ -259,7 +260,7 @@ const lessonDates = computed(() => {
 
   try {
     const days = getEventDays(event, semesterInfo);
-    return days.map((d) => d.day.format("DD.MM.YYYY"));
+    return days.map((d) => d.day.format(DATE_UI_FORMAT));
   } catch (e) {
     console.error("[KtpDetailPopupBody] Failed to compute lesson dates:", e);
     return [];

@@ -7,7 +7,7 @@
 
 import dayjs from "dayjs";
 import type { Mark } from "@/types/marks";
-import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
+import { DATE_STORAGE_FORMAT, DATE_UI_FORMAT } from "@/constants/calendar";
 import type { Journal } from "@/stores/journalStore";
 import type { CalendarEvent } from "@/stores/calendarStore";
 import type { Student } from "@/types/student";
@@ -38,7 +38,7 @@ export function formatExportHeaderLabel(mark: Mark): string {
     if (iso) {
       const parsed = dayjs(iso, DATE_STORAGE_FORMAT, true);
       if (parsed.isValid()) {
-        return parsed.format("DD.MM.YYYY");
+        return parsed.format(DATE_UI_FORMAT);
       }
     }
     // Fallback: use mark.date but strip newlines

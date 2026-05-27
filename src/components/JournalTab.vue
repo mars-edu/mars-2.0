@@ -7,134 +7,19 @@
     >
       Журнал закрыт. Доступен только просмотр.
     </div>
-    <div class="mb-3 flex items-center justify-between gap-4 flex-wrap">
-      <div class="flex items-center bg-muted p-1 rounded-lg">
-        <button
-          type="button"
-          @click="viewMode = 'general'"
-          :class="[
-            'px-4 py-1.5 rounded-[6px] text-[13px] font-medium transition-all',
-            viewMode === 'general'
-              ? 'bg-card text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground',
-          ]"
-        >
-          {{ journal_view_general() }}
-        </button>
-        <button
-          type="button"
-          @click="viewMode = 'monitoring'"
-          :class="[
-            'px-4 py-1.5 rounded-[6px] text-[13px] font-medium transition-all',
-            viewMode === 'monitoring'
-              ? 'bg-card text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground',
-          ]"
-        >
-          {{ journal_view_monitoring() }}
-        </button>
-      </div>
-      <div class="flex items-center gap-3">
-        <template v-if="viewMode === 'monitoring'">
-          <button
-            type="button"
-            @click="onDownloadClick"
-            class="flex items-center gap-1.5 px-3 py-1.5 bg-card border border-border text-foreground hover:bg-muted rounded-lg text-[13px] font-medium transition-all shadow-sm"
-          >
-            <IconFileSpreadsheet class="w-4 h-4" />
-            <span>{{ journal_export() }}</span>
-          </button>
-          <div class="w-px h-6 bg-border mx-1" />
-        </template>
-      <DropdownMenu align="right" width="18rem" @click.stop>
-        <template #trigger="{ toggle, isOpen }">
-          <button
-            id="journal-tools-button"
-            type="button"
-            @click="toggle"
-            class="w-12 h-12 bg-card rounded-2xl border border-border flex items-center justify-center text-muted-foreground hover:text-yellow-600 hover:border-yellow-200 hover:bg-yellow-50 transition-all shadow-sm"
-            :class="{ 'text-yellow-600 border-yellow-200 bg-yellow-50': isOpen }"
-          >
-            <IconMoreVertical class="w-7 h-7" />
-          </button>
-        </template>
-        <template #default="{ close }">
-          <button
-            type="button"
-            class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3"
-            @click="close(); onOpenRupClick()"
-          >
-            <IconFileText class="w-4 h-4" />
-            РУП
-          </button>
-          <button
-            id="journal-history-button"
-            type="button"
-            class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3"
-            @click="close(); onHistoryClick()"
-          >
-            <IconClock class="w-4 h-4" />
-            {{ journal_history_changes() }}
-          </button>
-          <button
-            id="journal-settings-button"
-            type="button"
-            :disabled="isViewOnly"
-            class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-            @click="close(); onSettingsClick()"
-          >
-            <IconSettings class="w-4 h-4" />
-            Настройки
-          </button>
-          <button
-            type="button"
-            class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3"
-            @click="close(); onDownloadClick()"
-          >
-            <IconArrowDownToLine class="w-4 h-4" />
-            Скачать журнал
-          </button>
-          <button
-            id="recalc-button"
-            type="button"
-            :disabled="isViewOnly"
-            class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-            @click.stop="close(); onRecalcClick()"
-          >
-            <IconCalculator class="w-4 h-4" />
-            {{ journal_recalc_controls() }}
-          </button>
-          <button
-            type="button"
-            class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3"
-            @click="close(); onMakeupHoursClick()"
-          >
-            <IconClock class="w-4 h-4" />
-            {{ makeup_hours_title() }}
-          </button>
-          <div class="h-px bg-border my-1" />
-          <button
-            v-if="!isViewOnly"
-            type="button"
-            class="w-full text-left px-4 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-3"
-            @click="close(); onCloseJournalClick()"
-          >
-            <IconCircleX class="w-4 h-4" />
-            Закрыть журнал
-          </button>
-          <button
-            v-else
-            type="button"
-            class="w-full text-left px-4 py-2.5 text-sm font-medium text-green-600 hover:bg-green-50 transition-colors flex items-center gap-3"
-            @click="close(); onOpenJournalClick()"
-          >
-            <IconLockOpen class="w-4 h-4" />
-            Открыть журнал
-          </button>
-        </template>
-      </DropdownMenu>
-      </div>
-    </div>
+    <JournalToolbar
+      v-model:viewMode="viewMode"
+      :is-view-only="isViewOnly"
+      @download="onDownloadClick"
+      @open-retake="isRetakeModalOpen = true"
+      @open-rup="onOpenRupClick"
+      @open-history="onHistoryClick"
+      @open-settings="onSettingsClick"
+      @open-recalc="onRecalcClick"
+      @open-makeup-hours="onMakeupHoursClick"
+      @close-journal="onCloseJournalClick"
+      @open-journal="onOpenJournalClick"
+    />
 
     <!-- Academic Year Mismatch Warning Banner -->
     <div
@@ -198,208 +83,29 @@
       </div>
     </div>
 
-    <div
+    <JournalGradeStats
       v-if="viewMode === 'monitoring' && monitoringGradeStats.totalGraded > 0"
-      class="mb-4 bg-card rounded-2xl shadow-sm border border-border p-6"
-    >
-      <div class="flex items-baseline justify-between mb-4">
-        <h3 class="text-[13px] font-bold text-foreground uppercase tracking-wide">
-          {{ journal_grade_stats_title() }}
-        </h3>
-        <span class="text-[12px] text-muted-foreground font-medium">
-          {{ journal_grade_stats_count({ graded: monitoringGradeStats.totalGraded, total: students.length }) }}
-        </span>
-      </div>
-      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-        <div
-          v-for="entry in monitoringGradeStats.entries"
-          :key="entry.letter"
-          class="flex justify-between items-center bg-muted p-3 rounded-xl"
-        >
-          <span class="text-sm font-bold text-foreground">{{ entry.letter }}</span>
-          <span
-            :class="[
-              'text-[12px] font-bold px-2 py-0.5 rounded-md',
-              entry.count > 0
-                ? 'bg-foreground text-background'
-                : 'bg-border text-muted-foreground',
-            ]"
-          >
-            {{ entry.count }}
-          </span>
-        </div>
-      </div>
-    </div>
+      :stats="monitoringGradeStats"
+      :total-students="students.length"
+    />
 
-    <div class="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
-      <table class="w-full text-sm border-collapse">
-        <thead class="bg-muted/80 backdrop-blur sticky top-0 z-20 shadow-sm">
-          <tr>
-            <th class="border-r border-b border-border p-2 w-14 min-w-[56px] max-w-[56px] text-center text-[11px] uppercase tracking-wide text-muted-foreground font-bold sticky left-0 bg-muted z-30 align-middle">
-              №
-            </th>
-            <th
-              class="border-r border-b border-border p-3 text-left min-w-[250px] text-[11px] uppercase tracking-wide text-muted-foreground font-bold sticky left-14 bg-muted z-30 align-middle"
-            >
-              Обучающийся
-            </th>
-            <!-- Dynamic date columns -->
-            <th
-              v-for="(header, index) in displayedHeaders"
-              :key="header.isFinalSummary ? 'final-summary' : header.index"
-              class="px-1 py-2 text-center text-[12px] font-medium text-foreground border-r border-b border-border w-14 min-w-[50px] relative"
-              :class="[
-                header.isFinalSummary
-                  ? 'bg-destructive/5 text-destructive font-bold cursor-default w-20'
-                  : 'cursor-pointer hover:bg-muted/80',
-                {
-                  'bg-muted/70 text-foreground font-bold w-16': header.type === 'session',
-                },
-              ]"
-              @click="
-                !header.isFinalSummary && header.index >= 0
-                  ? openDateFocus(header, header.index)
-                  : null
-              "
-            >
-              <div class="flex flex-col items-center">
-                <IconPaperclip
-                  v-if="header.type === 'date' && getKtpForHeader(header.index) !== null"
-                  class="h-8 text-gray-400"
-                  @click.stop="onPaperclipClick(header, index)"
-                  :id="`paperclip-${index}`"
-                />
-                <span v-html="header.label.replace('\n', '<br/>')"></span>
-              </div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="(student, studentIndex) in displayedStudents"
-            :key="student.id"
-            class="border-b border-border group hover:bg-muted/60 transition-colors"
-          >
-            <td
-              class="px-2 py-2 w-14 min-w-[56px] max-w-[56px] text-center border-r border-border text-[12px] font-medium text-muted-foreground align-middle sticky left-0 bg-card group-hover:bg-muted z-10 transition-colors"
-            >
-              {{ studentIndex + 1 }}
-            </td>
-            <td
-              class="px-3 py-2 border-r border-border align-middle cursor-pointer bg-card group-hover:bg-muted transition-colors min-w-[250px] sticky left-14 z-10"
-              @click="showFloatingRow(student, studentIndex)"
-            >
-              <div class="flex items-center justify-between gap-2">
-                <span
-                  v-if="student.name"
-                  class="whitespace-nowrap font-medium text-[13px] text-foreground"
-                  :title="student.name"
-                >
-                  {{ student.name }}
-                </span>
-                <span
-                  v-else
-                  class="block h-4 w-32 rounded bg-muted animate-pulse"
-                  aria-hidden="true"
-                />
-                <div
-                  class="ml-2 px-1.5 py-0.5 rounded-md text-[10px] font-bold text-white shadow-sm min-w-[28px] text-center flex-shrink-0"
-                  :class="
-                    getScoreBadgeClass(
-                      getStudentAverageScore(student.studentId)
-                    )
-                  "
-                >
-                  {{ getStudentAverageScore(student.studentId) }}
-                </div>
-              </div>
-            </td>
-            <td
-              v-for="(header, vColIdx) in displayedHeaders"
-              :key="header.isFinalSummary ? 'final-summary' : header.index"
-              class="px-1 py-1.5 text-center text-[12px] font-medium border-r border-b border-border min-w-[50px] align-middle"
-              :class="[
-                header.isFinalSummary ? 'bg-destructive/5 text-destructive font-bold' : '',
-                {
-                  'bg-muted/40': header.type === 'session',
-                  'bg-muted/30 cursor-not-allowed': header.type === 'date' && header.isoDate && isFutureDate(header.isoDate),
-                },
-              ]"
-            >
-              <div class="flex flex-col gap-1">
-                <div
-                  v-for="mIdx in getRowIndices(header.index)"
-                  :key="mIdx"
-                  class="h-8 flex items-center justify-center transition-transform duration-300"
-                  :class="{
-                    'scale-175 z-10':
-                      editingCell?.studentIndex === studentIndex &&
-                      editingCell?.colIndex === header.index &&
-                      editingCell?.markIndex === mIdx,
-                  }"
-                >
-                  <EditableMarkCell
-                    v-if="
-                      editingCell?.studentIndex === studentIndex &&
-                      editingCell?.colIndex === header.index &&
-                      editingCell?.markIndex === mIdx
-                    "
-                    v-model="editedValue"
-                    @confirm="confirmEdit"
-                    @cancel="cancelEdit"
-                    @navigate="navigate"
-                    :is-zoomed="true"
-                  />
-                  <div
-                    v-else
-                      @click="
-                        !header.isFinalSummary &&
-                        !(header.type === 'date' && header.isoDate && isFutureDate(header.isoDate))
-                          ? handleCellClick(studentIndex, header.index, mIdx)
-                          : null
-                      "
-                    :title="
-                      header.type === 'date' && header.isoDate && isFutureDate(header.isoDate)
-                        ? journal_future_date_tooltip()
-                        : ''
-                    "
-                    :class="[
-                      header.isFinalSummary ? 'w-full' : 'cursor-pointer w-full',
-                      {
-                        'cursor-not-allowed opacity-50': header.type === 'date' && header.isoDate && isFutureDate(header.isoDate),
-                      }
-                    ]"
-                  >
-                    <!-- Inlined MarkCell -->
-                    <div
-                      class="h-6 w-full rounded-md border border-border flex items-center justify-center text-xs group relative"
-                      :class="(marksMatrix[studentIndex]?.[header.index]?.[mIdx] ?? '') !== '' ? 'font-semibold' : 'hover:bg-muted/30 cursor-pointer'"
-                    >
-                      <span v-if="(marksMatrix[studentIndex]?.[header.index]?.[mIdx] ?? '') !== ''" class="font-semibold relative z-10">
-                        {{ marksMatrix[studentIndex][header.index][mIdx] }}
-                      </span>
-                      <span
-                        v-else
-                        class="text-green-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                      >+</span>
-                      <!-- Pencil icon overlay -->
-                      <div
-                        v-if="(marksMatrix[studentIndex]?.[header.index]?.[mIdx] ?? '') !== ''"
-                        class="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-md"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3 text-primary">
-                          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <JournalGrid
+      :displayed-students="displayedStudents"
+      :displayed-headers="displayedHeaders"
+      :marks-matrix="marksMatrix"
+      :editing-cell="editingCell"
+      :edited-value="editedValue"
+      :is-view-only="isViewOnly"
+      :journal_future_date_tooltip="journal_future_date_tooltip()"
+      :get-ktp-for-header="getKtpForHeader"
+      :is-future-date="isFutureDate"
+      @header-click="openDateFocus"
+      @paperclip-click="onPaperclipClick"
+      @cell-click="handleCellClick"
+      @update:editedValue="editedValue = $event"
+      @save-mark="saveMark"
+      @cancel-edit="cancelEdit"
+    />
 
     <!-- KtpDetailViewPopover -->
     <KtpDetailViewPopover
@@ -640,6 +346,13 @@
         />
       </div>
     </GuardedPopover>
+    <!-- Retake Modal -->
+    <RetakeModal
+      :is-open="isRetakeModalOpen"
+      :students="students"
+      @close="isRetakeModalOpen = false"
+      @submit="handleRetakeSubmit"
+    />
   </div>
 </template>
 
@@ -651,6 +364,7 @@ import {
   DATE_DAY_MONTH_FORMAT,
   DATE_YEAR_FORMAT,
   DATE_STORAGE_FORMAT,
+  DATE_UI_FORMAT,
 } from "@/constants/calendar";
 import { getEventDays, type SemesterInfo } from "@/utils/eventDate";
 import { f7, f7Button } from "framework7-vue";
@@ -693,6 +407,11 @@ import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
 import KtpDetailViewPopover from "@/components/KtpDetailViewPopover.vue";
 import JournalHistoryDialog from "@/components/JournalHistoryDialog.vue";
+import RetakeModal from "./RetakeModal.vue";
+import JournalToolbar from "./JournalToolbar.vue";
+import JournalGradeStats from "./JournalGradeStats.vue";
+import JournalGrid from "./JournalGrid.vue";
+import IconRefreshCw from "~icons/lucide/refresh-cw";
 import MakeupHoursPopover from "@/components/MakeupHoursPopover.vue";
 import type { MakeupHoursData } from "@/components/MakeupHoursPopover.vue";
 import { useMakeupRequestStore } from "@/stores/makeupRequestStore";
@@ -745,7 +464,7 @@ const exportHeaderLabelFor = (mark: any): string => {
     if (iso) {
       const parsed = dayjs(iso, DATE_STORAGE_FORMAT, true);
       if (parsed.isValid()) {
-        return parsed.format("DD.MM.YYYY");
+        return parsed.format(DATE_UI_FORMAT);
       }
     }
     const label = headerLabelFor(mark);
@@ -1622,8 +1341,8 @@ const generateDates = () => {
       label: rawControl.shortName || 'unlabeled',
       startDate: rawControl.startDate,
       endDate: rawControl.endDate,
-      parsedStart: start?.format('YYYY-MM-DD'),
-      parsedEnd: end?.format('YYYY-MM-DD'),
+      parsedStart: start?.format(DATE_STORAGE_FORMAT),
+      parsedEnd: end?.format(DATE_STORAGE_FORMAT),
       insertAfterDatePos,
       previousMax,
       dateMetaLength: dateMeta.length,
@@ -2008,6 +1727,11 @@ const marksMatrix = computed(() => {
 
 // Pending updates map for optimistic UI (no longer needed with direct tRPC)
 const userEditInProgress = ref(false);
+
+const isRetakeModalOpen = ref(false);
+const handleRetakeSubmit = (data: any) => {
+  console.log("Retake requested:", data);
+};
 
 // Direct mark update function - no debounce, immediate save
 const updateMark = async (

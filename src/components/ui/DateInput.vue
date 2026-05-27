@@ -19,6 +19,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import dayjs from "dayjs";
+import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 
 const props = withDefaults(
   defineProps<{
@@ -39,7 +40,7 @@ const focused = ref(false);
 
 const nativeValue = computed(() => {
   if (!props.value || props.value.length === 0) return "";
-  return dayjs(props.value[0]).format("YYYY-MM-DD");
+  return dayjs(props.value[0]).format(DATE_STORAGE_FORMAT);
 });
 
 function onInput(event: Event) {

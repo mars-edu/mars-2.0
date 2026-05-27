@@ -195,6 +195,7 @@ import { useConvexQuery as useQuery, useConvexMutation as useMutation } from 'co
 import { api } from '@convex/_generated/api';
 import { f7 } from 'framework7-vue';
 import dayjs from 'dayjs';
+import { DATE_UI_FORMAT } from "@/constants/calendar";
 
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -230,7 +231,7 @@ const selectedTest = ref<any>(null);
 
 function formatDate(dateStr: string) {
   if (!dateStr) return '';
-  return dayjs(dateStr).format('DD.MM.YYYY');
+  return dayjs(dateStr).format(DATE_UI_FORMAT);
 }
 
 function viewTest(test: any) {

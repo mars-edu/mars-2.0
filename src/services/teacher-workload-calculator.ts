@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import type { CalendarEvent, WeeklySchedule } from "@/stores/calendarStore";
 import type { Class9Data } from "@/stores/class9Store";
 import type { Student } from "@/types/student";
@@ -212,7 +213,7 @@ function calculateActualHours(
   // Create a map of lesson dates to hours
   const lessonDateMap = new Map<string, number>();
   lessonDates.forEach((lesson) => {
-    const dateKey = lesson.date.format("YYYY-MM-DD");
+    const dateKey = lesson.date.format(DATE_STORAGE_FORMAT);
     lessonDateMap.set(dateKey, (lessonDateMap.get(dateKey) || 0) + lesson.hours);
   });
 
@@ -235,7 +236,7 @@ function calculateActualHours(
   // Calculate actual hours for the current month AND fill daily hours array
   let actualHoursMonth = 0;
   lessonDates.forEach((lesson) => {
-    const dateKey = lesson.date.format("YYYY-MM-DD");
+    const dateKey = lesson.date.format(DATE_STORAGE_FORMAT);
     if (markedDates.has(dateKey)) {
       // Lesson was taught (has marks in journal)
       actualHoursMonth += lesson.hours;
@@ -265,7 +266,7 @@ function calculateActualHours(
   // Create map of all lesson dates to hours for cumulative calculation
   const allLessonDateMap = new Map<string, number>();
   allLessonDates.forEach((lesson) => {
-    const dateKey = lesson.date.format("YYYY-MM-DD");
+    const dateKey = lesson.date.format(DATE_STORAGE_FORMAT);
     allLessonDateMap.set(dateKey, (allLessonDateMap.get(dateKey) || 0) + lesson.hours);
   });
 
@@ -316,7 +317,7 @@ export function generateDailyWorkload(
   const monthEnd = dayjs(new Date(year, month + 1, 0)).endOf("day"); // Last day of month
   const daysInMonth = monthEnd.date();
 
-  console.log(`[Calculator] Month boundaries: ${monthStart.format('YYYY-MM-DD')} to ${monthEnd.format('YYYY-MM-DD')}, days: ${daysInMonth}`);
+  console.log(`[Calculator] Month boundaries: ${monthStart.format(DATE_STORAGE_FORMAT)} to ${monthEnd.format(DATE_STORAGE_FORMAT)}, days: ${daysInMonth}`);
 
   // Group events by subject/group combination
   const eventGroups = new Map<
@@ -570,8 +571,8 @@ export function computeMonthsFromSemesters(
     console.log(`[computeMonthsFromSemesters] Processing semester ${semester.semesterNumber}:`, {
       startDate: semester.startDate,
       endDate: semester.endDate,
-      startParsed: start.format("YYYY-MM-DD"),
-      endParsed: end.format("YYYY-MM-DD"),
+      startParsed: start.format(DATE_STORAGE_FORMAT),
+      endParsed: end.format(DATE_STORAGE_FORMAT),
       startValid: start.isValid(),
       endValid: end.isValid(),
     });

@@ -63,8 +63,8 @@ export function getEventDays(
   console.log("[getEventDays] Input:", {
     eventStartDate: event.startDate,
     eventEndDate: event.endDate,
-    startDate: start.format("YYYY-MM-DD"),
-    endDate: end.format("YYYY-MM-DD"),
+    startDate: start.format(DATE_STORAGE_FORMAT),
+    endDate: end.format(DATE_STORAGE_FORMAT),
     startEqualsEnd: start.isSame(end, "day"),
     hasWeeklySchedules:
       Array.isArray(event.weeklySchedules) && event.weeklySchedules.length > 0,
@@ -94,8 +94,8 @@ export function getEventDays(
       start = parseEventDate(semesterInfo.startDate);
       end = parseEventDate(semesterInfo.endDate);
       console.log("[getEventDays] Fallback applied - using semester dates:", {
-        newStart: start.format("YYYY-MM-DD"),
-        newEnd: end.format("YYYY-MM-DD"),
+        newStart: start.format(DATE_STORAGE_FORMAT),
+        newEnd: end.format(DATE_STORAGE_FORMAT),
       });
     } else {
       console.log("[getEventDays] No semester info available for fallback");
@@ -128,8 +128,8 @@ export function getEventDays(
 
   console.log("[getEventDays] Result:", {
     daysCount: result.length,
-    firstDay: result[0]?.day.format("YYYY-MM-DD"),
-    lastDay: result[result.length - 1]?.day.format("YYYY-MM-DD"),
+    firstDay: result[0]?.day.format(DATE_STORAGE_FORMAT),
+    lastDay: result[result.length - 1]?.day.format(DATE_STORAGE_FORMAT),
   });
 
   // SECONDARY FALLBACK: If result is empty but we have semester info and a same-day event with schedules,
@@ -159,8 +159,8 @@ export function getEventDays(
 
     console.log("[getEventDays] Secondary Fallback Result:", {
       daysCount: result.length,
-      firstDay: result[0]?.day.format("YYYY-MM-DD"),
-      lastDay: result[result.length - 1]?.day.format("YYYY-MM-DD"),
+      firstDay: result[0]?.day.format(DATE_STORAGE_FORMAT),
+      lastDay: result[result.length - 1]?.day.format(DATE_STORAGE_FORMAT),
     });
   }
 
