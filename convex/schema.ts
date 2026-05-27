@@ -79,7 +79,11 @@ export default defineSchema({
   permissionHistory: defineTable({
     permissionId: v.id("permissions"),
     resource: v.string(),
-    action: v.string(),
+    action: v.union(
+      v.literal("navigate"),
+      v.literal("read"),
+      v.literal("write"),
+    ),
     changedBy: v.id("users"),
     changedAt: v.number(),
     previousRoles: v.array(
@@ -110,7 +114,8 @@ export default defineSchema({
   })
     .index("by_permission", ["permissionId"])
     .index("by_changedBy", ["changedBy"])
-    .index("by_changedAt", ["changedAt"]),
+    .index("by_changedAt", ["changedAt"])
+    .index("by_permission_changedAt", ["permissionId", "changedAt"]),
 
   // ==========================================================================
   // ACADEMIC STRUCTURE
