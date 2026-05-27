@@ -235,26 +235,6 @@
                 {{ selectionDoneText }}
               </button>
             </div>
-            <!-- Замещаемые журналы -->
-            <div v-if="activeSubstitutions.length > 0" class="flex flex-col gap-3 mb-2">
-              <div class="flex items-center gap-2">
-                <h2 class="text-base font-bold text-foreground">Замещаемые журналы</h2>
-                <span class="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-700 rounded-full">{{ activeSubstitutions.length }}</span>
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                <JournalGridCard
-                  v-for="sub in activeSubstitutions"
-                  :key="sub._id"
-                  :title="sub.journalSnapshot?.disciplineName ?? 'Неизвестная дисциплина'"
-                  :subtitle="[sub.fromTeacher ? `${sub.fromTeacher.surname} ${sub.fromTeacher.firstName}` : '', sub.journalSnapshot?.groupName].filter(Boolean).join(' · ')"
-                  :accent-color="{ bg: 'bg-amber-100', text: 'text-amber-700' }"
-                  :student-count="0"
-                  :selection-mode="false"
-                  @click="sub.journal?.calendarEventId && goToJournalDetails(sub.journal.calendarEventId)"
-                />
-              </div>
-            </div>
-
             <!-- Filter bar -->
             <div class="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl overflow-x-auto max-w-full mb-5">
               <button
@@ -322,6 +302,26 @@
                   <IconInbox class="w-6 h-6 opacity-40" />
                 </div>
                 <span class="text-sm font-medium opacity-60">{{ journal_empty() }}</span>
+              </div>
+            </div>
+
+            <!-- Замещаемые журналы (after own journals) -->
+            <div v-if="filteredSubstitutions.length > 0" class="flex flex-col gap-3 mt-4">
+              <div class="flex items-center gap-2">
+                <h2 class="text-base font-bold text-foreground">Замещаемые журналы</h2>
+                <span class="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-700 rounded-full">{{ filteredSubstitutions.length }}</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                <JournalGridCard
+                  v-for="sub in filteredSubstitutions"
+                  :key="sub._id"
+                  :title="sub.journalSnapshot?.disciplineName ?? 'Неизвестная дисциплина'"
+                  :subtitle="[sub.fromTeacher ? `${sub.fromTeacher.surname} ${sub.fromTeacher.firstName}` : '', sub.journalSnapshot?.groupName].filter(Boolean).join(' · ')"
+                  :accent-color="{ bg: 'bg-amber-100', text: 'text-amber-700' }"
+                  :student-count="0"
+                  :selection-mode="false"
+                  @click="sub.journal?.calendarEventId && goToJournalDetails(sub.journal.calendarEventId)"
+                />
               </div>
             </div>
         </div>
@@ -935,6 +935,19 @@ const filteredByTab = computed(() => {
   if (activeFilter.value === 'individual') return filteredIndividualJournals.value
   const num = parseInt(activeFilter.value.split('-')[1])
   return filteredJournalsByCourse.value[num] ?? []
+})
+
+const filteredSubstitutions = computed(() => {
+  const subs = activeSubstitutions.value
+  if (subs.length === 0) return []
+  if (activeFilter.value === 'all') return subs
+  if (activeFilter.value === 'mixed' || activeFilter.value === 'individual') return subs
+  const courseNum = parseInt(activeFilter.value.split('-')[1])
+  return subs.filter((s) => {
+    const group = s.journalSnapshot?.groupName ?? ''
+    const match = group.match(/^(\d+)/)
+    return match && parseInt(match[1]) === courseNum
+  })
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
