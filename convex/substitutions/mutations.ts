@@ -1,19 +1,12 @@
-import { MutationCtx } from "../_generated/server";
+import type { MutationCtx } from "../_generated/server";
 import { v } from "convex/values";
-import { Id } from "../_generated/dataModel";
+import type { Id } from "../_generated/dataModel";
 import { m, getUserLocale, type Locale, withI18nMutation, setLocale } from "../lib/i18n";
+import { requirePermission } from "../lib/rbac";
 
 async function getAdminUsers(ctx: MutationCtx) {
   const allUsers = await ctx.db.query("users").collect();
   return allUsers.filter((u) => u.roles.includes("ADMIN"));
-}
-
-async function requireAdmin(ctx: MutationCtx, userId: Id<"users">) {
-  const user = await ctx.db.get(userId);
-  if (!user || !user.roles.includes("ADMIN")) {
-    throw new Error(m.backend_admin_only());
-  }
-  return user;
 }
 
 function formatTeacherName(teacher: any | null) {
@@ -31,13 +24,13 @@ function formatTeacherName(teacher: any | null) {
 }
 
 async function buildJournalSnapshot(ctx: MutationCtx, journal: { disciplineId?: any; groupName?: string; semesterId: any }) {
-  const [class9Item, semester] = await Promise.all([
-    journal.disciplineId ? ctx.db.get(journal.disciplineId as Id<"class9Items">) : null,
+  const [rupEntry, semester] = await Promise.all([
+    journal.disciplineId ? ctx.db.get(journal.disciplineId as Id<"rupEntries">) : null,
     ctx.db.get(journal.semesterId as Id<"academicYearSemesters">),
   ]);
 
   return {
-    disciplineName: class9Item?.learningOutcome ?? m.backend_unknown_discipline(),
+    disciplineName: rupEntry?.learningOutcome ?? m.backend_unknown_discipline(),
     groupName: journal.groupName,
     course: undefined,
     semester: semester?.semesterDefinitionId,
@@ -142,7 +135,7 @@ export const createBulkSubstitutions = withI18nMutation({
 
         const newJournalId = await ctx.db.insert("journals", {
           calendarEventId,
-          disciplineId: event.class9Id,
+          disciplineId: event.rupEntryId ?? event.class9Id ?? "",
           semesterId: semesterRecord._id,
           academicYearId: semesterRecord.academicYearId as string,
           createdAt: now,
@@ -212,7 +205,7 @@ export const acceptSubstitution = withI18nMutation({
     const substitution = await ctx.db.get(args.substitutionId);
     if (!substitution) throw new Error(m.backend_substitution_not_found());
 
-    await requireAdmin(ctx, args.userId);
+    await requirePermission(ctx, args.userId, "substitutions", "write");
 
     if (substitution.status !== "pending") {
       throw new Error(m.backend_substitution_already_processed());
@@ -309,7 +302,7 @@ export const rejectSubstitution = withI18nMutation({
     const substitution = await ctx.db.get(args.substitutionId);
     if (!substitution) throw new Error(m.backend_substitution_not_found());
 
-    await requireAdmin(ctx, args.userId);
+    await requirePermission(ctx, args.userId, "substitutions", "write");
 
     if (substitution.status !== "pending") {
       throw new Error(m.backend_substitution_already_processed());
@@ -379,7 +372,7 @@ export const cancelSubstitution = withI18nMutation({
     const substitution = await ctx.db.get(args.substitutionId);
     if (!substitution) throw new Error(m.backend_substitution_not_found());
 
-    await requireAdmin(ctx, args.userId);
+    await requirePermission(ctx, args.userId, "substitutions", "write");
 
     await ctx.db.patch(args.substitutionId, {
       status: "cancelled",
