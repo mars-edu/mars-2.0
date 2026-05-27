@@ -82,17 +82,6 @@
               />
             </div>
           </div>
-
-          <div class="pt-4 border-t border-border">
-            <button
-              class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
-              @click="confirmDelete"
-              :disabled="vacationStore.isLoading"
-            >
-              <IconTrash class="w-[18px] h-[18px] mr-2" />
-              Удалить каникулы
-            </button>
-          </div>
         </div>
 
         <PopoverFooter
@@ -109,8 +98,7 @@
 import { ref, computed, watchEffect } from "vue";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
-import { f7, f7Input, f7Popover } from "framework7-vue";
-import IconTrash from "~icons/lucide/trash-2";
+import { f7, f7Popover, f7Input } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
@@ -200,21 +188,5 @@ const handleUpdateVacation = async () => {
   }
 };
 
-const confirmDelete = () => {
-  if (!vacation.value) return;
-  f7.popover.close(`#edit-vacation-popover-${vacation.value.id}`);
-  f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить каникулы "${vacation.value.shortName}"?</p><p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
-    "Удаление каникул",
-    async () => {
-      if (!vacation.value) return;
-      try {
-        await vacationStore.deleteVacation(vacation.value.id);
-      } catch (error) {
-        console.error("Failed to delete vacation:", error);
-        f7.dialog.alert("Произошла ошибка при удалении каникул.");
-      }
-    }
-  );
-};
+
 </script>

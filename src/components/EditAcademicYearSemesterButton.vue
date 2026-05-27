@@ -55,17 +55,6 @@
               />
             </div>
           </div>
-
-          <div class="pt-4 border-t border-border">
-            <button
-              class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
-              @click="showDeleteConfirmation"
-              :disabled="academicYearSemesterStore.isLoading"
-            >
-              <IconTrash class="w-[18px] h-[18px] mr-2" />
-              Удалить семестр
-            </button>
-          </div>
         </div>
 
         <PopoverFooter
@@ -83,7 +72,6 @@ import { ref, computed, watchEffect, watch } from "vue";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { f7, f7Popover, f7Input } from "framework7-vue";
-import IconTrash from "~icons/lucide/trash-2";
 import { z } from "zod";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useSemesterStore } from "@/stores/semesterStore";
@@ -239,31 +227,7 @@ const handleUpdateAcademicYearSemester = async () => {
   }
 };
 
-const showDeleteConfirmation = () => {
-  if (!academicYearSemester.value) return;
-  f7.popover.close(
-    `#edit-academic-year-semester-popover-${academicYearSemester.value.id}`
-  );
 
-  const semesterName = `семестр ${academicYearSemester.value.semesterNumber}`;
-
-  f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить "${semesterName}" из учебного года?</p>
-     <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
-    "Удаление семестра",
-    async () => {
-      if (!academicYearSemester.value) return;
-      try {
-        await academicYearSemesterStore.deleteAcademicYearSemester(
-          academicYearSemester.value.id
-        );
-      } catch (error) {
-        console.error("Failed to delete academic year semester:", error);
-        f7.dialog.alert("Произошла ошибка при удалении семестра.");
-      }
-    }
-  );
-};
 
 const resetForm = () => {
   if (!academicYearSemester.value) return;

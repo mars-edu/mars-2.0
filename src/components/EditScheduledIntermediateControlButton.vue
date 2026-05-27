@@ -81,17 +81,6 @@
               />
             </div>
           </div>
-
-          <div class="pt-4 border-t border-border">
-            <button
-              class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
-              @click="confirmDelete"
-              :disabled="scheduledIntermediateControlStore.isLoading"
-            >
-              <IconTrash class="w-[18px] h-[18px] mr-2" />
-              Удалить промежуточный контроль
-            </button>
-          </div>
         </div>
 
         <PopoverFooter
@@ -110,8 +99,7 @@ import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT, getDatePickerParams } from "@/constants/calendar";
 
 const DATE_PICKER_PARAMS = getDatePickerParams();
-import { f7, f7Input, f7Popover } from "framework7-vue";
-import IconTrash from "~icons/lucide/trash-2";
+import { f7, f7Popover, f7Input } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
@@ -227,31 +215,6 @@ const handleUpdateControl = async () => {
   }
 };
 
-const confirmDelete = () => {
-  if (!control.value) return;
-  f7.popover.close(
-    `#edit-scheduled-intermediate-control-popover-${control.value.id}`
-  );
-  f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить промежуточный контроль "${control.value.shortName}"?</p><p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
-    "Удаление промежуточного контроля",
-    async () => {
-      if (!control.value) return;
-      try {
-        await scheduledIntermediateControlStore.deleteScheduledIntermediateControl(
-          control.value.id
-        );
-      } catch (error) {
-        console.error(
-          "Failed to delete scheduled intermediate control:",
-          error
-        );
-        f7.dialog.alert(
-          "Произошла ошибка при удалении промежуточного контроля."
-        );
-      }
-    }
-  );
-};
+
 </script>
 

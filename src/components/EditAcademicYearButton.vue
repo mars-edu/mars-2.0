@@ -63,17 +63,6 @@
               Активный учебный год
             </label>
           </div>
-
-          <div class="pt-4 border-t border-border">
-            <button
-              class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
-              @click="showDeleteConfirmation"
-              :disabled="academicYearStore.isLoading"
-            >
-              <IconTrash class="w-[18px] h-[18px] mr-2" />
-              Удалить учебный год
-            </button>
-          </div>
         </div>
 
         <PopoverFooter
@@ -89,7 +78,6 @@
 <script setup lang="ts">
 import { ref, computed, watchEffect } from "vue";
 import { f7, f7Popover, f7Input, f7Checkbox } from "framework7-vue";
-import IconTrash from "~icons/lucide/trash-2";
 import { z } from "zod";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
@@ -178,30 +166,7 @@ const handleUpdateAcademicYear = async () => {
   }
 };
 
-const showDeleteConfirmation = () => {
-  if (!academicYear.value) return;
-  if (academicYear.value.isActive) {
-    f7.dialog.alert("Нельзя удалить активный учебный год.");
-    return;
-  }
 
-  f7.popover.close(`#edit-academic-year-popover-${academicYear.value.id}`);
-
-  f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить учебный год "${academicYear.value.name}"?</p>
-     <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
-    "Удаление учебного года",
-    async () => {
-      if (!academicYear.value) return;
-      try {
-        await academicYearStore.deleteAcademicYear(academicYear.value.id);
-      } catch (error) {
-        console.error("Failed to delete academic year:", error);
-        f7.dialog.alert("Произошла ошибка при удалении учебного года.");
-      }
-    }
-  );
-};
 
 const resetForm = () => {
   if (!academicYear.value) return;

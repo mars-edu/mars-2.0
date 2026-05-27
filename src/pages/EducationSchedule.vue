@@ -84,6 +84,14 @@
                         >
                           <IconPencil class="w-[14px] h-[14px]" />
                         </button>
+                        <button
+                          class="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                          @click.stop="deleteAcademicYear(academicYear)"
+                          aria-label="Delete Academic Year"
+                          type="button"
+                        >
+                          <IconTrash class="w-[14px] h-[14px]" />
+                        </button>
                       </div>
                     </div>
                     <div v-if="academicYear.isActive" class="flex items-center justify-between mt-1">
@@ -146,6 +154,14 @@
                           type="button"
                         >
                           <IconPencil class="w-[14px] h-[14px]" />
+                        </button>
+                        <button
+                          class="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                          @click.stop="deleteAcademicYearSemester(academicYearSemester)"
+                          aria-label="Delete Academic Year Semester"
+                          type="button"
+                        >
+                          <IconTrash class="w-[14px] h-[14px]" />
                         </button>
                       </div>
                     </div>
@@ -218,6 +234,14 @@
                     >
                       <IconPencil class="w-[16px] h-[16px]" />
                     </button>
+                    <button
+                      class="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
+                      @click.stop="deleteSchedule(schedule)"
+                      aria-label="Delete Schedule"
+                      type="button"
+                    >
+                      <IconTrash class="w-[16px] h-[16px]" />
+                    </button>
                   </div>
                 </div>
                 <EditEducationScheduleButton
@@ -272,6 +296,14 @@
                           type="button"
                         >
                           <IconPencil class="w-[14px] h-[14px]" />
+                        </button>
+                        <button
+                          class="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                          @click.stop="deleteVacation(vacation)"
+                          aria-label="Delete Vacation"
+                          type="button"
+                        >
+                          <IconTrash class="w-[14px] h-[14px]" />
                         </button>
                       </div>
                     </div>
@@ -345,6 +377,14 @@
                             >
                               <IconPencil class="w-[14px] h-[14px]" />
                             </button>
+                            <button
+                              class="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                              @click.stop="deleteScheduledFinalControl(control)"
+                              aria-label="Delete Scheduled Final Control"
+                              type="button"
+                            >
+                              <IconTrash class="w-[14px] h-[14px]" />
+                            </button>
                           </div>
                         </div>
                         <div class="flex items-center justify-between mt-1">
@@ -414,6 +454,14 @@
                             >
                               <IconPencil class="w-[14px] h-[14px]" />
                             </button>
+                            <button
+                              class="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                              @click.stop="deleteScheduledIntermediateControl(control)"
+                              aria-label="Delete Scheduled Intermediate Control"
+                              type="button"
+                            >
+                              <IconTrash class="w-[14px] h-[14px]" />
+                            </button>
                           </div>
                         </div>
                         <div class="flex items-center justify-between mt-1">
@@ -448,6 +496,7 @@ import IconCircleCheck from "~icons/lucide/circle-check";
 import IconPencil from "~icons/lucide/pencil";
 import IconChevronUp from "~icons/lucide/chevron-up";
 import IconChevronDown from "~icons/lucide/chevron-down";
+import IconTrash from "~icons/lucide/trash-2";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Accordion from "@/components/ui/accordion/Accordion.vue";
@@ -694,4 +743,107 @@ function formatUiDate(value: string | Date | undefined | null) {
   if (!d.isValid()) d = dayjs(value as any);
   return d.isValid() ? d.format(DATE_UI_FORMAT) : String(value);
 }
+const deleteAcademicYear = (academicYear: AcademicYear) => {
+  if (academicYear.isActive) {
+    f7.dialog.alert("Нельзя удалить активный учебный год.");
+    return;
+  }
+  f7.dialog.confirm(
+    `<p>Вы уверены, что хотите удалить учебный год "${academicYear.name}"?</p>
+     <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
+    "Удаление учебного года",
+    async () => {
+      try {
+        await academicYearStore.deleteAcademicYear(academicYear.id);
+      } catch (error) {
+        console.error("Failed to delete academic year:", error);
+        f7.dialog.alert("Произошла ошибка при удалении учебного года.");
+      }
+    }
+  );
+};
+
+const deleteAcademicYearSemester = (semester: AcademicYearSemester) => {
+  if (academicYearSemesterStore.isSemesterActive(semester)) {
+    f7.dialog.alert("Нельзя удалить активный семестр.");
+    return;
+  }
+  f7.dialog.confirm(
+    `<p>Вы уверены, что хотите удалить ${semester.semesterNumber}-й семестр?</p>
+     <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
+    "Удаление семестра",
+    async () => {
+      try {
+        await academicYearSemesterStore.deleteAcademicYearSemester(semester.id);
+      } catch (error) {
+        console.error("Failed to delete academic year semester:", error);
+        f7.dialog.alert("Произошла ошибка при удалении семестра.");
+      }
+    }
+  );
+};
+
+const deleteSchedule = (schedule: EducationSchedule) => {
+  f7.dialog.confirm(
+    `<p>Вы уверены, что хотите удалить занятие номер ${schedule.lessonNumber}?</p>
+     <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
+    "Удаление расписания",
+    async () => {
+      try {
+        await educationScheduleStore.deleteSchedule(schedule.id);
+      } catch (error) {
+        console.error("Failed to delete schedule:", error);
+        f7.dialog.alert("Произошла ошибка при удалении расписания.");
+      }
+    }
+  );
+};
+
+const deleteVacation = (vacation: Vacation) => {
+  f7.dialog.confirm(
+    `<p>Вы уверены, что хотите удалить каникулы "${vacation.shortName}"?</p>
+     <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
+    "Удаление каникул",
+    async () => {
+      try {
+        await vacationStore.deleteVacation(vacation.id);
+      } catch (error) {
+        console.error("Failed to delete vacation:", error);
+        f7.dialog.alert("Произошла ошибка при удалении каникул.");
+      }
+    }
+  );
+};
+
+const deleteScheduledFinalControl = (control: ScheduledFinalControl) => {
+  f7.dialog.confirm(
+    `<p>Вы уверены, что хотите удалить контроль "${control.shortName}"?</p>
+     <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
+    "Удаление контроля",
+    async () => {
+      try {
+        await scheduledFinalControlStore.deleteScheduledFinalControl(control.id);
+      } catch (error) {
+        console.error("Failed to delete scheduled final control:", error);
+        f7.dialog.alert("Произошла ошибка при удалении контроля.");
+      }
+    }
+  );
+};
+
+const deleteScheduledIntermediateControl = (control: ScheduledIntermediateControl) => {
+  f7.dialog.confirm(
+    `<p>Вы уверены, что хотите удалить промежуточный контроль "${control.shortName}"?</p>
+     <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
+    "Удаление контроля",
+    async () => {
+      try {
+        await scheduledIntermediateControlStore.deleteScheduledIntermediateControl(control.id);
+      } catch (error) {
+        console.error("Failed to delete scheduled intermediate control:", error);
+        f7.dialog.alert("Произошла ошибка при удалении контроля.");
+      }
+    }
+  );
+};
 </script>

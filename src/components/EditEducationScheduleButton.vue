@@ -67,17 +67,6 @@
               placeholder="Введите время окончания"
             ></f7-input>
           </div>
-
-          <div class="pt-4 border-t border-border">
-            <button
-              class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
-              @click="showDeleteConfirmation"
-              :disabled="educationScheduleStore.isLoading"
-            >
-              <IconTrash class="w-[18px] h-[18px] mr-2" />
-              Удалить
-            </button>
-          </div>
         </div>
 
         <PopoverFooter
@@ -93,7 +82,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watchEffect } from "vue";
 import { f7, f7Popover, f7Input } from "framework7-vue";
-import IconTrash from "~icons/lucide/trash-2";
 import { z } from "zod";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import type { EducationSchedule } from "@/stores/educationScheduleStore";
@@ -232,25 +220,7 @@ const handleUpdateSchedule = async () => {
   }
 };
 
-const showDeleteConfirmation = () => {
-  if (!schedule.value) return;
-  f7.popover.close(`#edit-schedule-popover-${schedule.value.id}`);
 
-  f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить расписание для урока "${schedule.value.lessonNumber}"?</p>
-     <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
-    "Удаление",
-    async () => {
-      if (!schedule.value) return;
-      try {
-        await educationScheduleStore.deleteSchedule(schedule.value.id);
-      } catch (error) {
-        console.error("Failed to delete schedule:", error);
-        f7.dialog.alert("Произошла ошибка при удалении.");
-      }
-    }
-  );
-};
 
 const resetForm = () => {
   if (!schedule.value) return;
