@@ -73,11 +73,15 @@
 
             <!-- Entries for this date -->
             <div class="space-y-3">
-              <div
+              <template
                 v-for="entry in group.entries"
                 :key="entry._id"
-                class="protocol-entry relative overflow-hidden rounded-lg bg-card border border-border shadow-sm"
               >
+                <!-- Substitution card -->
+                <template v-if="entry.type === 'substitution'">
+                <div
+                  class="protocol-entry relative overflow-hidden rounded-lg bg-card border border-border shadow-sm"
+                >
                 <!-- Left color bar -->
                 <div
                   class="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg"
@@ -146,14 +150,14 @@
                       <span class="text-xs font-semibold text-muted-foreground self-end">{{ protocol_action_label() }}</span>
                       <div class="flex gap-2">
                         <button
-                          @click="openModal(entry._id, 'reject')"
+                          @click="openModal(entry._id, entry.type, 'reject')"
                           :disabled="protocolStore.actionLoading"
                           class="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs font-bold shadow-sm disabled:opacity-50"
                         >
                           ✕ {{ protocol_reject() }}
                         </button>
                         <button
-                          @click="openModal(entry._id, 'accept')"
+                          @click="openModal(entry._id, entry.type, 'accept')"
                           :disabled="protocolStore.actionLoading"
                           class="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-bold shadow-sm disabled:opacity-50"
                         >
@@ -198,6 +202,125 @@
                   </div>
                 </div>
               </div>
+              </template>
+
+              <!-- Makeup request card -->
+              <template v-else-if="entry.type === 'makeup_request'">
+                <div class="protocol-entry relative overflow-hidden rounded-lg bg-card border border-border shadow-sm">
+                  <div
+                    class="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg"
+                    :class="{
+                      'bg-blue-400':  entry.status === 'pending',
+                      'bg-green-400': entry.status === 'accepted',
+                      'bg-red-400':   entry.status === 'rejected',
+                    }"
+                  ></div>
+
+                  <div class="pl-5 pr-4 py-4 flex flex-col md:flex-row gap-4">
+                    <div class="flex-shrink-0 flex flex-col items-center gap-1.5 min-w-[52px]">
+                      <div
+                        class="w-3 h-3 rounded-full mt-0.5"
+                        :class="{
+                          'bg-blue-500 ring-4 ring-blue-100 dark:ring-blue-900/30':    entry.status === 'pending',
+                          'bg-green-500 ring-4 ring-green-100 dark:ring-green-900/30': entry.status === 'accepted',
+                          'bg-red-500 ring-4 ring-red-100 dark:ring-red-900/30':       entry.status === 'rejected',
+                        }"
+                      ></div>
+                      <span class="text-xs text-muted-foreground font-mono">
+                        {{ formatTime(entry.createdAt) }}
+                      </span>
+                    </div>
+
+                    <div class="flex-grow min-w-0">
+                      <div class="flex items-center gap-2 mb-1 flex-wrap">
+                        <h3 class="text-sm font-semibold text-foreground">
+                          {{ protocol_makeup_request_title() }}
+                        </h3>
+                        <span class="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">
+                          {{ protocol_makeup_request_label() }}
+                        </span>
+                      </div>
+
+                      <p class="text-sm text-muted-foreground leading-relaxed mb-2">
+                        {{ protocol_journal() }}
+                        <span class="font-medium text-foreground">
+                          {{ entry.journalSnapshot?.disciplineName ?? protocol_discipline_fallback() }}
+                        </span>
+                        <span v-if="entry.journalSnapshot?.groupName"> {{ entry.journalSnapshot.groupName }}</span>
+                        <template v-if="entry.teacher">
+                          {{ protocol_teacher_from() }}
+                          <span class="font-medium text-foreground">
+                            {{ protocolStore.getTeacherName(entry.teacher) }}
+                          </span>
+                        </template>
+                      </p>
+
+                      <div class="mb-2">
+                        <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                          {{ protocol_makeup_dates_label() }}:
+                        </span>
+                        <ul class="mt-1 space-y-0.5">
+                          <li
+                            v-for="(d, i) in entry.dates"
+                            :key="i"
+                            class="text-xs text-foreground font-medium"
+                          >
+                            {{ d.existingDate }} → {{ d.newDate }}
+                          </li>
+                        </ul>
+                      </div>
+
+                      <p v-if="entry.reason" class="text-xs text-muted-foreground italic">
+                        {{ protocol_reason() }} {{ entry.reason }}
+                      </p>
+                    </div>
+
+                    <div class="flex-shrink-0 md:w-44 flex flex-col justify-center items-end gap-2">
+                      <template v-if="isAdmin && entry.status === 'pending'">
+                        <span class="text-xs font-semibold text-muted-foreground self-end">{{ protocol_action_label() }}</span>
+                        <div class="flex gap-2">
+                          <button
+                            @click="openModal(entry._id, 'makeup_request', 'reject')"
+                            :disabled="protocolStore.actionLoading"
+                            class="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs font-bold shadow-sm disabled:opacity-50"
+                          >
+                            ✕ {{ protocol_reject() }}
+                          </button>
+                          <button
+                            @click="openModal(entry._id, 'makeup_request', 'accept')"
+                            :disabled="protocolStore.actionLoading"
+                            class="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs font-bold shadow-sm disabled:opacity-50"
+                          >
+                            ✓ {{ protocol_accept() }}
+                          </button>
+                        </div>
+                      </template>
+
+                      <template v-else-if="entry.status === 'pending'">
+                        <div class="flex items-center gap-1.5 text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-full">
+                          <span class="text-xs font-bold">{{ protocol_waiting() }}</span>
+                        </div>
+                      </template>
+
+                      <template v-else-if="entry.status === 'accepted'">
+                        <div class="flex items-center gap-1.5 text-green-600 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-full">
+                          <span class="text-xs font-bold">{{ protocol_accepted() }}</span>
+                        </div>
+                      </template>
+
+                      <template v-else-if="entry.status === 'rejected'">
+                        <div class="flex items-center gap-1.5 text-red-600 bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-full">
+                          <span class="text-xs font-bold">{{ protocol_rejected() }}</span>
+                        </div>
+                        <p v-if="entry.rejectionReason" class="text-[10px] text-muted-foreground text-right mt-1">
+                          {{ entry.rejectionReason }}
+                        </p>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </template>
+              </template>
             </div>
           </div>
           </div>
@@ -285,7 +408,7 @@ import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
 import { useProtocolStore } from "@/stores/protocolStore";
-import type { ProtocolEntry } from "@/stores/protocolStore";
+import type { ProtocolEntry, MakeupRequestEntry } from "@/stores/protocolStore";
 import { useUserStore } from "@/stores/userStore";
 import type { Id } from "@convex/_generated/dataModel";
 import { useTeacherStore } from "@/stores/teacherStore";
@@ -316,6 +439,9 @@ import {
   protocol_confirm_desc,
   protocol_wait,
   protocol_discipline_fallback,
+  protocol_makeup_request_label,
+  protocol_makeup_request_title,
+  protocol_makeup_dates_label,
   common_cancel,
   common_confirm,
   common_all,
@@ -348,13 +474,18 @@ const teacherOptions = computed(() => {
 
 const modalOpen = ref(false);
 const pendingAction = ref<{
-  id: Id<"substitutions">;
+  id: string;
+  entryType: "substitution" | "makeup_request";
   type: "accept" | "reject";
 } | null>(null);
 const rejectReason = ref("");
 
-function openModal(id: Id<"substitutions">, type: "accept" | "reject") {
-  pendingAction.value = { id, type };
+function openModal(
+  id: string,
+  entryType: "substitution" | "makeup_request",
+  type: "accept" | "reject"
+) {
+  pendingAction.value = { id, entryType, type };
   rejectReason.value = "";
   modalOpen.value = true;
 }
@@ -367,12 +498,20 @@ function closeModal() {
 
 async function confirmAction() {
   if (!pendingAction.value) return;
-  const { id, type } = pendingAction.value;
+  const { id, entryType, type } = pendingAction.value;
   closeModal();
-  if (type === "accept") {
-    await protocolStore.acceptEntry(id);
+  if (entryType === "substitution") {
+    if (type === "accept") {
+      await protocolStore.acceptEntry(id as Id<"substitutions">);
+    } else {
+      await protocolStore.rejectEntry(id as Id<"substitutions">, rejectReason.value || undefined);
+    }
   } else {
-    await protocolStore.rejectEntry(id, rejectReason.value || undefined);
+    if (type === "accept") {
+      await protocolStore.acceptMakeupRequest(id as Id<"makeupRequests">);
+    } else {
+      await protocolStore.rejectMakeupRequest(id as Id<"makeupRequests">, rejectReason.value || undefined);
+    }
   }
 }
 
