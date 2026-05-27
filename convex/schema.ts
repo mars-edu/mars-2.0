@@ -44,6 +44,75 @@ export default defineSchema({
     .index("by_email", ["email"]),
 
   // ==========================================================================
+  // RBAC (ROLE-BASED ACCESS CONTROL)
+  // ==========================================================================
+
+  /**
+   * Permissions - defines resource + action access rules for roles
+   * NEW: Dynamic RBAC implementation
+   */
+  permissions: defineTable({
+    resource: v.string(),
+    action: v.union(
+      v.literal("navigate"),
+      v.literal("read"),
+      v.literal("write"),
+    ),
+    roles: v.array(
+      v.union(
+        v.literal("ADMIN"),
+        v.literal("TEACHER"),
+        v.literal("STUDENT"),
+        v.literal("PARENT"),
+      )
+    ),
+    description: v.optional(v.string()),
+    activeFrom: v.optional(v.number()),
+    activeTo: v.optional(v.number()),
+  })
+    .index("by_resource_action", ["resource", "action"]),
+
+  /**
+   * Permission history - audit trail for permission changes
+   * NEW: Dynamic RBAC implementation
+   */
+  permissionHistory: defineTable({
+    permissionId: v.id("permissions"),
+    resource: v.string(),
+    action: v.string(),
+    changedBy: v.id("users"),
+    changedAt: v.number(),
+    previousRoles: v.array(
+      v.union(
+        v.literal("ADMIN"),
+        v.literal("TEACHER"),
+        v.literal("STUDENT"),
+        v.literal("PARENT"),
+      )
+    ),
+    newRoles: v.array(
+      v.union(
+        v.literal("ADMIN"),
+        v.literal("TEACHER"),
+        v.literal("STUDENT"),
+        v.literal("PARENT"),
+      )
+    ),
+    previousActiveFrom: v.optional(v.number()),
+    previousActiveTo: v.optional(v.number()),
+    newActiveFrom: v.optional(v.number()),
+    newActiveTo: v.optional(v.number()),
+    changeType: v.union(
+      v.literal("created"),
+      v.literal("updated"),
+      v.literal("deleted"),
+    ),
+  })
+    .index("by_permission", ["permissionId"])
+    .index("by_changedBy", ["changedBy"])
+    .index("by_changedAt", ["changedAt"]),
+
+  // ==========================================================================
   // ACADEMIC STRUCTURE
   // ==========================================================================
 
@@ -302,7 +371,8 @@ export default defineSchema({
    * Migrated from: class9Store.ts (nested distributionEntries)
    */
   distributionEntries: defineTable({
-    class9ItemId: v.id("class9Items"),
+    class9ItemId: v.optional(v.id("class9Items")),
+    rupEntryId: v.optional(v.id("rupEntries")),
     academicYearId: v.string(),
     semesterId: v.id("academicYearSemesters"),
     hours: v.string(),
@@ -315,6 +385,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_class9Item", ["class9ItemId"])
+    .index("by_rupEntry", ["rupEntryId"])
     .index("by_semester", ["semesterId"]),
 
   // ==========================================================================
@@ -353,7 +424,8 @@ export default defineSchema({
     shortName: v.string(), // Control name/title (REQUIRED)
     startDate: v.string(), // ISO date (REQUIRED)
     endDate: v.string(), // ISO date (REQUIRED)
-    class9Id: v.optional(v.string()), // Reference to class9Items
+    class9Id: v.optional(v.string()), // Legacy — migrating to rupEntryId
+    rupEntryId: v.optional(v.string()), // Reference to rupEntries
     semesterId: v.optional(v.id("academicYearSemesters")),
     date: v.optional(v.string()), // ISO date (legacy)
     createdAt: v.number(),
@@ -361,6 +433,7 @@ export default defineSchema({
   })
     .index("by_academicYear", ["academicYearId"])
     .index("by_class9Id", ["class9Id"])
+    .index("by_rupEntryId", ["rupEntryId"])
     .index("by_semester", ["semesterId"]),
 
   /**
@@ -373,7 +446,8 @@ export default defineSchema({
     shortName: v.string(), // Control name/title (REQUIRED)
     startDate: v.string(), // ISO date (REQUIRED)
     endDate: v.string(), // ISO date (REQUIRED)
-    class9Id: v.optional(v.string()), // Reference to class9Items
+    class9Id: v.optional(v.string()), // Legacy — migrating to rupEntryId
+    rupEntryId: v.optional(v.string()), // Reference to rupEntries
     semesterId: v.optional(v.id("academicYearSemesters")),
     date: v.optional(v.string()), // ISO date (legacy)
     createdAt: v.number(),
@@ -381,6 +455,7 @@ export default defineSchema({
   })
     .index("by_academicYear", ["academicYearId"])
     .index("by_class9Id", ["class9Id"])
+    .index("by_rupEntryId", ["rupEntryId"])
     .index("by_semester", ["semesterId"]),
 
   // ==========================================================================
@@ -392,7 +467,8 @@ export default defineSchema({
    * Migrated from: calendarStore.ts
    */
   calendarEvents: defineTable({
-    class9Id: v.string(), // Reference to class9Items
+    class9Id: v.optional(v.string()), // Legacy — migrating to rupEntryId
+    rupEntryId: v.optional(v.string()), // Reference to rupEntries
     ktpId: v.optional(v.string()), // Reference to ktps
     teacherId: v.optional(v.string()), // Reference to teachers
     startDate: v.string(), // ISO date
@@ -434,6 +510,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_class9Id", ["class9Id"])
+    .index("by_rupEntryId", ["rupEntryId"])
     .index("by_teacherId", ["teacherId"])
     .index("by_semester", ["semester"])
     .index("by_startDate", ["startDate"]),
@@ -447,7 +524,8 @@ export default defineSchema({
    * Migrated from: ktpStore.ts
    */
   ktps: defineTable({
-    class9Id: v.string(), // Reference to class9Items
+    class9Id: v.optional(v.string()), // Legacy — migrating to rupEntryId
+    rupEntryId: v.optional(v.string()), // Reference to rupEntries
     academicYearId: v.string(),
     semesterId: v.id("academicYearSemesters"),
     eventId: v.optional(v.string()), // Reference to calendarEvents
@@ -456,6 +534,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_class9Id", ["class9Id"])
+    .index("by_rupEntryId", ["rupEntryId"])
     .index("by_eventId", ["eventId"])
     .index("by_academicYear_semester", ["academicYearId", "semesterId"]),
 
@@ -693,31 +772,39 @@ export default defineSchema({
     .index("by_clientId", ["clientId"]),
 
   // ==========================================================================
-  // RUP (Working Curriculum)
+  // RUP ENTRIES (migration target for class9Items)
   // ==========================================================================
 
   /**
-   * RUP entries - working curriculum items
-   * Migrated from: rupStore.ts
+   * RUP entries — migration target table for class9Items rename.
+   * Same shape as class9Items so data can be copied 1:1.
    */
   rupEntries: defineTable({
+    specialtyIds: v.array(v.string()),
     academicYearId: v.string(),
-    specialtyId: v.string(),
-    semesterId: v.id("academicYearSemesters"),
-    disciplineName: v.string(),
-    totalHours: v.optional(v.number()),
-    lectureHours: v.optional(v.number()),
-    practiceHours: v.optional(v.number()),
-    labHours: v.optional(v.number()),
-    controlType: v.optional(v.string()),
-    credits: v.optional(v.number()),
+    baseClass: v.optional(v.array(v.number())),
+    language: v.optional(v.string()),
+    groupId: v.optional(v.string()),
+    moduleIndex: v.string(),
+    moduleName: v.string(),
+    learningOutcome: v.string(),
+    totalCredits: v.string(),
+    totalHours: v.string(),
+    theoreticalHours: v.string(),
+    labPracticalHours: v.string(),
+    field3Value: v.string(),
+    srspHours: v.string(),
+    srsHours: v.string(),
+    trainingPracticeHours: v.string(),
+    individualHours: v.string(),
+    individualAdditionalHours: v.optional(v.string()),
     position: v.number(),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_academicYear", ["academicYearId"])
-    .index("by_specialty", ["specialtyId"])
-    .index("by_semester", ["semesterId"]),
+    .index("by_position", ["academicYearId", "position"])
+    .index("by_groupId", ["groupId"]),
 
   // ==========================================================================
   // NOTIFICATIONS & SUBSTITUTIONS
