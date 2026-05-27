@@ -1,6 +1,7 @@
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
+import { requirePermission } from "../lib/rbac";
 
 /**
  * Update or create a mark
@@ -25,6 +26,10 @@ export const updateMark = mutation({
   },
   handler: async (ctx, args) => {
     const { userId, ...markData } = args;
+
+    if (userId) {
+      await requirePermission(ctx, userId, "marks", "write");
+    }
 
     // Find existing mark
     const existingMark = await ctx.db
@@ -128,6 +133,10 @@ export const batchUpdateMarks = mutation({
     userId: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
+    if (args.userId) {
+      await requirePermission(ctx, args.userId, "marks", "write");
+    }
+
     const now = Date.now();
     const results: string[] = [];
 
@@ -196,6 +205,10 @@ export const deleteMark = mutation({
     userId: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
+    if (args.userId) {
+      await requirePermission(ctx, args.userId, "marks", "write");
+    }
+
     const existingMark = await ctx.db
       .query("marks")
       .withIndex("by_journal_student_column_row", (q) =>
