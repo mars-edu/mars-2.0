@@ -148,9 +148,11 @@ export function useJournalExportImport(
         getJournalTitle: (j) => journalStore.getJournalTitle(j),
       });
 
+      const { filename, ...restMetadata } = metadata;
+
       await exportJournalViaConvex(
         {
-          ...metadata,
+          ...restMetadata,
           students: studentRows,
           lessonDates: snapshot.columns.map((column) => column.label),
         },

@@ -2,6 +2,7 @@
   <f7-page
     name="journal-details"
     class="flex flex-col h-screen bg-background text-foreground"
+    @page:afterin="onPageAfterIn"
   >
     <Header class="hidden md:block flex-shrink-0 border-b border-border" />
 
@@ -128,7 +129,7 @@
               </div>
             </div>
 
-            <f7-tabs>
+            <f7-tabs v-if="isPageReady">
               <f7-tab
                 id="tab-journal"
                 class="page-content"
@@ -306,6 +307,13 @@
                 </div>
               </f7-tab>
             </f7-tabs>
+
+            <div v-else class="flex flex-col items-center justify-center py-32 space-y-4">
+              <f7-preloader size="48" color="blue" />
+              <div class="text-sm text-muted-foreground font-medium animate-pulse">
+                Загрузка журнала...
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -354,14 +362,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, watch } from "vue";
+import { ref, computed, nextTick, watch, onMounted } from "vue";
 import {
   f7Page,
   f7,
+  f7Navbar,
+  f7NavRight,
   f7Toolbar,
   f7Link,
   f7Tabs,
   f7Tab,
+  f7Block,
+  f7Icon,
+  f7Preloader,
 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -452,6 +465,21 @@ const tabDefs = computed(() => [
   { id: "testing", label: journal_tab_testing() },
   { id: "services", label: journal_tab_services() },
 ]);
+
+const isPageReady = ref(false);
+
+const onPageAfterIn = () => {
+  isPageReady.value = true;
+};
+
+onMounted(() => {
+  // Fallback in case page:afterin doesn't fire (e.g. direct page reload without transition)
+  setTimeout(() => {
+    if (!isPageReady.value) {
+      isPageReady.value = true;
+    }
+  }, 350); // Typical F7 transition duration
+});
 
 const { confirmCloseJournal, confirmOpenJournal } = useJournalOpenClose();
 
@@ -641,6 +669,17 @@ const currentEvent = computed(() => {
   return calendarStore.getEventById(journalId.value) || null;
 });
 
+// Immediately initiate background fetching of grades before the grid even renders
+watch(
+  () => effectiveJournalId.value,
+  (newId) => {
+    if (newId) {
+      marksStore.preloadJournalMarks(newId as string);
+    }
+  },
+  { immediate: true }
+);
+
 const eventWithParticipantsResult = useConvexQuery(
   api.calendarEvents.queries.getByIdWithParticipants,
   computed(() =>
@@ -714,6 +753,8 @@ const journalTabRef = ref<InstanceType<typeof JournalTab> | null>(null);
 const journalSettings = ref({
   calculationType: "calculated" as "calculated" | "manual",
   calculationMethod: "only-assigned" as "only-assigned" | "all-days",
+  finalControlForm: "written" as "written" | "oral" | "mixed" | undefined,
+  finalGradeFormula: { intermediateWeight: 0.6, finalWeight: 0.4 } as { intermediateWeight: number; finalWeight: number } | undefined,
 });
 
 // Load journal settings from the event
@@ -737,6 +778,8 @@ watch(
         journalSettings.value = {
           calculationType: "calculated",
           calculationMethod: "only-assigned",
+          finalControlForm: "written",
+          finalGradeFormula: { intermediateWeight: 0.6, finalWeight: 0.4 },
         };
       }
     }
@@ -877,17 +920,19 @@ const handleRupSubmit = () => {
 
 // Journal settings functions
 const openJournalSettings = () => {
-  f7.popover.open("#journal-settings-popover", "#journal-settings-button");
+  f7.popup.open("#journal-settings-popover");
 };
 
 const closeJournalSettings = () => {
-  f7.popover.close("#journal-settings-popover");
+  f7.popup.close("#journal-settings-popover");
 };
 
 const saveJournalSettings = async (
   nextSettings?: {
     calculationType: "calculated" | "manual";
     calculationMethod: "only-assigned" | "all-days";
+    finalControlForm?: "written" | "oral" | "mixed";
+    finalGradeFormula?: { intermediateWeight: number; finalWeight: number };
   }
 ) => {
   if (!currentJournal.value) {

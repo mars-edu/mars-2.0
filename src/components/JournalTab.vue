@@ -389,106 +389,145 @@
 
     <!-- Journal Settings Popover (moved here for correct positioning) -->
     <GuardedPopover
-      v-slot="{ requestClose }"
       id="journal-settings-popover"
-      style="width: 500px !important"
-      target="#journal-settings-button"
+      kind="popup"
+      :guard-unsaved="false"
+      :close-by-backdrop-click="true"
+      :on-closed="resetLocalSettings"
     >
-      <div class="journal-settings-popover bg-card text-card-foreground">
-        <PopoverHeader
-          title="Настройки журнала"
-          :on-cancel="requestClose"
-        />
-        <div class="px-6 py-6 space-y-6">
-          <div class="space-y-2">
-            <label
-              class="block text-[12px] font-semibold text-muted-foreground uppercase tracking-wide ml-1"
-            >
-              {{ journal_settings_field_calculation() }}
-            </label>
-            <div class="bg-muted rounded-xl p-1 flex text-sm font-medium">
+      <div class="bg-card text-card-foreground h-full flex flex-col">
+        <!-- Header -->
+        <div class="px-6 pt-6 pb-4 flex justify-between items-center border-b border-border">
+          <div>
+            <h2 class="text-xl font-bold text-foreground tracking-tight">Настройки журнала</h2>
+            <p class="text-sm text-muted-foreground mt-1">Персональные настройки для текущего курса</p>
+          </div>
+          <button
+            type="button"
+            @click="closeJournalSettings"
+            class="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/80 transition-colors"
+          >
+            <IconCircleX class="w-5 h-5" />
+          </button>
+        </div>
+
+        <!-- Content -->
+        <div class="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+          <!-- Section 1: Calculation Method -->
+          <section class="space-y-4">
+            <div class="flex items-center gap-2 text-foreground">
+              <IconCalculator class="w-5 h-5 text-green-500" />
+              <h3 class="text-lg font-bold">{{ journal_settings_field_calculation() }}</h3>
+            </div>
+            <div class="flex gap-3">
               <button
                 type="button"
                 @click="localJournalSettings.calculationType = 'calculated'"
                 :class="[
-                  'flex-1 py-2.5 rounded-lg transition-all duration-200',
+                  'flex-1 p-4 rounded-2xl border-2 transition-all text-left',
                   localJournalSettings.calculationType === 'calculated'
-                    ? 'bg-card text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground',
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border bg-muted/40',
                 ]"
               >
-                {{ journal_settings_calc_calculated() }}
+                <div class="font-bold text-foreground">{{ journal_settings_calc_calculated() }}</div>
+                <div class="text-xs text-muted-foreground mt-1">Система рассчитывает средний балл за период</div>
               </button>
               <button
                 type="button"
                 @click="localJournalSettings.calculationType = 'manual'"
                 :class="[
-                  'flex-1 py-2.5 rounded-lg transition-all duration-200',
+                  'flex-1 p-4 rounded-2xl border-2 transition-all text-left',
                   localJournalSettings.calculationType === 'manual'
-                    ? 'bg-card text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground',
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border bg-muted/40',
                 ]"
               >
-                {{ journal_settings_calc_manual() }}
+                <div class="font-bold text-foreground">{{ journal_settings_calc_manual() }}</div>
+                <div class="text-xs text-muted-foreground mt-1">Оценки выставляются преподавателем самостоятельно</div>
               </button>
             </div>
-          </div>
 
-          <div
-            v-if="localJournalSettings.calculationType === 'calculated'"
-            class="space-y-2"
-          >
-            <label
-              class="block text-[12px] font-semibold text-muted-foreground uppercase tracking-wide ml-1"
+            <div
+              v-if="localJournalSettings.calculationType === 'calculated'"
+              class="space-y-3"
             >
-              {{ journal_settings_field_account_for() }}
-            </label>
-            <div class="space-y-2">
-              <label
-                :class="[
-                  'flex items-center justify-between px-4 py-3 rounded-xl border cursor-pointer transition-all',
-                  localJournalSettings.calculationMethod === 'only-assigned'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border bg-muted/40 hover:bg-muted',
-                ]"
-              >
-                <span class="text-[14px] font-medium text-foreground">
-                  {{ journal_settings_account_assigned() }}
-                </span>
-                <input
-                  type="radio"
-                  name="calculation-method"
-                  value="only-assigned"
-                  v-model="localJournalSettings.calculationMethod"
-                  class="w-4 h-4 text-primary focus:ring-primary"
-                />
-              </label>
-              <label
-                :class="[
-                  'flex items-center justify-between px-4 py-3 rounded-xl border cursor-pointer transition-all',
-                  localJournalSettings.calculationMethod === 'all-days'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border bg-muted/40 hover:bg-muted',
-                ]"
-              >
-                <span class="text-[14px] font-medium text-foreground">
-                  {{ journal_settings_account_all() }}
-                </span>
-                <input
-                  type="radio"
-                  name="calculation-method"
-                  value="all-days"
-                  v-model="localJournalSettings.calculationMethod"
-                  class="w-4 h-4 text-primary focus:ring-primary"
-                />
-              </label>
+              <Select
+                v-model="localJournalSettings.calculationMethod"
+                :options="calculationMethodOptions"
+                :label="journal_settings_field_account_for()"
+                placeholder="Выберите метод"
+              />
             </div>
-          </div>
+          </section>
+
+          <!-- Section 2: Final Control Form -->
+          <section class="space-y-4">
+            <div class="flex items-center gap-2 text-foreground">
+              <IconFileText class="w-5 h-5 text-orange-500" />
+              <h3 class="text-lg font-bold">Форма итогового контроля</h3>
+            </div>
+            <Select
+              v-model="localJournalSettings.finalControlForm"
+              :options="finalControlFormOptions"
+              label="Выберите форму"
+              placeholder="Выберите..."
+            />
+          </section>
+
+          <!-- Section 3: Final Grade Formula -->
+          <section class="space-y-4">
+            <div class="flex items-center gap-2 text-foreground">
+              <IconSparkles class="w-5 h-5 text-purple-500" />
+              <h3 class="text-lg font-bold">Формула расчета итоговой</h3>
+            </div>
+            <div class="p-5 bg-muted/40 rounded-2xl border border-border space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-foreground">Вес промежуточных контролей (РК)</span>
+                <div class="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="1"
+                    :value="localJournalSettings.finalGradeFormula?.intermediateWeight ?? 0.6"
+                    @input="updateFormulaWeight('intermediateWeight', $event)"
+                    class="w-16 bg-card border border-border rounded-lg px-2 py-1 text-center font-bold text-foreground text-sm"
+                  />
+                  <span class="text-xs text-muted-foreground">(60% = 0.6)</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-foreground">Вес итогового контроля</span>
+                <div class="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="1"
+                    :value="localJournalSettings.finalGradeFormula?.finalWeight ?? 0.4"
+                    @input="updateFormulaWeight('finalWeight', $event)"
+                    class="w-16 bg-card border border-border rounded-lg px-2 py-1 text-center font-bold text-foreground text-sm"
+                  />
+                  <span class="text-xs text-muted-foreground">(40% = 0.4)</span>
+                </div>
+              </div>
+              <div class="pt-3 border-t border-border flex justify-between items-center">
+                <span class="text-sm font-bold text-foreground">Итоговая формула:</span>
+                <code class="bg-card px-3 py-1 rounded-lg border border-border text-xs font-mono text-green-600">
+                  (РК_среднее * {{ localJournalSettings.finalGradeFormula?.intermediateWeight ?? 0.6 }}) + (Итоговый * {{ localJournalSettings.finalGradeFormula?.finalWeight ?? 0.4 }})
+                </code>
+              </div>
+            </div>
+          </section>
         </div>
 
+        <!-- Footer -->
         <PopoverFooter
+          cancel-text="Отмена"
+          save-text="Сохранить"
+          :on-cancel="closeJournalSettings"
           :on-save="saveJournalSettings"
-          :on-cancel="requestClose"
         />
       </div>
     </GuardedPopover>
@@ -593,6 +632,7 @@ import IconTriangleAlert from "~icons/lucide/triangle-alert";
 import IconPaperclip from "~icons/lucide/paperclip";
 import IconMoreVertical from "~icons/lucide/more-vertical";
 import IconCalculator from "~icons/lucide/calculator";
+import IconSparkles from "~icons/lucide/sparkles";
 import IconFileSpreadsheet from "~icons/lucide/file-spreadsheet";
 import {
   journal_view_general,
@@ -688,6 +728,8 @@ interface Props {
   journalSettings?: {
     calculationType: "calculated" | "manual";
     calculationMethod: "only-assigned" | "all-days";
+    finalControlForm?: "written" | "oral" | "mixed";
+    finalGradeFormula?: { intermediateWeight: number; finalWeight: number };
   };
   ktpId?: string | null;
   resolvedParticipants?: ResolvedParticipant[];
@@ -1848,18 +1890,26 @@ const students = computed(() => {
   );
 });
 
+const marksByStudentId = computed(() => {
+  const map = new Map<string, any>();
+  for (const student of students.value) {
+    map.set(student.studentId, student.marks);
+  }
+  return map;
+});
+
 const getMark = (studentIndex: number, colIndex: number, markIndex: number) => {
-  const studentId = getStudentIdByIndex(studentIndex);
-  if (!studentId || !props.journalId) return "";
+  const student = students.value[studentIndex];
+  if (!student || !props.journalId) return "";
 
   if (colIndex < 0) {
     // Final summary column - use getStudentFinalGrade instead of average
-    return markIndex === 0 ? getStudentFinalGrade(studentId) : "";
+    return markIndex === 0 ? getStudentFinalGrade(student.studentId) : "";
   }
 
   // Map canonical column index to store column index
   const storeColIndex = getStoreIndexForCanonicalIndex(colIndex);
-  const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
+  const studentMarks = student.marks;
   if (!studentMarks || storeColIndex == null || storeColIndex < 0) return "";
   if (storeColIndex >= studentMarks.length) return "";
 
@@ -2139,10 +2189,40 @@ const localJournalSettings = ref({
   calculationType: props.journalSettings?.calculationType || "calculated",
   calculationMethod:
     props.journalSettings?.calculationMethod || "only-assigned",
+  finalControlForm: props.journalSettings?.finalControlForm || "written" as "written" | "oral" | "mixed",
+  finalGradeFormula: props.journalSettings?.finalGradeFormula || { intermediateWeight: 0.6, finalWeight: 0.4 },
 });
 
+const finalControlFormOptions = [
+  { value: 'written', text: 'Письменный' },
+  { value: 'oral', text: 'Устный' },
+  { value: 'mixed', text: 'Смешанный' },
+];
+
+const calculationMethodOptions = computed(() => [
+  { value: 'only-assigned', text: journal_settings_account_assigned() },
+  { value: 'all-days', text: journal_settings_account_all() },
+]);
+
+const updateFormulaWeight = (field: 'intermediateWeight' | 'finalWeight', event: Event) => {
+  const value = parseFloat((event.target as HTMLInputElement).value) || (field === 'intermediateWeight' ? 0.6 : 0.4);
+  localJournalSettings.value.finalGradeFormula = {
+    ...localJournalSettings.value.finalGradeFormula,
+    [field]: value,
+  };
+};
+
+const resetLocalSettings = () => {
+  localJournalSettings.value = {
+    calculationType: props.journalSettings?.calculationType || "calculated",
+    calculationMethod: props.journalSettings?.calculationMethod || "only-assigned",
+    finalControlForm: props.journalSettings?.finalControlForm || "written",
+    finalGradeFormula: props.journalSettings?.finalGradeFormula || { intermediateWeight: 0.6, finalWeight: 0.4 },
+  };
+};
+
 const closeJournalSettings = () => {
-  f7.popover.close("#journal-settings-popover");
+  f7.popup.close("#journal-settings-popover");
 };
 
 const saveJournalSettings = () => {
@@ -2746,14 +2826,14 @@ const areAllControlsCalculated = (studentId: string): boolean => {
 const getStudentAverageScore = (studentId: string): string => {
   if (!props.journalId) return "—";
 
-  const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
+  const studentMarks = marksByStudentId.value.get(studentId);
   if (!studentMarks) return "—";
 
   const allMarks: (string | null)[] = [];
 
   // Collect all marks from all columns
-  studentMarks.forEach((mark) => {
-    mark.values.forEach((value) => {
+  studentMarks.forEach((mark: any) => {
+    mark.values.forEach((value: any) => {
       if (value !== null && value !== "") {
         allMarks.push(value);
       }
@@ -2777,25 +2857,10 @@ const getStudentAverageScore = (studentId: string): string => {
 const getStudentFinalGrade = (studentId: string): string => {
   if (!props.journalId) return "—";
 
-  const studentMarks = marksStore.getStudentMarks(props.journalId, studentId);
+  const studentMarks = marksByStudentId.value.get(studentId);
   if (!studentMarks) return "—";
 
   const canonical = canonicalTemplate.value || [];
-
-  // DEBUG: Log all canonical columns to understand the structure
-  console.log("[getStudentFinalGrade] All canonical columns:", {
-    totalColumns: canonical.length,
-    columns: canonical.map((mark: any, index: number) => ({
-      index,
-      type: mark?.type,
-      controlType: mark?.controlType,
-      label: mark?.label,
-      shortName: mark?.shortName,
-      // Show all keys to understand structure
-      allKeys: Object.keys(mark || {}),
-      fullMark: mark,
-    })),
-  });
 
   // Find all intermediate control columns (РК1, РК2, etc.)
   const intermediateControlColumns = canonical
@@ -2807,27 +2872,8 @@ const getStudentFinalGrade = (studentId: string): string => {
     .map((mark: any, index: number) => ({ mark, index }))
     .filter(({ mark }) => mark?.type === "session" && mark?.controlType === "final");
 
-  console.log("[getStudentFinalGrade] Debug info:", {
-    studentId,
-    intermediateControlColumnsCount: intermediateControlColumns.length,
-    intermediateControlColumns: intermediateControlColumns.map(({ mark, index }) => ({
-      index,
-      label: mark?.label,
-      controlType: mark?.controlType,
-      type: mark?.type,
-    })),
-    finalControlColumnsCount: finalControlColumns.length,
-    finalControlColumns: finalControlColumns.map(({ mark, index }) => ({
-      index,
-      label: mark?.label,
-      controlType: mark?.controlType,
-      type: mark?.type,
-    })),
-  });
-
   // If no intermediate controls are scheduled, return "—"
   if (intermediateControlColumns.length === 0) {
-    console.log("[getStudentFinalGrade] No intermediate controls found, returning —");
     return "—";
   }
 
@@ -2837,55 +2883,32 @@ const getStudentFinalGrade = (studentId: string): string => {
   for (const { mark, index: canonicalIndex } of intermediateControlColumns) {
     const storeColIndex = getStoreIndexForCanonicalIndex(canonicalIndex);
 
-    console.log("[getStudentFinalGrade] Checking РК column:", {
-      canonicalIndex,
-      storeColIndex,
-      label: mark?.label,
-    });
-
     if (storeColIndex == null || storeColIndex < 0) {
-      console.log("[getStudentFinalGrade] Store column not found, returning —");
       return "—";
     }
 
     if (storeColIndex >= studentMarks.length) {
-      console.log("[getStudentFinalGrade] Store column out of bounds, returning —");
       return "—";
     }
 
     const markValues = studentMarks[storeColIndex].values;
-
-    console.log("[getStudentFinalGrade] Mark values:", {
-      storeColIndex,
-      markValues,
-      firstValue: markValues?.[0],
-    });
-
-    // Get the first value from the РК column (usually there's only one value per session)
     const rkValue = markValues?.[0];
 
     if (rkValue === null || rkValue === "" || rkValue === undefined) {
-      console.log("[getStudentFinalGrade] РК value is empty, returning —");
       return "—";
     }
 
     // Try to parse as number
     const numericValue = Number(rkValue);
     if (isNaN(numericValue)) {
-      console.log("[getStudentFinalGrade] РК value is not a number, returning —", { rkValue });
       return "—";
     }
 
-    console.log("[getStudentFinalGrade] Found valid РК grade:", numericValue);
     rkGrades.push(numericValue);
   }
 
   // If we collected fewer grades than expected, some РК are missing
   if (rkGrades.length < intermediateControlColumns.length) {
-    console.log("[getStudentFinalGrade] Not all РК collected, returning —", {
-      collected: rkGrades.length,
-      expected: intermediateControlColumns.length,
-    });
     return "—";
   }
 
@@ -2895,22 +2918,12 @@ const getStudentFinalGrade = (studentId: string): string => {
   const rkAverage = rkGrades.reduce((sum, grade) => sum + grade, 0) / rkGrades.length;
 
   if (finalControlColumns.length === 0) {
-    console.log("[getStudentFinalGrade] Calculated final grade (no final control):", {
-      rkGrades,
-      rkAverage: rkAverage.toFixed(1),
-    });
     return rkAverage.toFixed(1);
   }
 
   const finalGrades: number[] = [];
   for (const { mark, index: canonicalIndex } of finalControlColumns) {
     const storeColIndex = getStoreIndexForCanonicalIndex(canonicalIndex);
-
-    console.log("[getStudentFinalGrade] Checking final control column:", {
-      canonicalIndex,
-      storeColIndex,
-      label: mark?.label,
-    });
 
     if (storeColIndex == null || storeColIndex < 0) continue;
     if (storeColIndex >= studentMarks.length) continue;
@@ -2924,9 +2937,6 @@ const getStudentFinalGrade = (studentId: string): string => {
 
     const numericValue = Number(finalValue);
     if (isNaN(numericValue)) {
-      console.log("[getStudentFinalGrade] Final control value is not a number, skipping:", {
-        finalValue,
-      });
       continue;
     }
 
@@ -2934,23 +2944,15 @@ const getStudentFinalGrade = (studentId: string): string => {
   }
 
   if (finalGrades.length === 0) {
-    console.log("[getStudentFinalGrade] Final control exists but has no numeric grade, returning —", {
-      finalControlColumnsCount: finalControlColumns.length,
-    });
     return "—";
   }
 
   const finalControlAverage =
     finalGrades.reduce((sum, grade) => sum + grade, 0) / finalGrades.length;
-  const weighted = rkAverage * 0.6 + finalControlAverage * 0.4;
-
-  console.log("[getStudentFinalGrade] Calculated final grade (with final control):", {
-    rkGrades,
-    rkAverage: rkAverage.toFixed(3),
-    finalGrades,
-    finalControlAverage: finalControlAverage.toFixed(3),
-    weighted: weighted.toFixed(1),
-  });
+    
+  const intWeight = localJournalSettings.value.finalGradeFormula?.intermediateWeight ?? 0.6;
+  const finWeight = localJournalSettings.value.finalGradeFormula?.finalWeight ?? 0.4;
+  const weighted = rkAverage * intWeight + finalControlAverage * finWeight;
 
   return weighted.toFixed(1);
 };
@@ -3119,14 +3121,18 @@ const rebuildMarks = async () => {
   // Load marks from backend to merge with the template
   try {
     console.log("[JournalTab] Loading marks from backend for journal:", props.journalId);
+    console.time(`journal-tab-load-marks-${props.journalId}`);
     await marksStore.loadJournalMarks(props.journalId);
+    console.timeEnd(`journal-tab-load-marks-${props.journalId}`);
     console.log("[JournalTab] Marks loaded successfully from backend");
   } catch (err) {
+    console.timeEnd(`journal-tab-load-marks-${props.journalId}`);
     console.warn("[JournalTab] Failed to load marks from backend:", err);
     // Continue - marks will work with local template
   }
   
   scheduleRecomputeSessionGrades();
+  console.timeEnd(`journal-tab-mounted-${props.journalId}`);
 };
 
 const scheduleRebuildMarks = debounce(() => {

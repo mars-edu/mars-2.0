@@ -95,7 +95,28 @@ export const useMarksStore = defineStore(
       return await resolveBackendJournalId(calendarEventId);
     };
 
-    // No more queue or debounce logic - direct API calls
+    const preloadPromiseCache = ref<Record<string, Promise<any>>>({});
+
+    const preloadJournalMarks = (journalId: string) => {
+      if (preloadPromiseCache.value[journalId]) return preloadPromiseCache.value[journalId];
+      
+      const promise = (async () => {
+        try {
+          const backendJournalId = await ensureBackendJournalId(journalId);
+          if (!backendJournalId) return null;
+          const result = await convex.query(api.marks.queries.getJournalMarks, {
+            journalId: backendJournalId as any,
+          });
+          return result;
+        } catch (e) {
+          console.error("[marksStore] Preload failed:", e);
+          return null;
+        }
+      })();
+      
+      preloadPromiseCache.value[journalId] = promise;
+      return promise;
+    };
 
     // Load journal marks from backend and merge with existing template
     const loadJournalMarks = async (journalId: string): Promise<boolean> => {
@@ -103,18 +124,30 @@ export const useMarksStore = defineStore(
         loading.value = true;
         error.value = null;
 
-        console.log("[marksStore] Fetching marks from backend for journal:", journalId);
+        let result = null;
+        if (preloadPromiseCache.value[journalId]) {
+          console.log("[marksStore] Using preloaded marks for journal:", journalId);
+          result = await preloadPromiseCache.value[journalId];
+          // Clear cache after use so subsequent reloads fetch fresh data
+          delete preloadPromiseCache.value[journalId];
+        } else {
+          console.log("[marksStore] Fetching marks from backend for journal:", journalId);
+          const backendJournalId = await ensureBackendJournalId(journalId);
+          if (!backendJournalId) {
+            console.warn("[marksStore] Backend journal not found; cannot load marks:", journalId);
+            loading.value = false;
+            return false;
+          }
 
-        const backendJournalId = await ensureBackendJournalId(journalId);
-        if (!backendJournalId) {
-          console.warn("[marksStore] Backend journal not found; cannot load marks:", journalId);
+          result = await convex.query(api.marks.queries.getJournalMarks, {
+            journalId: backendJournalId as any,
+          });
+        }
+        
+        if (!result) {
           loading.value = false;
           return false;
         }
-
-        const result = await convex.query(api.marks.queries.getJournalMarks, {
-          journalId: backendJournalId as any,
-        });
 
         console.log("[marksStore] Received marks from backend:", {
           journalId,
@@ -837,6 +870,7 @@ export const useMarksStore = defineStore(
       getStudentMarks,
       getJournalStudentMarks,
       initializeJournalMarks,
+      preloadJournalMarks,
       loadJournalMarks,
       initializeJournalBackend,
       updateStudentMark,
