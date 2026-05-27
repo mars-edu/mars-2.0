@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { computed, ref, watch } from "vue";
-import { useConvexQuery } from "convex-vue";
+import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 
@@ -39,19 +39,9 @@ export interface EnrichedSubstitution {
 export const useSubstitutionStore = defineStore("substitutions", () => {
   const currentUserId = ref<Id<"users"> | null>(null);
   const receivedSubstitutions = ref<EnrichedSubstitution[]>([]);
+  const loading = ref(false);
 
-  const queryArgs = computed(() =>
-    currentUserId.value ? { toUserId: currentUserId.value } : "skip"
-  );
-
-  const { data: convexSubstitutions } = useConvexQuery(
-    api.substitutions.queries.getTeacherSubstitutions,
-    queryArgs
-  );
-
-  watch(convexSubstitutions, (newData) => {
-    receivedSubstitutions.value = (newData as EnrichedSubstitution[] | undefined) ?? [];
-  });
+  let unsubscribe: (() => void) | null = null;
 
   const activeSubstitutions = computed(() =>
     receivedSubstitutions.value.filter(
@@ -59,15 +49,35 @@ export const useSubstitutionStore = defineStore("substitutions", () => {
     )
   );
 
-  const loading = computed(() => currentUserId.value !== null && !convexSubstitutions.value);
-
   function loadForUser(userId: Id<"users">) {
+    if (currentUserId.value === userId) return;
     currentUserId.value = userId;
+
+    if (unsubscribe) {
+      unsubscribe();
+      unsubscribe = null;
+    }
+
+    loading.value = true;
+
+    unsubscribe = convex.onUpdate(
+      api.substitutions.queries.getTeacherSubstitutions,
+      { toUserId: userId },
+      (data) => {
+        receivedSubstitutions.value = (data as EnrichedSubstitution[]) ?? [];
+        loading.value = false;
+      }
+    );
   }
 
   function reset() {
+    if (unsubscribe) {
+      unsubscribe();
+      unsubscribe = null;
+    }
     currentUserId.value = null;
     receivedSubstitutions.value = [];
+    loading.value = false;
   }
 
   return {
