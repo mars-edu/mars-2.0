@@ -17,7 +17,7 @@
           v-if="notifications.filter(n => n.status === 'unread').length > 0"
           @click="markAllAsRead"
           :disabled="processing"
-          class="p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+          class="p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 w-fit"
           title="Отметить все как прочитанные"
         >
           <IconCheckCheck class="w-5 h-5" />
