@@ -806,6 +806,42 @@ export default defineSchema({
     .index("by_createdAt", ["createdAt"]),
 
   /**
+   * Makeup hour requests - teacher requests to reschedule missed sessions
+   */
+  makeupRequests: defineTable({
+    journalId: v.id("journals"),
+    teacherId: v.string(), // references teachers table _id
+    createdBy: v.id("users"),
+    reason: v.optional(v.string()),
+    dates: v.array(
+      v.object({
+        existingDate: v.string(), // ISO YYYY-MM-DD from journal schedule
+        newDate: v.string(), // ISO YYYY-MM-DD for makeup session
+        startScheduleId: v.string(), // educationSchedules._id
+        endScheduleId: v.string(),
+      })
+    ),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("accepted"),
+      v.literal("rejected")
+    ),
+    rejectionReason: v.optional(v.string()),
+    journalSnapshot: v.optional(
+      v.object({
+        disciplineName: v.string(),
+        groupName: v.optional(v.string()),
+      })
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_journal", ["journalId"])
+    .index("by_teacher", ["teacherId"])
+    .index("by_status", ["status"])
+    .index("by_createdAt", ["createdAt"]),
+
+  /**
    * Journal closure reminders - tracks journal closure deadlines
    * NEW: System-wide journal closure notifications
    */
