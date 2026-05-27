@@ -1,6 +1,6 @@
 <template>
   <GuardedPopover
-    v-slot="{ requestClose }"
+    v-slot="{ requestClose, allowNextClose }"
     id="makeup-hours-popover"
     positioning="center"
     style="width: 520px !important"
@@ -101,7 +101,7 @@
 
       <PopoverFooter
         :on-cancel="requestClose"
-        :on-save="() => onSave(requestClose)"
+        :on-save="() => onSave(allowNextClose)"
         :disabled="!isFormValid"
         :is-loading="isLoading"
         cancel-text="Отмена"
@@ -113,6 +113,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { f7 } from "framework7-vue";
 import dayjs from "dayjs";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
@@ -232,7 +233,7 @@ function resetForm() {
   dateEntries.value = [makeEntry()];
 }
 
-async function onSave(requestClose: () => void) {
+async function onSave(allowNextClose: () => void) {
   const validDates = dateEntries.value
     .filter((e) => e.existingDate && e.newDate.length > 0)
     .map((e) => ({
@@ -244,8 +245,11 @@ async function onSave(requestClose: () => void) {
 
   if (validDates.length === 0) return;
 
-  emit("save", { reason: reason.value, dates: validDates });
-  requestClose();
+  const data = { reason: reason.value, dates: validDates };
+  resetForm();
+  allowNextClose();
+  f7.popover.close("#makeup-hours-popover");
+  emit("save", data);
 }
 </script>
 
