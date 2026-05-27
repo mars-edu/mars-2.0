@@ -203,7 +203,7 @@ const routes: RouteConfig[] = [
   {
     path: "/education-schedule",
     asyncComponent: () => import("../pages/suspense/EducationSchedulePage.vue"),
-    beforeEnter: [createAuthGuard("education-schedule")],
+    beforeEnter: [createAuthGuard("schedule")],
   },
   {
     path: "/analytics",

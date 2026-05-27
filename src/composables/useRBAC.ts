@@ -40,7 +40,7 @@ const ALL_NAV_ITEMS: Omit<NavigationItem, "label">[] = [
   { id: "journals", resource: "journals", icon: "book", route: "/journals/" },
   { id: "ktp", resource: "journals", icon: "layout-grid", route: "/journals/" },
   { id: "reports", resource: "reports", icon: "file-text", route: "/reports/" },
-  { id: "testing", resource: "journals", icon: "layout", route: "/testing" },
+  { id: "testing", resource: "testing", icon: "layout", route: "/testing" },
   { id: "courses", resource: "journals", icon: "graduation-cap", route: "/home" },
   { id: "protocol", resource: "protocol", icon: "layout", route: "/protocol" },
   { id: "analytics", resource: "analytics", icon: "pie-chart", route: "/analytics/" },

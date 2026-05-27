@@ -26,24 +26,31 @@ const SEED_DATA = [
   { resource: "marks", action: "write", roles: ["ADMIN", "TEACHER"] },
   { resource: "users", action: "write", roles: ["ADMIN"] },
   { resource: "substitutions", action: "write", roles: ["ADMIN"] },
+  { resource: "testing", action: "navigate", roles: ["ADMIN", "TEACHER"] },
   { resource: "settings", action: "navigate", roles: ["ADMIN", "TEACHER", "STUDENT", "PARENT"] },
 ] as const;
 
 export const seedPermissions = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const existing = await ctx.db.query("permissions").first();
-    if (existing) return { skipped: true };
-
+    let inserted = 0;
     for (const entry of SEED_DATA) {
-      await ctx.db.insert("permissions", {
-        resource: entry.resource,
-        action: entry.action,
-        roles: [...entry.roles],
-      });
+      const existing = await ctx.db
+        .query("permissions")
+        .withIndex("by_resource_action", (q) =>
+          q.eq("resource", entry.resource).eq("action", entry.action)
+        )
+        .unique();
+      if (!existing) {
+        await ctx.db.insert("permissions", {
+          resource: entry.resource,
+          action: entry.action,
+          roles: [...entry.roles],
+        });
+        inserted++;
+      }
     }
-
-    return { seeded: SEED_DATA.length };
+    return inserted > 0 ? { seeded: inserted } : { skipped: true };
   },
 });
 
