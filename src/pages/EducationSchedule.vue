@@ -328,14 +328,11 @@
               </div>
             </AccordionItem>
 
-            <AccordionItem id="controls" >
-              <template #title>{{ edu_schedule_controls() }}</template>
-              <Accordion v-model:expanded-items="expandedControlAccordions">
-                <!-- Scheduled Final Controls Section -->
-                <AccordionItem
-                  id="scheduled-final-controls"
-                  
-                >
+            <!-- Scheduled Final Controls Section -->
+            <AccordionItem
+              id="scheduled-final-controls"
+              
+            >
                   <template #title>{{ edu_schedule_final_controls() }}</template>
                   <template #actions>
                     <AddScheduledFinalControlButton />
@@ -484,8 +481,6 @@
                     />
                   </div>
                 </AccordionItem>
-              </Accordion>
-            </AccordionItem>
           </Accordion>
         </div>
       </div>
@@ -597,15 +592,12 @@ const accordionIds = [
   "semesters",
   "schedule",
   "vacations",
-  "controls",
+  "scheduled-final-controls",
+  "scheduled-intermediate-controls",
 ];
 
 // State for tracking expanded accordions
 const expandedAccordions = ref<string[]>([...accordionIds]);
-const expandedControlAccordions = ref<string[]>([
-  "scheduled-final-controls",
-  "scheduled-intermediate-controls",
-]);
 
 // Computed property to check if all accordions are expanded
 const areAllExpanded = computed(() => {
