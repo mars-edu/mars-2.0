@@ -69,6 +69,9 @@ export async function exportJournalViaConvex(
   const response = await fetch(url);
   const blob = await response.blob();
   saveAs(blob, filename);
+
+  // Cleanup: delete temporary storage entry (fire-and-forget)
+  convex.mutation(api.files.mutations.deleteFile, { storageId }).catch(console.error);
 }
 
 /**
@@ -91,6 +94,9 @@ export async function exportTeacherWorkloadViaConvex(
   const response = await fetch(url);
   const blob = await response.blob();
   saveAs(blob, filename);
+
+  // Cleanup: delete temporary storage entry (fire-and-forget)
+  convex.mutation(api.files.mutations.deleteFile, { storageId }).catch(console.error);
 }
 
 /**
@@ -110,6 +116,9 @@ export async function exportAnalyticsViaConvex(
   const response = await fetch(url);
   const blob = await response.blob();
   saveAs(blob, filename);
+
+  // Cleanup: delete temporary storage entry (fire-and-forget)
+  convex.mutation(api.files.mutations.deleteFile, { storageId }).catch(console.error);
 }
 
 // ============================================================================
@@ -210,4 +219,8 @@ export async function exportKtpToExcelViaConvex(
   const fileResponse = await fetch(url);
   const blob = await fileResponse.blob();
   saveAs(blob, filename);
+
+  // Cleanup: delete temporary storage entries (fire-and-forget)
+  convex.mutation(api.files.mutations.deleteFile, { storageId }).catch(console.error);
+  convex.mutation(api.files.mutations.deleteFile, { storageId: templateStorageId }).catch(console.error);
 }

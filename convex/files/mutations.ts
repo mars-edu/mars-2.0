@@ -2,6 +2,17 @@ import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 
 /**
+ * Delete a file from storage by its storage ID.
+ * Used for cleanup of temporary export files after download.
+ */
+export const deleteFile = mutation({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, args) => {
+    await ctx.storage.delete(args.storageId);
+  },
+});
+
+/**
  * Generate upload URL for file storage
  */
 export const generateUploadUrl = mutation({
