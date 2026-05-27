@@ -122,7 +122,7 @@ export const useTeacherStore = defineStore("teacher", () => {
     } else {
       teacher = idOrTeacher;
     }
-    if (!teacher) return typeof idOrTeacher === "string" ? idOrTeacher : "";
+    if (!teacher) return "";
     return `${teacher.surname} ${teacher.firstName} ${teacher.patronymic}`;
   };
 
