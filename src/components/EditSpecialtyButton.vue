@@ -160,7 +160,7 @@ const specialtySchema = z.object({
   name: z.string().min(1, "Пожалуйста, введите наименование специальности"),
   details: z.string().optional().default(""),
   codeName: z.string().optional().default(""),
-  year: z.number().optional(),
+  year: z.preprocess((v) => (v === "" || v === undefined ? undefined : Number(v)), z.number().optional()),
   orderNumber: z.string().optional().default(""),
 });
 
@@ -200,7 +200,7 @@ const handleUpdateSpecialty = async () => {
       name: specialtyName.value,
       details: specialtyDetails.value,
       codeName: specialtyCodeName.value,
-      year: specialtyYear.value,
+      year: Number(specialtyYear.value),
       orderNumber: specialtyOrderNumber.value,
     });
     closeEditSpecialtyPopover();
