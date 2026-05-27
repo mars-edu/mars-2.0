@@ -14,7 +14,7 @@
         :on-cancel="requestClose"
       />
 
-      <div class="px-8 pb-2 pt-4 space-y-4 max-h-[60vh] overflow-y-auto no-scrollbar">
+      <div class="px-8 pb-4 space-y-4 max-h-[60vh] overflow-y-auto no-scrollbar">
         <!-- Reason -->
         <div>
           <label class="text-sm font-normal mb-1 block text-muted-foreground">
@@ -23,7 +23,7 @@
           <textarea
             v-model="reason"
             :placeholder="makeup_hours_reason_placeholder()"
-            rows="3"
+            rows="2"
             class="w-full px-4 py-2.5 text-sm bg-muted/50 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-foreground resize-none transition-all"
           ></textarea>
         </div>
@@ -32,7 +32,7 @@
         <div
           v-for="(entry, index) in dateEntries"
           :key="entry.id"
-          class="p-4 bg-muted/30 rounded-2xl border border-input space-y-3 relative"
+          class="p-3 bg-muted/30 rounded-xl border border-input space-y-3 relative"
         >
           <button
             v-if="dateEntries.length > 1"
@@ -58,12 +58,8 @@
               <label class="text-sm font-normal mb-1 block text-muted-foreground">
                 {{ makeup_hours_new_date() }}
               </label>
-              <f7-input
-                type="datepicker"
-                placeholder="дд.мм.гггг"
+              <DateInput
                 v-model:value="entry.newDate"
-                readonly
-                :calendar-params="DATE_PICKER_PARAMS"
               />
             </div>
           </div>
@@ -96,7 +92,7 @@
         <button
           type="button"
           @click="addEntry"
-          class="w-full py-3 border-2 border-dashed border-input rounded-2xl text-muted-foreground font-semibold hover:border-primary hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2 text-sm"
+          class="w-full py-2.5 border-2 border-dashed border-input rounded-xl text-muted-foreground font-semibold hover:border-primary hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2 text-sm"
         >
           <IconPlus class="w-4 h-4" />
           {{ makeup_hours_add_date() }}
@@ -117,17 +113,17 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { f7Input } from "framework7-vue";
 import dayjs from "dayjs";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import Select from "@/components/ui/Select.vue";
+import DateInput from "@/components/ui/DateInput.vue";
+import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import IconTrash2 from "~icons/lucide/trash-2";
 import IconPlus from "~icons/lucide/plus";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { storeToRefs } from "pinia";
-import { getDatePickerParams, DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import {
   makeup_hours_title,
   makeup_hours_reason_label,
@@ -140,8 +136,6 @@ import {
   makeup_hours_submit,
   makeup_hours_select_date,
 } from "@/paraglide/messages";
-
-const DATE_PICKER_PARAMS = getDatePickerParams();
 
 export interface MakeupHoursData {
   reason: string;
@@ -254,3 +248,4 @@ async function onSave(requestClose: () => void) {
   requestClose();
 }
 </script>
+
