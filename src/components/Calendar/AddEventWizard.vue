@@ -120,27 +120,19 @@
             <div class="flex justify-between items-center">
               <span class="text-sm text-foreground">Начало</span>
               <div class="w-1/2">
-                <f7-input
-                  class="text-right"
-                  type="datepicker"
-                  placeholder="Дата"
+                <DateInput
                   v-model:value="startDateModel"
-                  readonly
-                  :calendar-params="DATE_PICKER_PARAMS"
-                ></f7-input>
+                  placeholder="Дата"
+                />
               </div>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-sm text-foreground">Конец</span>
               <div class="w-1/2">
-                <f7-input
-                  class="text-right"
-                  type="datepicker"
-                  placeholder="Дата"
+                <DateInput
                   v-model:value="endDateModel"
-                  readonly
-                  :calendar-params="DATE_PICKER_PARAMS"
-                ></f7-input>
+                  placeholder="Дата"
+                />
               </div>
             </div>
           </template>
@@ -638,14 +630,12 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import Select from "@/components/ui/Select.vue";
 import ColorPicker from "@/components/ui/ColorPicker.vue";
+import DateInput from "@/components/ui/DateInput.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
 import {
   getWeekDays,
-  getDatePickerParams,
   DATE_UI_FORMAT,
 } from "@/constants/calendar";
-
-const DATE_PICKER_PARAMS = getDatePickerParams();
 import { useNestedPopup } from "@/composables/useNestedPopup";
 import { useClass9Store } from "@/stores/class9Store";
 import { useStudentStore } from "@/stores/studentStore";

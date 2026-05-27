@@ -42,26 +42,18 @@
               <label class="text-sm text-foreground" for="start-date">
                 Дата начала <span class="text-destructive ml-1">*</span>
               </label>
-              <f7-input
-                id="start-date"
-                type="datepicker"
-                placeholder="Дата"
-                readonly
+              <DateInput
                 v-model:value="startDate"
-                :calendar-params="DATE_PICKER_PARAMS"
+                placeholder="Дата"
               />
             </div>
             <div class="space-y-2">
               <label class="text-sm text-foreground" for="end-date">
                 Дата окончания <span class="text-destructive ml-1">*</span>
               </label>
-              <f7-input
-                id="end-date"
-                type="datepicker"
-                placeholder="Дата"
-                readonly
+              <DateInput
                 v-model:value="endDate"
-                :calendar-params="DATE_PICKER_PARAMS"
+                placeholder="Дата"
               />
             </div>
           </div>
@@ -81,7 +73,7 @@
 import { ref, computed, watch } from "vue";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
-import { f7, f7Popover, f7Input } from "framework7-vue";
+import { f7 } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
 import { z } from "zod";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
@@ -92,9 +84,7 @@ import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Input from "@/components/ui/Input.vue";
 import Select from "@/components/ui/Select.vue";
-import { getDatePickerParams } from "@/constants/calendar";
-
-const DATE_PICKER_PARAMS = getDatePickerParams();
+import DateInput from "@/components/ui/DateInput.vue";
 
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const academicYearStore = useAcademicYearStore();

@@ -53,13 +53,9 @@
               >
                 Дата начала <span class="text-destructive ml-1">*</span>
               </label>
-              <f7-input
-                id="session-start-date-edit"
-                type="datepicker"
-                placeholder="Дата"
-                readonly
+              <DateInput
                 v-model:value="startDate"
-                :calendar-params="DATE_PICKER_PARAMS"
+                placeholder="Дата"
               />
             </div>
             <div class="space-y-2">
@@ -69,13 +65,9 @@
               >
                 Дата окончания <span class="text-destructive ml-1">*</span>
               </label>
-              <f7-input
-                id="session-end-date-edit"
-                type="datepicker"
-                placeholder="Дата"
-                readonly
+              <DateInput
                 v-model:value="endDate"
-                :calendar-params="DATE_PICKER_PARAMS"
+                placeholder="Дата"
               />
             </div>
           </div>
@@ -111,12 +103,10 @@ import IconTrash from "~icons/lucide/trash-2";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
+import DateInput from "@/components/ui/DateInput.vue";
 import { z } from "zod";
 import { useSessionStore } from "@/stores/sessionStore";
 import type { Session } from "@/stores/sessionStore";
-import { getDatePickerParams } from "@/constants/calendar";
-
-const DATE_PICKER_PARAMS = getDatePickerParams();
 
 const props = defineProps<{ sessionId: string }>();
 
