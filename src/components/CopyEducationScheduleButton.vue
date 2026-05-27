@@ -2,14 +2,15 @@
   <div>
     <button
       id="copy-education-schedule-button"
-      class="w-7 h-7 md:p-2 flex items-center justify-center text-white bg-blue-500 hover:bg-blue-600 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      aria-label="Копировать расписание"
+      class="h-7 px-3 flex items-center justify-center text-white bg-blue-500 hover:bg-blue-600 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed gap-1.5"
+      aria-label="Копировать из предыдущего семестра"
       type="button"
       @click.stop="openCopySchedulePopover"
       :disabled="!hasOtherYearsWithSchedules"
-      :title="hasOtherYearsWithSchedules ? 'Копировать расписание из другого учебного года' : 'Нет доступных учебных годов с расписанием для копирования'"
+      :title="hasOtherYearsWithSchedules ? 'Копировать расписание' : 'Нет доступных расписаний для копирования'"
     >
-      <IconCopy class="w-4 h-4 text-white" />
+      <IconCopy class="w-3.5 h-3.5 text-white" />
+      <span>Копировать из предыдущего семестра</span>
     </button>
 
     <GuardedPopover
