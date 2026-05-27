@@ -212,10 +212,11 @@
                   :icon="IconClock"
                 />
               </div>
-              <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              <div v-else ref="schedulesGridRef" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 <div
                   v-for="schedule in schedules"
                   :key="schedule.id"
+                  :data-id="schedule.id"
                   class="relative group p-4 bg-muted/20 border border-border rounded-xl hover:bg-card hover:shadow-sm transition-all cursor-pointer"
                   :id="`schedule-item-${schedule.id}`"
                   @click.stop="openEditSchedule(schedule)"
@@ -489,7 +490,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from "vue";
+import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
+import Sortable from "sortablejs";
 import { f7Page, f7, f7Preloader } from "framework7-vue";
 import IconCalendar from "~icons/lucide/calendar";
 import IconClock from "~icons/lucide/clock";
@@ -585,6 +587,44 @@ const selectedSchedule = computed(() =>
     ? schedules.value.find((s) => s.id === selectedScheduleId.value) ?? null
     : null
 );
+
+const schedulesGridRef = ref<HTMLElement | null>(null);
+let sortableInstance: Sortable | null = null;
+
+const initSortable = () => {
+  if (schedulesGridRef.value && !sortableInstance) {
+    sortableInstance = new Sortable(schedulesGridRef.value, {
+      animation: 150,
+      onEnd: async (evt) => {
+        if (evt.oldIndex !== undefined && evt.newIndex !== undefined && evt.oldIndex !== evt.newIndex) {
+          const newOrderIds = Array.from(schedulesGridRef.value!.children)
+            .map((child) => (child as HTMLElement).dataset.id)
+            .filter((id): id is string => !!id);
+          
+          try {
+            await educationScheduleStore.reorderSchedules(newOrderIds);
+          } catch (error) {
+            console.error("Failed to reorder:", error);
+          }
+        }
+      },
+    });
+  }
+};
+
+watch(() => schedules.value, () => {
+  nextTick(() => {
+    if (schedulesGridRef.value && !sortableInstance) {
+      initSortable();
+    }
+  });
+}, { deep: true });
+
+onBeforeUnmount(() => {
+  if (sortableInstance) {
+    sortableInstance.destroy();
+  }
+});
 
 // Accordion IDs for expand/collapse all functionality
 const accordionIds = [

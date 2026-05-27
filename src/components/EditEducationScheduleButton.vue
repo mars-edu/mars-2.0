@@ -22,20 +22,6 @@
 
         <div class="p-4 space-y-4">
           <div class="space-y-2">
-            <label class="text-sm text-foreground" for="schedule-lesson-number">
-              Номер урока
-              <span class="text-destructive ml-1">*</span>
-            </label>
-            <f7-input
-              id="schedule-lesson-number"
-              type="text"
-              inputmode="numeric"
-              pattern="[0-9]*"
-              v-model:value="lessonNumber"
-              placeholder="Введите номер урока"
-            ></f7-input>
-          </div>
-          <div class="space-y-2">
             <label
               class="text-sm text-foreground"
               :for="'schedule-start-time-' + schedule.id"
@@ -98,7 +84,6 @@ const educationScheduleStore = useEducationScheduleStore();
 // Get schedule from store by ID - always fresh data
 const schedule = computed(() => educationScheduleStore.getScheduleById(props.scheduleId));
 
-const lessonNumber = ref("");
 const startTime = ref("");
 const endTime = ref("");
 const formError = ref("");
@@ -106,7 +91,6 @@ const formError = ref("");
 // Update form fields whenever schedule data changes
 watchEffect(() => {
   if (schedule.value) {
-    lessonNumber.value = schedule.value.lessonNumber.toString();
     startTime.value = schedule.value.startTime;
     endTime.value = schedule.value.endTime;
   }
@@ -118,14 +102,12 @@ let endTimePicker: any = null;
 const timeRegex = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
 const scheduleSchema = z.object({
-  lessonNumber: z.coerce.number().min(1, "Пожалуйста, введите номер урока"),
   startTime: z.string().regex(timeRegex, "Неверный формат времени (HH:mm)"),
   endTime: z.string().regex(timeRegex, "Неверный формат времени (HH:mm)"),
 });
 
 const validationResult = computed(() => {
   return scheduleSchema.safeParse({
-    lessonNumber: lessonNumber.value,
     startTime: startTime.value,
     endTime: endTime.value,
   });
@@ -210,7 +192,6 @@ const handleUpdateSchedule = async () => {
 
   try {
     await educationScheduleStore.updateSchedule(schedule.value.id, {
-      lessonNumber: Number(lessonNumber.value),
       startTime: startTime.value,
       endTime: endTime.value,
     });
@@ -224,7 +205,6 @@ const handleUpdateSchedule = async () => {
 
 const resetForm = () => {
   if (!schedule.value) return;
-  lessonNumber.value = schedule.value.lessonNumber.toString();
   startTime.value = schedule.value.startTime;
   endTime.value = schedule.value.endTime;
   formError.value = "";

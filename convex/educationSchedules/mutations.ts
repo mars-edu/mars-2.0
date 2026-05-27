@@ -117,3 +117,26 @@ export const copySchedulesFromYear = mutation({
     };
   },
 });
+
+/**
+ * Reorder education schedules
+ */
+export const reorder = mutation({
+  args: {
+    updates: v.array(
+      v.object({
+        id: v.id("educationSchedules"),
+        order: v.number(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    for (const update of args.updates) {
+      await ctx.db.patch(update.id, {
+        order: update.order,
+        ...updateTimestamp(),
+      });
+    }
+    return { success: true };
+  },
+});

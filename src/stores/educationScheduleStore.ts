@@ -71,16 +71,21 @@ export const useEducationScheduleStore = defineStore(
     const getError = computed(() => error.value);
 
     async function addSchedule(
-      scheduleData: Omit<EducationSchedule, "id" | "createdAt" | "updatedAt">
+      scheduleData: Omit<EducationSchedule, "id" | "createdAt" | "updatedAt" | "lessonNumber">
     ) {
       loading.value = true;
       try {
+        const currentSchedules = getSchedulesByAcademicYear.value(scheduleData.academicYearId);
+        const nextLessonNumber = currentSchedules.length > 0 
+          ? Math.max(...currentSchedules.map(s => s.lessonNumber)) + 1 
+          : 1;
+
         // Use Convex - the reactive subscription will handle updating the local state
         await convex.mutation(api.educationSchedules.mutations.create, {
-          name: `Lesson ${scheduleData.lessonNumber}`,
+          name: `Lesson ${nextLessonNumber}`,
           startTime: scheduleData.startTime,
           endTime: scheduleData.endTime,
-          order: scheduleData.lessonNumber,
+          order: nextLessonNumber,
           academicYearId: scheduleData.academicYearId,
         });
         // Don't push to schedules.value - the reactive subscription will handle it
@@ -139,6 +144,38 @@ export const useEducationScheduleStore = defineStore(
         throw err;
       } finally {
         loading.value = false;
+      }
+    }
+
+    async function reorderSchedules(newOrderIds: string[]) {
+      // Optimistically update the local state to match the new order immediately
+      const currentActiveSchedules = [...getActiveYearSchedules.value];
+      
+      // We map the incoming new order of IDs to orders 1, 2, 3...
+      const updates = newOrderIds.map((id, index) => {
+        const schedule = currentActiveSchedules.find(s => s.id === id);
+        if (schedule) {
+          schedule.lessonNumber = index + 1;
+        }
+        return {
+          id: id as any,
+          order: index + 1,
+        };
+      });
+
+      // Update the main schedules value for optimistic UI update
+      sortSchedules();
+
+      try {
+        // Dispatch to convex
+        await convex.mutation(api.educationSchedules.mutations.reorder, {
+          updates,
+        });
+        error.value = null;
+      } catch (err) {
+        error.value = err instanceof Error ? err.message : "Failed to reorder schedules";
+        // Let the reactive subscription from Convex revert any optimistic update
+        throw err;
       }
     }
 
@@ -212,6 +249,7 @@ export const useEducationScheduleStore = defineStore(
       addSchedule,
       updateSchedule,
       deleteSchedule,
+      reorderSchedules,
       copySchedulesFromYear,
       clearError,
       reset,
