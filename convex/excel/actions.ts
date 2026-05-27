@@ -411,22 +411,28 @@ export const exportJournalsZip = action({
     const JSZip = (await import("jszip")).default;
     const zip = new JSZip();
 
-    // Generate Excel files for each journal and add to zip
-    for (const journalData of args.journals) {
-      const payload: JournalExportPayload = {
-        groupName: journalData.groupName,
-        courseLabel: journalData.courseLabel,
-        specialtyLabel: journalData.specialtyLabel,
-        academicYearLabel: journalData.academicYearLabel,
-        disciplineTitle: journalData.disciplineTitle,
-        teacherFullName: journalData.teacherFullName,
-        finalControlForm: journalData.finalControlForm,
-        students: journalData.students as JournalStudentRow[],
-        lessonDates: journalData.lessonDates,
-      };
+    // Generate Excel files for each journal in parallel and add to zip
+    const results = await Promise.all(
+      args.journals.map(async (journalData) => {
+        const payload: JournalExportPayload = {
+          groupName: journalData.groupName,
+          courseLabel: journalData.courseLabel,
+          specialtyLabel: journalData.specialtyLabel,
+          academicYearLabel: journalData.academicYearLabel,
+          disciplineTitle: journalData.disciplineTitle,
+          teacherFullName: journalData.teacherFullName,
+          finalControlForm: journalData.finalControlForm,
+          students: journalData.students as JournalStudentRow[],
+          lessonDates: journalData.lessonDates,
+        };
 
-      const buffer = await exportJournalToExcel(payload);
-      zip.file(journalData.filename, buffer);
+        const buffer = await exportJournalToExcel(payload);
+        return { filename: journalData.filename, buffer };
+      })
+    );
+
+    for (const { filename, buffer } of results) {
+      zip.file(filename, buffer);
     }
 
     // Generate the zip file
@@ -442,3 +448,140 @@ export const exportJournalsZip = action({
     return storageId;
   },
 });
+
+// ============================================================================
+// Server-Side Bulk Journal Export (fetches marks from DB, no data ping-pong)
+// ============================================================================
+
+export const exportJournalsZipServerSide = action({
+  args: {
+    journals: v.array(
+      v.object({
+        calendarEventId: v.string(),
+        filename: v.string(),
+        groupName: v.string(),
+        courseLabel: v.string(),
+        specialtyLabel: v.optional(v.string()),
+        academicYearLabel: v.optional(v.string()),
+        disciplineTitle: v.string(),
+        teacherFullName: v.optional(v.string()),
+        finalControlForm: v.optional(v.union(v.string(), v.null())),
+        // Students: only IDs and names — marks are fetched server-side
+        students: v.array(
+          v.object({
+            id: v.string(),
+            fullName: v.string(),
+          })
+        ),
+        // Mark column structure (template from first student)
+        markColumns: v.optional(v.array(
+          v.object({
+            type: v.string(),
+            label: v.string(),
+            isoDate: v.optional(v.union(v.string(), v.null())),
+            controlType: v.optional(v.union(v.string(), v.null())),
+          })
+        )),
+      })
+    ),
+  },
+  handler: async (ctx, args): Promise<Id<"_storage">> => {
+    const { internal } = await import("../_generated/api");
+    const JSZip = (await import("jszip")).default;
+    const zip = new JSZip();
+
+    // Generate Excel files for each journal in parallel
+    const results = await Promise.all(
+      args.journals.map(async (journalData) => {
+        // 1. Resolve backend journal ID from calendarEventId
+        const journal = await ctx.runQuery(
+          internal.excel.serverExportQueries.getJournalByCalendarEvent,
+          { calendarEventId: journalData.calendarEventId }
+        );
+
+        if (!journal) {
+          return null; // Skip journals without backend data
+        }
+
+        // 2. Fetch marks directly from DB (no frontend round-trip)
+        const marksData = await ctx.runQuery(
+          internal.excel.serverExportQueries.getMarksForExport,
+          { journalId: journal._id }
+        );
+
+        // 3. Build student rows with attendance from server-side marks
+        const markColumns = journalData.markColumns || [];
+        const lessonDates = markColumns.map((col) => col.label);
+
+        const studentRows: JournalStudentRow[] = journalData.students.map((student) => {
+          const studentMarksMap = marksData.studentMarks[student.id];
+
+          // Build attendance array matching column order
+          const attendance: (string | number | null)[] = markColumns.map((_, colIndex) => {
+            if (!studentMarksMap || !studentMarksMap[colIndex]) return "";
+            const colMarks = studentMarksMap[colIndex];
+            // Combine row values (multiple rows per column for date marks)
+            const rowValues = Object.values(colMarks)
+              .filter((v) => v !== null && v !== "")
+              .map((v) => String(v).trim());
+            return rowValues.length > 0 ? rowValues.join(" / ") : "";
+          });
+
+          // Extract final grade from session marks with controlType "final"
+          let finalGrade: string | undefined;
+          for (let colIndex = 0; colIndex < markColumns.length; colIndex++) {
+            const col = markColumns[colIndex];
+            if (col.type === "session" && col.controlType === "final") {
+              const colMarks = studentMarksMap?.[colIndex];
+              if (colMarks) {
+                const val = colMarks[0]; // First row
+                if (val !== null && val !== undefined && val !== "") {
+                  finalGrade = String(val);
+                }
+              }
+              break;
+            }
+          }
+
+          return {
+            id: student.id,
+            fullName: student.fullName,
+            attendance,
+            finalGrade,
+          };
+        });
+
+        const payload: JournalExportPayload = {
+          groupName: journalData.groupName,
+          courseLabel: journalData.courseLabel,
+          specialtyLabel: journalData.specialtyLabel,
+          academicYearLabel: journalData.academicYearLabel,
+          disciplineTitle: journalData.disciplineTitle,
+          teacherFullName: journalData.teacherFullName,
+          finalControlForm: journalData.finalControlForm,
+          students: studentRows,
+          lessonDates,
+        };
+
+        const buffer = await exportJournalToExcel(payload);
+        return { filename: journalData.filename, buffer };
+      })
+    );
+
+    // Add all successfully generated files to zip
+    for (const result of results) {
+      if (result) {
+        zip.file(result.filename, result.buffer);
+      }
+    }
+
+    const zipBuffer = await zip.generateAsync({ type: "arraybuffer" });
+
+    const storageId = await ctx.storage.store(
+      new Blob([zipBuffer], { type: "application/zip" })
+    );
+
+    return storageId;
+  },
+});
+

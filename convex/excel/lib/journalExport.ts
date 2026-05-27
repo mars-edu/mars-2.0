@@ -110,7 +110,7 @@ export function calculateColumnLayout(dateColumnsCount: number): JournalColumnLa
 // Template Generator
 // ============================================================================
 
-function generateJournalTemplate(dateColumnsCount: number = 10): ExcelJS.Workbook {
+function generateJournalTemplate(dateColumnsCount: number = 10): { workbook: ExcelJS.Workbook; layout: JournalColumnLayout } {
   const workbook: ExcelJS.Workbook = new Excel.Workbook();
 
   workbook.creator = "MARS 2.0";
@@ -302,7 +302,7 @@ function generateJournalTemplate(dateColumnsCount: number = 10): ExcelJS.Workboo
   headerAccompanist.border = THIN_BORDER;
   headerAccompanist.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
 
-  return workbook;
+  return { workbook, layout };
 }
 
 // ============================================================================
@@ -315,14 +315,12 @@ export async function exportJournalToExcel(
   const lessonDates = payload.lessonDates || [];
   const dateColumnsCount = Math.max(1, lessonDates.length);
 
-  const workbook = generateJournalTemplate(dateColumnsCount);
+  const { workbook, layout } = generateJournalTemplate(dateColumnsCount);
   const sheet = workbook.getWorksheet("Журнал");
 
   if (!sheet) {
     throw new Error("Failed to create journal worksheet");
   }
-
-  const layout = calculateColumnLayout(dateColumnsCount);
 
   // Update metadata
   if (payload.groupName) {
@@ -367,19 +365,31 @@ export async function exportJournalToExcel(
   teacherCell.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
   teacherCell.border = THIN_BORDER;
 
-  // Insert row 9 for lesson dates
-  sheet.spliceRows(ROW_DATES, 0, []);
+  // Row 9: lesson dates (row already exists empty in template, just set height)
   sheet.getRow(ROW_DATES).height = 15;
+
+  // Pre-define reusable cell styles to avoid per-cell object allocation
+  const STYLE_CENTERED = {
+    font: ARIAL_FONT,
+    alignment: { horizontal: "center" as const, vertical: "middle" as const },
+    border: THIN_BORDER,
+  };
+  const STYLE_LEFT_WRAP = {
+    font: ARIAL_FONT,
+    alignment: { horizontal: "left" as const, vertical: "middle" as const, wrapText: true },
+    border: THIN_BORDER,
+  };
+  const STYLE_CENTER_WRAP = {
+    font: ARIAL_FONT,
+    alignment: { horizontal: "center" as const, vertical: "middle" as const, wrapText: true },
+    border: THIN_BORDER,
+  };
 
   // Populate lesson dates
   lessonDates.forEach((date, index) => {
     const col = layout.colAttendanceStart + index;
     if (col <= layout.colAttendanceEnd) {
-      setCellValue(sheet, ROW_DATES, col, date, {
-        font: ARIAL_FONT,
-        alignment: { horizontal: "center", vertical: "middle", wrapText: true },
-        border: THIN_BORDER,
-      });
+      setCellValue(sheet, ROW_DATES, col, date, STYLE_CENTER_WRAP);
     }
   });
 
@@ -397,76 +407,36 @@ export async function exportJournalToExcel(
     const row = dataStartRow + index;
 
     // № п/п
-    setCellValue(sheet, row, layout.colNumber, index + 1, {
-      font: ARIAL_FONT,
-      alignment: { horizontal: "center", vertical: "middle" },
-      border: THIN_BORDER,
-    });
+    setCellValue(sheet, row, layout.colNumber, index + 1, STYLE_CENTERED);
 
     // Student full name
-    setCellValue(sheet, row, layout.colStudentName, student.fullName, {
-      font: ARIAL_FONT,
-      alignment: { horizontal: "left", vertical: "middle", wrapText: true },
-      border: THIN_BORDER,
-    });
+    setCellValue(sheet, row, layout.colStudentName, student.fullName, STYLE_LEFT_WRAP);
 
     // Attendance columns
     const attendance = student.attendance || [];
     for (let i = 0; i < dateColumnsCount; i++) {
       const col = layout.colAttendanceStart + i;
       const value = attendance[i] ?? "";
-      setCellValue(sheet, row, col, value as string | number, {
-        font: ARIAL_FONT,
-        alignment: { horizontal: "center", vertical: "middle" },
-        border: THIN_BORDER,
-      });
+      setCellValue(sheet, row, col, value as string | number, STYLE_CENTERED);
     }
 
     // Final control form
-    setCellValue(sheet, row, layout.colFinalControlForm, payload.finalControlForm ?? "", {
-      font: ARIAL_FONT,
-      alignment: { horizontal: "center", vertical: "middle" },
-      border: THIN_BORDER,
-    });
+    setCellValue(sheet, row, layout.colFinalControlForm, payload.finalControlForm ?? "", STYLE_CENTERED);
 
     // Final grade
-    setCellValue(sheet, row, layout.colFinalGrade, student.finalGrade as string | number ?? "", {
-      font: ARIAL_FONT,
-      alignment: { horizontal: "center", vertical: "middle" },
-      border: THIN_BORDER,
-    });
+    setCellValue(sheet, row, layout.colFinalGrade, student.finalGrade as string | number ?? "", STYLE_CENTERED);
 
     // Journal columns
-    setCellValue(sheet, row, layout.colDate, student.date ?? "", {
-      font: ARIAL_FONT,
-      alignment: { horizontal: "center", vertical: "middle" },
-      border: THIN_BORDER,
-    });
+    setCellValue(sheet, row, layout.colDate, student.date ?? "", STYLE_CENTERED);
 
-    setCellValue(sheet, row, layout.colHours, student.hours as string | number ?? "", {
-      font: ARIAL_FONT,
-      alignment: { horizontal: "center", vertical: "middle" },
-      border: THIN_BORDER,
-    });
+    setCellValue(sheet, row, layout.colHours, student.hours as string | number ?? "", STYLE_CENTERED);
 
-    setCellValue(sheet, row, layout.colTopic, student.topic ?? "", {
-      font: ARIAL_FONT,
-      alignment: { horizontal: "left", vertical: "middle", wrapText: true },
-      border: THIN_BORDER,
-    });
+    setCellValue(sheet, row, layout.colTopic, student.topic ?? "", STYLE_LEFT_WRAP);
 
     // Teacher and accompanist signature columns (empty)
-    setCellValue(sheet, row, layout.colTeacherSig, "", {
-      font: ARIAL_FONT,
-      alignment: { horizontal: "center", vertical: "middle" },
-      border: THIN_BORDER,
-    });
+    setCellValue(sheet, row, layout.colTeacherSig, "", STYLE_CENTERED);
 
-    setCellValue(sheet, row, layout.colAccompanistSig, "", {
-      font: ARIAL_FONT,
-      alignment: { horizontal: "center", vertical: "middle" },
-      border: THIN_BORDER,
-    });
+    setCellValue(sheet, row, layout.colAccompanistSig, "", STYLE_CENTERED);
   });
 
   // Write to buffer

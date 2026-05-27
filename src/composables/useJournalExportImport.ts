@@ -10,6 +10,7 @@ import {
   prepareMarksUpdate,
   applyUpdatesToMarks,
 } from "@/services/journal-import-mapper";
+import { prepareJournalExportMetadata } from "@/utils/journalExport";
 import { useStudentStore } from "@/stores/studentStore";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
@@ -117,84 +118,43 @@ export function useJournalExportImport(
         })
       );
 
-      const primaryStudentId = journal.students?.[0];
-      const primaryStudent = primaryStudentId
-        ? studentStoreStudents.value.find((s) => s.id === primaryStudentId)
-        : undefined;
-      const specialty = primaryStudent?.specialty
-        ? specialtyStore.getSpecialtyByCode(primaryStudent.specialty)
-        : undefined;
-
       const academicYearId = selectedItemsStore.selectedAcademicYearId;
       const academicYear = academicYearId
         ? academicYearStore.getAcademicYearById(academicYearId)
         : academicYearStore.getActiveAcademicYear;
 
-      const academicYearLabel = academicYear
-        ? `${academicYear.startYear}/${academicYear.endYear}`
-        : "";
-
-      const teacherName = event?.teacherId
-        ? teacherStore.getTeacherFullName(event.teacherId)
-        : "";
-
-      const disciplineTitle = journalStore.getDisciplineTitle(journal);
-      const groupTitle = journalStore.getJournalTitle(journal);
-
-      // Get final control form from distribution entry
-      let finalControlForm: string | null = null;
-      const class9Item = class9Store.class9Items.find(
-        (c) => c.id === journal.disciplineId
-      );
-      if (class9Item && academicYear) {
-        const semesters =
-          academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(
+      const semesters = academicYear
+        ? academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(
             academicYear.id
-          );
-        const semester = semesters.find(
-          (s) => s.semesterNumber === (event?.semester ?? 1)
-        );
-        if (semester) {
-          const distributionEntry = class9Item.distributionEntries.find(
-            (entry: any) =>
-              entry.academicYearId === academicYear.id &&
-              entry.semesterId === semester.id
-          );
-          if (distributionEntry?.finalControlId) {
-            // distributionEntry.finalControlId is ScheduledFinalControl.id, not FinalControl.id
-            const scheduledControl =
-              scheduledFinalControlStore.getScheduledFinalControlById(
-                distributionEntry.finalControlId
-              );
-            if (scheduledControl) {
-              const finalControl = finalControlStore.getFinalControlById(
-                scheduledControl.finalControlId
-              );
-              finalControlForm = finalControl?.name ?? null;
-            }
-          }
-        }
-      }
+          )
+        : [];
 
-      const filename = `${disciplineTitle}_${groupTitle}`
-        .replace(/[^a-zA-Zа-яА-Я0-9_\-\.]/g, "_")
-        .concat(".xlsx");
+      const metadata = prepareJournalExportMetadata({
+        journal,
+        event,
+        students: studentStoreStudents.value,
+        academicYear,
+        selectedAcademicYearId: academicYearId,
+        class9Items: class9Store.class9Items,
+        academicYearSemesters: semesters,
+        scheduledFinalControls:
+          scheduledFinalControlStore.scheduledFinalControls,
+        finalControls: finalControlStore.finalControls,
+        getSpecialtyByCode: (code: string) =>
+          specialtyStore.getSpecialtyByCode(code),
+        getTeacherFullName: (id: string) =>
+          teacherStore.getTeacherFullName(id),
+        getDisciplineTitle: (j) => journalStore.getDisciplineTitle(j),
+        getJournalTitle: (j) => journalStore.getJournalTitle(j),
+      });
 
       await exportJournalViaConvex(
         {
-          groupName: groupTitle,
-          courseLabel: journal.courseNumber?.toString?.() ?? "",
-          specialtyLabel: specialty
-            ? `${specialty.code} - ${specialty.name}`
-            : undefined,
-          academicYearLabel,
-          disciplineTitle,
-          teacherFullName: teacherName,
-          finalControlForm,
+          ...metadata,
           students: studentRows,
           lessonDates: snapshot.columns.map((column) => column.label),
         },
-        filename
+        metadata.filename
       );
     } catch (error) {
       console.error("Failed to export journal", error);
