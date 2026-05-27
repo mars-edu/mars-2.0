@@ -2,7 +2,6 @@
   <f7-page
     name="protocol"
     @page:init="onPageInit"
-    @page:mounted="onPageMounted"
     class="bg-background"
   >
     <div class="desktop-header-container">
@@ -388,22 +387,9 @@ function formatTime(timestamp: number): string {
   });
 }
 
-/**
- * Page initialization
- */
 function onPageInit() {
   protocolStore.fetchProtocolWithRoleAccess();
 }
-
-function onPageMounted() {
-  f7ready(() => {
-    protocolStore.fetchProtocolWithRoleAccess();
-  });
-}
-
-onMounted(() => {
-  protocolStore.fetchProtocolWithRoleAccess();
-});
 </script>
 
 <style scoped>

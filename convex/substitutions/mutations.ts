@@ -1,10 +1,57 @@
-import { mutation } from "../_generated/server";
+import { mutation, MutationCtx } from "../_generated/server";
 import { v } from "convex/values";
 import { Id } from "../_generated/dataModel";
 
-/**
- * Create a new substitution assignment
- */
+async function getAdminUsers(ctx: MutationCtx) {
+  const allUsers = await ctx.db.query("users").collect();
+  return allUsers.filter((u) => u.roles.includes("ADMIN"));
+}
+
+async function requireAdmin(ctx: MutationCtx, userId: Id<"users">) {
+  const user = await ctx.db.get(userId);
+  if (!user || !user.roles.includes("ADMIN")) {
+    throw new Error("Только администратор может выполнить это действие");
+  }
+  return user;
+}
+
+function formatTeacherName(teacher: { surname: string; firstName: string; patronymic?: string } | null) {
+  if (!teacher) return "Неизвестный преподаватель";
+  return `${teacher.surname} ${teacher.firstName} ${teacher.patronymic ?? ""}`.trim();
+}
+
+async function buildJournalSnapshot(ctx: MutationCtx, journal: { disciplineId?: any; groupName?: string; semesterId: any }) {
+  const [class9Item, semester] = await Promise.all([
+    journal.disciplineId ? ctx.db.get(journal.disciplineId as Id<"class9Items">) : null,
+    ctx.db.get(journal.semesterId as Id<"academicYearSemesters">),
+  ]);
+
+  return {
+    disciplineName: class9Item?.learningOutcome ?? "Неизвестная дисциплина",
+    groupName: journal.groupName,
+    course: undefined,
+    semester: semester?.semesterDefinitionId,
+  };
+}
+
+async function notifyAdmins(
+  ctx: MutationCtx,
+  adminUsers: Array<{ _id: Id<"users"> }>,
+  params: { substitutionId: Id<"substitutions">; journalId: Id<"journals">; message: string; timestamp: number }
+) {
+  for (const admin of adminUsers) {
+    await ctx.db.insert("notifications", {
+      userId: admin._id,
+      type: "substitution",
+      status: "unread",
+      title: "Запрос замены",
+      message: params.message,
+      metadata: { substitutionId: params.substitutionId, journalId: params.journalId },
+      createdAt: params.timestamp,
+    });
+  }
+}
+
 export const createSubstitution = mutation({
   args: {
     journalId: v.id("journals"),
@@ -21,28 +68,16 @@ export const createSubstitution = mutation({
     createdBy: v.id("users"),
   },
   handler: async (ctx, args) => {
-    // Get journal details for snapshot
+    const now = Date.now();
     const journal = await ctx.db.get(args.journalId);
-    if (!journal) {
-      throw new Error("Журнал не найден");
-    }
+    if (!journal) throw new Error("Журнал не найден");
 
-    // Get discipline name from class9Items
-    const class9Item = journal.disciplineId ? await ctx.db.get(journal.disciplineId as Id<"class9Items">) : null;
-    const disciplineName = class9Item?.learningOutcome ?? "Неизвестная дисциплина";
+    const [journalSnapshot, fromTeacher, adminUsers] = await Promise.all([
+      buildJournalSnapshot(ctx, journal),
+      ctx.db.get(args.fromTeacherId as Id<"teachers">),
+      getAdminUsers(ctx),
+    ]);
 
-    // Get semester info
-    const semester = await ctx.db.get(journal.semesterId);
-
-    // Create journal snapshot
-    const journalSnapshot = {
-      disciplineName,
-      groupName: journal.groupName,
-      course: undefined,
-      semester: semester?.semesterDefinitionId,
-    };
-
-    // Create substitution
     const substitutionId = await ctx.db.insert("substitutions", {
       journalId: args.journalId,
       fromTeacherId: args.fromTeacherId,
@@ -58,34 +93,17 @@ export const createSubstitution = mutation({
       serviceLetterNumber: args.serviceLetterNumber,
       journalSnapshot,
       createdBy: args.createdBy,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
     });
 
-    // Get teacher name for notification message
-    const fromTeacher = await ctx.db.get(args.fromTeacherId as Id<"teachers">);
-    const fromTeacherName = fromTeacher
-      ? `${fromTeacher.surname} ${fromTeacher.firstName} ${fromTeacher.patronymic}`
-      : "Неизвестный преподаватель";
-
-    // Notify all admins about the pending substitution request
-    const allUsers = await ctx.db.query("users").collect();
-    const adminUsers = allUsers.filter((u) => u.roles.includes("ADMIN"));
-
-    for (const admin of adminUsers) {
-      await ctx.db.insert("notifications", {
-        userId: admin._id,
-        type: "substitution",
-        status: "unread",
-        title: "Запрос замены",
-        message: `${fromTeacherName} запрашивает замену журнала "${disciplineName}" на ${args.startDate}–${args.endDate}.`,
-        metadata: {
-          substitutionId,
-          journalId: args.journalId,
-        },
-        createdAt: Date.now(),
-      });
-    }
+    const fromTeacherName = formatTeacherName(fromTeacher);
+    await notifyAdmins(ctx, adminUsers, {
+      substitutionId,
+      journalId: args.journalId,
+      message: `${fromTeacherName} запрашивает замену журнала "${journalSnapshot.disciplineName}" на ${args.startDate}–${args.endDate}.`,
+      timestamp: now,
+    });
 
     return substitutionId;
   },
@@ -108,10 +126,7 @@ export const createBulkSubstitutions = mutation({
   handler: async (ctx, args) => {
     const now = Date.now();
     const substitutionIds: string[] = [];
-
-    // Fetch admin users once before the loop
-    const allUsers = await ctx.db.query("users").collect();
-    const adminUsers = allUsers.filter((u) => u.roles.includes("ADMIN"));
+    const adminUsers = await getAdminUsers(ctx);
 
     for (const calendarEventId of args.calendarEventIds) {
       const event = await ctx.db.get(calendarEventId);
@@ -142,16 +157,10 @@ export const createBulkSubstitutions = mutation({
       const journalId = journal._id;
       const fromTeacherId = event.teacherId;
 
-      const [class9Item, semester, fromTeacher] = await Promise.all([
-        journal.disciplineId ? ctx.db.get(journal.disciplineId as Id<"class9Items">) : null,
-        ctx.db.get(journal.semesterId),
+      const [journalSnapshot, fromTeacher] = await Promise.all([
+        buildJournalSnapshot(ctx, journal),
         ctx.db.get(fromTeacherId as Id<"teachers">),
       ]);
-
-      const disciplineName = class9Item?.learningOutcome ?? "Неизвестная дисциплина";
-      const fromTeacherName = fromTeacher
-        ? `${fromTeacher.surname} ${fromTeacher.firstName} ${fromTeacher.patronymic}`
-        : "Неизвестный преподаватель";
 
       const substitutionId = await ctx.db.insert("substitutions", {
         journalId,
@@ -166,29 +175,19 @@ export const createBulkSubstitutions = mutation({
         status: "pending",
         reason: args.reason,
         serviceLetterNumber: args.serviceLetterNumber,
-        journalSnapshot: {
-          disciplineName,
-          groupName: journal.groupName,
-          course: undefined,
-          semester: semester?.semesterDefinitionId,
-        },
+        journalSnapshot,
         createdBy: args.createdBy,
         createdAt: now,
         updatedAt: now,
       });
 
-      // Notify admins (not replacement teacher) about the pending request
-      for (const admin of adminUsers) {
-        await ctx.db.insert("notifications", {
-          userId: admin._id,
-          type: "substitution",
-          status: "unread",
-          title: "Запрос замены",
-          message: `${fromTeacherName} запрашивает замену журнала "${disciplineName}" на ${args.startDate}–${args.endDate}.`,
-          metadata: { substitutionId, journalId },
-          createdAt: now,
-        });
-      }
+      const fromTeacherName = formatTeacherName(fromTeacher);
+      await notifyAdmins(ctx, adminUsers, {
+        substitutionId,
+        journalId,
+        message: `${fromTeacherName} запрашивает замену журнала "${journalSnapshot.disciplineName}" на ${args.startDate}–${args.endDate}.`,
+        timestamp: now,
+      });
 
       substitutionIds.push(substitutionId);
     }
@@ -197,9 +196,6 @@ export const createBulkSubstitutions = mutation({
   },
 });
 
-/**
- * Accept a substitution (teacher accepting the assignment)
- */
 export const acceptSubstitution = mutation({
   args: {
     substitutionId: v.id("substitutions"),
@@ -207,53 +203,40 @@ export const acceptSubstitution = mutation({
   },
   handler: async (ctx, args) => {
     const substitution = await ctx.db.get(args.substitutionId);
+    if (!substitution) throw new Error("Замена не найдена");
 
-    if (!substitution) {
-      throw new Error("Замена не найдена");
-    }
+    await requireAdmin(ctx, args.userId);
 
-    // Verify the user is an admin
-    const actingUser = await ctx.db.get(args.userId);
-    if (!actingUser || !actingUser.roles.includes("ADMIN")) {
-      throw new Error("Только администратор может одобрить замену");
-    }
-
-    // Verify status is pending
     if (substitution.status !== "pending") {
       throw new Error("Эта замена уже обработана");
     }
 
-    // Update substitution status
     await ctx.db.patch(args.substitutionId, {
       status: "accepted",
       acceptedAt: Date.now(),
       updatedAt: Date.now(),
     });
 
-    // Notify replacement teacher
+    const disciplineName = substitution.journalSnapshot?.disciplineName ?? "";
+
     await ctx.db.insert("notifications", {
       userId: substitution.toUserId,
       type: "substitution",
       status: "unread",
       title: "Замена одобрена",
-      message: `Администратор одобрил замену журнала "${substitution.journalSnapshot?.disciplineName ?? ""}". Вы назначены заместителем с ${substitution.startDate} по ${substitution.endDate}.`,
+      message: `Администратор одобрил замену журнала "${disciplineName}". Вы назначены заместителем с ${substitution.startDate} по ${substitution.endDate}.`,
       metadata: { substitutionId: args.substitutionId, journalId: substitution.journalId },
       createdAt: Date.now(),
     });
 
-    // Notify original teacher
-    const fromTeacher = await ctx.db
-      .query("teachers")
-      .collect()
-      .then((teachers) => teachers.find((t) => t._id === substitution.fromTeacherId));
-
+    const fromTeacher = await ctx.db.get(substitution.fromTeacherId as Id<"teachers">);
     if (fromTeacher?.userId) {
       await ctx.db.insert("notifications", {
         userId: fromTeacher.userId,
         type: "system",
         status: "unread",
         title: "Замена одобрена",
-        message: `Замена журнала "${substitution.journalSnapshot?.disciplineName ?? ""}" одобрена администратором.`,
+        message: `Замена журнала "${disciplineName}" одобрена администратором.`,
         createdAt: Date.now(),
       });
     }
@@ -262,9 +245,6 @@ export const acceptSubstitution = mutation({
   },
 });
 
-/**
- * Reject a substitution
- */
 export const rejectSubstitution = mutation({
   args: {
     substitutionId: v.id("substitutions"),
@@ -273,23 +253,14 @@ export const rejectSubstitution = mutation({
   },
   handler: async (ctx, args) => {
     const substitution = await ctx.db.get(args.substitutionId);
+    if (!substitution) throw new Error("Замена не найдена");
 
-    if (!substitution) {
-      throw new Error("Замена не найдена");
-    }
+    await requireAdmin(ctx, args.userId);
 
-    // Verify the user is an admin
-    const actingUser = await ctx.db.get(args.userId);
-    if (!actingUser || !actingUser.roles.includes("ADMIN")) {
-      throw new Error("Только администратор может отклонить замену");
-    }
-
-    // Verify status is pending
     if (substitution.status !== "pending") {
       throw new Error("Эта замена уже обработана");
     }
 
-    // Update substitution status
     await ctx.db.patch(args.substitutionId, {
       status: "rejected",
       rejectedAt: Date.now(),
@@ -297,12 +268,7 @@ export const rejectSubstitution = mutation({
       rejectionReason: args.rejectionReason,
     });
 
-    // Notify original teacher about rejection
-    const fromTeacher = await ctx.db
-      .query("teachers")
-      .collect()
-      .then((teachers) => teachers.find((t) => t._id === substitution.fromTeacherId));
-
+    const fromTeacher = await ctx.db.get(substitution.fromTeacherId as Id<"teachers">);
     if (fromTeacher?.userId) {
       await ctx.db.insert("notifications", {
         userId: fromTeacher.userId,
@@ -318,9 +284,6 @@ export const rejectSubstitution = mutation({
   },
 });
 
-/**
- * Complete a substitution (mark as finished)
- */
 export const completeSubstitution = mutation({
   args: {
     substitutionId: v.id("substitutions"),
@@ -328,26 +291,17 @@ export const completeSubstitution = mutation({
   },
   handler: async (ctx, args) => {
     const substitution = await ctx.db.get(args.substitutionId);
+    if (!substitution) throw new Error("Замена не найдена");
 
-    if (!substitution) {
-      throw new Error("Замена не найдена");
-    }
-
-    // Verify user is admin or the teacher involved
     const user = await ctx.db.get(args.userId);
-    if (
-      !user ||
-      (!user.roles.includes("ADMIN") && substitution.toUserId !== args.userId)
-    ) {
+    if (!user || (!user.roles.includes("ADMIN") && substitution.toUserId !== args.userId)) {
       throw new Error("Недостаточно прав для завершения замены");
     }
 
-    // Verify status is accepted
     if (substitution.status !== "accepted") {
       throw new Error("Можно завершить только принятую замену");
     }
 
-    // Update substitution status
     await ctx.db.patch(args.substitutionId, {
       status: "completed",
       updatedAt: Date.now(),
@@ -357,9 +311,6 @@ export const completeSubstitution = mutation({
   },
 });
 
-/**
- * Cancel a substitution (admin only)
- */
 export const cancelSubstitution = mutation({
   args: {
     substitutionId: v.id("substitutions"),
@@ -368,28 +319,34 @@ export const cancelSubstitution = mutation({
   },
   handler: async (ctx, args) => {
     const substitution = await ctx.db.get(args.substitutionId);
+    if (!substitution) throw new Error("Замена не найдена");
 
-    if (!substitution) {
-      throw new Error("Замена не найдена");
-    }
+    await requireAdmin(ctx, args.userId);
 
-    // Verify user is admin
-    const user = await ctx.db.get(args.userId);
-    if (!user || !user.roles.includes("ADMIN")) {
-      throw new Error("Только администраторы могут отменять замены");
-    }
-
-    // Delete the substitution
     await ctx.db.delete(args.substitutionId);
 
-    // Notify both teachers
+    const reasonSuffix = args.reason ? `: ${args.reason}` : "";
+    const disciplineName = substitution.journalSnapshot?.disciplineName ?? "";
+
     if (substitution.toUserId) {
       await ctx.db.insert("notifications", {
         userId: substitution.toUserId,
         type: "system",
         status: "unread",
         title: "Замена отменена",
-        message: `Замена журнала была отменена администратором${args.reason ? `: ${args.reason}` : ""}`,
+        message: `Замена журнала "${disciplineName}" отменена администратором${reasonSuffix}`,
+        createdAt: Date.now(),
+      });
+    }
+
+    const fromTeacher = await ctx.db.get(substitution.fromTeacherId as Id<"teachers">);
+    if (fromTeacher?.userId) {
+      await ctx.db.insert("notifications", {
+        userId: fromTeacher.userId,
+        type: "system",
+        status: "unread",
+        title: "Замена отменена",
+        message: `Замена журнала "${disciplineName}" отменена администратором${reasonSuffix}`,
         createdAt: Date.now(),
       });
     }
