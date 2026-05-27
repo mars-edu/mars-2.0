@@ -21,6 +21,7 @@ export interface Journal {
   isIndividualJournal?: boolean;
   mergedJournalIds?: string[];
   parentIndividualJournalId?: string;
+  customTitle?: string;
 }
 
 export const useJournalStore = defineStore(
@@ -252,6 +253,7 @@ export const useJournalStore = defineStore(
 
         journal.isIndividualJournal = true;
         journal.mergedJournalIds = actualEvent.mergedJournalIds || [];
+        journal.customTitle = actualEvent.customTitle;
 
         result.push(journal);
       });
@@ -272,7 +274,11 @@ export const useJournalStore = defineStore(
 
     const getJournalById = computed(() => {
       return (id: string) => {
-        // Check mixed group journals FIRST to get all students
+        // Check individual/merged journals first
+        const indJournal = individualJournals.value.find((j) => j.id === id);
+        if (indJournal) return indJournal;
+
+        // Check mixed group journals to get all students
         const mixedJournal = mixedGroupJournals.value.find((j) => j.id === id);
         if (mixedJournal) return mixedJournal;
 
@@ -336,7 +342,7 @@ export const useJournalStore = defineStore(
       }
     }
 
-    async function mergeJournals(journalIds: string[]) {
+    async function mergeJournals(journalIds: string[], customTitle?: string) {
       loading.value = true;
       try {
         const journalsToMerge = journalIds
@@ -361,6 +367,7 @@ export const useJournalStore = defineStore(
           semester: event.semester,
           isIndividualJournal: true,
           mergedJournalIds: journalIds,
+          customTitle: customTitle || undefined,
           teacherId: event.teacherId,
           startDate: event.startDate,
           endDate: event.endDate,
@@ -457,6 +464,7 @@ export const useJournalStore = defineStore(
     }
 
     function getDisciplineTitle(journal: Journal) {
+      if (journal.customTitle) return journal.customTitle;
       const item = class9Store.getClass9ById(journal.disciplineId as any);
       if (!item)
         return generateJournalTitle(
