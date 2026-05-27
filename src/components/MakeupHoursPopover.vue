@@ -4,7 +4,7 @@
     id="makeup-hours-popover"
     positioning="center"
     style="width: 520px !important"
-    :is-dirty="isDirty"
+    :is-dirty="() => isDirty"
     :on-closed="resetForm"
     :close-by-outside-click="false"
   >
