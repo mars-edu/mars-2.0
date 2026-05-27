@@ -12,20 +12,11 @@
         class="flex-1 overflow-y-auto p-3 md:p-4 bg-background pb-16 md:pb-6 transition-all duration-200"
         :class="contentMargin"
       >
-        <div
-          class="bg-card text-card-foreground rounded-xl p-4 md:p-4 shadow-sm"
-        >
-          <div
-            class="flex flex-col md:flex-row md:items-center md:gap-3 mb-4 md:mb-4"
-          >
-            <div
-              class="flex flex-col md:flex-row md:items-center md:gap-3 flex-1 mb-4 md:mb-0"
-            >
-              <span
-                class="text-base md:text-lg font-medium md:font-semibold mb-1 md:mb-0"
-                >{{ edu_schedule_title() }}</span
-              >
-            </div>
+        <div class="max-w-[1600px] mx-auto space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h1 class="text-xl md:text-2xl font-bold text-foreground">
+              {{ edu_schedule_title() }}
+            </h1>
             <div class="flex gap-2">
               <f7-button
                 fill
@@ -61,41 +52,46 @@
               >
                 {{ academicYearStore.getError }}
               </div>
-              <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
+              <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 <div
                   v-for="academicYear in academicYearStore.getSortedAcademicYears"
                   :key="academicYear.id"
                   @click.stop="handleSetActiveAcademicYear(academicYear)"
-                  class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                  class="relative group p-4 rounded-xl border transition-all cursor-pointer"
+                  :class="academicYear.isActive ? 'bg-card border-primary ring-1 ring-primary/20 shadow-md' : 'bg-muted/30 border-border hover:border-border/80 hover:bg-card hover:shadow-sm'"
                   :id="`academic-year-item-${academicYear.id}`"
-                  :class="{ 'border-primary': academicYear.isActive }"
                 >
-                  <span class="font-medium">
-                    {{ academicYear.name }}
-                  </span>
-                  <span
-                    v-if="academicYear.isActive"
-                    class="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full"
-                  >
-                    {{ edu_schedule_active() }}
-                  </span>
-                  <button
-                    v-if="!academicYear.isActive"
-                    class="ml-auto p-1 hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="handleSetActiveAcademicYear(academicYear)"
-                    aria-label="Set Active"
-                    type="button"
-                  >
-                    <IconCircleCheck class="w-[18px] h-[18px] text-primary" />
-                  </button>
-                  <button
-                    class="p-1 hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="openEditAcademicYear(academicYear)"
-                    aria-label="Edit Academic Year"
-                    type="button"
-                  >
-                    <IconPencil class="w-[18px] h-[18px] text-primary" />
-                  </button>
+                  <div class="flex flex-col gap-1 w-full">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-bold" :class="academicYear.isActive ? 'text-foreground' : 'text-muted-foreground'">
+                        {{ academicYear.name }}
+                      </span>
+                      <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          v-if="!academicYear.isActive"
+                          class="p-1 text-muted-foreground hover:text-primary transition-colors"
+                          @click.stop="handleSetActiveAcademicYear(academicYear)"
+                          aria-label="Set Active"
+                          type="button"
+                        >
+                          <IconCircleCheck class="w-[14px] h-[14px]" />
+                        </button>
+                        <button
+                          class="p-1 text-muted-foreground hover:text-primary transition-colors"
+                          @click.stop="openEditAcademicYear(academicYear)"
+                          aria-label="Edit Academic Year"
+                          type="button"
+                        >
+                          <IconPencil class="w-[14px] h-[14px]" />
+                        </button>
+                      </div>
+                    </div>
+                    <div v-if="academicYear.isActive" class="flex items-center justify-between mt-1">
+                      <span class="text-[10px] font-bold uppercase tracking-wider text-primary">
+                        {{ edu_schedule_active() }}
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 <EditAcademicYearButton
                   v-if="selectedAcademicYearId"
@@ -128,51 +124,43 @@
                   :icon="IconCalendar"
                 />
               </div>
-              <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
+              <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 <div
                   v-for="academicYearSemester in academicYearSemesters"
                   :key="academicYearSemester.id"
-                  class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                  class="relative group p-4 rounded-xl border transition-all cursor-pointer"
+                  :class="academicYearSemesterStore.isSemesterActive(academicYearSemester) ? 'bg-card border-primary ring-1 ring-primary/20 shadow-md' : 'bg-muted/30 border-border hover:border-border/80 hover:bg-card hover:shadow-sm'"
                   :id="`academic-year-semester-item-${academicYearSemester.id}`"
-                  :class="{
-                    'border-primary':
-                      academicYearSemesterStore.isSemesterActive(
-                        academicYearSemester
-                      ),
-                  }"
-                  @click.stop="
-                    openEditAcademicYearSemester(academicYearSemester)
-                  "
+                  @click.stop="openEditAcademicYearSemester(academicYearSemester)"
                 >
-                  <div class="flex flex-col w-full">
-                    <span class="font-medium">{{
-                      edu_schedule_semester_label({ number: academicYearSemester.semesterNumber })
-                    }}</span>
-                    <span class="text-xs px-2 py-0.5"
-                      >{{ formatUiDate(academicYearSemester.startDate) }}-
-                      {{ formatUiDate(academicYearSemester.endDate) }}</span
-                    >
+                  <div class="flex flex-col gap-1 w-full">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-bold" :class="academicYearSemesterStore.isSemesterActive(academicYearSemester) ? 'text-foreground' : 'text-muted-foreground'">
+                        {{ edu_schedule_semester_label({ number: academicYearSemester.semesterNumber }) }}
+                      </span>
+                      <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          class="p-1 text-muted-foreground hover:text-primary transition-colors"
+                          @click.stop="openEditAcademicYearSemester(academicYearSemester)"
+                          aria-label="Edit Academic Year Semester"
+                          type="button"
+                        >
+                          <IconPencil class="w-[14px] h-[14px]" />
+                        </button>
+                      </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-1">
+                      <span class="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
+                        {{ formatUiDate(academicYearSemester.startDate) }} - {{ formatUiDate(academicYearSemester.endDate) }}
+                      </span>
+                      <span
+                        v-if="academicYearSemesterStore.isSemesterActive(academicYearSemester)"
+                        class="text-[10px] font-bold uppercase tracking-wider text-primary"
+                      >
+                        {{ edu_schedule_active() }}
+                      </span>
+                    </div>
                   </div>
-                  <span
-                    v-if="
-                      academicYearSemesterStore.isSemesterActive(
-                        academicYearSemester
-                      )
-                    "
-                    class="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full"
-                  >
-                    {{ edu_schedule_active() }}
-                  </span>
-                  <button
-                    class="p-1 hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="
-                      openEditAcademicYearSemester(academicYearSemester)
-                    "
-                    aria-label="Edit Academic Year Semester"
-                    type="button"
-                  >
-                    <IconPencil class="w-[18px] h-[18px] text-primary" />
-                  </button>
                 </div>
                 <EditAcademicYearSemesterButton
                   v-if="selectedAcademicYearSemesterId"
@@ -208,28 +196,29 @@
                   :icon="IconClock"
                 />
               </div>
-              <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
+              <div v-else class="space-y-3">
                 <div
                   v-for="schedule in schedules"
                   :key="schedule.id"
-                  class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                  class="flex items-center justify-between p-4 bg-muted/20 border border-border rounded-xl hover:bg-card hover:shadow-sm transition-all group cursor-pointer"
                   :id="`schedule-item-${schedule.id}`"
                   @click.stop="openEditSchedule(schedule)"
                 >
-                  <span class="font-medium">
-                    {{ schedule.lessonNumber }}.
-                  </span>
-                  <span class="text-sm">
-                    {{ schedule.startTime }} - {{ schedule.endTime }}
-                  </span>
-                  <button
-                    class="p-1 hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="openEditSchedule(schedule)"
-                    aria-label="Edit Schedule"
-                    type="button"
-                  >
-                    <IconPencil class="w-[18px] h-[18px] text-primary" />
-                  </button>
+                  <div class="flex items-center gap-3">
+                    <span class="text-sm font-bold text-foreground">
+                      {{ schedule.lessonNumber }}. {{ schedule.startTime }} - {{ schedule.endTime }}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      class="p-1.5 text-muted-foreground hover:text-primary transition-colors"
+                      @click.stop="openEditSchedule(schedule)"
+                      aria-label="Edit Schedule"
+                      type="button"
+                    >
+                      <IconPencil class="w-[16px] h-[16px]" />
+                    </button>
+                  </div>
                 </div>
                 <EditEducationScheduleButton
                   v-if="selectedScheduleId"
@@ -262,27 +251,36 @@
                   :icon="IconSun"
                 />
               </div>
-              <div v-else class="flex flex-wrap items-center gap-2 md:gap-3">
+              <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 <div
                   v-for="vacation in vacations"
                   :key="vacation.id"
-                  class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                  class="relative group p-4 rounded-xl border transition-all cursor-pointer bg-muted/30 border-border hover:border-border/80 hover:bg-card hover:shadow-sm"
                   :id="`vacation-item-${vacation.id}`"
                   @click.stop="openEditVacation(vacation)"
                 >
-                  <span class="font-medium">{{ vacation.shortName }}</span>
-                  <span class="text-xs px-2 py-0.5"
-                    >{{ formatUiDate(vacation.startDate) }} -
-                    {{ formatUiDate(vacation.endDate) }}</span
-                  >
-                  <button
-                    class="p-1 hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="openEditVacation(vacation)"
-                    aria-label="Edit Vacation"
-                    type="button"
-                  >
-                    <IconPencil class="w-[18px] h-[18px] text-primary" />
-                  </button>
+                  <div class="flex flex-col gap-1 w-full">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-bold text-muted-foreground group-hover:text-foreground transition-colors">
+                        {{ vacation.shortName }}
+                      </span>
+                      <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          class="p-1 text-muted-foreground hover:text-primary transition-colors"
+                          @click.stop="openEditVacation(vacation)"
+                          aria-label="Edit Vacation"
+                          type="button"
+                        >
+                          <IconPencil class="w-[14px] h-[14px]" />
+                        </button>
+                      </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-1">
+                      <span class="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
+                        {{ formatUiDate(vacation.startDate) }} - {{ formatUiDate(vacation.endDate) }}
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 <EditVacationButton
                   v-if="selectedVacationId"
@@ -324,30 +322,37 @@
                   </div>
                   <div
                     v-else
-                    class="flex flex-wrap items-center gap-2 md:gap-3"
+                    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
                   >
                     <div
                       v-for="control in scheduledFinalControls"
                       :key="control.id"
-                      class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                      class="relative group p-4 rounded-xl border transition-all cursor-pointer bg-muted/30 border-border hover:border-border/80 hover:bg-card hover:shadow-sm"
                       :id="`scheduled-final-control-item-${control.id}`"
                       @click.stop="openEditScheduledFinalControl(control)"
                     >
-                      <div class="flex flex-col">
-                        <span class="font-medium">{{ control.shortName }}</span>
-                        <span class="text-xs px-2 py-0.5"
-                          >{{ formatUiDate(control.startDate) }} -
-                          {{ formatUiDate(control.endDate) }}</span
-                        >
+                      <div class="flex flex-col gap-1 w-full">
+                        <div class="flex items-center justify-between">
+                          <span class="text-sm font-bold text-muted-foreground group-hover:text-foreground transition-colors">
+                            {{ control.shortName }}
+                          </span>
+                          <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              class="p-1 text-muted-foreground hover:text-primary transition-colors"
+                              @click.stop="openEditScheduledFinalControl(control)"
+                              aria-label="Edit Scheduled Final Control"
+                              type="button"
+                            >
+                              <IconPencil class="w-[14px] h-[14px]" />
+                            </button>
+                          </div>
+                        </div>
+                        <div class="flex items-center justify-between mt-1">
+                          <span class="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
+                            {{ formatUiDate(control.startDate) }} - {{ formatUiDate(control.endDate) }}
+                          </span>
+                        </div>
                       </div>
-                      <button
-                        class="p-1 hover:bg-primary/10 rounded-md transition-colors"
-                        @click.stop="openEditScheduledFinalControl(control)"
-                        aria-label="Edit Scheduled Final Control"
-                        type="button"
-                      >
-                        <IconPencil class="w-[18px] h-[18px] text-primary" />
-                      </button>
                     </div>
                     <EditScheduledFinalControlButton
                       v-if="selectedScheduledFinalControlId"
@@ -386,34 +391,37 @@
                   </div>
                   <div
                     v-else
-                    class="flex flex-wrap items-center gap-2 md:gap-3"
+                    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
                   >
                     <div
                       v-for="control in scheduledIntermediateControls"
                       :key="control.id"
-                      class="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
+                      class="relative group p-4 rounded-xl border transition-all cursor-pointer bg-muted/30 border-border hover:border-border/80 hover:bg-card hover:shadow-sm"
                       :id="`scheduled-intermediate-control-item-${control.id}`"
-                      @click.stop="
-                        openEditScheduledIntermediateControl(control)
-                      "
+                      @click.stop="openEditScheduledIntermediateControl(control)"
                     >
-                      <div class="flex flex-col">
-                        <span class="font-medium">{{ control.shortName }}</span>
-                        <span class="text-xs px-2 py-0.5"
-                          >{{ formatUiDate(control.startDate) }} -
-                          {{ formatUiDate(control.endDate) }}</span
-                        >
+                      <div class="flex flex-col gap-1 w-full">
+                        <div class="flex items-center justify-between">
+                          <span class="text-sm font-bold text-muted-foreground group-hover:text-foreground transition-colors">
+                            {{ control.shortName }}
+                          </span>
+                          <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              class="p-1 text-muted-foreground hover:text-primary transition-colors"
+                              @click.stop="openEditScheduledIntermediateControl(control)"
+                              aria-label="Edit Scheduled Intermediate Control"
+                              type="button"
+                            >
+                              <IconPencil class="w-[14px] h-[14px]" />
+                            </button>
+                          </div>
+                        </div>
+                        <div class="flex items-center justify-between mt-1">
+                          <span class="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
+                            {{ formatUiDate(control.startDate) }} - {{ formatUiDate(control.endDate) }}
+                          </span>
+                        </div>
                       </div>
-                      <button
-                        class="p-1 hover:bg-primary/10 rounded-md transition-colors"
-                        @click.stop="
-                          openEditScheduledIntermediateControl(control)
-                        "
-                        aria-label="Edit Scheduled Intermediate Control"
-                        type="button"
-                      >
-                        <IconPencil class="w-[18px] h-[18px] text-primary" />
-                      </button>
                     </div>
                     <EditScheduledIntermediateControlButton
                       v-if="selectedScheduledIntermediateControlId"

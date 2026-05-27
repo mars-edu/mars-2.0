@@ -1,15 +1,15 @@
 <template>
-  <div class="border border-border rounded-lg md:rounded-xl overflow-hidden">
+  <div class="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
     <div
-      class="px-3 md:px-4 py-1.5 md:py-2 bg-muted flex items-center justify-between cursor-pointer hover:bg-muted/80 transition-colors"
+      class="px-4 md:px-6 py-3 md:py-4 bg-muted/30 border-b border-border flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors"
       @click="toggle"
     >
       <div class="flex items-center">
         <component
           :is="isExpanded ? IconChevronDown : IconChevronRight"
-          class="w-3.5 h-3.5 mr-1 md:mr-2 text-foreground/60"
+          class="w-5 h-5 mr-2 md:mr-3 text-foreground/70"
         />
-        <div class="font-medium text-sm md:text-base flex items-center">
+        <div class="font-bold text-sm flex items-center">
           <slot name="title"></slot>
         </div>
         <slot v-if="!isExpanded" name="selected-item"></slot>
@@ -18,7 +18,7 @@
         <slot name="actions"></slot>
       </div>
     </div>
-    <div class="p-3 md:p-5 bg-card" v-if="isExpanded">
+    <div class="p-4 md:p-6 bg-card" v-if="isExpanded">
       <slot></slot>
     </div>
   </div>
