@@ -21,17 +21,7 @@
         </div>
 
         <div class="p-4 space-y-4">
-          <div class="space-y-2">
-            <label class="text-sm text-foreground" for="academic-year-name">
-              Название учебного года
-            </label>
-            <f7-input
-              id="academic-year-name"
-              type="text"
-              v-model:value="academicYearName"
-              placeholder="Например: 2023-2024"
-            ></f7-input>
-          </div>
+
 
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
@@ -115,7 +105,7 @@ const academicYearStore = useAcademicYearStore();
 // Get academic year from store by ID - always fresh data
 const academicYear = computed(() => academicYearStore.getAcademicYearById(props.academicYearId));
 
-const academicYearName = ref("");
+
 const startYear = ref<number>(0);
 const endYear = ref<number>(0);
 const isActive = ref(false);
@@ -124,7 +114,7 @@ const formError = ref("");
 // Update form fields whenever academic year data changes
 watchEffect(() => {
   if (academicYear.value) {
-    academicYearName.value = academicYear.value.name;
+
     startYear.value = academicYear.value.startYear;
     endYear.value = academicYear.value.endYear;
     isActive.value = academicYear.value.isActive;
@@ -133,7 +123,6 @@ watchEffect(() => {
 
 const academicYearSchema = z
   .object({
-    name: z.string().min(1, "Пожалуйста, введите название учебного года"),
     startYear: z
       .number()
       .int()
@@ -151,7 +140,6 @@ const academicYearSchema = z
 
 const validationResult = computed(() => {
   return academicYearSchema.safeParse({
-    name: academicYearName.value,
     startYear: Number(startYear.value),
     endYear: Number(endYear.value),
     isActive: isActive.value,
@@ -179,7 +167,7 @@ const handleUpdateAcademicYear = async () => {
 
   try {
     await academicYearStore.updateAcademicYear(academicYear.value.id, {
-      name: academicYearName.value,
+      name: `${startYear.value}-${endYear.value}`,
       startYear: Number(startYear.value),
       endYear: Number(endYear.value),
       isActive: isActive.value,
@@ -217,7 +205,7 @@ const showDeleteConfirmation = () => {
 
 const resetForm = () => {
   if (!academicYear.value) return;
-  academicYearName.value = academicYear.value.name;
+
   startYear.value = academicYear.value.startYear;
   endYear.value = academicYear.value.endYear;
   isActive.value = academicYear.value.isActive;

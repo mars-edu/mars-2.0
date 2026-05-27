@@ -30,17 +30,7 @@
         </div>
 
         <div class="p-4 space-y-4">
-          <div class="space-y-2">
-            <label class="text-sm text-foreground" for="academic-year-name">
-              Название учебного года
-            </label>
-            <f7-input
-              id="academic-year-name"
-              type="text"
-              v-model:value="academicYearName"
-              placeholder="Например: 2023-2024"
-            ></f7-input>
-          </div>
+
 
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
@@ -105,7 +95,7 @@ import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const academicYearStore = useAcademicYearStore();
 
-const academicYearName = ref("");
+
 const startYear = ref<number | null>(null);
 const endYear = ref<number | null>(null);
 const isActive = ref(false);
@@ -113,7 +103,6 @@ const formError = ref("");
 
 const academicYearSchema = z
   .object({
-    name: z.string().min(1, "Пожалуйста, введите название учебного года"),
     startYear: z
       .number({
         error: "Пожалуйста, введите год начала",
@@ -135,7 +124,6 @@ const academicYearSchema = z
 
 const validationResult = computed(() => {
   return academicYearSchema.safeParse({
-    name: academicYearName.value,
     startYear: startYear.value ? Number(startYear.value) : null,
     endYear: endYear.value ? Number(endYear.value) : null,
     isActive: isActive.value,
@@ -166,7 +154,7 @@ const handleSaveAcademicYear = async () => {
 
   try {
     await academicYearStore.addAcademicYear({
-      name: academicYearName.value,
+      name: `${startYear.value}-${endYear.value}`,
       startYear: Number(startYear.value),
       endYear: Number(endYear.value),
       isActive: isActive.value,
@@ -178,7 +166,7 @@ const handleSaveAcademicYear = async () => {
 };
 
 const resetForm = () => {
-  academicYearName.value = "";
+
   startYear.value = null;
   endYear.value = null;
   isActive.value = false;
