@@ -53,16 +53,13 @@ export const getCreatedSubstitutions = query({
     ),
   },
   handler: async (ctx, args) => {
-    const allSubstitutions = await ctx.db
+    const substitutions = await ctx.db
       .query("substitutions")
-      .withIndex("by_fromTeacher", (q) =>
-        q.eq("fromTeacherId", args.fromTeacherId)
-      )
+      .withIndex("by_fromTeacher_status", (q) => {
+        const base = q.eq("fromTeacherId", args.fromTeacherId);
+        return args.status ? base.eq("status", args.status) : base;
+      })
       .collect();
-
-    const substitutions = args.status
-      ? allSubstitutions.filter((s) => s.status === args.status)
-      : allSubstitutions;
 
     const allTeachers = await ctx.db.query("teachers").collect();
     const teacherMap = new Map(allTeachers.map((t) => [t._id as string, t]));
@@ -227,7 +224,7 @@ export const listProtocolWithRoleAccess: any = action({
     token: v.string(),
     selectedTeacherId: v.optional(v.union(v.string(), v.null())),
   },
-  handler: async (ctx, args): Promise<any> => {
+  handler: async (ctx, args) => {
     const { token, selectedTeacherId } = args;
 
     const jwtSecret = process.env.JWT_SECRET;
@@ -244,7 +241,7 @@ export const listProtocolWithRoleAccess: any = action({
       return [];
     }
 
-    const protocolEntries: any = await ctx.runQuery(
+    const protocolEntries = await ctx.runQuery(
       internal.substitutions.queries.listProtocolWithRoleAccessInternal,
       {
         userId: payload.userId,

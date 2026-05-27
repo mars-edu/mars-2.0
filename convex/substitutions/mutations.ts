@@ -202,6 +202,7 @@ export const acceptSubstitution = mutation({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const now = Date.now();
     const substitution = await ctx.db.get(args.substitutionId);
     if (!substitution) throw new Error("Замена не найдена");
 
@@ -213,8 +214,8 @@ export const acceptSubstitution = mutation({
 
     await ctx.db.patch(args.substitutionId, {
       status: "accepted",
-      acceptedAt: Date.now(),
-      updatedAt: Date.now(),
+      acceptedAt: now,
+      updatedAt: now,
     });
 
     const disciplineName = substitution.journalSnapshot?.disciplineName ?? "";
@@ -226,7 +227,7 @@ export const acceptSubstitution = mutation({
       title: "Замена одобрена",
       message: `Администратор одобрил замену журнала "${disciplineName}". Вы назначены заместителем с ${substitution.startDate} по ${substitution.endDate}.`,
       metadata: { substitutionId: args.substitutionId, journalId: substitution.journalId },
-      createdAt: Date.now(),
+      createdAt: now,
     });
 
     const fromTeacher = await ctx.db.get(substitution.fromTeacherId as Id<"teachers">);
@@ -237,7 +238,7 @@ export const acceptSubstitution = mutation({
         status: "unread",
         title: "Замена одобрена",
         message: `Замена журнала "${disciplineName}" одобрена администратором.`,
-        createdAt: Date.now(),
+        createdAt: now,
       });
     }
 
@@ -252,6 +253,7 @@ export const rejectSubstitution = mutation({
     rejectionReason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const now = Date.now();
     const substitution = await ctx.db.get(args.substitutionId);
     if (!substitution) throw new Error("Замена не найдена");
 
@@ -263,8 +265,8 @@ export const rejectSubstitution = mutation({
 
     await ctx.db.patch(args.substitutionId, {
       status: "rejected",
-      rejectedAt: Date.now(),
-      updatedAt: Date.now(),
+      rejectedAt: now,
+      updatedAt: now,
       rejectionReason: args.rejectionReason,
     });
 
@@ -276,7 +278,7 @@ export const rejectSubstitution = mutation({
         status: "unread",
         title: "Замена отклонена",
         message: `Замена журнала "${substitution.journalSnapshot?.disciplineName ?? ""}" отклонена администратором${args.rejectionReason ? `: ${args.rejectionReason}` : "."}`,
-        createdAt: Date.now(),
+        createdAt: now,
       });
     }
 

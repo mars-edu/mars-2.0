@@ -168,6 +168,16 @@ import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
 import { useUserStore } from '@/stores/userStore';
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
+import {
+  notifications_marked_read,
+  notifications_update_error,
+  notifications_substitution_accepted,
+  notifications_substitution_accept_error,
+  notifications_substitution_rejected,
+  notifications_substitution_reject_error,
+  notifications_reject_reason,
+  notifications_reject_title,
+} from "@/paraglide/messages";
 
 // Icons
 import IconUsers from "~icons/lucide/users";
@@ -260,13 +270,13 @@ const markAllAsRead = async () => {
       userId: currentUserId.value,
     });
     f7.toast.create({
-      text: "Все уведомления прочитаны",
+      text: notifications_marked_read(),
       position: "center",
       closeTimeout: 2000,
     }).open();
   } catch (err: any) {
     f7.toast.create({
-      text: err.message || "Ошибка",
+      text: err.message || notifications_update_error(),
       position: "center",
       closeTimeout: 2000,
     }).open();
@@ -286,13 +296,13 @@ const acceptSubstitution = async (substitutionId: Id<"substitutions">, notificat
     });
     await markAsRead(notificationId);
     f7.toast.create({
-      text: "Замена принята",
+      text: notifications_substitution_accepted(),
       position: "center",
       closeTimeout: 2000,
     }).open();
   } catch (err: any) {
     f7.toast.create({
-      text: err.message || "Ошибка",
+      text: err.message || notifications_update_error(),
       position: "center",
       closeTimeout: 2000,
     }).open();
@@ -305,8 +315,8 @@ const rejectSubstitution = async (substitutionId: Id<"substitutions">, notificat
   if (!currentUserId.value) return;
 
   f7.dialog.prompt(
-    "Причина отклонения:",
-    "Отклонить замену",
+    notifications_reject_reason(),
+    notifications_reject_title(),
     async (reason: string) => {
       try {
         processing.value = true;
@@ -317,13 +327,13 @@ const rejectSubstitution = async (substitutionId: Id<"substitutions">, notificat
         });
         await markAsRead(notificationId);
         f7.toast.create({
-          text: "Замена отклонена",
+          text: notifications_substitution_rejected(),
           position: "center",
           closeTimeout: 2000,
         }).open();
       } catch (err: any) {
         f7.toast.create({
-          text: err.message || "Ошибка",
+          text: err.message || notifications_update_error(),
           position: "center",
           closeTimeout: 2000,
         }).open();

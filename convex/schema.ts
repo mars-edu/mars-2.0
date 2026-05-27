@@ -402,6 +402,7 @@ export default defineSchema({
     isIndividualJournal: v.optional(v.boolean()),
     mergedJournalIds: v.optional(v.array(v.string())),
     parentIndividualJournalId: v.optional(v.string()),
+    customTitle: v.optional(v.string()),
     isClosed: v.optional(v.boolean()),
     journalSettings: v.optional(
       v.object({
@@ -776,6 +777,7 @@ export default defineSchema({
   })
     .index("by_journal", ["journalId"])
     .index("by_fromTeacher", ["fromTeacherId"])
+    .index("by_fromTeacher_status", ["fromTeacherId", "status"])
     .index("by_toTeacher", ["toTeacherId"])
     .index("by_toUser", ["toUserId"])
     .index("by_toUser_status", ["toUserId", "status"])

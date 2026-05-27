@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
-import { computed, ref } from "vue";
-import { convex } from "@/lib/convexClient";
+import { computed, ref, watch } from "vue";
+import { useConvexQuery } from "convex-vue";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 
@@ -37,11 +37,21 @@ export interface EnrichedSubstitution {
 }
 
 export const useSubstitutionStore = defineStore("substitutions", () => {
+  const currentUserId = ref<Id<"users"> | null>(null);
   const receivedSubstitutions = ref<EnrichedSubstitution[]>([]);
-  const loading = ref(false);
-  const error = ref<string | null>(null);
 
-  let lastRequestId = 0;
+  const queryArgs = computed(() =>
+    currentUserId.value ? { toUserId: currentUserId.value } : "skip"
+  );
+
+  const { data: convexSubstitutions } = useConvexQuery(
+    api.substitutions.queries.getTeacherSubstitutions,
+    queryArgs
+  );
+
+  watch(convexSubstitutions, (newData) => {
+    receivedSubstitutions.value = (newData as EnrichedSubstitution[] | undefined) ?? [];
+  });
 
   const activeSubstitutions = computed(() =>
     receivedSubstitutions.value.filter(
@@ -49,42 +59,21 @@ export const useSubstitutionStore = defineStore("substitutions", () => {
     )
   );
 
-  const loadForUser = async (userId: Id<"users">) => {
-    const requestId = (lastRequestId += 1);
+  const loading = computed(() => currentUserId.value !== null && !convexSubstitutions.value);
 
-    try {
-      loading.value = true;
-      error.value = null;
+  function loadForUser(userId: Id<"users">) {
+    currentUserId.value = userId;
+  }
 
-      const data = await convex.query(
-        api.substitutions.queries.getTeacherSubstitutions,
-        { toUserId: userId }
-      );
-
-      if (requestId !== lastRequestId) return;
-
-      receivedSubstitutions.value = (data as EnrichedSubstitution[]) ?? [];
-    } catch (err) {
-      console.error("[substitutionStore] Failed to load substitutions:", err);
-      if (requestId !== lastRequestId) return;
-      receivedSubstitutions.value = [];
-      error.value = "Не удалось загрузить замены";
-    } finally {
-      if (requestId === lastRequestId) loading.value = false;
-    }
-  };
-
-  const reset = () => {
+  function reset() {
+    currentUserId.value = null;
     receivedSubstitutions.value = [];
-    error.value = null;
-    loading.value = false;
-  };
+  }
 
   return {
     receivedSubstitutions,
     activeSubstitutions,
     loading,
-    error,
     loadForUser,
     reset,
   };
