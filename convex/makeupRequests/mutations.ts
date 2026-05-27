@@ -1,18 +1,12 @@
-import { MutationCtx } from "../_generated/server";
+import type { MutationCtx } from "../_generated/server";
 import { v } from "convex/values";
-import { Id } from "../_generated/dataModel";
+import type { Id } from "../_generated/dataModel";
 import { m, getUserLocale, withI18nMutation, setLocale } from "../lib/i18n";
+import { requirePermission } from "../lib/rbac";
 
 async function getAdminUsers(ctx: MutationCtx) {
   const allUsers = await ctx.db.query("users").collect();
   return allUsers.filter((u) => u.roles.includes("ADMIN"));
-}
-
-async function requireAdmin(ctx: MutationCtx, userId: Id<"users">) {
-  const user = await ctx.db.get(userId);
-  if (!user || !user.roles.includes("ADMIN")) {
-    throw new Error(m.backend_admin_only());
-  }
 }
 
 export const createMakeupRequest = withI18nMutation({
@@ -36,12 +30,12 @@ export const createMakeupRequest = withI18nMutation({
     const journal = await ctx.db.get(args.journalId);
     if (!journal) throw new Error(m.backend_journal_not_found());
 
-    const class9Item =
+    const rupEntry =
       journal.disciplineId
-        ? await ctx.db.get(journal.disciplineId as Id<"class9Items">)
+        ? await ctx.db.get(journal.disciplineId as Id<"rupEntries">)
         : null;
     const journalSnapshot = {
-      disciplineName: class9Item?.learningOutcome ?? m.backend_unknown_discipline(),
+      disciplineName: rupEntry?.learningOutcome ?? m.backend_unknown_discipline(),
       groupName: journal.groupName,
     };
 
@@ -93,7 +87,7 @@ export const acceptMakeupRequest = withI18nMutation({
     const request = await ctx.db.get(args.makeupRequestId);
     if (!request) throw new Error(m.backend_makeup_request_not_found());
 
-    await requireAdmin(ctx, args.userId);
+    await requirePermission(ctx, args.userId, "marks", "write");
 
     if (request.status !== "pending") {
       throw new Error(m.backend_makeup_already_processed());
@@ -119,7 +113,7 @@ export const rejectMakeupRequest = withI18nMutation({
     const request = await ctx.db.get(args.makeupRequestId);
     if (!request) throw new Error(m.backend_makeup_request_not_found());
 
-    await requireAdmin(ctx, args.userId);
+    await requirePermission(ctx, args.userId, "marks", "write");
 
     if (request.status !== "pending") {
       throw new Error(m.backend_makeup_already_processed());
