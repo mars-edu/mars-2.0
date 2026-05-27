@@ -15,9 +15,18 @@ async function requireAdmin(ctx: MutationCtx, userId: Id<"users">) {
   return user;
 }
 
-function formatTeacherName(teacher: { surname: string; firstName: string; patronymic?: string } | null) {
+function formatTeacherName(teacher: any | null) {
   if (!teacher) return "Неизвестный преподаватель";
-  return `${teacher.surname} ${teacher.firstName} ${teacher.patronymic ?? ""}`.trim();
+  
+  if (teacher.surname !== undefined) {
+    return [teacher.surname, teacher.firstName, teacher.patronymic].filter(Boolean).join(" ");
+  }
+  
+  if (teacher.lastName !== undefined) {
+    return [teacher.lastName, teacher.firstName, teacher.middleName].filter(Boolean).join(" ");
+  }
+  
+  return [teacher.firstName].filter(Boolean).join(" ") || "Неизвестный преподаватель";
 }
 
 async function buildJournalSnapshot(ctx: MutationCtx, journal: { disciplineId?: any; groupName?: string; semesterId: any }) {
