@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, shallowRef, computed, triggerRef } from "vue";
 import type { Mark, StudentMark, JournalMarks } from "@/types/marks";
 import { useUserStore } from "./userStore";
 import { convex } from "@/lib/convexClient";
@@ -9,7 +9,7 @@ import type { Id } from "@convex/_generated/dataModel";
 export const useMarksStore = defineStore(
   "marks",
   () => {
-    const journalMarks = ref<Record<string, JournalMarks>>({});
+    const journalMarks = shallowRef<Record<string, JournalMarks>>({});
     const backendJournalIdByCalendarEventId = ref<Record<string, string>>({});
     const loading = ref(false);
     const error = ref<string | null>(null);
@@ -166,7 +166,7 @@ export const useMarksStore = defineStore(
         // Build a map of backend marks: studentId -> columnIndex -> rowIndex -> value
         const backendMarksMap = new Map<string, Map<number, Map<number, string | null>>>();
         
-        result.marks.forEach((mark) => {
+        result.marks.forEach((mark: any) => {
           if (!backendMarksMap.has(mark.studentId)) {
             backendMarksMap.set(mark.studentId, new Map());
           }
@@ -174,25 +174,32 @@ export const useMarksStore = defineStore(
           if (!studentMap.has(mark.columnIndex)) {
             studentMap.set(mark.columnIndex, new Map());
           }
-          studentMap.get(mark.columnIndex)!.set(mark.rowIndex, mark.value ?? null);
+          studentMap.get(mark.columnIndex)!.set(mark.rowIndex, mark.value);
         });
 
-        // Merge backend marks into the existing template
-        existingJournal.studentMarks.forEach((studentMark) => {
-          const backendStudentMarks = backendMarksMap.get(studentMark.studentId);
-          if (!backendStudentMarks) return;
+        // Merge marks into the existing template
+        let hasChanges = false;
+        
+        existingJournal.studentMarks.forEach((student) => {
+          const studentBackendMarks = backendMarksMap.get(student.studentId);
+          if (!studentBackendMarks) return;
 
-          studentMark.marks.forEach((mark, columnIndex) => {
-            const backendColumnMarks = backendStudentMarks.get(columnIndex);
-            if (!backendColumnMarks) return;
+          student.marks.forEach((templateCol, colIdx) => {
+            const colBackendMarks = studentBackendMarks.get(colIdx);
+            if (!colBackendMarks) return;
 
-            mark.values.forEach((_, rowIndex) => {
-              if (backendColumnMarks.has(rowIndex)) {
-                mark.values[rowIndex] = backendColumnMarks.get(rowIndex)!;
+            templateCol.values.forEach((_, rowIdx) => {
+              if (colBackendMarks.has(rowIdx)) {
+                templateCol.values[rowIdx] = colBackendMarks.get(rowIdx) ?? "";
+                hasChanges = true;
               }
             });
           });
         });
+
+        if (hasChanges) {
+          triggerRef(journalMarks);
+        }
 
         existingJournal.lastUpdated = new Date().toISOString();
         
@@ -466,6 +473,7 @@ export const useMarksStore = defineStore(
           // Optimistic update - update UI immediately
           studentMark.marks[markIndex].values[valueIndex] = value;
           journal.lastUpdated = new Date().toISOString();
+          triggerRef(journalMarks);
 
           // Save to backend
           try {
@@ -728,7 +736,7 @@ export const useMarksStore = defineStore(
       studentMark.marks[markIndex].values = adjustedValues;
       journal.lastUpdated = new Date().toISOString();
       // Trigger reactivity for persistence
-      journalMarks.value = { ...journalMarks.value };
+      triggerRef(journalMarks);
       return true;
     };
 
@@ -755,7 +763,7 @@ export const useMarksStore = defineStore(
       );
       journal.lastUpdated = new Date().toISOString();
       // Trigger reactivity for persistence
-      journalMarks.value = { ...journalMarks.value };
+      triggerRef(journalMarks);
       return true;
     };
 

@@ -99,12 +99,17 @@
       :journal_future_date_tooltip="journal_future_date_tooltip()"
       :get-ktp-for-header="getKtpForHeader"
       :is-future-date="isFutureDate"
+      :is-past-date="isPastDate"
+      :get-student-average-score="getStudentAverageScore"
+      :get-score-badge-class="getScoreBadgeClass"
       @header-click="openDateFocus"
       @paperclip-click="onPaperclipClick"
       @cell-click="handleCellClick"
+      @student-click="showFloatingRow"
       @update:editedValue="editedValue = $event"
-      @save-mark="saveMark"
+      @confirm-edit="confirmEdit"
       @cancel-edit="cancelEdit"
+      @navigate="navigate"
     />
 
     <!-- KtpDetailViewPopover -->
@@ -1795,6 +1800,14 @@ const isFutureDate = (isoDate: string | undefined): boolean => {
   return cellDate.isAfter(today);
 };
 
+// Utility function to check if a date is in the past (strictly before today)
+const isPastDate = (isoDate: string | undefined): boolean => {
+  if (!isoDate) return false;
+  const today = dayjs().startOf('day');
+  const cellDate = dayjs(isoDate, DATE_STORAGE_FORMAT);
+  return cellDate.isBefore(today);
+};
+
 const handleCellClick = (
   studentIndex: number,
   colIndex: number,
@@ -1865,6 +1878,16 @@ const editCell = (
   if (mark.type === "date" && mark.isoDate && isFutureDate(mark.isoDate)) {
     f7.toast.create({
       text: 'Нельзя выставлять оценки за будущие даты',
+      position: 'center',
+      closeTimeout: 2000,
+    }).open();
+    return;
+  }
+
+  // Check if this is a past date
+  if (mark.type === "date" && mark.isoDate && isPastDate(mark.isoDate)) {
+    f7.toast.create({
+      text: 'Нельзя изменять оценки за прошедшие даты',
       position: 'center',
       closeTimeout: 2000,
     }).open();
@@ -2846,6 +2869,8 @@ const tableHeaders = computed(() => {
     type: mark.type,
     label: headerLabelFor(mark),
     index,
+    dynamicRows: getCanonicalRows(index),
+    isoDate: mark.isoDate,
   }));
 });
 
@@ -2866,6 +2891,7 @@ const visibleHeaders = computed(() => {
     index: -1,
     displayIndex: baseHeaders.length,
     isFinalSummary: true,
+    dynamicRows: 1,
   };
 
   return [...baseHeaders, finalHeader];
