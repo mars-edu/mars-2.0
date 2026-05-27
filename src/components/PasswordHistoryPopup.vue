@@ -71,11 +71,14 @@ import { f7Popup, f7Page, f7PageContent, f7Preloader, f7 } from "framework7-vue"
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
+import { useI18n } from "@/composables/useI18n";
 
 const props = defineProps<{
   teacherId: string;
   userId: string;
 }>();
+
+const { locale } = useI18n();
 
 const history = ref<any[]>([]);
 const loading = ref(false);
@@ -128,7 +131,7 @@ const getChangeTypeBadgeClass = (type: string) => {
 
 const formatDate = (timestamp: number) => {
   const date = new Date(timestamp);
-  return date.toLocaleDateString("ru-RU", {
+  return date.toLocaleDateString(locale.value, {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -137,7 +140,7 @@ const formatDate = (timestamp: number) => {
 
 const formatTime = (timestamp: number) => {
   const date = new Date(timestamp);
-  return date.toLocaleTimeString("ru-RU", {
+  return date.toLocaleTimeString(locale.value, {
     hour: "2-digit",
     minute: "2-digit",
   });

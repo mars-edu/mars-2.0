@@ -1362,7 +1362,7 @@ const reportSummary = computed(() => ({
 
 const reportGeneratedAtLabel = computed(() => {
   if (!reportGeneratedAt.value) return "";
-  return new Intl.DateTimeFormat("ru-RU", {
+  return new Intl.DateTimeFormat(locale.value, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(reportGeneratedAt.value);

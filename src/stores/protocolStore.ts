@@ -1,11 +1,14 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useUserStore } from "./userStore";
+import { useLocaleStore } from "./localeStore";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import type { SubstitutionStatus } from "@/constants/substitution";
 import { SUBSTITUTION_STATUS_LABELS } from "@/constants/substitution";
+import dayjs from "dayjs";
+import { DATE_UI_FORMAT } from "@/constants/calendar";
 
 export interface SubstitutionEntry {
   type: "substitution";
@@ -71,6 +74,7 @@ export const useProtocolStore = defineStore("protocol", () => {
   const actionError = ref<string | null>(null);
 
   const userStore = useUserStore();
+  const localeStore = useLocaleStore();
 
   /**
    * Fetch protocol entries from the backend with JWT-based role access control.
@@ -246,17 +250,9 @@ export const useProtocolStore = defineStore("protocol", () => {
    */
   function formatDate(dateString: string): string {
     if (!dateString) return "—";
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return "—";
-      return date.toLocaleDateString("ru-RU", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
-    } catch {
-      return "—";
-    }
+    const d = dayjs(dateString);
+    if (!d.isValid()) return "—";
+    return d.format(DATE_UI_FORMAT);
   }
 
   /**
@@ -274,7 +270,7 @@ export const useProtocolStore = defineStore("protocol", () => {
 
     for (const entry of entries.value) {
       const date = new Date(entry.createdAt);
-      const dateKey = date.toLocaleDateString("ru-RU", {
+      const dateKey = date.toLocaleDateString(localeStore.locale, {
         weekday: "long",
         day: "numeric",
         month: "long",

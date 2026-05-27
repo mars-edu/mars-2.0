@@ -85,6 +85,7 @@ import { computed } from "vue";
 import { storeToRefs } from "pinia";
 import Card from "@/components/ui/Card.vue";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
+import { useI18n } from "@/composables/useI18n";
 import type { Theme } from "@/types/theme";
 
 interface Props {
@@ -95,6 +96,8 @@ interface Props {
 withDefaults(defineProps<Props>(), {
   theme: "light",
 });
+
+const { locale } = useI18n();
 
 // Initialize store to get active semester data
 const academicYearSemesterStore = useAcademicYearSemesterStore();
@@ -146,7 +149,7 @@ const semesterEndDate = computed(() => semesterData.value?.endDate ?? null);
 const TOTAL_WEEKS = computed(() => semesterData.value?.totalWeeks ?? 15);
 
 const formatDate = (date: Date): string => {
-  return date.toLocaleDateString("ru-RU", {
+  return date.toLocaleDateString(locale.value, {
     day: "numeric",
     month: "long",
     year: "numeric",
