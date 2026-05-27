@@ -2,6 +2,7 @@ import { mutation, action } from "../_generated/server";
 import { v } from "convex/values";
 import { api } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
+import { requirePermission } from "../lib/rbac";
 
 /**
  * Update user's profile picture
@@ -12,6 +13,7 @@ export const updateProfilePicture = mutation({
     avatarUrl: v.string(),
   },
   handler: async (ctx, args) => {
+    await requirePermission(ctx, args.userId, "users", "write");
     const user = await ctx.db.get(args.userId);
 
     if (!user) {
@@ -67,6 +69,7 @@ export const removeProfilePicture = mutation({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requirePermission(ctx, args.userId, "users", "write");
     const user = await ctx.db.get(args.userId);
 
     if (!user) {
@@ -93,6 +96,7 @@ export const updateTheme = mutation({
     theme: v.union(v.literal("light"), v.literal("dark"), v.literal("lavanda"), v.literal("coral"), v.literal("graphite")),
   },
   handler: async (ctx, args) => {
+    await requirePermission(ctx, args.userId, "users", "write");
     const user = await ctx.db.get(args.userId);
 
     if (!user) {
@@ -127,6 +131,7 @@ export const updateProfile = mutation({
     degree: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requirePermission(ctx, args.userId, "users", "write");
     const user = await ctx.db.get(args.userId);
 
     if (!user) {
@@ -155,6 +160,7 @@ export const updateLocale = mutation({
     locale: v.union(v.literal("ru"), v.literal("kk"), v.literal("en")),
   },
   handler: async (ctx, args) => {
+    await requirePermission(ctx, args.userId, "users", "write");
     const user = await ctx.db.get(args.userId);
     if (!user) throw new Error("User not found");
 
