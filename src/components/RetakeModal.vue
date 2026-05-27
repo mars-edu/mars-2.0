@@ -69,13 +69,66 @@
 
           <div class="space-y-1.5">
             <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70 ml-1">
-              Основание (необязательно)
+              Основание <span class="text-red-500">*</span>
             </div>
-            <textarea 
+            <textarea
               class="w-full bg-card rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-border/60 p-4 text-[15px] focus:border-orange-500/50 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all min-h-[100px] resize-none"
+              :class="retakeReason.trim() === '' && hasTriedNext ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' : ''"
               placeholder="Например: Заявление студента, Справка..."
               v-model="retakeReason"
             ></textarea>
+            <div v-if="retakeReason.trim() === '' && hasTriedNext" class="text-xs text-red-500 ml-1">
+              Укажите основание для пересдачи
+            </div>
+          </div>
+
+          <!-- File upload -->
+          <div class="space-y-1.5">
+            <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70 ml-1">
+              Прикрепить файлы
+            </div>
+            <div
+              class="relative w-full rounded-2xl border-2 border-dashed p-6 text-center transition-all cursor-pointer"
+              :class="isDragging
+                ? 'border-orange-500 bg-orange-50/50'
+                : 'border-border/60 hover:border-orange-500/50 hover:bg-orange-50/20'"
+              @click="fileInputRef?.click()"
+              @dragenter.prevent="isDragging = true"
+              @dragover.prevent="isDragging = true"
+              @dragleave.prevent="isDragging = false"
+              @drop.prevent="onDrop"
+            >
+              <IconUpload class="w-6 h-6 mx-auto mb-2 text-muted-foreground/50" />
+              <p class="text-sm font-medium text-muted-foreground">
+                Перетащите файлы сюда или <span class="text-orange-500">выберите</span>
+              </p>
+              <p class="text-xs text-muted-foreground/60 mt-1">PDF, JPG, PNG до 10 МБ</p>
+              <input
+                ref="fileInputRef"
+                type="file"
+                multiple
+                accept=".pdf,.jpg,.jpeg,.png"
+                class="hidden"
+                @change="onFileSelect"
+              />
+            </div>
+            <div v-if="attachedFiles.length > 0" class="space-y-2 mt-2">
+              <div
+                v-for="(file, idx) in attachedFiles"
+                :key="idx"
+                class="flex items-center gap-3 bg-muted/50 rounded-xl px-3 py-2"
+              >
+                <IconFile class="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <span class="text-sm font-medium text-foreground truncate flex-1">{{ file.name }}</span>
+                <span class="text-xs text-muted-foreground flex-shrink-0">{{ formatFileSize(file.size) }}</span>
+                <button
+                  @click.stop="attachedFiles.splice(idx, 1)"
+                  class="p-1 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                >
+                  <IconX class="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="bg-orange-50/50 border border-orange-100 p-4 rounded-2xl flex gap-3 items-start">
@@ -118,9 +171,9 @@
         >
           Отмена
         </button>
-        <button 
+        <button
           v-if="step === 'form'"
-          @click="step = 'confirm'"
+          @click="onNext"
           :disabled="selectedStudentIds.length === 0"
           class="px-6 py-3 rounded-xl font-bold bg-orange-500 text-white shadow-lg shadow-orange-500/20 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
         >
@@ -164,6 +217,9 @@ import Select from "@/components/ui/Select.vue";
 import IconAlertCircle from "~icons/lucide/alert-circle";
 import IconInfo from "~icons/lucide/info";
 import IconCheckCircle from "~icons/lucide/check-circle";
+import IconUpload from "~icons/lucide/upload";
+import IconFile from "~icons/lucide/file";
+import IconX from "~icons/lucide/x";
 
 const props = defineProps<{
   isOpen: boolean;
@@ -180,11 +236,44 @@ const selectedStudentIds = ref<string[]>([]);
 const retakeType = ref("rk1");
 const retakeReason = ref("");
 const isSubmitting = ref(false);
+const hasTriedNext = ref(false);
+const attachedFiles = ref<File[]>([]);
+const isDragging = ref(false);
+const fileInputRef = ref<HTMLInputElement | null>(null);
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/png"];
+
+function addFiles(files: FileList | File[]) {
+  for (const file of files) {
+    if (!ALLOWED_TYPES.includes(file.type)) continue;
+    if (file.size > MAX_FILE_SIZE) continue;
+    if (attachedFiles.value.some((f) => f.name === file.name && f.size === file.size)) continue;
+    attachedFiles.value.push(file);
+  }
+}
+
+function onFileSelect(e: Event) {
+  const input = e.target as HTMLInputElement;
+  if (input.files) addFiles(input.files);
+  input.value = "";
+}
+
+function onDrop(e: DragEvent) {
+  isDragging.value = false;
+  if (e.dataTransfer?.files) addFiles(e.dataTransfer.files);
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} Б`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} КБ`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} МБ`;
+}
 
 const retakeTypeOptions = [
-  { value: "rk1", label: "РК 1" },
-  { value: "rk2", label: "РК 2" },
-  { value: "exam", label: "Экзамен" },
+  { value: "rk1", text: "РК 1" },
+  { value: "rk2", text: "РК 2" },
+  { value: "exam", text: "Экзамен" },
 ];
 
 watch(() => props.isOpen, (newVal) => {
@@ -194,11 +283,20 @@ watch(() => props.isOpen, (newVal) => {
     retakeType.value = "rk1";
     retakeReason.value = "";
     isSubmitting.value = false;
+    hasTriedNext.value = false;
+    attachedFiles.value = [];
+    isDragging.value = false;
   }
 });
 
 const close = () => {
   emit("close");
+};
+
+const onNext = () => {
+  hasTriedNext.value = true;
+  if (retakeReason.value.trim() === "") return;
+  step.value = "confirm";
 };
 
 const submit = () => {
@@ -208,6 +306,7 @@ const submit = () => {
       studentIds: selectedStudentIds.value,
       type: retakeType.value,
       reason: retakeReason.value,
+      files: attachedFiles.value,
     });
     isSubmitting.value = false;
     step.value = "success";
