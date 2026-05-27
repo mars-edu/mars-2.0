@@ -235,33 +235,22 @@
                 {{ selectionDoneText }}
               </button>
             </div>
-            <!-- Объединенные журналы -->
-            <div v-if="filteredIndividualJournals.length > 0" class="flex flex-col gap-3 mb-4">
+            <!-- Замещаемые журналы -->
+            <div v-if="activeSubstitutions.length > 0" class="flex flex-col gap-3 mb-2">
               <div class="flex items-center gap-2">
-                <IconGitMerge class="w-4 h-4 text-gray-500" />
-                <h2 class="text-base font-bold text-foreground">{{ journal_merge() }}</h2>
-                <span class="px-2 py-0.5 text-xs font-bold bg-gray-100 text-gray-600 rounded-full dark:bg-gray-800 dark:text-gray-400">{{ filteredIndividualJournals.length }}</span>
+                <h2 class="text-base font-bold text-foreground">Замещаемые журналы</h2>
+                <span class="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-700 rounded-full">{{ activeSubstitutions.length }}</span>
               </div>
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 <JournalGridCard
-                  v-for="journal in filteredIndividualJournals"
-                  :key="`merged-${journal.id}`"
-                  :title="journalStore.getDisciplineTitle(journal)"
-                  :subtitle="journalStore.getJournalSubtitle(journal)"
-                  :accent-color="{ bg: 'rgba(142,142,147,0.15)', text: '#8E8E93' }"
-                  :student-count="journal.students?.length ?? 0"
-                  :is-merged="true"
-                  :merged-count="journal.mergedJournalIds?.length ?? 0"
-                  :selection-mode="isSelectionMode"
-                  :selected="selectedJournalIds.has(journal.id)"
-                  :disabled="isSelectionMode && selectionAction === 'merge'"
-                  @click="goToJournalDetails(journal.id)"
-                  @toggle-select="toggleJournalSelection(journal.id)"
-                  @download="handleCardDownload(journal.id)"
-                  @delete="handleCardDelete(journal.id)"
-                  @edit="onEditJournal(journal.id)"
-                  @split="onSplitJournal(journal.id)"
-                  @substitute="handleCardSubstitute(journal.id)"
+                  v-for="sub in activeSubstitutions"
+                  :key="sub._id"
+                  :title="sub.journalSnapshot?.disciplineName ?? 'Неизвестная дисциплина'"
+                  :subtitle="[sub.fromTeacher ? `${sub.fromTeacher.surname} ${sub.fromTeacher.firstName}` : '', sub.journalSnapshot?.groupName].filter(Boolean).join(' · ')"
+                  :accent-color="{ bg: 'bg-amber-100', text: 'text-amber-700' }"
+                  :student-count="0"
+                  :selection-mode="false"
+                  @click="sub.journal?.calendarEventId && goToJournalDetails(sub.journal.calendarEventId)"
                 />
               </div>
             </div>
@@ -283,22 +272,8 @@
               </button>
             </div>
 
-            <!-- Substitutions grid (shown when substitutions tab is active) -->
-            <div v-if="activeFilter === 'substitutions'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              <JournalGridCard
-                v-for="sub in activeSubstitutions"
-                :key="sub._id"
-                :title="sub.journalSnapshot?.disciplineName ?? 'Неизвестная дисциплина'"
-                :subtitle="[sub.fromTeacher ? `${sub.fromTeacher.surname} ${sub.fromTeacher.firstName}` : '', sub.journalSnapshot?.groupName].filter(Boolean).join(' · ')"
-                :accent-color="{ bg: 'bg-amber-100', text: 'text-amber-700' }"
-                :student-count="0"
-                :selection-mode="false"
-                @click="sub.journal?.calendarEventId && goToJournalDetails(sub.journal.calendarEventId)"
-              />
-            </div>
-
             <!-- Journal grid -->
-            <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               <!-- Loading skeleton (shown until disciplines and active year are ready) -->
               <template v-if="!isDataReady">
                 <div
@@ -330,9 +305,7 @@
                 :selection-mode="isSelectionMode"
                 :selected="selectedJournalIds.has(journal.id)"
                 :is-merged="!!journal.mergedJournalIds?.length"
-                :merged-count="journal.mergedJournalIds?.length ?? 0"
-                :disabled="(isSelectionMode && selectionAction === 'split' && !journal.mergedJournalIds?.length) || (isSelectionMode && selectionAction === 'merge' && !isJournalEligibleForMerge(journal))"
-                :tooltip="isSelectionMode && selectionAction === 'merge' && !isJournalEligibleForMerge(journal) ? journal_merge_ineligible_tooltip() : undefined"
+                :disabled="isSelectionMode && selectionAction === 'split' && !journal.mergedJournalIds?.length"
                 @click="goToJournalDetails(journal.id)"
                 @toggle-select="toggleJournalSelection(journal.id)"
                 @download="handleCardDownload(journal.id)"
@@ -425,10 +398,16 @@ import { useMarksStore } from "@/stores/marksStore";
 import type { Id } from "@convex/_generated/dataModel";
 import { useJournalOpenClose } from "@/composables/useJournalOpenClose";
 import { saveAs } from "file-saver";
+import {
+  exportJournalViaConvex,
+  type JournalExportParams,
+} from "@/services/convex-excel-export";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import {
-  formatExportHeaderLabel,
+  extractLessonDates,
+  formatAttendanceValue,
+  extractFinalGrade,
   prepareJournalExportMetadata,
 } from "@/utils/journalExport";
 import { useSidebar } from "@/composables/useSidebar";
@@ -454,8 +433,6 @@ import {
   journal_split,
   journal_merge_confirm_title,
   journal_merge_confirm_message,
-  journal_merge_ineligible_tooltip,
-  journal_merge_min_select,
   journal_split_confirm_title,
   journal_split_confirm_message,
   journal_filter_all,
@@ -465,7 +442,6 @@ import {
   journal_filter_course_4,
   journal_filter_mixed,
   journal_filter_individual,
-  journal_filter_substitutions,
   journal_action_close,
   journal_action_open,
   journal_action_merge,
@@ -496,7 +472,7 @@ const handleTabClick = (item: any) => {
   f7.views.main.router.navigate(item.route);
 };
 
-
+type JournalStudentRow = JournalExportParams["students"][number];
 
 // Unique page ID that changes on each mount to track navigation
 const pageId = ref(Date.now());
@@ -930,34 +906,29 @@ function getJournalAccentColor(id: string): { bg: string; text: string } {
 const pageReady = ref(false)
 const isDataReady = computed(() => pageReady.value && class9Store.class9Items.length > 0)
 
-type JournalFilter = 'all' | 'course-1' | 'course-2' | 'course-3' | 'course-4' | 'mixed' | 'individual' | 'substitutions'
+type JournalFilter = 'all' | 'course-1' | 'course-2' | 'course-3' | 'course-4' | 'mixed' | 'individual'
 const activeFilter = ref<JournalFilter>('all')
 
 const isYearPillOpen = ref(false)
 const isSemesterPillOpen = ref(false)
 const isTeacherPillOpen = ref(false)
 
-const JOURNAL_FILTERS = computed(() => {
-  const filters: Array<{ id: JournalFilter; label: string }> = [
-    { id: 'all',        label: journal_filter_all() },
-    { id: 'course-1',   label: journal_filter_course_1() },
-    { id: 'course-2',   label: journal_filter_course_2() },
-    { id: 'course-3',   label: journal_filter_course_3() },
-    { id: 'course-4',   label: journal_filter_course_4() },
-    { id: 'mixed',      label: journal_filter_mixed() },
-    { id: 'individual', label: journal_filter_individual() },
-  ]
-  if (activeSubstitutions.value.length > 0) {
-    filters.push({ id: 'substitutions', label: journal_filter_substitutions() })
-  }
-  return filters
-})
+const JOURNAL_FILTERS: ReadonlyArray<{ id: JournalFilter; label: string }> = [
+  { id: 'all',        label: journal_filter_all() },
+  { id: 'course-1',   label: journal_filter_course_1() },
+  { id: 'course-2',   label: journal_filter_course_2() },
+  { id: 'course-3',   label: journal_filter_course_3() },
+  { id: 'course-4',   label: journal_filter_course_4() },
+  { id: 'mixed',      label: journal_filter_mixed() },
+  { id: 'individual', label: journal_filter_individual() },
+]
 
 const filteredByTab = computed(() => {
   if (activeFilter.value === 'all') {
     const flat: Journal[] = []
     Object.values(filteredJournalsByCourse.value).forEach((list) => flat.push(...list))
     flat.push(...filteredMixedGroupJournals.value)
+    flat.push(...filteredIndividualJournals.value)
     return flat
   }
   if (activeFilter.value === 'mixed')      return filteredMixedGroupJournals.value
@@ -1026,10 +997,6 @@ const selectionDoneButtonClass = computed(() => {
   return `bg-primary hover:bg-primary-dark ${base}`;
 });
 
-function isJournalEligibleForMerge(journal: Journal): boolean {
-  return (journal.students?.length ?? 0) < 5 && !journal.isIndividualJournal && !(journal.mergedJournalIds?.length);
-}
-
 function startSelectionMode(action: SelectionAction) {
   selectionAction.value = action;
   isSelectionMode.value = true;
@@ -1042,14 +1009,6 @@ function exitSelectionMode() {
 }
 
 function selectAll() {
-  if (selectionAction.value === "merge") {
-    const eligibleIds = filteredByTab.value
-      .filter((journal) => isJournalEligibleForMerge(journal))
-      .map((journal) => journal.id);
-    selectedJournalIds.value = new Set(eligibleIds);
-    return;
-  }
-
   const allJournalIds: string[] = [];
 
   Object.values(journalsByCourse.value).forEach((courseJournals) => {
@@ -1078,11 +1037,6 @@ function toggleJournalSelection(id: string) {
     }
   }
 
-  if (selectionAction.value === "merge") {
-    const journal = journalStore.getJournalById(id);
-    if (!journal || !isJournalEligibleForMerge(journal)) return;
-  }
-
   if (selectedJournalIds.value.has(id)) {
     selectedJournalIds.value.delete(id);
   } else {
@@ -1094,22 +1048,7 @@ async function downloadSelectedJournals() {
   try {
     f7.preloader.show();
 
-    // Build ID→Journal lookup map for O(1) access
-    const journalMap = new Map<string, Journal>();
-    for (const courseNumber in journalsByCourse.value) {
-      for (const j of journalsByCourse.value[courseNumber]) {
-        journalMap.set(j.id, j);
-      }
-    }
-    for (const j of mixedGroupJournals.value) journalMap.set(j.id, j);
-    for (const j of individualJournals.value) journalMap.set(j.id, j);
-
-    const journalIds = Array.from(selectedJournalIds.value);
-
-    // Build lightweight payload — NO marks data, just metadata + student info + column structure
-    // The server-side action will fetch marks directly from DB
-    const journalsPayload: Array<{
-      calendarEventId: string;
+    const journalsData: Array<{
       filename: string;
       groupName: string;
       courseLabel: string;
@@ -1118,22 +1057,70 @@ async function downloadSelectedJournals() {
       disciplineTitle: string;
       teacherFullName?: string;
       finalControlForm?: string | null;
-      students: Array<{ id: string; fullName: string }>;
-      markColumns?: Array<{
-        type: string;
-        label: string;
-        isoDate?: string | null;
-        controlType?: string | null;
-      }>;
+      students: JournalStudentRow[];
+      lessonDates?: string[];
     }> = [];
 
-    for (const journalId of journalIds) {
-      const journal = journalMap.get(journalId);
+    // Process journals sequentially to load marks for each
+    for (const journalId of selectedJournalIds.value) {
+      let journal: Journal | null = null;
+
+      for (const courseNumber in journalsByCourse.value) {
+        const found = journalsByCourse.value[courseNumber].find(
+          (j) => j.id === journalId
+        );
+        if (found) {
+          journal = found;
+          break;
+        }
+      }
+
+      if (!journal) {
+        journal = mixedGroupJournals.value.find((j) => j.id === journalId) ?? null;
+      }
+
+      if (!journal) {
+        journal = individualJournals.value.find((j) => j.id === journalId) ?? null;
+      }
+
       if (!journal) continue;
 
       const event = calendarStore.getEventById(journal.id);
 
-      // Prepare export metadata using shared utility (no marks needed)
+      // Load marks for this journal from backend
+      await marksStore.loadJournalMarks(journalId);
+      const journalMarks = marksStore.getJournalMarks(journalId);
+
+      // Get marks structure from first student to determine columns (export ALL columns like JournalDetails)
+      const firstStudentMarks = journalMarks?.studentMarks?.[0]?.marks || [];
+
+      // Use utility to extract lesson dates from marks template
+      const lessonDates = extractLessonDates(firstStudentMarks);
+
+      // Build student rows with attendance data for ALL columns
+      const studentRows: JournalStudentRow[] = (journal.students || []).map(
+        (studentId) => {
+          const studentMarks = marksStore.getStudentMarks(journalId, studentId) || [];
+
+          // Build attendance array from ALL marks using utility function
+          const attendance: (string | number | null)[] = firstStudentMarks.map((_, markIndex) => {
+            const mark = studentMarks[markIndex];
+            return formatAttendanceValue(mark);
+          });
+
+          // Extract final grade using utility function
+          const finalGrade = extractFinalGrade(studentMarks);
+
+          return {
+            id: studentId,
+            fullName: studentStore.getStudentFullName(studentId),
+            attendance,
+            finalGrade,
+          };
+        }
+      );
+
+      // Prepare export metadata using shared utility
       const academicYearId = selectedItemsStore.selectedAcademicYearId;
       const academicYear = academicYearId
         ? academicYearStore.getAcademicYearById(academicYearId)
@@ -1159,33 +1146,23 @@ async function downloadSelectedJournals() {
         getJournalTitle: (j) => journalStore.getJournalTitle(j),
       });
 
-      // Student list: just IDs and names (marks fetched server-side)
-      const studentList = (journal.students || []).map((studentId) => ({
-        id: studentId,
-        fullName: studentStore.getStudentFullName(studentId),
-      }));
-
-      // Get mark column structure from existing template (if available)
-      const existingMarks = marksStore.getJournalMarks(journalId);
-      const firstStudentMarks = existingMarks?.studentMarks?.[0]?.marks || [];
-      const markColumns = firstStudentMarks.map((mark) => ({
-        type: mark.type,
-        label: formatExportHeaderLabel(mark),
-        isoDate: mark.isoDate ?? null,
-        controlType: mark.controlType ?? null,
-      }));
-
-      journalsPayload.push({
-        calendarEventId: journalId,
-        ...metadata,
-        students: studentList,
-        markColumns: markColumns.length > 0 ? markColumns : undefined,
+      journalsData.push({
+        filename: metadata.filename,
+        groupName: metadata.groupName,
+        courseLabel: metadata.courseLabel,
+        specialtyLabel: metadata.specialtyLabel,
+        academicYearLabel: metadata.academicYearLabel,
+        disciplineTitle: metadata.disciplineTitle,
+        teacherFullName: metadata.teacherFullName,
+        finalControlForm: metadata.finalControlForm,
+        students: studentRows,
+        lessonDates,
       });
     }
 
-    // Single network call: backend fetches marks + generates Excel + zips
-    const storageId = await convex.action(api.excel.actions.exportJournalsZipServerSide, {
-      journals: journalsPayload,
+    // Call backend to generate zip file
+    const storageId = await convex.action(api.excel.actions.exportJournalsZip, {
+      journals: journalsData,
     });
 
     // Get download URL from storage
@@ -1197,14 +1174,11 @@ async function downloadSelectedJournals() {
       throw new Error("Failed to get download URL");
     }
 
-    // Download the file
+    // Download the file using file-saver
     const date = new Date().toISOString().split("T")[0];
     const response = await fetch(downloadUrl);
     const blob = await response.blob();
     saveAs(blob, `journals-${date}.zip`);
-
-    // Cleanup: delete temporary storage entry (fire-and-forget)
-    convex.mutation(api.files.mutations.deleteFile, { storageId: storageId as Id<"_storage"> }).catch(console.error);
 
     f7.preloader.hide();
     exitSelectionMode();
@@ -1279,17 +1253,13 @@ function onSelectionDone() {
   }
 
   if (selectionAction.value === "merge") {
-    if (ids.length < 2) {
-      f7.dialog.alert(journal_merge_min_select(), journal_merge_confirm_title());
-      return;
-    }
-    f7.dialog.prompt(
-      journal_merge_confirm_message({ count: ids.length }),
+    f7.dialog.confirm(
+      `${journal_merge_confirm_message({ count: ids.length })}`,
       journal_merge_confirm_title(),
-      async (groupName: string) => {
+      async () => {
         try {
           f7.preloader.show();
-          await journalStore.mergeJournals(ids, groupName.trim() || undefined);
+          await journalStore.mergeJournals(ids);
           f7.toast
             .create({
               text: `${journal_merge_confirm_title()}: ${ids.length}`,
@@ -1306,9 +1276,7 @@ function onSelectionDone() {
           f7.preloader.hide();
           exitSelectionMode();
         }
-      },
-      () => {},
-      `Объединение (${ids.length})`
+      }
     );
     return;
   }
