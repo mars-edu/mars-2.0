@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
 
 /**
- * Create a class9 item
+ * Create a RUP entry
  */
 export const create = mutation({
   args: {
@@ -30,7 +30,7 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const timestamps = createTimestamps();
 
-    return await ctx.db.insert("class9Items", {
+    return await ctx.db.insert("rupEntries", {
       ...args,
       ...timestamps,
     });
@@ -38,11 +38,11 @@ export const create = mutation({
 });
 
 /**
- * Update a class9 item
+ * Update a RUP entry
  */
 export const update = mutation({
   args: {
-    id: v.id("class9Items"),
+    id: v.id("rupEntries"),
     specialtyIds: v.optional(v.array(v.string())),
     academicYearId: v.optional(v.string()),
     baseClass: v.optional(v.array(v.number())),
@@ -81,33 +81,33 @@ export const update = mutation({
 });
 
 /**
- * Delete a class9 item (also deletes its distribution entries)
+ * Delete a RUP entry (also deletes its distribution entries)
  */
 export const remove = mutation({
-  args: { id: v.id("class9Items") },
+  args: { id: v.id("rupEntries") },
   handler: async (ctx, args) => {
-    // Delete all distribution entries for this class9 item
+    // Delete all distribution entries for this RUP entry
     const distributions = await ctx.db
       .query("distributionEntries")
-      .withIndex("by_class9Item", (q) => q.eq("class9ItemId", args.id))
+      .withIndex("by_rupEntry", (q) => q.eq("rupEntryId", args.id))
       .collect();
 
     for (const dist of distributions) {
       await ctx.db.delete(dist._id);
     }
 
-    // Delete the class9 item
+    // Delete the RUP entry
     await ctx.db.delete(args.id);
     return { success: true };
   },
 });
 
 /**
- * Add a distribution entry to a class9 item
+ * Add a distribution entry to a RUP entry
  */
 export const addDistribution = mutation({
   args: {
-    class9ItemId: v.id("class9Items"),
+    rupEntryId: v.id("rupEntries"),
     academicYearId: v.string(),
     semesterId: v.string(),
     hours: v.string(),
@@ -172,11 +172,11 @@ export const removeDistribution = mutation({
 });
 
 /**
- * Update a class9 item with its distribution entries (full sync)
+ * Update a RUP entry with its distribution entries (full sync)
  */
 export const updateWithDistributions = mutation({
   args: {
-    id: v.id("class9Items"),
+    id: v.id("rupEntries"),
     specialtyIds: v.optional(v.array(v.string())),
     academicYearId: v.optional(v.string()),
     baseClass: v.optional(v.array(v.number())),
@@ -213,7 +213,7 @@ export const updateWithDistributions = mutation({
   handler: async (ctx, args) => {
     const { id, distributionEntries, ...updates } = args;
 
-    // Update the main class9 item
+    // Update the main RUP entry
     const cleanUpdates = Object.fromEntries(
       Object.entries(updates).filter(([_, v]) => v !== undefined)
     );
@@ -226,7 +226,7 @@ export const updateWithDistributions = mutation({
     // Get existing distribution entries
     const existingDistributions = await ctx.db
       .query("distributionEntries")
-      .withIndex("by_class9Item", (q) => q.eq("class9ItemId", id))
+      .withIndex("by_rupEntry", (q) => q.eq("rupEntryId", id))
       .collect();
 
     const existingIds = new Set(existingDistributions.map((d) => d._id));
@@ -245,7 +245,7 @@ export const updateWithDistributions = mutation({
       if (!existingIds.has(entry.id as any)) {
         // New entry - add it
         await ctx.db.insert("distributionEntries", {
-          class9ItemId: id,
+          rupEntryId: id,
           academicYearId: entry.academicYearId,
           semesterId: entry.semesterId as any,
           hours: entry.hours,
@@ -277,7 +277,7 @@ export const updateWithDistributions = mutation({
 });
 
 /**
- * Create multiple language variants of a class9 item in one transaction
+ * Create multiple language variants of a RUP entry in one transaction
  */
 export const createMultiLanguage = mutation({
   args: {
@@ -325,7 +325,7 @@ export const createMultiLanguage = mutation({
     const createdIds: string[] = [];
 
     for (const variant of variants) {
-      const id = await ctx.db.insert("class9Items", {
+      const id = await ctx.db.insert("rupEntries", {
         ...sharedFields,
         moduleIndex: variant.moduleIndex,
         moduleName: variant.moduleName,
@@ -338,7 +338,7 @@ export const createMultiLanguage = mutation({
       if (distributionEntries) {
         for (const dist of distributionEntries) {
           await ctx.db.insert("distributionEntries", {
-            class9ItemId: id,
+            rupEntryId: id,
             academicYearId: dist.academicYearId,
             semesterId: dist.semesterId as any,
             hours: dist.hours,

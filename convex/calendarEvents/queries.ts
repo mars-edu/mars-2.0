@@ -138,7 +138,7 @@ export const listWithRoleAccessInternal = internalQuery({
 export type CalendarEventDoc = {
   _id: string;
   _creationTime: number;
-  class9Id: string;
+  rupEntryId: string;
   ktpId?: string;
   teacherId?: string;
   startDate: string;
@@ -282,14 +282,14 @@ export const getByTeacher = query({
 });
 
 /**
- * Get calendar events by class9 ID
+ * Get calendar events by RUP entry ID
  */
-export const getByClass9Id = query({
-  args: { class9Id: v.string() },
+export const getByRupEntryId = query({
+  args: { rupEntryId: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("calendarEvents")
-      .withIndex("by_class9Id", (q) => q.eq("class9Id", args.class9Id))
+      .withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", args.rupEntryId))
       .collect();
   },
 });

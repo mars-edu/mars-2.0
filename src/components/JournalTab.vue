@@ -430,7 +430,7 @@ import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
 import { useJournalStore } from "@/stores/journalStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
-import { useClass9Store, type Class9Data } from "@/stores/class9Store";
+import { useRupEntryStore, type RupEntry } from "@/stores/rupEntryStore";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermediateControlStore";
@@ -537,14 +537,14 @@ const ktpStore = useKtpStore();
 const journalStore = useJournalStore();
 const academicYearStore = useAcademicYearStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
-const class9Store = useClass9Store();
+const rupEntryStore = useRupEntryStore();
 const intermediateControlStore = useIntermediateControlStore();
 const finalControlStore = useFinalControlStore();
 const scheduledIntermediateControlStore =
   useScheduledIntermediateControlStore();
 const scheduledFinalControlStore = useScheduledFinalControlStore();
 const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
-const { getClass9ById, class9Items } = storeToRefs(class9Store);
+const { getRupEntryById, rupEntries } = storeToRefs(rupEntryStore);
 const { getAcademicYearSemesterById } = storeToRefs(academicYearSemesterStore);
 const { getIntermediateControlById } = storeToRefs(intermediateControlStore);
 const { getFinalControlById } = storeToRefs(finalControlStore);
@@ -651,13 +651,13 @@ const notifyViewOnly = () => {
     .open();
 };
 
-const currentClass9 = computed(() => {
-  const class9Id =
-    currentJournal.value?.disciplineId || currentEvent.value?.class9Id;
-  if (!class9Id) return null;
-  const lookup = getClass9ById.value;
+const currentRupEntry = computed(() => {
+  const rupEntryId =
+    currentJournal.value?.disciplineId || currentEvent.value?.rupEntryId;
+  if (!rupEntryId) return null;
+  const lookup = getRupEntryById.value;
   if (typeof lookup !== "function") return null;
-  return (lookup(class9Id) as Class9Data | null | undefined) ?? null;
+  return (lookup(rupEntryId) as RupEntry | null | undefined) ?? null;
 });
 
 // Detect academic year mismatch for intermediate controls
@@ -669,7 +669,7 @@ const academicYearMismatchInfo = computed(() => {
     semesterId && typeof getAcademicYearSemesterById.value === "function"
       ? getAcademicYearSemesterById.value(semesterId)
       : null;
-  const academicYearId = currentSemester?.academicYearId || currentClass9.value?.academicYearId;
+  const academicYearId = currentSemester?.academicYearId || currentRupEntry.value?.academicYearId;
 
   if (!academicYearId) return null;
 
@@ -863,20 +863,20 @@ const generateDates = () => {
 
   const marksWithSessions: Mark[] = [...dateMarks];
   const event = currentEvent.value;
-  const class9Item = currentClass9.value as
-    | (ReturnType<NonNullable<typeof getClass9ById.value>> & {
+  const rupEntryItem = currentRupEntry.value as
+    | (ReturnType<NonNullable<typeof getRupEntryById.value>> & {
         distributionEntries?: any[];
       })
     | null;
   const semesterFilter = event?.semester ? String(event.semester) : null;
 
   // Get academic year from semester (for intermediate/final controls)
-  // instead of from discipline/РУП (class9Item)
+  // instead of from discipline/РУП (rupEntryItem)
   const currentSemester =
     semesterFilter && typeof getAcademicYearSemesterById.value === "function"
       ? getAcademicYearSemesterById.value(semesterFilter)
       : null;
-  const academicYearId = currentSemester?.academicYearId || class9Item?.academicYearId;
+  const academicYearId = currentSemester?.academicYearId || rupEntryItem?.academicYearId;
   const dateMeta = dateMarks.map((mark, datePos) => {
     const isoDate = mark.isoDate;
     const parsed = isoDate ? dayjs(isoDate, DATE_STORAGE_FORMAT, true) : null;
@@ -903,7 +903,7 @@ const generateDates = () => {
     debug?: Record<string, unknown>;
   }[] = [];
 
-  const relevantDistributionEntries = (class9Item?.distributionEntries || [])
+  const relevantDistributionEntries = (rupEntryItem?.distributionEntries || [])
     .filter((entry: any) => {
       if (!semesterFilter) return true;
       if (entry?.semesterId == null) return false;
@@ -919,10 +919,10 @@ const generateDates = () => {
 
   // Debug: Log distribution entries filtering in detail
   console.log("[JournalTab] РУП Distribution Entries Analysis:", {
-    disciplineId: class9Item?.id,
-    disciplineName: class9Item?.moduleName,
-    totalDistributionEntries: class9Item?.distributionEntries?.length || 0,
-    allDistributionEntries: class9Item?.distributionEntries?.map((e: any) => ({
+    disciplineId: rupEntryItem?.id,
+    disciplineName: rupEntryItem?.moduleName,
+    totalDistributionEntries: rupEntryItem?.distributionEntries?.length || 0,
+    allDistributionEntries: rupEntryItem?.distributionEntries?.map((e: any) => ({
       id: e.id,
       academicYearId: e.academicYearId,
       semesterId: e.semesterId,
@@ -936,7 +936,7 @@ const generateDates = () => {
     matching: {
       info: "Entries match only by UUID: entry.semesterId === semesterUUID",
     },
-    afterSemesterFilter: (class9Item?.distributionEntries || []).filter(
+    afterSemesterFilter: (rupEntryItem?.distributionEntries || []).filter(
       (entry: any) => {
         if (!semesterFilter) return true;
         if (entry?.semesterId == null) return false;
@@ -955,20 +955,20 @@ const generateDates = () => {
 
   debugGroup("Distribution Entries Analysis", () => {
     debugLog(
-      "class9Item",
-      class9Item
-        ? { id: class9Item.id, moduleName: class9Item.moduleName }
+      "rupEntryItem",
+      rupEntryItem
+        ? { id: rupEntryItem.id, moduleName: rupEntryItem.moduleName }
         : null
     );
     debugLog("academicYearId", academicYearId);
     debugLog("semesterFilter", semesterFilter);
     debugLog(
-      "All distribution entries in class9Item",
-      class9Item?.distributionEntries?.length || 0
+      "All distribution entries in rupEntryItem",
+      rupEntryItem?.distributionEntries?.length || 0
     );
     debugLog(
-      "class9Item.distributionEntries (full):",
-      class9Item?.distributionEntries
+      "rupEntryItem.distributionEntries (full):",
+      rupEntryItem?.distributionEntries
     );
     debugLog(
       "Relevant distribution entries after filtering",
@@ -1050,9 +1050,9 @@ const generateDates = () => {
     academicYearId,
     academicYearSource: currentSemester
       ? `semester (${currentSemester.id})`
-      : "class9/РУП fallback",
-    class9ItemExists: !!class9Item,
-    class9AcademicYearId: class9Item?.academicYearId,
+      : "rupEntry/РУП fallback",
+    rupEntryItemExists: !!rupEntryItem,
+    rupEntryAcademicYearId: rupEntryItem?.academicYearId,
     semesterId: semesterFilter,
     semesterAcademicYearId: currentSemester?.academicYearId,
     scheduledIntermediateCount: scheduledIntermediateForYear.length,
@@ -1097,7 +1097,7 @@ const generateDates = () => {
         academicYearId,
         "\n  Scheduled controls exist for academic year IDs:",
         uniqueAcademicYears,
-        "\n  FIX: Update the journal's class9 discipline to use the correct academic year ID,",
+        "\n  FIX: Update the journal's rupEntry discipline to use the correct academic year ID,",
         "\n       OR add scheduled controls for academic year ID",
         academicYearId
       );
@@ -1730,7 +1730,6 @@ const marksMatrix = computed(() => {
   return matrix;
 });
 
-// Pending updates map for optimistic UI (no longer needed with direct tRPC)
 const userEditInProgress = ref(false);
 
 const isRetakeModalOpen = ref(false);
@@ -1929,7 +1928,6 @@ const navigate = async (direction: "up" | "down" | "left" | "right") => {
   } = editingCell.value;
   setMark(startStudent, startCol, startMark, editedValue.value);
 
-  // No need to flush - updates are immediate with tRPC
   editingCell.value = null;
 
   nextTick(() => {
@@ -2017,7 +2015,7 @@ const effectiveAcademicYearIdForKtp = computed(() => {
     semesterId && typeof getAcademicYearSemesterById.value === "function"
       ? getAcademicYearSemesterById.value(semesterId)
       : null;
-  return semester?.academicYearId || currentClass9.value?.academicYearId || null;
+  return semester?.academicYearId || currentRupEntry.value?.academicYearId || null;
 });
 
 const localJournalSettings = ref({
@@ -2077,8 +2075,8 @@ const saveJournalSettings = () => {
  * @returns KtpDetail if exists and has theme, null otherwise
  */
 const getKtpForHeader = (headerIndex: number): KtpDetail | null => {
-  const class9Id = currentJournal.value?.disciplineId;
-  if (!class9Id) return null;
+  const rupEntryId = currentJournal.value?.disciplineId;
+  if (!rupEntryId) return null;
 
   const academicYearId = effectiveAcademicYearIdForKtp.value;
   const semesterId = effectiveSemesterIdForKtp.value;
@@ -3070,7 +3068,7 @@ watch(
 );
 
 watch(
-  () => currentClass9.value?.distributionEntries,
+  () => currentRupEntry.value?.distributionEntries,
   () => {
     scheduleRebuildMarks();
   },
@@ -3078,8 +3076,6 @@ watch(
 );
 const updateStudent = async (updatedStudent: any) => {
   if (!updatedStudent || !props.journalId) return;
-
-  // No need to flush - updates are immediate with tRPC
 
   // Update marks in store
   if (updatedStudent.marks) {
@@ -3094,8 +3090,6 @@ const updateStudent = async (updatedStudent: any) => {
 
 const updateStudents = async (updatedStudents: any[]) => {
   if (updatedStudents && props.journalId) {
-    // No need to flush - updates are immediate with tRPC
-
     // Update all students' marks in store
     const studentMarksToUpdate = updatedStudents.map((student) => ({
       studentId: student.studentId,

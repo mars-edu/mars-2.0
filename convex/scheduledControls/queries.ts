@@ -42,27 +42,27 @@ export const getIntermediateById = query({
 });
 
 /**
- * Get scheduled final controls by class9 ID
+ * Get scheduled final controls by RUP entry ID
  */
-export const getFinalByClass9Id = query({
-  args: { class9Id: v.string() },
+export const getFinalByRupEntryId = query({
+  args: { rupEntryId: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("scheduledFinalControls")
-      .withIndex("by_class9Id", (q) => q.eq("class9Id", args.class9Id))
+      .withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", args.rupEntryId))
       .collect();
   },
 });
 
 /**
- * Get scheduled intermediate controls by class9 ID
+ * Get scheduled intermediate controls by RUP entry ID
  */
-export const getIntermediateByClass9Id = query({
-  args: { class9Id: v.string() },
+export const getIntermediateByRupEntryId = query({
+  args: { rupEntryId: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("scheduledIntermediateControls")
-      .withIndex("by_class9Id", (q) => q.eq("class9Id", args.class9Id))
+      .withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", args.rupEntryId))
       .collect();
   },
 });

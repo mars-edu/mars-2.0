@@ -511,7 +511,7 @@ import Select from "@/components/ui/Select.vue";
 import { useWorkloadStore } from "@/stores/workloadStore";
 import { useTeacherStore, type Teacher } from "@/stores/teacherStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
-import { useClass9Store, type Class9Data } from "@/stores/class9Store";
+import { useRupEntryStore, type RupEntry } from "@/stores/rupEntryStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useSidebar } from "@/composables/useSidebar";
@@ -538,13 +538,13 @@ const { contentMargin } = useSidebar();
 const workloadStore = useWorkloadStore();
 const teacherStore = useTeacherStore();
 const academicYearStore = useAcademicYearStore();
-const class9Store = useClass9Store();
+const rupEntryStore = useRupEntryStore();
 const specialtyStore = useSpecialtyStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 
 const { teachers } = storeToRefs(teacherStore);
 const { academicYearOptions, getActiveAcademicYear } = storeToRefs(academicYearStore);
-const { class9Items } = storeToRefs(class9Store);
+const { rupEntries } = storeToRefs(rupEntryStore);
 const { specialties } = storeToRefs(specialtyStore);
 const { allWorkloads, selectedTeacherId, selectedAcademicYearId, currentWorkloadItems, editingWorkloadId } = storeToRefs(workloadStore);
 
@@ -582,7 +582,7 @@ const filteredTeachers = computed(() => {
 });
 
 const filteredRup = computed(() => {
-  return class9Items.value.filter(item => {
+  return rupEntries.value.filter(item => {
     if (selectedAcademicYearId.value && item.academicYearId !== selectedAcademicYearId.value) return false;
     const search = subjectSearchQuery.value.toLowerCase();
     return item.moduleName.toLowerCase().includes(search) || item.moduleIndex.toLowerCase().includes(search);
@@ -612,7 +612,7 @@ function selectTeacher(teacher: Teacher) {
   }
 }
 
-function addSubjectFromRup(rup: Class9Data) {
+function addSubjectFromRup(rup: RupEntry) {
   const newItem: WorkloadItem = {
     id: crypto.randomUUID(),
     subjectId: rup.id,

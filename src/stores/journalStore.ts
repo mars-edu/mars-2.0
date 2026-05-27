@@ -5,7 +5,7 @@ import { useCourseStore } from "./courseStore";
 import { useStudentStore } from "./studentStore";
 import { useSpecialtyStore } from "./specialtyStore";
 import { useLanguageStore } from "./languageStore";
-import { useClass9Store } from "./class9Store";
+import { useRupEntryStore } from "./rupEntryStore";
 import { useAcademicYearSemesterStore } from "./academicYearSemesterStore";
 import { useEducationScheduleStore } from "./educationScheduleStore";
 import { getWeekDays, DATE_STORAGE_FORMAT } from "@/constants/calendar";
@@ -36,7 +36,7 @@ export const useJournalStore = defineStore(
     const studentStore = useStudentStore();
     const specialtyStore = useSpecialtyStore();
     const languageStore = useLanguageStore();
-    const class9Store = useClass9Store();
+    const rupEntryStore = useRupEntryStore();
     const academicYearSemesterStore = useAcademicYearSemesterStore();
     const educationScheduleStore = useEducationScheduleStore();
 
@@ -122,7 +122,7 @@ export const useJournalStore = defineStore(
       return {
         id: `${actualEvent.id}`,
         courseNumber: courseNumbers[0] || 1, // Primary course for sorting/filtering
-        disciplineId: actualEvent.class9Id,
+        disciplineId: actualEvent.rupEntryId,
         group: generateJournalTitle(courseNumbers, students),
         students,
         isMixedGroup: isMixed,
@@ -334,7 +334,7 @@ export const useJournalStore = defineStore(
         const activeSemester = academicYearSemesterStore.getActiveAcademicYearSemester;
 
         const eventData = {
-          class9Id: journalData.disciplineId,
+          rupEntryId: journalData.disciplineId,
           startDate: dayjs().format(DATE_STORAGE_FORMAT),
           endDate: dayjs().add(30, "day").format(DATE_STORAGE_FORMAT),
           participants: journalData.students,
@@ -375,7 +375,7 @@ export const useJournalStore = defineStore(
         if (!event) throw new Error("Source event not found");
 
         const newEvent = await calendarStore.addEvent({
-          class9Id: firstJournal.disciplineId,
+          rupEntryId: firstJournal.disciplineId,
           participants: allStudents,
           semester: event.semester,
           isIndividualJournal: true,
@@ -448,7 +448,7 @@ export const useJournalStore = defineStore(
         const eventData: any = {};
 
         if (journalData.disciplineId)
-          eventData.class9Id = journalData.disciplineId;
+          eventData.rupEntryId = journalData.disciplineId;
         if (journalData.students) eventData.participants = journalData.students;
 
         await calendarStore.updateEvent(id, eventData);
@@ -478,7 +478,7 @@ export const useJournalStore = defineStore(
 
     function getDisciplineTitle(journal: Journal) {
       if (journal.customTitle) return journal.customTitle;
-      const item = class9Store.getClass9ById(journal.disciplineId as any);
+      const item = rupEntryStore.getRupEntryById(journal.disciplineId as any);
       if (!item)
         return generateJournalTitle(
           [journal.courseNumber],

@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
-import { useClass9Store } from "./class9Store";
+import { useRupEntryStore } from "./rupEntryStore";
 import { useKtpStore } from "./ktpStore";
 import { useAcademicYearSemesterStore } from "./academicYearSemesterStore";
 import { useUserStore } from "./userStore";
@@ -27,7 +27,7 @@ export interface JournalSettings {
 
 export interface CalendarEvent {
   id: string;
-  class9Id: string;
+  rupEntryId: string;
   ktpId?: string; // Direct reference to the event's dedicated KTP
   teacherId?: string;
   startDate: string;
@@ -86,7 +86,7 @@ export const useCalendarStore = defineStore(
 
         events.value = data.map((event: any) => ({
           id: event._id,
-          class9Id: event.class9Id,
+          rupEntryId: event.rupEntryId,
           ktpId: event.ktpId,
           teacherId: event.teacherId,
           startDate: event.startDate,
@@ -139,14 +139,14 @@ export const useCalendarStore = defineStore(
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
-    const class9Store = useClass9Store();
+    const rupEntryStore = useRupEntryStore();
 
     const getEventTitle = (event: CalendarEvent) => {
-      const class9Item = class9Store.getClass9ById(event.class9Id);
+      const rupEntry = rupEntryStore.getRupEntryById(event.rupEntryId);
 
-      if (!class9Item || !class9Item.learningOutcome) return "";
+      if (!rupEntry || !rupEntry.learningOutcome) return "";
 
-      return `${class9Item.moduleIndex} ${class9Item.learningOutcome}`;
+      return `${rupEntry.moduleIndex} ${rupEntry.learningOutcome}`;
     };
 
     async function addEvent(
@@ -165,8 +165,8 @@ export const useCalendarStore = defineStore(
         let ktpId = eventData.ktpId;
         if (semester && semester.academicYearId && !ktpId) {
           const eventId = preGeneratedId || crypto.randomUUID();
-          const ktp = await ktpStore.ensureKtpForClass9(
-            eventData.class9Id,
+          const ktp = await ktpStore.ensureKtpForRupEntry(
+            eventData.rupEntryId,
             semester.academicYearId,
             eventData.semester,
             eventId // Link KTP to this specific event
@@ -176,7 +176,7 @@ export const useCalendarStore = defineStore(
 
         // Use Convex - the reactive subscription will handle updating the local state
         const id = await convex.mutation(api.calendarEvents.mutations.create, {
-          class9Id: eventData.class9Id,
+          rupEntryId: eventData.rupEntryId,
           ktpId,
           teacherId: eventData.teacherId,
           startDate: eventData.startDate,
@@ -200,7 +200,7 @@ export const useCalendarStore = defineStore(
         if (created) {
           const mapped: CalendarEvent = {
             id: created._id,
-            class9Id: created.class9Id,
+            rupEntryId: created.rupEntryId,
             ktpId: created.ktpId,
             teacherId: created.teacherId,
             startDate: created.startDate,
@@ -255,9 +255,9 @@ export const useCalendarStore = defineStore(
           journalSettings: eventData.journalSettings,
         });
 
-        // If class9Id changed, create new event-specific KTP
+        // If RUP entry ID changed, create new event-specific KTP
         let ktpId = eventData.ktpId;
-        if (eventData.class9Id && eventData.class9Id !== originalEvent.class9Id) {
+        if (eventData.rupEntryId && eventData.rupEntryId !== originalEvent.rupEntryId) {
           const ktpStore = useKtpStore();
           const academicYearSemesterStore = useAcademicYearSemesterStore();
           const semesterId = eventData.semester || originalEvent.semester;
@@ -266,8 +266,8 @@ export const useCalendarStore = defineStore(
           );
 
           if (semester && semester.academicYearId) {
-            const ktp = await ktpStore.ensureKtpForClass9(
-              eventData.class9Id,
+            const ktp = await ktpStore.ensureKtpForRupEntry(
+              eventData.rupEntryId,
               semester.academicYearId,
               semesterId,
               id // Link KTP to this specific event
@@ -279,7 +279,7 @@ export const useCalendarStore = defineStore(
         // Use Convex - the reactive subscription will handle updating the local state
         const updated = await convex.mutation(api.calendarEvents.mutations.update, {
           id: id as any,
-          class9Id: eventData.class9Id,
+          rupEntryId: eventData.rupEntryId,
           ktpId,
           teacherId: eventData.teacherId,
           startDate: eventData.startDate,
@@ -308,7 +308,7 @@ export const useCalendarStore = defineStore(
         if (updated) {
           const mapped: CalendarEvent = {
             id: updated._id,
-            class9Id: updated.class9Id,
+            rupEntryId: updated.rupEntryId,
             ktpId: updated.ktpId,
             teacherId: updated.teacherId,
             startDate: updated.startDate,
@@ -367,7 +367,7 @@ export const useCalendarStore = defineStore(
         const data = await convex.query(api.calendarEvents.queries.list, {});
         events.value = data.map((event) => ({
           id: event._id,
-          class9Id: event.class9Id,
+          rupEntryId: event.rupEntryId,
           ktpId: event.ktpId,
           teacherId: event.teacherId,
           startDate: event.startDate,

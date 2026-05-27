@@ -3,30 +3,6 @@
  */
 
 /**
- * Get common authentication headers for API requests
- *
- * Note: Currently unused as the app uses Convex.
- * Kept for potential future HTTP/fetch requests.
- */
-export const getAuthHeaders = (): Record<string, string> => {
-  const token = localStorage.getItem("auth_token");
-  const language =
-    localStorage.getItem("app_language") ||
-    navigator.language?.split("-")[0] ||
-    "en";
-
-  const headers: Record<string, string> = {
-    "X-Language": language,
-  };
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  return headers;
-};
-
-/**
  * Helper to check if user is authenticated
  */
 export const isAuthenticated = (): boolean => {

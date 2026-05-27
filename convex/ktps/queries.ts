@@ -56,14 +56,14 @@ export const getById = query({
 });
 
 /**
- * Get ktps by class9 ID
+ * Get ktps by RUP entry ID
  */
-export const getByClass9Id = query({
-  args: { class9Id: v.string() },
+export const getByRupEntryId = query({
+  args: { rupEntryId: v.string() },
   handler: async (ctx, args) => {
     const ktps = await ctx.db
       .query("ktps")
-      .withIndex("by_class9Id", (q) => q.eq("class9Id", args.class9Id))
+      .withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", args.rupEntryId))
       .collect();
 
     // For each ktp, fetch its details

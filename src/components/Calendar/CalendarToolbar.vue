@@ -25,7 +25,7 @@ import AddEventButton from "./AddEventButton.vue";
 import MonthNavigator from "./MonthNavigator.vue";
 import Select from "@/components/ui/Select.vue";
 import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
-import { useClass9Store } from "@/stores/class9Store";
+import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { storeToRefs } from "pinia";
 
 const props = defineProps<{
@@ -44,10 +44,10 @@ const emit = defineEmits<{
 }>();
 
 const calendarStore = useCalendarStore();
-const class9Store = useClass9Store();
-const { class9Options } = storeToRefs(class9Store);
+const rupEntryStore = useRupEntryStore();
+const { rupEntryOptions } = storeToRefs(rupEntryStore);
 
-const disciplineOptions = computed(() => class9Options.value);
+const disciplineOptions = computed(() => rupEntryOptions.value);
 
 const handleSearchSelect = (value: string) => {
   const selected = disciplineOptions.value.find(o => o.value === value);

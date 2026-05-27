@@ -11,7 +11,7 @@ const MARS_BASE_PROMPT = `Ты — ИИ-ассистент системы MARS 2
 
 ### Модули:
 - **Учебная структура**: academicYears, semesterDefinitions, specialties, courses, bases
-- **Учебные планы**: disciplines, class9Items (модули с часами: лекции/лаб/практика/СРСП/СРС/учпрактика), rupEntries (РУП — страница /rup)
+- **Учебные планы**: disciplines, rupEntries (РУП — модули с часами: лекции/лаб/практика/СРСП/СРС/учпрактика, страница /rup)
 - **КТП**: ktps + ktpDetails — календарно-тематическое планирование (страница /ktp)
 - **Расписание**: calendarEvents, educationSchedules (страница /planning)
 - **Журналы**: journals, marks, markHistory, journalStudents (страницы /journals, /journal-details)

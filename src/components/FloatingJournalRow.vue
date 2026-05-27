@@ -380,7 +380,6 @@ const navigate = async (direction: "up" | "down" | "left" | "right") => {
 
   setMark(startRow, startCol, editedValue.value);
 
-  // No need to flush - updates are immediate with tRPC
   editingCell.value = null;
 
   nextTick(() => {
@@ -433,8 +432,6 @@ const handleClose = async () => {
   if (editingCell.value) {
     confirmEdit();
   }
-
-  // No need to flush - updates are immediate with tRPC
 
   if (localStudent.value) {
     console.log("[FloatingJournalRow] Emitting updated student:", {

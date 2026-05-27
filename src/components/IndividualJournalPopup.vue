@@ -374,7 +374,7 @@ const handleSave = async () => {
       if (!firstEvent) return;
 
       const newEvent = await calendarStore.addEvent({
-        class9Id: firstJournal.disciplineId,
+        rupEntryId: firstJournal.disciplineId,
         participants: allStudents,
         semester: firstEvent.semester || academicYearSemesterStore.getActiveAcademicYearSemester?.id || '',
         isIndividualJournal: true,

@@ -393,7 +393,7 @@ import { useTeacherStore } from "@/stores/teacherStore";
 import { useSubstitutionStore } from "@/stores/substitutionStore";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
-import { useClass9Store, type DistributionEntry } from "@/stores/class9Store";
+import { useRupEntryStore, type DistributionEntry } from "@/stores/rupEntryStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
 import { useMarksStore } from "@/stores/marksStore";
@@ -489,7 +489,7 @@ const { confirmCloseJournals, confirmOpenJournals } = useJournalOpenClose();
 const teacherStore = useTeacherStore();
 const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
-const class9Store = useClass9Store();
+const rupEntryStore = useRupEntryStore();
 const finalControlStore = useFinalControlStore();
 const scheduledFinalControlStore = useScheduledFinalControlStore();
 const marksStore = useMarksStore();
@@ -615,7 +615,7 @@ onMounted(async () => {
   allEvents.forEach((event: any, idx: number) => {
     const actualEvent = event._custom?.value || event;
     const semesterValue = actualEvent.semester;
-    const disciplineId = actualEvent.class9Id;
+    const disciplineId = actualEvent.rupEntryId;
     const hasWeeklySchedules = actualEvent.weeklySchedules && actualEvent.weeklySchedules.length > 0;
 
     console.log(`\n${idx + 1}. Event ID: ${actualEvent.id}`);
@@ -907,7 +907,7 @@ function getJournalAccentColor(id: string): { bg: string; text: string } {
 }
 
 const pageReady = ref(false)
-const isDataReady = computed(() => pageReady.value && class9Store.class9Items.length > 0)
+const isDataReady = computed(() => pageReady.value && rupEntryStore.rupEntries.length > 0)
 
 type JournalFilter = 'all' | 'course-1' | 'course-2' | 'course-3' | 'course-4' | 'mixed' | 'individual'
 const activeFilter = ref<JournalFilter>('all')
@@ -1152,7 +1152,7 @@ async function downloadSelectedJournals() {
         students: students.value,
         academicYear,
         selectedAcademicYearId: academicYearId,
-        class9Items: class9Store.class9Items,
+        rupEntries: rupEntryStore.rupEntries,
         academicYearSemesters: semesters,
         scheduledFinalControls: scheduledFinalControlStore.scheduledFinalControls,
         finalControls: finalControlStore.finalControls,

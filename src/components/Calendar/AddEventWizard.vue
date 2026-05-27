@@ -33,10 +33,10 @@
             Дисциплина
           </div>
           <Select
-            id="event-class9-generic"
+            id="event-rupEntry-generic"
             placeholder="Выберите дисциплину"
-            v-model="class9IdModel"
-            :options="class9Options"
+            v-model="rupEntryIdModel"
+            :options="rupEntryOptions"
           />
         </div>
 
@@ -637,7 +637,7 @@ import {
   DATE_UI_FORMAT,
 } from "@/constants/calendar";
 import { useNestedPopup } from "@/composables/useNestedPopup";
-import { useClass9Store } from "@/stores/class9Store";
+import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
@@ -657,7 +657,7 @@ dayjs.extend(customParseFormat);
 dayjs.locale("ru");
 
 const props = withDefaults(defineProps<{
-  class9Id: string;
+  rupEntryId: string;
   useCustomPeriod: boolean;
   startDate?: string;
   endDate?: string;
@@ -698,7 +698,7 @@ const {
 } = toRefs(props);
 
 const emit = defineEmits<{
-  (e: "update:class9Id", v: string): void;
+  (e: "update:rupEntryId", v: string): void;
   (e: "update:useCustomPeriod", v: boolean): void;
   (e: "update:startDate", v: string): void;
   (e: "update:endDate", v: string): void;
@@ -715,7 +715,7 @@ const requestClose = () => {
   props.requestClose();
 };
 
-const class9Store = useClass9Store();
+const rupEntryStore = useRupEntryStore();
 const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
@@ -724,7 +724,7 @@ const educationScheduleStore = useEducationScheduleStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const ktpStore = useKtpStore();
 
-const { class9Options } = storeToRefs(class9Store);
+const { rupEntryOptions } = storeToRefs(rupEntryStore);
 const { students } = storeToRefs(studentStore);
 const { specialtyOptions: storeSpecialtyOptions } = storeToRefs(specialtyStore);
 const { languageOptions: storeLanguageOptions } = storeToRefs(languageStore);
@@ -739,9 +739,9 @@ const { closeParent, openParent } = useNestedPopup({
   parentPopupId,
 });
 
-const class9IdModel = computed({
-  get: () => props.class9Id,
-  set: (v: string) => emit("update:class9Id", v),
+const rupEntryIdModel = computed({
+  get: () => props.rupEntryId,
+  set: (v: string) => emit("update:rupEntryId", v),
 });
 
 const useCustomPeriodModel = computed({
@@ -964,15 +964,15 @@ const studentCourseOptions = computed(() =>
 const studentGenderOptions = computed(() => getGenderOptions("Все", ""));
 
 const allowedSpecialtyIds = computed(() => {
-  if (!class9IdModel.value) return [];
-  const selectedClass9 = class9Store.getClass9ById(class9IdModel.value);
-  return selectedClass9?.specialtyIds || [];
+  if (!rupEntryIdModel.value) return [];
+  const selectedRupEntry = rupEntryStore.getRupEntryById(rupEntryIdModel.value);
+  return selectedRupEntry?.specialtyIds || [];
 });
 
 const allowedAcademicYearId = computed<string | undefined>(() => {
-  if (!class9IdModel.value) return undefined;
-  const selectedClass9 = class9Store.getClass9ById(class9IdModel.value);
-  return selectedClass9?.academicYearId;
+  if (!rupEntryIdModel.value) return undefined;
+  const selectedRupEntry = rupEntryStore.getRupEntryById(rupEntryIdModel.value);
+  return selectedRupEntry?.academicYearId;
 });
 
 const filteredStudents = computed(() => {
@@ -1066,13 +1066,13 @@ const currentKtp = computed(() => {
     return ktpStore.findKtpById(currentKtpIdRef.value) || null;
   }
 
-  if (!class9IdModel.value || !semesterForKtp.value || !props.tempEventId) {
+  if (!rupEntryIdModel.value || !semesterForKtp.value || !props.tempEventId) {
     return null;
   }
 
   return (
-    ktpStore.findKtpByClass9Id(
-      class9IdModel.value,
+    ktpStore.findKtpByRupEntryId(
+      rupEntryIdModel.value,
       semesterForKtp.value.academicYearId,
       semesterForKtp.value.id,
       props.tempEventId
@@ -1256,14 +1256,14 @@ const totalIndividualHours = computed(() => {
 });
 
 const currentKtpTitle = computed(() => {
-  if (!class9IdModel.value) return undefined;
-  const class9Item = class9Store.getClass9ById(class9IdModel.value);
-  if (!class9Item) return undefined;
-  return `${class9Item.moduleIndex} - ${class9Item.moduleName}`;
+  if (!rupEntryIdModel.value) return undefined;
+  const rupEntryItem = rupEntryStore.getRupEntryById(rupEntryIdModel.value);
+  if (!rupEntryItem) return undefined;
+  return `${rupEntryItem.moduleIndex} - ${rupEntryItem.moduleName}`;
 });
 
 async function openKtpPopup() {
-  if (!class9IdModel.value) {
+  if (!rupEntryIdModel.value) {
     f7.dialog.alert(
       "Пожалуйста, сначала выберите результат обучения/дисциплину",
       "Внимание"
@@ -1282,8 +1282,8 @@ async function openKtpPopup() {
   }
 
   try {
-    const ktp = await ktpStore.ensureKtpForClass9(
-      class9IdModel.value,
+    const ktp = await ktpStore.ensureKtpForRupEntry(
+      rupEntryIdModel.value,
       semesterForKtp.value.academicYearId,
       semesterForKtp.value.id,
       props.tempEventId
@@ -1318,7 +1318,7 @@ function handleKtpNext() {
 }
 
 watch(
-  () => props.class9Id,
+  () => props.rupEntryId,
   () => {
     currentKtpIdRef.value = null;
   }
@@ -1355,7 +1355,7 @@ const {
   previousStep,
   reset,
 } = useAddEventWizard({
-  class9Id: class9IdModel,
+  rupEntryId: rupEntryIdModel,
   color: computed(() => colorModel.value.hex),
   participants: participantsModel,
   selectedWeekDays: selectedWeekDaysModel,

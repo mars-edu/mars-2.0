@@ -3,10 +3,10 @@
     <Select
       label="Результат обучения/дисциплина"
       placeholder="Выберите результат обучения/дисциплину"
-      v-model="class9IdModel"
-      :options="class9Options"
-      name="event-class9-generic"
-      id="event-class9-generic"
+      v-model="rupEntryIdModel"
+      :options="rupEntryOptions"
+      name="event-rupEntry-generic"
+      id="event-rupEntry-generic"
       searchable
     />
 
@@ -162,7 +162,7 @@
     <StudentSelectionPopup
       ref="studentPopup"
       :selected-students="participantsModel"
-      :class9-id="class9IdModel"
+      :rup-entry-id="rupEntryIdModel"
       @save="handleStudentsSave"
       @close="handleStudentPopupClose"
     />
@@ -199,7 +199,7 @@ import {
 } from "@/constants/calendar";
 
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
-import { useClass9Store } from "@/stores/class9Store";
+import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useKtpStore } from "@/stores/ktpStore";
 import { useNestedPopover } from "@/composables/useNestedPopover";
@@ -210,7 +210,7 @@ dayjs.extend(customParseFormat);
 dayjs.locale("ru");
 
 const props = defineProps<{
-  class9Id: string;
+  rupEntryId: string;
   useCustomPeriod: boolean;
   startDate?: string;
   endDate?: string;
@@ -231,7 +231,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "update:class9Id", v: string): void;
+  (e: "update:rupEntryId", v: string): void;
   (e: "update:useCustomPeriod", v: boolean): void;
   (e: "update:startDate", v: string): void;
   (e: "update:endDate", v: string): void;
@@ -240,8 +240,8 @@ const emit = defineEmits<{
   (e: "update:selectedWeekDays", v: WeekDaySchedule[]): void;
 }>();
 
-const class9Store = useClass9Store();
-const { class9Options } = storeToRefs(class9Store);
+const rupEntryStore = useRupEntryStore();
+const { rupEntryOptions } = storeToRefs(rupEntryStore);
 
 const educationScheduleStore = useEducationScheduleStore();
 const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
@@ -284,9 +284,9 @@ const checkboxId = computed(() => {
   return props.mode === "edit" ? "use-custom-period-edit" : "use-custom-period";
 });
 
-const class9IdModel = computed({
-  get: () => props.class9Id,
-  set: (v: string) => emit("update:class9Id", v),
+const rupEntryIdModel = computed({
+  get: () => props.rupEntryId,
+  set: (v: string) => emit("update:rupEntryId", v),
 });
 
 const useCustomPeriodModel = computed({
@@ -448,9 +448,9 @@ const semesterForKtp = computed(() => {
 
 const currentKtpId = computed(() => {
   if (currentKtpIdRef.value) return currentKtpIdRef.value;
-  if (!class9IdModel.value || !semesterForKtp.value) return null;
-  const existing = ktpStore.findKtpByClass9Id(
-    class9IdModel.value,
+  if (!rupEntryIdModel.value || !semesterForKtp.value) return null;
+  const existing = ktpStore.findKtpByRupEntryId(
+    rupEntryIdModel.value,
     semesterForKtp.value.academicYearId,
     semesterForKtp.value.id,
     props.eventId
@@ -459,10 +459,10 @@ const currentKtpId = computed(() => {
 });
 
 const currentKtpTitle = computed(() => {
-  if (!currentKtpId.value || !class9IdModel.value) return undefined;
-  const class9Item = class9Store.getClass9ById(class9IdModel.value);
-  if (!class9Item) return undefined;
-  return `${class9Item.moduleIndex} - ${class9Item.moduleName}`;
+  if (!currentKtpId.value || !rupEntryIdModel.value) return undefined;
+  const rupEntryItem = rupEntryStore.getRupEntryById(rupEntryIdModel.value);
+  if (!rupEntryItem) return undefined;
+  return `${rupEntryItem.moduleIndex} - ${rupEntryItem.moduleName}`;
 });
 
 function handleKtpPopupClosed(isOpen: boolean) {
@@ -471,7 +471,7 @@ function handleKtpPopupClosed(isOpen: boolean) {
 }
 
 async function openKtpPopup() {
-  if (!class9IdModel.value) {
+  if (!rupEntryIdModel.value) {
     f7.dialog.alert(
       "Пожалуйста, сначала выберите результат обучения/дисциплину",
       "Внимание"
@@ -485,8 +485,8 @@ async function openKtpPopup() {
   }
 
   try {
-    const ktp = await ktpStore.ensureKtpForClass9(
-      class9IdModel.value,
+    const ktp = await ktpStore.ensureKtpForRupEntry(
+      rupEntryIdModel.value,
       semesterForKtp.value.academicYearId,
       semesterForKtp.value.id,
       props.eventId

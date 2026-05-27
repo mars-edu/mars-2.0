@@ -4,7 +4,7 @@ import { useSpecialtyStore } from "./specialtyStore";
 import { useCourseStore } from "./courseStore";
 import { useAcademicYearStore } from "./academicYearStore";
 import { storeToRefs } from "pinia";
-import { useClass9Store } from "./class9Store";
+import { useRupEntryStore } from "./rupEntryStore";
 import { useSemesterStore } from "./semesterStore";
 import { useAcademicYearSemesterStore } from "./academicYearSemesterStore";
 
@@ -20,10 +20,10 @@ export const useRupStore = defineStore(
     const selectedSpecialtyId = ref<string | null>(null);
     const selectedTeacherId = ref<string | null>(null);
 
-    const selectedClass9ItemId = ref<string | null>(null);
+    const selectedRupEntryId = ref<string | null>(null);
 
-    function setSelectedClass9ItemId(id: string | null) {
-      selectedClass9ItemId.value = id;
+    function setSelectedRupEntryId(id: string | null) {
+      selectedRupEntryId.value = id;
     }
 
     const targetSpecialtyId = ref<string | null>(null);
@@ -74,20 +74,20 @@ export const useRupStore = defineStore(
       );
     });
 
-    const selectedClass9Item = computed(() => {
-      const class9Store = useClass9Store();
-      if (!selectedClass9ItemId.value) return null;
-      return class9Store.class9Items.find(
-        (item) => item.id === selectedClass9ItemId.value
+    const selectedRupEntry= computed(() => {
+      const rupEntryStore = useRupEntryStore();
+      if (!selectedRupEntryId.value) return null;
+      return rupEntryStore.rupEntries.find(
+        (item) => item.id === selectedRupEntryId.value
       );
     });
 
-    const selectedClass9TotalHours = computed(() => {
-      return selectedClass9Item.value?.totalHours ?? "0";
+    const selectedRupEntryTotalHours = computed(() => {
+      return selectedRupEntry.value?.totalHours ?? "0";
     });
 
-    const selectedClass9SemesterHours = computed(() => {
-      if (!selectedClass9Item.value) return "0";
+    const selectedRupEntrySemesterHours = computed(() => {
+      if (!selectedRupEntry.value) return "0";
 
       if (
         !getActiveAcademicYearSemester.value ||
@@ -95,7 +95,7 @@ export const useRupStore = defineStore(
       )
         return "0";
 
-      const sum = selectedClass9Item.value.distributionEntries
+      const sum = selectedRupEntry.value.distributionEntries
         .filter(
           (entry) =>
             entry.semesterId === getActiveAcademicYearSemester.value?.id
@@ -107,23 +107,23 @@ export const useRupStore = defineStore(
     });
 
     const itemsForImport = ref<any[]>([]);
-    const selectedClass9ItemIds = ref<string[]>([]);
+    const selectedRupEntryIds = ref<string[]>([]);
 
-    const isClass9ItemSelected = computed(() => {
-      return (itemId: string) => selectedClass9ItemIds.value.includes(itemId);
+    const isRupEntrySelected = computed(() => {
+      return (itemId: string) => selectedRupEntryIds.value.includes(itemId);
     });
 
-    function toggleClass9ItemSelection(itemId: string) {
-      const index = selectedClass9ItemIds.value.indexOf(itemId);
+    function toggleRupEntrySelection(itemId: string) {
+      const index = selectedRupEntryIds.value.indexOf(itemId);
       if (index > -1) {
-        selectedClass9ItemIds.value.splice(index, 1);
+        selectedRupEntryIds.value.splice(index, 1);
       } else {
-        selectedClass9ItemIds.value.push(itemId);
+        selectedRupEntryIds.value.push(itemId);
       }
     }
 
-    function clearClass9Selection() {
-      selectedClass9ItemIds.value = [];
+    function clearRupEntrySelection() {
+      selectedRupEntryIds.value = [];
     }
 
     function setItemsForImport(items: any[]) {
@@ -140,8 +140,8 @@ export const useRupStore = defineStore(
       selectedTeacherId.value = null;
       targetSpecialtyId.value = null;
       targetAcademicYearId.value = null;
-      selectedClass9ItemId.value = null;
-      selectedClass9ItemIds.value = [];
+      selectedRupEntryId.value = null;
+      selectedRupEntryIds.value = [];
       itemsForImport.value = [];
     }
 
@@ -159,19 +159,19 @@ export const useRupStore = defineStore(
       clearSelection,
       selectedAcademicYear,
       selectedSpecialty,
-      selectedClass9ItemIds,
-      isClass9ItemSelected,
-      toggleClass9ItemSelection,
-      clearClass9Selection,
+      selectedRupEntryIds,
+      isRupEntrySelected,
+      toggleRupEntrySelection,
+      clearRupEntrySelection,
       itemsForImport,
       setItemsForImport,
       clearItemsForImport,
 
-      selectedClass9ItemId,
-      setSelectedClass9ItemId,
-      selectedClass9Item,
-      selectedClass9TotalHours,
-      selectedClass9SemesterHours,
+      selectedRupEntryId,
+      setSelectedRupEntryId,
+      selectedRupEntry,
+      selectedRupEntryTotalHours,
+      selectedRupEntrySemesterHours,
       reset,
     };
   },

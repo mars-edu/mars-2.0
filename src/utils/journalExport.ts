@@ -12,7 +12,7 @@ import type { Journal } from "@/stores/journalStore";
 import type { CalendarEvent } from "@/stores/calendarStore";
 import type { Student } from "@/types/student";
 import type { AcademicYear } from "@/types/academic-year";
-import type { Class9Item, DistributionEntry } from "@/stores/class9Store";
+import type { RupEntryItem, DistributionEntry } from "@/stores/rupEntryStore";
 
 export interface ExportColumn {
   type: string;
@@ -128,7 +128,7 @@ export interface PrepareMetadataParams {
   students: Student[];
   academicYear: AcademicYear | null;
   selectedAcademicYearId: string | null;
-  class9Items: Class9Item[];
+  rupEntries: RupEntryItem[];
   academicYearSemesters: any[];
   scheduledFinalControls: any[];
   finalControls: any[];
@@ -146,7 +146,7 @@ export function prepareJournalExportMetadata(
     event,
     students,
     academicYear,
-    class9Items,
+    rupEntries,
     academicYearSemesters,
     scheduledFinalControls,
     finalControls,
@@ -175,13 +175,13 @@ export function prepareJournalExportMetadata(
 
   // Get final control form from distribution entry
   let finalControlForm: string | null = null;
-  const class9Item = class9Items.find((c) => c.id === journal.disciplineId);
-  if (class9Item && academicYear) {
+  const rupEntryItem = rupEntries.find((c) => c.id === journal.disciplineId);
+  if (rupEntryItem && academicYear) {
     const semester = academicYearSemesters.find(
       (s: any) => s.semesterNumber === (event?.semester ?? 1)
     );
     if (semester) {
-      const distributionEntry = class9Item.distributionEntries.find(
+      const distributionEntry = rupEntryItem.distributionEntries.find(
         (entry: DistributionEntry) =>
           entry.academicYearId === academicYear.id && entry.semesterId === semester.id
       );

@@ -158,7 +158,7 @@
     </div>
 
     <!-- Modals -->
-    <Class9Popup
+    <RupEntryPopup
       v-if="isPopupOpen"
       :specialty-ids="[]"
       :academic-year-id="activeAcademicYearId"
@@ -175,8 +175,8 @@ import { ref, computed, nextTick } from "vue";
 import { f7Page, f7 } from "framework7-vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
-import Class9Popup from "@/components/Class9Popup.vue";
-import { useClass9Store, type Class9Data } from "@/stores/class9Store";
+import RupEntryPopup from "@/components/RupEntryPopup.vue";
+import { useRupEntryStore, type RupEntry } from "@/stores/rupEntryStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSidebar } from "@/composables/useSidebar";
 import {
@@ -210,7 +210,7 @@ const pageId = ref(Date.now());
 const { contentMargin } = useSidebar();
 
 const activeNavItem = ref("discipline-catalog");
-const class9Store = useClass9Store();
+const rupEntryStore = useRupEntryStore();
 const academicYearStore = useAcademicYearStore();
 
 const searchQuery = ref("");
@@ -225,7 +225,7 @@ const activeAcademicYearId = computed(() => {
 });
 
 const filteredItems = computed(() => {
-  let items = class9Store.getAllClass9Items;
+  let items = rupEntryStore.getAllRupEntryItems;
 
   // Filter by Active Academic Year
   if (activeAcademicYearId.value) {
@@ -253,21 +253,21 @@ const filteredItems = computed(() => {
 
 // Popup logic
 const isPopupOpen = ref(false);
-const editingItem = ref<Class9Data | null>(null);
+const editingItem = ref<RupEntry | null>(null);
 
 const openAddPopup = () => {
   editingItem.value = null;
   isPopupOpen.value = true;
   nextTick(() => {
-    f7.popover.open("#class9-popover");
+    f7.popover.open("#rup-entry-popover");
   });
 };
 
-const openEditPopup = (item: Class9Data) => {
+const openEditPopup = (item: RupEntry) => {
   editingItem.value = { ...item };
   isPopupOpen.value = true;
   nextTick(() => {
-    f7.popover.open("#class9-popover");
+    f7.popover.open("#rup-entry-popover");
   });
 };
 
@@ -280,14 +280,14 @@ const handlePopupSubmit = () => {
   closePopup();
 };
 
-const handleDelete = (item: Class9Data) => {
+const handleDelete = (item: RupEntry) => {
   f7.dialog.confirm(
     `<p>Вы уверены, что хотите удалить запись "${item.moduleName}"?</p>
      <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
     "Удаление записи",
     async () => {
       try {
-        await class9Store.deleteClass9(item.id);
+        await rupEntryStore.deleteRupEntry(item.id);
         f7.toast.create({
           text: "Запись удалена",
           closeTimeout: 2000,

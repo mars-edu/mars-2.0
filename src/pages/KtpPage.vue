@@ -100,7 +100,7 @@
     <KtpDetailPopup
       v-model:opened="isPopupOpened"
       :ktp-id="
-        getKtpIdForClass9(
+        getKtpIdForRupEntry(
           selectedKtpParentId,
           selectedAcademicYearId ?? undefined,
           selectedSemesterId
@@ -138,7 +138,7 @@ import Select from "@/components/ui/Select.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
 import AddKtpItemForm from "@/components/AddKtpItemForm.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
-import { useClass9Store } from "@/stores/class9Store";
+import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
@@ -156,19 +156,19 @@ const academicYearStore = useAcademicYearStore();
 const { academicYears } = storeToRefs(academicYearStore);
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 
-const class9Store = useClass9Store();
+const rupEntryStore = useRupEntryStore();
 const journalStore = useJournalStore();
 const calendarStore = useCalendarStore();
 
-// Get KTP data and enrich with class9 information
+// Get KTP data and enrich with rupEntry information
 const ktpItems = computed(() => {
   const ktps = ktpStore.ktps;
-  const class9Items = class9Store.getAllClass9Items;
+  const rupEntries = rupEntryStore.getAllRupEntryItems;
 
   return ktps
     .map((ktp) => {
-      const class9Item = class9Items.find((c) => c.id === ktp.class9Id);
-      if (!class9Item) return null;
+      const rupEntryItem = rupEntries.find((c) => c.id === ktp.rupEntryId);
+      if (!rupEntryItem) return null;
 
       // Calculate total hours from KTP details
       const details = ktpStore.getDetailsByKtpId(ktp.id);
@@ -177,7 +177,7 @@ const ktpItems = computed(() => {
       }, 0);
 
       return {
-        ...class9Item,
+        ...rupEntryItem,
         ktpId: ktp.id,
         ktpTotalHours: totalHours,
         academicYearId: ktp.academicYearId,
@@ -189,7 +189,7 @@ const ktpItems = computed(() => {
     .filter(Boolean);
 });
 
-const isLoading = computed(() => ktpStore.loading || class9Store.isLoading);
+const isLoading = computed(() => ktpStore.loading || rupEntryStore.isLoading);
 const courseStore = useCourseStore();
 const semesterStore = useSemesterStore();
 const { sortedSemesters } = storeToRefs(semesterStore);
@@ -250,12 +250,12 @@ const getCourseNumber = (courseId: string) => {
 };
 
 const getKtpSubtitle = (item: any) => {
-  // Find the calendar event that corresponds to this KTP's class9Id and semester
+  // Find the calendar event that corresponds to this KTP's rupEntryId and semester
   const events = calendarStore.filteredEvents;
   const matchingEvent = events.find((event: any) => {
     const actualEvent = event._custom?.value || event;
     return (
-      actualEvent.class9Id === item.id &&
+      actualEvent.rupEntryId === item.id &&
       actualEvent.semester === item.semesterId
     );
   });
@@ -276,7 +276,7 @@ const getKtpSubtitle = (item: any) => {
   return journalStore.getJournalSubtitle(journal);
 };
 
-const { getKtpIdForClass9, getModuleTitleForKtp } = storeToRefs(ktpStore);
+const { getKtpIdForRupEntry, getModuleTitleForKtp } = storeToRefs(ktpStore);
 
 const selectItem = (item: any) => {
   selectedItemId.value = item.id;

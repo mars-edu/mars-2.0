@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import type { CalendarEvent, WeeklySchedule } from "@/stores/calendarStore";
-import type { Class9Data } from "@/stores/class9Store";
+import type { RupEntry } from "@/stores/rupEntryStore";
 import type { Student } from "@/types/student";
 import type { AcademicYearSemester } from "@/stores/academicYearSemesterStore";
 import { getEventDays, parseEventDate } from "@/utils/eventDate";
@@ -135,7 +135,7 @@ function generateGroupName(students: Student[]): string {
  */
 function calculateActualHours(
   event: CalendarEvent,
-  class9: Class9Data,
+  rupEntry: RupEntry,
   groupName: string,
   lessonDates: { date: dayjs.Dayjs; weekId: number; hours: number }[],
   journals: Journal[],
@@ -145,23 +145,23 @@ function calculateActualHours(
   academicYearStart: number,
   daysInMonth: number
 ): { dailyActualHours: (number | null)[]; actualHoursMonth: number; cumulativeHoursYear: number } {
-  console.log(`[calculateActualHours] Looking for journal: event.id=${event.id}, class9.id=${class9.id}`);
+  console.log(`[calculateActualHours] Looking for journal: event.id=${event.id}, rupEntry.id=${rupEntry.id}`);
 
   // Find the journal for this event
   const journal = journals.find(
-    (j) => j.disciplineId === class9.id && j.id === event.id.toString()
+    (j) => j.disciplineId === rupEntry.id && j.id === event.id.toString()
   );
 
   if (journal) {
     console.log(`[calculateActualHours] Journal found: id=${journal.id}, disciplineId=${journal.disciplineId}, group=${journal.group}`);
   } else {
-    console.log(`[calculateActualHours] No journal found. Looking for event.id=${event.id.toString()}, class9.id=${class9.id}`);
+    console.log(`[calculateActualHours] No journal found. Looking for event.id=${event.id.toString()}, rupEntry.id=${rupEntry.id}`);
     console.log(`[calculateActualHours] Available journals:`, journals.map(j => ({
       id: j.id,
       disciplineId: j.disciplineId,
       group: j.group,
       matchesEvent: j.id === event.id.toString(),
-      matchesClass9: j.disciplineId === class9.id
+      matchesRupEntry: j.disciplineId === rupEntry.id
     })));
   }
 
@@ -170,7 +170,7 @@ function calculateActualHours(
 
   if (!journal) {
     // No journal found - fall back to scheduled hours
-    console.warn(`[calculateActualHours] No journal found for event ${event.id}, class9 ${class9.id}, using scheduled hours`);
+    console.warn(`[calculateActualHours] No journal found for event ${event.id}, rupEntry ${rupEntry.id}, using scheduled hours`);
 
     // Fill daily hours with scheduled hours
     lessonDates.forEach((lesson) => {
@@ -300,7 +300,7 @@ function calculateActualHours(
  */
 export function generateDailyWorkload(
   events: CalendarEvent[],
-  class9Items: Class9Data[],
+  rupEntryItems: RupEntry[],
   students: Student[],
   month: number, // 0-11 (JS month)
   year: number,
@@ -324,7 +324,7 @@ export function generateDailyWorkload(
     string,
     {
       event: CalendarEvent;
-      class9: Class9Data;
+      rupEntry: RupEntry;
       groupName: string;
       lessonDates: { date: dayjs.Dayjs; weekId: number; hours: number }[];
     }
@@ -332,9 +332,9 @@ export function generateDailyWorkload(
 
   for (const event of events) {
     // Get subject/module info
-    const class9 = class9Items.find((c) => c.id === event.class9Id);
-    if (!class9) {
-      console.log(`[Calculator] Skipping event ${event.id}: no class9 found for class9Id=${event.class9Id}`);
+    const rupEntry = rupEntryItems.find((c) => c.id === event.rupEntryId);
+    if (!rupEntry) {
+      console.log(`[Calculator] Skipping event ${event.id}: no rupEntry found for rupEntryId=${event.rupEntryId}`);
       continue;
     }
 
@@ -352,19 +352,19 @@ export function generateDailyWorkload(
     );
 
     if (lessonDates.length === 0) {
-      console.log(`[Calculator] Event ${event.id} (${class9.moduleName} - ${groupName}): no lessons in this month`);
+      console.log(`[Calculator] Event ${event.id} (${rupEntry.moduleName} - ${groupName}): no lessons in this month`);
       continue;
     }
 
-    console.log(`[Calculator] Event ${event.id} (${class9.moduleName} - ${groupName}): ${lessonDates.length} lessons found`);
+    console.log(`[Calculator] Event ${event.id} (${rupEntry.moduleName} - ${groupName}): ${lessonDates.length} lessons found`);
 
     // Create unique key for subject/group combination
-    const key = `${class9.id}-${groupName}`;
+    const key = `${rupEntry.id}-${groupName}`;
 
     if (!eventGroups.has(key)) {
       eventGroups.set(key, {
         event,
-        class9,
+        rupEntry,
         groupName,
         lessonDates,
       });
@@ -380,14 +380,14 @@ export function generateDailyWorkload(
 
   let rowNumber = 1;
   for (const [key, group] of eventGroups) {
-    const plannedHours = parseFloat(group.class9.totalHours) || 0;
+    const plannedHours = parseFloat(group.rupEntry.totalHours) || 0;
 
-    console.log(`[Calculator] Processing group: ${group.class9.moduleName} - ${group.groupName}, planned=${plannedHours}, lessons=${group.lessonDates.length}`);
+    console.log(`[Calculator] Processing group: ${group.rupEntry.moduleName} - ${group.groupName}, planned=${plannedHours}, lessons=${group.lessonDates.length}`);
 
     // Calculate actual taught hours from journal marks (includes daily breakdown)
     const { dailyActualHours, actualHoursMonth, cumulativeHoursYear } = calculateActualHours(
       group.event,
-      group.class9,
+      group.rupEntry,
       group.groupName,
       group.lessonDates,
       journals,
@@ -413,8 +413,8 @@ export function generateDailyWorkload(
 
     entries.push({
       rowNumber,
-      moduleIndex: group.class9.moduleIndex,
-      subjectName: group.class9.moduleName,
+      moduleIndex: group.rupEntry.moduleIndex,
+      subjectName: group.rupEntry.moduleName,
       groupName: group.groupName,
       dailyHours,
       monthTotal,
@@ -437,7 +437,7 @@ export function generateDailyWorkload(
  */
 export function generateWorkloadSummary(
   events: CalendarEvent[],
-  class9Items: Class9Data[],
+  rupEntryItems: RupEntry[],
   students: Student[],
   filterStartDate?: Date,
   filterEndDate?: Date
@@ -448,7 +448,7 @@ export function generateWorkloadSummary(
   const eventGroups = new Map<
     string,
     {
-      class9: Class9Data;
+      rupEntry: RupEntry;
       groupName: string;
       totalHours: number;
     }
@@ -456,8 +456,8 @@ export function generateWorkloadSummary(
 
   for (const event of events) {
     // Get subject/module info
-    const class9 = class9Items.find((c) => c.id === event.class9Id);
-    if (!class9) continue;
+    const rupEntry = rupEntryItems.find((c) => c.id === event.rupEntryId);
+    if (!rupEntry) continue;
 
     // Get group name from participants
     const eventStudents = students.filter((s) =>
@@ -481,11 +481,11 @@ export function generateWorkloadSummary(
     if (totalHours === 0) continue;
 
     // Create unique key for subject/group combination
-    const key = `${class9.id}-${groupName}`;
+    const key = `${rupEntry.id}-${groupName}`;
 
     if (!eventGroups.has(key)) {
       eventGroups.set(key, {
-        class9,
+        rupEntry,
         groupName,
         totalHours,
       });
@@ -498,13 +498,13 @@ export function generateWorkloadSummary(
 
   // Convert grouped data to summary entries
   for (const [, group] of eventGroups) {
-    const plannedHours = parseFloat(group.class9.totalHours) || 0;
+    const plannedHours = parseFloat(group.rupEntry.totalHours) || 0;
     const actualHours = group.totalHours;
 
     summaries.push({
       groupName: group.groupName,
-      moduleIndex: group.class9.moduleIndex,
-      subjectName: group.class9.moduleName,
+      moduleIndex: group.rupEntry.moduleIndex,
+      subjectName: group.rupEntry.moduleName,
       plannedHours,
       actualHours,
       // Facultative, consultations, and exams not currently tracked
@@ -637,13 +637,13 @@ export function computeMonthsFromSemesters(
  */
 export function generateMonthlyDistribution(
   events: CalendarEvent[],
-  class9Items: Class9Data[],
+  rupEntryItems: RupEntry[],
   students: Student[],
   semesters: AcademicYearSemester[]
 ): { distributions: MonthlyDistributionEntry[]; months: MonthInfo[] } {
   console.log("[generateMonthlyDistribution] Starting with:", {
     eventsCount: events.length,
-    class9ItemsCount: class9Items.length,
+    rupEntryItemsCount: rupEntryItems.length,
     studentsCount: students.length,
     semestersCount: semesters.length,
   });
@@ -673,8 +673,8 @@ export function generateMonthlyDistribution(
 
   for (const event of events) {
     // Get subject/module info
-    const class9 = class9Items.find((c) => c.id === event.class9Id);
-    if (!class9) continue;
+    const rupEntry = rupEntryItems.find((c) => c.id === event.rupEntryId);
+    if (!rupEntry) continue;
 
     // Get group name from participants
     const eventStudents = students.filter((s) =>
@@ -743,7 +743,7 @@ export function generateMonthlyDistribution(
  */
 export function generateAllMonthsWorkload(
   events: CalendarEvent[],
-  class9Items: Class9Data[],
+  rupEntryItems: RupEntry[],
   students: Student[],
   semesters: AcademicYearSemester[],
   journals: Journal[],
@@ -765,22 +765,22 @@ export function generateAllMonthsWorkload(
   // First, collect all unique subject/group combinations across all events
   // This ensures we show all subjects in all months, even if they have no hours in some months
   const allSubjectGroups = new Map<string, {
-    class9: Class9Data;
+    rupEntry: RupEntry;
     groupName: string;
     rowNumber: number;
   }>();
 
   let rowNumber = 1;
   for (const event of events) {
-    const class9 = class9Items.find((c) => c.id === event.class9Id);
-    if (!class9) continue;
+    const rupEntry = rupEntryItems.find((c) => c.id === event.rupEntryId);
+    if (!rupEntry) continue;
 
     const eventStudents = students.filter((s) => event.participants.includes(s.id));
     const groupName = generateGroupName(eventStudents);
-    const key = `${class9.id}-${groupName}`;
+    const key = `${rupEntry.id}-${groupName}`;
 
     if (!allSubjectGroups.has(key)) {
-      allSubjectGroups.set(key, { class9, groupName, rowNumber });
+      allSubjectGroups.set(key, { rupEntry, groupName, rowNumber });
       rowNumber++;
     }
   }
@@ -795,7 +795,7 @@ export function generateAllMonthsWorkload(
     // Generate workload entries for this month
     const monthEntries = generateDailyWorkload(
       events,
-      class9Items,
+      rupEntryItems,
       students,
       monthInfo.month,
       monthInfo.year,
@@ -817,21 +817,21 @@ export function generateAllMonthsWorkload(
     const entries: WorkloadEntry[] = [];
 
     for (const [key, subjectGroup] of allSubjectGroups) {
-      const entryKey = `${subjectGroup.class9.moduleIndex}-${subjectGroup.class9.moduleName}-${subjectGroup.groupName}`;
+      const entryKey = `${subjectGroup.rupEntry.moduleIndex}-${subjectGroup.rupEntry.moduleName}-${subjectGroup.groupName}`;
 
       if (existingEntriesMap.has(entryKey)) {
         // Subject has hours this month - use existing entry
         entries.push(existingEntriesMap.get(entryKey)!);
       } else {
         // Subject has no hours this month - create empty entry
-        const plannedHours = parseFloat(subjectGroup.class9.totalHours) || 0;
+        const plannedHours = parseFloat(subjectGroup.rupEntry.totalHours) || 0;
 
         // Calculate cumulative hours from previous months
         let cumulativeHours = 0;
         for (const prevMonthData of allMonthsData) {
           const prevEntry = prevMonthData.entries.find(
-            e => e.moduleIndex === subjectGroup.class9.moduleIndex &&
-                 e.subjectName === subjectGroup.class9.moduleName &&
+            e => e.moduleIndex === subjectGroup.rupEntry.moduleIndex &&
+                 e.subjectName === subjectGroup.rupEntry.moduleName &&
                  e.groupName === subjectGroup.groupName
           );
           if (prevEntry) {
@@ -843,8 +843,8 @@ export function generateAllMonthsWorkload(
 
         entries.push({
           rowNumber: subjectGroup.rowNumber,
-          moduleIndex: subjectGroup.class9.moduleIndex,
-          subjectName: subjectGroup.class9.moduleName,
+          moduleIndex: subjectGroup.rupEntry.moduleIndex,
+          subjectName: subjectGroup.rupEntry.moduleName,
           groupName: subjectGroup.groupName,
           dailyHours: Array(daysInMonth).fill(null),
           monthTotal: 0,

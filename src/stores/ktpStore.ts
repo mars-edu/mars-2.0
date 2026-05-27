@@ -7,7 +7,7 @@ import { useConvexQuery } from "convex-vue";
 
 export interface Ktp {
   id: string;
-  class9Id: string;
+  rupEntryId: string;
   academicYearId: string;
   semesterId: string;
   eventId?: string; // Back-reference to the calendar event (if KTP is event-specific)
@@ -50,15 +50,15 @@ export const useKtpStore = defineStore(
     const loading = ref(false);
     const error = ref<string | null>(null);
 
-    function findKtpByClass9Id(
-      class9Id: string,
+    function findKtpByRupEntryId(
+      rupEntryId: string,
       academicYearId?: string,
       semesterId?: string,
       eventId?: string
     ): Ktp | undefined {
       return ktps.value.find(
         (k) =>
-          k.class9Id === class9Id &&
+          k.rupEntryId === rupEntryId &&
           (!academicYearId || k.academicYearId === academicYearId) &&
           (!semesterId || k.semesterId === semesterId) &&
           (!eventId || k.eventId === eventId)
@@ -70,14 +70,14 @@ export const useKtpStore = defineStore(
     }
 
     async function createKtp(
-      class9Id: string,
+      rupEntryId: string,
       academicYearId: string,
       semesterId: string,
       eventId?: string,
       name?: string
     ): Promise<Ktp> {
       const id = await convex.mutation(api.ktps.mutations.create, {
-        class9Id,
+        rupEntryId,
         academicYearId,
         semesterId,
         eventId,
@@ -87,7 +87,7 @@ export const useKtpStore = defineStore(
       if (created) {
         const mapped: Ktp = {
           id: created._id,
-          class9Id: created.class9Id,
+          rupEntryId: created.rupEntryId,
           academicYearId: created.academicYearId,
           semesterId: created.semesterId,
           eventId: created.eventId,
@@ -103,8 +103,8 @@ export const useKtpStore = defineStore(
       throw new Error("Failed to create KTP");
     }
 
-    async function ensureKtpForClass9(
-      class9Id: string,
+    async function ensureKtpForRupEntry(
+      rupEntryId: string,
       academicYearId: string,
       semesterId: string,
       eventId?: string,
@@ -113,8 +113,8 @@ export const useKtpStore = defineStore(
       if (!semesterId) {
         throw new Error("semesterId is required to create a KTP");
       }
-      const existing = findKtpByClass9Id(class9Id, academicYearId, semesterId, eventId);
-      return existing || await createKtp(class9Id, academicYearId, semesterId, eventId, name);
+      const existing = findKtpByRupEntryId(rupEntryId, academicYearId, semesterId, eventId);
+      return existing || await createKtp(rupEntryId, academicYearId, semesterId, eventId, name);
     }
 
     function fetchDetailsForKtp(ktpId: string) {
@@ -212,12 +212,12 @@ export const useKtpStore = defineStore(
       ktpDetails.value = ktpDetails.value.filter((d) => d.ktpId !== ktpId);
     }
 
-    function deleteKtpByClass9Id(
-      class9Id: string,
+    function deleteKtpByRupEntryId(
+      rupEntryId: string,
       academicYearId?: string,
       semesterId?: string
     ) {
-      const ktp = findKtpByClass9Id(class9Id, academicYearId, semesterId);
+      const ktp = findKtpByRupEntryId(rupEntryId, academicYearId, semesterId);
       if (!ktp) return { success: true, deleted: 0 };
 
       // Delete all KTP details for this KTP
@@ -336,25 +336,25 @@ export const useKtpStore = defineStore(
           .sort((a, b) => a.position - b.position);
     });
 
-    // Convenience wrappers by class9Id for existing components
-    async function fetchDetailsForClass9(
-      class9Id: string,
+    // Convenience wrappers by RUP entry ID for existing components
+    async function fetchDetailsForRupEntry(
+      rupEntryId: string,
       academicYearId?: string,
       semesterId?: string
     ) {
       if (!academicYearId || !semesterId) {
         throw new Error("academicYearId and semesterId are required");
       }
-      const ktp = await ensureKtpForClass9(
-        class9Id,
+      const ktp = await ensureKtpForRupEntry(
+        rupEntryId,
         academicYearId,
         semesterId
       );
       return fetchDetailsForKtp(ktp.id);
     }
 
-    async function addKtpDetailForClass9(
-      class9Id: string,
+    async function addKtpDetailForRupEntry(
+      rupEntryId: string,
       data: Partial<Omit<KtpDetail, "id" | "ktpId" | "position">>,
       academicYearId?: string,
       semesterId?: string
@@ -362,16 +362,16 @@ export const useKtpStore = defineStore(
       if (!academicYearId || !semesterId) {
         throw new Error("academicYearId and semesterId are required");
       }
-      const ktp = await ensureKtpForClass9(
-        class9Id,
+      const ktp = await ensureKtpForRupEntry(
+        rupEntryId,
         academicYearId,
         semesterId
       );
       return addKtpDetail(ktp.id, data);
     }
 
-    async function reorderKtpDetailsForClass9(
-      class9Id: string,
+    async function reorderKtpDetailsForRupEntry(
+      rupEntryId: string,
       reorderedIds: string[],
       academicYearId?: string,
       semesterId?: string
@@ -379,16 +379,16 @@ export const useKtpStore = defineStore(
       if (!academicYearId || !semesterId) {
         throw new Error("academicYearId and semesterId are required");
       }
-      const ktp = await ensureKtpForClass9(
-        class9Id,
+      const ktp = await ensureKtpForRupEntry(
+        rupEntryId,
         academicYearId,
         semesterId
       );
       return reorderKtpDetails(ktp.id, reorderedIds);
     }
 
-    async function bulkImportKtpDetailsForClass9(
-      class9Id: string,
+    async function bulkImportKtpDetailsForRupEntry(
+      rupEntryId: string,
       lessons: ParsedLesson[],
       academicYearId?: string,
       semesterId?: string
@@ -396,25 +396,25 @@ export const useKtpStore = defineStore(
       if (!academicYearId || !semesterId) {
         throw new Error("academicYearId and semesterId are required");
       }
-      const ktp = await ensureKtpForClass9(
-        class9Id,
+      const ktp = await ensureKtpForRupEntry(
+        rupEntryId,
         academicYearId,
         semesterId
       );
       return bulkImportKtpDetails(ktp.id, lessons);
     }
 
-    const getDetailsByClass9Id = computed(() => {
+    const getDetailsByRupEntryId = computed(() => {
       return (
-        class9Id: string,
+        rupEntryId: string,
         academicYearId?: string,
         semesterId?: string
       ) => {
         if (!academicYearId || !semesterId) {
           throw new Error("academicYearId and semesterId are required");
         }
-        const ktp = findKtpByClass9Id(
-          class9Id,
+        const ktp = findKtpByRupEntryId(
+          rupEntryId,
           academicYearId,
           semesterId
         );
@@ -423,15 +423,15 @@ export const useKtpStore = defineStore(
       };
     });
 
-    const getKtpIdForClass9 = computed(() => {
+    const getKtpIdForRupEntry = computed(() => {
       return (
-        class9Id: string | null | undefined,
+        rupEntryId: string | null | undefined,
         academicYearId?: string,
         semesterId?: string
       ) => {
-        if (!class9Id) return null;
-        const ktp = findKtpByClass9Id(
-          class9Id || "",
+        if (!rupEntryId) return null;
+        const ktp = findKtpByRupEntryId(
+          rupEntryId || "",
           academicYearId,
           semesterId
         );
@@ -445,7 +445,7 @@ export const useKtpStore = defineStore(
         const ktpItem = ktps.value.find((ktp) => ktp.id === ktpId);
         if (!ktpItem) return "Рабочие учебные программы";
 
-        // Return a basic title since we can't access class9Store from within ktpStore
+        // Return a basic title since we can't access rupEntryStore from within ktpStore
         return `КТП ${ktpItem.id.slice(0, 8)}`;
       };
     });
@@ -463,7 +463,7 @@ export const useKtpStore = defineStore(
         data.forEach((ktp: any) => {
           ktps.value.push({
             id: ktp._id,
-            class9Id: ktp.class9Id,
+            rupEntryId: ktp.rupEntryId,
             academicYearId: ktp.academicYearId,
             semesterId: ktp.semesterId,
             eventId: ktp.eventId,
@@ -505,27 +505,27 @@ export const useKtpStore = defineStore(
       loading,
       error,
       // Primary KTP-based APIs
-      ensureKtpForClass9,
-      findKtpByClass9Id,
+      ensureKtpForRupEntry,
+      findKtpByRupEntryId,
       findKtpById,
       fetchDetailsForKtp,
       addKtpDetail,
       updateKtpDetail,
       deleteKtpDetail,
-      deleteKtpByClass9Id,
+      deleteKtpByRupEntryId,
       deleteKtpById,
       clearKtpDetails,
       reorderKtpDetails,
       bulkImportKtpDetails,
       getDetailsByKtpId,
-      getKtpIdForClass9,
+      getKtpIdForRupEntry,
       getModuleTitleForKtp,
-      // Convenience class9-based APIs (backward compat)
-      fetchDetailsForClass9,
-      addKtpDetailForClass9,
-      reorderKtpDetailsForClass9,
-      bulkImportKtpDetailsForClass9,
-      getDetailsByClass9Id,
+      // Convenience RUP entry-based APIs (backward compat)
+      fetchDetailsForRupEntry,
+      addKtpDetailForRupEntry,
+      reorderKtpDetailsForRupEntry,
+      bulkImportKtpDetailsForRupEntry,
+      getDetailsByRupEntryId,
       loadFromBackend,
     };
   },

@@ -294,7 +294,7 @@ import { useTeacherStore } from "@/stores/teacherStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
-import { useClass9Store } from "@/stores/class9Store";
+import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useUserStore } from "@/stores/userStore";
@@ -367,7 +367,7 @@ const teacherStore = useTeacherStore();
 const academicYearStore = useAcademicYearStore();
 const calendarStore = useCalendarStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
-const class9Store = useClass9Store();
+const rupEntryStore = useRupEntryStore();
 const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
 const journalStore = useJournalStore();
@@ -499,10 +499,10 @@ async function generateWorkloadReport() {
 
     while (attempts < maxAttempts) {
       const eventsLoaded = calendarStore.events && calendarStore.events.length > 0;
-      const class9Loaded = class9Store.items && class9Store.items.length > 0;
+      const rupEntryLoaded = rupEntryStore.items && rupEntryStore.items.length > 0;
       const studentsLoaded = studentStore.students && studentStore.students.length > 0;
 
-      if (eventsLoaded && class9Loaded && studentsLoaded) break;
+      if (eventsLoaded && rupEntryLoaded && studentsLoaded) break;
       await new Promise(resolve => setTimeout(resolve, 100));
       attempts++;
     }
@@ -561,7 +561,7 @@ async function generateWorkloadReport() {
       };
     });
 
-    const class9Items = class9Store.class9Items;
+    const rupEntries = rupEntryStore.rupEntries;
     const semesterMonths = computeMonthsFromSemesters(availableSemesters.value);
 
     if (semesterMonths.length === 0) {
@@ -576,7 +576,7 @@ async function generateWorkloadReport() {
 
     const entries = generateDailyWorkload(
       teacherEvents,
-      class9Items,
+      rupEntries,
       enrichedStudents,
       reportMonth,
       reportYear,
@@ -587,18 +587,18 @@ async function generateWorkloadReport() {
 
     const summaryEntries = generateWorkloadSummary(
       teacherEvents,
-      class9Items,
+      rupEntries,
       enrichedStudents,
       filterStartDate,
       filterEndDate
     );
 
     const { distributions: monthlyDistribution, months: reportMonths } =
-      generateMonthlyDistribution(teacherEvents, class9Items, enrichedStudents, availableSemesters.value);
+      generateMonthlyDistribution(teacherEvents, rupEntries, enrichedStudents, availableSemesters.value);
 
     const allMonthsWorkload = generateAllMonthsWorkload(
       teacherEvents,
-      class9Items,
+      rupEntries,
       enrichedStudents,
       availableSemesters.value,
       allJournals,

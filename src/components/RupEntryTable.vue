@@ -1,11 +1,11 @@
 <template>
-  <div class="class9-table">
-    <div v-if="class9List.length" ref="sortableList" class="space-y-0">
+  <div class="rup-entry-table">
+    <div v-if="rupEntryList.length" ref="sortableList" class="space-y-0">
       <div
-        v-for="(item, idx) in class9List"
+        v-for="(item, idx) in rupEntryList"
         :key="item.id"
         class="overflow-hidden bg-card border-b border-border last:border-b-0 transition-colors duration-150"
-        :class="{ 'is-selected': rupStore.isClass9ItemSelected(item.id) }"
+        :class="{ 'is-selected': rupStore.isRupEntryItemSelected(item.id) }"
         @click="handleRowClick(item)"
       >
         <div class="flex items-stretch w-full">
@@ -165,13 +165,13 @@
     >
       Нет данных для отображения
     </div>
-    <Class9ViewPopover
+    <RupEntryViewPopover
       v-if="viewPopupOpen"
       :item="viewData"
       @close="closeViewPopup"
       @edit="openEditFromView"
     />
-    <Class9Popup
+    <RupEntryPopup
       v-if="popupOpen"
       :specialty-ids="specialtyIds"
       :academic-year-id="academicYearId"
@@ -188,12 +188,12 @@
 
 <script setup lang="ts">
 import { computed, ref, nextTick, onMounted, onBeforeUnmount } from "vue";
-import { useClass9Store, type Class9Data } from "@/stores/class9Store";
+import { useRupEntryStore, type RupEntry } from "@/stores/rupEntryStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { f7 } from "framework7-vue";
-import Class9Popup from "@/components/Class9Popup.vue";
-import Class9ViewPopover from "@/components/Class9ViewPopover.vue";
+import RupEntryPopup from "@/components/RupEntryPopup.vue";
+import RupEntryViewPopover from "@/components/RupEntryViewPopover.vue";
 import { useRupStore } from "@/stores/rupStore";
 import Sortable from "sortablejs";
 
@@ -206,21 +206,21 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "duplicate-item", item: Class9Data): void;
+  (e: "duplicate-item", item: RupEntry): void;
 }>();
 
-const class9Store = useClass9Store();
+const rupEntryStore = useRupEntryStore();
 const rupStore = useRupStore();
 const finalControlStore = useFinalControlStore();
 const intermediateControlStore = useIntermediateControlStore();
 const sortableList = ref<HTMLElement | null>(null);
 let sortableInstance: Sortable | null = null;
 
-const class9List = computed(() => {
+const rupEntryList = computed(() => {
   if (!props.academicYearId) {
     return [];
   }
-  return class9Store.getClass9ItemsByContext(
+  return rupEntryStore.getRupEntryItemsByContext(
     props.academicYearId,
     props.specialtyIds,
     props.baseClass
@@ -235,7 +235,7 @@ onMounted(() => {
       ghostClass: "ghost",
       onEnd: (evt) => {
         if (evt.oldIndex !== undefined && evt.newIndex !== undefined) {
-          class9Store.updateClass9Order(
+          rupEntryStore.updateRupEntryOrder(
             props.academicYearId,
             props.specialtyIds || [],
             evt.oldIndex,
@@ -255,32 +255,32 @@ onBeforeUnmount(() => {
 
 const popupOpen = ref(false);
 const editMode = ref(false);
-const initialData = ref<Class9Data | null>(null);
+const initialData = ref<RupEntry | null>(null);
 const viewPopupOpen = ref(false);
-const viewData = ref<Class9Data | null>(null);
+const viewData = ref<RupEntry | null>(null);
 
-function handleRowClick(item: Class9Data) {
+function handleRowClick(item: RupEntry) {
   if (props.selectMode) {
-    rupStore.toggleClass9ItemSelection(item.id);
+    rupStore.toggleRupEntryItemSelection(item.id);
   } else {
     openViewPopup(item);
   }
 }
 
-function openEditPopup(item: Class9Data) {
+function openEditPopup(item: RupEntry) {
   editMode.value = true;
   initialData.value = { ...item };
   popupOpen.value = true;
   nextTick(() => {
-    f7.popover.open("#class9-popover");
+    f7.popover.open("#rup-entry-popover");
   });
 }
 
-function openViewPopup(item: Class9Data) {
+function openViewPopup(item: RupEntry) {
   viewData.value = { ...item };
   viewPopupOpen.value = true;
   nextTick(() => {
-    f7.popover.open("#class9-view-popover");
+    f7.popover.open("#rup-entry-view-popover");
   });
 }
 
@@ -289,7 +289,7 @@ function openAddPopup() {
   initialData.value = null;
   popupOpen.value = true;
   nextTick(() => {
-    f7.popover.open("#class9-popover");
+    f7.popover.open("#rup-entry-popover");
   });
 }
 
@@ -297,7 +297,7 @@ function closePopup() {
   popupOpen.value = false;
   editMode.value = false;
   initialData.value = null;
-  f7.popover.close("#class9-popover");
+  f7.popover.close("#rup-entry-popover");
 }
 
 function closeViewPopup() {
@@ -306,7 +306,7 @@ function closeViewPopup() {
 }
 
 function requestCloseViewPopup() {
-  f7.popover.close("#class9-view-popover");
+  f7.popover.close("#rup-entry-view-popover");
 }
 
 function openEditFromView() {
@@ -322,7 +322,7 @@ function handlePopupSubmit() {
   closePopup();
 }
 
-function duplicateItem(item: Class9Data) {
+function duplicateItem(item: RupEntry) {
   emit("duplicate-item", item);
 }
 
@@ -332,7 +332,7 @@ defineExpose({
 </script>
 
 <style scoped>
-.class9-table {
+.rup-entry-table {
   border: 1px solid hsl(var(--border) / 0.9);
   border-radius: 12px;
   overflow: hidden;
@@ -345,7 +345,7 @@ defineExpose({
   border: 1px dashed var(--f7-theme-color) !important;
 }
 
-.class9-table > div > div:hover {
+.rup-entry-table > div > div:hover {
   background-color: hsl(var(--muted) / 0.35) !important;
   cursor: pointer;
 }

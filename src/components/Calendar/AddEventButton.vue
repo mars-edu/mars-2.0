@@ -36,7 +36,7 @@
           :date-validation-error="dateValidationError"
           :derived-is-valid="isFormValid"
           :temp-event-id="tempEventId"
-          v-model:class9Id="class9Id"
+          v-model:rupEntryId="rupEntryId"
           v-model:useCustomPeriod="useCustomPeriod"
           v-model:startDate="customStartDate"
           v-model:endDate="customEndDate"
@@ -91,7 +91,7 @@ const effectiveTeacherId = computed(() => {
   return undefined;
 });
 
-const class9Id = ref("");
+const rupEntryId = ref("");
 const useCustomPeriodRaw = ref(false);
 const customStartDate = ref("");
 const customEndDate = ref("");
@@ -122,7 +122,7 @@ const {
   slotTimeError,
   isValid: isFormValid,
 } = useEventFormDerived({
-  class9Id,
+  rupEntryId,
   useCustomPeriod: useCustomPeriodRaw,
   customStartDate,
   customEndDate,
@@ -159,7 +159,7 @@ const handleAddEvent = async () => {
     }
 
     const eventData: Omit<CalendarEvent, "id" | "createdAt" | "updatedAt"> = {
-      class9Id: class9Id.value,
+      rupEntryId: rupEntryId.value,
       teacherId: effectiveTeacherId.value,
       startDate: effectiveStartDate.value,
       endDate: effectiveEndDate.value,
@@ -189,7 +189,7 @@ const handleAddEvent = async () => {
 };
 
 const resetForm = () => {
-  class9Id.value = "";
+  rupEntryId.value = "";
   useCustomPeriodRaw.value = false;
   customStartDate.value = "";
   customEndDate.value = "";
@@ -222,7 +222,7 @@ const onPopupClosed = () => {
 };
 
 const draft = computed<AddWizardDraft>(() => ({
-  class9Id: class9Id.value,
+  rupEntryId: rupEntryId.value,
   useCustomPeriod: useCustomPeriodRaw.value,
   startDate: customStartDate.value,
   endDate: customEndDate.value,

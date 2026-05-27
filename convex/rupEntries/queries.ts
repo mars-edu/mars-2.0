@@ -2,19 +2,19 @@ import { query } from "../_generated/server";
 import { v } from "convex/values";
 
 /**
- * Get all class9 items
+ * Get all RUP entries
  */
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const items = await ctx.db.query("class9Items").collect();
+    const items = await ctx.db.query("rupEntries").collect();
 
     // For each item, fetch its distribution entries
     const itemsWithDistributions = await Promise.all(
       items.map(async (item) => {
         const distributions = await ctx.db
           .query("distributionEntries")
-          .withIndex("by_class9Item", (q) => q.eq("class9ItemId", item._id))
+          .withIndex("by_rupEntry", (q) => q.eq("rupEntryId", item._id))
           .collect();
 
         return {
@@ -29,17 +29,17 @@ export const list = query({
 });
 
 /**
- * Get class9 item by ID
+ * Get RUP entry by ID
  */
 export const getById = query({
-  args: { id: v.id("class9Items") },
+  args: { id: v.id("rupEntries") },
   handler: async (ctx, args) => {
     const item = await ctx.db.get(args.id);
     if (!item) return null;
 
     const distributions = await ctx.db
       .query("distributionEntries")
-      .withIndex("by_class9Item", (q) => q.eq("class9ItemId", args.id))
+      .withIndex("by_rupEntry", (q) => q.eq("rupEntryId", args.id))
       .collect();
 
     return {
@@ -50,13 +50,13 @@ export const getById = query({
 });
 
 /**
- * Get class9 items by academic year
+ * Get RUP entrys by academic year
  */
 export const getByAcademicYear = query({
   args: { academicYearId: v.string() },
   handler: async (ctx, args) => {
     const items = await ctx.db
-      .query("class9Items")
+      .query("rupEntries")
       .withIndex("by_academicYear", (q) => q.eq("academicYearId", args.academicYearId))
       .collect();
 
@@ -65,7 +65,7 @@ export const getByAcademicYear = query({
       items.map(async (item) => {
         const distributions = await ctx.db
           .query("distributionEntries")
-          .withIndex("by_class9Item", (q) => q.eq("class9ItemId", item._id))
+          .withIndex("by_rupEntry", (q) => q.eq("rupEntryId", item._id))
           .collect();
 
         return {
@@ -80,7 +80,7 @@ export const getByAcademicYear = query({
 });
 
 /**
- * Get class9 items by academic year and specialty
+ * Get RUP entrys by academic year and specialty
  */
 export const getByAcademicYearAndSpecialty = query({
   args: {
@@ -89,7 +89,7 @@ export const getByAcademicYearAndSpecialty = query({
   },
   handler: async (ctx, args) => {
     const items = await ctx.db
-      .query("class9Items")
+      .query("rupEntries")
       .withIndex("by_academicYear", (q) => q.eq("academicYearId", args.academicYearId))
       .collect();
 
@@ -109,7 +109,7 @@ export const getByAcademicYearAndSpecialty = query({
       filteredItems.map(async (item) => {
         const distributions = await ctx.db
           .query("distributionEntries")
-          .withIndex("by_class9Item", (q) => q.eq("class9ItemId", item._id))
+          .withIndex("by_rupEntry", (q) => q.eq("rupEntryId", item._id))
           .collect();
 
         return {
@@ -124,13 +124,13 @@ export const getByAcademicYearAndSpecialty = query({
 });
 
 /**
- * Get class9 items by groupId (all language variants in a group)
+ * Get RUP entrys by groupId (all language variants in a group)
  */
 export const getByGroupId = query({
   args: { groupId: v.string() },
   handler: async (ctx, args) => {
     const items = await ctx.db
-      .query("class9Items")
+      .query("rupEntries")
       .withIndex("by_groupId", (q) => q.eq("groupId", args.groupId))
       .collect();
 
@@ -138,7 +138,7 @@ export const getByGroupId = query({
       items.map(async (item) => {
         const distributions = await ctx.db
           .query("distributionEntries")
-          .withIndex("by_class9Item", (q) => q.eq("class9ItemId", item._id))
+          .withIndex("by_rupEntry", (q) => q.eq("rupEntryId", item._id))
           .collect();
 
         return {

@@ -30,7 +30,7 @@
         :selected-hours="selectedHours"
         :hours-exceeded-error="hoursExceededError"
         :date-validation-error="dateValidationError"
-        v-model:class9Id="class9Id"
+        v-model:rupEntryId="rupEntryId"
         v-model:useCustomPeriod="useCustomPeriod"
         v-model:startDate="customStartDate"
         v-model:endDate="customEndDate"
@@ -68,7 +68,7 @@ import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import EventForm from "./EventForm.vue";
 import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
-import { useClass9Store } from "@/stores/class9Store";
+import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useUserStore } from "@/stores/userStore";
@@ -93,7 +93,7 @@ const { confirmWithParent } = useNestedPopover({
 
 // Get event from store by ID - always fresh data
 const event = computed(() => calendarStore.getEventById(props.eventId));
-const class9Store = useClass9Store();
+const rupEntryStore = useRupEntryStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const educationScheduleStore = useEducationScheduleStore();
 const userStore = useUserStore();
@@ -113,7 +113,7 @@ const { getActiveAcademicYearSemester } = storeToRefs(
   academicYearSemesterStore
 );
 
-const class9Id = ref("");
+const rupEntryId = ref("");
 const semester = ref("");
 const useCustomPeriodRaw = ref(false);
 const customStartDate = ref("");
@@ -140,7 +140,7 @@ const {
   hoursExceededError,
   isValid: isFormValid,
 } = useEventFormDerived({
-  class9Id,
+  rupEntryId,
   useCustomPeriod: useCustomPeriodRaw,
   customStartDate,
   customEndDate,
@@ -166,7 +166,7 @@ const useCustomPeriod = computed({
 // Update form fields whenever event data changes
 watchEffect(() => {
   if (event.value) {
-    class9Id.value = event.value.class9Id;
+    rupEntryId.value = event.value.rupEntryId;
     useCustomPeriodRaw.value = event.value.useCustomPeriod || false;
     semester.value = event.value.semester || "";
     customStartDate.value = event.value.startDate || "";
@@ -206,7 +206,7 @@ const handleUpdateEvent = async () => {
     }
 
     const updateData = {
-      class9Id: class9Id.value,
+      rupEntryId: rupEntryId.value,
       teacherId: effectiveTeacherId.value,
       startDate: effectiveStartDate.value,
       endDate: effectiveEndDate.value,
@@ -225,7 +225,7 @@ const handleUpdateEvent = async () => {
 
     const emitData = {
       ...event.value,
-      class9Id: class9Id.value,
+      rupEntryId: rupEntryId.value,
       startDate: effectiveStartDate.value,
       endDate: effectiveEndDate.value,
       participants: participants.value,

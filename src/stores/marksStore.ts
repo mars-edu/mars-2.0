@@ -54,12 +54,12 @@ export const useMarksStore = defineStore(
       try {
         const { useJournalStore } = await import("./journalStore");
         const { useCalendarStore } = await import("./calendarStore");
-        const { useClass9Store } = await import("./class9Store");
+        const { useRupEntryStore } = await import("./rupEntryStore");
         const { useAcademicYearSemesterStore } = await import("./academicYearSemesterStore");
 
         const journalStore = useJournalStore();
         const calendarStore = useCalendarStore();
-        const class9Store = useClass9Store();
+        const rupEntryStore = useRupEntryStore();
         const academicYearSemesterStore = useAcademicYearSemesterStore();
 
         const journalInfo = journalStore.getJournalById(calendarEventId);
@@ -73,7 +73,7 @@ export const useMarksStore = defineStore(
           : null;
         const academicYearId =
           semester?.academicYearId ||
-          String(class9Store.getClass9ById(journalInfo.disciplineId)?.academicYearId || "");
+          String(rupEntryStore.getRupEntryById(journalInfo.disciplineId)?.academicYearId || "");
 
         if (!semesterId || semesterId === "" || !academicYearId || academicYearId === "") return null;
 
@@ -436,7 +436,6 @@ export const useMarksStore = defineStore(
       journalMarks.value = { ...journalMarks.value };
     };
 
-    // Update a specific mark for a student - now uses tRPC directly
     const updateStudentMark = async (
       journalId: string,
       studentId: string,
@@ -513,12 +512,12 @@ export const useMarksStore = defineStore(
               // Try to get journal info from other stores
               const { useJournalStore } = await import("./journalStore");
               const { useCalendarStore } = await import("./calendarStore");
-              const { useClass9Store } = await import("./class9Store");
+              const { useRupEntryStore } = await import("./rupEntryStore");
               const { useAcademicYearSemesterStore } = await import("./academicYearSemesterStore");
               
               const journalStore = useJournalStore();
               const calendarStore = useCalendarStore();
-              const class9Store = useClass9Store();
+              const rupEntryStore = useRupEntryStore();
               const academicYearSemesterStore = useAcademicYearSemesterStore();
               
               const journalInfo = journalStore.getJournalById(journalId);
@@ -536,7 +535,7 @@ export const useMarksStore = defineStore(
               const academicYear = semester?.academicYearId
                 ? String(semester.academicYearId)
                 : String(
-                    class9Store.getClass9ById(journalInfo.disciplineId)
+                    rupEntryStore.getRupEntryById(journalInfo.disciplineId)
                       ?.academicYearId || ""
                   );
 

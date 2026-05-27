@@ -18,7 +18,7 @@ const ALLOWED_TABLES = [
   "modules",
   "students",
   "teachers",
-  "class9Items",
+  "rupEntries",
   "distributionEntries",
   "intermediateControls",
   "finalControls",
@@ -37,7 +37,6 @@ const ALLOWED_TABLES = [
   "files",
   "passwordChangeHistory",
   "offlineQueue",
-  "rupEntries",
 ] as const;
 
 type AllowedTable = (typeof ALLOWED_TABLES)[number];

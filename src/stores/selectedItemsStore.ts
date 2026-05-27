@@ -2,14 +2,14 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useSpecialtyStore } from "./specialtyStore";
 import { useCourseStore } from "./courseStore";
-import { useClass9Store } from "./class9Store";
+import { useRupEntryStore } from "./rupEntryStore";
 import { storeToRefs } from "pinia";
 
 export const useSelectedItemsStore = defineStore("selectedItems", () => {
   const selectedAcademicYearId = ref<string | null>(null);
   const selectedSpecialtyId = ref<string | null>(null);
   const selectedCourseId = ref<string | null>(null);
-  const selectedClass9ItemId = ref<string | null>(null);
+  const selectedRupEntryId = ref<string | null>(null);
   function setSelectedAcademicYear(id: string | null) {
     selectedAcademicYearId.value = id;
   }
@@ -25,22 +25,22 @@ export const useSelectedItemsStore = defineStore("selectedItems", () => {
     selectedCourseId.value = id;
   }
 
-  function setSelectedClass9ItemId(id: string | null) {
-    selectedClass9ItemId.value = id;
+  function setSelectedRupEntryId(id: string | null) {
+    selectedRupEntryId.value = id;
   }
 
   function clear() {
     selectedAcademicYearId.value = null;
     selectedSpecialtyId.value = null;
     selectedCourseId.value = null;
-    selectedClass9ItemId.value = null;
+    selectedRupEntryId.value = null;
   }
 
   function reset() {
     selectedAcademicYearId.value = null;
     selectedSpecialtyId.value = null;
     selectedCourseId.value = null;
-    selectedClass9ItemId.value = null;
+    selectedRupEntryId.value = null;
   }
 
   const selectedSpecialty = computed(() => {
@@ -59,11 +59,11 @@ export const useSelectedItemsStore = defineStore("selectedItems", () => {
     return courses.value.find((course) => course.id === selectedCourseId.value);
   });
 
-  const selectedClass9Item = computed(() => {
-    const class9Store = useClass9Store();
-    if (!selectedClass9ItemId.value) return null;
-    return class9Store.class9Items.find(
-      (item) => item.id === selectedClass9ItemId.value
+  const selectedRupEntry = computed(() => {
+    const rupEntryStore = useRupEntryStore();
+    if (!selectedRupEntryId.value) return null;
+    return rupEntryStore.rupEntries.find(
+      (item) => item.id === selectedRupEntryId.value
     );
   });
 
@@ -71,14 +71,14 @@ export const useSelectedItemsStore = defineStore("selectedItems", () => {
     selectedAcademicYearId,
     selectedSpecialtyId,
     selectedCourseId,
-    selectedClass9ItemId,
+    selectedRupEntryId,
     setSelectedAcademicYear,
     selectedSpecialty,
     selectedCourse,
-    selectedClass9Item,
+    selectedRupEntry,
     setSelectedSpecialty,
     setSelectedCourse,
-    setSelectedClass9ItemId,
+    setSelectedRupEntryId,
     clear,
     reset,
   };

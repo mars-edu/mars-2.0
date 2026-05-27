@@ -5,8 +5,8 @@
  * Compile:       `npm run build:paraglide:backend`
  */
 
-import { MutationCtx, QueryCtx, ActionCtx } from "../_generated/server";
-import { Id } from "../_generated/dataModel";
+import type { MutationCtx, QueryCtx, ActionCtx } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
 import { setLocale } from "../paraglide/runtime.js";
 
 export type Locale = "ru" | "kk" | "en";

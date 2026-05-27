@@ -194,7 +194,7 @@ import IconMenu from "~icons/lucide/menu";
 import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
-import { useClass9Store } from "@/stores/class9Store";
+import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { getEventDays } from "@/utils/eventDate";
 import { DATE_UI_FORMAT } from "@/constants/calendar";
 import KtpDetailFormPopover from "@/components/KtpDetailFormPopover.vue";
@@ -214,7 +214,7 @@ const props = defineProps<{
 const ktpStore = useKtpStore();
 const calendarStore = useCalendarStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
-const class9Store = useClass9Store();
+const rupEntryStore = useRupEntryStore();
 const { loading } = storeToRefs(ktpStore);
 const selectedDetailId = ref("ktp-detail-3");
 
@@ -235,9 +235,9 @@ const linkedEvent = computed(() => {
 
 const learningOutcome = computed(() => {
   const event = linkedEvent.value as any;
-  if (!event?.class9Id) return null;
-  const class9Item = class9Store.getClass9ById(event.class9Id);
-  return class9Item?.learningOutcome || null;
+  if (!event?.rupEntryId) return null;
+  const rupEntryItem = rupEntryStore.getRupEntryById(event.rupEntryId);
+  return rupEntryItem?.learningOutcome || null;
 });
 
 const lessonDates = computed(() => {

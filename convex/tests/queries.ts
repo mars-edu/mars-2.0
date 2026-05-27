@@ -1,5 +1,5 @@
 import { query } from "../_generated/server";
-import { Id } from "../_generated/dataModel";
+import type { Id } from "../_generated/dataModel";
 
 export const getTests = query({
   args: {},
@@ -22,9 +22,9 @@ export const getTestHistory = query({
         let disciplineName = "Неизвестный предмет";
         
         if (journal && journal.disciplineId) {
-          const class9 = await ctx.db.get(journal.disciplineId as Id<"class9Items">);
-          if (class9) {
-             disciplineName = `${class9.moduleIndex} ${class9.learningOutcome}`.trim();
+          const rupEntry = await ctx.db.get(journal.disciplineId as Id<"rupEntries">);
+          if (rupEntry) {
+             disciplineName = `${rupEntry.moduleIndex} ${rupEntry.learningOutcome}`.trim();
           }
         }
         

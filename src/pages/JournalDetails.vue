@@ -16,7 +16,7 @@
         <div class="flex flex-col gap-4">
           <!-- Page Header -->
           <JournalHeader
-            :discipline-text="currentClass9Text"
+            :discipline-text="currentRupEntryText"
             :group="currentJournal?.group"
             :group-language="currentJournalGroupLanguage"
             :course="currentJournal?.courseNumber"
@@ -99,7 +99,7 @@
             :group="currentJournal?.group"
             :academic-year="currentAcademicYearText"
             :semester="currentSemesterText"
-            :discipline-text="currentClass9Text"
+            :discipline-text="currentRupEntryText"
             :debug-info="debugInfo"
             :table-headers="tableHeaders"
           />
@@ -339,8 +339,8 @@
       :ktp-id="ktpParentId"
     />
     
-    <!-- Class9 (RUP) Popup -->
-    <Class9Popup
+    <!-- RupEntry (RUP) Popup -->
+    <RupEntryPopup
       v-if="isRupPopupOpened"
       :specialty-ids="rupSpecialtyIds"
       :academic-year-id="rupAcademicYearId"
@@ -381,7 +381,7 @@ import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useJournalStore } from "@/stores/journalStore";
 import { useCalendarStore } from "@/stores/calendarStore";
-import { useClass9Store } from "@/stores/class9Store";
+import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useKtpStore } from "@/stores/ktpStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import JournalTab from "@/components/JournalTab.vue";
@@ -391,7 +391,7 @@ import FloatingJournalRow from "@/components/FloatingJournalRow.vue";
 import DateColumnFocus from "@/components/DateColumnFocus.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
 import KtpDetailPopupBody from "@/components/KtpDetailPopupBody.vue";
-import Class9Popup from "@/components/Class9Popup.vue";
+import RupEntryPopup from "@/components/RupEntryPopup.vue";
 import StudentListTable from "@/components/StudentListTable.vue";
 import StudentTable from "@/components/StudentTable.vue";
 import AssignmentsView from "@/components/AssignmentsView.vue";
@@ -510,8 +510,8 @@ const { academicYears } = storeToRefs(academicYearStore);
 const journalStore = useJournalStore();
 const calendarStore = useCalendarStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
-const class9Store = useClass9Store();
-const { class9Options } = storeToRefs(class9Store);
+const rupEntryStore = useRupEntryStore();
+const { rupEntryOptions } = storeToRefs(rupEntryStore);
 const ktpStore = useKtpStore();
 const studentStore = useStudentStore();
 const teacherStore = useTeacherStore();
@@ -589,10 +589,10 @@ const currentJournalGroupLanguage = computed(() => {
   return journalStore.getJournalGroupLanguage(currentJournal.value);
 });
 
-const currentClass9Text = computed(() => {
+const currentRupEntryText = computed(() => {
   const disciplineId = currentJournal.value?.disciplineId;
   if (!disciplineId) return "";
-  const option = class9Options.value.find((o: any) => o.value === disciplineId);
+  const option = rupEntryOptions.value.find((o: any) => o.value === disciplineId);
   return option?.text || "";
 });
 
@@ -635,8 +635,8 @@ const rupInitialData = ref<any>(null);
 const rupSpecialtyIds = computed(() => {
   const disciplineId = currentJournal.value?.disciplineId;
   if (!disciplineId) return [];
-  const class9Item = class9Store.getClass9ById(disciplineId);
-  return class9Item?.specialtyIds || [];
+  const rupEntryItem = rupEntryStore.getRupEntryById(disciplineId);
+  return rupEntryItem?.specialtyIds || [];
 });
 
 const rupAcademicYearId = computed(() => {
@@ -701,11 +701,11 @@ watch(
     journalId.value,
     currentEvent.value?.id,
     currentEvent.value?.ktpId,
-    currentEvent.value?.class9Id,
+    currentEvent.value?.rupEntryId,
     currentEvent.value?.semester,
     academicYearSemesterStore.academicYearSemesters.length,
   ] as const,
-  async ([_jid, _eventId, eventKtpId, eventClass9Id, eventSemesterId]) => {
+  async ([_jid, _eventId, eventKtpId, eventRupEntryId, eventSemesterId]) => {
     ensuredKtpId.value = eventKtpId || null;
     if (!journalId.value || !currentEvent.value) return;
     if (isEnsuringKtp.value) return;
@@ -723,14 +723,14 @@ watch(
     // Otherwise, create/link an event-specific KTP.
     const semester = eventSemesterId ? getSemesterById(eventSemesterId) : null;
     const academicYearId = semester?.academicYearId;
-    if (!academicYearId || !eventClass9Id || !eventSemesterId) return;
+    if (!academicYearId || !eventRupEntryId || !eventSemesterId) return;
 
     isEnsuringKtp.value = true;
     try {
       const event = currentEvent.value;
       if (!event) return;
-      const ktp = await ktpStore.ensureKtpForClass9(
-        event.class9Id,
+      const ktp = await ktpStore.ensureKtpForRupEntry(
+        event.rupEntryId,
         academicYearId,
         event.semester,
         event.id
@@ -845,7 +845,7 @@ const copyDebugInfo = async () => {
         id: journalId.value,
         disciplineId: currentJournal.value?.disciplineId,
         group: currentJournal.value?.group,
-        discipline: currentClass9Text.value,
+        discipline: currentRupEntryText.value,
         academicYear: currentAcademicYearText.value,
         semester: currentSemesterText.value,
       },
@@ -875,7 +875,7 @@ const onOpenKtpDetails = (
     currentJournal.value.disciplineId ===
     (journalStore.mixedGroupJournals[0]?.disciplineId || "")
   ) {
-    ktpParentId.value = "mock-class9-id-1";
+    ktpParentId.value = "mock-rupEntry-id-1";
   } else {
     ktpParentId.value = currentJournal.value.disciplineId;
   }
@@ -890,22 +890,22 @@ const openRupDialog = () => {
     return;
   }
   
-  // Load the class9 data for editing
-  const class9Item = class9Store.getClass9ById(disciplineId);
-  if (class9Item) {
-    rupInitialData.value = class9Item;
+  // Load the rupEntry data for editing
+  const rupEntryItem = rupEntryStore.getRupEntryById(disciplineId);
+  if (rupEntryItem) {
+    rupInitialData.value = rupEntryItem;
   }
   
   isRupPopupOpened.value = true;
   nextTick(() => {
-    f7.popover.open("#class9-popover");
+    f7.popover.open("#rup-entry-popover");
   });
 };
 
 const closeRupPopup = () => {
   isRupPopupOpened.value = false;
   rupInitialData.value = null;
-  f7.popover.close("#class9-popover");
+  f7.popover.close("#rup-entry-popover");
 };
 
 const handleRupSubmit = () => {
@@ -1025,13 +1025,13 @@ const debugInfo = computed(() => {
     academicYearStore.getActiveAcademicYear?.id;
   const semesterId = event?.semester;
 
-  // Get distribution entries for this discipline from class9
+  // Get distribution entries for this discipline from rupEntry
   const disciplineId = journal?.disciplineId;
-  const class9Item = disciplineId 
-    ? class9Store.getClass9ById(disciplineId) 
+  const rupEntryItem = disciplineId 
+    ? rupEntryStore.getRupEntryById(disciplineId) 
     : null;
   
-  const relevantDistributionEntries = (class9Item?.distributionEntries || [])
+  const relevantDistributionEntries = (rupEntryItem?.distributionEntries || [])
     .filter((entry: any) => {
       if (!semesterId) return true;
       if (entry?.semesterId == null) return false;
@@ -1046,15 +1046,15 @@ const debugInfo = computed(() => {
 
   // Debug: Log distribution entries filtering
   console.log('[JournalDetails] Distribution Entries Filtering:', {
-    totalDistributionEntries: class9Item?.distributionEntries?.length || 0,
-    allDistributionEntries: class9Item?.distributionEntries,
+    totalDistributionEntries: rupEntryItem?.distributionEntries?.length || 0,
+    allDistributionEntries: rupEntryItem?.distributionEntries,
     currentSemesterId: semesterId,
     currentAcademicYearId: academicYearId,
     matching: {
       info: 'Entries match only by UUID: entry.semesterId === semesterUUID',
       byUUID: 'entry.semesterId === ' + semesterId,
     },
-    afterSemesterFilter: (class9Item?.distributionEntries || []).filter((entry: any) => {
+    afterSemesterFilter: (rupEntryItem?.distributionEntries || []).filter((entry: any) => {
       if (!semesterId) return true;
       if (entry?.semesterId == null) return false;
       return String(entry.semesterId) === String(semesterId);
@@ -1174,8 +1174,8 @@ const debugInfo = computed(() => {
     academicYearId: academicYearId || "—",
     semesterId: semesterId || "—",
     distributionEntriesCount: relevantDistributionEntries.length,
-    totalDistributionEntries: class9Item?.distributionEntries?.length || 0,
-    allDistributionEntries: (class9Item?.distributionEntries || []).map((e: any) => ({
+    totalDistributionEntries: rupEntryItem?.distributionEntries?.length || 0,
+    allDistributionEntries: (rupEntryItem?.distributionEntries || []).map((e: any) => ({
       id: e.id,
       academicYearId: e.academicYearId,
       semesterId: e.semesterId,

@@ -8,7 +8,7 @@ import {
   DATE_UI_FORMAT,
 } from "@/constants/calendar";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
-import { useClass9Store } from "@/stores/class9Store";
+import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 
 dayjs.extend(customParseFormat);
@@ -28,7 +28,7 @@ export type SemesterDates = {
 };
 
 export function useEventFormDerived(args: {
-  class9Id: Ref<string>;
+  rupEntryId: Ref<string>;
   useCustomPeriod: Ref<boolean>;
   customStartDate: Ref<string>;
   customEndDate: Ref<string>;
@@ -36,7 +36,7 @@ export function useEventFormDerived(args: {
   semesterId: Ref<string> | ComputedRef<string>;
 }) {
   const academicYearSemesterStore = useAcademicYearSemesterStore();
-  const class9Store = useClass9Store();
+  const rupEntryStore = useRupEntryStore();
   const educationScheduleStore = useEducationScheduleStore();
 
   const semester = computed(() => {
@@ -88,12 +88,12 @@ export function useEventFormDerived(args: {
   });
 
   const totalPlannedHours = computed(() => {
-    const item = class9Store.getClass9ById(args.class9Id.value);
+    const item = rupEntryStore.getRupEntryById(args.rupEntryId.value);
     return item?.totalHours || "0";
   });
 
   const semesterPlannedHours = computed(() => {
-    const item = class9Store.getClass9ById(args.class9Id.value);
+    const item = rupEntryStore.getRupEntryById(args.rupEntryId.value);
     if (!item || !semester.value) return "0";
 
     const semesterNumber = String(semester.value.semesterNumber ?? "");
@@ -167,7 +167,7 @@ export function useEventFormDerived(args: {
 
   const isValid = computed(() => {
     if (!args.semesterId.value) return false;
-    if (!args.class9Id.value) return false;
+    if (!args.rupEntryId.value) return false;
     if (!effectiveStartDate.value || !effectiveEndDate.value) return false;
     if (isSelectedHoursExceeded.value) return false;
     if (slotTimeError.value) return false;

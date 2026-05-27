@@ -27,7 +27,7 @@
         :date-validation-error="dateValidationError"
         :derived-is-valid="isFormValid"
         :temp-event-id="eventId ?? ''"
-        v-model:class9Id="class9Id"
+        v-model:rupEntryId="rupEntryId"
         v-model:useCustomPeriod="useCustomPeriod"
         v-model:startDate="customStartDate"
         v-model:endDate="customEndDate"
@@ -85,7 +85,7 @@ const effectiveTeacherId = computed(() => {
 
 const event = computed(() => calendarStore.getEventById(props.eventId));
 
-const class9Id = ref("");
+const rupEntryId = ref("");
 const useCustomPeriodRaw = ref(false);
 const customStartDate = ref("");
 const customEndDate = ref("");
@@ -119,7 +119,7 @@ const {
   slotTimeError,
   isValid: isFormValid,
 } = useEventFormDerived({
-  class9Id,
+  rupEntryId,
   useCustomPeriod: useCustomPeriodRaw,
   customStartDate,
   customEndDate,
@@ -145,7 +145,7 @@ const useCustomPeriod = computed({
 function loadEventData() {
   if (!event.value) return;
 
-  class9Id.value = event.value.class9Id;
+  rupEntryId.value = event.value.rupEntryId;
   useCustomPeriodRaw.value = event.value.useCustomPeriod || false;
   customStartDate.value = event.value.startDate || "";
   customEndDate.value = event.value.endDate || "";
@@ -185,7 +185,7 @@ const handleUpdateEvent = async () => {
     }
 
     const updateData = {
-      class9Id: class9Id.value,
+      rupEntryId: rupEntryId.value,
       teacherId: effectiveTeacherId.value,
       startDate: effectiveStartDate.value,
       endDate: effectiveEndDate.value,
@@ -229,7 +229,7 @@ const onPopupClosed = () => {
 const hasUnsavedChanges = () => {
   if (!dataLoaded.value || !event.value) return false;
   return (
-    class9Id.value !== event.value.class9Id ||
+    rupEntryId.value !== event.value.rupEntryId ||
     eventColor.value !== (event.value.color || "#3F51B5") ||
     participants.value.length !== event.value.participants.length ||
     JSON.stringify(selectedWeekDays.value) !== JSON.stringify(event.value.weeklySchedules?.map((ws) => ({

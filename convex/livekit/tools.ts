@@ -236,13 +236,13 @@ export function createMarsTools(
         const journals = (await ctx.runQuery(api.journals.queries.getByStudentId, {
           studentId,
         })) as Doc<'journals'>[];
-        // Resolve disciplineId → moduleName from class9Items so AI never shows raw UUIDs
+        // Resolve disciplineId → moduleName from rupEntries so AI never shows raw UUIDs
         return Promise.all(
           journals.map(async (j) => {
             let disciplineName: string | null = null;
             if (j.disciplineId) {
-              const item = await ctx.runQuery(api.class9Items.queries.getById, {
-                id: j.disciplineId as Id<'class9Items'>,
+              const item = await ctx.runQuery(api.rupEntries.queries.getById, {
+                id: j.disciplineId as Id<'rupEntries'>,
               });
               disciplineName = item?.moduleName ?? null;
             }

@@ -1,13 +1,13 @@
 <template>
   <GuardedPopover
     v-slot="{ requestClose }"
-    id="class9-popover"
+    id="rup-entry-popover"
     positioning="center"
     :arrow="false"
     style="width: calc(100vw - 400px) !important"
     :on-closed="handlePopoverClosed"
   >
-    <div class="course-popover bg-card text-card-foreground">
+    <div class="rup-entry-popover bg-card text-card-foreground">
       <div class="fixed-header">
         <PopoverHeader
           title="Создать"
@@ -47,12 +47,12 @@
                 </div>
               </div>
             </div>
-            <div v-else class="border-t border-border">
+            <div v-else>
               <button
-                class="flex items-center justify-center w-full py-2 px-4 bg-destructive/10 hover:bg-destructive/20 rounded-lg text-destructive transition-colors"
+                class="flex items-center gap-2 px-6 py-2 rounded-lg bg-red-50 text-red-500 font-medium hover:bg-red-100 transition-colors"
                 @click="showDeleteConfirmation"
               >
-                <IconTrash class="w-[18px] h-[18px] mr-2" />
+                <IconTrash class="w-[18px] h-[18px]" />
                 Удалить
               </button>
             </div>
@@ -65,7 +65,7 @@
       </div>
 
       <div class="scrollable-content">
-        <div class="p-4">
+        <div class="max-w-5xl mx-auto space-y-4 pb-60 p-4">
           <template
             v-for="(stepData, index) in steps"
             :key="index"
@@ -99,7 +99,9 @@
                   type="button"
                   @click="toggleLanguage(lang.code)"
                   class="language-chip"
-                  :class="{ 'language-chip-active': selectedLanguages.includes(lang.code) }"
+                  :class="[
+                    selectedLanguages.includes(lang.code) ? 'language-chip-active language-chip-' + lang.code : ''
+                  ]"
                 >
                   <span>{{ lang.name }}</span>
                   <IconCircleCheck
@@ -110,15 +112,25 @@
               </div>
             </div>
 
+            <!-- Section divider -->
+            <div v-if="index === 0" class="border-b border-gray-100 mb-6"></div>
+
             <!-- Language sections for each selected language -->
             <div class="space-y-6">
               <div
                 v-for="lang in selectedLanguages"
                 :key="lang"
-                class="bg-muted/50 border border-border rounded-lg p-4"
+                class="p-4 bg-gray-50 rounded-xl border border-gray-100"
               >
                 <div class="flex items-center gap-2 mb-4">
-                  <div class="w-2 h-2 rounded-full bg-primary"></div>
+                  <div
+                    class="w-2 h-2 rounded-full"
+                    :class="{
+                      'bg-yellow-500': lang === 'kk',
+                      'bg-gray-900': lang === 'ru',
+                      'bg-purple-500': lang === 'en',
+                    }"
+                  ></div>
                   <span class="text-sm font-bold uppercase">{{ getLanguageName(lang) }}</span>
                 </div>
 
@@ -153,7 +165,7 @@
               </div>
             </div>
 
-            <div class="mt-6 grid grid-cols-2 gap-4">
+            <div class="mt-6 pt-4 border-t border-gray-100 grid grid-cols-2 gap-x-8 gap-y-4">
                 <Input
                   :id="'total-credits-' + index"
                   v-model="stepData.totalCredits"
@@ -268,7 +280,7 @@
                 </Input>
               </div>
 
-              <div class="mt-6">
+              <div class="mt-6 pt-4 border-t border-gray-100">
                 <div class="flex items-center justify-between mb-2">
                   <div class="text-sm font-semibold text-gray-900">
                     Распределение по курсам и семестрам
@@ -394,6 +406,7 @@
       <PopoverFooter
         :on-save="submit"
         :disabled="!isFormValid"
+        saveVariant="success"
       />
     </div>
   </GuardedPopover>
@@ -407,7 +420,7 @@ import IconGlobe from "~icons/lucide/globe";
 import IconCircleCheck from "~icons/lucide/circle-check";
 import IconArrowDown from "~icons/lucide/arrow-down";
 import IconPlus from "~icons/lucide/plus";
-import { useClass9Store } from "@/stores/class9Store";
+import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
@@ -437,7 +450,7 @@ const props = defineProps<{
   editMode?: boolean;
 }>();
 
-const class9Store = useClass9Store();
+const rupEntryStore = useRupEntryStore();
 const academicYearStore = useAcademicYearStore();
 const semesterStore = useSemesterStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
@@ -447,7 +460,7 @@ const scheduledFinalControlStore = useScheduledFinalControlStore();
 const finalControlStore = useFinalControlStore();
 
 function createEmptyStep() {
-  return class9Store.createEmptyClass9Data(
+  return rupEntryStore.createEmptyRupEntry(
     props.academicYearId,
     props.specialtyIds || [],
     props.baseClass ?? 9,
@@ -528,7 +541,7 @@ watch(
     if (edit && val) {
       // Check if this item is part of a language group
       if (val.groupId) {
-        const variants = class9Store.getGroupedVariants(val.groupId);
+        const variants = rupEntryStore.getGroupedVariants(val.groupId);
         if (variants.length > 0) {
           const langs = variants.map((v: any) => v.language || "ru");
           selectedLanguages.value = [...new Set(langs)];
@@ -644,7 +657,7 @@ const distributionEntrySchema = z.object({
   controlLessonEnabled: z.boolean().optional(),
 });
 
-const class9Schema = z.object({
+const rupEntrySchema = z.object({
   moduleIndex: z.string().min(1, "Индекс модуля обязателен"),
   moduleName: z.string().min(1, "Наименование модуля обязательно"),
   learningOutcome: z
@@ -718,7 +731,7 @@ const validationResult = computed(() => {
   if (!step)
     return { success: false, error: { issues: [{ message: "Нет данных" }] } };
   const texts = languageTexts.value[activeLanguageTab.value] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
-  return class9Schema.safeParse({
+  return rupEntrySchema.safeParse({
     moduleIndex: texts.moduleIndex,
     moduleName: texts.moduleName,
     learningOutcome: texts.learningOutcome,
@@ -795,7 +808,7 @@ function handlePopoverClosed() {
 }
 
 function closeProgrammatically() {
-  f7.popover.close("#class9-popover", true, "programmatic");
+  f7.popover.close("#rup-entry-popover", true, "programmatic");
 }
 
 async function submit() {
@@ -821,7 +834,7 @@ async function submit() {
 
         if (variantId) {
           // Update existing variant
-          await class9Store.updateClass9(variantId, {
+          await rupEntryStore.updateRupEntry(variantId, {
             ...step,
             specialtyIds: selectedSpecialtyIds.value,
             baseClass,
@@ -833,7 +846,7 @@ async function submit() {
         } else {
           // New language added during edit - create new variant with same groupId
           const existingGroupId = props.initialData.groupId || crypto.randomUUID();
-          await class9Store.addClass9(
+          await rupEntryStore.addRupEntry(
             props.academicYearId,
             selectedSpecialtyIds.value,
             {
@@ -852,7 +865,7 @@ async function submit() {
       // Delete removed language variants
       for (const [lang, variantId] of Object.entries(editVariantIds.value)) {
         if (!selectedLanguages.value.includes(lang)) {
-          await class9Store.deleteClass9(variantId);
+          await rupEntryStore.deleteRupEntry(variantId);
         }
       }
     } else {
@@ -863,7 +876,7 @@ async function submit() {
         if (selectedLanguages.value.length === 1) {
           const lang = selectedLanguages.value[0];
           const texts = languageTexts.value[lang] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
-          await class9Store.addClass9(
+          await rupEntryStore.addRupEntry(
             props.academicYearId,
             selectedSpecialtyIds.value,
             {
@@ -880,7 +893,7 @@ async function submit() {
           // Multiple languages - create all variants
           for (const lang of selectedLanguages.value) {
             const texts = languageTexts.value[lang] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
-            await class9Store.addClass9(
+            await rupEntryStore.addRupEntry(
               props.academicYearId,
               selectedSpecialtyIds.value,
               {
@@ -899,7 +912,7 @@ async function submit() {
     }
     emit("submit");
   } catch (error) {
-    console.error("Failed to save class9 data:", error);
+    console.error("Failed to save rupEntry data:", error);
   }
 }
 
@@ -1001,7 +1014,7 @@ function showDeleteConfirmation() {
   if (!props.initialData || !props.initialData.id) return;
 
   const hasGroup = props.initialData.groupId &&
-    class9Store.getGroupedVariants(props.initialData.groupId).length > 1;
+    rupEntryStore.getGroupedVariants(props.initialData.groupId).length > 1;
 
   if (hasGroup) {
     f7.dialog.create({
@@ -1014,7 +1027,7 @@ function showDeleteConfirmation() {
           close: true,
           onClick: async () => {
             try {
-              await class9Store.deleteClass9(props.initialData.id);
+              await rupEntryStore.deleteRupEntry(props.initialData.id);
               closeProgrammatically();
               emit("submit");
             } catch (error) {
@@ -1028,7 +1041,7 @@ function showDeleteConfirmation() {
           cssClass: "text-destructive",
           onClick: async () => {
             try {
-              await class9Store.deleteClass9Group(props.initialData.groupId);
+              await rupEntryStore.deleteRupEntryGroup(props.initialData.groupId);
               closeProgrammatically();
               emit("submit");
             } catch (error) {
@@ -1044,7 +1057,7 @@ function showDeleteConfirmation() {
       "Удаление записи",
       async () => {
         try {
-          await class9Store.deleteClass9(props.initialData.id);
+          await rupEntryStore.deleteRupEntry(props.initialData.id);
           closeProgrammatically();
           emit("submit");
         } catch (error) {
@@ -1086,7 +1099,7 @@ function showDeleteConfirmation() {
 </style>
 
 <style scoped>
-.course-popover {
+.rup-entry-popover {
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -1289,5 +1302,36 @@ function showDeleteConfirmation() {
 
 .language-chip-active:hover {
   background-color: var(--f7-theme-color-shade);
+}
+
+/* Per-language active chip colors */
+.language-chip-kk.language-chip-active {
+  background-color: #eab308;
+  border-color: #eab308;
+  box-shadow: 0 2px 8px rgba(234, 179, 8, 0.3);
+}
+
+.language-chip-kk.language-chip-active:hover {
+  background-color: #ca8a04;
+}
+
+.language-chip-ru.language-chip-active {
+  background-color: #111827;
+  border-color: #111827;
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.3);
+}
+
+.language-chip-ru.language-chip-active:hover {
+  background-color: #1f2937;
+}
+
+.language-chip-en.language-chip-active {
+  background-color: #a855f7;
+  border-color: #a855f7;
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3);
+}
+
+.language-chip-en.language-chip-active:hover {
+  background-color: #9333ea;
 }
 </style>

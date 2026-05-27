@@ -16,7 +16,7 @@ import { useTeacherStore } from "@/stores/teacherStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
-import { useClass9Store } from "@/stores/class9Store";
+import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useJournalStore } from "@/stores/journalStore";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
@@ -63,7 +63,7 @@ export function useJournalExportImport(
   const specialtyStore = useSpecialtyStore();
   const academicYearStore = useAcademicYearStore();
   const academicYearSemesterStore = useAcademicYearSemesterStore();
-  const class9Store = useClass9Store();
+  const rupEntryStore = useRupEntryStore();
   const journalStore = useJournalStore();
   const calendarStore = useCalendarStore();
   const selectedItemsStore = useSelectedItemsStore();
@@ -135,7 +135,7 @@ export function useJournalExportImport(
         students: studentStoreStudents.value,
         academicYear,
         selectedAcademicYearId: academicYearId,
-        class9Items: class9Store.class9Items,
+        rupEntries: rupEntryStore.rupEntries,
         academicYearSemesters: semesters,
         scheduledFinalControls:
           scheduledFinalControlStore.scheduledFinalControls,

@@ -20,10 +20,10 @@
         <Select
           label="Результат обучения/дисциплина"
           placeholder="Выберите результат обучения/дисциплину"
-          v-model="class9Id"
-          :options="filteredClass9Options"
-          name="ktp-item-class9"
-          id="ktp-item-class9"
+          v-model="rupEntryId"
+          :options="filteredRupEntryOptions"
+          name="ktp-item-rupEntry"
+          id="ktp-item-rupEntry"
           searchable
           @before-open="closeKtpItemPopover"
           @after-close="openKtpItemPopover"
@@ -32,8 +32,8 @@
 
       <PopoverFooter
         :on-save="handleSave"
-        :disabled="!isFormValid || class9Store.loading"
-        :is-loading="class9Store.loading"
+        :disabled="!isFormValid || rupEntryStore.loading"
+        :is-loading="rupEntryStore.loading"
       />
     </div>
   </GuardedPopover>
@@ -43,7 +43,7 @@
 import { ref, computed, watch } from "vue";
 import { f7Popover, f7 } from "framework7-vue";
 import { storeToRefs } from "pinia";
-import { useClass9Store } from "@/stores/class9Store";
+import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useKtpStore } from "@/stores/ktpStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
@@ -58,25 +58,25 @@ const props = defineProps<{
 
 const emit = defineEmits(["update:opened"]);
 
-const class9Store = useClass9Store();
+const rupEntryStore = useRupEntryStore();
 const ktpStore = useKtpStore();
-const { class9Options } = storeToRefs(class9Store);
+const { rupEntryOptions } = storeToRefs(rupEntryStore);
 const formError = ref("");
 
-const class9Id = ref("");
+const rupEntryId = ref("");
 
-// Create filtered class9Options based on selected academic year and semester from props
-const filteredClass9Options = computed(() => {
+// Create filtered rupEntryOptions based on selected academic year and semester from props
+const filteredRupEntryOptions = computed(() => {
   if (!props.selectedAcademicYearId || !props.selectedSemesterId) {
-    return class9Options.value;
+    return rupEntryOptions.value;
   }
 
-  return class9Options.value.filter((option) => {
-    const class9Item = class9Store.getClass9ById(option.value);
-    if (!class9Item) return false;
+  return rupEntryOptions.value.filter((option) => {
+    const rupEntryItem = rupEntryStore.getRupEntryById(option.value);
+    if (!rupEntryItem) return false;
 
-    // Check if class9Item has distributionEntries with matching academicYearId and semesterId
-    return class9Item.distributionEntries.some(
+    // Check if rupEntryItem has distributionEntries with matching academicYearId and semesterId
+    return rupEntryItem.distributionEntries.some(
       (entry) =>
         entry.academicYearId === props.selectedAcademicYearId &&
         entry.semesterId === props.selectedSemesterId
@@ -86,14 +86,14 @@ const filteredClass9Options = computed(() => {
 
 const isFormValid = computed(() => {
   return (
-    !!class9Id.value &&
+    !!rupEntryId.value &&
     !!props.selectedAcademicYearId &&
     !!props.selectedSemesterId
   );
 });
 
 const resetForm = () => {
-  class9Id.value = "";
+  rupEntryId.value = "";
   formError.value = "";
 };
 
@@ -122,14 +122,14 @@ const handleSave = async () => {
   }
 
   try {
-    const selectedItem = class9Store.getClass9ById(class9Id.value);
+    const selectedItem = rupEntryStore.getRupEntryById(rupEntryId.value);
     if (!selectedItem) {
       formError.value = "Выбранный элемент не найден.";
       return;
     }
 
-    const ktp = await ktpStore.ensureKtpForClass9(
-      class9Id.value,
+    const ktp = await ktpStore.ensureKtpForRupEntry(
+      rupEntryId.value,
       props.selectedAcademicYearId,
       props.selectedSemesterId
     );

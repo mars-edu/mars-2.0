@@ -57,7 +57,7 @@ import { ref, watch, toRefs, computed } from "vue";
 import { f7, f7Popover } from "framework7-vue";
 import IconTrash from "~icons/lucide/trash-2";
 import { useKtpStore } from "@/stores/ktpStore";
-import { useClass9Store } from "@/stores/class9Store";
+import { useRupEntryStore } from "@/stores/rupEntryStore";
 import KtpDetailPopupBody from "@/components/KtpDetailPopupBody.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
@@ -79,7 +79,7 @@ const emit = defineEmits<{
 
 const { ktpId, opened } = toRefs(props);
 const ktpStore = useKtpStore();
-const class9Store = useClass9Store();
+const rupEntryStore = useRupEntryStore();
 const { loading } = storeToRefs(ktpStore);
 const { deleteKtpById } = ktpStore;
 const popupBodyRef = ref<InstanceType<typeof KtpDetailPopupBody> | null>(null);
@@ -91,10 +91,10 @@ const computedModuleTitle = computed(() => {
   const ktpItem = ktpStore.ktps.find((ktp: any) => ktp.id === ktpId.value);
   if (!ktpItem) return "Рабочие учебные программы";
 
-  const class9Item = class9Store.getClass9ById(ktpItem.class9Id);
-  if (!class9Item) return "Рабочие учебные программы";
+  const rupEntryItem = rupEntryStore.getRupEntryById(ktpItem.rupEntryId);
+  if (!rupEntryItem) return "Рабочие учебные программы";
 
-  return `${class9Item.moduleIndex} - ${class9Item.moduleName}`;
+  return `${rupEntryItem.moduleIndex} - ${rupEntryItem.moduleName}`;
 });
 
 // Use prop moduleTitle if provided, otherwise use computed value

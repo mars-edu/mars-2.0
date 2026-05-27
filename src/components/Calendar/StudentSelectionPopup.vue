@@ -96,7 +96,7 @@
                   .map((s: any) => `${s.id}:${s.semesterNumber}`)
                   .join(", ")
               }}
-              | class9Id: {{ class9Id }} | allowIds:
+              | rupEntryId: {{ rupEntryId }} | allowIds:
               {{ (allowedSpecialtyIds || []).join(", ") }} | allowCodes:
               {{ (allowedSpecialtyCodes || []).join(", ") }} | students:
               {{ students.length }} | filtered: {{ filteredStudents.length }}
@@ -190,13 +190,13 @@ import { useLanguageStore } from "@/stores/languageStore";
 import { useBaseStore } from "@/stores/baseStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSemesterStore } from "@/stores/semesterStore";
-import { useClass9Store } from "@/stores/class9Store";
+import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 
 const props = defineProps<{
   selectedStudents: string[];
-  class9Id?: string;
+  rupEntryId?: string;
 }>();
 
 const emit = defineEmits<{
@@ -208,7 +208,7 @@ const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
 const baseStore = useBaseStore();
-const class9Store = useClass9Store();
+const rupEntryStore = useRupEntryStore();
 const courseStore = useCourseStore();
 const semesterStore = useSemesterStore();
 const academicYearStore = useAcademicYearStore();
@@ -263,8 +263,8 @@ const allowedSpecialtyCodes = computed<string[]>(() => {
 const debugText = computed(() => {
   const activeAY = getActiveAcademicYear.value;
   const activeSems = getActiveAcademicYearSemesters.value;
-  const selected = props.class9Id
-    ? class9Store.getClass9ById(props.class9Id)
+  const selected = props.rupEntryId
+    ? rupEntryStore.getRupEntryById(props.rupEntryId)
     : null;
 
   const withCourse = students.value.map((s) => ({
@@ -329,8 +329,8 @@ const debugText = computed(() => {
   );
   const baseSetAll = Array.from(new Set(withCourse.map((s) => s.base)));
 
-  // Class9 distribution with resolved semester numbers
-  const class9Entries = (selected?.distributionEntries || []).map((e) => {
+  // RupEntry distribution with resolved semester numbers
+  const rupEntryDistEntries = (selected?.distributionEntries || []).map((e) => {
     const sem = academicYearSemesterStore.getAcademicYearSemesterById(
       e.semesterId
     );
@@ -367,11 +367,11 @@ const debugText = computed(() => {
     `ActiveSemesters: ${activeSems
       .map((s: any) => `${s.id}:${s.semesterNumber}`)
       .join(", ")}`,
-    `SelectedClass9Id: ${props.class9Id || "N/A"}`,
-    `SelectedClass9.distEntries: ${
+    `SelectedRupEntryId: ${props.rupEntryId || "N/A"}`,
+    `SelectedRupEntry.distEntries: ${
       selected ? selected.distributionEntries.length : 0
     }`,
-    `SelectedClass9.entries: ${JSON.stringify(class9Entries)}`,
+    `SelectedRupEntry.entries: ${JSON.stringify(rupEntryDistEntries)}`,
     `AllowedSpecialtyIds: ${(allowedSpecialtyIds.value || []).join(", ")}`,
     `AllowedSpecialtyCodes: ${(allowedSpecialtyCodes.value || []).join(", ")}`,
     `Filters: { language: ${filters.language}, specialty: ${filters.specialty}, course: ${filters.course}, gender: ${filters.gender}, searchTerm: ${filters.searchTerm} }`,
@@ -449,16 +449,16 @@ const courseOptions = computed(() =>
 const genderOptions = computed(() => getGenderOptions());
 
 const allowedSpecialtyIds = computed(() => {
-  if (!props.class9Id) return [];
-  // Get the selected class9 item from the store
-  const selectedClass9 = class9Store.getClass9ById(props.class9Id);
-  return selectedClass9?.specialtyIds || [];
+  if (!props.rupEntryId) return [];
+  // Get the selected rupEntry item from the store
+  const selectedRupEntry = rupEntryStore.getRupEntryById(props.rupEntryId);
+  return selectedRupEntry?.specialtyIds || [];
 });
 
 const allowedAcademicYearId = computed<string | undefined>(() => {
-  if (!props.class9Id) return undefined;
-  const selectedClass9 = class9Store.getClass9ById(props.class9Id);
-  return selectedClass9?.academicYearId;
+  if (!props.rupEntryId) return undefined;
+  const selectedRupEntry = rupEntryStore.getRupEntryById(props.rupEntryId);
+  return selectedRupEntry?.academicYearId;
 });
 
 const filteredStudentsInfo = computed(() => {

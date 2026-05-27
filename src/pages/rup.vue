@@ -179,7 +179,7 @@
 
                   <AddWorkingPlanDialog
                     :disabled="!(selectedAcademicYear && selectedSpecialtyId)"
-                    @add="addClass9"
+                    @add="addRupEntry"
                   />
                 </div>
               </template>
@@ -203,14 +203,14 @@
               </div>
               <div v-else class="space-y-3 min-w-0">
                 <div>
-                  <Class9Table
-                    ref="class9TableRef"
+                  <RupEntryTable
+                    ref="rupEntryTableRef"
                     :specialty-ids="[selectedSpecialtyId]"
                     :academic-year-id="selectedAcademicYear"
                     :teacher-id="effectiveTeacherId"
                     :select-mode="isSelectMode"
                     :base-class="selectedClassLevel"
-                    @duplicate-item="handleDuplicateClass9Item"
+                    @duplicate-item="handleDuplicateRupEntryItem"
                   />
                 </div>
               </div>
@@ -263,7 +263,7 @@ import IconArrowUp from "~icons/lucide/arrow-up";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddWorkingPlanDialog from "@/components/AddWorkingPlanDialog.vue";
-import Class9Table from "@/components/Class9Table.vue";
+import RupEntryTable from "@/components/RupEntryTable.vue";
 import { useSpecialtyStore, type Specialty } from "@/stores/specialtyStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import Accordion from "@/components/ui/accordion/Accordion.vue";
@@ -272,7 +272,7 @@ import Select from "@/components/ui/Select.vue";
 import { storeToRefs } from "pinia";
 import ImportWorkingPlanDialog from "@/components/ImportWorkingPlanDialog.vue";
 import { useRupStore } from "@/stores/rupStore";
-import { useClass9Store, type Class9Data } from "@/stores/class9Store";
+import { useRupEntryStore, type RupEntry } from "@/stores/rupEntryStore";
 import { useUserStore } from "@/stores/userStore";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useSidebar } from "@/composables/useSidebar";
@@ -329,7 +329,7 @@ const academicYearStore = useAcademicYearStore();
 const userStore = useUserStore();
 const teacherStore = useTeacherStore();
 
-const class9TableRef = ref<InstanceType<typeof Class9Table> | null>(null);
+const rupEntryTableRef = ref<InstanceType<typeof RupEntryTable> | null>(null);
 
 const { specialties } = storeToRefs(specialtyStore);
 const { academicYearOptions, getActiveAcademicYear } =
@@ -344,7 +344,7 @@ const selectedAcademicYear = computed({
 const selectedClassLevel = ref<9 | 11>(9);
 
 const rupStore = useRupStore();
-const class9Store = useClass9Store();
+const rupEntryStore = useRupEntryStore();
 
 const isSelectMode = ref(false);
 
@@ -360,7 +360,7 @@ const onPopoverClosed = () => {
 };
 
 const enableSelectMode = () => {
-  rupStore.setItemsForImport(class9Store.getAllClass9Items);
+  rupStore.setItemsForImport(rupEntryStore.getAllRupEntryItems);
   rupStore.setTargetContext(
     rupStore.selectedSpecialtyId,
     rupStore.selectedAcademicYearId
@@ -372,12 +372,12 @@ const enableSelectMode = () => {
 const cancelSelectMode = () => {
   isSelectMode.value = false;
   rupStore.clearTargetContext();
-  rupStore.clearClass9Selection();
+  rupStore.clearRupEntrySelection();
   rupStore.clearItemsForImport();
 };
 
-const handleDuplicateClass9Item = (item: Class9Data) => {
-  class9Store.duplicateClass9Item(item);
+const handleDuplicateRupEntryItem = (item: RupEntry) => {
+  rupEntryStore.duplicateRupEntryItem(item);
   f7.toast
     .create({
       text: rup_module_duplicated(),
@@ -389,7 +389,7 @@ const handleDuplicateClass9Item = (item: Class9Data) => {
 };
 
 const handleImport = () => {
-  const selectedIds = rupStore.selectedClass9ItemIds;
+  const selectedIds = rupStore.selectedRupEntryItemIds;
   if (selectedIds.length === 0) {
     f7.dialog.alert(rup_import_nothing(), rup_import_nothing_title());
     return;
@@ -417,7 +417,7 @@ const handleImport = () => {
     updatedAt: new Date(),
   }));
 
-  class9Store.addClass9Items(newItems);
+  rupEntryStore.addRupEntryItems(newItems);
 
   cancelSelectMode();
   f7.dialog.alert(
@@ -426,9 +426,9 @@ const handleImport = () => {
   );
 };
 
-const addClass9 = () => {
-  if (class9TableRef.value) {
-    class9TableRef.value.openAddPopup();
+const addRupEntry = () => {
+  if (rupEntryTableRef.value) {
+    rupEntryTableRef.value.openAddPopup();
   }
 };
 

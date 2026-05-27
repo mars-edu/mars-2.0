@@ -186,12 +186,12 @@ export const listProtocolWithRoleAccessInternal = internalQuery({
       }
     }
 
-    const [allTeachers, allClass9Items] = await Promise.all([
+    const [allTeachers, allRupEntries] = await Promise.all([
       ctx.db.query("teachers").collect(),
-      ctx.db.query("class9Items").collect(),
+      ctx.db.query("rupEntries").collect(),
     ]);
     const teacherMap = new Map(allTeachers.map((t) => [t._id as string, t]));
-    const class9Map = new Map(allClass9Items.map((c) => [c._id, c]));
+    const rupEntryMap = new Map(allRupEntries.map((c) => [c._id, c]));
 
     const enriched = await Promise.all(
       substitutions.map(async (sub) => {
@@ -199,8 +199,8 @@ export const listProtocolWithRoleAccessInternal = internalQuery({
 
         let disciplineName = "Неизвестная дисциплина";
         if (journal && "disciplineId" in journal && journal.disciplineId) {
-          const class9Item = class9Map.get(journal.disciplineId as any);
-          if (class9Item) disciplineName = class9Item.learningOutcome;
+          const rupEntry = rupEntryMap.get(journal.disciplineId as any);
+          if (rupEntry) disciplineName = rupEntry.learningOutcome;
         }
 
         return {

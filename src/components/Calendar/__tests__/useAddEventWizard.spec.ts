@@ -4,7 +4,7 @@ import type { WeekDaySchedule } from "../useEventFormDerived";
 
 describe("useAddEventWizard", () => {
   function setup(overrides?: {
-    class9Id?: string;
+    rupEntryId?: string;
     color?: string;
     participants?: string[];
     selectedWeekDays?: WeekDaySchedule[];
@@ -15,7 +15,7 @@ describe("useAddEventWizard", () => {
     programReady?: boolean;
     step5Valid?: boolean;
   }) {
-    const class9Id = ref(overrides?.class9Id ?? "");
+    const rupEntryId = ref(overrides?.rupEntryId ?? "");
     const color = ref(overrides?.color ?? "#3F51B5");
     const participants = ref(overrides?.participants ?? []);
     const selectedWeekDays = ref<WeekDaySchedule[]>(
@@ -29,7 +29,7 @@ describe("useAddEventWizard", () => {
     const step5Valid = ref(overrides?.step5Valid ?? true);
 
     const wizard = useAddEventWizard({
-      class9Id,
+      rupEntryId,
       color,
       participants,
       selectedWeekDays,
@@ -42,7 +42,7 @@ describe("useAddEventWizard", () => {
     });
 
     return {
-      class9Id,
+      rupEntryId,
       color,
       participants,
       selectedWeekDays,
@@ -57,7 +57,7 @@ describe("useAddEventWizard", () => {
   }
 
   it("enforces step-by-step progression", () => {
-    const { class9Id, participants, selectedWeekDays, programReady, wizard } = setup();
+    const { rupEntryId, participants, selectedWeekDays, programReady, wizard } = setup();
 
     expect(wizard.currentStep.value).toBe(1);
     expect(wizard.isCurrentStepValid.value).toBe(false);
@@ -65,7 +65,7 @@ describe("useAddEventWizard", () => {
     wizard.nextStep();
     expect(wizard.currentStep.value).toBe(1);
 
-    class9Id.value = "class9-id";
+    rupEntryId.value = "rup-entry-id";
     expect(wizard.isStep1Valid.value).toBe(true);
 
     wizard.nextStep();
@@ -96,9 +96,9 @@ describe("useAddEventWizard", () => {
   });
 
   it("requires at least one fully configured weekday on step 2", () => {
-    const { class9Id, selectedWeekDays, wizard } = setup();
+    const { rupEntryId, selectedWeekDays, wizard } = setup();
 
-    class9Id.value = "class9-id";
+    rupEntryId.value = "rup-entry-id";
     wizard.nextStep();
 
     selectedWeekDays.value = [];
@@ -116,9 +116,9 @@ describe("useAddEventWizard", () => {
   });
 
   it("blocks step 2 when date or hours validations fail", () => {
-    const { class9Id, selectedWeekDays, dateError, hoursError, wizard } = setup();
+    const { rupEntryId, selectedWeekDays, dateError, hoursError, wizard } = setup();
 
-    class9Id.value = "class9-id";
+    rupEntryId.value = "rup-entry-id";
     wizard.nextStep();
 
     selectedWeekDays.value = [
@@ -135,9 +135,9 @@ describe("useAddEventWizard", () => {
   });
 
   it("resets back to first step", () => {
-    const { class9Id, selectedWeekDays, wizard } = setup();
+    const { rupEntryId, selectedWeekDays, wizard } = setup();
 
-    class9Id.value = "class9-id";
+    rupEntryId.value = "rup-entry-id";
     wizard.nextStep();
 
     selectedWeekDays.value = [

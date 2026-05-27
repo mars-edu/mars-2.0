@@ -10,7 +10,7 @@ export interface IndividualJournalDraft {
 }
 
 export interface AddWizardDraft {
-  class9Id: string;
+  rupEntryId: string;
   useCustomPeriod: boolean;
   startDate: string;
   endDate: string;
@@ -39,7 +39,7 @@ const DEFAULT_COLOR = "#3F51B5";
 
 export function createEmptyAddWizardDraft(): AddWizardDraft {
   return {
-    class9Id: "",
+    rupEntryId: "",
     useCustomPeriod: false,
     startDate: "",
     endDate: "",
@@ -89,7 +89,7 @@ export function serializeAddWizardDraft(draft: AddWizardDraft): string {
 type MaybeComputed<T> = Ref<T> | ComputedRef<T>;
 
 interface UseAddEventWizardOptions {
-  class9Id: MaybeComputed<string>;
+  rupEntryId: MaybeComputed<string>;
   color: MaybeComputed<string>;
   participants: MaybeComputed<string[]>;
   selectedWeekDays: MaybeComputed<WeekDaySchedule[]>;
@@ -106,7 +106,7 @@ export function useAddEventWizard(options: UseAddEventWizardOptions) {
   const currentStep = ref<AddWizardStep>(1);
 
   const isStep1Valid = computed(
-    () => !!options.class9Id.value && !!options.color.value
+    () => !!options.rupEntryId.value && !!options.color.value
   );
 
   const isScheduleComplete = computed(() => {

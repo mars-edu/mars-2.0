@@ -17,7 +17,7 @@ export interface DistributionEntry {
   controlLessonEnabled?: boolean;
 }
 
-export interface Class9Data {
+export interface RupEntry {
   id: string;
   specialtyIds: string[]; // Changed from specialtyId to specialtyIds array
   academicYearId: string;
@@ -43,23 +43,23 @@ export interface Class9Data {
   updatedAt: Date;
 }
 
-export const useClass9Store = defineStore(
-  "class9",
+export const useRupEntryStore = defineStore(
+  "rupEntryStore",
   () => {
     const loading = ref(false);
     const error = ref<string | null>(null);
 
     // Reactive Convex query for real-time sync
-    const { data: convexClass9Items } = useConvexQuery(
-      api.class9Items.queries.list,
+    const { data: convexRupEntries } = useConvexQuery(
+      api.rupEntries.queries.list,
       ref({})
     );
 
-    // Transform Convex data to our Class9Data format
-    const class9Items = computed(() => {
-      if (!convexClass9Items.value) return [];
+    // Transform Convex data to our RupEntry format
+    const rupEntries = computed(() => {
+      if (!convexRupEntries.value) return [];
 
-      return convexClass9Items.value.map((item: any) => ({
+      return convexRupEntries.value.map((item: any) => ({
         id: item._id,
         specialtyIds: item.specialtyIds,
         academicYearId: item.academicYearId,
@@ -100,18 +100,18 @@ export const useClass9Store = defineStore(
       }));
     });
 
-    const getClass9ById = computed(() => {
-      return (id: string) => class9Items.value.find((c) => c.id === id);
+    const getRupEntryById = computed(() => {
+      return (id: string) => rupEntries.value.find((c) => c.id === id);
     });
 
     const getGroupedVariants = computed(() => {
       return (groupId: string) =>
-        class9Items.value.filter((c) => c.groupId === groupId);
+        rupEntries.value.filter((c) => c.groupId === groupId);
     });
 
-    const getClass9ItemsByContext = computed(() => {
+    const getRupEntriesByContext = computed(() => {
       return (academicYearId: string, specialtyIds?: string[], baseClass?: number) =>
-        class9Items.value
+        rupEntries.value
           .filter(
             (c) =>
               c.academicYearId === academicYearId &&
@@ -126,7 +126,7 @@ export const useClass9Store = defineStore(
     const getAllModulesAndOutcomes = computed(() => {
       // Group modules by their display text to avoid duplicates
       const moduleMap = new Map();
-      class9Items.value
+      rupEntries.value
         .filter(
           (item) => item.learningOutcome && item.learningOutcome.trim() !== ""
         )
@@ -149,7 +149,7 @@ export const useClass9Store = defineStore(
         string,
         Array<{ value: string; text: string }>
       > = {};
-      class9Items.value
+      rupEntries.value
         .filter(
           (item) => item.learningOutcome && item.learningOutcome.trim() !== ""
         )
@@ -165,7 +165,7 @@ export const useClass9Store = defineStore(
         });
 
       // Get all outcomes (unfiltered list)
-      const allOutcomes = class9Items.value
+      const allOutcomes = rupEntries.value
         .filter(
           (item) => item.learningOutcome && item.learningOutcome.trim() !== ""
         )
@@ -182,13 +182,13 @@ export const useClass9Store = defineStore(
       };
     });
 
-    const getAllClass9Items = computed(() => class9Items.value);
+    const getAllRupEntries = computed(() => rupEntries.value);
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
-    const class9Options = computed(() => {
+    const rupEntryOptions = computed(() => {
       const academicYearStore = useAcademicYearStore();
-      return class9Items.value
+      return rupEntries.value
         .filter(
           (item) => item.learningOutcome && item.learningOutcome.trim() !== ""
         )
@@ -205,12 +205,12 @@ export const useClass9Store = defineStore(
         });
     });
 
-    function createEmptyClass9Data(
+    function createEmptyRupEntry(
       academicYearId: string,
       specialtyIds: string[] = [],
       baseClass: number = 9,
       language: string = ""
-    ): Class9Data {
+    ): RupEntry {
       return {
         id: crypto.randomUUID(),
         specialtyIds,
@@ -238,12 +238,12 @@ export const useClass9Store = defineStore(
       };
     }
 
-    async function addClass9(
+    async function addRupEntry(
       academicYearId: string,
       specialtyIds: string[],
       data?: Partial<
         Omit<
-          Class9Data,
+          RupEntry,
           "id" | "createdAt" | "updatedAt" | "specialtyIds" | "academicYearId"
         >
       >
@@ -251,8 +251,8 @@ export const useClass9Store = defineStore(
       loading.value = true;
       try {
         // Use Convex - create parent item
-        const contextItems = getClass9ItemsByContext.value(academicYearId, specialtyIds);
-        const id = await convex.mutation(api.class9Items.mutations.create, {
+        const contextItems = getRupEntriesByContext.value(academicYearId, specialtyIds);
+        const id = await convex.mutation(api.rupEntries.mutations.create, {
           specialtyIds,
           academicYearId,
           baseClass: data?.baseClass ?? [9],
@@ -277,8 +277,8 @@ export const useClass9Store = defineStore(
         // Create nested distribution entries if provided
         if (data?.distributionEntries && data.distributionEntries.length > 0) {
           for (const dist of data.distributionEntries) {
-            await convex.mutation(api.class9Items.mutations.addDistribution, {
-              class9ItemId: id,
+            await convex.mutation(api.rupEntries.mutations.addDistribution, {
+              rupEntryId: id,
               academicYearId: dist.academicYearId,
               semesterId: dist.semesterId,
               hours: dist.hours,
@@ -291,25 +291,25 @@ export const useClass9Store = defineStore(
           }
         }
 
-        // The reactive query will automatically update class9Items
+        // The reactive query will automatically update rupEntries
         error.value = null;
         return id;
       } catch (err) {
         error.value =
-          err instanceof Error ? err.message : "Failed to add class9 data";
+          err instanceof Error ? err.message : "Failed to add RUP entry";
         throw err;
       } finally {
         loading.value = false;
       }
     }
 
-    async function linkExistingClass9(
+    async function linkExistingRupEntry(
       academicYearId: string,
       specialtyIds: string[],
       existingItemId: string,
       customData?: Partial<
         Pick<
-          Class9Data,
+          RupEntry,
           | "totalHours"
           | "theoreticalHours"
           | "labPracticalHours"
@@ -323,18 +323,18 @@ export const useClass9Store = defineStore(
     ) {
       loading.value = true;
       try {
-        const existingItem = getClass9ById.value(existingItemId);
+        const existingItem = getRupEntryById.value(existingItemId);
         if (!existingItem) {
           throw new Error("Existing item not found");
         }
 
         // Create a new item in Convex based on the existing one
-        const contextItems = getClass9ItemsByContext.value(
+        const contextItems = getRupEntriesByContext.value(
           academicYearId,
           specialtyIds
         );
 
-        const id = await convex.mutation(api.class9Items.mutations.create, {
+        const id = await convex.mutation(api.rupEntries.mutations.create, {
           specialtyIds,
           academicYearId,
           baseClass: existingItem.baseClass ?? [9],
@@ -359,24 +359,24 @@ export const useClass9Store = defineStore(
           position: contextItems.length,
         });
 
-        // The reactive query will automatically update class9Items
+        // The reactive query will automatically update rupEntries
         error.value = null;
         return id;
       } catch (err) {
         error.value =
-          err instanceof Error ? err.message : "Failed to link class9 data";
+          err instanceof Error ? err.message : "Failed to link RUP entry";
         throw err;
       } finally {
         loading.value = false;
       }
     }
 
-    async function addClass9Items(items: Class9Data[]) {
+    async function addRupEntries(items: RupEntry[]) {
       loading.value = true;
       try {
         // Create all items in Convex
         for (const item of items) {
-          await convex.mutation(api.class9Items.mutations.create, {
+          await convex.mutation(api.rupEntries.mutations.create, {
             specialtyIds: item.specialtyIds,
             academicYearId: item.academicYearId,
             baseClass: item.baseClass ?? [9],
@@ -399,25 +399,25 @@ export const useClass9Store = defineStore(
           });
         }
 
-        // The reactive query will automatically update class9Items
+        // The reactive query will automatically update rupEntries
         error.value = null;
       } catch (err) {
         error.value =
-          err instanceof Error ? err.message : "Failed to add class9 items";
+          err instanceof Error ? err.message : "Failed to add RUP entries";
         throw err;
       } finally {
         loading.value = false;
       }
     }
 
-    async function updateClass9(
+    async function updateRupEntry(
       id: string,
-      data: Partial<Omit<Class9Data, "id" | "createdAt" | "updatedAt">>
+      data: Partial<Omit<RupEntry, "id" | "createdAt" | "updatedAt">>
     ) {
       loading.value = true;
       try {
         // Use Convex - update parent item with distribution entries
-        const updated = await convex.mutation(api.class9Items.mutations.updateWithDistributions, {
+        const updated = await convex.mutation(api.rupEntries.mutations.updateWithDistributions, {
           id: id as any,
           specialtyIds: data.specialtyIds,
           academicYearId: data.academicYearId,
@@ -451,42 +451,42 @@ export const useClass9Store = defineStore(
           })),
         });
 
-        // The reactive query will automatically update class9Items with fresh data
+        // The reactive query will automatically update rupEntries with fresh data
         error.value = null;
         return updated;
       } catch (err) {
         error.value =
-          err instanceof Error ? err.message : "Failed to update class9 data";
+          err instanceof Error ? err.message : "Failed to update RUP entry";
         throw err;
       } finally {
         loading.value = false;
       }
     }
 
-    function updateClass9Order(
+    function updateRupEntryOrder(
       academicYearId: string,
       specialtyIds: string[],
       oldIndex: number,
       newIndex: number
     ) {
-      const contextItems = getClass9ItemsByContext.value(
+      const contextItems = getRupEntriesByContext.value(
         academicYearId,
         specialtyIds
       );
       const [movedItem] = contextItems.splice(oldIndex, 1);
       contextItems.splice(newIndex, 0, movedItem);
       contextItems.forEach((item, index) => {
-        const originalItem = class9Items.value.find((i) => i.id === item.id);
+        const originalItem = rupEntries.value.find((i) => i.id === item.id);
         if (originalItem) {
           originalItem.position = index;
         }
       });
     }
 
-    async function duplicateClass9Item(itemToDuplicate: Class9Data) {
+    async function duplicateRupEntry(itemToDuplicate: RupEntry) {
       loading.value = true;
       try {
-        const originalItem = class9Items.value.find(
+        const originalItem = rupEntries.value.find(
           (item) => item.id === itemToDuplicate.id
         );
         if (!originalItem) {
@@ -497,7 +497,7 @@ export const useClass9Store = defineStore(
         const insertionPosition = originalItem.position + 1;
 
         // Update positions of items that come after
-        const itemsInContext = class9Items.value.filter(
+        const itemsInContext = rupEntries.value.filter(
           (c) =>
             c.academicYearId === itemToDuplicate.academicYearId &&
             c.specialtyIds.some((sid: string) => itemToDuplicate.specialtyIds.includes(sid)) &&
@@ -506,7 +506,7 @@ export const useClass9Store = defineStore(
 
         // Update positions in Convex
         for (const item of itemsInContext) {
-          await convex.mutation(api.class9Items.mutations.update, {
+          await convex.mutation(api.rupEntries.mutations.update, {
             id: item.id as any,
             specialtyIds: item.specialtyIds,
             academicYearId: item.academicYearId,
@@ -528,7 +528,7 @@ export const useClass9Store = defineStore(
         }
 
         // Create the duplicated item in Convex
-        const id = await convex.mutation(api.class9Items.mutations.create, {
+        const id = await convex.mutation(api.rupEntries.mutations.create, {
           specialtyIds: itemToDuplicate.specialtyIds,
           academicYearId: itemToDuplicate.academicYearId,
           baseClass: itemToDuplicate.baseClass ?? [9],
@@ -552,8 +552,8 @@ export const useClass9Store = defineStore(
 
         // Duplicate distribution entries
         for (const dist of itemToDuplicate.distributionEntries) {
-          await convex.mutation(api.class9Items.mutations.addDistribution, {
-            class9ItemId: id,
+          await convex.mutation(api.rupEntries.mutations.addDistribution, {
+            rupEntryId: id,
             academicYearId: dist.academicYearId,
             semesterId: dist.semesterId,
             hours: dist.hours,
@@ -565,25 +565,25 @@ export const useClass9Store = defineStore(
           });
         }
 
-        // The reactive query will automatically update class9Items
+        // The reactive query will automatically update rupEntries
         error.value = null;
         return id;
       } catch (err) {
         error.value =
-          err instanceof Error ? err.message : "Failed to duplicate class9 item";
+          err instanceof Error ? err.message : "Failed to duplicate RUP entry";
         throw err;
       } finally {
         loading.value = false;
       }
     }
 
-    async function addClass9MultiLanguage(
+    async function addRupEntryMultiLanguage(
       academicYearId: string,
       specialtyIds: string[],
       languages: string[],
       data?: Partial<
         Omit<
-          Class9Data,
+          RupEntry,
           "id" | "createdAt" | "updatedAt" | "specialtyIds" | "academicYearId" | "language" | "groupId"
         >
       >
@@ -591,11 +591,11 @@ export const useClass9Store = defineStore(
       loading.value = true;
       try {
         const groupId = crypto.randomUUID();
-        const contextItems = getClass9ItemsByContext.value(academicYearId, specialtyIds);
+        const contextItems = getRupEntriesByContext.value(academicYearId, specialtyIds);
         const ids: string[] = [];
 
         for (let i = 0; i < languages.length; i++) {
-          const id = await convex.mutation(api.class9Items.mutations.create, {
+          const id = await convex.mutation(api.rupEntries.mutations.create, {
             specialtyIds,
             academicYearId,
             baseClass: data?.baseClass ?? [9],
@@ -623,45 +623,45 @@ export const useClass9Store = defineStore(
         return { groupId, ids };
       } catch (err) {
         error.value =
-          err instanceof Error ? err.message : "Failed to add multi-language class9 data";
+          err instanceof Error ? err.message : "Failed to add multi-language RUP entry";
         throw err;
       } finally {
         loading.value = false;
       }
     }
 
-    async function deleteClass9Group(groupId: string) {
+    async function deleteRupEntryGroup(groupId: string) {
       loading.value = true;
       try {
-        const itemsInGroup = class9Items.value.filter(
+        const itemsInGroup = rupEntries.value.filter(
           (c) => c.groupId === groupId
         );
         for (const item of itemsInGroup) {
-          await convex.mutation(api.class9Items.mutations.remove, {
+          await convex.mutation(api.rupEntries.mutations.remove, {
             id: item.id as any,
           });
         }
         error.value = null;
       } catch (err) {
         error.value =
-          err instanceof Error ? err.message : "Failed to delete class9 group";
+          err instanceof Error ? err.message : "Failed to delete RUP entry group";
         throw err;
       } finally {
         loading.value = false;
       }
     }
 
-    async function deleteClass9(id: string) {
+    async function deleteRupEntry(id: string) {
       loading.value = true;
       try {
         // Use Convex - cascade delete handled by mutation
-        await convex.mutation(api.class9Items.mutations.remove, {
+        await convex.mutation(api.rupEntries.mutations.remove, {
           id: id as any,
         });
         error.value = null;
       } catch (err) {
         error.value =
-          err instanceof Error ? err.message : "Failed to delete class9 data";
+          err instanceof Error ? err.message : "Failed to delete RUP entry";
         throw err;
       } finally {
         loading.value = false;
@@ -673,34 +673,34 @@ export const useClass9Store = defineStore(
     }
 
     function reset() {
-      // Note: class9Items is now a computed property, so we can't reset it directly
+      // Note: rupEntries is now a computed property, so we can't reset it directly
       // The data will automatically sync from Convex
       loading.value = false;
       error.value = null;
     }
 
     return {
-      class9Items,
+      rupEntries,
       loading,
       error,
-      getClass9ById,
+      getRupEntryById,
       getGroupedVariants,
-      getClass9ItemsByContext,
-      getAllClass9Items,
+      getRupEntriesByContext,
+      getAllRupEntries,
       getAllModulesAndOutcomes,
-      class9Options,
+      rupEntryOptions,
       isLoading,
       getError,
-      createEmptyClass9Data,
-      addClass9,
-      linkExistingClass9,
-      addClass9Items,
-      updateClass9,
-      updateClass9Order,
-      duplicateClass9Item,
-      addClass9MultiLanguage,
-      deleteClass9Group,
-      deleteClass9,
+      createEmptyRupEntry,
+      addRupEntry,
+      linkExistingRupEntry,
+      addRupEntries,
+      updateRupEntry,
+      updateRupEntryOrder,
+      duplicateRupEntry,
+      addRupEntryMultiLanguage,
+      deleteRupEntryGroup,
+      deleteRupEntry,
       clearError,
       reset,
     };

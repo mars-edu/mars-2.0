@@ -143,7 +143,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { f7, f7Popover, f7Button, f7Radio, f7Preloader } from "framework7-vue";
-import { useClass9Store, type Class9Data } from "@/stores/class9Store";
+import { useRupEntryStore, type RupEntry } from "@/stores/rupEntryStore";
 import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
@@ -163,12 +163,12 @@ const emit = defineEmits<{
   (e: "imported", count: number): void;
 }>();
 
-const class9Store = useClass9Store();
+const rupEntryStore = useRupEntryStore();
 const ktpStore = useKtpStore();
 const courseStore = useCourseStore();
 const academicYearStore = useAcademicYearStore();
 const semesterStore = useSemesterStore();
-const { getAllClass9Items: allRups, isLoading } = storeToRefs(class9Store);
+const { getAllRupEntryItems: allRups, isLoading } = storeToRefs(rupEntryStore);
 const { academicYears } = storeToRefs(academicYearStore);
 const { semesters } = storeToRefs(semesterStore);
 
@@ -214,7 +214,7 @@ const availableRups = computed(() => {
   }
 
   // Note: Semester filtering would require additional data structure
-  // For now, we'll keep it as placeholder since Class9Data doesn't have semester info
+  // For now, we'll keep it as placeholder since RupEntry doesn't have semester info
 
   return filtered;
 });
@@ -222,8 +222,8 @@ const availableRups = computed(() => {
 // Get themes for the selected RUP
 const selectedRupThemes = computed(() => {
   if (!selectedRupId.value) return [];
-  // Use direct KTP ID method instead of class9-based method
-  const ktp = ktpStore.findKtpByClass9Id(selectedRupId.value, selectedAcademicYear.value, selectedSemester.value);
+  // Use direct KTP ID method instead of rupEntry-based method
+  const ktp = ktpStore.findKtpByRupEntryId(selectedRupId.value, selectedAcademicYear.value, selectedSemester.value);
   return ktp ? ktpStore.getDetailsByKtpId(ktp.id) : [];
 });
 
@@ -233,8 +233,8 @@ const getCourseNumber = (courseId: string) => {
 };
 
 const getThemeCount = (rupId: string) => {
-  // Use direct KTP ID method instead of class9-based method
-  const ktp = ktpStore.findKtpByClass9Id(rupId, selectedAcademicYear.value, selectedSemester.value);
+  // Use direct KTP ID method instead of rupEntry-based method
+  const ktp = ktpStore.findKtpByRupEntryId(rupId, selectedAcademicYear.value, selectedSemester.value);
   return ktp ? ktpStore.getDetailsByKtpId(ktp.id).length : 0;
 };
 
