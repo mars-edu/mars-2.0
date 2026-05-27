@@ -311,6 +311,7 @@
   "journal_filter_course_4": "4 Курс",
   "journal_filter_mixed": "Аралас",
   "journal_filter_individual": "Жеке",
+  "journal_merge_ineligible_tooltip": "Бір карточкаға 4 адамға дейінгі журналдарды қосуға болады",
   "journal_action_close": "Жабу",
   "journal_action_open": "Ашу",
   "journal_action_replace": "Ауыстыру",

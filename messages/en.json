@@ -311,6 +311,7 @@
   "journal_filter_course_4": "Year 4",
   "journal_filter_mixed": "Mixed",
   "journal_filter_individual": "Individual",
+  "journal_merge_ineligible_tooltip": "You can add journals with up to 4 students to a single card",
   "journal_action_close": "Close",
   "journal_action_open": "Open",
   "journal_action_replace": "Replace",
