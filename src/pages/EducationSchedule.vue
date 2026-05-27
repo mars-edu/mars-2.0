@@ -212,36 +212,43 @@
                   :icon="IconClock"
                 />
               </div>
-              <div v-else class="space-y-3">
+              <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 <div
                   v-for="schedule in schedules"
                   :key="schedule.id"
-                  class="flex items-center justify-between p-4 bg-muted/20 border border-border rounded-xl hover:bg-card hover:shadow-sm transition-all group cursor-pointer"
+                  class="relative group p-4 bg-muted/20 border border-border rounded-xl hover:bg-card hover:shadow-sm transition-all cursor-pointer"
                   :id="`schedule-item-${schedule.id}`"
                   @click.stop="openEditSchedule(schedule)"
                 >
-                  <div class="flex items-center gap-3">
-                    <span class="text-sm font-bold text-foreground">
-                      {{ schedule.lessonNumber }}. {{ schedule.startTime }} - {{ schedule.endTime }}
-                    </span>
-                  </div>
-                  <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      class="p-1.5 text-muted-foreground hover:text-primary transition-colors"
-                      @click.stop="openEditSchedule(schedule)"
-                      aria-label="Edit Schedule"
-                      type="button"
-                    >
-                      <IconPencil class="w-[16px] h-[16px]" />
-                    </button>
-                    <button
-                      class="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
-                      @click.stop="deleteSchedule(schedule)"
-                      aria-label="Delete Schedule"
-                      type="button"
-                    >
-                      <IconTrash class="w-[16px] h-[16px]" />
-                    </button>
+                  <div class="flex flex-col gap-1">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-bold text-foreground">
+                        Урок {{ schedule.lessonNumber }}
+                      </span>
+                      <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          class="p-1 text-muted-foreground hover:text-primary transition-colors"
+                          @click.stop="openEditSchedule(schedule)"
+                          aria-label="Edit Schedule"
+                          type="button"
+                        >
+                          <IconPencil class="w-[14px] h-[14px]" />
+                        </button>
+                        <button
+                          class="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                          @click.stop="deleteSchedule(schedule)"
+                          aria-label="Delete Schedule"
+                          type="button"
+                        >
+                          <IconTrash class="w-[14px] h-[14px]" />
+                        </button>
+                      </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-1">
+                      <span class="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
+                        {{ schedule.startTime }} - {{ schedule.endTime }}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <EditEducationScheduleButton
