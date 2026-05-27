@@ -144,6 +144,11 @@ export const useJournalStore = defineStore(
           return;
         }
 
+        // Skip unmerged individual journals (they belong strictly in the Individual tab)
+        if (actualEvent.isIndividualJournal && (!actualEvent.mergedJournalIds || actualEvent.mergedJournalIds.length === 0)) {
+          return;
+        }
+
         // Only process events WITH participants
         if (
           !actualEvent.participants ||
@@ -197,6 +202,11 @@ export const useJournalStore = defineStore(
           return;
         }
 
+        // Skip unmerged individual journals (they belong strictly in the Individual tab)
+        if (actualEvent.isIndividualJournal && (!actualEvent.mergedJournalIds || actualEvent.mergedJournalIds.length === 0)) {
+          return;
+        }
+
         if (!actualEvent.participants || actualEvent.participants.length === 0)
           return;
 
@@ -232,6 +242,9 @@ export const useJournalStore = defineStore(
 
         // Only include events marked as individual journals
         if (!actualEvent.isIndividualJournal) return;
+
+        // Skip joined/merged individual journals (they should appear in Mixed or Course tabs)
+        if (actualEvent.mergedJournalIds && actualEvent.mergedJournalIds.length > 0) return;
 
         if (!actualEvent.participants || actualEvent.participants.length === 0)
           return;
