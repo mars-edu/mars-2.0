@@ -174,13 +174,13 @@
                     </div>
                     <div class="relative w-full sm:w-72">
                       <IconSearch
-                        class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
+                        class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 w-[18px] h-[18px]"
                       />
                       <input
                         v-model="participantsSearch"
                         type="text"
                         :placeholder="journal_participants_search()"
-                        class="w-full pl-9 pr-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground"
+                        class="student-search-input w-full pl-10 pr-4 py-2 rounded-lg text-sm text-foreground transition-all"
                       />
                     </div>
                   </div>
@@ -1219,5 +1219,26 @@ const debugInfo = computed(() => {
 
 .page-content {
   padding: 0;
+}
+
+.student-search-input {
+  background-color: rgb(243, 244, 246) !important;
+  border: 1px solid rgb(229, 231, 235) !important;
+  color: hsl(var(--foreground)) !important;
+  outline: none !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  padding: 0.5rem 1rem 0.5rem 2.5rem !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+  border-radius: 0.5rem !important;
+  width: 100% !important;
+}
+.student-search-input::placeholder {
+  color: rgb(156, 163, 175) !important;
+}
+.student-search-input:focus {
+  background-color: rgb(255, 255, 255) !important;
+  border-color: rgb(209, 213, 219) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08) !important;
 }
 </style>
