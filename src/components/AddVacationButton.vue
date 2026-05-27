@@ -59,26 +59,18 @@
               <label class="text-sm text-foreground" for="vacation-start-date">
                 Дата начала <span class="text-destructive ml-1">*</span>
               </label>
-              <f7-input
-                id="vacation-start-date"
-                type="datepicker"
-                placeholder="Дата"
-                readonly
+              <DateInput
                 v-model:value="startDate"
-                :calendar-params="DATE_PICKER_PARAMS"
+                placeholder="Дата"
               />
             </div>
             <div class="space-y-2">
               <label class="text-sm text-foreground" for="vacation-end-date">
                 Дата окончания <span class="text-destructive ml-1">*</span>
               </label>
-              <f7-input
-                id="vacation-end-date"
-                type="datepicker"
-                placeholder="Дата"
-                readonly
+              <DateInput
                 v-model:value="endDate"
-                :calendar-params="DATE_PICKER_PARAMS"
+                placeholder="Дата"
               />
             </div>
           </div>
@@ -106,9 +98,7 @@ import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
-import { getDatePickerParams } from "@/constants/calendar";
-
-const DATE_PICKER_PARAMS = getDatePickerParams();
+import DateInput from "@/components/ui/DateInput.vue";
 
 const props = defineProps<{ prefix?: string }>();
 

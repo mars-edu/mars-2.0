@@ -26,23 +26,17 @@
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="text-sm font-normal mb-1 block text-muted-foreground">Дата с</label>
-            <f7-input
-              type="datepicker"
-              placeholder="дд.мм.гггг"
+            <DateInput
               v-model:value="localData.startDate"
-              readonly
-              :calendar-params="DATE_PICKER_PARAMS"
-            ></f7-input>
+              placeholder="дд.мм.гггг"
+            />
           </div>
           <div>
             <label class="text-sm font-normal mb-1 block text-muted-foreground">Дата по</label>
-            <f7-input
-              type="datepicker"
-              placeholder="дд.мм.гггг"
+            <DateInput
               v-model:value="localData.endDate"
-              readonly
-              :calendar-params="DATE_PICKER_PARAMS"
-            ></f7-input>
+              placeholder="дд.мм.гггг"
+            />
           </div>
         </div>
 
@@ -98,19 +92,17 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-import { f7Input } from "framework7-vue";
 import dayjs from "dayjs";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import Select from "@/components/ui/Select.vue";
 import Switch from "@/components/ui/Switch.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
+import DateInput from "@/components/ui/DateInput.vue";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
-import { getDatePickerParams, DATE_STORAGE_FORMAT } from "@/constants/calendar";
+import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { storeToRefs } from "pinia";
-
-const DATE_PICKER_PARAMS = getDatePickerParams();
 
 export interface ReplaceJournalData {
   teacherId: string;
@@ -256,49 +248,4 @@ const onSave = () => {
   overflow-y: auto;
 }
 
-/* Strip F7 block margin/padding so datepickers align with other fields */
-:deep(.block) {
-  padding-left: 0;
-  padding-right: 0;
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-/* Datepicker input styling */
-:deep(.datepicker-input input) {
-  width: 100%;
-  padding: 0.625rem 0.75rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  background-color: hsl(var(--background));
-  border: 1px solid hsl(var(--input));
-  border-radius: 0.5rem;
-  color: hsl(var(--foreground));
-  transition: all 0.2s ease;
-}
-
-:deep(.datepicker-input input:focus) {
-  outline: none;
-  border-color: hsl(var(--primary));
-  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
-}
-
-:deep(.datepicker-input input::placeholder) {
-  color: hsl(var(--muted-foreground));
-}
-
-:deep(.datepicker-input .list) {
-  margin: 0;
-  padding: 0;
-}
-
-:deep(.datepicker-input .item-content) {
-  padding: 0;
-  min-height: auto;
-}
-
-:deep(.datepicker-input .item-inner) {
-  padding: 0;
-  border: none;
-}
 </style>

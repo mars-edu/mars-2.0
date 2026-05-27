@@ -56,13 +56,9 @@
               >
                 Дата начала <span class="text-destructive ml-1">*</span>
               </label>
-              <f7-input
-                id="vacation-start-date-edit"
-                type="datepicker"
-                placeholder="Дата"
-                readonly
+              <DateInput
                 v-model:value="startDate"
-                :calendar-params="DATE_PICKER_PARAMS"
+                placeholder="Дата"
               />
             </div>
             <div class="space-y-2">
@@ -72,13 +68,9 @@
               >
                 Дата окончания <span class="text-destructive ml-1">*</span>
               </label>
-              <f7-input
-                id="vacation-end-date-edit"
-                type="datepicker"
-                placeholder="Дата"
-                readonly
+              <DateInput
                 v-model:value="endDate"
-                :calendar-params="DATE_PICKER_PARAMS"
+                placeholder="Дата"
               />
             </div>
           </div>
@@ -102,12 +94,10 @@ import { f7, f7Popover, f7Input } from "framework7-vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
+import DateInput from "@/components/ui/DateInput.vue";
 import { z } from "zod";
 import { useVacationStore } from "@/stores/vacationStore";
 import type { Vacation } from "@/stores/vacationStore";
-import { getDatePickerParams } from "@/constants/calendar";
-
-const DATE_PICKER_PARAMS = getDatePickerParams();
 
 const props = defineProps<{ vacationId: string }>();
 
