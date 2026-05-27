@@ -1,0 +1,40 @@
+{
+  "backend_unknown_teacher": "Неизвестный преподаватель",
+  "backend_unknown_discipline": "Неизвестная дисциплина",
+  "backend_unknown_group": "Неизвестная группа",
+  "backend_unknown_test": "Неизвестный тест",
+  "backend_admin_only": "Только администратор может выполнить это действие",
+  "backend_journal_not_found": "Журнал не найден",
+  "backend_notification_not_found": "Уведомление не найдено",
+
+  "backend_substitution_not_found": "Замена не найдена",
+  "backend_substitution_already_processed": "Эта замена уже обработана",
+  "backend_substitution_request_title": "Запрос замены",
+  "backend_substitution_accepted_title": "Замена одобрена",
+  "backend_substitution_rejected_title": "Замена отклонена",
+  "backend_substitution_cancelled_title": "Замена отменена",
+  "backend_substitution_complete_denied": "Недостаточно прав для завершения замены",
+  "backend_substitution_complete_only_accepted": "Можно завершить только принятую замену",
+  "backend_teacher_changed_title": "Преподаватель изменен",
+
+  "backend_substitution_request_msg": "{fromTeacher} запрашивает замену журнала \"{discipline}\" на {startDate}–{endDate}.",
+  "backend_substitution_accepted_primary": "Администратор одобрил замену журнала \"{discipline}\". Вы назначены основным преподавателем.",
+  "backend_substitution_accepted_temp": "Администратор одобрил замену журнала \"{discipline}\". Вы назначены заместителем с {startDate} по {endDate}.",
+  "backend_substitution_accepted_from_primary": "Основной преподаватель журнала \"{discipline}\" изменён. Новый преподаватель назначен.",
+  "backend_substitution_accepted_from": "Замена журнала \"{discipline}\" одобрена администратором.",
+  "backend_substitution_rejected_msg": "Замена журнала \"{discipline}\" отклонена администратором{reason}",
+  "backend_substitution_cancelled_msg": "Замена журнала \"{discipline}\" отменена администратором{reason}",
+  "backend_substitution_event_teacher_err": "Не удалось определить преподавателя для события {eventId}",
+  "backend_substitution_event_semester_err": "Не удалось определить семестр для события {eventId}",
+  "backend_substitution_journal_create_err": "Не удалось создать журнал для события {eventId}",
+
+  "backend_makeup_request_title": "Запрос на отработку часов",
+  "backend_makeup_request_not_found": "Запрос на отработку не найден",
+  "backend_makeup_already_processed": "Этот запрос уже обработан",
+  "backend_makeup_request_msg": "{teacher} запрашивает отработку часов по дисциплине \"{discipline}\".",
+  "backend_teacher_label": "Преподаватель",
+
+  "backend_journal_close_reminder_title": "Объявление о закрытии журналов",
+  "backend_admin_only_close_reminders": "Только администраторы могут создавать напоминания о закрытии журналов",
+  "backend_admin_only_deactivate": "Только администраторы могут деактивировать напоминания"
+}

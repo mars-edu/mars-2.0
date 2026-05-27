@@ -1,0 +1,40 @@
+{
+  "backend_unknown_teacher": "Белгісіз оқытушы",
+  "backend_unknown_discipline": "Белгісіз пән",
+  "backend_unknown_group": "Белгісіз топ",
+  "backend_unknown_test": "Белгісіз тест",
+  "backend_admin_only": "Бұл әрекетті тек әкімші орындай алады",
+  "backend_journal_not_found": "Журнал табылмады",
+  "backend_notification_not_found": "Хабарлама табылмады",
+
+  "backend_substitution_not_found": "Ауыстыру табылмады",
+  "backend_substitution_already_processed": "Бұл ауыстыру өңделген",
+  "backend_substitution_request_title": "Ауыстыру сұрауы",
+  "backend_substitution_accepted_title": "Ауыстыру мақұлданды",
+  "backend_substitution_rejected_title": "Ауыстыру қабылданбады",
+  "backend_substitution_cancelled_title": "Ауыстыру жойылды",
+  "backend_substitution_complete_denied": "Ауыстыруды аяқтауға құқық жеткіліксіз",
+  "backend_substitution_complete_only_accepted": "Тек қабылданған ауыстыруды аяқтауға болады",
+  "backend_teacher_changed_title": "Оқытушы өзгертілді",
+
+  "backend_substitution_request_msg": "{fromTeacher} \"{discipline}\" журналын ауыстыруды сұрайды {startDate}–{endDate} аралығында.",
+  "backend_substitution_accepted_primary": "Әкімші \"{discipline}\" журналын ауыстыруды мақұлдады. Сіз негізгі оқытушы болып тағайындалдыңыз.",
+  "backend_substitution_accepted_temp": "Әкімші \"{discipline}\" журналын ауыстыруды мақұлдады. Сіз {startDate} – {endDate} аралығында орынбасар болып тағайындалдыңыз.",
+  "backend_substitution_accepted_from_primary": "\"{discipline}\" журналының негізгі оқытушысы өзгертілді. Жаңа оқытушы тағайындалды.",
+  "backend_substitution_accepted_from": "\"{discipline}\" журналын ауыстыру әкімші тарапынан мақұлданды.",
+  "backend_substitution_rejected_msg": "\"{discipline}\" журналын ауыстыру әкімші тарапынан қабылданбады{reason}",
+  "backend_substitution_cancelled_msg": "\"{discipline}\" журналын ауыстыру әкімші тарапынан жойылды{reason}",
+  "backend_substitution_event_teacher_err": "{eventId} оқиғасы үшін оқытушыны анықтау мүмкін болмады",
+  "backend_substitution_event_semester_err": "{eventId} оқиғасы үшін семестрді анықтау мүмкін болмады",
+  "backend_substitution_journal_create_err": "{eventId} оқиғасы үшін журнал жасау мүмкін болмады",
+
+  "backend_makeup_request_title": "Сағаттарды өтеу сұрауы",
+  "backend_makeup_request_not_found": "Өтеу сұрауы табылмады",
+  "backend_makeup_already_processed": "Бұл сұрау өңделген",
+  "backend_makeup_request_msg": "{teacher} \"{discipline}\" пәні бойынша сағаттарды өтеуді сұрайды.",
+  "backend_teacher_label": "Оқытушы",
+
+  "backend_journal_close_reminder_title": "Журналдарды жабу туралы хабарлама",
+  "backend_admin_only_close_reminders": "Тек әкімшілер журналдарды жабу еске салуларын жасай алады",
+  "backend_admin_only_deactivate": "Тек әкімшілер еске салуларды өшіре алады"
+}

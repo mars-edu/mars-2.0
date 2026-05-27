@@ -1,0 +1,40 @@
+{
+  "backend_unknown_teacher": "Unknown teacher",
+  "backend_unknown_discipline": "Unknown discipline",
+  "backend_unknown_group": "Unknown group",
+  "backend_unknown_test": "Unknown test",
+  "backend_admin_only": "Only an administrator can perform this action",
+  "backend_journal_not_found": "Journal not found",
+  "backend_notification_not_found": "Notification not found",
+
+  "backend_substitution_not_found": "Substitution not found",
+  "backend_substitution_already_processed": "This substitution has already been processed",
+  "backend_substitution_request_title": "Substitution request",
+  "backend_substitution_accepted_title": "Substitution approved",
+  "backend_substitution_rejected_title": "Substitution rejected",
+  "backend_substitution_cancelled_title": "Substitution cancelled",
+  "backend_substitution_complete_denied": "Insufficient permissions to complete substitution",
+  "backend_substitution_complete_only_accepted": "Only accepted substitutions can be completed",
+  "backend_teacher_changed_title": "Teacher changed",
+
+  "backend_substitution_request_msg": "{fromTeacher} requests journal substitution \"{discipline}\" for {startDate}–{endDate}.",
+  "backend_substitution_accepted_primary": "Administrator approved journal substitution \"{discipline}\". You have been assigned as the primary teacher.",
+  "backend_substitution_accepted_temp": "Administrator approved journal substitution \"{discipline}\". You are assigned as substitute from {startDate} to {endDate}.",
+  "backend_substitution_accepted_from_primary": "Primary teacher of journal \"{discipline}\" has been changed. A new teacher has been assigned.",
+  "backend_substitution_accepted_from": "Journal substitution \"{discipline}\" has been approved by the administrator.",
+  "backend_substitution_rejected_msg": "Journal substitution \"{discipline}\" has been rejected by the administrator{reason}",
+  "backend_substitution_cancelled_msg": "Journal substitution \"{discipline}\" has been cancelled by the administrator{reason}",
+  "backend_substitution_event_teacher_err": "Could not determine teacher for event {eventId}",
+  "backend_substitution_event_semester_err": "Could not determine semester for event {eventId}",
+  "backend_substitution_journal_create_err": "Could not create journal for event {eventId}",
+
+  "backend_makeup_request_title": "Makeup hours request",
+  "backend_makeup_request_not_found": "Makeup request not found",
+  "backend_makeup_already_processed": "This request has already been processed",
+  "backend_makeup_request_msg": "{teacher} requests makeup hours for discipline \"{discipline}\".",
+  "backend_teacher_label": "Teacher",
+
+  "backend_journal_close_reminder_title": "Journal closing announcement",
+  "backend_admin_only_close_reminders": "Only administrators can create journal closing reminders",
+  "backend_admin_only_deactivate": "Only administrators can deactivate reminders"
+}

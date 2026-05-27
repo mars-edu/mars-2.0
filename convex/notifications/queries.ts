@@ -1,10 +1,11 @@
 import { query } from "../_generated/server";
 import { v } from "convex/values";
+import { m, withI18nQuery } from "../lib/i18n";
 
 /**
  * Get all notifications for a user
  */
-export const getUserNotifications = query({
+export const getUserNotifications = withI18nQuery({
   args: {
     userId: v.id("users"),
     status: v.optional(v.union(
@@ -91,13 +92,13 @@ export const getUnreadCount = query({
 /**
  * Get a single notification by ID
  */
-export const getNotification = query({
+export const getNotification = withI18nQuery({
   args: { notificationId: v.id("notifications") },
   handler: async (ctx, args) => {
     const notification = await ctx.db.get(args.notificationId);
 
     if (!notification) {
-      throw new Error("Уведомление не найдено");
+      throw new Error(m.backend_notification_not_found());
     }
 
     return notification;

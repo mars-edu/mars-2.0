@@ -91,7 +91,7 @@ export default async () => {
         autoInstall: false,
       }),
       paraglideVitePlugin({
-        project: "./project.inlang",
+        project: "./project.frontend.inlang",
         outdir: "./src/paraglide",
       }),
     ],

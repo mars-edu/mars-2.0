@@ -1,6 +1,7 @@
-import { mutation, MutationCtx } from "../_generated/server";
+import { MutationCtx } from "../_generated/server";
 import { v } from "convex/values";
 import { Id } from "../_generated/dataModel";
+import { m, getUserLocale, withI18nMutation, setLocale } from "../lib/i18n";
 
 async function getAdminUsers(ctx: MutationCtx) {
   const allUsers = await ctx.db.query("users").collect();
@@ -10,11 +11,11 @@ async function getAdminUsers(ctx: MutationCtx) {
 async function requireAdmin(ctx: MutationCtx, userId: Id<"users">) {
   const user = await ctx.db.get(userId);
   if (!user || !user.roles.includes("ADMIN")) {
-    throw new Error("Только администратор может выполнить это действие");
+    throw new Error(m.backend_admin_only());
   }
 }
 
-export const createMakeupRequest = mutation({
+export const createMakeupRequest = withI18nMutation({
   args: {
     journalId: v.id("journals"),
     teacherId: v.string(),
@@ -33,14 +34,14 @@ export const createMakeupRequest = mutation({
     const now = Date.now();
 
     const journal = await ctx.db.get(args.journalId);
-    if (!journal) throw new Error("Журнал не найден");
+    if (!journal) throw new Error(m.backend_journal_not_found());
 
     const class9Item =
       journal.disciplineId
         ? await ctx.db.get(journal.disciplineId as Id<"class9Items">)
         : null;
     const journalSnapshot = {
-      disciplineName: class9Item?.learningOutcome ?? "Неизвестная дисциплина",
+      disciplineName: class9Item?.learningOutcome ?? m.backend_unknown_discipline(),
       groupName: journal.groupName,
     };
 
@@ -62,15 +63,17 @@ export const createMakeupRequest = mutation({
     );
     const teacherName = teacherRecord
       ? `${teacherRecord.surname} ${teacherRecord.firstName} ${teacherRecord.patronymic}`.trim()
-      : "Преподаватель";
+      : m.backend_teacher_label();
 
     for (const admin of adminUsers) {
+      const locale = await getUserLocale(ctx, admin._id);
+      setLocale(locale);
       await ctx.db.insert("notifications", {
         userId: admin._id,
         type: "substitution",
         status: "unread",
-        title: "Запрос на отработку часов",
-        message: `${teacherName} запрашивает отработку часов по дисциплине "${journalSnapshot.disciplineName}".`,
+        title: m.backend_makeup_request_title(),
+        message: m.backend_makeup_request_msg({ teacher: teacherName, discipline: journalSnapshot.disciplineName }),
         metadata: { journalId: args.journalId },
         createdAt: now,
       });
@@ -80,7 +83,7 @@ export const createMakeupRequest = mutation({
   },
 });
 
-export const acceptMakeupRequest = mutation({
+export const acceptMakeupRequest = withI18nMutation({
   args: {
     makeupRequestId: v.id("makeupRequests"),
     userId: v.id("users"),
@@ -88,12 +91,12 @@ export const acceptMakeupRequest = mutation({
   handler: async (ctx, args) => {
     const now = Date.now();
     const request = await ctx.db.get(args.makeupRequestId);
-    if (!request) throw new Error("Запрос на отработку не найден");
+    if (!request) throw new Error(m.backend_makeup_request_not_found());
 
     await requireAdmin(ctx, args.userId);
 
     if (request.status !== "pending") {
-      throw new Error("Этот запрос уже обработан");
+      throw new Error(m.backend_makeup_already_processed());
     }
 
     await ctx.db.patch(args.makeupRequestId, {
@@ -105,7 +108,7 @@ export const acceptMakeupRequest = mutation({
   },
 });
 
-export const rejectMakeupRequest = mutation({
+export const rejectMakeupRequest = withI18nMutation({
   args: {
     makeupRequestId: v.id("makeupRequests"),
     userId: v.id("users"),
@@ -114,12 +117,12 @@ export const rejectMakeupRequest = mutation({
   handler: async (ctx, args) => {
     const now = Date.now();
     const request = await ctx.db.get(args.makeupRequestId);
-    if (!request) throw new Error("Запрос на отработку не найден");
+    if (!request) throw new Error(m.backend_makeup_request_not_found());
 
     await requireAdmin(ctx, args.userId);
 
     if (request.status !== "pending") {
-      throw new Error("Этот запрос уже обработан");
+      throw new Error(m.backend_makeup_already_processed());
     }
 
     await ctx.db.patch(args.makeupRequestId, {

@@ -145,3 +145,24 @@ export const updateProfile = mutation({
     };
   },
 });
+
+/**
+ * Sync user's locale preference from the frontend
+ */
+export const updateLocale = mutation({
+  args: {
+    userId: v.id("users"),
+    locale: v.union(v.literal("ru"), v.literal("kk"), v.literal("en")),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) throw new Error("User not found");
+
+    await ctx.db.patch(args.userId, {
+      locale: args.locale,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});

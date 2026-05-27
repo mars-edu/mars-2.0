@@ -1,10 +1,10 @@
-import { mutation } from "../_generated/server";
 import { v } from "convex/values";
+import { m, getUserLocale, withI18nMutation, setLocale } from "../lib/i18n";
 
 /**
  * Create a notification for a user
  */
-export const createNotification = mutation({
+export const createNotification = withI18nMutation({
   args: {
     userId: v.id("users"),
     type: v.union(
@@ -40,7 +40,7 @@ export const createNotification = mutation({
 /**
  * Mark a notification as read
  */
-export const markAsRead = mutation({
+export const markAsRead = withI18nMutation({
   args: {
     notificationId: v.id("notifications"),
   },
@@ -48,7 +48,7 @@ export const markAsRead = mutation({
     const notification = await ctx.db.get(args.notificationId);
 
     if (!notification) {
-      throw new Error("Уведомление не найдено");
+      throw new Error(m.backend_notification_not_found());
     }
 
     await ctx.db.patch(args.notificationId, {
@@ -63,7 +63,7 @@ export const markAsRead = mutation({
 /**
  * Mark multiple notifications as read
  */
-export const markMultipleAsRead = mutation({
+export const markMultipleAsRead = withI18nMutation({
   args: {
     notificationIds: v.array(v.id("notifications")),
   },
@@ -86,7 +86,7 @@ export const markMultipleAsRead = mutation({
 /**
  * Mark all notifications as read for a user
  */
-export const markAllAsRead = mutation({
+export const markAllAsRead = withI18nMutation({
   args: {
     userId: v.id("users"),
   },
@@ -116,7 +116,7 @@ export const markAllAsRead = mutation({
 /**
  * Archive a notification
  */
-export const archiveNotification = mutation({
+export const archiveNotification = withI18nMutation({
   args: {
     notificationId: v.id("notifications"),
   },
@@ -132,7 +132,7 @@ export const archiveNotification = mutation({
 /**
  * Delete a notification
  */
-export const deleteNotification = mutation({
+export const deleteNotification = withI18nMutation({
   args: {
     notificationId: v.id("notifications"),
   },
@@ -146,7 +146,7 @@ export const deleteNotification = mutation({
 /**
  * Create a journal closure reminder (admin only)
  */
-export const createJournalClosureReminder = mutation({
+export const createJournalClosureReminder = withI18nMutation({
   args: {
     academicYearId: v.string(),
     semesterId: v.optional(v.id("academicYearSemesters")),
@@ -158,7 +158,7 @@ export const createJournalClosureReminder = mutation({
     // Verify creator is admin
     const creator = await ctx.db.get(args.createdBy);
     if (!creator || !creator.roles.includes("ADMIN")) {
-      throw new Error("Только администраторы могут создавать напоминания о закрытии журналов");
+      throw new Error(m.backend_admin_only_close_reminders());
     }
 
     // Deactivate existing reminders for this academic year/semester
@@ -188,25 +188,25 @@ export const createJournalClosureReminder = mutation({
       updatedAt: Date.now(),
     });
 
-    // Create notifications for all teachers
+    // Create notifications for all teachers — each in their own locale
     const teachers = await ctx.db.query("teachers").collect();
     const teachersWithUsers = teachers.filter((t) => t.userId);
 
-    await Promise.all(
-      teachersWithUsers.map((teacher) =>
-        ctx.db.insert("notifications", {
-          userId: teacher.userId!,
-          type: "journal_closure",
-          status: "unread",
-          title: "Объявление о закрытии журналов",
-          message: args.message,
-          metadata: {
-            deadline: args.deadline,
-          },
-          createdAt: Date.now(),
-        })
-      )
-    );
+    for (const teacher of teachersWithUsers) {
+      const locale = await getUserLocale(ctx, teacher.userId!);
+      setLocale(locale);
+      await ctx.db.insert("notifications", {
+        userId: teacher.userId!,
+        type: "journal_closure",
+        status: "unread",
+        title: m.backend_journal_close_reminder_title(),
+        message: args.message,
+        metadata: {
+          deadline: args.deadline,
+        },
+        createdAt: Date.now(),
+      });
+    }
 
     return reminderId;
   },
@@ -215,7 +215,7 @@ export const createJournalClosureReminder = mutation({
 /**
  * Deactivate a journal closure reminder
  */
-export const deactivateJournalClosureReminder = mutation({
+export const deactivateJournalClosureReminder = withI18nMutation({
   args: {
     reminderId: v.id("journalClosureReminders"),
     userId: v.id("users"),
@@ -224,7 +224,7 @@ export const deactivateJournalClosureReminder = mutation({
     // Verify user is admin
     const user = await ctx.db.get(args.userId);
     if (!user || !user.roles.includes("ADMIN")) {
-      throw new Error("Только администраторы могут деактивировать напоминания");
+      throw new Error(m.backend_admin_only_deactivate());
     }
 
     await ctx.db.patch(args.reminderId, {

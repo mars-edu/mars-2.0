@@ -32,6 +32,7 @@ export default defineSchema({
     ),
     avatar: v.optional(v.string()), // Profile picture URL or storage ID
     theme: v.optional(v.union(v.literal("light"), v.literal("dark"), v.literal("lavanda"), v.literal("coral"), v.literal("graphite"))), // User theme preference
+    locale: v.optional(v.union(v.literal("ru"), v.literal("kk"), v.literal("en"))),
     phone: v.optional(v.string()),
     office: v.optional(v.string()),
     department: v.optional(v.string()),
@@ -803,6 +804,25 @@ export default defineSchema({
     .index("by_toUser", ["toUserId"])
     .index("by_toUser_status", ["toUserId", "status"])
     .index("by_status", ["status"])
+    .index("by_createdAt", ["createdAt"]),
+
+  /**
+   * Teacher change history - audit trail for when a calendar event's primary teacher is changed
+   * Triggered when a substitution with isPrimary=true is accepted
+   */
+  teacherChangeHistory: defineTable({
+    calendarEventId: v.id("calendarEvents"),
+    journalId: v.optional(v.id("journals")),
+    substitutionId: v.optional(v.id("substitutions")),
+    fromTeacherId: v.string(), // Previous primary teacher
+    toTeacherId: v.string(), // New primary teacher
+    fromTeacherName: v.optional(v.string()), // Snapshot of previous teacher name
+    toTeacherName: v.optional(v.string()), // Snapshot of new teacher name
+    reason: v.optional(v.string()),
+    changedBy: v.id("users"), // Admin who approved the change
+    createdAt: v.number(),
+  })
+    .index("by_calendarEvent", ["calendarEventId"])
     .index("by_createdAt", ["createdAt"]),
 
   /**
