@@ -751,6 +751,7 @@ export default defineSchema({
     startTime: v.optional(v.string()), // Optional time restriction start (HH:mm)
     endTime: v.optional(v.string()), // Optional time restriction end (HH:mm)
     isPrimary: v.optional(v.boolean()), // Whether substitute becomes primary teacher
+    // Keep in sync with src/constants/substitution.ts
     status: v.union(
       v.literal("pending"), // Awaiting admin approval
       v.literal("accepted"), // Admin approved

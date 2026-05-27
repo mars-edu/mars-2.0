@@ -3,8 +3,9 @@ import { computed, ref, watch } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import type { SubstitutionStatus } from "@/constants/substitution";
 
-export type SubstitutionStatus = "pending" | "accepted" | "rejected" | "completed" | "cancelled";
+export type { SubstitutionStatus };
 
 export interface EnrichedSubstitution {
   _id: Id<"substitutions">;

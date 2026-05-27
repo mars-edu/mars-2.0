@@ -4,6 +4,8 @@ import { useUserStore } from "./userStore";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import type { SubstitutionStatus } from "@/constants/substitution";
+import { SUBSTITUTION_STATUS_LABELS } from "@/constants/substitution";
 
 export interface ProtocolEntry {
   _id: Id<"substitutions">;
@@ -14,7 +16,7 @@ export interface ProtocolEntry {
   toUserId: Id<"users">;
   startDate: string;
   endDate: string;
-  status: "pending" | "accepted" | "rejected" | "completed" | "cancelled";
+  status: SubstitutionStatus;
   reason?: string;
   serviceLetterNumber?: string;
   journalSnapshot?: {
@@ -197,14 +199,7 @@ export const useProtocolStore = defineStore("protocol", () => {
    * Get status badge text
    */
   function getStatusText(status: string): string {
-    const statusMap: Record<string, string> = {
-      pending: "Ожидает",
-      accepted: "Принята",
-      rejected: "Отклонена",
-      completed: "Завершена",
-      cancelled: "Отменена",
-    };
-    return statusMap[status] || status;
+    return SUBSTITUTION_STATUS_LABELS[status as SubstitutionStatus] ?? status;
   }
 
   /**
