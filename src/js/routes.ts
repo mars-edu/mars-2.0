@@ -227,6 +227,14 @@ const routes: RouteConfig[] = [
     },
   },
   {
+    path: "/testing",
+    asyncComponent: () => import("../pages/suspense/TestingPage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN, Role.TEACHER])],
+    options: {
+      roles: [Role.ADMIN, Role.TEACHER],
+    },
+  },
+  {
     path: "/settings",
     asyncComponent: () => import("../pages/suspense/SettingsPage.vue"),
     beforeEnter: [createAuthGuard([Role.ADMIN])],
@@ -261,6 +269,14 @@ const routes: RouteConfig[] = [
   {
     path: "/workload-management",
     asyncComponent: () => import("../pages/suspense/WorkloadManagementPage.vue"),
+    beforeEnter: [createAuthGuard([Role.ADMIN])],
+    options: {
+      roles: [Role.ADMIN],
+    },
+  },
+  {
+    path: "/cabinet-management",
+    asyncComponent: () => import("../pages/suspense/CabinetManagementPage.vue"),
     beforeEnter: [createAuthGuard([Role.ADMIN])],
     options: {
       roles: [Role.ADMIN],

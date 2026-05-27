@@ -101,6 +101,8 @@ import IconLayout from "~icons/lucide/layout";
 import IconPieChart from "~icons/lucide/pie-chart";
 import IconClock from "~icons/lucide/clock";
 import IconBook from "~icons/lucide/book";
+import IconDoorOpen from "~icons/lucide/door-open";
+import IconFlaskConical from "~icons/lucide/flask-conical";
 
 const navIconMap: Record<string, Component> = {
   "home": IconHouse,
@@ -108,7 +110,7 @@ const navIconMap: Record<string, Component> = {
   "journals": IconBook,
   "ktp": IconLayoutGrid,
   "reports": IconFileBarChart,
-  "testing": IconLayout,
+  "testing": IconFlaskConical,
   "courses": IconGraduationCap,
   "protocol": IconLayout,
   "analytics": IconPieChart,
@@ -116,6 +118,7 @@ const navIconMap: Record<string, Component> = {
   "schedule": IconCalendar,
   "timetable": IconClock,
   "workload": IconLayoutGrid,
+  "cabinet-management": IconDoorOpen,
   "specialty-catalog": IconBookOpen,
   "student-card": IconUsers,
   "discipline-catalog": IconBook,

@@ -22,6 +22,7 @@ import {
   nav_courses,
   nav_timetable,
   nav_workload,
+  nav_cabinet_management,
 } from "@/paraglide/messages";
 import { useLocaleStore } from "@/stores/localeStore";
 
@@ -91,7 +92,7 @@ export function useRBAC() {
         label: nav_testing(),
         icon: "layout",
         roles: [Role.ADMIN, Role.TEACHER],
-        route: "/home",
+        route: "/testing",
       },
       {
         id: "courses",
@@ -141,6 +142,13 @@ export function useRBAC() {
         icon: "layout-grid",
         roles: [Role.ADMIN],
         route: "/workload-management",
+      },
+      {
+        id: "cabinet-management",
+        label: nav_cabinet_management(),
+        icon: "door-open",
+        roles: [Role.ADMIN],
+        route: "/cabinet-management/",
       },
       {
         id: "specialty-catalog",
