@@ -1,6 +1,8 @@
-import { computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useUserStore } from "../stores/userStore";
-import { Role } from "../types/user";
+import type { Id } from "@convex/_generated/dataModel";
+import { convex } from "../lib/convexClient";
+import { api } from "@convex/_generated/api";
 import {
   nav_home,
   nav_specialty_catalog,
@@ -14,9 +16,7 @@ import {
   nav_education_schedule,
   nav_student_card,
   nav_teacher_card,
-  nav_profile,
   nav_settings,
-  nav_logout,
   nav_ktp,
   nav_testing,
   nav_courses,
@@ -26,175 +26,100 @@ import {
 } from "@/paraglide/messages";
 import { useLocaleStore } from "@/stores/localeStore";
 
-export interface AccessControl {
-  roles: Role[];
-  redirect?: string;
-}
-
 export interface NavigationItem {
   id: string;
+  resource: string;
   label: string;
   icon: string;
-  roles: Role[];
   route: string;
 }
+
+const ALL_NAV_ITEMS: Omit<NavigationItem, "label">[] = [
+  { id: "home", resource: "home", icon: "home", route: "/home" },
+  { id: "planning", resource: "planning", icon: "calendar-days", route: "/planning" },
+  { id: "journals", resource: "journals", icon: "book", route: "/journals/" },
+  { id: "ktp", resource: "journals", icon: "layout-grid", route: "/journals/" },
+  { id: "reports", resource: "reports", icon: "file-text", route: "/reports/" },
+  { id: "testing", resource: "journals", icon: "layout", route: "/testing" },
+  { id: "courses", resource: "journals", icon: "graduation-cap", route: "/home" },
+  { id: "protocol", resource: "protocol", icon: "layout", route: "/protocol" },
+  { id: "analytics", resource: "analytics", icon: "pie-chart", route: "/analytics/" },
+  { id: "rup", resource: "rup", icon: "file-text", route: "/rup/" },
+  { id: "schedule", resource: "schedule", icon: "calendar", route: "/education-schedule/" },
+  { id: "timetable", resource: "timetable", icon: "clock", route: "/home" },
+  { id: "workload", resource: "workload", icon: "layout-grid", route: "/workload-management" },
+  { id: "cabinet-management", resource: "cabinet-management", icon: "door-open", route: "/cabinet-management/" },
+  { id: "specialty-catalog", resource: "specialty-catalog", icon: "book-open", route: "/specialty-catalog/" },
+  { id: "student-card", resource: "student-card", icon: "users", route: "/student-card/" },
+  { id: "discipline-catalog", resource: "discipline-catalog", icon: "book", route: "/discipline-catalog/" },
+  { id: "teacher-card", resource: "teacher-card", icon: "user-check", route: "/teacher-card/" },
+  { id: "settings", resource: "settings", icon: "settings", route: "/settings/" },
+];
 
 export function useRBAC() {
   const userStore = useUserStore();
   const localeStore = useLocaleStore();
 
-  const checkAccess = (requiredRoles: Role[]): boolean => {
-    if (!userStore.isAuthenticated) return false;
-    if (requiredRoles.length === 0) return true;
-    return userStore.hasAnyRole(requiredRoles);
-  };
+  const myPermissions = ref<string[]>([]);
 
-  const getNavigationItems = computed(() => {
-    void localeStore.locale; // reactive dependency — re-runs when locale changes
-    const items: NavigationItem[] = [
-      {
-        id: "home",
-        label: nav_home(),
-        icon: "home",
-        roles: [],
-        route: "/home",
-      },
-      {
-        id: "planning",
-        label: nav_schedule(),
-        icon: "calendar-days",
-        roles: [Role.ADMIN, Role.TEACHER],
-        route: "/planning",
-      },
-      {
-        id: "journals",
-        label: nav_journals(),
-        icon: "book",
-        roles: [Role.ADMIN, Role.TEACHER],
-        route: "/journals/",
-      },
-      {
-        id: "ktp",
-        label: nav_ktp(),
-        icon: "layout-grid",
-        roles: [Role.ADMIN, Role.TEACHER],
-        route: "/journals/", // Redirect to journals for now as KTP is often linked
-      },
-      {
-        id: "reports",
-        label: nav_reports(),
-        icon: "file-text",
-        roles: [Role.ADMIN, Role.TEACHER],
-        route: "/reports/",
-      },
-      {
-        id: "testing",
-        label: nav_testing(),
-        icon: "layout",
-        roles: [Role.ADMIN, Role.TEACHER],
-        route: "/testing",
-      },
-      {
-        id: "courses",
-        label: nav_courses(),
-        icon: "graduation-cap",
-        roles: [Role.ADMIN, Role.TEACHER],
-        route: "/home",
-      },
-      {
-        id: "protocol",
-        label: nav_protocol(),
-        icon: "layout",
-        roles: [Role.ADMIN, Role.TEACHER],
-        route: "/protocol",
-      },
-      {
-        id: "analytics",
-        label: nav_analytics(),
-        icon: "pie-chart",
-        roles: [Role.ADMIN],
-        route: "/analytics/",
-      },
-      {
-        id: "rup",
-        label: nav_rup(),
-        icon: "file-text",
-        roles: [Role.ADMIN, Role.TEACHER],
-        route: "/rup/",
-      },
-      {
-        id: "schedule",
-        label: nav_education_schedule(),
-        icon: "calendar",
-        roles: [Role.ADMIN, Role.TEACHER],
-        route: "/education-schedule/",
-      },
-      {
-        id: "timetable",
-        label: nav_timetable(),
-        icon: "clock",
-        roles: [Role.ADMIN],
-        route: "/home",
-      },
-      {
-        id: "workload",
-        label: nav_workload(),
-        icon: "layout-grid",
-        roles: [Role.ADMIN],
-        route: "/workload-management",
-      },
-      {
-        id: "cabinet-management",
-        label: nav_cabinet_management(),
-        icon: "door-open",
-        roles: [Role.ADMIN],
-        route: "/cabinet-management/",
-      },
-      {
-        id: "specialty-catalog",
-        label: nav_specialty_catalog(),
-        icon: "book-open",
-        roles: [Role.ADMIN],
-        route: "/specialty-catalog/",
-      },
-      {
-        id: "student-card",
-        label: nav_student_card(),
-        icon: "users",
-        roles: [Role.ADMIN],
-        route: "/student-card/",
-      },
-      {
-        id: "discipline-catalog",
-        label: nav_discipline_catalog(),
-        icon: "book",
-        roles: [Role.ADMIN],
-        route: "/discipline-catalog/",
-      },
-      {
-        id: "teacher-card",
-        label: nav_teacher_card(),
-        icon: "user-check",
-        roles: [Role.ADMIN],
-        route: "/teacher-card/",
-      },
-      {
-        id: "settings",
-        label: nav_settings(),
-        icon: "settings",
-        roles: [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
-        route: "/settings/",
-      },
-    ];
-    return items.filter((item) => checkAccess(item.roles));
+  watch(
+    () => userStore.currentUser?.id,
+    (userId, _prev, onCleanup) => {
+      if (!userId) {
+        myPermissions.value = [];
+        return;
+      }
+
+      const unsubscribe = convex.onUpdate(
+        api.permissions.queries.getMyPermissions,
+        { userId: userId as Id<"users"> },
+        (data) => {
+          myPermissions.value = data ?? [];
+        }
+      );
+
+      onCleanup(unsubscribe);
+    },
+    { immediate: true }
+  );
+
+  const canNavigate = (resource: string): boolean =>
+    myPermissions.value.includes(resource);
+
+  const getNavigationItems = computed<NavigationItem[]>(() => {
+    void localeStore.locale;
+
+    const labels: Record<string, () => string> = {
+      home: nav_home,
+      planning: nav_schedule,
+      journals: nav_journals,
+      ktp: nav_ktp,
+      reports: nav_reports,
+      testing: nav_testing,
+      courses: nav_courses,
+      protocol: nav_protocol,
+      analytics: nav_analytics,
+      rup: nav_rup,
+      schedule: nav_education_schedule,
+      timetable: nav_timetable,
+      workload: nav_workload,
+      "cabinet-management": nav_cabinet_management,
+      "specialty-catalog": nav_specialty_catalog,
+      "student-card": nav_student_card,
+      "discipline-catalog": nav_discipline_catalog,
+      "teacher-card": nav_teacher_card,
+      settings: nav_settings,
+    };
+
+    return ALL_NAV_ITEMS
+      .filter((item) => canNavigate(item.resource))
+      .map((item) => ({ ...item, label: labels[item.id]?.() ?? item.id }));
   });
 
-  const getProfileMenuItems = computed(() => {
-    return [] as NavigationItem[];
-  });
+  const getProfileMenuItems = computed(() => [] as NavigationItem[]);
 
   return {
-    checkAccess,
+    canNavigate,
     getNavigationItems,
     getProfileMenuItems,
   };

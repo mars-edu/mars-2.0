@@ -1,5 +1,5 @@
 import { Role } from "../types/user";
-import { useRBAC } from "./useRBAC";
+import { useUserStore } from "../stores/userStore";
 import { f7 } from "framework7-vue";
 
 export interface RouteGuard {
@@ -8,14 +8,15 @@ export interface RouteGuard {
 }
 
 export function useRouteGuard() {
-  const { checkAccess } = useRBAC();
+  const userStore = useUserStore();
 
   const guardRoute = (guard: RouteGuard): boolean => {
     if (guard.roles.length === 0) {
       return true;
     }
 
-    const hasAccess = checkAccess(guard.roles);
+    const hasAccess =
+      userStore.isAuthenticated && userStore.hasAnyRole(guard.roles);
 
     if (!hasAccess) {
       const redirectPath = guard.redirect || "/";
