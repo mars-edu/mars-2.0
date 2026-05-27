@@ -320,12 +320,16 @@ export const cancelSubstitution = mutation({
     reason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const now = Date.now();
     const substitution = await ctx.db.get(args.substitutionId);
     if (!substitution) throw new Error("Замена не найдена");
 
     await requireAdmin(ctx, args.userId);
 
-    await ctx.db.delete(args.substitutionId);
+    await ctx.db.patch(args.substitutionId, {
+      status: "cancelled",
+      updatedAt: now,
+    });
 
     const reasonSuffix = args.reason ? `: ${args.reason}` : "";
     const disciplineName = substitution.journalSnapshot?.disciplineName ?? "";
@@ -337,7 +341,7 @@ export const cancelSubstitution = mutation({
         status: "unread",
         title: "Замена отменена",
         message: `Замена журнала "${disciplineName}" отменена администратором${reasonSuffix}`,
-        createdAt: Date.now(),
+        createdAt: now,
       });
     }
 
@@ -349,7 +353,7 @@ export const cancelSubstitution = mutation({
         status: "unread",
         title: "Замена отменена",
         message: `Замена журнала "${disciplineName}" отменена администратором${reasonSuffix}`,
-        createdAt: Date.now(),
+        createdAt: now,
       });
     }
 

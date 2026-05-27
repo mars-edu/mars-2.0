@@ -752,10 +752,11 @@ export default defineSchema({
     endTime: v.optional(v.string()), // Optional time restriction end (HH:mm)
     isPrimary: v.optional(v.boolean()), // Whether substitute becomes primary teacher
     status: v.union(
-      v.literal("pending"), // Awaiting acceptance
-      v.literal("accepted"), // Teacher accepted
-      v.literal("rejected"), // Teacher rejected
-      v.literal("completed") // Substitution period ended
+      v.literal("pending"), // Awaiting admin approval
+      v.literal("accepted"), // Admin approved
+      v.literal("rejected"), // Admin rejected
+      v.literal("completed"), // Substitution period ended
+      v.literal("cancelled") // Admin cancelled
     ),
     reason: v.optional(v.string()), // Reason for substitution
     rejectionReason: v.optional(v.string()), // Admin rejection reason

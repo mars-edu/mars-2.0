@@ -14,7 +14,7 @@ export interface ProtocolEntry {
   toUserId: Id<"users">;
   startDate: string;
   endDate: string;
-  status: "pending" | "accepted" | "rejected" | "completed";
+  status: "pending" | "accepted" | "rejected" | "completed" | "cancelled";
   reason?: string;
   serviceLetterNumber?: string;
   journalSnapshot?: {
@@ -202,6 +202,7 @@ export const useProtocolStore = defineStore("protocol", () => {
       accepted: "Принята",
       rejected: "Отклонена",
       completed: "Завершена",
+      cancelled: "Отменена",
     };
     return statusMap[status] || status;
   }

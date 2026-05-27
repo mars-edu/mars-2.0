@@ -4,7 +4,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 
-export type SubstitutionStatus = "pending" | "accepted" | "rejected" | "completed";
+export type SubstitutionStatus = "pending" | "accepted" | "rejected" | "completed" | "cancelled";
 
 export interface EnrichedSubstitution {
   _id: Id<"substitutions">;
