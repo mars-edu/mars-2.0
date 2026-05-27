@@ -285,6 +285,7 @@
                 :selection-mode="isSelectionMode"
                 :selected="selectedJournalIds.has(journal.id)"
                 :is-merged="!!journal.mergedJournalIds?.length"
+                :merged-count="journal.mergedJournalIds?.length ?? 0"
                 :disabled="isSelectionMode && selectionAction === 'split' && !journal.mergedJournalIds?.length"
                 @click="goToJournalDetails(journal.id)"
                 @toggle-select="toggleJournalSelection(journal.id)"
@@ -1266,13 +1267,17 @@ function onSelectionDone() {
   }
 
   if (selectionAction.value === "merge") {
-    f7.dialog.confirm(
-      `${journal_merge_confirm_message({ count: ids.length })}`,
+    if (ids.length < 2) {
+      f7.dialog.alert(journal_merge_min_select(), journal_merge_confirm_title());
+      return;
+    }
+    f7.dialog.prompt(
+      journal_merge_confirm_message({ count: ids.length }),
       journal_merge_confirm_title(),
-      async () => {
+      async (groupName: string) => {
         try {
           f7.preloader.show();
-          await journalStore.mergeJournals(ids);
+          await journalStore.mergeJournals(ids, groupName.trim() || undefined);
           f7.toast
             .create({
               text: `${journal_merge_confirm_title()}: ${ids.length}`,
@@ -1289,7 +1294,9 @@ function onSelectionDone() {
           f7.preloader.hide();
           exitSelectionMode();
         }
-      }
+      },
+      () => {},
+      `Объединение (${ids.length})`
     );
     return;
   }
