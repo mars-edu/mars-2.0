@@ -2224,8 +2224,9 @@ const onMakeupHoursSave = async (data: MakeupHoursData) => {
     f7.dialog.alert("Пользователь не авторизован");
     return;
   }
-  const teacher = teacherStore.getTeacherByUserId(userId);
-  if (!teacher) {
+
+  const teacherId = currentEvent.value?.teacherId;
+  if (!teacherId) {
     f7.dialog.alert("Преподаватель не найден");
     return;
   }
@@ -2233,7 +2234,7 @@ const onMakeupHoursSave = async (data: MakeupHoursData) => {
   try {
     await makeupRequestStore.createMakeupRequest({
       journalId: props.journalId,
-      teacherId: teacher.id,
+      teacherId,
       createdBy: userId,
       reason: data.reason || undefined,
       dates: data.dates,
