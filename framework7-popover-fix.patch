@@ -403,7 +403,7 @@
  export default Popover;
 -  
 \ No newline at end of file
-+  
++
 --- a/node_modules/framework7-vue/components/popup.js
 +++ b/node_modules/framework7-vue/components/popup.js
 @@ -36,6 +36,10 @@
@@ -459,4 +459,4 @@
  export default Popup;
 -  
 \ No newline at end of file
-+  
++

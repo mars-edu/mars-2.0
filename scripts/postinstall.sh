@@ -1,11 +1,6 @@
 #!/bin/bash
 
-# Post-install script to set up fonts and apply Framework7 patches
-
-# Copy fonts from dependencies
-echo "Copying fonts..."
-cpy --flat ./node_modules/framework7-icons/fonts/*.* ./src/fonts/
-cpy --flat ./node_modules/material-icons/iconfont/*.* ./src/fonts/
+# Post-install script to apply Framework7 patches
 
 # Apply Framework7 popover patch if needed
 echo "Checking Framework7 popover patch..."
@@ -13,9 +8,9 @@ PATCH_FILE="framework7-popover-fix.patch"
 
 if [ -f "$PATCH_FILE" ]; then
     # Try git apply first (most reliable for git repos)
-    if git apply --check "$PATCH_FILE" 2>/dev/null; then
+    if git apply --check --whitespace=nowarn "$PATCH_FILE" 2>/dev/null; then
         echo "Applying Framework7 popover patch with git..."
-        git apply "$PATCH_FILE"
+        git apply --whitespace=nowarn "$PATCH_FILE"
         echo "Framework7 popover patch applied successfully."
     # Fallback to patch command
     elif patch -p1 --dry-run < "$PATCH_FILE" 2>/dev/null; then
