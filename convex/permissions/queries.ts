@@ -27,7 +27,7 @@ export const getPermissionHistory = query({
   handler: async (ctx, { permissionId }) => {
     return await ctx.db
       .query("permissionHistory")
-      .withIndex("by_permission_changedAt", (q) => q.eq("permissionId", permissionId))
+      .withIndex("by_permission", (q) => q.eq("permissionId", permissionId))
       .order("desc")
       .collect();
   },

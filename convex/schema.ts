@@ -79,11 +79,7 @@ export default defineSchema({
   permissionHistory: defineTable({
     permissionId: v.id("permissions"),
     resource: v.string(),
-    action: v.union(
-      v.literal("navigate"),
-      v.literal("read"),
-      v.literal("write"),
-    ),
+    action: v.string(),
     changedBy: v.id("users"),
     changedAt: v.number(),
     previousRoles: v.array(
@@ -114,8 +110,7 @@ export default defineSchema({
   })
     .index("by_permission", ["permissionId"])
     .index("by_changedBy", ["changedBy"])
-    .index("by_changedAt", ["changedAt"])
-    .index("by_permission_changedAt", ["permissionId", "changedAt"]),
+    .index("by_changedAt", ["changedAt"]),
 
   // ==========================================================================
   // ACADEMIC STRUCTURE
@@ -337,19 +332,18 @@ export default defineSchema({
     }),
 
   // ==========================================================================
-  // CURRICULUM (CLASS9 - Learning Outcomes)
+  // RUP (Working Curriculum - Learning Outcomes)
   // ==========================================================================
 
   /**
-   * Class9 items - curriculum modules with learning outcomes
-   * Migrated from: class9Store.ts
+   * RUP entries - curriculum modules with learning outcomes
    */
-  class9Items: defineTable({
-    specialtyIds: v.array(v.string()), // Multiple specialty IDs
+  rupEntries: defineTable({
+    specialtyIds: v.array(v.string()),
     academicYearId: v.string(),
-    baseClass: v.optional(v.array(v.number())), // [9], [11], or [9, 11]
-    language: v.optional(v.string()), // "ru" | "kk" | "en"
-    groupId: v.optional(v.string()), // UUID linking language variants
+    baseClass: v.optional(v.array(v.number())),
+    language: v.optional(v.string()),
+    groupId: v.optional(v.string()),
     moduleIndex: v.string(),
     moduleName: v.string(),
     learningOutcome: v.string(),
@@ -372,12 +366,10 @@ export default defineSchema({
     .index("by_groupId", ["groupId"]),
 
   /**
-   * Distribution entries for class9 items across semesters
-   * Migrated from: class9Store.ts (nested distributionEntries)
+   * Distribution entries for RUP items across semesters
    */
   distributionEntries: defineTable({
-    class9ItemId: v.optional(v.id("class9Items")),
-    rupEntryId: v.optional(v.id("rupEntries")),
+    rupEntryId: v.id("rupEntries"),
     academicYearId: v.string(),
     semesterId: v.id("academicYearSemesters"),
     hours: v.string(),
@@ -392,7 +384,6 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("by_class9Item", ["class9ItemId"])
     .index("by_rupEntry", ["rupEntryId"])
     .index("by_semester", ["semesterId"]),
 
@@ -423,46 +414,40 @@ export default defineSchema({
   }),
 
   /**
-   * Scheduled intermediate controls for specific class9 items
-   * Migrated from: scheduledIntermediateControlStore.ts
+   * Scheduled intermediate controls for specific RUP entries
    */
   scheduledIntermediateControls: defineTable({
-    intermediateControlId: v.string(), // Reference to intermediateControls
-    academicYearId: v.string(), // Reference to academicYears (REQUIRED)
-    shortName: v.string(), // Control name/title (REQUIRED)
-    startDate: v.string(), // ISO date (REQUIRED)
-    endDate: v.string(), // ISO date (REQUIRED)
-    class9Id: v.optional(v.string()), // Legacy — migrating to rupEntryId
-    rupEntryId: v.optional(v.string()), // Reference to rupEntries
+    intermediateControlId: v.string(),
+    academicYearId: v.string(),
+    shortName: v.string(),
+    startDate: v.string(),
+    endDate: v.string(),
+    rupEntryId: v.optional(v.string()),
     semesterId: v.optional(v.id("academicYearSemesters")),
     date: v.optional(v.string()), // ISO date (legacy)
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_academicYear", ["academicYearId"])
-    .index("by_class9Id", ["class9Id"])
     .index("by_rupEntryId", ["rupEntryId"])
     .index("by_semester", ["semesterId"]),
 
   /**
-   * Scheduled final controls for specific class9 items
-   * Migrated from: scheduledFinalControlStore.ts
+   * Scheduled final controls for specific RUP entries
    */
   scheduledFinalControls: defineTable({
-    finalControlId: v.string(), // Reference to finalControls
-    academicYearId: v.string(), // Reference to academicYears (REQUIRED)
-    shortName: v.string(), // Control name/title (REQUIRED)
-    startDate: v.string(), // ISO date (REQUIRED)
-    endDate: v.string(), // ISO date (REQUIRED)
-    class9Id: v.optional(v.string()), // Legacy — migrating to rupEntryId
-    rupEntryId: v.optional(v.string()), // Reference to rupEntries
+    finalControlId: v.string(),
+    academicYearId: v.string(),
+    shortName: v.string(),
+    startDate: v.string(),
+    endDate: v.string(),
+    rupEntryId: v.optional(v.string()),
     semesterId: v.optional(v.id("academicYearSemesters")),
-    date: v.optional(v.string()), // ISO date (legacy)
+    date: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_academicYear", ["academicYearId"])
-    .index("by_class9Id", ["class9Id"])
     .index("by_rupEntryId", ["rupEntryId"])
     .index("by_semester", ["semesterId"]),
 
@@ -475,8 +460,7 @@ export default defineSchema({
    * Migrated from: calendarStore.ts
    */
   calendarEvents: defineTable({
-    class9Id: v.optional(v.string()), // Legacy — migrating to rupEntryId
-    rupEntryId: v.optional(v.string()), // Reference to rupEntries
+    rupEntryId: v.string(), // Reference to rupEntries
     ktpId: v.optional(v.string()), // Reference to ktps
     teacherId: v.optional(v.string()), // Reference to teachers
     startDate: v.string(), // ISO date
@@ -517,7 +501,6 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("by_class9Id", ["class9Id"])
     .index("by_rupEntryId", ["rupEntryId"])
     .index("by_teacherId", ["teacherId"])
     .index("by_semester", ["semester"])
@@ -532,8 +515,7 @@ export default defineSchema({
    * Migrated from: ktpStore.ts
    */
   ktps: defineTable({
-    class9Id: v.optional(v.string()), // Legacy — migrating to rupEntryId
-    rupEntryId: v.optional(v.string()), // Reference to rupEntries
+    rupEntryId: v.string(), // Reference to rupEntries
     academicYearId: v.string(),
     semesterId: v.id("academicYearSemesters"),
     eventId: v.optional(v.string()), // Reference to calendarEvents
@@ -541,7 +523,6 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("by_class9Id", ["class9Id"])
     .index("by_rupEntryId", ["rupEntryId"])
     .index("by_eventId", ["eventId"])
     .index("by_academicYear_semester", ["academicYearId", "semesterId"]),
@@ -575,7 +556,7 @@ export default defineSchema({
    */
   journals: defineTable({
     calendarEventId: v.optional(v.string()), // Reference to calendarEvents
-    disciplineId: v.string(), // Reference to class9Items
+    disciplineId: v.string(), // Reference to rupEntries
     groupName: v.optional(v.string()),
     academicYearId: v.string(),
     semesterId: v.id("academicYearSemesters"),
@@ -778,41 +759,6 @@ export default defineSchema({
     .index("by_userId_status", ["userId", "status"])
     .index("by_createdAt", ["createdAt"])
     .index("by_clientId", ["clientId"]),
-
-  // ==========================================================================
-  // RUP ENTRIES (migration target for class9Items)
-  // ==========================================================================
-
-  /**
-   * RUP entries — migration target table for class9Items rename.
-   * Same shape as class9Items so data can be copied 1:1.
-   */
-  rupEntries: defineTable({
-    specialtyIds: v.array(v.string()),
-    academicYearId: v.string(),
-    baseClass: v.optional(v.array(v.number())),
-    language: v.optional(v.string()),
-    groupId: v.optional(v.string()),
-    moduleIndex: v.string(),
-    moduleName: v.string(),
-    learningOutcome: v.string(),
-    totalCredits: v.string(),
-    totalHours: v.string(),
-    theoreticalHours: v.string(),
-    labPracticalHours: v.string(),
-    field3Value: v.string(),
-    srspHours: v.string(),
-    srsHours: v.string(),
-    trainingPracticeHours: v.string(),
-    individualHours: v.string(),
-    individualAdditionalHours: v.optional(v.string()),
-    position: v.number(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_academicYear", ["academicYearId"])
-    .index("by_position", ["academicYearId", "position"])
-    .index("by_groupId", ["groupId"]),
 
   // ==========================================================================
   // NOTIFICATIONS & SUBSTITUTIONS
@@ -1041,7 +987,7 @@ export default defineSchema({
     items: v.array(
       v.object({
         id: v.string(),
-        subjectId: v.string(), // Convex ID of the class9Item or other source
+        subjectId: v.string(), // Convex ID of the rupEntry or other source
         department: v.string(),
         course: v.string(),
         studentCount: v.string(),
