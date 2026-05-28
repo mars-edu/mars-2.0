@@ -5,32 +5,14 @@
         v-for="(item, idx) in rupEntryList"
         :key="item.id"
         class="overflow-hidden bg-card border-b border-border last:border-b-0 transition-colors duration-150"
-        :class="{ 'is-selected': rupStore.isRupEntryItemSelected(item.id) }"
+        :class="{ 'is-selected': rupStore.isRupEntrySelected(item.id) }"
         @click="handleRowClick(item)"
       >
         <div class="flex items-stretch w-full">
           <div
             class="w-6 sm:w-7 bg-muted/60 text-muted-foreground flex items-center justify-center text-sm font-medium border-r border-border drag-handle cursor-move"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-grip-vertical"
-            >
-              <circle cx="9" cy="12" r="1" />
-              <circle cx="9" cy="5" r="1" />
-              <circle cx="9" cy="19" r="1" />
-              <circle cx="15" cy="12" r="1" />
-              <circle cx="15" cy="5" r="1" />
-              <circle cx="15" cy="19" r="1" />
-            </svg>
+            <IconGripVertical class="w-5 h-5" />
           </div>
           <div
             class="w-10 sm:w-11 bg-muted/40 flex items-center justify-center text-sm font-medium border-r border-border text-foreground/75"
@@ -135,23 +117,14 @@
                   class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
                   aria-label="Дублировать"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="lucide lucide-copy"
-                  >
-                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-                    <path
-                      d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
-                    />
-                  </svg>
+                  <IconCopy class="w-[18px] h-[18px]" />
+                </button>
+                <button
+                  @click.stop="confirmDeleteItem(item)"
+                  class="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                  aria-label="Удалить"
+                >
+                  <IconTrash2 class="w-[18px] h-[18px]" />
                 </button>
               </div>
             </div>
@@ -192,6 +165,9 @@ import { useRupEntryStore, type RupEntry } from "@/stores/rupEntryStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { f7 } from "framework7-vue";
+import IconGripVertical from "~icons/lucide/grip-vertical";
+import IconCopy from "~icons/lucide/copy";
+import IconTrash2 from "~icons/lucide/trash-2";
 import RupEntryPopup from "@/components/RupEntryPopup.vue";
 import RupEntryViewPopover from "@/components/RupEntryViewPopover.vue";
 import { useRupStore } from "@/stores/rupStore";
@@ -220,7 +196,7 @@ const rupEntryList = computed(() => {
   if (!props.academicYearId) {
     return [];
   }
-  return rupEntryStore.getRupEntryItemsByContext(
+  return rupEntryStore.getRupEntriesByContext(
     props.academicYearId,
     props.specialtyIds,
     props.baseClass
@@ -324,6 +300,69 @@ function handlePopupSubmit() {
 
 function duplicateItem(item: RupEntry) {
   emit("duplicate-item", item);
+}
+
+function escapeHtml(s: string) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function confirmDeleteItem(item: RupEntry) {
+  const hasGroup =
+    item.groupId &&
+    rupEntryStore.getGroupedVariants(item.groupId).length > 1;
+  const safeName = escapeHtml(item.moduleName ?? "");
+
+  if (hasGroup) {
+    f7.dialog
+      .create({
+        title: "Удаление записи",
+        text: `<p>Удалить все языковые варианты записи "${safeName}" или только текущий?</p>`,
+        buttons: [
+          { text: "Отмена", close: true },
+          {
+            text: "Только этот язык",
+            close: true,
+            onClick: async () => {
+              try {
+                await rupEntryStore.deleteRupEntry(item.id);
+              } catch {
+                f7.dialog.alert("Произошла ошибка при удалении.");
+              }
+            },
+          },
+          {
+            text: "Все варианты",
+            close: true,
+            cssClass: "text-destructive",
+            onClick: async () => {
+              try {
+                await rupEntryStore.deleteRupEntryGroup(item.groupId!);
+              } catch {
+                f7.dialog.alert("Произошла ошибка при удалении.");
+              }
+            },
+          },
+        ],
+      })
+      .open();
+  } else {
+    f7.dialog.confirm(
+      `<p>Вы уверены, что хотите удалить запись "${safeName}"?</p><p class='text-sm text-muted-foreground mt-2'>Это действие нельзя отменить.</p>`,
+      "Удаление записи",
+      async () => {
+        try {
+          await rupEntryStore.deleteRupEntry(item.id);
+        } catch {
+          f7.dialog.alert("Произошла ошибка при удалении.");
+        }
+      }
+    );
+  }
 }
 
 defineExpose({

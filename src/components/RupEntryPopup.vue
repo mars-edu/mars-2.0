@@ -6,75 +6,108 @@
     :arrow="false"
     style="width: calc(100vw - 400px) !important"
     :on-closed="handlePopoverClosed"
+    :is-dirty="isFormDirty"
+    :close-by-backdrop-click="false"
   >
     <div class="rup-entry-popover bg-card text-card-foreground">
       <div class="fixed-header">
         <PopoverHeader
-          title="Создать"
+          :title="editMode ? 'Редактировать модуль' : 'Создать модуль'"
+          :subtitle="baseLabel"
           :on-cancel="requestClose"
-        >
-          <template #title>
-            <div v-if="!editMode" class="flex-1 flex items-center justify-center space-x-4">
-              <button @click="removeStep(currentStep)" v-if="steps.length > 1">
-                <IconTrash class="text-red-500" />
-              </button>
-              <div
-                class="text-foreground font-semibold flex items-center space-x-4"
-              >
-                <f7-button
-                  small
-                  outline
-                  @click.stop="onBack"
-                  :disabled="currentStep === 1"
-                >
-                  Назад
-                </f7-button>
-                <div class="flex items-center space-x-2">
-                  <div
-                    v-for="step in steps.length"
-                    :key="step"
-                    class="w-2 h-2 rounded-full transition-colors duration-200"
-                    :class="[
-                      step === currentStep ? 'bg-primary' : 'bg-gray-300',
-                      step < currentStep ? 'bg-gray-300' : '',
-                    ]"
-                  ></div>
-                </div>
-                <div class="flex items-center space-x-2">
-                  <f7-button small outline @click.stop="onNext">
-                    {{ currentStep === steps.length ? "Добавить" : "Далее" }}
-                  </f7-button>
-                </div>
-              </div>
-            </div>
-            <div v-else>
-              <button
-                class="flex items-center gap-2 px-6 py-2 rounded-lg bg-red-50 text-red-500 font-medium hover:bg-red-100 transition-colors"
-                @click="showDeleteConfirmation"
-              >
-                <IconTrash class="w-[18px] h-[18px]" />
-                Удалить
-              </button>
-            </div>
-          </template>
-        </PopoverHeader>
+        />
 
-        <div v-if="formError" class="px-4 pb-2 text-destructive text-sm">
+        <div v-if="formError" class="px-8 pb-2 text-destructive text-sm">
           {{ formError }}
         </div>
       </div>
 
       <div class="scrollable-content">
-        <div class="max-w-5xl mx-auto space-y-4 pb-60 p-4">
-          <template
-            v-for="(stepData, index) in steps"
-            :key="index"
-          >
-          <div
-            v-if="currentStep === index + 1"
-          >
-            <!-- Specialty selection for first step -->
-            <div v-if="index === 0" class="mb-6">
+        <div class="space-y-4 pb-60 px-6 py-4">
+          <div>
+            <!-- Integration with other specialties from other years -->
+            <div class="pb-4 border-b border-gray-100">
+              <label class="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  v-model="isIntegrationEnabled"
+                  class="form-checkbox h-5 w-5 rounded border-gray-300 text-green-500 focus:ring-green-200 cursor-pointer"
+                />
+                <span class="flex items-center gap-2 text-gray-700 font-medium">
+                  <IconLink
+                    class="w-4 h-4"
+                    :class="isIntegrationEnabled ? 'text-green-600' : 'text-gray-400'"
+                  />
+                  Добавить интеграцию с другими специальностями других годов
+                </span>
+              </label>
+
+              <div
+                v-if="isIntegrationEnabled"
+                class="mt-3 bg-green-50 border border-green-200 rounded-xl p-4 grid grid-cols-1 md:grid-cols-2 gap-4"
+              >
+                <Select
+                  v-model="integrationYear"
+                  :options="availableIntegrationYears"
+                  label="Год поступления"
+                  placeholder="Выберите год"
+                />
+                <Select
+                  v-model="integrationSubjectId"
+                  :options="availableIntegrationSubjects"
+                  label="Предмет"
+                  placeholder="Выберите предмет"
+                  :disabled="!integrationYear"
+                  @update:modelValue="handleIntegration"
+                />
+              </div>
+            </div>
+
+            <!-- Connect with base-9 (only for base-11 items) -->
+            <div v-if="(baseClass ?? 9) === 11" class="pb-4 border-b border-gray-100">
+              <label class="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  v-model="isConnectChecked"
+                  class="form-checkbox h-5 w-5 rounded border-gray-300 text-yellow-500 focus:ring-yellow-200 cursor-pointer"
+                />
+                <span class="flex items-center gap-2 text-gray-700 font-medium">
+                  <IconLink
+                    class="w-4 h-4"
+                    :class="isConnectChecked ? 'text-yellow-600' : 'text-gray-400'"
+                  />
+                  Связать с базой 9 класса
+                </span>
+              </label>
+
+              <div
+                v-if="isConnectChecked"
+                class="mt-3 bg-yellow-50 border border-yellow-200 rounded-xl p-4 space-y-2"
+              >
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Select
+                    v-model="connectYear"
+                    :options="availableConnectYears"
+                    label="Год поступления (база 9 кл)"
+                    placeholder="Выберите год"
+                  />
+                  <Select
+                    v-model="connectSubjectId"
+                    :options="availableConnectSubjects"
+                    label="Предмет"
+                    placeholder="Выберите предмет"
+                    :disabled="!connectYear"
+                    @update:modelValue="handleConnect"
+                  />
+                </div>
+                <p class="text-xs text-gray-400">
+                  Выберите предмет из сохранённой базы 9 класса, чтобы автоматически заполнить поля.
+                </p>
+              </div>
+            </div>
+
+            <!-- Specialty selection -->
+            <div class="mb-6">
               <TagsSelector
                 v-model="selectedSpecialtyIds"
                 :items="specialtyOptions"
@@ -86,34 +119,29 @@
               />
             </div>
 
-            <!-- Language selector -->
-            <div v-if="index === 0" class="mb-6">
+            <!-- Language chips (concept-style: colored pills) -->
+            <div class="mb-4">
               <label class="text-sm text-foreground mb-2 block font-medium flex items-center gap-2">
                 <IconGlobe class="w-4 h-4 text-muted-foreground" />
                 Языки обучения
               </label>
-              <div class="grid grid-cols-3 gap-2">
+              <div class="flex flex-wrap gap-2">
                 <button
                   v-for="lang in languageOptions"
                   :key="lang.code"
                   type="button"
                   @click="toggleLanguage(lang.code)"
-                  class="language-chip"
-                  :class="[
-                    selectedLanguages.includes(lang.code) ? 'language-chip-active language-chip-' + lang.code : ''
-                  ]"
+                  class="lang-pill"
+                  :class="
+                    selectedLanguages.includes(lang.code)
+                      ? `lang-pill-active lang-pill-${lang.code}`
+                      : 'lang-pill-inactive'
+                  "
                 >
-                  <span>{{ lang.name }}</span>
-                  <IconCircleCheck
-                    v-if="selectedLanguages.includes(lang.code)"
-                    class="w-3.5 h-3.5 ml-1"
-                  />
+                  {{ lang.name }}
                 </button>
               </div>
             </div>
-
-            <!-- Section divider -->
-            <div v-if="index === 0" class="border-b border-gray-100 mb-6"></div>
 
             <!-- Language sections for each selected language -->
             <div class="space-y-6">
@@ -136,30 +164,24 @@
 
                 <div class="space-y-4">
                   <Input
-                    :id="'module-index-' + index + '-' + lang"
+                    :id="'module-index-' + lang"
                     v-model="languageTexts[lang].moduleIndex"
                     label="Индекс модуля/дисциплины"
                     placeholder="Введите индекс"
-                    :show-copy-button="index > 0"
-                    @copy="copyFromPreviousStep(index, 'moduleIndex')"
                   />
 
                   <Input
-                    :id="'module-name-' + index + '-' + lang"
-                    v-model="languageTexts[lang].moduleName"
-                    label="Наименование модуля"
-                    placeholder="Введите наименование"
-                    :show-copy-button="index > 0"
-                    @copy="copyFromPreviousStep(index, 'moduleName')"
-                  />
-
-                  <Input
-                    :id="'learning-outcome-' + index + '-' + lang"
+                    :id="'learning-outcome-' + lang"
                     v-model="languageTexts[lang].learningOutcome"
                     label="Наименование результата обучения/дисциплина"
                     placeholder="Введите результат"
-                    :show-copy-button="index > 0"
-                    @copy="copyFromPreviousStep(index, 'learningOutcome')"
+                  />
+
+                  <Input
+                    :id="'module-name-' + lang"
+                    v-model="languageTexts[lang].moduleName"
+                    label="Наименование модуля"
+                    placeholder="Введите наименование"
                   />
                 </div>
               </div>
@@ -167,50 +189,50 @@
 
             <div class="mt-6 pt-4 border-t border-gray-100 grid grid-cols-2 gap-x-8 gap-y-4">
                 <Input
-                  :id="'total-credits-' + index"
-                  v-model="stepData.totalCredits"
+                  :id="'total-credits-'"
+                  v-model="step.totalCredits"
                   label="Всего кредитов"
-                  type="number"
+                  type="text" inputmode="numeric"
                   placeholder="0"
                 />
 
                 <Input
-                  :id="'total-hours-' + index"
-                  v-model="stepData.totalHours"
+                  :id="'total-hours-'"
+                  v-model="step.totalHours"
                   label="Всего часов"
-                  type="number"
+                  type="text" inputmode="numeric"
                   placeholder="0"
                 />
 
                 <Input
-                  :id="'theoretical-hours-' + index"
-                  v-model="stepData.theoreticalHours"
+                  :id="'theoretical-hours-'"
+                  v-model="step.theoreticalHours"
                   label="Теоретических"
-                  type="number"
+                  type="text" inputmode="numeric"
                   placeholder="0"
                 />
 
                 <Input
-                  :id="'lab-practical-hours-' + index"
-                  v-model="stepData.labPracticalHours"
+                  :id="'lab-practical-hours-'"
+                  v-model="step.labPracticalHours"
                   label="Лабараторно-практических"
-                  type="number"
+                  type="text" inputmode="numeric"
                   placeholder="0"
                 />
 
                 <Input
-                  :id="'field3-value-' + index"
-                  v-model="stepData.field3Value"
+                  :id="'field3-value-'"
+                  v-model="step.field3Value"
                   label="3"
-                  type="number"
+                  type="text" inputmode="numeric"
                   placeholder="0"
                 />
 
                 <Input
-                  :id="'srsp-hours-' + index"
-                  v-model="stepData.srspHours"
+                  :id="'srsp-hours-'"
+                  v-model="step.srspHours"
                   label="Самостоятельная работа студента с педагогом"
-                  type="number"
+                  type="text" inputmode="numeric"
                   placeholder="0"
                 >
                   <template #button>
@@ -226,10 +248,10 @@
                 </Input>
 
                 <Input
-                  :id="'srs-hours-' + index"
-                  v-model="stepData.srsHours"
+                  :id="'srs-hours-'"
+                  v-model="step.srsHours"
                   label="Самостоятельная работа студента"
-                  type="number"
+                  type="text" inputmode="numeric"
                   placeholder="0"
                 >
                   <template #button>
@@ -245,26 +267,26 @@
                 </Input>
 
                 <Input
-                  :id="'training-practice-hours-' + index"
-                  v-model="stepData.trainingPracticeHours"
+                  :id="'training-practice-hours-'"
+                  v-model="step.trainingPracticeHours"
                   label="Производственное обучение / профессиональная практика"
-                  type="number"
+                  type="text" inputmode="numeric"
                   placeholder="0"
                 />
 
                 <Input
-                  :id="'individual-hours-' + index"
-                  v-model="stepData.individualHours"
+                  :id="'individual-hours-'"
+                  v-model="step.individualHours"
                   label="Индивидуальные"
-                  type="number"
+                  type="text" inputmode="numeric"
                   placeholder="0"
                 />
 
                 <Input
-                  :id="'individual-additional-hours-' + index"
-                  v-model="stepData.individualAdditionalHours"
+                  :id="'individual-additional-hours-'"
+                  v-model="step.individualAdditionalHours"
                   label="Индивидуальные (дополнительно)"
-                  type="number"
+                  type="text" inputmode="numeric"
                   placeholder="0"
                 >
                   <template #button>
@@ -298,27 +320,33 @@
 
                 <div class="distribution-table border border-input rounded-lg">
                   <div class="overflow-x-auto">
-                    <div class="distribution-grid distribution-header">
+                    <div
+                      class="distribution-grid distribution-header"
+                      :style="distributionGridStyle"
+                    >
                       <div>Учебный год</div>
                       <div>Семестр</div>
                       <div class="text-center">Групп</div>
+                      <div v-if="visibleColumns.srs" class="text-center">СРС</div>
+                      <div v-if="visibleColumns.srsp" class="text-center">СРСП</div>
+                      <div v-if="visibleColumns.individual" class="text-center">Индив.</div>
                       <div>Форма контроля</div>
                       <div></div>
                     </div>
 
                     <div
-                      v-if="stepData.distributionEntries.length === 0"
-                      class="text-center py-4 text-muted-foreground text-sm bg-white"
+                      v-if="step.distributionEntries.length === 0"
+                      class="text-center py-6 text-gray-400 text-sm bg-white"
                     >
-                      Нет записей распределения. Нажмите "Добавить" чтобы создать
-                      первую запись.
+                      Нет записей распределения. Нажмите «Добавить», чтобы создать первую запись.
                     </div>
 
                     <div v-else class="distribution-body">
                       <div
-                        v-for="entry in stepData.distributionEntries"
+                        v-for="entry in step.distributionEntries"
                         :key="entry.id"
                         class="distribution-grid distribution-row"
+                        :style="distributionGridStyle"
                       >
                         <Select
                           :modelValue="entry.academicYearId"
@@ -362,7 +390,35 @@
 
                         <Input
                           v-model="entry.hours"
-                          type="number"
+                          type="text" inputmode="numeric"
+                          placeholder="0"
+                          :show-checkmark="false"
+                          :clear-button="false"
+                          class="distribution-hours-input"
+                        />
+
+                        <Input
+                          v-if="visibleColumns.srs"
+                          v-model="(entry as any).srsHours"
+                          type="text" inputmode="numeric"
+                          placeholder="0"
+                          :show-checkmark="false"
+                          :clear-button="false"
+                          class="distribution-hours-input"
+                        />
+                        <Input
+                          v-if="visibleColumns.srsp"
+                          v-model="(entry as any).srspHours"
+                          type="text" inputmode="numeric"
+                          placeholder="0"
+                          :show-checkmark="false"
+                          :clear-button="false"
+                          class="distribution-hours-input"
+                        />
+                        <Input
+                          v-if="visibleColumns.individual"
+                          v-model="(entry as any).individualHours"
+                          type="text" inputmode="numeric"
                           placeholder="0"
                           :show-checkmark="false"
                           :clear-button="false"
@@ -399,7 +455,6 @@
                 </div>
               </div>
           </div>
-          </template>
         </div>
       </div>
 
@@ -419,6 +474,7 @@ import IconTrash from "~icons/lucide/trash-2";
 import IconGlobe from "~icons/lucide/globe";
 import IconCircleCheck from "~icons/lucide/circle-check";
 import IconArrowDown from "~icons/lucide/arrow-down";
+import IconLink from "~icons/lucide/link";
 import IconPlus from "~icons/lucide/plus";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
@@ -427,9 +483,9 @@ import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { z } from "zod";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
-import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Select from "@/components/ui/Select.vue";
 import Input from "@/components/ui/Input.vue";
 import TagsSelector from "@/components/ui/TagsSelector.vue";
@@ -459,7 +515,7 @@ const languageStore = useLanguageStore();
 const scheduledFinalControlStore = useScheduledFinalControlStore();
 const finalControlStore = useFinalControlStore();
 
-function createEmptyStep() {
+function createEmptyEntry() {
   return rupEntryStore.createEmptyRupEntry(
     props.academicYearId,
     props.specialtyIds || [],
@@ -468,8 +524,7 @@ function createEmptyStep() {
   );
 }
 
-const steps = ref([createEmptyStep()]);
-const currentStep = ref(1);
+const step = ref(createEmptyEntry());
 const selectedSpecialtyIds = ref<string[]>([]);
 
 const selectedLanguages = ref<string[]>(["ru"]);
@@ -489,6 +544,159 @@ const languageTexts = ref<Record<string, { moduleIndex: string; moduleName: stri
 });
 
 const editVariantIds = ref<Record<string, string>>({});
+
+// Distribution table optional per-semester columns (revealed by down-arrow buttons)
+const visibleColumns = ref({
+  srs: false,
+  srsp: false,
+  individual: false,
+});
+
+const distributionGridStyle = computed(() => {
+  const extraCount =
+    (visibleColumns.value.srs ? 1 : 0) +
+    (visibleColumns.value.srsp ? 1 : 0) +
+    (visibleColumns.value.individual ? 1 : 0);
+  // year | semester | group | (extras) | control | delete
+  return {
+    gridTemplateColumns: `minmax(160px,1fr) minmax(160px,1fr) 100px ${"100px ".repeat(extraCount)}minmax(220px,1.4fr) 32px`,
+    minWidth: `${760 + extraCount * 110}px`,
+  };
+});
+
+// Integration with subject from another year
+const isIntegrationEnabled = ref(false);
+const integrationYear = ref("");
+const integrationSubjectId = ref("");
+
+// Connect with base-9 (only meaningful for base-11 items)
+const isConnectChecked = ref(false);
+const connectYear = ref("");
+const connectSubjectId = ref("");
+
+const baseLabel = computed(() => {
+  const base = props.baseClass ?? 9;
+  return base === 11 ? "База 11 классов" : "База 9 классов";
+});
+
+const availableIntegrationYears = computed(() =>
+  academicYearStore.academicYears
+    .filter((y) => y.id !== props.academicYearId)
+    .map((y) => ({
+      value: y.id,
+      text: `${y.startYear}-${y.endYear}`,
+    }))
+);
+
+const availableIntegrationSubjects = computed(() => {
+  if (!integrationYear.value) return [];
+  const targetBase = props.baseClass ?? 9;
+  return rupEntryStore.rupEntries
+    .filter(
+      (e) =>
+        e.academicYearId === integrationYear.value &&
+        (e.baseClass?.includes(targetBase) ?? false)
+    )
+    .map((e) => ({
+      value: e.id,
+      text: e.moduleIndex
+        ? `${e.moduleIndex} — ${e.moduleName || "—"}`
+        : e.moduleName || "—",
+    }));
+});
+
+const availableConnectYears = computed(() =>
+  academicYearStore.academicYears.map((y) => ({
+    value: y.id,
+    text: `${y.startYear}-${y.endYear}`,
+  }))
+);
+
+const availableConnectSubjects = computed(() => {
+  if (!connectYear.value) return [];
+  return rupEntryStore.rupEntries
+    .filter(
+      (e) =>
+        e.academicYearId === connectYear.value &&
+        (e.baseClass?.includes(9) ?? false)
+    )
+    .map((e) => ({
+      value: e.id,
+      text: e.moduleIndex
+        ? `${e.moduleIndex} — ${e.moduleName || "—"}`
+        : e.moduleName || "—",
+    }));
+});
+
+function copyFromSource(source: any) {
+  // Copy numeric fields
+  step.value.totalCredits = source.totalCredits ?? "";
+  step.value.totalHours = source.totalHours ?? "";
+  step.value.theoreticalHours = source.theoreticalHours ?? "";
+  step.value.labPracticalHours = source.labPracticalHours ?? "";
+  step.value.field3Value = source.field3Value ?? "";
+  step.value.srspHours = source.srspHours ?? "";
+  step.value.srsHours = source.srsHours ?? "";
+  step.value.trainingPracticeHours = source.trainingPracticeHours ?? "";
+  step.value.individualHours = source.individualHours ?? "";
+  step.value.individualAdditionalHours = source.individualAdditionalHours ?? "";
+
+  // Copy text fields per language — use all variants if grouped, else just the source itself
+  const variants = source.groupId
+    ? rupEntryStore.getGroupedVariants(source.groupId)
+    : [source];
+
+  const langs = Array.from(
+    new Set(variants.map((v: any) => v.language || "ru"))
+  );
+  if (langs.length > 0) {
+    selectedLanguages.value = langs as string[];
+    activeLanguageTab.value = langs[0] as string;
+  }
+
+  for (const v of variants) {
+    const lang = v.language || "ru";
+    languageTexts.value[lang] = {
+      moduleIndex: v.moduleIndex || "",
+      moduleName: v.moduleName || "",
+      learningOutcome: v.learningOutcome || "",
+    };
+  }
+}
+
+function handleIntegration(subjectId: string) {
+  if (!subjectId) return;
+  const source = rupEntryStore.rupEntries.find((e) => e.id === subjectId);
+  if (!source) return;
+  copyFromSource(source);
+}
+
+function handleConnect(subjectId: string) {
+  if (!subjectId) return;
+  const source = rupEntryStore.rupEntries.find((e) => e.id === subjectId);
+  if (!source) return;
+  copyFromSource(source);
+}
+
+// Dirty-state tracking for unsaved changes confirmation
+let dirtyBaseline = "";
+
+function serializeFormState() {
+  return JSON.stringify({
+    step: step.value,
+    selectedSpecialtyIds: selectedSpecialtyIds.value,
+    selectedLanguages: [...selectedLanguages.value].sort(),
+    languageTexts: languageTexts.value,
+  });
+}
+
+function captureBaseline() {
+  dirtyBaseline = serializeFormState();
+}
+
+function isFormDirty() {
+  return serializeFormState() !== dirtyBaseline;
+}
 
 function toggleLanguage(code: string) {
   const idx = selectedLanguages.value.indexOf(code);
@@ -547,7 +755,6 @@ watch(
           selectedLanguages.value = [...new Set(langs)];
           activeLanguageTab.value = val.language || langs[0];
 
-          // Build languageTexts from all variants
           const texts: Record<string, { moduleIndex: string; moduleName: string; learningOutcome: string }> = {};
           const variantIdMap: Record<string, string> = {};
           for (const v of variants) {
@@ -562,13 +769,11 @@ watch(
           languageTexts.value = texts;
           editVariantIds.value = variantIdMap;
 
-          // Use first variant for shared fields
           const first = variants[0];
-          steps.value = [{ ...first }];
+          step.value = { ...first };
           selectedSpecialtyIds.value = first.specialtyIds || [];
         } else {
-          // Fallback: group not found, treat as single
-          steps.value = [{ ...val }];
+          step.value = { ...val };
           selectedLanguages.value = [val.language || "ru"];
           activeLanguageTab.value = val.language || "ru";
           languageTexts.value = {
@@ -582,8 +787,7 @@ watch(
           selectedSpecialtyIds.value = val.specialtyIds || [];
         }
       } else {
-        // Legacy item without groupId
-        steps.value = [{ ...val }];
+        step.value = { ...val };
         selectedLanguages.value = [val.language || "ru"];
         activeLanguageTab.value = val.language || "ru";
         languageTexts.value = {
@@ -596,27 +800,24 @@ watch(
         editVariantIds.value = { [val.language || "ru"]: val.id };
         selectedSpecialtyIds.value = val.specialtyIds || [];
       }
-      currentStep.value = 1;
     } else {
-      steps.value = [createEmptyStep()];
+      step.value = createEmptyEntry();
       selectedLanguages.value = ["ru"];
       activeLanguageTab.value = "ru";
       languageTexts.value = { ru: { moduleIndex: "", moduleName: "", learningOutcome: "" } };
       editVariantIds.value = {};
       selectedSpecialtyIds.value = props.specialtyIds || [];
-      currentStep.value = 1;
     }
+    nextTick(() => captureBaseline());
   },
   { immediate: true }
 );
 
-// Watch for changes in selectedSpecialtyIds and sync with form data
 watch(
   selectedSpecialtyIds,
   (newIds) => {
-    // Update the current step's specialty IDs
-    if (steps.value[0]) {
-      steps.value[0].specialtyIds = newIds;
+    if (step.value) {
+      step.value.specialtyIds = newIds;
     }
   },
   { immediate: true }
@@ -624,22 +825,14 @@ watch(
 
 onMounted(async () => {
   await specialtyStore.fetchSpecialties();
-  if (props.editMode && props.initialData) {
-    // Watch handles the initialization
-  } else {
-    steps.value = [createEmptyStep()];
+  if (!props.editMode || !props.initialData) {
+    step.value = createEmptyEntry();
     selectedSpecialtyIds.value = props.specialtyIds || [];
     selectedLanguages.value = ["ru"];
     activeLanguageTab.value = "ru";
     languageTexts.value = { ru: { moduleIndex: "", moduleName: "", learningOutcome: "" } };
   }
-  currentStep.value = 1;
-  nextTick(() => {
-    f7.tooltip.create({
-      targetEl: ".copy-button",
-      text: "Копировать из предыдущего шага",
-    });
-  });
+  nextTick(() => captureBaseline());
 });
 
 const distributionEntrySchema = z.object({
@@ -727,25 +920,25 @@ const rupEntrySchema = z.object({
 });
 
 const validationResult = computed(() => {
-  const step = steps.value[currentStep.value - 1];
-  if (!step)
+  const s = step.value;
+  if (!s)
     return { success: false, error: { issues: [{ message: "Нет данных" }] } };
   const texts = languageTexts.value[activeLanguageTab.value] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
   return rupEntrySchema.safeParse({
     moduleIndex: texts.moduleIndex,
     moduleName: texts.moduleName,
     learningOutcome: texts.learningOutcome,
-    totalCredits: String(step.totalCredits),
-    totalHours: String(step.totalHours),
-    theoreticalHours: String(step.theoreticalHours),
-    labPracticalHours: String(step.labPracticalHours),
-    field3Value: String(step.field3Value),
-    srspHours: String(step.srspHours),
-    srsHours: String(step.srsHours),
-    trainingPracticeHours: String(step.trainingPracticeHours),
-    individualHours: String(step.individualHours),
-    individualAdditionalHours: String(step.individualAdditionalHours ?? ""),
-    distributionEntries: step.distributionEntries,
+    totalCredits: String(s.totalCredits),
+    totalHours: String(s.totalHours),
+    theoreticalHours: String(s.theoreticalHours),
+    labPracticalHours: String(s.labPracticalHours),
+    field3Value: String(s.field3Value),
+    srspHours: String(s.srspHours),
+    srsHours: String(s.srsHours),
+    trainingPracticeHours: String(s.trainingPracticeHours),
+    individualHours: String(s.individualHours),
+    individualAdditionalHours: String(s.individualAdditionalHours ?? ""),
+    distributionEntries: s.distributionEntries,
   });
 });
 
@@ -758,48 +951,20 @@ const formError = computed(() => {
 
 const isFormValid = computed(() => validationResult.value.success);
 
-function onBack() {
-  if (currentStep.value > 1) currentStep.value--;
-}
-
-function onNext() {
-  if (currentStep.value === steps.value.length) {
-    steps.value.push(createEmptyStep());
-  }
-  currentStep.value++;
-}
-
-function removeStep(stepNumber: number) {
-  const index = stepNumber - 1;
-  if (steps.value.length > 1 && index >= 0 && index < steps.value.length) {
-    steps.value.splice(index, 1);
-    if (currentStep.value > steps.value.length) {
-      currentStep.value = steps.value.length;
-    }
-  }
-}
-
-function copyFromPreviousStep(
-  index: number,
-  field: keyof (typeof steps.value)[0]
-) {
-  if (index > 0) {
-    const previousStep = steps.value[index - 1];
-    const currentStepObj = steps.value[index];
-    if (previousStep && currentStepObj) {
-      (currentStepObj[field] as any) = previousStep[field];
-    }
-  }
-}
-
 function resetLocalState() {
-  steps.value = [createEmptyStep()];
-  currentStep.value = 1;
+  step.value = createEmptyEntry();
   selectedSpecialtyIds.value = [];
   selectedLanguages.value = ["ru"];
   activeLanguageTab.value = "ru";
   languageTexts.value = { ru: { moduleIndex: "", moduleName: "", learningOutcome: "" } };
   editVariantIds.value = {};
+  isIntegrationEnabled.value = false;
+  integrationYear.value = "";
+  integrationSubjectId.value = "";
+  isConnectChecked.value = false;
+  connectYear.value = "";
+  connectSubjectId.value = "";
+  visibleColumns.value = { srs: false, srsp: false, individual: false };
 }
 
 function handlePopoverClosed() {
@@ -825,17 +990,17 @@ async function submit() {
   try {
     const baseClass = props.baseClass ? [props.baseClass] : [9];
 
+    const entryData = step.value;
+
     if (props.editMode && props.initialData) {
       // Edit mode: update each language variant
       for (const lang of selectedLanguages.value) {
         const texts = languageTexts.value[lang] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
         const variantId = editVariantIds.value[lang];
-        const step = steps.value[0];
 
         if (variantId) {
-          // Update existing variant
           await rupEntryStore.updateRupEntry(variantId, {
-            ...step,
+            ...entryData,
             specialtyIds: selectedSpecialtyIds.value,
             baseClass,
             language: lang,
@@ -850,7 +1015,7 @@ async function submit() {
             props.academicYearId,
             selectedSpecialtyIds.value,
             {
-              ...step,
+              ...entryData,
               baseClass,
               language: lang,
               groupId: existingGroupId,
@@ -869,47 +1034,27 @@ async function submit() {
         }
       }
     } else {
-      // Create mode
+      // Create mode: one entry, one variant per selected language
       const groupId = crypto.randomUUID();
 
-      for (const step of steps.value) {
-        if (selectedLanguages.value.length === 1) {
-          const lang = selectedLanguages.value[0];
-          const texts = languageTexts.value[lang] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
-          await rupEntryStore.addRupEntry(
-            props.academicYearId,
-            selectedSpecialtyIds.value,
-            {
-              ...step,
-              baseClass,
-              language: lang,
-              groupId,
-              moduleIndex: texts.moduleIndex,
-              moduleName: texts.moduleName,
-              learningOutcome: texts.learningOutcome,
-            }
-          );
-        } else {
-          // Multiple languages - create all variants
-          for (const lang of selectedLanguages.value) {
-            const texts = languageTexts.value[lang] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
-            await rupEntryStore.addRupEntry(
-              props.academicYearId,
-              selectedSpecialtyIds.value,
-              {
-                ...step,
-                baseClass,
-                language: lang,
-                groupId,
-                moduleIndex: texts.moduleIndex,
-                moduleName: texts.moduleName,
-                learningOutcome: texts.learningOutcome,
-              }
-            );
+      for (const lang of selectedLanguages.value) {
+        const texts = languageTexts.value[lang] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
+        await rupEntryStore.addRupEntry(
+          props.academicYearId,
+          selectedSpecialtyIds.value,
+          {
+            ...entryData,
+            baseClass,
+            language: lang,
+            groupId,
+            moduleIndex: texts.moduleIndex,
+            moduleName: texts.moduleName,
+            learningOutcome: texts.learningOutcome,
           }
-        }
+        );
       }
     }
+    captureBaseline();
     emit("submit");
   } catch (error) {
     console.error("Failed to save rupEntry data:", error);
@@ -917,61 +1062,87 @@ async function submit() {
 }
 
 function addDistributionEntry() {
-  const step = steps.value[currentStep.value - 1];
-  if (!step) return;
+  const s = step.value;
+  if (!s) return;
 
-  const newEntry = {
+  s.distributionEntries.push({
     id: crypto.randomUUID(),
     academicYearId: props.academicYearId,
     semesterId: "",
     hours: "",
+    srsHours: "",
+    srspHours: "",
+    individualHours: "",
     finalControlId: null,
     examEnabled: false,
     creditEnabled: false,
     controlLessonEnabled: false,
-  };
-
-  step.distributionEntries.push(newEntry);
+  });
 }
 
 function removeDistributionEntry(entryId: string) {
-  const step = steps.value[currentStep.value - 1];
-  if (!step) return;
+  const s = step.value;
+  if (!s) return;
 
-  const entryIndex = step.distributionEntries.findIndex(
+  const entryIndex = s.distributionEntries.findIndex(
     (entry) => entry.id === entryId
   );
   if (entryIndex !== -1) {
-    step.distributionEntries.splice(entryIndex, 1);
+    s.distributionEntries.splice(entryIndex, 1);
   }
 }
 
+// Down-arrow: reveal the per-semester column AND auto-distribute the top-level
+// value evenly across rows. For "individualAdditionalHours" we additionally
+// recompute each row's group hours so that group + individual = totalHours/N.
 function distributeHoursFromField(
   field: "srspHours" | "srsHours" | "individualAdditionalHours"
 ) {
-  const step = steps.value[currentStep.value - 1];
-  if (!step) return;
-
-  if (!step.distributionEntries.length) {
-    f7.dialog.alert("Сначала добавьте записи в распределение по семестрам");
+  const s = step.value;
+  if (!s || !s.distributionEntries.length) {
+    f7.dialog.alert("Сначала добавьте запись в распределение часов");
     return;
   }
 
-  const sourceValue = Number(step[field] ?? 0);
-  if (!Number.isFinite(sourceValue) || sourceValue < 0) {
-    f7.dialog.alert("Введите корректное количество часов");
-    return;
+  const num = (v: string | undefined | null) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+  const fmt = (n: number) => {
+    if (!Number.isFinite(n)) return "0";
+    return Number.isInteger(n) ? String(n) : n.toFixed(2);
+  };
+
+  const count = s.distributionEntries.length;
+
+  if (field === "srspHours") {
+    visibleColumns.value.srsp = true;
+    const total = num(s.srspHours);
+    const per = total / count;
+    s.distributionEntries.forEach((e) => {
+      (e as any).srspHours = fmt(per);
+    });
+  } else if (field === "srsHours") {
+    visibleColumns.value.srs = true;
+    const total = num(s.srsHours);
+    const per = total / count;
+    s.distributionEntries.forEach((e) => {
+      (e as any).srsHours = fmt(per);
+    });
+  } else if (field === "individualAdditionalHours") {
+    visibleColumns.value.individual = true;
+    const totalIndividual = num(s.individualAdditionalHours);
+    const totalAll = num(s.totalHours);
+    const perIndividual = totalIndividual / count;
+    const perGroup = Math.max(0, (totalAll - totalIndividual) / count);
+    s.distributionEntries.forEach((e) => {
+      (e as any).individualHours = fmt(perIndividual);
+      // Only overwrite group hours if totalHours is set — otherwise leave user values
+      if (totalAll > 0) {
+        e.hours = fmt(perGroup);
+      }
+    });
   }
-
-  const total = Math.round(sourceValue * 100);
-  const count = step.distributionEntries.length;
-  const base = Math.floor(total / count);
-  const remainder = total % count;
-
-  step.distributionEntries.forEach((entry, idx) => {
-    const value = (base + (idx < remainder ? 1 : 0)) / 100;
-    entry.hours = Number.isInteger(value) ? String(value) : value.toFixed(2);
-  });
 }
 
 function getFinalControlOptionsForYear(
@@ -1272,7 +1443,58 @@ function showDeleteConfirmation() {
   display: none !important;
 }
 
-/* Language selector chips */
+/* Language pill chips (concept-style: colored when active) */
+.lang-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.lang-pill-inactive {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.lang-pill-inactive:hover {
+  background-color: #e5e7eb;
+}
+
+.lang-pill-active {
+  color: #ffffff;
+}
+
+.lang-pill-active.lang-pill-kk {
+  background-color: #eab308;
+}
+.lang-pill-active.lang-pill-kk:hover {
+  background-color: #ca8a04;
+}
+
+.lang-pill-active.lang-pill-ru {
+  background-color: #111827;
+}
+.lang-pill-active.lang-pill-ru:hover {
+  background-color: #1f2937;
+}
+
+.lang-pill-active.lang-pill-en {
+  background-color: #a855f7;
+}
+.lang-pill-active.lang-pill-en:hover {
+  background-color: #9333ea;
+}
+
+/* Language selector chips (legacy, kept for backward compat) */
 .language-chip {
   display: inline-flex;
   align-items: center;

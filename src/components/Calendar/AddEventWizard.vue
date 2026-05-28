@@ -383,13 +383,28 @@
         <div class="rounded-xl border border-input bg-card p-3 space-y-3">
           <div class="flex items-center justify-between">
             <div>
-              <div class="text-base text-foreground">Индивидуальные журналы</div>
-              <div class="text-xs text-muted-foreground">Подгруппы студентов с собственным расписанием</div>
+              <div
+                class="text-base"
+                :class="individualHoursAvailable ? 'text-foreground' : 'text-muted-foreground'"
+              >
+                Индивидуальные журналы
+              </div>
+              <div class="text-xs text-muted-foreground">
+                {{
+                  individualHoursAvailable
+                    ? "Подгруппы студентов с собственным расписанием"
+                    : "Установите индивидуальные часы в РУП, чтобы активировать"
+                }}
+              </div>
             </div>
-            <label class="relative inline-flex h-7 w-12 cursor-pointer items-center">
+            <label
+              class="relative inline-flex h-7 w-12 items-center"
+              :class="individualHoursAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'"
+            >
               <input
                 v-model="useIndividualJournalsModel"
                 type="checkbox"
+                :disabled="!individualHoursAvailable"
                 class="peer sr-only"
               />
               <span
@@ -764,9 +779,30 @@ const colorModel = computed({
   set: (v: { hex: string }) => emit("update:color", v?.hex || "#8E8E93"),
 });
 
+// True when the selected RUP entry has individual hours configured
+// (either at top level or any distribution entry). Without this, the
+// "Индивидуальные журналы" toggle is disabled.
+const individualHoursAvailable = computed(() => {
+  if (!rupEntryIdModel.value) return false;
+  const entry = rupEntryStore.getRupEntryById(rupEntryIdModel.value);
+  if (!entry) return false;
+  const num = (v: string | undefined | null) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+  if (num(entry.individualHours) > 0) return true;
+  if (num((entry as any).individualAdditionalHours) > 0) return true;
+  return (entry.distributionEntries || []).some(
+    (d: any) => num(d.individualHours) > 0
+  );
+});
+
 const useIndividualJournalsModel = computed({
-  get: () => props.useIndividualJournals,
-  set: (v: boolean) => emit("update:useIndividualJournals", v),
+  get: () => props.useIndividualJournals && individualHoursAvailable.value,
+  set: (v: boolean) => {
+    if (v && !individualHoursAvailable.value) return;
+    emit("update:useIndividualJournals", v);
+  },
 });
 
 const gradingTypeModel = computed({

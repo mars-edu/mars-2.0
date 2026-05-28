@@ -10,6 +10,9 @@ export interface DistributionEntry {
   academicYearId: string;
   semesterId: string;
   hours: string;
+  srsHours?: string;
+  srspHours?: string;
+  individualHours?: string;
   intermediateControlId?: string | null;
   finalControlId?: string | null;
   examEnabled?: boolean;
@@ -89,6 +92,9 @@ export const useRupEntryStore = defineStore(
           academicYearId: d.academicYearId,
           semesterId: d.semesterId,
           hours: d.hours,
+          srsHours: d.srsHours,
+          srspHours: d.srspHours,
+          individualHours: d.individualHours,
           intermediateControlId: d.intermediateControlId,
           finalControlId: d.finalControlId,
           examEnabled: d.examEnabled,
@@ -282,6 +288,9 @@ export const useRupEntryStore = defineStore(
               academicYearId: dist.academicYearId,
               semesterId: dist.semesterId,
               hours: dist.hours,
+              srsHours: (dist as any).srsHours,
+              srspHours: (dist as any).srspHours,
+              individualHours: (dist as any).individualHours,
               intermediateControlId: dist.intermediateControlId ?? undefined,
               finalControlId: dist.finalControlId ?? undefined,
               examEnabled: dist.examEnabled,
@@ -443,6 +452,9 @@ export const useRupEntryStore = defineStore(
             academicYearId: d.academicYearId,
             semesterId: d.semesterId,
             hours: d.hours,
+            srsHours: (d as any).srsHours,
+            srspHours: (d as any).srspHours,
+            individualHours: (d as any).individualHours,
             intermediateControlId: d.intermediateControlId,
             finalControlId: d.finalControlId,
             examEnabled: d.examEnabled,
@@ -557,6 +569,9 @@ export const useRupEntryStore = defineStore(
             academicYearId: dist.academicYearId,
             semesterId: dist.semesterId,
             hours: dist.hours,
+            srsHours: (dist as any).srsHours,
+            srspHours: (dist as any).srspHours,
+            individualHours: (dist as any).individualHours,
             intermediateControlId: dist.intermediateControlId ?? undefined,
             finalControlId: dist.finalControlId ?? undefined,
             examEnabled: dist.examEnabled,

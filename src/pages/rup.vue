@@ -426,7 +426,10 @@ const handleImport = () => {
   );
 };
 
-const addRupEntry = () => {
+const addRupEntry = (baseClass?: number) => {
+  if (typeof baseClass === "number") {
+    selectedClassLevel.value = baseClass as 9 | 11;
+  }
   if (rupEntryTableRef.value) {
     rupEntryTableRef.value.openAddPopup();
   }
