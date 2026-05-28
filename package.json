@@ -14,7 +14,7 @@
     "build:paraglide:frontend": "paraglide-js compile --project project.frontend.inlang",
     "build:paraglide:backend": "paraglide-js compile --project project.backend.inlang --outdir ./convex/paraglide --silent && rm -f ./convex/paraglide/server.js",
     "build": "cross-env NODE_ENV=production vite build",
-    "build:convex": "npx convex codegen && npx convex deploy --check-build-environment disable --cmd 'npm run build' && ./scripts/run-migrations.sh",
+    "build:convex": "npm run build:paraglide:backend && npx convex codegen && npx convex deploy --check-build-environment disable --cmd 'npm run build' && ./scripts/run-migrations.sh",
     "migrate": "./scripts/run-migrations.sh",
     "postinstall": "./scripts/postinstall.sh",
     "patch:framework7": "./scripts/generate-framework7-popover-patch.sh",
