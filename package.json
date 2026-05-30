@@ -13,7 +13,7 @@
     "build:paraglide": "npm run build:paraglide:frontend && npm run build:paraglide:backend",
     "build:paraglide:frontend": "paraglide-js compile --project project.frontend.inlang",
     "build:paraglide:backend": "paraglide-js compile --project project.backend.inlang --outdir ./convex/paraglide --silent && rm -f ./convex/paraglide/server.js",
-    "build": "cross-env NODE_ENV=production vite build",
+    "build": "cross-env NODE_ENV=production NO_COLOR=1 vite build",
     "build:convex": "npm run build:paraglide:backend && npx convex codegen && npx convex deploy --check-build-environment disable --cmd 'npm run build' && ./scripts/run-migrations.sh",
     "migrate": "./scripts/run-migrations.sh",
     "postinstall": "./scripts/postinstall.sh",
