@@ -54,6 +54,33 @@
           </div>
         </div>
 
+        <div class="grid grid-cols-3 gap-4">
+          <div class="space-y-2">
+            <label class="text-sm text-foreground">Теория</label>
+            <div
+              class="p-3 bg-muted rounded-lg text-sm text-foreground text-center"
+            >
+              {{ detail?.theoretical || "—" }}
+            </div>
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm text-foreground">Практика</label>
+            <div
+              class="p-3 bg-muted rounded-lg text-sm text-foreground text-center"
+            >
+              {{ detail?.practical || "—" }}
+            </div>
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm text-foreground">Индивид.</label>
+            <div
+              class="p-3 bg-muted rounded-lg text-sm text-foreground text-center"
+            >
+              {{ detail?.individual || "—" }}
+            </div>
+          </div>
+        </div>
+
         <div class="space-y-2">
           <label class="text-sm text-foreground"> Что задано? </label>
           <div class="p-3 bg-muted rounded-lg text-sm text-foreground">

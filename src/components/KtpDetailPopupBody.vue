@@ -84,16 +84,19 @@
           </div>
         </div>
 
-        <div class="border border-border rounded-lg overflow-hidden">
+        <div class="border border-border rounded-lg overflow-hidden overflow-x-auto">
           <div
-            class="grid grid-cols-[40px_minmax(0,_1fr)_100px_100px_80px_80px_120px_160px] gap-4 px-4 py-2 bg-muted/50 text-sm text-muted-foreground"
+            class="grid grid-cols-[40px_minmax(0,_1fr)_100px_80px_70px_70px_70px_70px_70px_120px_140px] gap-3 px-4 py-2 bg-muted/50 text-sm text-muted-foreground min-w-[1100px]"
           >
             <div class="font-medium text-center">№</div>
             <div class="font-medium">Темы занятий</div>
             <div class="font-medium text-center">Дата</div>
-            <div class="font-medium text-center">Всего часов</div>
+            <div class="font-medium text-center">Часы</div>
             <div class="font-medium text-center">СРСП</div>
             <div class="font-medium text-center">СРС</div>
+            <div class="font-medium text-center">Теория</div>
+            <div class="font-medium text-center">Практ.</div>
+            <div class="font-medium text-center">Индив.</div>
             <div class="font-medium text-center">Что задано?</div>
             <div class="font-medium text-center">Примечание</div>
           </div>
@@ -112,24 +115,34 @@
               ></div>
               <div
                 :id="`ktp-detail-item-${item.id}`"
-                class="grid grid-cols-[40px_minmax(0,_1fr)_100px_100px_80px_80px_120px_160px] gap-4 px-4 py-3 items-start cursor-pointer hover:bg-muted/50 transition-colors"
+                class="grid grid-cols-[40px_minmax(0,_1fr)_100px_80px_70px_70px_70px_70px_70px_120px_140px] gap-3 px-4 py-3 items-start transition-colors min-w-[1100px]"
                 :class="{
                   'is-dragging': dragSourceId === item.id,
                   'is-drag-over':
                     dragOverId === item.id && dragSourceId !== item.id,
+                  'cursor-pointer hover:bg-muted/50': !isRowLocked(idx),
+                  'opacity-60 cursor-default bg-muted/20': isRowLocked(idx),
                 }"
-                draggable="true"
-                @dragstart="onDragStart(item)"
+                :draggable="!isRowLocked(idx)"
+                @dragstart="!isRowLocked(idx) && onDragStart(item)"
                 @dragover.prevent="onDragOver(item, idx, $event)"
                 @dragenter.prevent="onDragEnter(item, idx, $event)"
                 @drop.prevent="onDrop()"
                 @dragend="onDragEnd"
-                @click="openEditPopover(item)"
+                @click="handleRowClick(item, idx)"
               >
                 <div
                   class="flex items-center justify-center gap-2 select-none"
                 >
                   <span
+                    v-if="isRowLocked(idx)"
+                    class="inline-flex items-center justify-center p-1 rounded text-muted-foreground/50"
+                    title="Дата прошла — редактирование заблокировано"
+                  >
+                    <IconLock class="w-4 h-4" />
+                  </span>
+                  <span
+                    v-else
                     class="drag-handle inline-flex items-center justify-center p-1 rounded cursor-move text-muted-foreground/80 hover:text-foreground hover:bg-muted"
                   >
                     <IconMenu class="w-4 h-4" />
@@ -149,6 +162,9 @@
                   {{ item.srsp ?? "—" }}
                 </div>
                 <div class="text-center text-sm">{{ item.srs ?? "—" }}</div>
+                <div class="text-center text-sm">{{ item.theoretical ?? "—" }}</div>
+                <div class="text-center text-sm">{{ item.practical ?? "—" }}</div>
+                <div class="text-center text-sm">{{ item.individual ?? "—" }}</div>
                 <div class="text-center text-sm">
                   {{ item.homework || "—" }}
                 </div>
@@ -171,6 +187,8 @@
       v-model:opened="isFormPopoverOpen"
       :ktp-id="ktpId"
       :detail-to-edit="editingDetail"
+      :locked="isEditingLocked"
+      :remaining-hours="remainingHoursForForm"
     />
 
     <DownloadTemplateDialog />
@@ -191,6 +209,7 @@ import IconFileUp from "~icons/lucide/file-up";
 import IconSquareArrowDown from "~icons/lucide/square-arrow-down";
 import IconPlus from "~icons/lucide/plus";
 import IconMenu from "~icons/lucide/menu";
+import IconLock from "~icons/lucide/lock";
 import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
@@ -290,6 +309,7 @@ const semesterPlannedHours = computed(() => {
 
 const isFormPopoverOpen = ref(false);
 const editingDetail = ref<KtpDetail | null>(null);
+const isEditingLocked = ref(false);
 const isImporting = ref(false);
 const isRupImportDialogOpen = ref(false);
 const dragSourceId = ref<string | null>(null);
@@ -449,9 +469,49 @@ const openAddPopover = () => {
 
 const openEditPopover = (detail: KtpDetail) => {
   editingDetail.value = detail;
+  isEditingLocked.value = false;
   selectedDetailId.value = detail.id;
   isFormPopoverOpen.value = true;
 };
+
+// Date-based locking: check if a row's date is in the past
+const isRowLocked = (idx: number): boolean => {
+  const dateStr = lessonDates.value[idx];
+  if (!dateStr || dateStr === "—") return false;
+  // Parse DD.MM.YYYY format
+  const parts = dateStr.split(".");
+  if (parts.length !== 3) return false;
+  const parsed = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return parsed < today;
+};
+
+const handleRowClick = (item: KtpDetail, idx: number) => {
+  if (isRowLocked(idx)) {
+    // Open in view-only mode for locked rows
+    editingDetail.value = item;
+    isEditingLocked.value = true;
+    selectedDetailId.value = item.id;
+    isFormPopoverOpen.value = true;
+  } else {
+    openEditPopover(item);
+  }
+};
+
+// Hours validation: remaining hours available for the form
+const remainingHoursForForm = computed(() => {
+  const details = ktpDetails.value;
+  const editId = editingDetail.value?.id;
+  // Sum hours of all details except the one being edited
+  const usedHours = details.reduce((sum, d) => {
+    if (d.id === editId) return sum;
+    return sum + (d.totalHours || 0);
+  }, 0);
+  // If editing, add back the current detail's hours as available
+  const currentHours = editingDetail.value?.totalHours || 0;
+  return currentHours + (plannedHoursFromKtp.value - usedHours);
+});
 
 function onDragStart(item: KtpDetail) {
   dragSourceId.value = item.id;

@@ -24,6 +24,9 @@ export interface KtpDetail {
   totalHours: number | null;
   srsp: number | null;
   srs: number | null;
+  theoretical: number | null;
+  practical: number | null;
+  individual: number | null;
   homework: string;
   notes: string;
 }
@@ -37,6 +40,9 @@ function createEmptyKtpDetail(ktpId: string, position: number): KtpDetail {
     totalHours: null,
     srsp: null,
     srs: null,
+    theoretical: null,
+    practical: null,
+    individual: null,
     homework: "",
     notes: "",
   };
@@ -150,6 +156,9 @@ export const useKtpStore = defineStore(
         totalHours: data.totalHours ?? undefined,
         srsp: data.srsp ?? undefined,
         srs: data.srs ?? undefined,
+        theoretical: data.theoretical ?? undefined,
+        practical: data.practical ?? undefined,
+        individual: data.individual ?? undefined,
         homework: data.homework || "",
         notes: data.notes || "",
       });
@@ -165,6 +174,9 @@ export const useKtpStore = defineStore(
             totalHours: newDetail.totalHours,
             srsp: newDetail.srsp,
             srs: newDetail.srs,
+            theoretical: newDetail.theoretical ?? null,
+            practical: newDetail.practical ?? null,
+            individual: newDetail.individual ?? null,
             homework: newDetail.homework,
             notes: newDetail.notes,
           };
@@ -184,6 +196,9 @@ export const useKtpStore = defineStore(
         totalHours: data.totalHours ?? undefined,
         srsp: data.srsp ?? undefined,
         srs: data.srs ?? undefined,
+        theoretical: data.theoretical ?? undefined,
+        practical: data.practical ?? undefined,
+        individual: data.individual ?? undefined,
         homework: data.homework,
         notes: data.notes,
       });
@@ -314,6 +329,9 @@ export const useKtpStore = defineStore(
             totalHours: d.totalHours,
             srsp: d.srsp,
             srs: d.srs,
+            theoretical: d.theoretical ?? null,
+            practical: d.practical ?? null,
+            individual: d.individual ?? null,
             homework: d.homework,
             notes: d.notes,
           }));
@@ -483,6 +501,9 @@ export const useKtpStore = defineStore(
                 totalHours: detail.totalHours,
                 srsp: detail.srsp,
                 srs: detail.srs,
+                theoretical: detail.theoretical ?? null,
+                practical: detail.practical ?? null,
+                individual: detail.individual ?? null,
                 homework: detail.homework,
                 notes: detail.notes,
               });

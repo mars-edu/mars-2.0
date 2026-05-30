@@ -5,33 +5,78 @@
     :opened="opened"
     @popover:closed="onPopoverClosed"
     positioning="center"
-    style="width: 600px !important"
+    style="width: 575px !important; max-width: calc(100vw - 32px) !important"
   >
-    <div class="bg-card text-card-foreground">
+    <div class="bg-card text-card-foreground rounded-2xl overflow-hidden flex flex-col" style="max-height: 80dvh">
+      <!-- Header -->
       <PopoverHeader
-        title="Результат обучения/дисциплина"
+        title="Создание КТП"
+        subtitle="Выберите результат обучения/дисциплину для нового плана"
         :on-cancel="requestClose"
       />
-      <div v-if="formError" class="px-4 pt-2 text-destructive text-sm">
-        {{ formError }}
+
+      <!-- Body -->
+      <div class="flex-1 overflow-y-auto px-8 pb-6 space-y-6">
+        <!-- Error banner -->
+        <div
+          v-if="formError"
+          class="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 text-destructive text-sm font-medium"
+        >
+          <IconAlertCircle class="w-4 h-4 flex-shrink-0" />
+          {{ formError }}
+        </div>
+
+        <!-- RUP Entry Select -->
+        <div>
+          <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
+            Результат обучения / дисциплина
+          </label>
+          <Select
+            placeholder="Выберите из списка..."
+            v-model="rupEntryId"
+            :options="filteredRupEntryOptions"
+            name="ktp-item-rupEntry"
+            id="ktp-item-rupEntry"
+            searchable
+          />
+        </div>
+
+        <!-- Info hint -->
+        <div
+          v-if="!rupEntryId"
+          class="flex items-start gap-3 p-4 rounded-xl bg-muted/50 text-muted-foreground text-sm"
+        >
+          <IconInfo class="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <div>
+            Тематический план будет привязан к выбранной дисциплине
+            для учебного года и семестра, указанных на странице.
+          </div>
+        </div>
+
+        <!-- Selected entry preview -->
+        <div
+          v-if="selectedEntry"
+          class="p-4 rounded-xl border border-border bg-muted/30 space-y-2"
+        >
+          <div class="flex items-center gap-2">
+            <IconBookOpen class="w-4 h-4 text-primary" />
+            <span class="text-sm font-semibold">{{ selectedEntry.moduleIndex }} — {{ selectedEntry.moduleName }}</span>
+          </div>
+          <p
+            v-if="selectedEntry.learningOutcome"
+            class="text-xs text-muted-foreground ml-6"
+          >
+            {{ selectedEntry.learningOutcome }}
+          </p>
+        </div>
       </div>
 
-      <div class="p-4 space-y-3">
-        <Select
-          label="Результат обучения/дисциплина"
-          placeholder="Выберите результат обучения/дисциплину"
-          v-model="rupEntryId"
-          :options="filteredRupEntryOptions"
-          name="ktp-item-rupEntry"
-          id="ktp-item-rupEntry"
-          searchable
-          @before-open="closeKtpItemPopover"
-          @after-close="openKtpItemPopover"
-        />
-      </div>
-
+      <!-- Footer -->
       <PopoverFooter
+        save-text="Создать"
+        save-variant="success"
         :on-save="handleSave"
+        :on-cancel="requestClose"
         :disabled="!isFormValid || rupEntryStore.loading"
         :is-loading="rupEntryStore.loading"
       />
@@ -40,8 +85,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
-import { f7Popover, f7 } from "framework7-vue";
+import { ref, computed } from "vue";
+import { f7 } from "framework7-vue";
 import { storeToRefs } from "pinia";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useKtpStore } from "@/stores/ktpStore";
@@ -49,6 +94,9 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Select from "@/components/ui/Select.vue";
+import IconAlertCircle from "~icons/lucide/alert-circle";
+import IconInfo from "~icons/lucide/info";
+import IconBookOpen from "~icons/lucide/book-open";
 
 const props = defineProps<{
   opened: boolean;
@@ -84,6 +132,12 @@ const filteredRupEntryOptions = computed(() => {
   });
 });
 
+// Show a preview of the selected RUP entry
+const selectedEntry = computed(() => {
+  if (!rupEntryId.value) return null;
+  return rupEntryStore.getRupEntryById(rupEntryId.value) ?? null;
+});
+
 const isFormValid = computed(() => {
   return (
     !!rupEntryId.value &&
@@ -102,13 +156,7 @@ const onPopoverClosed = () => {
   emit("update:opened", false);
 };
 
-const closeKtpItemPopover = () => {
-  f7.popover.close("#add-ktp-item-popover");
-};
 
-const openKtpItemPopover = () => {
-  f7.popover.open("#add-ktp-item-popover");
-};
 
 const handleSave = async () => {
   if (!isFormValid.value) {
@@ -136,13 +184,13 @@ const handleSave = async () => {
 
     f7.toast
       .create({
-        text: "Элемент КТП создан",
+        text: "Тематический план создан",
         closeTimeout: 1500,
         cssClass: "color-green",
       })
       .open();
 
-    closeKtpItemPopover();
+    emit("update:opened", false);
   } catch (err) {
     formError.value =
       err instanceof Error ? err.message : "Не удалось добавить запись.";

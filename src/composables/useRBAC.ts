@@ -38,7 +38,7 @@ const ALL_NAV_ITEMS: Omit<NavigationItem, "label">[] = [
   { id: "home", resource: "home", icon: "home", route: "/home" },
   { id: "planning", resource: "planning", icon: "calendar-days", route: "/planning" },
   { id: "journals", resource: "journals", icon: "book", route: "/journals/" },
-  { id: "ktp", resource: "journals", icon: "layout-grid", route: "/journals/" },
+  { id: "ktp", resource: "rup", icon: "layout-grid", route: "/ktp" },
   { id: "reports", resource: "reports", icon: "file-text", route: "/reports/" },
   { id: "testing", resource: "testing", icon: "layout", route: "/testing" },
   { id: "courses", resource: "journals", icon: "graduation-cap", route: "/home" },

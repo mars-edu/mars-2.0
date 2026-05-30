@@ -512,15 +512,43 @@ const { getActiveAcademicYearSemester } = storeToRefs(
   academicYearSemesterStore
 );
 
+// Auto-select active academic year when it becomes available
+watch(
+  () => academicYearStore.getActiveAcademicYear,
+  (activeYear) => {
+    if (activeYear && !selectedItemsStore.selectedAcademicYearId) {
+      selectedItemsStore.setSelectedAcademicYear(activeYear.id);
+      console.log("   ✅ Reactively set selected year to:", activeYear.name);
+    }
+  },
+  { immediate: true }
+);
+
 const selectedAcademicYearModel = computed({
   get: () => selectedItemsStore.selectedAcademicYearId ?? "",
   set: (v: string) => {
     selectedItemsStore.setSelectedAcademicYear(v || null);
-    if (v !== (selectedItemsStore.selectedAcademicYearId ?? "")) {
-      selectedSemesterId.value = "";
-    }
   },
 });
+
+// Auto-select semester when academic year changes or semesters finish loading
+watch(
+  [() => selectedItemsStore.selectedAcademicYearId, () => academicYearSemesterStore.academicYearSemesters],
+  ([newYearId, semesters], [oldYearId, oldSemesters]) => {
+    // Only trigger if we have a year, AND either the year just changed, OR we don't have a semester selected yet
+    if (newYearId && (newYearId !== oldYearId || !selectedSemesterId.value)) {
+      const autoSemester = academicYearSemesterStore.getAutoSelectedSemesterForYear(newYearId);
+      if (autoSemester) {
+        selectedSemesterId.value = autoSemester.id;
+        console.log(`   ✅ Reactively auto-selected semester "${autoSemester.semesterNumber}" with ID: ${autoSemester.id}`);
+      } else if (newYearId !== oldYearId) {
+        // Only clear if the year actually changed and there are no semesters
+        selectedSemesterId.value = "";
+      }
+    }
+  },
+  { immediate: true }
+);
 
 const academicYearOptions = computed(() => {
   return academicYears.value.map((year) => ({
@@ -573,24 +601,6 @@ onMounted(async () => {
   console.log("╔════════════════════════════════════════════════════════════╗");
   console.log("║              🔍 JOURNALS PAGE MOUNTED                      ║");
   console.log("╚════════════════════════════════════════════════════════════╝");
-
-  const activeYear = academicYearStore.getActiveAcademicYear;
-  console.log("\n📅 Active Year:", activeYear);
-  if (activeYear) {
-    selectedItemsStore.setSelectedAcademicYear(activeYear.id);
-    console.log("   ✅ Set selected year to:", activeYear.name);
-  }
-
-  const activeSemesters =
-    academicYearSemesterStore.getActiveAcademicYearSemesters;
-  console.log("\n📚 Active Semesters:", activeSemesters);
-
-  if (activeSemesters.length > 0) {
-    selectedSemesterId.value = activeSemesters[0].id;
-    console.log(`   ✅ Auto-selected semester "${activeSemesters[0].semesterNumber}" with ID: ${activeSemesters[0].id}`);
-  } else {
-    console.warn("   ⚠️  No active semesters found!");
-  }
 
   if (userStore.isTeacher && userStore.currentUser?.id) {
     calendarStore.setSelectedTeacher(userStore.currentUser.id);

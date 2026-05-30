@@ -100,6 +100,19 @@ export const useAcademicYearSemesterStore = defineStore(
       });
     });
 
+    const getAutoSelectedSemesterForYear = computed(() => {
+      return (yearId?: string) => {
+        let semesters: AcademicYearSemester[] = yearId 
+          ? getAcademicYearSemestersByAcademicYear.value(yearId)
+          : getActiveAcademicYearSemesters.value;
+          
+        const current = semesters.find((s: AcademicYearSemester) => isSemesterActive(s));
+        if (current) return current;
+        if (semesters.length > 0) return semesters[semesters.length - 1];
+        return null;
+      };
+    });
+
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
@@ -284,6 +297,7 @@ export const useAcademicYearSemesterStore = defineStore(
       getAcademicYearSemestersByAcademicYear,
       getActiveAcademicYearSemester,
       getActiveAcademicYearSemesters,
+      getAutoSelectedSemesterForYear,
       isSemesterActive,
       isLoading,
       getError,

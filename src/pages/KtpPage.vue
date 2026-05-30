@@ -15,81 +15,131 @@
         <div
           class="bg-card text-card-foreground rounded-xl p-4 md:p-4 shadow-sm"
         >
-          <div
-            class="flex flex-col md:flex-row md:items-center md:justify-between md:gap-3 mb-4 md:mb-4"
-          >
-            <span
-              class="text-base md:text-lg font-medium md:font-semibold mb-1 md:mb-0"
+          <!-- Row 1: Title + Create -->
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl md:text-3xl font-bold">
+              Тематические планы (КТП)
+            </h1>
+            <button
+              class="w-fit flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all active:scale-95"
+              :class="isAddDisabled
+                ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/20'"
+              :disabled="isAddDisabled"
+              @click="openAddDialog"
             >
-              Рабочие учебные программы
-            </span>
-            <div class="flex flex-col md:flex-row md:items-center md:gap-3">
-              <Select
-                v-model="selectedAcademicYearModel"
-                :options="academicYearOptions"
-                placeholder="Учебный год:"
-                name="academic-year"
-                class="w-[250px]"
-              />
-              <Select
-                v-model="selectedSemesterId"
-                :options="semesterOptions"
-                placeholder="Семестр:"
-                name="semester"
-                class="w-[220px]"
-              />
-            </div>
+              <IconPlus class="w-5 h-5" />
+              Создать
+            </button>
           </div>
 
-          <div class="space-y-3">
-            <div class="border border-border rounded-lg overflow-hidden">
-              <div
-                class="grid grid-cols-[minmax(0,_1fr)_100px_100px_120px_100px] gap-4 px-4 py-2 bg-muted/50 text-sm text-muted-foreground"
-              >
-                <div class="font-medium">Модуль/дисциплина</div>
-                <div class="font-medium text-center">Курс</div>
-                <div class="font-medium text-center">Часы</div>
-                <div class="font-medium text-center">Язык</div>
-                <div class="font-medium text-center">Группы</div>
-              </div>
+          <!-- Row 2: Search + Filters -->
+          <div class="flex flex-col md:flex-row gap-3 mb-6">
+            <SearchInput
+              v-model="searchQuery"
+              placeholder="Поиск по названию, модулю или результату обучения..."
+              wrapper-class="flex-1"
+            />
+            <Select
+              v-model="selectedAcademicYearModel"
+              :options="academicYearOptions"
+              placeholder="Учебный год"
+              name="academic-year"
+              class="w-full md:w-[220px]"
+            />
+            <Select
+              v-model="selectedSemesterId"
+              :options="semesterOptions"
+              placeholder="Семестр"
+              name="semester"
+              class="w-full md:w-[200px]"
+            />
+          </div>
 
-              <div
-                v-if="isLoading"
-                class="p-4 text-center text-muted-foreground"
-              >
-                Загрузка данных...
-              </div>
-              <div
-                v-else-if="ktpItems.length === 0"
-                class="p-4 text-center text-muted-foreground"
-              >
-                Нет данных для отображения.
-              </div>
-              <div v-else class="divide-y divide-border">
+          <!-- Cards -->
+          <div v-if="isLoading" class="py-12 text-center text-muted-foreground">
+            Загрузка данных...
+          </div>
+          <div
+            v-else-if="filteredKtpItems.length === 0"
+            class="py-12 text-center text-muted-foreground"
+          >
+            <IconBookOpen class="w-10 h-10 mx-auto mb-3 opacity-40" />
+            <div class="text-sm">Нет данных для отображения</div>
+          </div>
+          <div v-else class="flex flex-col gap-3">
+            <div
+              v-for="item in filteredKtpItems"
+              :key="item.id"
+              class="group relative bg-card border border-border rounded-2xl p-5 cursor-pointer transition-all duration-200 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5"
+              @click="selectItem(item)"
+            >
+              <div class="flex items-center gap-4">
+                <!-- Icon -->
                 <div
-                  v-for="item in filteredKtpItems"
-                  :key="item.id"
-                  class="grid grid-cols-[minmax(0,_1fr)_100px_100px_120px_100px] gap-4 px-4 py-3 items-center cursor-pointer hover:bg-muted/50"
-                  @click="selectItem(item)"
+                  class="flex-shrink-0 p-3 rounded-xl bg-primary/10 text-primary transition-transform group-hover:scale-110"
                 >
-                  <div>
-                    {{ item.moduleIndex }} - {{ item.moduleName }}
-                    <br />
-                    <span class="text-muted-foreground text-xs font-medium">{{
-                      getKtpSubtitle(item)
-                    }}</span>
-                    <br />
-                    <span class="text-muted-foreground text-sm">{{
-                      item.learningOutcome
-                    }}</span>
-                  </div>
-                  <div class="text-center">
-                    {{ getCourseNumber((item as any).courseId || "") }}
-                  </div>
-                  <div class="text-center">{{ item.ktpTotalHours }}</div>
-                  <div class="text-center">—</div>
-                  <div class="text-center">—</div>
+                  <IconBookOpen class="w-6 h-6" />
                 </div>
+
+                <!-- Main info -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <h3
+                      class="font-semibold text-base truncate group-hover:text-primary transition-colors"
+                    >
+                      {{ item.moduleIndex }} — {{ item.moduleName }}
+                    </h3>
+                  </div>
+                  <p
+                    v-if="item.learningOutcome"
+                    class="text-sm text-muted-foreground truncate mb-0.5"
+                  >
+                    {{ item.learningOutcome }}
+                  </p>
+                  <p
+                    v-if="getKtpSubtitle(item)"
+                    class="text-xs text-muted-foreground/70 flex items-center gap-1"
+                  >
+                    <IconClock class="w-3 h-3 flex-shrink-0" />
+                    {{ getKtpSubtitle(item) }}
+                  </p>
+                </div>
+
+                <!-- Divider -->
+                <div class="hidden md:block h-12 w-px bg-border flex-shrink-0" />
+
+                <!-- Stats -->
+                <div class="hidden md:flex items-center gap-6 flex-shrink-0">
+                  <div class="flex flex-col items-center min-w-[50px]">
+                    <span class="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">Часы</span>
+                    <span class="text-sm font-semibold group-hover:text-primary transition-colors">
+                      {{ item.ktpTotalHours || 0 }}
+                    </span>
+                  </div>
+                  <div class="flex flex-col items-center min-w-[50px]">
+                    <span class="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">Курс</span>
+                    <span class="text-sm font-semibold group-hover:text-primary transition-colors">
+                      {{ getCourseNumber((item as any).courseId || "") || "—" }}
+                    </span>
+                  </div>
+                  <div class="flex flex-col items-center min-w-[50px]">
+                    <span class="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">Тем</span>
+                    <span
+                      class="text-xs font-bold px-2.5 py-0.5 rounded-full"
+                      :class="getTopicCount(item) > 0
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-muted text-muted-foreground'"
+                    >
+                      {{ getTopicCount(item) }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Arrow -->
+                <IconChevronRight
+                  class="w-5 h-5 text-muted-foreground/40 group-hover:text-primary transition-colors flex-shrink-0"
+                />
               </div>
             </div>
           </div>
@@ -114,27 +164,20 @@
       :selected-semester-id="selectedSemesterId ?? undefined"
     />
 
-    <template #fixed>
-      <f7-fab
-        position="right-bottom"
-        slot="fixed"
-        @click="openAddDialog"
-        id="ktp-page-add-button"
-        :disabled="isAddDisabled"
-      >
-        <IconPlus />
-      </f7-fab>
-    </template>
   </f7-page>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
-import { f7Page, f7Fab, f7 } from "framework7-vue";
+import { f7Page, f7 } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
+import IconBookOpen from "~icons/lucide/book-open";
+import IconClock from "~icons/lucide/clock";
+import IconChevronRight from "~icons/lucide/chevron-right";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
+import SearchInput from "@/components/ui/SearchInput.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
 import AddKtpItemForm from "@/components/AddKtpItemForm.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
@@ -151,6 +194,7 @@ import { useSidebar } from "@/composables/useSidebar";
 
 const { contentMargin } = useSidebar();
 const activeNavItem = ref("ktp");
+const searchQuery = ref("");
 
 const academicYearStore = useAcademicYearStore();
 const { academicYears } = storeToRefs(academicYearStore);
@@ -228,21 +272,28 @@ const semesterOptions = computed(() => {
 const filteredKtpItems = computed(() => {
   const yearId = selectedAcademicYearId.value;
   const semId = selectedSemesterId.value;
+  const query = searchQuery.value.toLowerCase().trim();
   return ktpItems.value
     .filter((item) => item !== null)
     .filter((item) => {
       if (yearId && item.academicYearId !== yearId) return false;
       if (semId && item.semesterId !== semId) return false;
+      if (query) {
+        const haystack = [
+          item.moduleIndex,
+          item.moduleName,
+          item.learningOutcome,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!haystack.includes(query)) return false;
+      }
       return true;
     });
 });
 
-const isAddDisabled = computed(
-  () =>
-    !selectedAcademicYearId.value ||
-    !selectedSpecialtyIdStore.value ||
-    !selectedCourseIdStore.value
-);
+const isAddDisabled = computed(() => !selectedAcademicYearId.value);
 
 const getCourseNumber = (courseId: string) => {
   const course = courseStore.getCourseById(courseId);
@@ -276,6 +327,17 @@ const getKtpSubtitle = (item: any) => {
   return journalStore.getJournalSubtitle(journal);
 };
 
+const getTopicCount = (item: any): number => {
+  const ktpId = getKtpIdForRupEntry.value(
+    item.id,
+    selectedAcademicYearId.value ?? undefined,
+    selectedSemesterId.value
+  );
+  if (!ktpId) return 0;
+  const details = ktpStore.ktpDetails.filter((d) => d.ktpId === ktpId);
+  return details.length;
+};
+
 const { getKtpIdForRupEntry, getModuleTitleForKtp } = storeToRefs(ktpStore);
 
 const selectItem = (item: any) => {
@@ -302,40 +364,41 @@ const openAddDialog = () => {
   isAddItemFormOpen.value = true;
 };
 
-onMounted(async () => {
-  const activeYear = academicYearStore.getActiveAcademicYear;
-  if (activeYear) {
-    selectedItemsStore.setSelectedAcademicYear(activeYear.id);
-  }
-
-  // Set default semester if we have an active academic year
-  if (activeYear && !selectedAcademicYearId.value) {
-    const activeSemesters =
-      academicYearSemesterStore.getActiveAcademicYearSemesters;
-    if (activeSemesters.length > 0) {
-      selectedSemesterId.value = activeSemesters[0].semesterNumber.toString();
+// Auto-select active academic year when it becomes available
+watch(
+  () => academicYearStore.getActiveAcademicYear,
+  (activeYear) => {
+    if (activeYear && !selectedAcademicYearId.value) {
+      selectedItemsStore.setSelectedAcademicYear(activeYear.id);
     }
-  }
-});
+  },
+  { immediate: true }
+);
 
 const selectedAcademicYearModel = computed({
   get: () => selectedAcademicYearId.value ?? "",
   set: (v: string) => {
     selectedItemsStore.setSelectedAcademicYear(v || null);
-    // Clear semester selection when academic year changes
-    if (v !== selectedAcademicYearId.value) {
-      selectedSemesterId.value = "";
-    }
   },
 });
 
-// Watch for academic year changes and update semester options
-watch(selectedAcademicYearId, (newYearId, oldYearId) => {
-  if (newYearId !== oldYearId && newYearId) {
-    // Clear semester selection when academic year changes
-    selectedSemesterId.value = "";
-  }
-});
+// Auto-select semester when academic year changes or semesters finish loading
+watch(
+  [selectedAcademicYearId, () => academicYearSemesterStore.academicYearSemesters],
+  ([newYearId, semesters], [oldYearId, oldSemesters]) => {
+    // Only trigger if we have a year, AND either the year just changed, OR we don't have a semester selected yet
+    if (newYearId && (newYearId !== oldYearId || !selectedSemesterId.value)) {
+      const autoSemester = academicYearSemesterStore.getAutoSelectedSemesterForYear(newYearId);
+      if (autoSemester) {
+        selectedSemesterId.value = autoSemester.semesterNumber.toString();
+      } else if (newYearId !== oldYearId) {
+        // Only clear if the year actually changed and there are no semesters
+        selectedSemesterId.value = "";
+      }
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped></style>

@@ -37,8 +37,8 @@
     <!-- Teleported dropdown: renders at body level to escape any overflow/stacking context -->
     <Teleport to="body">
       <template v-if="isOpened">
-        <div class="dropdown-backdrop" @click="close" />
-        <div class="dropdown-panel" :style="dropdownStyle">
+        <div class="dropdown-backdrop" @click="close" data-popover-ignore="true" />
+        <div class="dropdown-panel" :style="dropdownStyle" data-popover-ignore="true">
           <div class="search-wrapper">
             <div class="relative">
               <IconSearch class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />

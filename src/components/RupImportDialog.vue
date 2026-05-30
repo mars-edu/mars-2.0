@@ -168,7 +168,7 @@ const ktpStore = useKtpStore();
 const courseStore = useCourseStore();
 const academicYearStore = useAcademicYearStore();
 const semesterStore = useSemesterStore();
-const { getAllRupEntryItems: allRups, isLoading } = storeToRefs(rupEntryStore);
+const { getAllRupEntries: allRups, isLoading } = storeToRefs(rupEntryStore);
 const { academicYears } = storeToRefs(academicYearStore);
 const { semesters } = storeToRefs(semesterStore);
 

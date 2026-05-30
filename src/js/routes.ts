@@ -226,6 +226,11 @@ const routes: RouteConfig[] = [
     beforeEnter: [createAuthGuard("cabinet-management")],
   },
   {
+    path: "/ktp",
+    asyncComponent: () => import("../pages/suspense/KtpPage.vue"),
+    beforeEnter: [createAuthGuard("rup")],
+  },
+  {
     path: "/profile",
     asyncComponent: () => import("../pages/suspense/ProfilePage.vue"),
     beforeEnter: [createAuthGuard()],
