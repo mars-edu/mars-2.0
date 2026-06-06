@@ -943,13 +943,7 @@ function updateWeekDayTime(
   const updated = { ...current[index], [field]: nextValue };
 
   if (field === "startId") {
-    const schedules = activeSemesterSchedules.value;
-    const startIndex = schedules.findIndex((s) => s.id === nextValue);
-    if (startIndex !== -1 && startIndex + 1 < schedules.length) {
-      updated.endId = schedules[startIndex + 1].id;
-    } else if (startIndex !== -1) {
-      updated.endId = nextValue;
-    }
+    updated.endId = nextValue;
   }
   selectedWeekDaysModel.value = [
     ...current.slice(0, index),
@@ -1210,13 +1204,7 @@ function updateJournalSlotTime(
     if (!slots[slotIdx]) return j;
     slots[slotIdx] = { ...slots[slotIdx], [field]: nextValue };
     if (field === "startId") {
-      const schedules = activeSemesterSchedules.value;
-      const startIndex = schedules.findIndex((s) => s.id === nextValue);
-      if (startIndex !== -1 && startIndex + 1 < schedules.length) {
-        slots[slotIdx].endId = schedules[startIndex + 1].id;
-      } else if (startIndex !== -1) {
-        slots[slotIdx].endId = nextValue;
-      }
+      slots[slotIdx].endId = nextValue;
     }
     return { ...j, daySlots: slots };
   });

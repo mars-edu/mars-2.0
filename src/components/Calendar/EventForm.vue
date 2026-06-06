@@ -414,13 +414,7 @@ function updateWeekDayTime(
   let updated = { ...existing, [field]: nextValue };
 
   if (field === "startId") {
-    const schedules = activeSemesterSchedules.value;
-    const startIndex = schedules.findIndex((s) => s.id === nextValue);
-    if (startIndex !== -1 && startIndex + 1 < schedules.length) {
-      updated.endId = schedules[startIndex + 1].id;
-    } else if (startIndex !== -1) {
-      updated.endId = nextValue;
-    }
+    updated.endId = nextValue;
   }
 
   selectedWeekDaysModel.value = [
