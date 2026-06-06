@@ -1,6 +1,7 @@
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
+import { validateIndividualJournals } from "./lib";
 
 const weeklyScheduleValidator = v.object({
   weekId: v.number(),
@@ -40,6 +41,10 @@ export const create = mutation({
     isIndividualJournal: v.optional(v.boolean()),
     mergedJournalIds: v.optional(v.array(v.string())),
     parentIndividualJournalId: v.optional(v.string()),
+    sourceGroupEventId: v.optional(v.string()),
+    gradingType: v.optional(
+      v.union(v.literal("combined"), v.literal("separate"))
+    ),
     customTitle: v.optional(v.string()),
     isClosed: v.optional(v.boolean()),
     journalSettings: v.optional(journalSettingsValidator),
@@ -75,6 +80,10 @@ export const update = mutation({
     isIndividualJournal: v.optional(v.boolean()),
     mergedJournalIds: v.optional(v.array(v.string())),
     parentIndividualJournalId: v.optional(v.string()),
+    sourceGroupEventId: v.optional(v.string()),
+    gradingType: v.optional(
+      v.union(v.literal("combined"), v.literal("separate"))
+    ),
     customTitle: v.optional(v.string()),
     isClosed: v.optional(v.boolean()),
     journalSettings: v.optional(journalSettingsValidator),
@@ -123,5 +132,76 @@ export const remove = mutation({
   handler: async (ctx, args) => {
     await ctx.db.delete(args.id);
     return { success: true };
+  },
+});
+
+/**
+ * Atomically create a main group event plus its individual sub-journals.
+ * Each draft becomes its own calendarEvent flagged isIndividualJournal with
+ * sourceGroupEventId pointing back to the main event.
+ */
+export const createWithIndividualJournals = mutation({
+  args: {
+    rupEntryId: v.string(),
+    ktpId: v.optional(v.string()),
+    teacherId: v.optional(v.string()),
+    startDate: v.string(),
+    startTime: v.optional(v.string()),
+    endDate: v.string(),
+    endTime: v.optional(v.string()),
+    participants: v.array(v.string()),
+    color: v.optional(v.string()),
+    semester: v.string(),
+    useCustomPeriod: v.boolean(),
+    weeklySchedules: v.optional(v.array(weeklyScheduleValidator)),
+    gradingType: v.union(v.literal("combined"), v.literal("separate")),
+    individualJournals: v.array(
+      v.object({
+        studentIds: v.array(v.string()),
+        weeklySchedules: v.array(weeklyScheduleValidator),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const { gradingType, individualJournals, ...mainFields } = args;
+
+    const validationError = validateIndividualJournals(
+      individualJournals,
+      gradingType
+    );
+    if (validationError) {
+      throw new Error(validationError);
+    }
+
+    const timestamps = createTimestamps();
+
+    const mainId = await ctx.db.insert("calendarEvents", {
+      ...mainFields,
+      gradingType,
+      ...timestamps,
+    });
+
+    const childIds: string[] = [];
+    for (let i = 0; i < individualJournals.length; i++) {
+      const j = individualJournals[i];
+      const childId = await ctx.db.insert("calendarEvents", {
+        rupEntryId: mainFields.rupEntryId,
+        teacherId: mainFields.teacherId,
+        startDate: mainFields.startDate,
+        endDate: mainFields.endDate,
+        participants: j.studentIds,
+        color: mainFields.color,
+        semester: mainFields.semester,
+        useCustomPeriod: mainFields.useCustomPeriod,
+        weeklySchedules: j.weeklySchedules,
+        isIndividualJournal: true,
+        sourceGroupEventId: mainId,
+        customTitle: `Индивидуальный журнал #${i + 1}`,
+        ...timestamps,
+      });
+      childIds.push(childId);
+    }
+
+    return { mainId, childIds };
   },
 });
