@@ -596,6 +596,7 @@ export const useMarksStore = defineStore(
 
           // After successfully saving the mark, sync to parent journals if this is an individual journal
           await syncToParentJournals(journalId, studentId, markIndex, valueIndex, value, mark);
+          await syncToMainJournal(journalId, studentId, valueIndex, value, mark);
 
           return true;
         }
@@ -708,6 +709,95 @@ export const useMarksStore = defineStore(
         }
       } catch (err) {
         console.error("[marksStore] Error syncing individual journal marks:", err);
+      }
+    };
+
+    // «Общая» trajectory: sync CONTROL marks from a wizard-child individual
+    // journal up to its main group journal. Only control marks sync — date
+    // columns differ between the child and main grids, but control columns
+    // are shared per discipline-semester and matched by controlId.
+    const syncToMainJournal = async (
+      childJournalId: string,
+      studentId: string,
+      valueIndex: number,
+      value: string | null,
+      mark: Mark
+    ): Promise<void> => {
+      try {
+        if (mark.controlType !== "intermediate" && mark.controlType !== "final") {
+          return; // control marks only
+        }
+
+        const { useCalendarStore } = await import("./calendarStore");
+        const calendarStore = useCalendarStore();
+
+        const childEvent = calendarStore.getEventById(childJournalId);
+        if (!childEvent?.isIndividualJournal || !childEvent.sourceGroupEventId) {
+          return; // not a wizard-child individual journal
+        }
+
+        const mainEvent = calendarStore.getEventById(childEvent.sourceGroupEventId);
+        if (!mainEvent || mainEvent.gradingType !== "combined") {
+          return; // «Раздельная» or unknown: no sync
+        }
+        if (!mainEvent.participants?.includes(studentId)) {
+          return;
+        }
+
+        const mainJournal = journalMarks.value[mainEvent.id];
+        if (!mainJournal) {
+          console.warn("[marksStore] Main journal not loaded, skipping control sync");
+          return;
+        }
+        const mainStudentMark = mainJournal.studentMarks.find(
+          (sm) => sm.studentId === studentId
+        );
+        if (!mainStudentMark) return;
+
+        // Locate the SAME control column in the main grid by controlId/type —
+        // column indexes differ between grids, never reuse the child's index.
+        const mainMarkIndex = mainStudentMark.marks.findIndex(
+          (m) =>
+            m.controlType === mark.controlType &&
+            (m.controlId ?? "") === (mark.controlId ?? "") &&
+            (m.scheduledControlId ?? "") === (mark.scheduledControlId ?? "")
+        );
+        if (mainMarkIndex === -1) {
+          console.warn("[marksStore] Matching control column not found in main journal");
+          return;
+        }
+
+        const mainMark = mainStudentMark.marks[mainMarkIndex];
+        if (valueIndex < 0 || valueIndex >= mainMark.values.length) return;
+        mainMark.values[valueIndex] = value;
+        mainJournal.lastUpdated = new Date().toISOString();
+
+        const backendMainJournalId = await ensureBackendJournalId(mainEvent.id);
+        if (!backendMainJournalId) {
+          console.warn("[marksStore] Main journal not initialized in backend, skipping");
+          return;
+        }
+        const userStore = useUserStore();
+        const rawUserId = userStore.currentUser?.id;
+        const userId = rawUserId ? (rawUserId as Id<"users">) : undefined;
+        await convex.mutation(api.marks.mutations.updateMark, {
+          journalId: backendMainJournalId as any,
+          studentId,
+          columnIndex: mainMarkIndex,
+          rowIndex: valueIndex,
+          value: value || undefined,
+          columnType: mainMark.type,
+          columnDate: mainMark.isoDate,
+          columnLabel: mainMark.label,
+          controlType: mainMark.controlType,
+          controlId: mainMark.controlId,
+          sessionId: mainMark.sessionId,
+          scheduledControlId: mainMark.scheduledControlId,
+          userId,
+        });
+        console.log("[marksStore] Synced control mark to main journal");
+      } catch (err) {
+        console.error("[marksStore] Error syncing control mark to main journal:", err);
       }
     };
 
