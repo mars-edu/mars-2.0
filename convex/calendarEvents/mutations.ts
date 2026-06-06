@@ -1,5 +1,5 @@
 import { mutation } from "../_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
 import { validateIndividualJournals } from "./lib";
 
@@ -170,7 +170,7 @@ export const createWithIndividualJournals = mutation({
       gradingType
     );
     if (validationError) {
-      throw new Error(validationError);
+      throw new ConvexError(validationError);
     }
 
     const timestamps = createTimestamps();
