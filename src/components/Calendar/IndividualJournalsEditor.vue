@@ -219,7 +219,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 
 import IconX from "~icons/lucide/x";
@@ -277,6 +277,17 @@ const individualBudget = computed(() => {
 });
 
 const individualHoursAvailable = computed(() => individualBudget.value > 0);
+
+// Auto-reset the toggle when the budget gate closes (e.g. discipline
+// changed to one without individual hours) — keeps parent state in sync
+// so submit logic and step validation never see a stale `true`.
+watch(individualHoursAvailable, (available) => {
+  if (!available && props.useIndividualJournals) {
+    emit("update:useIndividualJournals", false);
+    emit("update:gradingType", "");
+    emit("update:individualJournals", []);
+  }
+});
 
 // --- Models ---
 
