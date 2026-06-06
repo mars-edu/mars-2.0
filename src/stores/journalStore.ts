@@ -21,6 +21,7 @@ export interface Journal {
   isIndividualJournal?: boolean;
   mergedJournalIds?: string[];
   parentIndividualJournalId?: string;
+  sourceGroupEventId?: string;
   customTitle?: string;
 }
 
@@ -266,6 +267,7 @@ export const useJournalStore = defineStore(
 
         journal.isIndividualJournal = true;
         journal.mergedJournalIds = actualEvent.mergedJournalIds || [];
+        journal.sourceGroupEventId = actualEvent.sourceGroupEventId;
         journal.customTitle = actualEvent.customTitle;
 
         result.push(journal);

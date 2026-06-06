@@ -485,6 +485,10 @@ export default defineSchema({
     isIndividualJournal: v.optional(v.boolean()),
     mergedJournalIds: v.optional(v.array(v.string())),
     parentIndividualJournalId: v.optional(v.string()),
+    sourceGroupEventId: v.optional(v.string()), // wizard-child → main group event link
+    gradingType: v.optional(
+      v.union(v.literal("combined"), v.literal("separate"))
+    ), // set on the main event when it has individual journals
     customTitle: v.optional(v.string()),
     isClosed: v.optional(v.boolean()),
     journalSettings: v.optional(

@@ -42,6 +42,8 @@ export interface CalendarEvent {
   isIndividualJournal?: boolean;
   mergedJournalIds?: string[];
   parentIndividualJournalId?: string;
+  sourceGroupEventId?: string;
+  gradingType?: "combined" | "separate";
   customTitle?: string;
   isClosed?: boolean;
   journalSettings?: JournalSettings;
@@ -101,6 +103,8 @@ export const useCalendarStore = defineStore(
           isIndividualJournal: event.isIndividualJournal,
           mergedJournalIds: event.mergedJournalIds,
           parentIndividualJournalId: event.parentIndividualJournalId,
+          sourceGroupEventId: event.sourceGroupEventId,
+          gradingType: event.gradingType,
           customTitle: event.customTitle,
           isClosed: event.isClosed,
           journalSettings: event.journalSettings,
@@ -191,6 +195,8 @@ export const useCalendarStore = defineStore(
           isIndividualJournal: eventData.isIndividualJournal,
           mergedJournalIds: eventData.mergedJournalIds,
           parentIndividualJournalId: eventData.parentIndividualJournalId,
+          sourceGroupEventId: eventData.sourceGroupEventId,
+          gradingType: eventData.gradingType,
           customTitle: eventData.customTitle,
           isClosed: eventData.isClosed,
           journalSettings: eventData.journalSettings,
@@ -215,6 +221,8 @@ export const useCalendarStore = defineStore(
             isIndividualJournal: created.isIndividualJournal,
             mergedJournalIds: created.mergedJournalIds,
             parentIndividualJournalId: created.parentIndividualJournalId,
+            sourceGroupEventId: created.sourceGroupEventId,
+            gradingType: created.gradingType,
             customTitle: created.customTitle,
             isClosed: created.isClosed,
             journalSettings: created.journalSettings,
@@ -294,6 +302,8 @@ export const useCalendarStore = defineStore(
           isIndividualJournal: eventData.isIndividualJournal,
           mergedJournalIds: eventData.mergedJournalIds,
           parentIndividualJournalId: eventData.parentIndividualJournalId,
+          sourceGroupEventId: eventData.sourceGroupEventId,
+          gradingType: eventData.gradingType,
           customTitle: eventData.customTitle,
           isClosed: eventData.isClosed,
           journalSettings: eventData.journalSettings,
@@ -323,6 +333,8 @@ export const useCalendarStore = defineStore(
             isIndividualJournal: updated.isIndividualJournal,
             mergedJournalIds: updated.mergedJournalIds,
             parentIndividualJournalId: updated.parentIndividualJournalId,
+            sourceGroupEventId: updated.sourceGroupEventId,
+            gradingType: updated.gradingType,
             customTitle: updated.customTitle,
             isClosed: updated.isClosed,
             journalSettings: updated.journalSettings,
@@ -382,6 +394,8 @@ export const useCalendarStore = defineStore(
           isIndividualJournal: event.isIndividualJournal,
           mergedJournalIds: event.mergedJournalIds,
           parentIndividualJournalId: event.parentIndividualJournalId,
+          sourceGroupEventId: event.sourceGroupEventId,
+          gradingType: event.gradingType,
           customTitle: event.customTitle,
           isClosed: event.isClosed,
           journalSettings: event.journalSettings,
