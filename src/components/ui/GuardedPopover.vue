@@ -3,7 +3,7 @@
     :is="componentName"
     v-bind="$attrs"
     :id="id"
-    :class="positioningClass"
+    class="popover-center"
     :before-close="handleBeforeClose"
     :close-by-backdrop-click="resolvedCloseByBackdropClick"
     :close-on-escape="resolvedCloseOnEscape"
@@ -45,12 +45,10 @@ const props = withDefaults(
     beforeClose?: (ctx: BeforeCloseContext) => boolean | void;
     closeByBackdropClick?: boolean;
     closeOnEscape?: boolean;
-    positioning?: 'center' | 'target';
   }>(),
   {
     kind: "popover",
     guardUnsaved: true,
-    positioning: "target",
   }
 );
 
@@ -58,9 +56,6 @@ const componentName = computed(() =>
   props.kind === "popup" ? f7Popup : f7Popover
 );
 
-const positioningClass = computed(() => {
-  return props.positioning === 'center' ? 'popover-center' : '';
-});
 
 const resolvedCloseByBackdropClick = computed(() => {
   if (typeof props.closeByBackdropClick !== "undefined") {

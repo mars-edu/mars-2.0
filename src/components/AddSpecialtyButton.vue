@@ -14,7 +14,6 @@
       v-slot="{ requestClose }"
       id="add-specialty-popover"
       style="width: 600px !important"
-      positioning="center"
     >
       <div class="specialty-popover bg-card text-card-foreground">
         <PopoverHeader

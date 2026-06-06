@@ -207,7 +207,7 @@ const calendarStore = useCalendarStore();
 // Get KTP data and enrich with rupEntry information
 const ktpItems = computed(() => {
   const ktps = ktpStore.ktps;
-  const rupEntries = rupEntryStore.getAllRupEntryItems;
+  const rupEntries = rupEntryStore.rupEntries;
 
   return ktps
     .map((ktp) => {

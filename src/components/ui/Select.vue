@@ -182,7 +182,11 @@ const selectOption = (option: SelectOption) => {
     }
     emit("update:modelValue", current);
   } else {
-    emit("update:modelValue", option.value);
+    if (props.modelValue == option.value) {
+      emit("update:modelValue", null);
+    } else {
+      emit("update:modelValue", option.value);
+    }
     close();
   }
 };

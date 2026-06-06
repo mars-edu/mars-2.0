@@ -3,7 +3,6 @@
     <GuardedPopover
       v-slot="{ requestClose }"
       id="ktp-detail-popover"
-      positioning="center"
       :guard-unsaved="false"
       :arrow="false"
       style="

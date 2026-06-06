@@ -11,6 +11,7 @@ export interface ScheduledIntermediateControl {
   shortName: string;
   startDate: string;
   endDate: string;
+  semesterId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,6 +43,7 @@ export const useScheduledIntermediateControlStore = defineStore(
           shortName: c.shortName,
           startDate: c.startDate,
           endDate: c.endDate,
+          semesterId: c.semesterId ?? undefined,
           createdAt: new Date(c.createdAt),
           updatedAt: new Date(c.updatedAt),
         }));
@@ -63,6 +65,13 @@ export const useScheduledIntermediateControlStore = defineStore(
       return (academicYearId: string) =>
         scheduledIntermediateControls.value.filter(
           (c) => c.academicYearId === academicYearId
+        );
+    });
+
+    const getScheduledIntermediateControlsBySemester = computed(() => {
+      return (semesterId: string) =>
+        scheduledIntermediateControls.value.filter(
+          (c) => c.semesterId === semesterId
         );
     });
 
@@ -190,6 +199,7 @@ export const useScheduledIntermediateControlStore = defineStore(
       getScheduledIntermediateControlById,
       sortedScheduledIntermediateControls,
       getScheduledIntermediateControlsByAcademicYear,
+      getScheduledIntermediateControlsBySemester,
       isLoading,
       getError,
       addScheduledIntermediateControl,

@@ -10,17 +10,17 @@
     <div class="h-6 w-px bg-border mx-1"></div>
     <Select
       id="calendar-search"
+      v-model="searchValue"
       :options="disciplineOptions"
       :placeholder="searchPlaceholder"
       class="w-[200px]"
-      @update:modelValue="handleSearchSelect"
     />
     <AddEventButton @event-added="handleEventAdded" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 import AddEventButton from "./AddEventButton.vue";
 import MonthNavigator from "./MonthNavigator.vue";
 import Select from "@/components/ui/Select.vue";
@@ -49,12 +49,21 @@ const { rupEntryOptions } = storeToRefs(rupEntryStore);
 
 const disciplineOptions = computed(() => rupEntryOptions.value);
 
-const handleSearchSelect = (value: string) => {
+// Local model for the search select — acts as a persistent filter.
+const searchValue = ref<string | null>(null);
+
+watch(searchValue, (value) => {
+  if (!value) {
+    emit("search", "");
+    return;
+  }
   const selected = disciplineOptions.value.find(o => o.value === value);
   if (selected) {
     emit("search", selected.text);
+  } else {
+    emit("search", "");
   }
-};
+});
 
 const handleEventAdded = (event: CalendarEvent) => {
   // Event is already added to the store in AddEventButton

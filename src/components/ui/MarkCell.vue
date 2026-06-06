@@ -1,20 +1,21 @@
 <template>
   <div
-    class="h-6 w-full rounded-md border border-border flex items-center justify-center text-xs group relative"
+    class="h-7 w-[calc(100%-8px)] mx-auto rounded-md border flex items-center justify-center text-[13px] group relative transition-colors"
     :class="cellClass"
   >
-    <span v-if="mark !== null && mark !== ''" class="font-semibold relative z-10">{{
-      mark
-    }}</span>
+    <span v-if="mark !== null && mark !== ''" class="relative z-10" :class="mark === 'Н' ? 'text-destructive font-bold' : 'font-semibold text-foreground'">
+      {{ mark }}
+    </span>
     <span
-      v-else
-      class="text-green-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-      >+</span
+      v-else-if="!disabled"
+      class="text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-200"
     >
+      +
+    </span>
     <!-- Pencil icon overlay for filled cells -->
     <div
-      v-if="mark !== null && mark !== ''"
-      class="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-md"
+      v-if="mark !== null && mark !== '' && !disabled"
+      class="absolute inset-0 flex items-center justify-center bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-md"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -36,15 +37,19 @@
 import { computed } from "vue";
 
 interface Props {
-  mark: string | number | null;
+  mark: string | number | null | undefined;
+  disabled?: boolean;
 }
 
 const props = defineProps<Props>();
 
 const cellClass = computed(() => {
-  if (props.mark !== null && props.mark !== "") {
-    return "font-semibold";
+  if (props.disabled) {
+    return "bg-muted/30 border-border/40 text-muted-foreground opacity-60 cursor-not-allowed";
   }
-  return "hover:bg-muted/30 cursor-pointer";
+  if (props.mark !== null && props.mark !== "") {
+    return "bg-muted/50 border-border/60 hover:bg-background cursor-pointer";
+  }
+  return "bg-muted/50 border-border/60 hover:bg-background cursor-pointer text-muted-foreground";
 });
 </script>

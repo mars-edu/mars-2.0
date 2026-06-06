@@ -365,6 +365,8 @@
 import { ref, computed, nextTick, onMounted, onUnmounted, watch, onUpdated } from "vue";
 import { debounce } from "es-toolkit";
 import dayjs from "dayjs";
+import { isFutureDate, isPastDate } from "@/utils/date";
+import { confirmMarkEdit } from "@/utils/dialogs";
 import {
   DATE_DAY_MONTH_FORMAT,
   DATE_YEAR_FORMAT,
@@ -649,6 +651,17 @@ const notifyViewOnly = () => {
       closeTimeout: 2000,
     })
     .open();
+};
+
+const withEditPermission = <T extends (...args: any[]) => any>(fn: T): T => {
+  return ((...args: any[]) => {
+    if (isViewOnly.value) {
+      editingCell.value = null;
+      notifyViewOnly();
+      return;
+    }
+    return fn(...args);
+  }) as T;
 };
 
 const currentRupEntry = computed(() => {
@@ -1738,16 +1751,12 @@ const handleRetakeSubmit = (data: any) => {
 };
 
 // Direct mark update function - no debounce, immediate save
-const updateMark = async (
+const updateMark = withEditPermission(async (
   studentIndex: number,
   colIndex: number,
   markIndex: number,
   value: string | null
 ) => {
-  if (isViewOnly.value) {
-    notifyViewOnly();
-    return;
-  }
   userEditInProgress.value = true;
 
   const studentId = getStudentIdByIndex(studentIndex);
@@ -1773,7 +1782,7 @@ const updateMark = async (
 
   emit("update-students", students.value);
   userEditInProgress.value = false;
-};
+});
 
 const setMark = (
   studentIndex: number,
@@ -1791,69 +1800,29 @@ const setMark = (
   updateMark(studentIndex, colIndex, markIndex, newValue);
 };
 
-// Utility function to check if a date is in the future
-const isFutureDate = (isoDate: string | undefined): boolean => {
-  if (!isoDate) return false;
-  const today = dayjs().startOf('day');
-  const cellDate = dayjs(isoDate, DATE_STORAGE_FORMAT);
-  return cellDate.isAfter(today);
-};
+// Date validation functions removed, imported from @/utils/date
 
-// Utility function to check if a date is in the past (strictly before today)
-const isPastDate = (isoDate: string | undefined): boolean => {
-  if (!isoDate) return false;
-  const today = dayjs().startOf('day');
-  const cellDate = dayjs(isoDate, DATE_STORAGE_FORMAT);
-  return cellDate.isBefore(today);
-};
-
-const handleCellClick = (
+const handleCellClick = withEditPermission((
   studentIndex: number,
   colIndex: number,
   markIndex: number
 ) => {
-  if (isViewOnly.value) {
-    notifyViewOnly();
-    return;
-  }
   const currentMark = getMark(studentIndex, colIndex, markIndex);
   const hasExistingValue = currentMark !== "" && currentMark !== null;
 
   if (hasExistingValue) {
-    // Show confirmation dialog for existing values
-    f7.dialog.create({
-      title: 'Изменить оценку?',
-      text: `Текущая оценка: ${currentMark}. Вы действительно хотите изменить её?`,
-      buttons: [
-        {
-          text: 'Нет',
-          close: true,
-        },
-        {
-          text: 'Да',
-          bold: true,
-          onClick: () => {
-            editCell(studentIndex, colIndex, markIndex);
-          }
-        }
-      ],
-      verticalButtons: false,
-    }).open();
+    confirmMarkEdit(currentMark, () => editCell(studentIndex, colIndex, markIndex));
   } else {
     // Empty cell, edit directly
     editCell(studentIndex, colIndex, markIndex);
   }
-};
+});
 
-const editCell = (
+const editCell = withEditPermission((
   studentIndex: number,
   colIndex: number,
   markIndex: number
 ) => {
-  if (isViewOnly.value) {
-    notifyViewOnly();
-    return;
-  }
   const studentId = getStudentIdByIndex(studentIndex);
   if (!studentId || !props.journalId) return;
   if (colIndex < 0) return;
@@ -1873,52 +1842,22 @@ const editCell = (
     return;
   }
 
-  // Check if this is a future date
-  if (mark.type === "date" && mark.isoDate && isFutureDate(mark.isoDate)) {
-    f7.toast.create({
-      text: 'Нельзя выставлять оценки за будущие даты',
-      position: 'center',
-      closeTimeout: 2000,
-    }).open();
-    return;
-  }
-
-  // Check if this is a past date
-  if (mark.type === "date" && mark.isoDate && isPastDate(mark.isoDate)) {
-    f7.toast.create({
-      text: 'Нельзя изменять оценки за прошедшие даты',
-      position: 'center',
-      closeTimeout: 2000,
-    }).open();
-    return;
-  }
-
   editingCell.value = { studentIndex, colIndex, markIndex };
   editedValue.value = getMark(studentIndex, colIndex, markIndex);
-};
+});
 
-const confirmEdit = () => {
-  if (isViewOnly.value) {
-    notifyViewOnly();
-    editingCell.value = null;
-    return;
-  }
+const confirmEdit = withEditPermission(() => {
   if (!editingCell.value) return;
   const { studentIndex, colIndex, markIndex } = editingCell.value;
   setMark(studentIndex, colIndex, markIndex, editedValue.value);
   editingCell.value = null;
-};
+});
 
 const cancelEdit = () => {
   editingCell.value = null;
 };
 
-const navigate = async (direction: "up" | "down" | "left" | "right") => {
-  if (isViewOnly.value) {
-    notifyViewOnly();
-    editingCell.value = null;
-    return;
-  }
+const navigate = withEditPermission(async (direction: "up" | "down" | "left" | "right") => {
   if (!editingCell.value) return;
 
   const {
@@ -1975,7 +1914,7 @@ const navigate = async (direction: "up" | "down" | "left" | "right") => {
 
     editCell(nextStudent, nextCol, nextMark);
   });
-};
+});
 
 const openDateFocus = (
   header: { type: string; label: string },
@@ -2058,15 +1997,10 @@ const closeJournalSettings = () => {
   f7.popup.close("#journal-settings-popover");
 };
 
-const saveJournalSettings = () => {
-  if (isViewOnly.value) {
-    notifyViewOnly();
-    closeJournalSettings();
-    return;
-  }
+const saveJournalSettings = withEditPermission(() => {
   emit("save-journal-settings", localJournalSettings.value);
   closeJournalSettings();
-};
+});
 
 /**
  * Get KTP detail for a specific header index.
@@ -2165,27 +2099,19 @@ const onSettingsClick = () => emit("open-settings");
 const onHistoryClick = () => {
   isHistoryDialogOpen.value = true;
 };
-const onCloseJournalClick = () => {
-  if (isViewOnly.value) {
-    notifyViewOnly();
-    return;
-  }
+const onCloseJournalClick = withEditPermission(() => {
   emit("close-journal");
-};
+});
 const onOpenJournalClick = () => emit("open-journal");
 const onDownloadClick = () => emit("download");
 
-const onRecalcClick = () => {
-  if (isViewOnly.value) {
-    notifyViewOnly();
-    return;
-  }
+const onRecalcClick = withEditPermission(() => {
   // Auto-select all students when opening
   selectedRecalcControl.value = '';
   selectedRecalcStudentIds.value = students.value.map(s => s.studentId);
   recalcPopupOpen.value = true;
   f7.popup.open("#recalc-popup");
-};
+});
 
 const closeRecalcPopup = () => {
   f7.popup.close("#recalc-popup");
@@ -3159,6 +3085,10 @@ defineExpose({
   tableHeaders: computed(() => tableHeaders.value),
   students: computed(() => students.value),
   getExportSnapshot,
+  getKtpForHeader,
+  onPaperclipClick,
+  isViewOnly,
+  notifyViewOnly,
 });
 
 onMounted(() => {

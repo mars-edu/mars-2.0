@@ -423,7 +423,7 @@ export default defineSchema({
     startDate: v.string(),
     endDate: v.string(),
     rupEntryId: v.optional(v.string()),
-    semesterId: v.optional(v.id("academicYearSemesters")),
+    semesterId: v.id("academicYearSemesters"),
     date: v.optional(v.string()), // ISO date (legacy)
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -442,7 +442,7 @@ export default defineSchema({
     startDate: v.string(),
     endDate: v.string(),
     rupEntryId: v.optional(v.string()),
-    semesterId: v.optional(v.id("academicYearSemesters")),
+    semesterId: v.id("academicYearSemesters"),
     date: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -654,11 +654,13 @@ export default defineSchema({
     endTime: v.string(),
     order: v.number(),
     academicYearId: v.string(),
+    semesterId: v.id("academicYearSemesters"),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_order", ["order"])
-    .index("by_academicYear", ["academicYearId"]),
+    .index("by_academicYear", ["academicYearId"])
+    .index("by_semester", ["semesterId"]),
 
   /**
    * Vacation periods
@@ -668,11 +670,14 @@ export default defineSchema({
     shortName: v.string(),
     fullName: v.string(),
     academicYearId: v.string(), // Reference to academicYears
+    semesterId: v.id("academicYearSemesters"),
     startDate: v.string(), // ISO date
     endDate: v.string(), // ISO date
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_academicYear", ["academicYearId"]),
+  })
+    .index("by_academicYear", ["academicYearId"])
+    .index("by_semester", ["semesterId"]),
 
   /**
    * Exam sessions
@@ -682,7 +687,7 @@ export default defineSchema({
     shortName: v.string(),
     fullName: v.string(),
     academicYearId: v.string(),
-    semesterId: v.optional(v.id("academicYearSemesters")),
+    semesterId: v.id("academicYearSemesters"),
     startDate: v.string(),
     endDate: v.string(),
     createdAt: v.number(),

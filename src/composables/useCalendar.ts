@@ -31,6 +31,7 @@ export function useCalendar() {
   const monthIndex = ref(now.getMonth());
   const activeTab = ref("month");
   const todayDate = ref(now.getDate().toString());
+  const searchQuery = ref("");
 
   const calendarStore = useCalendarStore();
   const educationScheduleStore = useEducationScheduleStore();
@@ -46,6 +47,10 @@ export function useCalendar() {
 
   const setActiveTab = (tab: string) => {
     activeTab.value = tab;
+  };
+
+  const setSearchQuery = (query: string) => {
+    searchQuery.value = query;
   };
 
   const goToToday = () => {
@@ -120,6 +125,14 @@ export function useCalendar() {
           group,
           color: event.color, // pass through the color from store event
         };
+      })
+      .filter((eventInfo) => {
+        if (!searchQuery.value) return true;
+        const q = searchQuery.value.toLowerCase();
+        return (
+          eventInfo.title.toLowerCase().includes(q) ||
+          (eventInfo.group && eventInfo.group.toLowerCase().includes(q))
+        );
       });
   };
 
@@ -216,5 +229,6 @@ export function useCalendar() {
     setMonth,
     setActiveTab,
     goToToday,
+    setSearchQuery,
   };
 }

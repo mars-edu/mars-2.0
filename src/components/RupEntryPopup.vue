@@ -2,7 +2,6 @@
   <GuardedPopover
     v-slot="{ requestClose }"
     id="rup-entry-popover"
-    positioning="center"
     :arrow="false"
     style="width: calc(100vw - 400px) !important"
     :on-closed="handlePopoverClosed"
@@ -454,6 +453,40 @@
                   </div>
                 </div>
               </div>
+
+              <div
+                v-if="step.distributionEntries.length > 0"
+                class="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200 text-sm"
+              >
+                <div class="font-semibold mb-2">Итоги распределения:</div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <span class="text-gray-500">Групп:</span>
+                    <span :class="distributionSummary.group === distributionSummary.targetGroup ? 'text-green-600 font-medium' : 'text-red-600 font-medium'">
+                      {{ distributionSummary.group }} / {{ distributionSummary.targetGroup }}
+                    </span>
+                  </div>
+                  <div v-if="visibleColumns.srs">
+                    <span class="text-gray-500">СРС:</span>
+                    <span :class="distributionSummary.srs === distributionSummary.targetSrs ? 'text-green-600 font-medium' : 'text-red-600 font-medium'">
+                      {{ distributionSummary.srs }} / {{ distributionSummary.targetSrs }}
+                    </span>
+                  </div>
+                  <div v-if="visibleColumns.srsp">
+                    <span class="text-gray-500">СРСП:</span>
+                    <span :class="distributionSummary.srsp === distributionSummary.targetSrsp ? 'text-green-600 font-medium' : 'text-red-600 font-medium'">
+                      {{ distributionSummary.srsp }} / {{ distributionSummary.targetSrsp }}
+                    </span>
+                  </div>
+                  <div v-if="visibleColumns.individual">
+                    <span class="text-gray-500">Индивидуальные:</span>
+                    <span :class="distributionSummary.individual === distributionSummary.targetIndividual ? 'text-green-600 font-medium' : 'text-red-600 font-medium'">
+                      {{ distributionSummary.individual }} / {{ distributionSummary.targetIndividual }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
           </div>
         </div>
       </div>
@@ -577,6 +610,28 @@ const connectSubjectId = ref("");
 const baseLabel = computed(() => {
   const base = props.baseClass ?? 9;
   return base === 11 ? "База 11 классов" : "База 9 классов";
+});
+
+const distributionSummary = computed(() => {
+  const s = step.value;
+  if (!s || !s.distributionEntries) return { group: 0, srs: 0, srsp: 0, individual: 0, targetGroup: 0, targetSrs: 0, targetSrsp: 0, targetIndividual: 0 };
+  let sumGroup = 0, sumSrs = 0, sumSrsp = 0, sumIndividual = 0;
+  for (const entry of s.distributionEntries) {
+    sumGroup += Number(entry.hours) || 0;
+    sumSrs += Number((entry as any).srsHours) || 0;
+    sumSrsp += Number((entry as any).srspHours) || 0;
+    sumIndividual += Number((entry as any).individualHours) || 0;
+  }
+  return {
+    group: Number(sumGroup.toFixed(2)),
+    srs: Number(sumSrs.toFixed(2)),
+    srsp: Number(sumSrsp.toFixed(2)),
+    individual: Number(sumIndividual.toFixed(2)),
+    targetGroup: Number(((Number(s.totalHours) || 0) - (Number(s.individualAdditionalHours) || 0)).toFixed(2)),
+    targetSrs: Number(Number(s.srsHours || 0).toFixed(2)),
+    targetSrsp: Number(Number(s.srspHours || 0).toFixed(2)),
+    targetIndividual: Number(Number(s.individualAdditionalHours || 0).toFixed(2)),
+  };
 });
 
 const availableIntegrationYears = computed(() =>
@@ -772,6 +827,15 @@ watch(
           const first = variants[0];
           step.value = { ...first };
           selectedSpecialtyIds.value = first.specialtyIds || [];
+          
+          const hasSrs = first.distributionEntries?.some((e: any) => Number(e.srsHours) > 0);
+          const hasSrsp = first.distributionEntries?.some((e: any) => Number(e.srspHours) > 0);
+          const hasIndiv = first.distributionEntries?.some((e: any) => Number(e.individualHours) > 0);
+          visibleColumns.value = {
+            srs: !!hasSrs,
+            srsp: !!hasSrsp,
+            individual: !!hasIndiv,
+          };
         } else {
           step.value = { ...val };
           selectedLanguages.value = [val.language || "ru"];
@@ -785,6 +849,15 @@ watch(
           };
           editVariantIds.value = { [val.language || "ru"]: val.id };
           selectedSpecialtyIds.value = val.specialtyIds || [];
+          
+          const hasSrs = val.distributionEntries?.some((e: any) => Number(e.srsHours) > 0);
+          const hasSrsp = val.distributionEntries?.some((e: any) => Number(e.srspHours) > 0);
+          const hasIndiv = val.distributionEntries?.some((e: any) => Number(e.individualHours) > 0);
+          visibleColumns.value = {
+            srs: !!hasSrs,
+            srsp: !!hasSrsp,
+            individual: !!hasIndiv,
+          };
         }
       } else {
         step.value = { ...val };
@@ -799,6 +872,15 @@ watch(
         };
         editVariantIds.value = { [val.language || "ru"]: val.id };
         selectedSpecialtyIds.value = val.specialtyIds || [];
+        
+        const hasSrs = val.distributionEntries?.some((e: any) => Number(e.srsHours) > 0);
+        const hasSrsp = val.distributionEntries?.some((e: any) => Number(e.srspHours) > 0);
+        const hasIndiv = val.distributionEntries?.some((e: any) => Number(e.individualHours) > 0);
+        visibleColumns.value = {
+          srs: !!hasSrs,
+          srsp: !!hasSrsp,
+          individual: !!hasIndiv,
+        };
       }
     } else {
       step.value = createEmptyEntry();

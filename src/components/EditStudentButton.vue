@@ -5,7 +5,6 @@
       v-if="student"
       :id="'edit-student-popover-' + student.id"
       style="width: 600px !important"
-      positioning="center"
       :on-closed="resetForm">
       <div class="student-popover bg-card text-card-foreground">
         <PopoverHeader

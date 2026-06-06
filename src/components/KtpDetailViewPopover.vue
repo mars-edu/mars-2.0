@@ -4,7 +4,6 @@
     id="ktp-detail-view-popover"
     :opened="opened"
     @popover:closed="$emit('update:opened', false)"
-    positioning="center"
     style="width: 600px !important"
     :target-el="target"
   >

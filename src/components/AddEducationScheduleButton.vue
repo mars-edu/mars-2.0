@@ -79,6 +79,8 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
+const props = defineProps<{ semesterId: string }>();
+
 const educationScheduleStore = useEducationScheduleStore();
 const academicYearStore = useAcademicYearStore();
 
@@ -202,6 +204,7 @@ const handleSaveSchedule = async () => {
       startTime: startTime.value,
       endTime: endTime.value,
       academicYearId: activeAcademicYear.id,
+      semesterId: props.semesterId,
     });
     closeAddSchedulePopover();
   } catch (error) {

@@ -2,7 +2,6 @@
   <GuardedPopover
     v-slot="{ requestClose, allowNextClose }"
     id="makeup-hours-popover"
-    positioning="center"
     style="width: 520px !important"
     :is-dirty="() => isDirty"
     :on-closed="resetForm"

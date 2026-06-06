@@ -13,7 +13,7 @@ export const createFinal = mutation({
     startDate: v.string(),
     endDate: v.string(),
     rupEntryId: v.optional(v.string()),
-    semesterId: v.optional(v.string()),
+    semesterId: v.string(),
     date: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -38,7 +38,7 @@ export const createIntermediate = mutation({
     startDate: v.string(),
     endDate: v.string(),
     rupEntryId: v.optional(v.string()),
-    semesterId: v.optional(v.string()),
+    semesterId: v.string(),
     date: v.optional(v.string()),
   },
   handler: async (ctx, args) => {

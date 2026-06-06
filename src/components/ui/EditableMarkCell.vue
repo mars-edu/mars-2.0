@@ -3,7 +3,7 @@
     ref="inputRef"
     type="text"
     :value="modelValue"
-    class="h-4 w-full rounded-md border-2 border-primary bg-background text-center font-semibold shadow-lg outline-none transition-all duration-300 text-sm"
+    class="h-7 w-[calc(100%-8px)] mx-auto rounded-md border border-border/60 bg-muted/50 text-center font-semibold outline-none transition-all duration-200 text-[13px] text-foreground hover:bg-background focus:bg-background focus:border-primary focus:ring-2 focus:ring-primary/20"
     @input="onInput"
     @keydown.enter.prevent="$emit('navigate', 'right')"
     @keydown.esc.prevent="$emit('cancel')"

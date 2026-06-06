@@ -100,7 +100,7 @@ import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import DateInput from "@/components/ui/DateInput.vue";
 
-const props = defineProps<{ prefix?: string }>();
+const props = defineProps<{ prefix?: string; semesterId: string }>();
 
 const computedPrefix = computed(() => props.prefix || "vacation");
 const buttonId = computed(() => `add-${computedPrefix.value}-button`);
@@ -179,6 +179,7 @@ const handleSaveVacation = async () => {
       startDate: dayjs(startDate.value[0]).format(DATE_STORAGE_FORMAT),
       endDate: dayjs(endDate.value[0]).format(DATE_STORAGE_FORMAT),
       academicYearId: activeAcademicYear.id,
+      semesterId: props.semesterId,
     });
     closeAddVacationPopover();
   } catch (error) {

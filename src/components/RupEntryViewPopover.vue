@@ -2,7 +2,6 @@
   <GuardedPopover
     v-slot="{ requestClose }"
     id="rup-entry-view-popover"
-    positioning="center"
     style="width: min(960px, 96vw) !important"
     @popover:closed="$emit('close')"
   >

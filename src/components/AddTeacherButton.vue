@@ -14,7 +14,6 @@
       v-slot="{ requestClose }"
       id="add-teacher-popover"
       style="width: 600px !important"
-      positioning="center"
       :on-closed="resetForm">
       <div class="teacher-popover bg-card text-card-foreground">
         <PopoverHeader

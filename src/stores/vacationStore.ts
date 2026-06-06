@@ -11,6 +11,7 @@ export interface Vacation {
   startDate: string;
   endDate: string;
   academicYearId: string;
+  semesterId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,6 +40,7 @@ export const useVacationStore = defineStore(
           startDate: v.startDate,
           endDate: v.endDate,
           academicYearId: v.academicYearId,
+          semesterId: v.semesterId,
           createdAt: new Date(v.createdAt),
           updatedAt: new Date(v.updatedAt),
         }));
@@ -60,6 +62,11 @@ export const useVacationStore = defineStore(
         vacations.value.filter((v) => v.academicYearId === academicYearId);
     });
 
+    const getVacationsBySemester = computed(() => {
+      return (semesterId: string) =>
+        vacations.value.filter((v) => v.semesterId === semesterId);
+    });
+
     const isLoading = computed(() => loading.value);
     const getError = computed(() => error.value);
 
@@ -75,6 +82,7 @@ export const useVacationStore = defineStore(
           academicYearId: vacationData.academicYearId,
           startDate: vacationData.startDate,
           endDate: vacationData.endDate,
+          semesterId: vacationData.semesterId,
         });
         // Don't push to vacations.value - the reactive subscription will handle it
         error.value = null;
@@ -101,6 +109,7 @@ export const useVacationStore = defineStore(
           academicYearId: vacationData.academicYearId,
           startDate: vacationData.startDate,
           endDate: vacationData.endDate,
+          semesterId: vacationData.semesterId,
         });
         // Don't update vacations.value - the reactive subscription will handle it
         error.value = null;
@@ -142,6 +151,7 @@ export const useVacationStore = defineStore(
           startDate: v.startDate,
           endDate: v.endDate,
           academicYearId: v.academicYearId,
+          semesterId: v.semesterId,
           createdAt: new Date(v.createdAt),
           updatedAt: new Date(v.updatedAt),
         }));
@@ -206,6 +216,7 @@ export const useVacationStore = defineStore(
       getVacationById,
       sortedVacations,
       getVacationsByAcademicYear,
+      getVacationsBySemester,
       isLoading,
       getError,
       addVacation,

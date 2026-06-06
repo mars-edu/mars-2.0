@@ -10,7 +10,7 @@
     @popup:closed="onPopupClosed"
     class="edit-journal-popup"
   >
-    <f7-page>
+    <div class="flex flex-col h-full">
       <AddEventWizard
         mode="edit"
         :session-key="sessionKey"
@@ -39,7 +39,7 @@
         v-model:individualJournals="individualJournals"
         @submit="handleUpdateEvent"
       />
-    </f7-page>
+    </div>
   </GuardedPopover>
 </template>
 
@@ -250,12 +250,6 @@ defineExpose({
 .edit-journal-popup {
   --f7-popup-tablet-width: 672px;
   --f7-popup-tablet-height: min(900px, calc(100vh - 80px));
-  border-radius: 2rem !important;
-  overflow: hidden;
 }
 
-.edit-journal-popup .page-content {
-  padding: 0;
-  height: 100%;
-}
 </style>

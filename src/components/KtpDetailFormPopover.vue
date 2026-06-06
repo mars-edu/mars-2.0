@@ -4,7 +4,6 @@
     id="ktp-detail-form-popover"
     :opened="opened"
     @popover:closed="$emit('update:opened', false)"
-    positioning="center"
     style="width: 650px !important; max-width: calc(100vw - 32px) !important"
     :arrow="false"
   >

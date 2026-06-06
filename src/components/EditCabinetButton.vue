@@ -5,7 +5,6 @@
       v-if="cabinet"
       :id="'edit-cabinet-popover-' + cabinet.id"
       style="width: 600px !important"
-      positioning="center"
       :on-closed="resetForm">
       <div class="cabinet-popover bg-card text-card-foreground">
         <PopoverHeader

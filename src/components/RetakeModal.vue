@@ -318,8 +318,6 @@ const submit = () => {
 .retake-popup {
   --f7-popup-tablet-width: 450px;
   --f7-popup-tablet-height: min(600px, calc(100vh - 80px));
-  border-radius: 2rem !important;
-  overflow: hidden;
 }
 
 .retake-popup .page-content {

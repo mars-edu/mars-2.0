@@ -7,7 +7,7 @@
     class="announcement-settings-popup"
   >
     <template v-slot="{ requestClose }">
-      <f7-page>
+      <div class="flex flex-col h-full">
         <div class="flex flex-col h-full bg-card">
           <div class="fixed-header">
             <PopoverHeader
@@ -137,14 +137,14 @@
             :on-save="handleSave"
           />
         </div>
-      </f7-page>
+      </div>
     </template>
   </GuardedPopover>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { f7Page, f7Input } from 'framework7-vue';
+import { f7Input } from 'framework7-vue';
 import { common_close } from '@/paraglide/messages';
 import GuardedPopover from '@/components/ui/GuardedPopover.vue';
 import PopoverHeader from '@/components/ui/PopoverHeader.vue';
@@ -212,14 +212,9 @@ const getCategoryTitle = (category: { id: string; labels: AnnouncementContent })
 .announcement-settings-popup {
   --f7-popup-tablet-width: 620px;
   --f7-popup-tablet-height: min(760px, calc(100vh - 96px));
-  border-radius: 2rem !important;
-  overflow: hidden;
 }
 
-.announcement-settings-popup :deep(.page-content) {
-  padding: 0;
-  height: 100%;
-}
+
 
 .fixed-header {
   position: sticky;

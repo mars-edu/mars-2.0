@@ -52,37 +52,25 @@
                 >
                   {{ student.name }}
                 </td>
-                <td class="p-2 text-center rounded-r-lg">
-                  <div class="flex flex-col gap-1">
-                    <div
-                      v-for="(value, rowIdx) in student.marks[selectedDateIndex]
-                        .values"
-                      :key="rowIdx"
-                      class="h-8 flex items-center justify-center"
-                    >
-                      <EditableMarkCell
-                        v-if="
-                          editingCell?.studentIndex === index &&
-                          editingCell?.markIndex === rowIdx
-                        "
-                        v-model="editedValue"
-                        @confirm="confirmEdit"
-                        @cancel="cancelEdit"
-                        @navigate="navigate"
-                        :is-zoomed="true"
-                      />
-                      <div
-                        v-else
-                        @click="handleCellClick(index, rowIdx)"
-                        :class="[
-                          'w-full',
-                          isColumnFutureDate ? 'cursor-not-allowed' : 'cursor-pointer'
-                        ]"
-                      >
-                        <MarkCell :mark="value" />
-                      </div>
-                    </div>
-                  </div>
+                <td class="p-0 text-center rounded-r-lg h-full align-middle">
+                  <JournalGridCell
+                    :header="columnHeader"
+                    :marks="student.marks[selectedDateIndex]?.values || []"
+                    :editing-mark-index="
+                      editingCell?.studentIndex === index
+                        ? editingCell?.markIndex
+                        : null
+                    "
+                    :edited-value="editedValue"
+                    :is-view-only="isViewOnly"
+                    :is-future="isColumnFutureDate"
+                    :is-past="isColumnPastDate"
+                    @cell-click="(mIdx) => handleCellClick(index, mIdx)"
+                    @update:editedValue="editedValue = $event"
+                    @confirm-edit="confirmEdit"
+                    @cancel-edit="cancelEdit"
+                    @navigate="navigate"
+                  />
                 </td>
               </tr>
             </tbody>
@@ -94,12 +82,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, computed } from "vue";
-import MarkCell from "@/components/ui/MarkCell.vue";
-import EditableMarkCell from "./ui/EditableMarkCell.vue";
+import { ref, watch, nextTick, computed, type PropType } from "vue";
+import JournalGridCell from "@/components/JournalGridCell.vue";
 import { useMarksStore } from "@/stores/marksStore";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
+import { isFutureDate, isPastDate } from "@/utils/date";
+import { confirmMarkEdit } from "@/utils/dialogs";
 import { f7 } from "framework7-vue";
 
 const props = defineProps({
@@ -124,7 +113,26 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  isViewOnly: {
+    type: Boolean,
+    default: false,
+  },
+  notifyViewOnly: {
+    type: Function as PropType<() => void>,
+    default: () => {},
+  },
 });
+
+const withEditPermission = <T extends (...args: any[]) => any>(fn: T): T => {
+  return ((...args: any[]) => {
+    if (props.isViewOnly) {
+      editingCell.value = null;
+      props.notifyViewOnly();
+      return;
+    }
+    return fn(...args);
+  }) as T;
+};
 
 const emit = defineEmits(["close"]);
 
@@ -196,14 +204,6 @@ const setMark = (studentIndex: number, markIndex: number, value: string) => {
   updateMark(studentIndex, markIndex, newValue);
 };
 
-// Utility function to check if a date is in the future
-const isFutureDate = (isoDate: string | undefined): boolean => {
-  if (!isoDate) return false;
-  const today = dayjs().startOf('day');
-  const cellDate = dayjs(isoDate, DATE_STORAGE_FORMAT);
-  return cellDate.isAfter(today);
-};
-
 // Check if the current column is a future date
 const isColumnFutureDate = computed(() => {
   return props.columnHeader?.type === 'date' &&
@@ -211,63 +211,42 @@ const isColumnFutureDate = computed(() => {
          isFutureDate(props.columnHeader.isoDate);
 });
 
-const handleCellClick = (studentIndex: number, markIndex: number) => {
+// Check if the current column is a past date
+const isColumnPastDate = computed(() => {
+  return props.columnHeader?.type === 'date' &&
+         props.columnHeader?.isoDate &&
+         isPastDate(props.columnHeader.isoDate);
+});
+
+const handleCellClick = withEditPermission((studentIndex: number, markIndex: number) => {
   const currentMark = getMark(studentIndex, markIndex);
   const hasExistingValue = currentMark !== "" && currentMark !== null;
 
   if (hasExistingValue) {
-    // Show confirmation dialog for existing values
-    f7.dialog.create({
-      title: 'Изменить оценку?',
-      text: `Текущая оценка: ${currentMark}. Вы действительно хотите изменить её?`,
-      buttons: [
-        {
-          text: 'Нет',
-          close: true,
-        },
-        {
-          text: 'Да',
-          bold: true,
-          onClick: () => {
-            editCell(studentIndex, markIndex);
-          }
-        }
-      ],
-      verticalButtons: false,
-    }).open();
+    confirmMarkEdit(currentMark, () => editCell(studentIndex, markIndex));
   } else {
     // Empty cell, edit directly
     editCell(studentIndex, markIndex);
   }
-};
+});
 
-const editCell = (studentIndex: number, markIndex: number) => {
-  // Check if this is a future date column
-  if (isColumnFutureDate.value) {
-    f7.toast.create({
-      text: 'Нельзя выставлять оценки за будущие даты',
-      position: 'center',
-      closeTimeout: 2000,
-    }).open();
-    return;
-  }
-
+const editCell = withEditPermission((studentIndex: number, markIndex: number) => {
   editingCell.value = { studentIndex, markIndex };
   editedValue.value = getMark(studentIndex, markIndex);
-};
+});
 
-const confirmEdit = () => {
+const confirmEdit = withEditPermission(() => {
   if (!editingCell.value) return;
   const { studentIndex, markIndex } = editingCell.value;
   setMark(studentIndex, markIndex, editedValue.value);
   editingCell.value = null;
-};
+});
 
 const cancelEdit = () => {
   editingCell.value = null;
 };
 
-const navigate = (direction: "up" | "down" | "left" | "right") => {
+const navigate = withEditPermission(async (direction: "up" | "down" | "left" | "right") => {
   if (!editingCell.value) return;
   const { studentIndex: startStudentIndex, markIndex: startMarkIndex } =
     editingCell.value;
@@ -308,7 +287,7 @@ const navigate = (direction: "up" | "down" | "left" | "right") => {
 
     editCell(nextStudentIndex, nextMarkIndex);
   });
-};
+});
 
 const handleClose = () => {
   if (editingCell.value) {

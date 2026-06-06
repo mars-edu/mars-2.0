@@ -7,7 +7,7 @@
     class="student-details-popup"
     @popover:closed="onClosed"
   >
-    <f7-page>
+    <div class="flex flex-col h-full">
       <div class="flex flex-col h-full bg-background text-foreground overflow-hidden">
         <!-- Header -->
         <PopoverHeader
@@ -303,13 +303,13 @@
           </div>
         </div>
       </div>
-    </f7-page>
+    </div>
   </GuardedPopover>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { f7, f7Page, f7Input, f7Button, f7Preloader } from 'framework7-vue';
+import { f7, f7Input, f7Button, f7Preloader } from 'framework7-vue';
 import { useStudentStore } from '@/stores/studentStore';
 import { useSpecialtyStore } from '@/stores/specialtyStore';
 import { useAcademicYearStore } from '@/stores/academicYearStore';
@@ -482,18 +482,9 @@ const onClosed = () => {
 .student-details-popup {
   --f7-popup-tablet-width: 800px;
   --f7-popup-tablet-height: min(900px, 85vh);
-  border-radius: 2rem !important;
-  overflow: hidden;
 }
 
-.student-details-popup :deep(.page-content) {
-  padding: 0;
-  height: 100%;
-}
 
-:deep(.popover-angle) {
-  display: none !important;
-}
 
 /* Custom transitions */
 .animate-in {

@@ -133,7 +133,18 @@ export function useUnsavedPopoverGuard(options: UseUnsavedPopoverGuardOptions) {
   };
 
   const requestClose = () => {
-    closeModal("cancel");
+    if (allowNextClose || !checkDirty()) {
+      closeModal("cancel");
+      return;
+    }
+    if (confirmInProgress) return;
+    confirmInProgress = true;
+    void confirmDiscard().then((confirmed) => {
+      confirmInProgress = false;
+      if (!confirmed) return;
+      allowNextClose = true;
+      closeModal("discard-confirmed");
+    });
   };
 
   const markCleanSnapshot = () => {

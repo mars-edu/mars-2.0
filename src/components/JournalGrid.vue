@@ -11,43 +11,25 @@
           >
             Обучающийся
           </th>
-          <th
+          <JournalGridHeader
             v-for="(header, index) in displayedHeaders"
             :key="header.isFinalSummary ? 'final-summary' : header.index"
-            class="px-1 py-2 text-center text-[12px] font-medium text-foreground border-r border-b border-border w-14 min-w-[50px] relative"
-            :class="[
-              header.isFinalSummary
-                ? 'bg-destructive/5 text-destructive font-bold cursor-default w-20'
-                : 'cursor-pointer hover:bg-muted/80',
-              {
-                'bg-muted/70 text-foreground font-bold w-16': header.type === 'session',
-              },
-            ]"
-            @click="
-              !header.isFinalSummary && header.index >= 0
-                ? $emit('header-click', header, header.index)
-                : null
-            "
-          >
-            <div class="flex flex-col items-center">
-              <IconPaperclip
-                v-if="header.type === 'date' && getKtpForHeader(header.index) !== null"
-                class="h-8 text-gray-400 cursor-pointer"
-                @click.stop="$emit('paperclip-click', header, index)"
-                :id="`paperclip-${index}`"
-              />
-              <span v-html="header.label.replace('\n', '<br/>')"></span>
-            </div>
-          </th>
+            :header="header"
+            :index="header.index"
+            :has-ktp="header.type === 'date' && getKtpForHeader(header.index) !== null"
+            :is-clickable="true"
+            @header-click="(h, i) => $emit('header-click', h, i)"
+            @paperclip-click="(h, i) => $emit('paperclip-click', h, i)"
+          />
         </tr>
       </thead>
-      <tbody @click="onTbodyClick">
+      <tbody class="divide-y divide-border">
         <tr
           v-for="(student, studentIndex) in displayedStudents"
           :key="student.id"
           v-memo="[marksMatrix[studentIndex], editingCell?.studentIndex === studentIndex ? editedValue : false, displayedHeaders.length, isViewOnly]"
           class="border-b border-border group hover:bg-muted/60 transition-colors"
-          style="content-visibility: auto; contain-intrinsic-size: 40px;"
+          style="content-visibility: auto; contain-intrinsic-size: 64px;"
         >
           <td
             class="px-2 py-2 w-14 min-w-[56px] max-w-[56px] text-center border-r border-border text-[12px] font-medium text-muted-foreground align-middle sticky left-0 bg-card group-hover:bg-muted z-10 transition-colors"
@@ -80,89 +62,26 @@
               </div>
             </div>
           </td>
-          <td
+          <JournalGridCell
             v-for="(header, index) in displayedHeaders"
             :key="header.isFinalSummary ? 'final-summary' : header.index"
-            class="p-0 border-r border-border align-middle relative h-10 w-14 min-w-[50px]"
-            :class="[
-              header.isFinalSummary
-                ? 'bg-destructive/5 font-bold'
-                : 'hover:bg-muted/80',
-              {
-                'bg-muted/40 font-semibold': header.type === 'session',
-                'bg-muted/30 cursor-not-allowed': header.type === 'date' && header.isoDate && (isFutureDate(header.isoDate) || isPastDate(header.isoDate)),
-              },
-            ]"
-          >
-            <div
-              class="flex w-full h-full"
-              :class="{
-                'divide-x divide-border': header.dynamicRows > 1,
-              }"
-            >
-              <div
-                v-for="mIdx in header.dynamicRows"
-                :key="mIdx"
-                class="flex-1 flex items-center justify-center min-w-[24px]"
-              >
-                <div
-                  v-if="!isViewOnly"
-                  class="absolute top-0 right-0 w-1.5 h-1.5"
-                  :class="{
-                    'bg-destructive rounded-bl-sm':
-                      marksMatrix[studentIndex]?.[header.index]?.[mIdx - 1] === 'Н',
-                  }"
-                ></div>
-
-                <EditableMarkCell
-                  v-if="
-                    editingCell?.studentIndex === studentIndex &&
-                    editingCell?.colIndex === header.index &&
-                    editingCell?.markIndex === (mIdx - 1)
-                  "
-                  :model-value="editedValue"
-                  @update:model-value="$emit('update:editedValue', $event)"
-                  @confirm="$emit('confirm-edit')"
-                  @cancel="$emit('cancel-edit')"
-                  @navigate="(dir: string) => $emit('navigate', dir)"
-                  :is-zoomed="true"
-                />
-                <div
-                  v-else
-                  class="journal-cell-delegate flex items-center justify-center w-full h-full text-[13px] font-medium cursor-pointer"
-                  :class="{
-                    'text-destructive font-bold':
-                      marksMatrix[studentIndex]?.[header.index]?.[mIdx - 1] === 'Н',
-                    'text-muted-foreground cursor-not-allowed opacity-50':
-                      header.type === 'date' && header.isoDate && (isFutureDate(header.isoDate) || isPastDate(header.isoDate)),
-                  }"
-                  :data-sidx="studentIndex"
-                  :data-cidx="header.index"
-                  :data-midx="mIdx - 1"
-                  :data-future="header.type === 'date' && header.isoDate && isFutureDate(header.isoDate) ? 'true' : 'false'"
-                  :data-past="header.type === 'date' && header.isoDate && isPastDate(header.isoDate) ? 'true' : 'false'"
-                  :data-final="header.isFinalSummary ? 'true' : 'false'"
-                  :title="
-                    header.type === 'date' && header.isoDate && isFutureDate(header.isoDate)
-                      ? journal_future_date_tooltip
-                      : header.type === 'date' && header.isoDate && isPastDate(header.isoDate)
-                        ? 'Нельзя изменять оценки за прошедшие даты'
-                        : undefined
-                  "
-                >
-                  <span v-if="marksMatrix[studentIndex]?.[header.index]?.[mIdx - 1]">
-                    {{ marksMatrix[studentIndex]?.[header.index]?.[mIdx - 1] }}
-                  </span>
-                  <div
-                    v-else
-                    class="w-full h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <IconPlus class="w-3 h-3 text-primary" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </td>
+            :header="header"
+            :marks="marksMatrix[studentIndex]?.[header.index] || []"
+            :editing-mark-index="
+              editingCell?.studentIndex === studentIndex && editingCell?.colIndex === header.index
+                ? editingCell?.markIndex
+                : null
+            "
+            :edited-value="editedValue"
+            :is-view-only="isViewOnly"
+            :is-future="header.type === 'date' && header.isoDate ? isFutureDate(header.isoDate) : false"
+            :is-past="header.type === 'date' && header.isoDate ? isPastDate(header.isoDate) : false"
+            @cell-click="(mIdx) => $emit('cell-click', studentIndex, header.index, mIdx)"
+            @update:editedValue="$emit('update:editedValue', $event)"
+            @confirm-edit="$emit('confirm-edit')"
+            @cancel-edit="$emit('cancel-edit')"
+            @navigate="(dir) => $emit('navigate', dir)"
+          />
         </tr>
       </tbody>
     </table>
@@ -170,9 +89,8 @@
 </template>
 
 <script setup lang="ts">
-import IconPaperclip from "~icons/lucide/paperclip";
-import IconPlus from "~icons/lucide/plus";
-import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
+import JournalGridCell from "@/components/JournalGridCell.vue";
+import JournalGridHeader from "@/components/JournalGridHeader.vue";
 
 const props = defineProps<{
   displayedStudents: Array<any>;
@@ -205,20 +123,4 @@ const getScoreBadgeClass = (score: string): string => {
   return props.getScoreBadgeClass(score);
 };
 
-const onTbodyClick = (e: MouseEvent) => {
-  const target = e.target as HTMLElement;
-  const cell = target.closest('.journal-cell-delegate');
-  if (cell) {
-    const sIdx = Number(cell.getAttribute('data-sidx'));
-    const cIdx = Number(cell.getAttribute('data-cidx'));
-    const mIdx = Number(cell.getAttribute('data-midx'));
-    const isFuture = cell.getAttribute('data-future') === 'true';
-    const isPast = cell.getAttribute('data-past') === 'true';
-    const isFinal = cell.getAttribute('data-final') === 'true';
-
-    if (isFuture || isPast || isFinal) return;
-
-    emit('cell-click', sIdx, cIdx, mIdx);
-  }
-};
 </script>

@@ -10,7 +10,7 @@
     @popup:closed="onPopupClosed"
     class="student-selection-popup"
   >
-    <f7-page>
+    <div class="flex flex-col h-full">
       <div class="event-popover bg-card text-card-foreground flex flex-col h-full">
         <PopoverHeader
           title="Выбрать обучающихся"
@@ -153,7 +153,7 @@
           save-text="Сохранить"
         />
       </div>
-    </f7-page>
+    </div>
   </GuardedPopover>
 </template>
 
@@ -169,15 +169,12 @@
   overflow: hidden;
 }
 
-.student-selection-popup .page-content {
-  padding: 0;
-  height: 100%;
-}
+
 </style>
 
 <script setup lang="ts">
 import { ref, computed, reactive } from "vue";
-import { f7, f7Input, f7Checkbox, f7Page } from "framework7-vue";
+import { f7, f7Input, f7Checkbox } from "framework7-vue";
 import { storeToRefs } from "pinia";
 import { withAllOption, getGenderOptions } from "@/lib/utils";
 import Select from "../ui/Select.vue";

@@ -354,13 +354,10 @@ const openNotificationsTab = () => {
 .notification-popover {
   width: 440px !important;
   max-width: calc(100vw - 32px) !important;
-  border-radius: 32px !important;
-  overflow: hidden;
 }
 
 :deep(.popover-inner) {
   padding: 0 !important;
-  border-radius: 32px !important;
 }
 
 .custom-scrollbar::-webkit-scrollbar {

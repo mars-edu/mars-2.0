@@ -14,7 +14,6 @@
       v-slot="{ requestClose }"
       id="add-cabinet-popover"
       style="width: 600px !important"
-      positioning="center"
     >
       <div class="cabinet-popover bg-card text-card-foreground">
         <PopoverHeader

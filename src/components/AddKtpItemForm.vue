@@ -4,7 +4,6 @@
     id="add-ktp-item-popover"
     :opened="opened"
     @popover:closed="onPopoverClosed"
-    positioning="center"
     style="width: 575px !important; max-width: calc(100vw - 32px) !important"
   >
     <div class="bg-card text-card-foreground rounded-2xl overflow-hidden flex flex-col" style="max-height: 80dvh">

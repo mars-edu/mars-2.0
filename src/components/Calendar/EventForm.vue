@@ -244,7 +244,7 @@ const rupEntryStore = useRupEntryStore();
 const { rupEntryOptions } = storeToRefs(rupEntryStore);
 
 const educationScheduleStore = useEducationScheduleStore();
-const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
+const { getActiveYearSchedules, getSchedulesBySemester } = storeToRefs(educationScheduleStore);
 
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const ktpStore = useKtpStore();
@@ -349,15 +349,21 @@ const colorModelObj = computed({
   set: (v: { hex: string }) => emit("update:color", v?.hex || "#3F51B5"),
 });
 
+const activeSemesterSchedules = computed(() => {
+  if (!effectiveSemesterId.value) return getActiveYearSchedules.value;
+  const schedules = getSchedulesBySemester.value(effectiveSemesterId.value);
+  return [...schedules].sort((a, b) => a.lessonNumber - b.lessonNumber);
+});
+
 const startTimeOptions = computed(() => {
-  return getActiveYearSchedules.value.map((schedule) => ({
+  return activeSemesterSchedules.value.map((schedule) => ({
     value: schedule.id,
     text: schedule.startTime,
   }));
 });
 
 const endTimeOptions = computed(() => {
-  return getActiveYearSchedules.value.map((schedule) => ({
+  return activeSemesterSchedules.value.map((schedule) => ({
     value: schedule.id,
     text: schedule.endTime,
   }));
@@ -405,7 +411,18 @@ function updateWeekDayTime(
   const existing = current[index];
   if (existing[field] === nextValue) return;
 
-  const updated = { ...existing, [field]: nextValue };
+  let updated = { ...existing, [field]: nextValue };
+
+  if (field === "startId") {
+    const schedules = activeSemesterSchedules.value;
+    const startIndex = schedules.findIndex((s) => s.id === nextValue);
+    if (startIndex !== -1 && startIndex + 1 < schedules.length) {
+      updated.endId = schedules[startIndex + 1].id;
+    } else if (startIndex !== -1) {
+      updated.endId = nextValue;
+    }
+  }
+
   selectedWeekDaysModel.value = [
     ...current.slice(0, index),
     updated,

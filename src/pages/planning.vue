@@ -140,7 +140,7 @@ import { useI18n } from "@/composables/useI18n";
 const { locale } = useI18n();
 const { contentMargin, openMobile } = useSidebar();
 const calendarContainer = ref<HTMLElement | null>(null);
-const activeNavItem = ref("calendar");
+const activeNavItem = ref("planning");
 
 const navigationItems = computed(() => {
   void locale.value;
@@ -199,6 +199,7 @@ const {
   setMonth,
   setActiveTab,
   goToToday,
+  setSearchQuery,
 } = useCalendar();
 
 const previousMonth = () => {
@@ -277,7 +278,7 @@ onMounted(() => {
 // Toolbar icon-click handler removed
 
 const handleSearch = (query: string) => {
-  console.log(`Search query: ${query}`);
+  setSearchQuery(query);
 };
 
 const addEvent = (event: any) => {

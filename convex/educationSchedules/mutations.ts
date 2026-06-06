@@ -12,6 +12,7 @@ export const create = mutation({
     endTime: v.string(),
     order: v.number(),
     academicYearId: v.string(),
+    semesterId: v.id("academicYearSemesters"),
   },
   handler: async (ctx, args) => {
     const timestamps = createTimestamps();
@@ -33,6 +34,7 @@ export const update = mutation({
     startTime: v.optional(v.string()),
     endTime: v.optional(v.string()),
     order: v.optional(v.number()),
+    semesterId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
@@ -105,6 +107,7 @@ export const copySchedulesFromYear = mutation({
         endTime: schedule.endTime,
         order: schedule.order,
         academicYearId: targetAcademicYearId,
+        semesterId: schedule.semesterId,
         ...timestamps,
       });
       copiedScheduleIds.push(newId);

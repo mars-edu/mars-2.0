@@ -196,16 +196,7 @@
                     :options="startTimeOptions"
                     placeholder="Начало"
                     class="w-full"
-                    @update:modelValue="
-                      (v) => {
-                        updateWeekDayTime(slot.index, 'startId', v);
-                        const newStartIdx = startTimeOptions.findIndex((o) => o.value === v);
-                        const curEndIdx = endTimeOptions.findIndex((o) => o.value === slot.value.endId);
-                        if (curEndIdx !== -1 && curEndIdx < newStartIdx) {
-                          updateWeekDayTime(slot.index, 'endId', '');
-                        }
-                      }
-                    "
+                    @update:modelValue="(v) => updateWeekDayTime(slot.index, 'startId', v)"
                   />
                 </div>
                 <span class="text-muted-foreground text-sm shrink-0">—</span>
@@ -542,16 +533,7 @@
                         :options="startTimeOptions"
                         placeholder="Начало"
                         class="w-full"
-                        @update:modelValue="
-                          (v) => {
-                            updateJournalSlotTime(journal.id, slot.index, 'startId', v);
-                            const newStartIdx = startTimeOptions.findIndex((o) => o.value === v);
-                            const curEndIdx = endTimeOptions.findIndex((o) => o.value === slot.value.endId);
-                            if (curEndIdx !== -1 && curEndIdx < newStartIdx) {
-                              updateJournalSlotTime(journal.id, slot.index, 'endId', '');
-                            }
-                          }
-                        "
+                        @update:modelValue="(v) => updateJournalSlotTime(journal.id, slot.index, 'startId', v)"
                       />
                     </div>
                     <span class="text-muted-foreground text-sm shrink-0">—</span>
@@ -630,7 +612,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, toRefs, watch, type Ref } from "vue";
 import { f7 } from "framework7-vue";
-import { useUnsavedChangesDialog } from "@/composables/useUnsavedChangesDialog";
+
 import IconX from "~icons/lucide/x";
 import IconPlus from "~icons/lucide/plus";
 import IconChevronRight from "~icons/lucide/chevron-right";
@@ -744,7 +726,7 @@ const { students } = storeToRefs(studentStore);
 const { specialtyOptions: storeSpecialtyOptions } = storeToRefs(specialtyStore);
 const { languageOptions: storeLanguageOptions } = storeToRefs(languageStore);
 const { courseOptions: storeCourseOptions } = storeToRefs(courseStore);
-const { getActiveYearSchedules } = storeToRefs(educationScheduleStore);
+const { getActiveYearSchedules, getSchedulesBySemester } = storeToRefs(educationScheduleStore);
 
 const parentPopupId = computed(() =>
   props.mode === "edit" ? "#edit-journal-popup" : "#add-event-popup"
@@ -899,22 +881,28 @@ const groupedWeekSchedules = computed(() => {
   return Array.from(grouped.values()).sort((a, b) => a.weekId - b.weekId);
 });
 
+const activeSemesterSchedules = computed(() => {
+  if (!props.semesterId) return getActiveYearSchedules.value;
+  const schedules = getSchedulesBySemester.value(props.semesterId);
+  return [...schedules].sort((a, b) => a.lessonNumber - b.lessonNumber);
+});
+
 const startTimeOptions = computed(() => {
-  return getActiveYearSchedules.value.map((schedule) => ({
+  return activeSemesterSchedules.value.map((schedule) => ({
     value: schedule.id,
     text: schedule.startTime,
   }));
 });
 
 const endTimeOptions = computed(() => {
-  return getActiveYearSchedules.value.map((schedule) => ({
+  return activeSemesterSchedules.value.map((schedule) => ({
     value: schedule.id,
     text: schedule.endTime,
   }));
 });
 
 function getEndTimeOptionsForStart(startId: string) {
-  const schedules = getActiveYearSchedules.value;
+  const schedules = activeSemesterSchedules.value;
   const startIndex = startId ? schedules.findIndex((s) => s.id === startId) : -1;
   if (startIndex === -1) return [];
   return schedules
@@ -953,6 +941,16 @@ function updateWeekDayTime(
   if (!current[index]) return;
 
   const updated = { ...current[index], [field]: nextValue };
+
+  if (field === "startId") {
+    const schedules = activeSemesterSchedules.value;
+    const startIndex = schedules.findIndex((s) => s.id === nextValue);
+    if (startIndex !== -1 && startIndex + 1 < schedules.length) {
+      updated.endId = schedules[startIndex + 1].id;
+    } else if (startIndex !== -1) {
+      updated.endId = nextValue;
+    }
+  }
   selectedWeekDaysModel.value = [
     ...current.slice(0, index),
     updated,
@@ -1085,11 +1083,11 @@ function toggleSelectAllStudents() {
 const isKtpPopupOpen = ref(false);
 const currentKtpIdRef = ref<string | null>(null);
 
-const { confirmDiscard } = useUnsavedChangesDialog();
 
-const handleExit = async () => {
-  const confirmed = await confirmDiscard();
-  if (confirmed) props.requestClose();
+
+const handleExit = () => {
+  // Just call requestClose — GuardedPopover's unsaved guard will handle the confirm dialog if dirty
+  props.requestClose();
 };
 
 const semesterForKtp = computed(() => {
@@ -1211,6 +1209,15 @@ function updateJournalSlotTime(
     const slots = [...j.daySlots];
     if (!slots[slotIdx]) return j;
     slots[slotIdx] = { ...slots[slotIdx], [field]: nextValue };
+    if (field === "startId") {
+      const schedules = activeSemesterSchedules.value;
+      const startIndex = schedules.findIndex((s) => s.id === nextValue);
+      if (startIndex !== -1 && startIndex + 1 < schedules.length) {
+        slots[slotIdx].endId = schedules[startIndex + 1].id;
+      } else if (startIndex !== -1) {
+        slots[slotIdx].endId = nextValue;
+      }
+    }
     return { ...j, daySlots: slots };
   });
 }

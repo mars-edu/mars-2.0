@@ -8,7 +8,7 @@
     :is-dirty="hasUnsavedChanges"
   >
     <template v-slot="{ requestClose }">
-      <f7-page>
+      <div class="flex flex-col h-full">
         <div class="flex flex-col h-full bg-card">
           <div class="fixed-header">
             <PopoverHeader
@@ -124,14 +124,14 @@
             :on-save="handleSubmit"
           />
         </div>
-      </f7-page>
+      </div>
     </template>
   </GuardedPopover>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue';
-import { f7Page, f7Input } from 'framework7-vue';
+import { f7Input } from 'framework7-vue';
 import {
   home_announcements_modal_title,
   common_close,
@@ -259,14 +259,9 @@ watch(() => props.opened, (isOpened) => {
 .add-announcement-popup {
   --f7-popup-tablet-width: 600px;
   --f7-popup-tablet-height: min(850px, calc(100vh - 80px));
-  border-radius: 2rem !important;
-  overflow: hidden;
 }
 
-.add-announcement-popup :deep(.page-content) {
-  padding: 0;
-  height: 100%;
-}
+
 
 .fixed-header {
   position: sticky;

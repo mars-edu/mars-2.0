@@ -72,10 +72,17 @@ export const useAcademicYearSemesterStore = defineStore(
         return null;
       }
 
+      const yearSemesters = academicYearSemesters.value.filter((semester) => {
+        return semester.academicYearId === activeAcademicYear.id;
+      });
+      
+      const today = new Date();
       return (
-        academicYearSemesters.value.find((semester) => {
-          return semester.academicYearId === activeAcademicYear.id;
-        }) || null
+        yearSemesters.find((semester) => {
+          const startDate = new Date(semester.startDate);
+          const endDate = new Date(semester.endDate);
+          return today >= startDate && today <= endDate;
+        }) || yearSemesters[0] || null
       );
     });
 

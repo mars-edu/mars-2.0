@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from "vue";
-import { f7Toolbar, f7Link, f7 } from "framework7-vue";
+import { f7Toolbar, f7Link, f7, f7ready } from "framework7-vue";
 import { useSidebar } from "@/composables/useSidebar";
 import { useRBAC } from "@/composables/useRBAC";
 import { useUserStore } from "@/stores/userStore";
@@ -75,11 +75,15 @@ const updateActiveItem = () => {
   if (!f7.views.main || !f7.views.main.router || !f7.views.main.router.currentRoute) return;
   const currentPath = f7.views.main.router.currentRoute.path;
   if (!currentPath) return;
+
+  const normalizePath = (p: string) => (p.endsWith("/") && p.length > 1 ? p.slice(0, -1) : p);
+  const currentNormalized = normalizePath(currentPath);
   
   const matchingItem = footerItems.value.reduce((best, item) => {
+    if (!item.route) return best;
+    const itemNormalized = normalizePath(item.route);
     if (
-      item.route &&
-      currentPath.startsWith(item.route) &&
+      (currentNormalized === itemNormalized || currentNormalized.startsWith(itemNormalized + "/")) &&
       item.route.length > (best?.route?.length || 0)
     ) {
       return item;
@@ -101,14 +105,16 @@ const navigate = (route: string) => {
 };
 
 onMounted(() => {
-  updateActiveItem();
-  if (f7.views.main) {
-    f7.views.main.router.on("routeChanged", updateActiveItem);
-  }
+  f7ready(() => {
+    updateActiveItem();
+    if (f7.views.main) {
+      f7.views.main.router.on("routeChanged", updateActiveItem);
+    }
+  });
 });
 
 onUnmounted(() => {
-  if (f7.views.main) {
+  if (f7 && f7.views && f7.views.main) {
     f7.views.main.router.off("routeChanged", updateActiveItem);
   }
 });

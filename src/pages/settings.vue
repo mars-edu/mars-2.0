@@ -40,7 +40,9 @@
               <SettingsSection
                 :title="settings_semesters()"
                 :items="semesterItems"
+                allow-delete
                 @edit="openEditSemester"
+                @delete="deleteSemesterItem"
               >
                 <template #action>
                   <AddSemesterButton />
@@ -51,7 +53,9 @@
               <SettingsSection
                 :title="settings_courses()"
                 :items="courseItems"
+                allow-delete
                 @edit="openEditCourse"
+                @delete="deleteCourseItem"
               >
                 <template #action>
                   <AddCourseButton />
@@ -62,7 +66,9 @@
               <SettingsSection
                 :title="settings_languages()"
                 :items="languageItems"
+                allow-delete
                 @edit="openEditLanguage"
+                @delete="deleteLanguageItem"
               >
                 <template #action>
                   <AddLanguageButton />
@@ -73,7 +79,9 @@
               <SettingsSection
                 :title="settings_final_controls()"
                 :items="finalControlItems"
+                allow-delete
                 @edit="openEditFinalControl"
+                @delete="deleteFinalControlItem"
               >
                 <template #action>
                   <AddFinalControlButton />
@@ -83,7 +91,9 @@
               <SettingsSection
                 :title="settings_intermediate_controls()"
                 :items="intermediateControlItems"
+                allow-delete
                 @edit="openEditIntermediateControl"
+                @delete="deleteIntermediateControlItem"
               >
                 <template #action>
                   <AddIntermediateControlButton />
@@ -269,6 +279,72 @@ const openEditIntermediateControl = async (item: any) => {
   if (targetEl) {
     f7.popover.open(`#edit-settings-intermediate-control-popover-${item.id}`, targetEl);
   }
+};
+
+// ── Delete handlers ────────────────────────────────────────────────────────────
+const deleteSemesterItem = (id: string) => {
+  const item = semesters.value.find(s => s.id === id);
+  f7.dialog.confirm(
+    `<p>Удалить <strong>${item?.shortName || item?.fullName || 'запись'}</strong>?</p>
+     <p class="text-sm text-muted-foreground mt-1">Это действие нельзя отменить.</p>`,
+    'Удаление',
+    async () => {
+      try { await semesterStore.deleteSemester(id); }
+      catch { f7.dialog.alert('Не удалось удалить запись.'); }
+    }
+  );
+};
+
+const deleteCourseItem = (id: string) => {
+  const item = courses.value.find(c => c.id === id);
+  f7.dialog.confirm(
+    `<p>Удалить <strong>${item?.number ? item.number + ' курс' : 'запись'}</strong>?</p>
+     <p class="text-sm text-muted-foreground mt-1">Это действие нельзя отменить.</p>`,
+    'Удаление',
+    async () => {
+      try { await courseStore.deleteCourse(id); }
+      catch { f7.dialog.alert('Не удалось удалить запись.'); }
+    }
+  );
+};
+
+const deleteLanguageItem = (id: string) => {
+  const item = languages.value.find(l => l.id === id);
+  f7.dialog.confirm(
+    `<p>Удалить язык <strong>${item?.name || 'запись'}</strong>?</p>
+     <p class="text-sm text-muted-foreground mt-1">Это действие нельзя отменить.</p>`,
+    'Удаление',
+    async () => {
+      try { await languageStore.deleteLanguage(id); }
+      catch { f7.dialog.alert('Не удалось удалить запись.'); }
+    }
+  );
+};
+
+const deleteFinalControlItem = (id: string) => {
+  const item = sortedFinalControls.value.find(c => c.id === id);
+  f7.dialog.confirm(
+    `<p>Удалить <strong>${item?.name || 'запись'}</strong>?</p>
+     <p class="text-sm text-muted-foreground mt-1">Это действие нельзя отменить.</p>`,
+    'Удаление',
+    async () => {
+      try { await finalControlStore.deleteFinalControl(id); }
+      catch { f7.dialog.alert('Не удалось удалить запись.'); }
+    }
+  );
+};
+
+const deleteIntermediateControlItem = (id: string) => {
+  const item = sortedIntermediateControls.value.find(c => c.id === id);
+  f7.dialog.confirm(
+    `<p>Удалить <strong>${item?.name || 'запись'}</strong>?</p>
+     <p class="text-sm text-muted-foreground mt-1">Это действие нельзя отменить.</p>`,
+    'Удаление',
+    async () => {
+      try { await intermediateControlStore.deleteIntermediateControl(id); }
+      catch { f7.dialog.alert('Не удалось удалить запись.'); }
+    }
+  );
 };
 </script>
 

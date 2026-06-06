@@ -11,6 +11,7 @@ export interface EducationSchedule {
   startTime: string;
   endTime: string;
   academicYearId: string;
+  semesterId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,6 +43,7 @@ export const useEducationScheduleStore = defineStore(
           startTime: s.startTime,
           endTime: s.endTime,
           academicYearId: s.academicYearId,
+          semesterId: s.semesterId,
           createdAt: new Date(s.createdAt),
           updatedAt: new Date(s.updatedAt),
         }));
@@ -57,6 +59,11 @@ export const useEducationScheduleStore = defineStore(
     const getSchedulesByAcademicYear = computed(() => {
       return (academicYearId: string) =>
         schedules.value.filter((s) => s.academicYearId === academicYearId);
+    });
+
+    const getSchedulesBySemester = computed(() => {
+      return (semesterId: string) =>
+        schedules.value.filter((s) => s.semesterId === semesterId);
     });
 
     const getActiveYearSchedules = computed(() => {
@@ -87,6 +94,7 @@ export const useEducationScheduleStore = defineStore(
           endTime: scheduleData.endTime,
           order: nextLessonNumber,
           academicYearId: scheduleData.academicYearId,
+          semesterId: scheduleData.semesterId,
         });
         // Don't push to schedules.value - the reactive subscription will handle it
         error.value = null;
@@ -115,6 +123,7 @@ export const useEducationScheduleStore = defineStore(
           startTime: scheduleData.startTime,
           endTime: scheduleData.endTime,
           order: scheduleData.lessonNumber,
+          semesterId: scheduleData.semesterId,
         });
         // Don't update schedules.value - the reactive subscription will handle it
         error.value = null;
@@ -190,6 +199,7 @@ export const useEducationScheduleStore = defineStore(
           startTime: s.startTime,
           endTime: s.endTime,
           academicYearId: s.academicYearId,
+          semesterId: s.semesterId,
           createdAt: new Date(s.createdAt),
           updatedAt: new Date(s.updatedAt),
         }));
@@ -243,6 +253,7 @@ export const useEducationScheduleStore = defineStore(
       getScheduleById,
       getSchedules,
       getSchedulesByAcademicYear,
+      getSchedulesBySemester,
       getActiveYearSchedules,
       isLoading,
       getError,

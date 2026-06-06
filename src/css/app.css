@@ -113,9 +113,7 @@ body {
   padding: 0 !important;
 }
 
-.popover .popover-inner {
-  border-radius: 16px;
-}
+
 
 .input {
   @apply bg-muted rounded-lg px-4 py-2;
@@ -211,6 +209,8 @@ body {
   opacity: 0 !important;
   transition-property: transform, opacity !important;
   transform-origin: center center !important;
+  border-radius: 1rem !important;
+  overflow: hidden;
 }
 .popup.modal-in {
   transform: scale(1) !important;
@@ -222,41 +222,30 @@ body {
 }
 
 /* Popover: zoom-in-95 + fade (replaces F7 iOS scale-from-0 at trigger point) */
+/* All popovers are always centered on the viewport */
 .popover {
-  transform: scale(0.95) !important;
+  left: 50% !important;
+  top: 50% !important;
+  margin: 0 !important;
+  overflow: hidden;
+  transform: translate(-50%, -50%) scale(0.95) !important;
   transition-property: opacity, transform !important;
   transform-origin: center center !important;
 }
 .popover.modal-in {
-  transform: scale(1) !important;
+  transform: translate(-50%, -50%) scale(1) !important;
 }
 .popover.modal-out {
-  transform: scale(0.95) !important;
+  transform: translate(-50%, -50%) scale(0.95) !important;
 }
 /* Disable the iOS popover-inner secondary offset/bounce animation */
 .popover .popover-inner {
   transform: none !important;
   transition: none !important;
-}
-
-/* Centered popover positioning with animation support */
-.popover.popover-center {
-  left: 50% !important;
-  top: 50% !important;
-  margin: 0 !important;
-  border-radius: 0.5rem;
+  border-radius: 1rem;
   overflow: hidden;
 }
-
-/* Override scale transform while preserving centering */
-.popover.popover-center {
-  transform: translate(-50%, -50%) scale(0.95) !important;
-}
-
-.popover.popover-center.modal-in {
-  transform: translate(-50%, -50%) scale(1) !important;
-}
-
-.popover.popover-center.modal-out {
-  transform: translate(-50%, -50%) scale(0.95) !important;
+/* Hide the F7 popover angle/arrow — not meaningful for centered popovers */
+.popover .popover-angle {
+  display: none !important;
 }

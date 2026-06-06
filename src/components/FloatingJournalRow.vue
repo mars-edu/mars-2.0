@@ -27,26 +27,16 @@
                   >
                     Обучающийся
                   </th>
-                  <th
+                  <JournalGridHeader
                     v-for="(header, index) in tableHeaders"
                     :key="index"
-                    class="px-1 py-2 text-center text-xs border-r border-border w-16 min-w-[56px] transition-all duration-300"
-                    :class="[
-                      {
-                        'scale-125 bg-green-100 text-green-600 font-bold':
-                          editingCell?.col === index,
-                      },
-                      {
-                        'bg-muted/50 text-muted-foreground':
-                          header.type === 'session' ||
-                          header.type === 'pk' ||
-                          header.type === 'e' ||
-                          header.type === 'i',
-                      },
-                    ]"
-                  >
-                    <span v-html="header.label.replace('\\n', '<br/>')"></span>
-                  </th>
+                    :header="header"
+                    :index="index"
+                    :is-editing="editingCell?.col === index"
+                    :has-ktp="header.type === 'date' && getKtpForHeader(index) !== null"
+                    :is-clickable="true"
+                    @paperclip-click="(h, i) => $emit('paperclip-click', h, i)"
+                  />
                 </tr>
               </thead>
               <tbody>
@@ -69,56 +59,24 @@
                       </div>
                     </div>
                   </td>
-                  <td
-                    v-for="(mark, colIndex) in localStudent?.marks || []"
+                  <JournalGridCell
+                    v-for="(header, colIndex) in tableHeaders"
                     :key="colIndex"
-                    class="px-1 py-2 text-center border-r border-border min-w-[56px]"
-                    :class="{
-                      'bg-muted/90':
-                        mark.type === 'session' ||
-                        mark.type === 'pk' ||
-                        mark.type === 'e' ||
-                        mark.type === 'i',
-                      'bg-gray-100 cursor-not-allowed': mark.type === 'date' && mark.isoDate && isFutureDate(mark.isoDate),
-                    }"
-                  >
-                    <div class="flex flex-col gap-1">
-                      <div
-                        v-for="(value, rowIdx) in mark.values"
-                        :key="rowIdx"
-                        class="h-8 flex items-center justify-center transition-transform duration-300"
-                        :class="{
-                          'scale-175 z-10':
-                            editingCell?.row === rowIdx &&
-                            editingCell?.col === colIndex,
-                        }"
-                      >
-                        <EditableMarkCell
-                          v-if="
-                            editingCell?.row === rowIdx &&
-                            editingCell?.col === colIndex
-                          "
-                          v-model="editedValue"
-                          @confirm="confirmEdit"
-                          @cancel="cancelEdit"
-                          @navigate="navigate"
-                          :is-zoomed="true"
-                        />
-                        <div
-                          v-else
-                          @click="handleCellClick(rowIdx, colIndex)"
-                          :class="[
-                            'w-full',
-                            mark.type === 'date' && mark.isoDate && isFutureDate(mark.isoDate)
-                              ? 'cursor-not-allowed'
-                              : 'cursor-pointer'
-                          ]"
-                        >
-                          <MarkCell :mark="value" />
-                        </div>
-                      </div>
-                    </div>
-                  </td>
+                    :header="header"
+                    :marks="getMarksArray(header, colIndex)"
+                    :editing-mark-index="
+                      editingCell?.col === colIndex ? editingCell?.row : null
+                    "
+                    :edited-value="editedValue"
+                    :is-view-only="isViewOnly"
+                    :is-future="header.type === 'date' && header.isoDate ? isFutureDate(header.isoDate) : false"
+                    :is-past="header.type === 'date' && header.isoDate ? isPastDate(header.isoDate) : false"
+                    @cell-click="(mIdx) => handleCellClick(mIdx, colIndex)"
+                    @update:editedValue="editedValue = $event"
+                    @confirm-edit="confirmEdit"
+                    @cancel-edit="cancelEdit"
+                    @navigate="navigate"
+                  />
                 </tr>
               </tbody>
             </table>
@@ -130,13 +88,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, nextTick } from "vue";
+import { ref, watch, computed, nextTick, type PropType } from "vue";
 import MarkCell from "@/components/ui/MarkCell.vue";
 import EditableMarkCell from "@/components/ui/EditableMarkCell.vue";
+import JournalGridCell from "@/components/JournalGridCell.vue";
+import JournalGridHeader from "@/components/JournalGridHeader.vue";
 import { useMarksStore } from "@/stores/marksStore";
 import type { Mark } from "@/types/marks";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
+import { isFutureDate, isPastDate } from "@/utils/date";
+import { confirmMarkEdit } from "@/utils/dialogs";
 import { f7 } from "framework7-vue";
 
 const props = defineProps({
@@ -149,16 +111,48 @@ const props = defineProps({
     required: true,
   },
   tableHeaders: {
-    type: Array as () => { type: string; label: string }[],
+    type: Array as () => any[],
     required: true,
   },
   journalId: {
     type: String,
     required: true,
   },
+  getKtpForHeader: {
+    type: Function as PropType<(index: number) => any>,
+    default: () => null,
+  },
+  isViewOnly: {
+    type: Boolean,
+    default: false,
+  },
+  notifyViewOnly: {
+    type: Function as PropType<() => void>,
+    default: () => {},
+  },
 });
 
-const emit = defineEmits(["close", "update-student"]);
+const withEditPermission = <T extends (...args: any[]) => any>(fn: T): T => {
+  return ((...args: any[]) => {
+    if (props.isViewOnly) {
+      editingCell.value = null;
+      props.notifyViewOnly();
+      return;
+    }
+    return fn(...args);
+  }) as T;
+};
+
+const getMarksArray = (header: any, colIndex: number) => {
+  const rows = header.dynamicRows || 1;
+  const arr = [];
+  for (let i = 0; i < rows; i++) {
+    arr.push(getMark(i, colIndex));
+  }
+  return arr;
+};
+
+const emit = defineEmits(["close", "update-student", "paperclip-click"]);
 
 const marksStore = useMarksStore();
 
@@ -298,66 +292,29 @@ const setMark = (row: number, col: number, value: string) => {
   updateMark(row, col, newValue);
 };
 
-// Utility function to check if a date is in the future
-const isFutureDate = (isoDate: string | undefined): boolean => {
-  if (!isoDate) return false;
-  const today = dayjs().startOf('day');
-  const cellDate = dayjs(isoDate, DATE_STORAGE_FORMAT);
-  return cellDate.isAfter(today);
-};
+// Date validation logic moved to src/utils/date.ts
 
-const handleCellClick = (row: number, col: number) => {
+const handleCellClick = withEditPermission((row: number, col: number) => {
   const currentMark = getMark(row, col);
   const hasExistingValue = currentMark !== "" && currentMark !== null;
 
   if (hasExistingValue) {
-    // Show confirmation dialog for existing values
-    f7.dialog.create({
-      title: 'Изменить оценку?',
-      text: `Текущая оценка: ${currentMark}. Вы действительно хотите изменить её?`,
-      buttons: [
-        {
-          text: 'Нет',
-          close: true,
-        },
-        {
-          text: 'Да',
-          bold: true,
-          onClick: () => {
-            editCell(row, col);
-          }
-        }
-      ],
-      verticalButtons: false,
-    }).open();
+    confirmMarkEdit(currentMark, () => editCell(row, col));
   } else {
     // Empty cell, edit directly
     editCell(row, col);
   }
 };
 
-const editCell = (row: number, col: number) => {
+const editCell = withEditPermission((row: number, col: number) => {
   console.log("[FloatingJournalRow] Editing cell:", { row, col });
-
-  // Check if this is a future date
-  if (localStudent.value?.marks[col]) {
-    const mark = localStudent.value.marks[col];
-    if (mark.type === "date" && mark.isoDate && isFutureDate(mark.isoDate)) {
-      f7.toast.create({
-        text: 'Нельзя выставлять оценки за будущие даты',
-        position: 'center',
-        closeTimeout: 2000,
-      }).open();
-      return;
-    }
-  }
 
   editingCell.value = { row, col };
   editedValue.value = getMark(row, col);
   console.log("[FloatingJournalRow] Current mark value:", editedValue.value);
-};
+});
 
-const confirmEdit = () => {
+const confirmEdit = withEditPermission(() => {
   console.log("[FloatingJournalRow] Confirming edit:", {
     hasEditingCell: !!editingCell.value,
     editedValue: editedValue.value,
@@ -367,13 +324,13 @@ const confirmEdit = () => {
   const { row, col } = editingCell.value;
   setMark(row, col, editedValue.value);
   editingCell.value = null;
-};
+});
 
 const cancelEdit = () => {
   editingCell.value = null;
 };
 
-const navigate = async (direction: "up" | "down" | "left" | "right") => {
+const navigate = withEditPermission(async (direction: "up" | "down" | "left" | "right") => {
   if (!editingCell.value) return;
 
   const { row: startRow, col: startCol } = editingCell.value;
@@ -421,7 +378,7 @@ const navigate = async (direction: "up" | "down" | "left" | "right") => {
 
     editCell(nextRow, nextCol);
   });
-};
+});
 
 const handleClose = async () => {
   console.log("[FloatingJournalRow] Handling close:", {

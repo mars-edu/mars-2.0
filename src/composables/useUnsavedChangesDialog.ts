@@ -16,10 +16,6 @@ let resolveCurrent: ((value: boolean) => void) | null = null;
 let isHandlingResult = false;
 let currentContainer: HTMLElement | null = null;
 
-function findParentPopup(): HTMLElement | null {
-  const openPopups = document.querySelectorAll<HTMLElement>(".popup.modal-in");
-  return openPopups.length > 0 ? openPopups[openPopups.length - 1] : null;
-}
 
 function createDialogDOM(options: {
   title: string;
@@ -33,12 +29,7 @@ function createDialogDOM(options: {
 
   // Base backdrop style
   container.style.cssText =
-    "position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);padding:1rem;";
-
-  const parentPopup = findParentPopup();
-  if (parentPopup) {
-    container.style.position = "absolute";
-  }
+    "position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:1rem;";
 
   container.setAttribute("role", "dialog");
   container.setAttribute("aria-modal", "true");
@@ -128,21 +119,9 @@ export function useUnsavedChangesDialog() {
       resolveCurrent = resolve;
       isHandlingResult = false;
 
-      const parentPopup = findParentPopup();
-      const backdrop = document.querySelector<HTMLElement>(".popup-backdrop");
-
-      if (parentPopup) {
-        parentPopup.style.visibility = "hidden";
-        if (backdrop) backdrop.style.visibility = "hidden";
-      }
-
       const finish = (value: boolean) => {
         if (!resolveCurrent || isHandlingResult) return;
         isHandlingResult = true;
-        if (parentPopup) {
-          parentPopup.style.visibility = "";
-          if (backdrop) backdrop.style.visibility = "";
-        }
         const resolver = resolveCurrent;
         resolveCurrent = null;
         removeDialog();
@@ -157,9 +136,6 @@ export function useUnsavedChangesDialog() {
         onConfirm: () => finish(true),
         onCancel: () => finish(false),
       });
-
-      currentContainer.style.cssText =
-        "position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);padding:1rem;";
 
       document.body.appendChild(currentContainer);
     });

@@ -71,7 +71,7 @@ import { computed } from "vue";
 import type { Component } from "vue";
 import { useRBAC } from "@/composables/useRBAC";
 import { useSidebar } from "@/composables/useSidebar";
-import { f7 } from "framework7-vue";
+import { f7, f7ready } from "framework7-vue";
 import AuthService from "@/services/auth";
 import type { NavigationItem } from "@/composables/useRBAC";
 import SidebarItem from "./SidebarItem.vue";
@@ -185,10 +185,14 @@ const updateActiveItem = () => {
   const currentPath = f7.views.main.router.currentRoute.path;
   if (!currentPath) return;
 
+  const normalizePath = (p: string) => (p.endsWith("/") && p.length > 1 ? p.slice(0, -1) : p);
+  const currentNormalized = normalizePath(currentPath);
+
   const matchingItem = navigationItems.value.reduce((best, item) => {
+    if (!item.route) return best;
+    const itemNormalized = normalizePath(item.route);
     if (
-      item.route &&
-      currentPath.startsWith(item.route) &&
+      (currentNormalized === itemNormalized || currentNormalized.startsWith(itemNormalized + "/")) &&
       item.route.length > (best?.route?.length || 0)
     ) {
       return item;
@@ -203,11 +207,15 @@ const updateActiveItem = () => {
 import { onMounted, onUnmounted } from "vue";
 
 onMounted(() => {
-  updateActiveItem();
-  f7.views.main.router.on("routeChanged", updateActiveItem);
+  f7ready(() => {
+    updateActiveItem();
+    f7.views.main.router.on("routeChanged", updateActiveItem);
+  });
 });
 
 onUnmounted(() => {
-  f7.views.main.router.off("routeChanged", updateActiveItem);
+  if (f7 && f7.views && f7.views.main) {
+    f7.views.main.router.off("routeChanged", updateActiveItem);
+  }
 });
 </script>

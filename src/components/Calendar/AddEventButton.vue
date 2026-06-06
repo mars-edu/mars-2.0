@@ -20,7 +20,7 @@
       @popup:closed="onPopupClosed"
       class="add-event-popup"
     >
-      <f7-page>
+      <div class="flex flex-col h-full">
         <AddEventWizard
           :session-key="sessionKey"
           :request-close="requestClose"
@@ -48,7 +48,7 @@
           v-model:individualJournals="individualJournals"
           @submit="handleAddEvent"
         />
-      </f7-page>
+      </div>
     </GuardedPopover>
   </div>
 </template>
@@ -248,12 +248,6 @@ const hasUnsavedChanges = () => isDirty.value;
 .add-event-popup {
   --f7-popup-tablet-width: 672px;
   --f7-popup-tablet-height: min(900px, calc(100vh - 80px));
-  border-radius: 2rem !important;
-  overflow: hidden;
 }
 
-.add-event-popup .page-content {
-  padding: 0;
-  height: 100%;
-}
 </style>

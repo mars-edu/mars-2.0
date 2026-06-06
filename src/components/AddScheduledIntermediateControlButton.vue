@@ -103,7 +103,7 @@ import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Select from "@/components/ui/Select.vue";
 import DateInput from "@/components/ui/DateInput.vue";
 
-const props = defineProps<{ prefix?: string }>();
+const props = defineProps<{ prefix?: string; semesterId: string }>();
 
 const computedPrefix = computed(
   () => props.prefix || "scheduled-intermediate-control"
@@ -202,6 +202,7 @@ const handleSaveControl = async () => {
       startDate: dayjs(startDate.value[0]).format(DATE_STORAGE_FORMAT),
       endDate: dayjs(endDate.value[0]).format(DATE_STORAGE_FORMAT),
       academicYearId: activeAcademicYear.id,
+      semesterId: props.semesterId,
     });
     closeAddControlPopover();
   } catch (error) {

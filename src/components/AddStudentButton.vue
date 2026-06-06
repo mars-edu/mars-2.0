@@ -15,7 +15,6 @@
       id="add-student-popover"
       style="width: 800px !important; height: auto !important;"
       kind="popup"
-      positioning="center"
       :on-closed="resetForm">
       <div class="student-popover bg-card text-card-foreground flex flex-col">
         <PopoverHeader
@@ -326,10 +325,5 @@ const resetForm = () => {
 .student-order-input :deep(input:focus) {
   border-color: hsl(var(--primary)) !important;
   box-shadow: 0 0 0 2px hsl(var(--primary) / 0.1) !important;
-}
-
-.student-popover {
-  border-radius: 2rem !important;
-  overflow: clip;
 }
 </style>

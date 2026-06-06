@@ -2,7 +2,6 @@
   <GuardedPopover
     v-slot="{ requestClose }"
     id="replace-journal-popover"
-    positioning="center"
     style="width: 500px !important"
     :is-dirty="isDirty"
     :on-closed="resetLocalData"

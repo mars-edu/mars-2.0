@@ -1,5 +1,5 @@
 <template>
-  <div class="border-t border-input flex items-center justify-between px-8 py-6 flex-shrink-0 bg-white/80 backdrop-blur-xl">
+  <div class="border-t border-input flex items-center justify-between px-8 py-6 flex-shrink-0 bg-card/80 backdrop-blur-xl">
     <button
       v-if="onCancel"
       class="w-auto py-3.5 px-6 text-[15px] font-semibold transition-colors rounded-2xl"

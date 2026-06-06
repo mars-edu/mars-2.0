@@ -2,6 +2,7 @@ import { query, internalQuery, action } from "../_generated/server";
 import { v } from "convex/values";
 import { validateToken } from "../auth/helpers";
 import { internal } from "../_generated/api";
+import { Id } from "../_generated/dataModel";
 
 /**
  * Get all calendar events, optionally filtered by teacher
@@ -93,8 +94,6 @@ export const listWithRoleAccessInternal = internalQuery({
 
     // For teachers: only their own events
     if (isTeacher && !isAdmin) {
-      // Use by_userId index - O(log n) instead of O(n) full scan
-      // Note: Need to cast userId since the index type doesn't match the field type
       const teacherRecord = await ctx.db
         .query("teachers")
         .withIndex("by_userId", (q) => q.eq("userId", userId as any))
@@ -104,21 +103,17 @@ export const listWithRoleAccessInternal = internalQuery({
         return [];
       }
 
-      // Fetch events using indexed queries
       return await fetchEventsByTeacherIds(ctx, teacherRecord._id, userId);
     }
 
     // For admins
     if (isAdmin) {
       if (selectedTeacherId) {
-        // Query teachers table to find the teacher and get their userId
-        // This is more type-safe than ctx.db.get() which returns union of all tables
         const teacherRecord = await ctx.db
           .query("teachers")
           .filter((q) => q.eq(q.field("_id"), selectedTeacherId))
           .unique();
 
-        // Fetch events using indexed queries
         return await fetchEventsByTeacherIds(
           ctx,
           selectedTeacherId,
@@ -126,7 +121,6 @@ export const listWithRoleAccessInternal = internalQuery({
         );
       }
 
-      // No filter - return all events (unavoidable full scan)
       return await ctx.db.query("calendarEvents").collect();
     }
 

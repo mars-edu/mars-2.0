@@ -317,8 +317,12 @@
       :student="selectedStudent"
       :student-index="selectedStudentIndex"
       :table-headers="tableHeaders"
+      :get-ktp-for-header="journalTabRef?.getKtpForHeader"
+      :is-view-only="journalTabRef?.isViewOnly"
+      :notify-view-only="journalTabRef?.notifyViewOnly"
       @close="hideFloatingRow"
       @update-student="updateStudent"
+      @paperclip-click="(h, i) => journalTabRef?.onPaperclipClick(h, i)"
     />
     <DateColumnFocus
       :visible="isDateFocusVisible"
@@ -326,6 +330,8 @@
       :column-header="focusedColumnHeader"
       :selected-date-index="focusedDateIndex"
       :journal-id="journalId"
+      :is-view-only="journalTabRef?.isViewOnly"
+      :notify-view-only="journalTabRef?.notifyViewOnly"
       @close="isDateFocusVisible = false"
     />
     <KtpDetailPopup

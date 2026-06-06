@@ -11,6 +11,7 @@ export interface ScheduledFinalControl {
   shortName: string;
   startDate: string;
   endDate: string;
+  semesterId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +42,7 @@ export const useScheduledFinalControlStore = defineStore(
           shortName: c.shortName,
           startDate: c.startDate,
           endDate: c.endDate,
+          semesterId: c.semesterId ?? undefined,
           createdAt: new Date(c.createdAt),
           updatedAt: new Date(c.updatedAt),
         }));
@@ -62,6 +64,13 @@ export const useScheduledFinalControlStore = defineStore(
       return (academicYearId: string) =>
         scheduledFinalControls.value.filter(
           (c) => c.academicYearId === academicYearId
+        );
+    });
+
+    const getScheduledFinalControlsBySemester = computed(() => {
+      return (semesterId: string) =>
+        scheduledFinalControls.value.filter(
+          (c) => c.semesterId === semesterId
         );
     });
 
@@ -184,6 +193,7 @@ export const useScheduledFinalControlStore = defineStore(
       getScheduledFinalControlById,
       sortedScheduledFinalControls,
       getScheduledFinalControlsByAcademicYear,
+      getScheduledFinalControlsBySemester,
       isLoading,
       getError,
       addScheduledFinalControl,
