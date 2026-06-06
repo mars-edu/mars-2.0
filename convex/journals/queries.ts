@@ -107,3 +107,30 @@ export const getByStudentId = query({
     return journals.filter(Boolean);
   },
 });
+
+/**
+ * True if any mark exists in any wizard-child individual journal of the
+ * given main group event. Used as the edit-lock pre-check.
+ */
+export const hasMarksInIndividualJournals = query({
+  args: { mainEventId: v.string() },
+  handler: async (ctx, args) => {
+    const allEvents = await ctx.db.query("calendarEvents").collect();
+    const children = allEvents.filter(
+      (e) => e.sourceGroupEventId === args.mainEventId
+    );
+    for (const child of children) {
+      const journal = await ctx.db
+        .query("journals")
+        .withIndex("by_calendarEvent", (q) => q.eq("calendarEventId", child._id))
+        .unique();
+      if (!journal) continue;
+      const anyMark = await ctx.db
+        .query("marks")
+        .withIndex("by_journal", (q) => q.eq("journalId", journal._id))
+        .first();
+      if (anyMark) return true;
+    }
+    return false;
+  },
+});

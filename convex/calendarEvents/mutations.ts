@@ -205,3 +205,121 @@ export const createWithIndividualJournals = mutation({
     return { mainId, childIds };
   },
 });
+
+/**
+ * Replace the individual-journal configuration of a main group event.
+ * FULL LOCK: if any mark exists in any existing child journal, throws
+ * INDIVIDUAL_JOURNALS_LOCKED — config editing is forbidden once grading
+ * has started (concept-v2 semantics).
+ */
+export const updateIndividualJournalsConfig = mutation({
+  args: {
+    mainEventId: v.id("calendarEvents"),
+    gradingType: v.union(v.literal("combined"), v.literal("separate")),
+    individualJournals: v.array(
+      v.object({
+        eventId: v.optional(v.string()), // existing child event id; absent = create new
+        studentIds: v.array(v.string()),
+        weeklySchedules: v.array(weeklyScheduleValidator),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const validationError = validateIndividualJournals(
+      args.individualJournals,
+      args.gradingType
+    );
+    if (validationError) {
+      throw new ConvexError(validationError);
+    }
+
+    const mainEvent = await ctx.db.get(args.mainEventId);
+    if (!mainEvent) {
+      throw new ConvexError("Main event not found");
+    }
+
+    // Collect existing children
+    const allEvents = await ctx.db.query("calendarEvents").collect();
+    const children = allEvents.filter(
+      (e) => e.sourceGroupEventId === args.mainEventId
+    );
+
+    // FULL LOCK check: any mark in any child journal forbids editing
+    for (const child of children) {
+      const journal = await ctx.db
+        .query("journals")
+        .withIndex("by_calendarEvent", (q) => q.eq("calendarEventId", child._id))
+        .unique();
+      if (!journal) continue;
+      const anyMark = await ctx.db
+        .query("marks")
+        .withIndex("by_journal", (q) => q.eq("journalId", journal._id))
+        .first();
+      if (anyMark) {
+        throw new ConvexError("INDIVIDUAL_JOURNALS_LOCKED");
+      }
+    }
+
+    await ctx.db.patch(args.mainEventId, {
+      gradingType: args.gradingType,
+      ...updateTimestamp(),
+    });
+
+    const keptEventIds = new Set(
+      args.individualJournals.map((j) => j.eventId).filter(Boolean)
+    );
+
+    // Delete removed children (and their empty journals)
+    for (const child of children) {
+      if (keptEventIds.has(child._id)) continue;
+      const journal = await ctx.db
+        .query("journals")
+        .withIndex("by_calendarEvent", (q) => q.eq("calendarEventId", child._id))
+        .unique();
+      if (journal) {
+        const students = await ctx.db
+          .query("journalStudents")
+          .withIndex("by_journal", (q) => q.eq("journalId", journal._id))
+          .collect();
+        for (const s of students) await ctx.db.delete(s._id);
+        await ctx.db.delete(journal._id);
+      }
+      await ctx.db.delete(child._id);
+    }
+
+    // Upsert kept/new children
+    const childIds: string[] = [];
+    let counter = 0;
+    for (const j of args.individualJournals) {
+      counter += 1;
+      if (j.eventId) {
+        await ctx.db.patch(j.eventId as any, {
+          participants: j.studentIds,
+          weeklySchedules: j.weeklySchedules,
+          ...updateTimestamp(),
+        });
+        childIds.push(j.eventId);
+      } else {
+        const timestamps = createTimestamps();
+        const childId = await ctx.db.insert("calendarEvents", {
+          rupEntryId: mainEvent.rupEntryId,
+          teacherId: mainEvent.teacherId,
+          startDate: mainEvent.startDate,
+          endDate: mainEvent.endDate,
+          participants: j.studentIds,
+          color: mainEvent.color,
+          semester: mainEvent.semester,
+          useCustomPeriod: mainEvent.useCustomPeriod,
+          weeklySchedules: j.weeklySchedules,
+          isIndividualJournal: true,
+          sourceGroupEventId: args.mainEventId,
+          customTitle: `Индивидуальный журнал #${counter}`,
+          ...timestamps,
+        });
+        childIds.push(childId);
+      }
+    }
+
+    return { mainId: args.mainEventId, childIds };
+  },
+});
