@@ -91,6 +91,37 @@
             </div>
           </div>
 
+          <!-- Individual journals of this group event (wizard children) -->
+          <div
+            v-if="!isMergedJournal && individualChildJournals.length > 0"
+            class="p-4 bg-muted/50 rounded-2xl border border-border/50"
+          >
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-sm font-bold">Индивидуальные журналы</div>
+              <button
+                class="text-sm text-primary font-medium hover:underline"
+                @click="openIndividualConfig"
+              >
+                Настроить
+              </button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+              <button
+                v-for="child in individualChildJournals"
+                :key="child.id"
+                class="p-4 rounded-2xl border-2 bg-card border-border hover:border-primary/50 hover:shadow-md text-left"
+                @click="navigateToJournal(child.id)"
+              >
+                <div class="text-base font-bold truncate">
+                  {{ child.customTitle || "Индивидуальный журнал" }}
+                </div>
+                <div class="text-[11px] font-bold text-muted-foreground mt-1">
+                  Студентов: {{ child.participants.length }}
+                </div>
+              </button>
+            </div>
+          </div>
+
           <!-- Debug Information Panel (dev mode only) -->
           <JournalDebugPanel
             v-if="false && isDev"
@@ -358,6 +389,9 @@
       v-if="selectedStudentForEditId"
       :student-id="selectedStudentForEditId"
     />
+
+    <!-- Individual Journals Config Popup -->
+    <IndividualJournalsConfigPopup ref="individualConfigRef" />
   </f7-page>
 </template>
 
@@ -403,6 +437,7 @@ import IconUsers from "~icons/lucide/users";
 import { useConvexQuery } from "convex-vue";
 import { api } from "@convex/_generated/api";
 import EditStudentButton from "@/components/EditStudentButton.vue";
+import IndividualJournalsConfigPopup from "@/components/IndividualJournalsConfigPopup.vue";
 import { storeToRefs } from "pinia";
 
 import { useJournalOpenClose } from "@/composables/useJournalOpenClose";
@@ -991,6 +1026,21 @@ const tableHeaders = computed(() => {
 const students = computed(() => {
   return journalTabRef.value?.students || [];
 });
+
+// Individual journals config popup
+const individualConfigRef = ref<InstanceType<typeof IndividualJournalsConfigPopup> | null>(null);
+
+const individualChildJournals = computed(() =>
+  calendarStore.events.filter((e) => e.sourceGroupEventId === journalId.value)
+);
+
+function openIndividualConfig() {
+  individualConfigRef.value?.open(journalId.value);
+}
+
+function navigateToJournal(id: string) {
+  f7.views.main.router.navigate(`/journals/${id}`);
+}
 
 // Initialize control stores
 const intermediateControlStore = useIntermediateControlStore();
