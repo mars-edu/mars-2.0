@@ -115,10 +115,12 @@ export const getByStudentId = query({
 export const hasMarksInIndividualJournals = query({
   args: { mainEventId: v.string() },
   handler: async (ctx, args) => {
-    const allEvents = await ctx.db.query("calendarEvents").collect();
-    const children = allEvents.filter(
-      (e) => e.sourceGroupEventId === args.mainEventId
-    );
+    const children = await ctx.db
+      .query("calendarEvents")
+      .withIndex("by_sourceGroupEventId", (q) =>
+        q.eq("sourceGroupEventId", args.mainEventId)
+      )
+      .collect();
     for (const child of children) {
       const journal = await ctx.db
         .query("journals")

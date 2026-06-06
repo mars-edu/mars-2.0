@@ -239,10 +239,12 @@ export const updateIndividualJournalsConfig = mutation({
     }
 
     // Collect existing children
-    const allEvents = await ctx.db.query("calendarEvents").collect();
-    const children = allEvents.filter(
-      (e) => e.sourceGroupEventId === args.mainEventId
-    );
+    const children = await ctx.db
+      .query("calendarEvents")
+      .withIndex("by_sourceGroupEventId", (q) =>
+        q.eq("sourceGroupEventId", args.mainEventId)
+      )
+      .collect();
 
     // FULL LOCK check: any mark in any child journal forbids editing
     for (const child of children) {
@@ -293,6 +295,9 @@ export const updateIndividualJournalsConfig = mutation({
     for (const j of args.individualJournals) {
       counter += 1;
       if (j.eventId) {
+        if (!children.some((c) => c._id === j.eventId)) {
+          throw new ConvexError("Журнал не принадлежит этому событию");
+        }
         await ctx.db.patch(j.eventId as any, {
           participants: j.studentIds,
           weeklySchedules: j.weeklySchedules,

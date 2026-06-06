@@ -508,7 +508,8 @@ export default defineSchema({
     .index("by_rupEntryId", ["rupEntryId"])
     .index("by_teacherId", ["teacherId"])
     .index("by_semester", ["semester"])
-    .index("by_startDate", ["startDate"]),
+    .index("by_startDate", ["startDate"])
+    .index("by_sourceGroupEventId", ["sourceGroupEventId"]),
 
   // ==========================================================================
   // LESSON PLANS (KTP)
