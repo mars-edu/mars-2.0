@@ -1,6 +1,5 @@
 <template>
   <f7-popup
-    id="individual-journals-config-popup"
     :opened="isOpen"
     @popup:closed="isOpen = false"
     class="individual-journals-config-popup"
@@ -47,7 +46,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { f7, f7Popup } from "framework7-vue";
+import { f7 } from "framework7-vue";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { ConvexError } from "convex/values";

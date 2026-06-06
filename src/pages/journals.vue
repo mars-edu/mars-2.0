@@ -336,6 +336,8 @@
       @close="onIndividualJournalClose"
     />
 
+    <IndividualJournalsConfigPopup ref="individualConfigRef" />
+
     <EditJournalPopup
       v-if="editingEventId"
       ref="editJournalPopupRef"
@@ -376,6 +378,7 @@ import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
 import DropdownMenu from "@/components/ui/DropdownMenu.vue";
 import IndividualJournalPopup from "@/components/IndividualJournalPopup.vue";
+import IndividualJournalsConfigPopup from "@/components/IndividualJournalsConfigPopup.vue";
 import EditJournalPopup from "@/components/Calendar/EditJournalPopup.vue";
 import ReplaceJournalPopover from "@/components/ReplaceJournalPopover.vue";
 import type { ReplaceJournalData } from "@/components/ReplaceJournalPopover.vue";
@@ -1415,7 +1418,10 @@ function onEditJournal(journalId: string) {
   const journal = journalStore.getJournalById(journalId);
   if (!journal) return;
 
-  if (journal.isIndividualJournal) {
+  if (journal.sourceGroupEventId) {
+    // Wizard-child individual journal: config lives on the main event
+    individualConfigRef.value?.open(journal.sourceGroupEventId);
+  } else if (journal.isIndividualJournal) {
     onEditIndividualJournal(journalId);
   } else {
     openEditJournalPopup(journalId);
@@ -1509,6 +1515,7 @@ function handleReplaceCancel() {
 }
 
 const individualJournalPopupRef = ref<InstanceType<typeof IndividualJournalPopup>>();
+const individualConfigRef = ref<InstanceType<typeof IndividualJournalsConfigPopup> | null>(null);
 
 function onAddIndividualJournal() {
   individualJournalPopupRef.value?.open();

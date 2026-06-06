@@ -465,6 +465,13 @@ export const useJournalStore = defineStore(
     }
 
     async function deleteJournal(id: string) {
+      const event = calendarStore.getEventById(id);
+      if (event?.sourceGroupEventId) {
+        throw new Error(
+          "Индивидуальный журнал удаляется через настройку индивидуальных журналов основного журнала"
+        );
+      }
+
       loading.value = true;
       try {
         await calendarStore.deleteEvent(id);
