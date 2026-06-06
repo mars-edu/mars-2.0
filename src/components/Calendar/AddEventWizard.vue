@@ -75,67 +75,56 @@
       </section>
 
       <section v-if="currentStep === 2" class="space-y-6">
-        <div class="bg-card rounded-2xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-border/60 space-y-3">
-          <div class="flex items-center justify-between">
-            <label for="use-custom-period" class="text-base text-foreground">
-              Свой период
-            </label>
-            <label for="use-custom-period" class="relative inline-flex h-7 w-12 cursor-pointer items-center">
-              <input
-                id="use-custom-period"
-                v-model="useCustomPeriodModel"
-                type="checkbox"
-                class="peer sr-only"
-              />
-              <span
-                class="h-7 w-12 rounded-full bg-muted transition-colors peer-checked:bg-primary"
-              ></span>
-              <span
-                class="absolute left-0.5 top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5"
-              ></span>
-            </label>
+        <div class="space-y-3">
+          <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70 ml-1">
+            Период
           </div>
 
-          <template v-if="!useCustomPeriodModel">
-            <div
-              v-if="semesterDates"
-              class="flex items-center justify-between gap-3"
+          <div class="bg-muted p-1 rounded-xl flex gap-1">
+            <button 
+              class="flex-1 py-1.5 text-sm font-medium rounded-lg transition-all"
+              :class="!useCustomPeriodModel ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-black/5'"
+              @click="useCustomPeriodModel = false"
             >
-              <div class="text-[15px] md:text-[17px] font-medium leading-tight text-foreground">
-                {{ semesterDates.startDate }} - {{ semesterDates.endDate }}
-              </div>
-              <span
-                v-if="semesterDates.semesterText"
-                class="shrink-0 rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-              >
-                {{ semesterDates.semesterText }}
-              </span>
-            </div>
-            <div v-else class="text-sm text-muted-foreground">
-              Период не определен
-            </div>
-          </template>
+              Семестр
+            </button>
+            <button 
+              class="flex-1 py-1.5 text-sm font-medium rounded-lg transition-all"
+              :class="useCustomPeriodModel ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-black/5'"
+              @click="useCustomPeriodModel = true"
+            >
+              Свой период
+            </button>
+          </div>
 
-          <template v-else>
-            <div class="flex justify-between items-center">
-              <span class="text-sm text-foreground">Начало</span>
-              <div class="w-1/2">
-                <DateInput
-                  v-model:value="startDateModel"
-                  placeholder="Дата"
-                />
+          <div class="bg-card rounded-2xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-border/60">
+            <template v-if="!useCustomPeriodModel">
+              <div v-if="semesterDates" class="flex flex-col gap-1.5">
+                <span v-if="semesterDates.semesterText" class="text-[11px] font-semibold text-primary uppercase tracking-widest">
+                  {{ semesterDates.semesterText }}
+                </span>
+                <div class="text-[15px] font-medium leading-tight text-foreground">
+                  {{ semesterDates.startDate }} — {{ semesterDates.endDate }}
+                </div>
               </div>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-sm text-foreground">Конец</span>
-              <div class="w-1/2">
-                <DateInput
-                  v-model:value="endDateModel"
-                  placeholder="Дата"
-                />
+              <div v-else class="text-sm text-muted-foreground">
+                Период не определен
               </div>
-            </div>
-          </template>
+            </template>
+
+            <template v-else>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                  <label class="text-xs font-medium text-muted-foreground ml-1">Начало</label>
+                  <DateInput v-model:value="startDateModel" placeholder="Дата" />
+                </div>
+                <div class="space-y-1.5">
+                  <label class="text-xs font-medium text-muted-foreground ml-1">Конец</label>
+                  <DateInput v-model:value="endDateModel" placeholder="Дата" />
+                </div>
+              </div>
+            </template>
+          </div>
         </div>
 
         <div v-if="dateValidationError" class="text-destructive text-sm">
