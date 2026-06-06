@@ -10,6 +10,7 @@ import {
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
+import { computeWeeklySlotHours } from "./scheduleHours";
 
 dayjs.extend(customParseFormat);
 dayjs.locale("ru");
@@ -115,32 +116,29 @@ export function useEventFormDerived(args: {
     return String(matchedEntry.hours);
   });
 
-  const selectedHours = computed(() => {
+  const weekCount = computed(() => {
     const startUi = effectiveStartDate.value;
     const endUi = effectiveEndDate.value;
-    if (!startUi || !endUi) return "0";
+    if (!startUi || !endUi) return 0;
 
     const start = dayjs(startUi, DATE_UI_FORMAT, true);
     const end = dayjs(endUi, DATE_UI_FORMAT, true);
-    if (!start.isValid() || !end.isValid()) return "0";
+    if (!start.isValid() || !end.isValid()) return 0;
 
     const daysDiff = end.diff(start, "day") + 1;
-    const weekCount = daysDiff > 0 ? Math.ceil(daysDiff / 7) : 0;
-    if (weekCount <= 0) return "0";
+    return daysDiff > 0 ? Math.ceil(daysDiff / 7) : 0;
+  });
 
-    const schedules = educationScheduleStore.getActiveYearSchedules;
-    let hoursPerWeek = 0;
-
-    for (const day of args.selectedWeekDays.value) {
-      if (!day.startId || !day.endId) continue;
-      const startIndex = schedules.findIndex((s) => s.id === day.startId);
-      const endIndex = schedules.findIndex((s) => s.id === day.endId);
-      if (startIndex !== -1 && endIndex !== -1 && endIndex >= startIndex) {
-        hoursPerWeek += endIndex - startIndex + 1;
-      }
-    }
-
-    return String(hoursPerWeek * weekCount);
+  const selectedHours = computed(() => {
+    if (weekCount.value <= 0) return "0";
+    const scheduleIds = educationScheduleStore.getActiveYearSchedules.map(
+      (s) => s.id
+    );
+    const hoursPerWeek = computeWeeklySlotHours(
+      args.selectedWeekDays.value,
+      scheduleIds
+    );
+    return String(hoursPerWeek * weekCount.value);
   });
 
   const isSelectedHoursExceeded = computed(() => {
@@ -189,6 +187,7 @@ export function useEventFormDerived(args: {
     dateValidationError,
     totalPlannedHours,
     semesterPlannedHours,
+    weekCount,
     selectedHours,
     isSelectedHoursExceeded,
     hoursExceededError,
