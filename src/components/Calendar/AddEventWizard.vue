@@ -402,7 +402,10 @@
                 План: <span class="text-foreground">{{ semesterPlannedHours }} ч</span>
               </span>
               <span class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Инд.: <span class="text-foreground">{{ totalIndividualHours }} ч</span>
+                Инд.:
+                <span :class="isIndividualHoursMatching ? 'text-green-600' : 'text-destructive'">
+                  {{ totalIndividualHours }} / {{ individualBudget }} ч
+                </span>
               </span>
             </div>
 
@@ -638,6 +641,7 @@ import {
   type IndividualJournalDraft,
 } from "./useAddEventWizard";
 import type { SemesterDates, WeekDaySchedule } from "./useEventFormDerived";
+import { computeScheduleHours, resolveIndividualBudget } from "./scheduleHours";
 
 dayjs.extend(customParseFormat);
 dayjs.locale("ru");
@@ -655,6 +659,7 @@ const props = withDefaults(defineProps<{
   totalPlannedHours: string;
   semesterPlannedHours: string;
   selectedHours: string;
+  weekCount: number;
   hoursExceededError?: string | null;
   slotTimeError?: string | null;
   dateValidationError?: string | null;
@@ -1114,6 +1119,7 @@ const isStep5Valid = computed(() => {
   if (!useIndividualJournalsModel.value) return true;
   if (!gradingTypeModel.value) return false;
   if (individualJournalsModel.value.length === 0) return false;
+  if (!isIndividualHoursMatching.value) return false;
   return individualJournalsModel.value.every(
     (j) =>
       j.studentIds.length > 0 &&
@@ -1268,12 +1274,32 @@ function groupedJournalSlots(journal: IndividualJournalDraft) {
 }
 
 const totalIndividualHours = computed(() => {
-  let count = 0;
+  const scheduleIds = getActiveYearSchedules.value.map((s: any) => s.id);
+  let total = 0;
   for (const j of individualJournalsModel.value) {
-    count += j.daySlots.filter((s) => !!s.startId && !!s.endId).length;
+    total += computeScheduleHours(j.daySlots, scheduleIds, props.weekCount);
   }
-  return count;
+  return total;
 });
+
+// Exact individual-hours budget for the active semester (concept-v2 rule:
+// the budget must be fully and exactly distributed across the journals).
+const individualBudget = computed(() => {
+  const entry = rupEntryStore.getRupEntryById(rupEntryIdModel.value);
+  const semester = academicYearSemesterStore.getAcademicYearSemesterById(
+    props.semesterId
+  );
+  if (!semester) return 0;
+  return resolveIndividualBudget(entry, {
+    semesterId: String(semester.id ?? ""),
+    semesterNumber: String(semester.semesterNumber ?? ""),
+    academicYearId: semester.academicYearId,
+  });
+});
+
+const isIndividualHoursMatching = computed(
+  () => totalIndividualHours.value === individualBudget.value
+);
 
 const currentKtpTitle = computed(() => {
   if (!rupEntryIdModel.value) return undefined;

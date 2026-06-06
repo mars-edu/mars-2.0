@@ -31,6 +31,7 @@
           :total-planned-hours="totalPlannedHours"
           :semester-planned-hours="semesterPlannedHours"
           :selected-hours="selectedHours"
+          :week-count="weekCount"
           :hours-exceeded-error="hoursExceededError"
           :slot-time-error="slotTimeError"
           :date-validation-error="dateValidationError"
@@ -117,6 +118,7 @@ const {
   dateValidationError,
   totalPlannedHours,
   semesterPlannedHours,
+  weekCount,
   selectedHours,
   hoursExceededError,
   slotTimeError,
