@@ -176,7 +176,28 @@ const handleAddEvent = async () => {
       semester: semesterId.value,
     };
 
-    const newEvent = await calendarStore.addEvent(eventData, tempEventId.value);
+    let newEvent: CalendarEvent | null | undefined;
+    if (useIndividualJournals.value && individualJournals.value.length > 0) {
+      if (gradingType.value !== "combined" && gradingType.value !== "separate") {
+        formError.value = "Не выбран тип оценивания.";
+        return;
+      }
+      newEvent = await calendarStore.addEventWithIndividualJournals(
+        eventData,
+        gradingType.value,
+        individualJournals.value.map((j) => ({
+          studentIds: j.studentIds,
+          weeklySchedules: j.daySlots.map(({ weekId, startId, endId }) => ({
+            weekId,
+            startId,
+            endId,
+          })),
+        })),
+        tempEventId.value
+      );
+    } else {
+      newEvent = await calendarStore.addEvent(eventData, tempEventId.value);
+    }
 
     if (newEvent) {
       emit("event-added", newEvent);

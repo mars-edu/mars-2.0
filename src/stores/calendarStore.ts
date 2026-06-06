@@ -243,6 +243,68 @@ export const useCalendarStore = defineStore(
       }
     }
 
+    async function addEventWithIndividualJournals(
+      eventData: Omit<CalendarEvent, "id" | "createdAt" | "updatedAt">,
+      gradingType: "combined" | "separate",
+      individualJournals: Array<{
+        studentIds: string[];
+        weeklySchedules: WeeklySchedule[];
+      }>,
+      preGeneratedId?: string
+    ) {
+      loading.value = true;
+      try {
+        // Same KTP bootstrap as addEvent
+        const ktpStore = useKtpStore();
+        const academicYearSemesterStore = useAcademicYearSemesterStore();
+        const semester = academicYearSemesterStore.academicYearSemesters.find(
+          (s: any) => s.id === eventData.semester
+        );
+
+        let ktpId = eventData.ktpId;
+        if (semester && semester.academicYearId && !ktpId) {
+          const eventId = preGeneratedId || crypto.randomUUID();
+          const ktp = await ktpStore.ensureKtpForRupEntry(
+            eventData.rupEntryId,
+            semester.academicYearId,
+            eventData.semester,
+            eventId
+          );
+          ktpId = ktp.id;
+        }
+
+        const result = await convex.mutation(
+          api.calendarEvents.mutations.createWithIndividualJournals,
+          {
+            rupEntryId: eventData.rupEntryId,
+            ktpId,
+            teacherId: eventData.teacherId,
+            startDate: eventData.startDate,
+            startTime: eventData.startTime,
+            endDate: eventData.endDate,
+            endTime: eventData.endTime,
+            participants: eventData.participants,
+            color: eventData.color,
+            semester: eventData.semester,
+            useCustomPeriod: eventData.useCustomPeriod,
+            weeklySchedules: eventData.weeklySchedules,
+            gradingType,
+            individualJournals,
+          }
+        );
+
+        await fetchEventsWithRoleAccess();
+        error.value = null;
+        return events.value.find((e) => e.id === result.mainId) ?? null;
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to add event";
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    }
+
     async function updateEvent(
       id: string,
       eventData: Partial<Omit<CalendarEvent, "id" | "createdAt" | "updatedAt">>
@@ -437,6 +499,7 @@ export const useCalendarStore = defineStore(
       getError,
       getEventTitle,
       addEvent,
+      addEventWithIndividualJournals,
       updateEvent,
       deleteEvent,
       loadFromBackend,
