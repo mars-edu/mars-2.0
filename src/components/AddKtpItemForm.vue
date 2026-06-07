@@ -39,21 +39,6 @@
           />
         </div>
 
-        <!-- Specialty (faculty) -->
-        <div>
-          <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
-            Специальность
-          </label>
-          <Select
-            placeholder="Все специальности"
-            v-model="selectedSpecialtyId"
-            :options="specialtySelectOptions"
-            name="ktp-item-specialty"
-            id="ktp-item-specialty"
-            searchable
-          />
-        </div>
-
         <!-- RUP Entry Select -->
         <div>
           <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
@@ -175,7 +160,6 @@ import { f7 } from "framework7-vue";
 import { storeToRefs } from "pinia";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useKtpStore } from "@/stores/ktpStore";
-import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
@@ -198,10 +182,8 @@ const emit = defineEmits(["update:opened"]);
 const rupEntryStore = useRupEntryStore();
 const ktpStore = useKtpStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
-const specialtyStore = useSpecialtyStore();
 const academicYearStore = useAcademicYearStore();
 const { rupEntryOptions } = storeToRefs(rupEntryStore);
-const { specialtyOptions } = storeToRefs(specialtyStore);
 const { academicYears, getActiveAcademicYear } = storeToRefs(academicYearStore);
 
 const formError = ref("");
@@ -209,15 +191,9 @@ const formError = ref("");
 const rupEntryId = ref("");
 const selectedColor = ref(KTP_COLORS[0]);
 
-// RUP-style cascade: study year → specialty → discipline → distribution row
-const selectedSpecialtyId = ref("");
+// RUP-style cascade: study year → discipline → distribution row
 const selectedYearId = ref("");
 const selectedDistributionId = ref("");
-
-const specialtySelectOptions = computed(() => [
-  { value: "", text: "Все специальности" },
-  ...specialtyOptions.value,
-]);
 
 const academicYearOptions = computed(() =>
   academicYears.value.map((year) => ({ value: year.id, text: year.name }))
@@ -236,25 +212,21 @@ watch(
   { immediate: true }
 );
 
-// Year/specialty change invalidates discipline + row
-watch([selectedYearId, selectedSpecialtyId], () => {
+// Year change invalidates discipline + row
+watch(selectedYearId, () => {
   rupEntryId.value = "";
   selectedDistributionId.value = "";
 });
 
-// Disciplines of the selected RUP year (+specialty). Language variants are
-// separate rupEntries — each shows with an [RU]/[KK]/[EN] suffix.
+// Disciplines of the selected RUP year. Language variants are separate
+// rupEntries — each shows with an [RU]/[KK]/[EN] suffix.
 const filteredRupEntryOptions = computed(() => {
   const yearId = selectedYearId.value;
-  const specialtyId = selectedSpecialtyId.value;
 
   return rupEntryOptions.value
     .filter((option) => {
       const rupEntryItem = rupEntryStore.getRupEntryById(option.value);
       if (!rupEntryItem) return false;
-      if (specialtyId && !rupEntryItem.specialtyIds.includes(specialtyId)) {
-        return false;
-      }
       return !yearId || rupEntryItem.academicYearId === yearId;
     })
     .map((option) => {
@@ -350,7 +322,6 @@ const resetForm = () => {
   rupEntryId.value = "";
   formError.value = "";
   selectedColor.value = KTP_COLORS[0];
-  selectedSpecialtyId.value = "";
   selectedDistributionId.value = "";
   selectedYearId.value = defaultYearId();
 };
