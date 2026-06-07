@@ -1,6 +1,7 @@
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
+import { validateReorder } from "./lib";
 
 /**
  * Create a ktp
@@ -147,6 +148,41 @@ export const removeDetail = mutation({
   handler: async (ctx, args) => {
     await ctx.db.delete(args.id);
     return { success: true };
+  },
+});
+
+/**
+ * Atomically reorder all details of a ktp.
+ * orderedIds must be an exact permutation of the ktp's current detail ids.
+ * Positions are rewritten 1..n in the given order.
+ */
+export const reorderDetails = mutation({
+  args: {
+    ktpId: v.id("ktps"),
+    orderedIds: v.array(v.id("ktpDetails")),
+  },
+  handler: async (ctx, args) => {
+    const details = await ctx.db
+      .query("ktpDetails")
+      .withIndex("by_ktpId", (q) => q.eq("ktpId", args.ktpId))
+      .collect();
+
+    const error = validateReorder(
+      details.map((d) => d._id),
+      args.orderedIds
+    );
+    if (error) {
+      throw new Error(error);
+    }
+
+    for (let i = 0; i < args.orderedIds.length; i++) {
+      await ctx.db.patch(args.orderedIds[i], {
+        position: i + 1,
+        ...updateTimestamp(),
+      });
+    }
+
+    return { success: true, reordered: args.orderedIds.length };
   },
 });
 
