@@ -262,4 +262,22 @@ test.describe('KTP Page (Тематические планы)', () => {
 
     await expect(page.locator('#ktp-edit-popover')).toBeVisible();
   });
+
+  test("card click opens in-page detail view and back returns to list", async ({ page }) => {
+    const url = page.url();
+    if (url.includes("login")) return;
+
+    await page.waitForTimeout(2000);
+
+    const cards = page.getByTestId("ktp-card");
+    if ((await cards.count()) === 0) return; // no data in this environment
+
+    await cards.first().click();
+    await expect(page.getByTestId("ktp-detail-back")).toBeVisible();
+    await expect(page.getByText("Тема занятия")).toBeVisible();
+    await expect(page.getByTestId("ktp-detail-add")).toBeVisible();
+
+    await page.getByTestId("ktp-detail-back").click();
+    await expect(page.getByRole("button", { name: "Создать" })).toBeVisible();
+  });
 });

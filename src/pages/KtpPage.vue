@@ -13,7 +13,9 @@
         :class="contentMargin"
       >
         <div
-          class="bg-card text-card-foreground rounded-xl p-4 md:p-4 shadow-sm"
+          :class="selectedKtpId
+            ? ''
+            : 'bg-card text-card-foreground rounded-xl p-4 md:p-4 shadow-sm'"
         >
           <KtpDetailView
             v-if="selectedKtpId"
@@ -73,6 +75,7 @@
             <div
               v-for="item in filteredKtpItems"
               :key="item.id"
+              data-testid="ktp-card"
               class="group relative bg-card border border-border rounded-2xl p-5 cursor-pointer transition-all duration-200 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5"
               :style="{ zIndex: activeMenuKtpId === item.ktpId ? 30 : undefined }"
               @click="selectItem(item)"
