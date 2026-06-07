@@ -4,7 +4,7 @@
     id="add-ktp-item-popover"
     :opened="opened"
     @popover:closed="onPopoverClosed"
-    style="width: 600px !important; max-width: calc(100vw - 32px) !important"
+    style="width: 575px !important; max-width: calc(100vw - 32px) !important"
   >
     <div class="bg-card text-card-foreground rounded-2xl overflow-hidden flex flex-col" style="max-height: 80dvh">
       <!-- Header -->
@@ -55,15 +55,17 @@
           >
             <template #option="{ option, selected }">
               <div class="flex-1 text-left min-w-0">
-                <span class="text-[15px] font-semibold whitespace-normal break-words" :class="selected ? 'text-primary' : ''">
-                  {{ option.moduleIndex }} {{ option.moduleName }} — {{ option.learningOutcome }}
-                </span>
-                <span
-                  v-if="option.language"
-                  class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary flex-shrink-0 ml-2 align-middle"
-                >
-                  {{ option.language.toUpperCase() }}
-                </span>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-[15px] font-semibold whitespace-normal break-words" :class="selected ? 'text-primary' : ''">
+                    {{ option.moduleIndex }} {{ option.moduleName }} — {{ option.learningOutcome }}
+                  </span>
+                  <span
+                    v-if="option.language"
+                    class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary flex-shrink-0"
+                  >
+                    {{ option.language.toUpperCase() }}
+                  </span>
+                </div>
                 <div v-if="option.specialtyChips && option.specialtyChips.length" class="flex flex-wrap items-center gap-1 mt-1.5">
                   <span
                     v-for="sp in option.specialtyChips"
