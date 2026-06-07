@@ -125,7 +125,7 @@
                 <span
                   v-for="specialty in specialtyChips"
                   :key="specialty.id"
-                  class="inline-block px-2 py-0.5 text-[11px] font-bold rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 max-w-full break-words"
+                  class="px-2 py-0.5 text-[11px] font-bold rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/30"
                 >
                   {{ specialty.codeName || specialty.name }}
                 </span>
