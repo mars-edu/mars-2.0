@@ -14,6 +14,19 @@
         {{ journal_view_general() }}
       </button>
       <button
+        v-if="showIndividualJournals && hasIndividualJournals"
+        type="button"
+        @click="$emit('update:viewMode', 'individual')"
+        :class="[
+          'px-4 py-1.5 rounded-[6px] text-[13px] font-medium transition-all',
+          viewMode === 'individual'
+            ? 'bg-card text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground',
+        ]"
+      >
+        Индивидуальный
+      </button>
+      <button
         type="button"
         @click="$emit('update:viewMode', 'monitoring')"
         :class="[
@@ -171,14 +184,14 @@ import {
 } from "@/paraglide/messages";
 
 defineProps<{
-  viewMode: 'general' | 'monitoring';
+  viewMode: 'general' | 'monitoring' | 'individual';
   isViewOnly: boolean;
   showIndividualJournals?: boolean;
   hasIndividualJournals?: boolean;
 }>();
 
 defineEmits<{
-  'update:viewMode': [mode: 'general' | 'monitoring'];
+  'update:viewMode': [mode: 'general' | 'monitoring' | 'individual'];
   'download': [];
   'open-retake': [];
   'open-rup': [];

@@ -86,33 +86,40 @@
       </div>
     </div>
 
-    <JournalGradeStats
-      v-if="viewMode === 'monitoring' && monitoringGradeStats.totalGraded > 0"
-      :stats="monitoringGradeStats"
-      :total-students="students.length"
-    />
+    <template v-if="viewMode !== 'individual'">
+      <JournalGradeStats
+        v-if="viewMode === 'monitoring' && monitoringGradeStats.totalGraded > 0"
+        :stats="monitoringGradeStats"
+        :total-students="students.length"
+      />
 
-    <JournalGrid
-      :displayed-students="displayedStudents"
-      :displayed-headers="displayedHeaders"
-      :marks-matrix="marksMatrix"
-      :editing-cell="editingCell"
-      :edited-value="editedValue"
-      :is-view-only="isViewOnly"
-      :journal_future_date_tooltip="journal_future_date_tooltip()"
-      :get-ktp-for-header="getKtpForHeader"
-      :is-future-date="isFutureDate"
-      :is-past-date="isPastDate"
-      :get-student-average-score="getStudentAverageScore"
-      :get-score-badge-class="getScoreBadgeClass"
-      @header-click="openDateFocus"
-      @paperclip-click="onPaperclipClick"
-      @cell-click="handleCellClick"
-      @student-click="showFloatingRow"
-      @update:editedValue="editedValue = $event"
-      @confirm-edit="confirmEdit"
-      @cancel-edit="cancelEdit"
-      @navigate="navigate"
+      <JournalGrid
+        :displayed-students="displayedStudents"
+        :displayed-headers="displayedHeaders"
+        :marks-matrix="marksMatrix"
+        :editing-cell="editingCell"
+        :edited-value="editedValue"
+        :is-view-only="isViewOnly"
+        :journal_future_date_tooltip="journal_future_date_tooltip()"
+        :get-ktp-for-header="getKtpForHeader"
+        :is-future-date="isFutureDate"
+        :is-past-date="isPastDate"
+        :get-student-average-score="getStudentAverageScore"
+        :get-score-badge-class="getScoreBadgeClass"
+        @header-click="openDateFocus"
+        @paperclip-click="onPaperclipClick"
+        @cell-click="handleCellClick"
+        @student-click="showFloatingRow"
+        @update:editedValue="editedValue = $event"
+        @confirm-edit="confirmEdit"
+        @cancel-edit="cancelEdit"
+        @navigate="navigate"
+      />
+    </template>
+
+    <IndividualJournalsInlineView
+      v-if="viewMode === 'individual'"
+      :main-event-id="props.journalId"
     />
 
     <!-- KtpDetailViewPopover -->
@@ -421,6 +428,7 @@ import RetakeModal from "./RetakeModal.vue";
 import JournalToolbar from "./JournalToolbar.vue";
 import JournalGradeStats from "./JournalGradeStats.vue";
 import JournalGrid from "./JournalGrid.vue";
+import IndividualJournalsInlineView from "./IndividualJournalsInlineView.vue";
 import IconRefreshCw from "~icons/lucide/refresh-cw";
 import MakeupHoursPopover from "@/components/MakeupHoursPopover.vue";
 import type { MakeupHoursData } from "@/components/MakeupHoursPopover.vue";
@@ -569,7 +577,14 @@ const editingCell = ref<{
   markIndex: number;
 } | null>(null);
 const editedValue = ref("");
-const viewMode = ref<"general" | "monitoring">("general");
+const viewMode = ref<"general" | "monitoring" | "individual">("general");
+
+// Self-heal: if individual mode is active but feature is not available, fall back to general
+watch(viewMode, (mode) => {
+  if (mode === "individual" && !(props.showIndividualJournals && props.hasIndividualJournals)) {
+    viewMode.value = "general";
+  }
+});
 
 const LETTER_GRADE_BUCKETS: Array<{ letter: string; min: number }> = [
   { letter: "A", min: 95 },
