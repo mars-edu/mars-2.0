@@ -36,7 +36,7 @@
       <h2 class="text-3xl font-bold mb-8">{{ moduleTitle }}</h2>
 
       <!-- Action bar: single row (scrolls horizontally on narrow screens) -->
-      <div class="flex flex-nowrap gap-3 mb-8 overflow-x-auto">
+      <div class="w-fit flex flex-nowrap gap-3 mb-8 overflow-x-auto max-w-full">
         <!-- concept-v2 pattern: «Скачать шаблон» opens a dropdown (Word/Excel).
              DropdownMenu teleports the panel to body, so overflow-x-auto
              cannot clip it. -->
