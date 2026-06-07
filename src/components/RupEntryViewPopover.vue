@@ -125,7 +125,7 @@
                 <span
                   v-for="specialty in specialtyChips"
                   :key="specialty.id"
-                  class="specialty-chip"
+                  class="px-2 py-0.5 text-[11px] font-bold rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/30"
                 >
                   {{ specialty.codeName || specialty.name }}
                 </span>
@@ -541,20 +541,6 @@ function handleEdit() {
 .metric-card-gray {
   background-color: #f9fafb;
   border-color: #f3f4f6;
-}
-
-/* Specialty chips */
-.specialty-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.5rem;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.25rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: #374151;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* Table */

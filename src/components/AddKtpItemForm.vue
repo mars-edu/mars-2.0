@@ -78,6 +78,19 @@
               {{ selectedEntry.language.toUpperCase() }}
             </span>
           </div>
+          <div
+            v-if="specialtyChips.length"
+            class="flex items-center gap-1.5 mt-2 ml-6"
+          >
+            <span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Специальности</span>
+            <span
+              v-for="sp in specialtyChips"
+              :key="sp.id"
+              class="px-2 py-0.5 text-[11px] font-bold rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/30"
+            >
+              {{ sp.codeName || sp.name }}
+            </span>
+          </div>
           <p
             v-if="selectedEntry.learningOutcome"
             class="text-xs text-muted-foreground ml-6"
@@ -161,6 +174,7 @@ import { storeToRefs } from "pinia";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useKtpStore } from "@/stores/ktpStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
+import { useSpecialtyStore } from "@/stores/specialtyStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
@@ -183,6 +197,7 @@ const rupEntryStore = useRupEntryStore();
 const ktpStore = useKtpStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const academicYearStore = useAcademicYearStore();
+const specialtyStore = useSpecialtyStore();
 const { rupEntryOptions } = storeToRefs(rupEntryStore);
 const { academicYears, getActiveAcademicYear } = storeToRefs(academicYearStore);
 
@@ -251,6 +266,15 @@ watch(filteredRupEntryOptions, (options) => {
 const selectedEntry = computed(() => {
   if (!rupEntryId.value) return null;
   return rupEntryStore.getRupEntryById(rupEntryId.value) ?? null;
+});
+
+// Specialty chips for the selected discipline (rup.vue / RupEntryViewPopover pattern)
+const specialtyChips = computed(() => {
+  const entry = selectedEntry.value;
+  if (!entry) return [];
+  return (entry.specialtyIds || [])
+    .map((id) => specialtyStore.specialties.find((s: any) => s.id === id))
+    .filter((s): s is any => !!s);
 });
 
 interface DistributionRowOption {
