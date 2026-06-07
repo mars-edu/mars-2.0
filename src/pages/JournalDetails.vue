@@ -91,47 +91,6 @@
             </div>
           </div>
 
-          <!-- Individual journals of this group event (wizard children) -->
-          <div
-            v-if="isPlainGroupJournal"
-            class="p-4 bg-muted/50 rounded-2xl border border-border/50"
-          >
-            <div class="flex items-center justify-between mb-2">
-              <div class="text-sm font-bold">Индивидуальные журналы</div>
-              <button
-                v-if="individualChildJournals.length > 0"
-                class="text-sm text-primary font-medium hover:underline"
-                @click="openIndividualConfig"
-              >
-                Настроить
-              </button>
-            </div>
-            <div
-              v-if="individualChildJournals.length > 0"
-              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2"
-            >
-              <button
-                v-for="child in individualChildJournals"
-                :key="child.id"
-                class="p-4 rounded-2xl border-2 bg-card border-border hover:border-primary/50 hover:shadow-md text-left"
-                @click="navigateToJournal(child.id)"
-              >
-                <div class="text-base font-bold truncate">
-                  {{ child.customTitle || "Индивидуальный журнал" }}
-                </div>
-                <div class="text-[11px] font-bold text-muted-foreground mt-1">
-                  Студентов: {{ child.participants.length }}
-                </div>
-              </button>
-            </div>
-            <button
-              v-else
-              class="w-full py-3 border border-dashed border-input rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
-              @click="openIndividualConfig"
-            >
-              + Добавить индивидуальные журналы
-            </button>
-          </div>
 
           <!-- Debug Information Panel (dev mode only) -->
           <JournalDebugPanel
@@ -1056,10 +1015,6 @@ const isPlainGroupJournal = computed(() => {
 
 function openIndividualConfig() {
   individualConfigRef.value?.open(journalId.value);
-}
-
-function navigateToJournal(id: string) {
-  f7.views.main.router.navigate(`/journals/${id}`);
 }
 
 // Initialize control stores

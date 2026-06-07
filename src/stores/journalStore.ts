@@ -247,6 +247,9 @@ export const useJournalStore = defineStore(
         // Skip joined/merged individual journals (they should appear in Mixed or Course tabs)
         if (actualEvent.mergedJournalIds && actualEvent.mergedJournalIds.length > 0) return;
 
+        // Wizard-child journals render inline inside their main journal — not as standalone cards
+        if (actualEvent.sourceGroupEventId) return;
+
         if (!actualEvent.participants || actualEvent.participants.length === 0)
           return;
 
