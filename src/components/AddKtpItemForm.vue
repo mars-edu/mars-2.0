@@ -25,6 +25,49 @@
           {{ formError }}
         </div>
 
+        <!-- Specialty (faculty) -->
+        <div>
+          <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
+            Специальность
+          </label>
+          <Select
+            placeholder="Все специальности"
+            v-model="selectedSpecialtyId"
+            :options="specialtySelectOptions"
+            name="ktp-item-specialty"
+            id="ktp-item-specialty"
+            searchable
+          />
+        </div>
+
+        <!-- Study year + Semester -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
+              Учебный год
+            </label>
+            <Select
+              placeholder="Учебный год"
+              v-model="innerAcademicYearId"
+              :options="academicYearOptions"
+              name="ktp-item-academic-year"
+              id="ktp-item-academic-year"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
+              Семестр
+            </label>
+            <Select
+              placeholder="Семестр"
+              v-model="innerSemesterId"
+              :options="innerSemesterOptions"
+              name="ktp-item-semester"
+              id="ktp-item-semester"
+            />
+          </div>
+        </div>
+
         <!-- RUP Entry Select -->
         <div>
           <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
@@ -48,7 +91,7 @@
           <IconInfo class="w-5 h-5 flex-shrink-0 mt-0.5" />
           <div>
             Тематический план будет привязан к выбранной дисциплине
-            для учебного года и семестра, указанных на странице.
+            для выбранного учебного года и семестра.
           </div>
         </div>
 
@@ -125,11 +168,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { f7 } from "framework7-vue";
 import { storeToRefs } from "pinia";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useKtpStore } from "@/stores/ktpStore";
+import { useSpecialtyStore } from "@/stores/specialtyStore";
+import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
@@ -151,7 +196,11 @@ const emit = defineEmits(["update:opened"]);
 const rupEntryStore = useRupEntryStore();
 const ktpStore = useKtpStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
+const specialtyStore = useSpecialtyStore();
+const academicYearStore = useAcademicYearStore();
 const { rupEntryOptions } = storeToRefs(rupEntryStore);
+const { specialtyOptions } = storeToRefs(specialtyStore);
+const { academicYears } = storeToRefs(academicYearStore);
 
 // Maps an academicYearSemesters Convex id to its semesterNumber string
 // (distributionEntries store Convex ids, the page passes semester numbers)
@@ -165,6 +214,54 @@ const rupEntryId = ref("");
 const selectedColor = ref(KTP_COLORS[0]);
 const selectedLanguages = ref<string[]>([]);
 
+// In-form context selectors (defaulted from the page filters via props)
+const selectedSpecialtyId = ref("");
+const innerAcademicYearId = ref(props.selectedAcademicYearId ?? "");
+const innerSemesterId = ref(props.selectedSemesterId ?? "");
+
+const specialtySelectOptions = computed(() => [
+  { value: "", text: "Все специальности" },
+  ...specialtyOptions.value,
+]);
+
+const academicYearOptions = computed(() =>
+  academicYears.value.map((year) => ({ value: year.id, text: year.name }))
+);
+
+const innerSemesterOptions = computed(() => {
+  const yearId = innerAcademicYearId.value;
+  const list = yearId
+    ? academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(yearId)
+    : [];
+  return list.map((ays) => ({
+    value: ays.semesterNumber.toString(),
+    text: `Семестр ${ays.semesterNumber}`,
+  }));
+});
+
+// Sync defaults from page filters each time the popover opens
+watch(
+  () => props.opened,
+  (opened) => {
+    if (!opened) return;
+    if (props.selectedAcademicYearId) {
+      innerAcademicYearId.value = props.selectedAcademicYearId;
+    }
+    if (props.selectedSemesterId) {
+      innerSemesterId.value = props.selectedSemesterId;
+    }
+  }
+);
+
+// Year change invalidates the semester choice; auto-select when possible
+watch(innerAcademicYearId, (newYearId, oldYearId) => {
+  if (newYearId === oldYearId) return;
+  const auto = newYearId
+    ? academicYearSemesterStore.getAutoSelectedSemesterForYear(newYearId)
+    : null;
+  innerSemesterId.value = auto ? auto.semesterNumber.toString() : "";
+});
+
 const toggleLanguage = (lang: string) => {
   if (selectedLanguages.value.includes(lang)) {
     selectedLanguages.value = selectedLanguages.value.filter((l) => l !== lang);
@@ -173,28 +270,40 @@ const toggleLanguage = (lang: string) => {
   }
 };
 
-// Create filtered rupEntryOptions based on selected academic year and semester from props
+// Disciplines filtered by the in-form specialty + academic year + semester
 const filteredRupEntryOptions = computed(() => {
-  if (!props.selectedAcademicYearId || !props.selectedSemesterId) {
-    return rupEntryOptions.value;
-  }
+  const yearId = innerAcademicYearId.value;
+  const semId = innerSemesterId.value;
+  const specialtyId = selectedSpecialtyId.value;
 
   return rupEntryOptions.value.filter((option) => {
     const rupEntryItem = rupEntryStore.getRupEntryById(option.value);
     if (!rupEntryItem) return false;
 
+    if (specialtyId && !rupEntryItem.specialtyIds.includes(specialtyId)) {
+      return false;
+    }
+
+    if (!yearId || !semId) return true;
+
     // Check if rupEntryItem has distributionEntries with matching academicYearId and semesterId.
     // semesterIdsMatch handles the Convex-id vs semester-number-string mismatch.
     return rupEntryItem.distributionEntries.some(
       (entry) =>
-        entry.academicYearId === props.selectedAcademicYearId &&
-        semesterIdsMatch(
-          entry.semesterId,
-          props.selectedSemesterId!,
-          resolveSemesterNumber
-        )
+        entry.academicYearId === yearId &&
+        semesterIdsMatch(entry.semesterId, semId, resolveSemesterNumber)
     );
   });
+});
+
+// Clear a discipline that fell out of the filtered list
+watch(filteredRupEntryOptions, (options) => {
+  if (
+    rupEntryId.value &&
+    !options.some((o) => o.value === rupEntryId.value)
+  ) {
+    rupEntryId.value = "";
+  }
 });
 
 // Show a preview of the selected RUP entry
@@ -206,8 +315,8 @@ const selectedEntry = computed(() => {
 const isFormValid = computed(() => {
   return (
     !!rupEntryId.value &&
-    !!props.selectedAcademicYearId &&
-    !!props.selectedSemesterId
+    !!innerAcademicYearId.value &&
+    !!innerSemesterId.value
   );
 });
 
@@ -216,6 +325,7 @@ const resetForm = () => {
   formError.value = "";
   selectedColor.value = KTP_COLORS[0];
   selectedLanguages.value = [];
+  selectedSpecialtyId.value = "";
 };
 
 const onPopoverClosed = () => {
@@ -231,11 +341,6 @@ const handleSave = async () => {
     return;
   }
 
-  if (!props.selectedAcademicYearId || !props.selectedSemesterId) {
-    formError.value = "Не удалось определить учебный год или семестр.";
-    return;
-  }
-
   try {
     const selectedItem = rupEntryStore.getRupEntryById(rupEntryId.value);
     if (!selectedItem) {
@@ -245,8 +350,8 @@ const handleSave = async () => {
 
     const ktp = await ktpStore.ensureKtpForRupEntry(
       rupEntryId.value,
-      props.selectedAcademicYearId,
-      props.selectedSemesterId,
+      innerAcademicYearId.value,
+      innerSemesterId.value,
       undefined,
       undefined,
       {

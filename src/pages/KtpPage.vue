@@ -21,11 +21,7 @@
               Тематические планы (КТП)
             </h1>
             <button
-              class="w-fit flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all active:scale-95"
-              :class="isAddDisabled
-                ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/20'"
-              :disabled="isAddDisabled"
+              class="w-fit flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all active:scale-95 bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/20"
               @click="openAddDialog"
             >
               <IconPlus class="w-5 h-5" />
@@ -415,7 +411,6 @@ const filteredKtpItems = computed(() => {
     });
 });
 
-const isAddDisabled = computed(() => !selectedAcademicYearId.value);
 
 const getCourseNumber = (courseId: string) => {
   const course = courseStore.getCourseById(courseId);
@@ -466,21 +461,9 @@ const selectItem = (item: any) => {
   isPopupOpened.value = true;
 };
 
+// Year/semester/specialty are selected inside AddKtpItemForm
+// (pre-filled from the page filters when set)
 const openAddDialog = () => {
-  if (!selectedAcademicYearId.value) {
-    f7.dialog.alert(
-      "Пожалуйста, выберите учебный год перед добавлением КТП",
-      "Предупреждение"
-    );
-    return;
-  }
-  if (!selectedSemesterId.value) {
-    f7.dialog.alert(
-      "Пожалуйста, выберите семестр перед добавлением КТП",
-      "Предупреждение"
-    );
-    return;
-  }
   isAddItemFormOpen.value = true;
 };
 
