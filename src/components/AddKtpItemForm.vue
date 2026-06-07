@@ -228,7 +228,8 @@ const innerSemesterOptions = computed(() => {
     ? academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(yearId)
     : [];
   return list.map((ays) => ({
-    value: ays.semesterNumber.toString(),
+    // academicYearSemesters Convex id — matches ktps.semesterId validator
+    value: ays.id,
     text: `Семестр ${ays.semesterNumber}`,
   }));
 });
@@ -253,7 +254,7 @@ watch(innerAcademicYearId, (newYearId, oldYearId) => {
   const auto = newYearId
     ? academicYearSemesterStore.getAutoSelectedSemesterForYear(newYearId)
     : null;
-  innerSemesterId.value = auto ? auto.semesterNumber.toString() : "";
+  innerSemesterId.value = auto ? auto.id : "";
 });
 
 const toggleLanguage = (lang: string) => {

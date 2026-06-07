@@ -382,7 +382,10 @@ const semesterOptions = computed(() => {
     ? academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(yearId)
     : [];
   return list.map((academicYearSemester) => ({
-    value: academicYearSemester.semesterNumber.toString(),
+    // Value is the academicYearSemesters Convex id — ktps.semesterId stores
+    // these ids (schema: v.id("academicYearSemesters")), so select values
+    // must match for filtering and KTP creation to work.
+    value: academicYearSemester.id,
     text: `Семестр ${academicYearSemester.semesterNumber}`,
   }));
 });
@@ -493,7 +496,7 @@ watch(
     if (newYearId && (newYearId !== oldYearId || !selectedSemesterId.value)) {
       const autoSemester = academicYearSemesterStore.getAutoSelectedSemesterForYear(newYearId);
       if (autoSemester) {
-        selectedSemesterId.value = autoSemester.semesterNumber.toString();
+        selectedSemesterId.value = autoSemester.id;
       } else if (newYearId !== oldYearId) {
         // Only clear if the year actually changed and there are no semesters
         selectedSemesterId.value = "";
