@@ -579,6 +579,11 @@ async function onDrop() {
   const [moved] = newOrder.splice(fromIndex, 1);
   newOrder.splice(toIndex, 0, moved);
 
+  // Clear immediately so a second drop is a no-op during the pending mutation
+  dragSourceId.value = null;
+  dragOverId.value = null;
+  dropIndex.value = null;
+
   const result = await ktpStore.reorderKtpDetails(props.ktpId, newOrder);
   if (result.success) {
     f7.toast
@@ -598,9 +603,6 @@ async function onDrop() {
       })
       .open();
   }
-  dragSourceId.value = null;
-  dragOverId.value = null;
-  dropIndex.value = null;
 }
 
 function onDragEnd() {
