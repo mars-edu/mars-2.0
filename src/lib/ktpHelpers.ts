@@ -68,3 +68,15 @@ export const KTP_COLORS = [
 ];
 
 export const KTP_LANGUAGES = ["KZ", "RU", "EN"];
+
+/**
+ * Map a rupEntry language code ('ru' | 'kk' | 'en') to the KTP badge
+ * convention used by ktp.languages (see KTP_LANGUAGES). kk → KZ.
+ */
+export function deriveKtpLanguages(
+  code?: string | null
+): string[] | undefined {
+  const map: Record<string, string> = { ru: "RU", kk: "KZ", en: "EN" };
+  const mapped = code ? map[code.toLowerCase()] : undefined;
+  return mapped ? [mapped] : undefined;
+}

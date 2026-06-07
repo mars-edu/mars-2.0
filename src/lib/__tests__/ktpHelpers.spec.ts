@@ -3,6 +3,7 @@ import {
   parsePlannedHours,
   semesterIdsMatch,
   isKtpFullyLoaded,
+  deriveKtpLanguages,
 } from "../ktpHelpers";
 
 describe("toNullableNumber", () => {
@@ -68,5 +69,18 @@ describe("isKtpFullyLoaded", () => {
   });
   it("false when hours below budget", () => {
     expect(isKtpFullyLoaded([d("Тема 1", 40)], 90)).toBe(false);
+  });
+});
+
+describe("deriveKtpLanguages", () => {
+  it("maps ru to RU", () => expect(deriveKtpLanguages("ru")).toEqual(["RU"]));
+  it("maps kk to KZ (KTP badge convention)", () =>
+    expect(deriveKtpLanguages("kk")).toEqual(["KZ"]));
+  it("is case-insensitive", () => expect(deriveKtpLanguages("EN")).toEqual(["EN"]));
+  it("returns undefined for empty/null/unknown", () => {
+    expect(deriveKtpLanguages("")).toBeUndefined();
+    expect(deriveKtpLanguages(null)).toBeUndefined();
+    expect(deriveKtpLanguages(undefined)).toBeUndefined();
+    expect(deriveKtpLanguages("xx")).toBeUndefined();
   });
 });
