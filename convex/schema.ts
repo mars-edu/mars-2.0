@@ -525,6 +525,8 @@ export default defineSchema({
     semesterId: v.id("academicYearSemesters"),
     eventId: v.optional(v.string()), // Reference to calendarEvents
     name: v.optional(v.string()),
+    color: v.optional(v.string()), // hex, e.g. '#FACC15'
+    languages: v.optional(v.array(v.string())), // subset of ['KZ','RU','EN']
     createdAt: v.number(),
     updatedAt: v.number(),
   })

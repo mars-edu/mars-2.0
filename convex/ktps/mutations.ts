@@ -12,6 +12,8 @@ export const create = mutation({
     semesterId: v.id("academicYearSemesters"),
     eventId: v.optional(v.string()),
     name: v.optional(v.string()),
+    color: v.optional(v.string()),
+    languages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const timestamps = createTimestamps();
@@ -34,6 +36,8 @@ export const update = mutation({
     semesterId: v.optional(v.id("academicYearSemesters")),
     eventId: v.optional(v.string()),
     name: v.optional(v.string()),
+    color: v.optional(v.string()),
+    languages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
