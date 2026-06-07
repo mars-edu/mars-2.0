@@ -94,14 +94,13 @@
 
       <!-- Topic table -->
       <div class="overflow-x-auto">
-        <div class="min-w-[760px]">
+        <div class="min-w-[620px]">
           <!-- Header -->
           <div
-            class="grid grid-cols-[40px_minmax(0,1fr)_110px_80px_minmax(0,0.6fr)_minmax(0,0.6fr)_40px] gap-2 py-3 px-2 text-sm text-muted-foreground border-b border-border"
+            class="grid grid-cols-[40px_minmax(0,1fr)_80px_minmax(0,0.6fr)_minmax(0,0.6fr)_40px] gap-2 py-3 px-2 text-sm text-muted-foreground border-b border-border"
           >
             <div>№</div>
             <div>Тема занятия</div>
-            <div>Дата</div>
             <div>Часы</div>
             <div>Что задано?</div>
             <div>Примечание</div>
@@ -121,7 +120,7 @@
               />
               <div
                 :id="`ktp-detail-row-${item.id}`"
-                class="grid grid-cols-[40px_minmax(0,1fr)_110px_80px_minmax(0,0.6fr)_minmax(0,0.6fr)_40px] gap-2 py-4 px-2 border-b border-border transition-colors"
+                class="grid grid-cols-[40px_minmax(0,1fr)_80px_minmax(0,0.6fr)_minmax(0,0.6fr)_40px] gap-2 py-4 px-2 border-b border-border transition-colors"
                 :class="[
                   dragSourceId === item.id ? 'opacity-50' : '',
                   dragOverId === item.id && dragSourceId !== item.id ? 'bg-primary/5' : '',
@@ -149,7 +148,6 @@
                   <span v-if="item.theme">{{ item.theme }}</span>
                   <span v-else class="text-muted-foreground/60 italic">Тема еще не загружена</span>
                 </div>
-                <div class="text-muted-foreground">{{ getLessonDateByIndex(idx) }}</div>
                 <div class="text-muted-foreground">{{ item.totalHours ?? "—" }}</div>
                 <div class="text-muted-foreground break-words">{{ item.homework || "—" }}</div>
                 <div class="text-muted-foreground break-words">{{ item.notes || "—" }}</div>
