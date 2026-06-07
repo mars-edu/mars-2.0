@@ -14,6 +14,7 @@
 
       <div class="flex-1 overflow-y-auto p-4">
         <IndividualJournalsEditor
+          v-if="budgetAvailable"
           ref="editorRef"
           v-model:useIndividualJournals="useIndividualJournals"
           v-model:gradingType="gradingType"
@@ -29,10 +30,18 @@
           :get-end-time-options-for-start="getEndTimeOptionsForStart"
           hide-toggle
         />
+        <div
+          v-else
+          class="rounded-xl border border-input bg-card p-4 text-sm text-muted-foreground"
+        >
+          В учебной программе не предусмотрены часы для индивидуальных занятий.
+          Установите индивидуальные часы в РУП, чтобы активировать.
+        </div>
       </div>
 
       <div class="p-4 border-t border-border">
         <button
+          v-if="budgetAvailable"
           class="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold disabled:opacity-50"
           :disabled="!canSave || isSaving"
           @click="handleSave"
@@ -61,6 +70,7 @@ import { api } from "@convex/_generated/api";
 import { getWeekDays, DATE_UI_FORMAT } from "@/constants/calendar";
 import { storeToRefs } from "pinia";
 import type { IndividualJournalDraft } from "@/components/Calendar/useAddEventWizard";
+import { resolveIndividualBudget } from "@/components/Calendar/scheduleHours";
 
 dayjs.extend(customParseFormat);
 
@@ -116,6 +126,21 @@ const semesterPlannedHours = computed(() => {
     return matchesYear;
   });
   return matchedEntry?.hours ? String(matchedEntry.hours) : "0";
+});
+
+const budgetAvailable = computed(() => {
+  const ev = mainEvent.value;
+  if (!ev) return false;
+  const entry = rupEntryStore.getRupEntryById(ev.rupEntryId);
+  const semester = academicYearSemesterStore.getAcademicYearSemesterById(ev.semester);
+  if (!semester) return false;
+  return (
+    resolveIndividualBudget(entry, {
+      semesterId: String(semester.id ?? ""),
+      semesterNumber: String(semester.semesterNumber ?? ""),
+      academicYearId: semester.academicYearId,
+    }) > 0
+  );
 });
 
 // Time options — same derivation as AddEventWizard
@@ -188,6 +213,9 @@ async function open(eventId: string) {
       endId: ws.endId ?? "",
     })),
   }));
+  if (budgetAvailable.value && drafts.value.length === 0) {
+    drafts.value = [{ id: crypto.randomUUID(), studentIds: [], daySlots: [] }];
+  }
   isOpen.value = true;
 }
 

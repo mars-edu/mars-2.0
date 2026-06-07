@@ -93,19 +93,23 @@
 
           <!-- Individual journals of this group event (wizard children) -->
           <div
-            v-if="!isMergedJournal && individualChildJournals.length > 0"
+            v-if="isPlainGroupJournal"
             class="p-4 bg-muted/50 rounded-2xl border border-border/50"
           >
             <div class="flex items-center justify-between mb-2">
               <div class="text-sm font-bold">Индивидуальные журналы</div>
               <button
+                v-if="individualChildJournals.length > 0"
                 class="text-sm text-primary font-medium hover:underline"
                 @click="openIndividualConfig"
               >
                 Настроить
               </button>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+            <div
+              v-if="individualChildJournals.length > 0"
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2"
+            >
               <button
                 v-for="child in individualChildJournals"
                 :key="child.id"
@@ -120,6 +124,13 @@
                 </div>
               </button>
             </div>
+            <button
+              v-else
+              class="w-full py-3 border border-dashed border-input rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
+              @click="openIndividualConfig"
+            >
+              + Добавить индивидуальные журналы
+            </button>
           </div>
 
           <!-- Debug Information Panel (dev mode only) -->
@@ -1033,6 +1044,12 @@ const individualConfigRef = ref<InstanceType<typeof IndividualJournalsConfigPopu
 const individualChildJournals = computed(() =>
   calendarStore.events.filter((e) => e.sourceGroupEventId === journalId.value)
 );
+
+const isPlainGroupJournal = computed(() => {
+  const e = currentEvent.value;
+  if (!e) return false;
+  return !e.isIndividualJournal && !e.sourceGroupEventId && !(e.mergedJournalIds?.length);
+});
 
 function openIndividualConfig() {
   individualConfigRef.value?.open(journalId.value);
