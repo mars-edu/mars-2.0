@@ -72,12 +72,24 @@
               v-for="item in filteredKtpItems"
               :key="item.id"
               class="group relative bg-card border border-border rounded-2xl p-5 cursor-pointer transition-all duration-200 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5"
+              :style="{ zIndex: activeMenuKtpId === item.ktpId ? 30 : undefined }"
               @click="selectItem(item)"
             >
+              <div
+                v-if="isItemFullyLoaded(item)"
+                class="absolute -top-2.5 -right-2.5 bg-primary text-primary-foreground p-2 rounded-xl shadow-lg rotate-12 group-hover:rotate-0 transition-transform z-10"
+                title="План полностью заполнен"
+              >
+                <IconPaperclip class="w-4 h-4" />
+              </div>
               <div class="flex items-center gap-4">
                 <!-- Icon -->
                 <div
-                  class="flex-shrink-0 p-3 rounded-xl bg-primary/10 text-primary transition-transform group-hover:scale-110"
+                  class="flex-shrink-0 p-3 rounded-xl transition-transform group-hover:scale-110"
+                  :class="getKtpColor(item) ? '' : 'bg-primary/10 text-primary'"
+                  :style="getKtpColor(item)
+                    ? { backgroundColor: getKtpColor(item) + '20', color: getKtpColor(item) }
+                    : {}"
                 >
                   <IconBookOpen class="w-6 h-6" />
                 </div>
@@ -90,6 +102,13 @@
                     >
                       {{ item.moduleIndex }} — {{ item.moduleName }}
                     </h3>
+                    <span
+                      v-for="lang in getKtpLanguages(item)"
+                      :key="lang"
+                      class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary flex-shrink-0"
+                    >
+                      {{ lang }}
+                    </span>
                   </div>
                   <p
                     v-if="item.learningOutcome"
@@ -136,6 +155,36 @@
                   </div>
                 </div>
 
+                <!-- Action menu -->
+                <div class="relative flex-shrink-0" @click.stop>
+                  <button
+                    class="p-2 rounded-xl text-muted-foreground/60 hover:text-primary hover:bg-primary/10 transition-colors"
+                    :data-testid="`ktp-card-menu-${item.id}`"
+                    @click="toggleCardMenu(item.ktpId)"
+                  >
+                    <IconMoreVertical class="w-5 h-5" />
+                  </button>
+                  <div
+                    v-if="activeMenuKtpId === item.ktpId"
+                    class="absolute right-0 top-full mt-1 w-48 bg-card border border-border rounded-xl shadow-xl py-1 z-20 overflow-hidden"
+                  >
+                    <button
+                      class="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-muted transition-colors"
+                      @click="onEditKtp(item.ktpId)"
+                    >
+                      <IconEdit2 class="w-4 h-4 text-primary" />
+                      Редактировать
+                    </button>
+                    <button
+                      class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                      @click="onDeleteKtp(item.ktpId)"
+                    >
+                      <IconTrash2 class="w-4 h-4" />
+                      Удалить
+                    </button>
+                  </div>
+                </div>
+
                 <!-- Arrow -->
                 <IconChevronRight
                   class="w-5 h-5 text-muted-foreground/40 group-hover:text-primary transition-colors flex-shrink-0"
@@ -164,22 +213,32 @@
       :selected-semester-id="selectedSemesterId ?? undefined"
     />
 
+    <KtpEditPopover
+      v-model:opened="isEditPopoverOpen"
+      :ktp="editingKtp"
+    />
+
   </f7-page>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed, watch, onUnmounted } from "vue";
 import { f7Page, f7 } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
 import IconBookOpen from "~icons/lucide/book-open";
 import IconClock from "~icons/lucide/clock";
 import IconChevronRight from "~icons/lucide/chevron-right";
+import IconPaperclip from "~icons/lucide/paperclip";
+import IconMoreVertical from "~icons/lucide/more-vertical";
+import IconEdit2 from "~icons/lucide/edit-2";
+import IconTrash2 from "~icons/lucide/trash-2";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
 import SearchInput from "@/components/ui/SearchInput.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
 import AddKtpItemForm from "@/components/AddKtpItemForm.vue";
+import KtpEditPopover from "@/components/KtpEditPopover.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
@@ -191,6 +250,9 @@ import { useJournalStore } from "@/stores/journalStore";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { storeToRefs } from "pinia";
 import { useSidebar } from "@/composables/useSidebar";
+import { useKtpPlannedHours } from "@/composables/useKtpPlannedHours";
+import { isKtpFullyLoaded } from "@/lib/ktpHelpers";
+import type { Ktp } from "@/stores/ktpStore";
 
 const { contentMargin } = useSidebar();
 const activeNavItem = ref("ktp");
@@ -250,6 +312,66 @@ const isPopupOpened = ref(false);
 const selectedKtpParentId = ref<string | null>(null);
 const isAddItemFormOpen = ref(false);
 const selectedSemesterId = ref<string>("");
+
+const { getKtpIdForRupEntry, getModuleTitleForKtp } = storeToRefs(ktpStore);
+
+const { getPlannedHoursForKtp } = useKtpPlannedHours();
+
+// Card action menu
+const activeMenuKtpId = ref<string | null>(null);
+const editingKtp = ref<Ktp | null>(null);
+const isEditPopoverOpen = ref(false);
+
+const closeMenus = () => {
+  activeMenuKtpId.value = null;
+};
+window.addEventListener("click", closeMenus);
+onUnmounted(() => window.removeEventListener("click", closeMenus));
+
+const toggleCardMenu = (ktpId: string) => {
+  activeMenuKtpId.value = activeMenuKtpId.value === ktpId ? null : ktpId;
+};
+
+const onEditKtp = (ktpId: string) => {
+  activeMenuKtpId.value = null;
+  editingKtp.value = ktpStore.findKtpById(ktpId) ?? null;
+  if (editingKtp.value) isEditPopoverOpen.value = true;
+};
+
+const onDeleteKtp = (ktpId: string) => {
+  activeMenuKtpId.value = null;
+  const title = getModuleTitleForKtp.value(ktpId);
+  f7.dialog.confirm(
+    `Удалить КТП «${title}» со всеми темами? Это действие нельзя отменить.`,
+    "Удаление КТП",
+    async () => {
+      const result = await ktpStore.deleteKtpById(ktpId);
+      f7.toast
+        .create({
+          text: result.success
+            ? `КТП удалён (тем: ${result.deleted})`
+            : "Не удалось удалить КТП",
+          closeTimeout: 2000,
+          cssClass: result.success ? "color-green" : "color-red",
+        })
+        .open();
+    }
+  );
+};
+
+const isItemFullyLoaded = (item: any): boolean => {
+  if (!item.ktpId) return false;
+  const details = ktpStore.getDetailsByKtpId(item.ktpId);
+  return isKtpFullyLoaded(details, getPlannedHoursForKtp(item.ktpId));
+};
+
+const getKtpColor = (item: any): string | undefined => {
+  return item.ktpId ? ktpStore.findKtpById(item.ktpId)?.color : undefined;
+};
+
+const getKtpLanguages = (item: any): string[] => {
+  return (item.ktpId && ktpStore.findKtpById(item.ktpId)?.languages) || [];
+};
 
 const academicYearOptions = computed(() => {
   return academicYears.value.map((year) => ({
@@ -337,8 +459,6 @@ const getTopicCount = (item: any): number => {
   const details = ktpStore.ktpDetails.filter((d) => d.ktpId === ktpId);
   return details.length;
 };
-
-const { getKtpIdForRupEntry, getModuleTitleForKtp } = storeToRefs(ktpStore);
 
 const selectItem = (item: any) => {
   selectedItemId.value = item.id;
