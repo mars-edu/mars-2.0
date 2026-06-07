@@ -63,7 +63,9 @@
                 :class="{ active: isOptionSelected(option.value) }"
                 @click="selectOption(option)"
               >
-                <span class="flex-1 text-left whitespace-normal break-words leading-snug">{{ option.text }}</span>
+                <slot name="option" :option="option" :selected="isOptionSelected(option.value)">
+                  <span class="flex-1 text-left whitespace-normal break-words leading-snug">{{ option.text }}</span>
+                </slot>
                 <IconCheck v-if="isOptionSelected(option.value)" class="w-4 h-4 text-primary shrink-0 mt-0.5" />
               </button>
             </div>
@@ -91,6 +93,7 @@ const attrs = useAttrs();
 interface SelectOption {
   value: string | number;
   text: string;
+  [key: string]: any; // extra fields passed through to the #option slot
 }
 
 const props = defineProps<{
