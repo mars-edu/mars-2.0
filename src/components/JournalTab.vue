@@ -579,12 +579,17 @@ const editingCell = ref<{
 const editedValue = ref("");
 const viewMode = ref<"general" | "monitoring" | "individual">("general");
 
-// Self-heal: if individual mode is active but feature is not available, fall back to general
-watch(viewMode, (mode) => {
-  if (mode === "individual" && !(props.showIndividualJournals && props.hasIndividualJournals)) {
-    viewMode.value = "general";
+// Self-heal: fall back to general when individual mode becomes unavailable
+// (either viewMode flips to "individual" while the feature is off, OR the
+// feature flags flip false while already in individual mode).
+watch(
+  [viewMode, () => props.showIndividualJournals, () => props.hasIndividualJournals],
+  ([mode]) => {
+    if (mode === "individual" && !(props.showIndividualJournals && props.hasIndividualJournals)) {
+      viewMode.value = "general";
+    }
   }
-});
+);
 
 const LETTER_GRADE_BUCKETS: Array<{ letter: string; min: number }> = [
   { letter: "A", min: 95 },

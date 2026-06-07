@@ -119,6 +119,7 @@ import IconUsers from "~icons/lucide/users";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useMarksStore } from "@/stores/marksStore";
 import { useStudentStore } from "@/stores/studentStore";
+import { useJournalMarkTemplate } from "@/composables/useJournalMarkTemplate";
 import { getWeekDays } from "@/constants/calendar";
 import type { CalendarEvent } from "@/stores/calendarStore";
 import type { Mark } from "@/types/marks";
@@ -130,6 +131,7 @@ const props = defineProps<{
 const calendarStore = useCalendarStore();
 const marksStore = useMarksStore();
 const studentStore = useStudentStore();
+const { buildMarkTemplate } = useJournalMarkTemplate();
 
 // Computed children: calendar events whose sourceGroupEventId === mainEventId
 const children = computed(() =>
@@ -138,11 +140,25 @@ const children = computed(() =>
   )
 );
 
-// Preload marks for each child whenever the child list changes
+// Initialize and load marks for each child whenever the child list changes.
+// This mirrors the exact sequence JournalTab.vue uses in rebuildMarks():
+//   1. initializeJournalMarks  — seeds the in-memory template so the grid renders
+//   2. loadJournalMarks        — merges persisted backend values into the template
 watch(
   () => children.value.map((c) => c.id),
-  (ids) => {
-    ids.forEach((id) => marksStore.preloadJournalMarks(id));
+  async (ids) => {
+    for (const child of children.value) {
+      // Skip if already initialized (template exists in the store)
+      if (marksStore.journalMarks[child.id]) continue;
+
+      const template = buildMarkTemplate(child);
+      marksStore.initializeJournalMarks(child.id, child.participants, template);
+      try {
+        await marksStore.loadJournalMarks(child.id);
+      } catch (err) {
+        console.warn("[IndividualJournalsInlineView] Failed to load marks for child:", child.id, err);
+      }
+    }
   },
   { immediate: true }
 );
