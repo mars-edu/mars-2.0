@@ -68,6 +68,47 @@
             {{ selectedEntry.learningOutcome }}
           </p>
         </div>
+
+        <!-- Color -->
+        <div>
+          <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
+            Цвет
+          </label>
+          <div class="flex gap-2">
+            <button
+              v-for="color in KTP_COLORS"
+              :key="color"
+              type="button"
+              class="w-8 h-8 rounded-lg transition-all"
+              :class="selectedColor === color ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'hover:scale-105'"
+              :style="{ backgroundColor: color }"
+              :data-testid="`ktp-color-${color.slice(1)}`"
+              @click="selectedColor = color"
+            />
+          </div>
+        </div>
+
+        <!-- Languages -->
+        <div>
+          <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
+            Языки обучения
+          </label>
+          <div class="flex gap-2">
+            <button
+              v-for="lang in KTP_LANGUAGES"
+              :key="lang"
+              type="button"
+              class="px-4 py-2 rounded-xl text-sm font-bold transition-all"
+              :class="selectedLanguages.includes(lang)
+                ? 'bg-primary text-primary-foreground scale-105'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'"
+              :data-testid="`ktp-lang-${lang}`"
+              @click="toggleLanguage(lang)"
+            >
+              {{ lang }}
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Footer -->
@@ -96,6 +137,7 @@ import Select from "@/components/ui/Select.vue";
 import IconAlertCircle from "~icons/lucide/alert-circle";
 import IconInfo from "~icons/lucide/info";
 import IconBookOpen from "~icons/lucide/book-open";
+import { KTP_COLORS, KTP_LANGUAGES } from "@/lib/ktpHelpers";
 
 const props = defineProps<{
   opened: boolean;
@@ -111,6 +153,16 @@ const { rupEntryOptions } = storeToRefs(rupEntryStore);
 const formError = ref("");
 
 const rupEntryId = ref("");
+const selectedColor = ref(KTP_COLORS[0]);
+const selectedLanguages = ref<string[]>([]);
+
+const toggleLanguage = (lang: string) => {
+  if (selectedLanguages.value.includes(lang)) {
+    selectedLanguages.value = selectedLanguages.value.filter((l) => l !== lang);
+  } else {
+    selectedLanguages.value = [...selectedLanguages.value, lang];
+  }
+};
 
 // Create filtered rupEntryOptions based on selected academic year and semester from props
 const filteredRupEntryOptions = computed(() => {
@@ -148,6 +200,8 @@ const isFormValid = computed(() => {
 const resetForm = () => {
   rupEntryId.value = "";
   formError.value = "";
+  selectedColor.value = KTP_COLORS[0];
+  selectedLanguages.value = [];
 };
 
 const onPopoverClosed = () => {
@@ -178,7 +232,15 @@ const handleSave = async () => {
     const ktp = await ktpStore.ensureKtpForRupEntry(
       rupEntryId.value,
       props.selectedAcademicYearId,
-      props.selectedSemesterId
+      props.selectedSemesterId,
+      undefined,
+      undefined,
+      {
+        color: selectedColor.value,
+        languages: selectedLanguages.value.length
+          ? selectedLanguages.value
+          : undefined,
+      }
     );
 
     f7.toast
