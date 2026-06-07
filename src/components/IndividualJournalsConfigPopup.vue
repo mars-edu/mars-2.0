@@ -1,7 +1,13 @@
 <template>
-  <f7-popup
+  <GuardedPopover
+    ref="popupRef"
+    v-slot="{ requestClose }"
+    id="individual-journals-config-popup"
+    kind="popup"
     :opened="isOpen"
-    @popup:closed="isOpen = false"
+    :close-on-escape="true"
+    :is-dirty="hasUnsavedChanges"
+    @popup:closed="onPopupClosed"
     class="individual-journals-config-popup"
   >
     <div class="flex flex-col h-full w-full bg-background text-foreground">
@@ -11,7 +17,7 @@
         </div>
         <button
           class="shrink-0 w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          @click="isOpen = false"
+          @click="requestClose()"
         >
           <IconX class="text-xl" />
         </button>
@@ -55,7 +61,7 @@
         </button>
       </div>
     </div>
-  </f7-popup>
+  </GuardedPopover>
 </template>
 
 <script setup lang="ts">
@@ -65,6 +71,7 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { ConvexError } from "convex/values";
 import IconX from "~icons/lucide/x";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import IndividualJournalsEditor from "@/components/Calendar/IndividualJournalsEditor.vue";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
@@ -93,6 +100,26 @@ const useIndividualJournals = ref(true);
 const gradingType = ref<"combined" | "separate" | "">("");
 const drafts = ref<IndividualJournalDraft[]>([]);
 const editorRef = ref<InstanceType<typeof IndividualJournalsEditor> | null>(null);
+const popupRef = ref<{ allowNextClose: () => void } | null>(null);
+
+const baseline = ref("");
+
+function serializeState() {
+  return JSON.stringify({
+    gradingType: gradingType.value,
+    drafts: [...drafts.value]
+      .map((j) => ({
+        id: j.id,
+        studentIds: [...j.studentIds].sort(),
+        daySlots: [...j.daySlots]
+          .map((s) => ({ weekId: s.weekId, startId: s.startId, endId: s.endId }))
+          .sort((a, b) => a.weekId - b.weekId || a.startId.localeCompare(b.startId)),
+      }))
+      .sort((a, b) => a.id.localeCompare(b.id)),
+  });
+}
+
+const hasUnsavedChanges = () => serializeState() !== baseline.value;
 
 const mainEvent = computed(() => calendarStore.getEventById(mainEventId.value));
 
@@ -221,6 +248,7 @@ async function open(eventId: string) {
   if (budgetAvailable.value && drafts.value.length === 0) {
     drafts.value = [{ id: crypto.randomUUID(), studentIds: [], daySlots: [] }];
   }
+  baseline.value = serializeState();
   isOpen.value = true;
 }
 
@@ -246,7 +274,8 @@ async function handleSave() {
       }
     );
     await calendarStore.fetchEventsWithRoleAccess();
-    isOpen.value = false;
+    popupRef.value?.allowNextClose();
+    f7.popup.close("#individual-journals-config-popup", true, "programmatic");
   } catch (err) {
     const message =
       err instanceof ConvexError
@@ -262,6 +291,10 @@ async function handleSave() {
   } finally {
     isSaving.value = false;
   }
+}
+
+function onPopupClosed() {
+  isOpen.value = false;
 }
 
 defineExpose({ open });
