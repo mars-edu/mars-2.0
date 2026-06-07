@@ -257,12 +257,12 @@ watch(innerAcademicYearId, (newYearId, oldYearId) => {
   innerSemesterId.value = auto ? auto.id : "";
 });
 
+// Single-select: picking a language replaces the previous one; clicking
+// the selected language deselects it. Stored as array for schema compat.
 const toggleLanguage = (lang: string) => {
-  if (selectedLanguages.value.includes(lang)) {
-    selectedLanguages.value = selectedLanguages.value.filter((l) => l !== lang);
-  } else {
-    selectedLanguages.value = [...selectedLanguages.value, lang];
-  }
+  selectedLanguages.value = selectedLanguages.value.includes(lang)
+    ? []
+    : [lang];
 };
 
 // Disciplines filtered by the in-form specialty + RUP academic year.

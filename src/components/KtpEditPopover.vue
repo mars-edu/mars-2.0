@@ -91,18 +91,19 @@ watch(
   ([opened, ktp]) => {
     if (opened && ktp) {
       selectedColor.value = ktp.color || KTP_COLORS[0];
-      selectedLanguages.value = [...(ktp.languages || [])];
+      // Single-select UI: keep only the first language from legacy multi-select data
+      selectedLanguages.value = (ktp.languages || []).slice(0, 1);
     }
   },
   { immediate: true }
 );
 
+// Single-select: picking a language replaces the previous one; clicking
+// the selected language deselects it. Stored as array for schema compat.
 const toggleLanguage = (lang: string) => {
-  if (selectedLanguages.value.includes(lang)) {
-    selectedLanguages.value = selectedLanguages.value.filter((l) => l !== lang);
-  } else {
-    selectedLanguages.value = [...selectedLanguages.value, lang];
-  }
+  selectedLanguages.value = selectedLanguages.value.includes(lang)
+    ? []
+    : [lang];
 };
 
 const handleSave = async () => {
