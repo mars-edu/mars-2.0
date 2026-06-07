@@ -15,6 +15,12 @@
         <div
           class="bg-card text-card-foreground rounded-xl p-4 md:p-4 shadow-sm"
         >
+          <KtpDetailView
+            v-if="selectedKtpId"
+            :ktp-id="selectedKtpId"
+            @back="selectedKtpId = null"
+          />
+          <template v-else>
           <!-- Row 1: Title + Create -->
           <div class="flex items-center justify-between mb-6">
             <h1 class="text-2xl md:text-3xl font-bold">
@@ -188,20 +194,10 @@
               </div>
             </div>
           </div>
+          </template>
         </div>
       </div>
     </div>
-
-    <KtpDetailPopup
-      v-model:opened="isPopupOpened"
-      :ktp-id="
-        getKtpIdForRupEntry(
-          selectedKtpParentId,
-          selectedAcademicYearId ?? undefined,
-          selectedSemesterId
-        )
-      "
-    />
 
     <AddKtpItemForm
       v-model:opened="isAddItemFormOpen"
@@ -232,7 +228,7 @@ import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
 import SearchInput from "@/components/ui/SearchInput.vue";
-import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
+import KtpDetailView from "@/components/KtpDetailView.vue";
 import AddKtpItemForm from "@/components/AddKtpItemForm.vue";
 import KtpEditPopover from "@/components/KtpEditPopover.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
@@ -303,9 +299,7 @@ const {
   selectedSpecialtyId: selectedSpecialtyIdStore,
   selectedCourseId: selectedCourseIdStore,
 } = storeToRefs(selectedItemsStore);
-const selectedItemId = ref<string | null>(null);
-const isPopupOpened = ref(false);
-const selectedKtpParentId = ref<string | null>(null);
+const selectedKtpId = ref<string | null>(null);
 const isAddItemFormOpen = ref(false);
 const selectedSemesterId = ref<string>("");
 
@@ -459,9 +453,9 @@ const getTopicCount = (item: any): number => {
 };
 
 const selectItem = (item: any) => {
-  selectedItemId.value = item.id;
-  selectedKtpParentId.value = item.id;
-  isPopupOpened.value = true;
+  if (!item.ktpId) return;
+  selectedKtpId.value = item.ktpId;
+  ktpStore.fetchDetailsForKtp(item.ktpId);
 };
 
 // Year/semester/specialty are selected inside AddKtpItemForm
