@@ -12,7 +12,7 @@ export const create = mutation({
     endTime: v.string(),
     order: v.number(),
     academicYearId: v.string(),
-    semesterId: v.id("academicYearSemesters"),
+    semesterId: v.optional(v.id("academicYearSemesters")),
   },
   handler: async (ctx, args) => {
     const timestamps = createTimestamps();

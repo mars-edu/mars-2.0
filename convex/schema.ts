@@ -661,7 +661,9 @@ export default defineSchema({
     endTime: v.string(),
     order: v.number(),
     academicYearId: v.string(),
-    semesterId: v.id("academicYearSemesters"),
+    // Optional: legacy pre-semester-migration slots (inactive years with
+    // no academicYearSemesters) have no semester to point at.
+    semesterId: v.optional(v.id("academicYearSemesters")),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

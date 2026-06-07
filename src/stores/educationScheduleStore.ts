@@ -11,7 +11,7 @@ export interface EducationSchedule {
   startTime: string;
   endTime: string;
   academicYearId: string;
-  semesterId: string;
+  semesterId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
