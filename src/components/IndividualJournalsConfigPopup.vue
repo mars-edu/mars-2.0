@@ -4,10 +4,15 @@
     @popup:closed="isOpen = false"
     class="individual-journals-config-popup"
   >
-    <div class="flex flex-col h-full bg-background text-foreground">
-      <div class="flex items-center justify-between p-4 border-b border-border">
-        <div class="text-lg font-bold">Индивидуальные журналы</div>
-        <button class="text-muted-foreground hover:text-foreground" @click="isOpen = false">
+    <div class="flex flex-col h-full w-full bg-background text-foreground">
+      <div class="flex w-full items-center justify-between gap-4 p-4 border-b border-border">
+        <div class="text-lg font-bold whitespace-nowrap truncate">
+          Индивидуальные журналы
+        </div>
+        <button
+          class="shrink-0 w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          @click="isOpen = false"
+        >
           <IconX class="text-xl" />
         </button>
       </div>
@@ -261,3 +266,10 @@ async function handleSave() {
 
 defineExpose({ open });
 </script>
+
+<style scoped>
+.individual-journals-config-popup {
+  --f7-popup-tablet-width: 672px;
+  --f7-popup-tablet-height: min(900px, calc(100vh - 80px));
+}
+</style>
