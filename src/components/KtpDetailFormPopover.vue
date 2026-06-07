@@ -180,6 +180,7 @@ import IconAlertTriangle from "~icons/lucide/alert-triangle";
 import { z } from "zod";
 import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
 import { useNestedPopover } from "@/composables/useNestedPopover";
+import { toNullableNumber } from "@/lib/ktpHelpers";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
@@ -285,12 +286,12 @@ const formSchema = z.object({
 const validationResult = computed(() => {
   return formSchema.safeParse({
     ...formData,
-    totalHours: formData.totalHours ? Number(formData.totalHours) : null,
-    srsp: formData.srsp ? Number(formData.srsp) : null,
-    srs: formData.srs ? Number(formData.srs) : null,
-    theoretical: formData.theoretical ? Number(formData.theoretical) : null,
-    practical: formData.practical ? Number(formData.practical) : null,
-    individual: formData.individual ? Number(formData.individual) : null,
+    totalHours: toNullableNumber(formData.totalHours),
+    srsp: toNullableNumber(formData.srsp),
+    srs: toNullableNumber(formData.srs),
+    theoretical: toNullableNumber(formData.theoretical),
+    practical: toNullableNumber(formData.practical),
+    individual: toNullableNumber(formData.individual),
   });
 });
 
@@ -299,7 +300,7 @@ const isFormValid = computed(() => validationResult.value.success);
 // Hours warning computed
 const hoursWarning = computed(() => {
   if (props.remainingHours === undefined || props.remainingHours === null) return "";
-  const hours = formData.totalHours ? Number(formData.totalHours) : 0;
+  const hours = toNullableNumber(formData.totalHours) ?? 0;
   if (hours > 0 && hours > props.remainingHours) {
     return `Внимание: указано ${hours} ч., доступно ${props.remainingHours} ч.`;
   }
@@ -318,12 +319,12 @@ const handleSave = () => {
 
   const dataToSave = {
     ...formData,
-    totalHours: formData.totalHours ? Number(formData.totalHours) : null,
-    srsp: formData.srsp ? Number(formData.srsp) : null,
-    srs: formData.srs ? Number(formData.srs) : null,
-    theoretical: formData.theoretical ? Number(formData.theoretical) : null,
-    practical: formData.practical ? Number(formData.practical) : null,
-    individual: formData.individual ? Number(formData.individual) : null,
+    totalHours: toNullableNumber(formData.totalHours),
+    srsp: toNullableNumber(formData.srsp),
+    srs: toNullableNumber(formData.srs),
+    theoretical: toNullableNumber(formData.theoretical),
+    practical: toNullableNumber(formData.practical),
+    individual: toNullableNumber(formData.individual),
   };
 
   if (isEditMode.value && props.detailToEdit) {
