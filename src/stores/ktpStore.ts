@@ -12,6 +12,8 @@ export interface Ktp {
   semesterId: string;
   eventId?: string; // Back-reference to the calendar event (if KTP is event-specific)
   name?: string; // Optional custom name for the KTP
+  color?: string; // hex, e.g. '#FACC15'
+  languages?: string[]; // subset of ['KZ','RU','EN']
   createdAt: Date;
   updatedAt: Date;
 }
@@ -80,7 +82,8 @@ export const useKtpStore = defineStore(
       academicYearId: string,
       semesterId: string,
       eventId?: string,
-      name?: string
+      name?: string,
+      extra?: { color?: string; languages?: string[] }
     ): Promise<Ktp> {
       const id = await convex.mutation(api.ktps.mutations.create, {
         rupEntryId,
@@ -88,6 +91,8 @@ export const useKtpStore = defineStore(
         semesterId,
         eventId,
         name,
+        color: extra?.color,
+        languages: extra?.languages,
       });
       const created = await convex.query(api.ktps.queries.getById, { id });
       if (created) {
@@ -98,6 +103,8 @@ export const useKtpStore = defineStore(
           semesterId: created.semesterId,
           eventId: created.eventId,
           name: created.name,
+          color: created.color,
+          languages: created.languages,
           createdAt: new Date(created.createdAt),
           updatedAt: new Date(created.updatedAt),
         };
@@ -114,13 +121,28 @@ export const useKtpStore = defineStore(
       academicYearId: string,
       semesterId: string,
       eventId?: string,
-      name?: string
+      name?: string,
+      extra?: { color?: string; languages?: string[] }
     ): Promise<Ktp> {
       if (!semesterId) {
         throw new Error("semesterId is required to create a KTP");
       }
       const existing = findKtpByRupEntryId(rupEntryId, academicYearId, semesterId, eventId);
-      return existing || await createKtp(rupEntryId, academicYearId, semesterId, eventId, name);
+      return existing || await createKtp(rupEntryId, academicYearId, semesterId, eventId, name, extra);
+    }
+
+    async function updateKtp(
+      id: string,
+      data: { name?: string; color?: string; languages?: string[] }
+    ) {
+      await convex.mutation(api.ktps.mutations.update, {
+        id: id as any,
+        ...data,
+      });
+      const index = ktps.value.findIndex((k) => k.id === id);
+      if (index !== -1) {
+        ktps.value[index] = { ...ktps.value[index], ...data };
+      }
     }
 
     function fetchDetailsForKtp(ktpId: string) {
@@ -142,6 +164,29 @@ export const useKtpStore = defineStore(
       }
 
       loading.value = false;
+    }
+
+    /** Re-query one ktp from Convex and replace its local details. */
+    async function refreshDetailsFromBackend(ktpId: string): Promise<number> {
+      const updated = await convex.query(api.ktps.queries.getById, { id: ktpId as any });
+      if (!updated || !updated.details) return 0;
+      ktpDetails.value = ktpDetails.value.filter((d) => d.ktpId !== ktpId);
+      const mappedDetails = updated.details.map((d: any) => ({
+        id: d._id,
+        ktpId: d.ktpId,
+        position: d.position,
+        theme: d.theme,
+        totalHours: d.totalHours ?? null,
+        srsp: d.srsp ?? null,
+        srs: d.srs ?? null,
+        theoretical: d.theoretical ?? null,
+        practical: d.practical ?? null,
+        individual: d.individual ?? null,
+        homework: d.homework,
+        notes: d.notes,
+      }));
+      ktpDetails.value.push(...mappedDetails);
+      return mappedDetails.length;
     }
 
     async function addKtpDetail(
@@ -210,14 +255,21 @@ export const useKtpStore = defineStore(
     }
 
     async function deleteKtpDetail(id: string) {
+      const target = ktpDetails.value.find((d) => d.id === id);
       await convex.mutation(api.ktps.mutations.removeDetail, {
         id: id as any,
       });
 
       ktpDetails.value = ktpDetails.value.filter((d) => d.id !== id);
-      ktpDetails.value.forEach((item, index) => {
-        item.position = index + 1;
-      });
+      if (target) {
+        // Renumber only the affected ktp's details, in position order
+        ktpDetails.value
+          .filter((d) => d.ktpId === target.ktpId)
+          .sort((a, b) => a.position - b.position)
+          .forEach((item, index) => {
+            item.position = index + 1;
+          });
+      }
     }
 
     async function clearKtpDetails(ktpId: string) {
@@ -227,13 +279,18 @@ export const useKtpStore = defineStore(
       ktpDetails.value = ktpDetails.value.filter((d) => d.ktpId !== ktpId);
     }
 
-    function deleteKtpByRupEntryId(
+    async function deleteKtpByRupEntryId(
       rupEntryId: string,
       academicYearId?: string,
       semesterId?: string
     ) {
       const ktp = findKtpByRupEntryId(rupEntryId, academicYearId, semesterId);
       if (!ktp) return { success: true, deleted: 0 };
+
+      // Delete on backend first (cascades to details server-side)
+      await convex.mutation(api.ktps.mutations.remove, {
+        id: ktp.id as any,
+      });
 
       // Delete all KTP details for this KTP
       const deletedDetails = ktpDetails.value.filter(
@@ -267,7 +324,7 @@ export const useKtpStore = defineStore(
       return { success: true, deleted: deletedDetails };
     }
 
-    function reorderKtpDetails(ktpId: string, reorderedIds: string[]) {
+    async function reorderKtpDetails(ktpId: string, reorderedIds: string[]) {
       try {
         error.value = null;
 
@@ -286,7 +343,20 @@ export const useKtpStore = defineStore(
           position: index + 1,
         }));
 
+        // Optimistic local update
         ktpDetails.value = [...otherDetails, ...reorderedDetails];
+
+        // Persist to backend; revert local state from backend on failure
+        try {
+          await convex.mutation(api.ktps.mutations.reorderDetails, {
+            ktpId: ktpId as any,
+            orderedIds: filteredOrder as any,
+          });
+        } catch (mutationErr) {
+          await refreshDetailsFromBackend(ktpId);
+          throw mutationErr;
+        }
+
         return { success: true, reordered: reorderedDetails.length };
       } catch (err) {
         error.value =
@@ -313,33 +383,12 @@ export const useKtpStore = defineStore(
         await convex.mutation(api.ktps.mutations.bulkImportDetails, {
           ktpId: ktpId as any,
           details,
+          replace: true,
         });
 
         // Reload the KTP with new details
-        const updated = await convex.query(api.ktps.queries.getById, { id: ktpId as any });
-        if (updated && updated.details) {
-          // Remove old details for this ktpId
-          ktpDetails.value = ktpDetails.value.filter((d) => d.ktpId !== ktpId);
-          // Add new details
-          const mappedDetails = updated.details.map((d: any) => ({
-            id: d._id,
-            ktpId: d.ktpId,
-            position: d.position,
-            theme: d.theme,
-            totalHours: d.totalHours,
-            srsp: d.srsp,
-            srs: d.srs,
-            theoretical: d.theoretical ?? null,
-            practical: d.practical ?? null,
-            individual: d.individual ?? null,
-            homework: d.homework,
-            notes: d.notes,
-          }));
-          ktpDetails.value.push(...mappedDetails);
-          return { success: true, imported: mappedDetails.length };
-        }
-
-        return { success: false, error: "Failed to reload after import" };
+        const imported = await refreshDetailsFromBackend(ktpId);
+        return { success: true, imported };
       } catch (err) {
         error.value =
           err instanceof Error ? err.message : "Failed to import data";
@@ -486,6 +535,8 @@ export const useKtpStore = defineStore(
             semesterId: ktp.semesterId,
             eventId: ktp.eventId,
             name: ktp.name,
+            color: ktp.color,
+            languages: ktp.languages,
             createdAt: new Date(ktp.createdAt),
             updatedAt: new Date(ktp.updatedAt),
           });
@@ -527,9 +578,11 @@ export const useKtpStore = defineStore(
       error,
       // Primary KTP-based APIs
       ensureKtpForRupEntry,
+      updateKtp,
       findKtpByRupEntryId,
       findKtpById,
       fetchDetailsForKtp,
+      refreshDetailsFromBackend,
       addKtpDetail,
       updateKtpDetail,
       deleteKtpDetail,
