@@ -33,9 +33,10 @@
         </div>
 
         <div class="scrollable-content">
-          <KtpDetailPopupBody
-            ref="popupBodyRef"
+          <KtpDetailView
+            v-if="ktpId"
             :ktp-id="ktpId"
+            embedded
           />
         </div>
 
@@ -57,7 +58,7 @@ import { f7, f7Popover } from "framework7-vue";
 import IconTrash from "~icons/lucide/trash-2";
 import { useKtpStore } from "@/stores/ktpStore";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
-import KtpDetailPopupBody from "@/components/KtpDetailPopupBody.vue";
+import KtpDetailView from "@/components/KtpDetailView.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
@@ -81,7 +82,6 @@ const ktpStore = useKtpStore();
 const rupEntryStore = useRupEntryStore();
 const { loading } = storeToRefs(ktpStore);
 const { deleteKtpById } = ktpStore;
-const popupBodyRef = ref<InstanceType<typeof KtpDetailPopupBody> | null>(null);
 const isClosingProgrammatically = ref(false);
 
 // Computed property to get the module name for the header
@@ -120,8 +120,8 @@ function handleDeleteAll() {
   f7.dialog.confirm(
     "Вы уверены, что хотите удалить все темы КТП?",
     "Удаление КТП",
-    () => {
-      const result = deleteKtpById(ktpId.value as string);
+    async () => {
+      const result = await deleteKtpById(ktpId.value as string);
 
       if (result.success) {
         f7.toast
