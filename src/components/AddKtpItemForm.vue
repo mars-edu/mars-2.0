@@ -174,7 +174,7 @@ import { storeToRefs } from "pinia";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useKtpStore } from "@/stores/ktpStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
-import { useSpecialtyStore } from "@/stores/specialtyStore";
+import { useSpecialtyStore, type Specialty } from "@/stores/specialtyStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
@@ -273,8 +273,8 @@ const specialtyChips = computed(() => {
   const entry = selectedEntry.value;
   if (!entry) return [];
   return (entry.specialtyIds || [])
-    .map((id) => specialtyStore.specialties.find((s: any) => s.id === id))
-    .filter((s): s is any => !!s);
+    .map((id) => specialtyStore.specialties.find((s: Specialty) => s.id === id))
+    .filter((s): s is Specialty => !!s);
 });
 
 interface DistributionRowOption {

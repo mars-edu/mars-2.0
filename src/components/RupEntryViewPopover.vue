@@ -297,7 +297,7 @@ import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
-import { useSpecialtyStore } from "@/stores/specialtyStore";
+import { useSpecialtyStore, type Specialty } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
 
 const props = defineProps<{
@@ -343,8 +343,8 @@ const itemBases = computed<number[]>(() => {
 const specialtyChips = computed(() => {
   if (!props.item) return [];
   return (props.item.specialtyIds || [])
-    .map((id) => specialtyStore.specialties.find((s: any) => s.id === id))
-    .filter((s): s is any => !!s);
+    .map((id) => specialtyStore.specialties.find((s: Specialty) => s.id === id))
+    .filter((s): s is Specialty => !!s);
 });
 
 // Localized info slots — render one card per configured language, fill with variant if present
