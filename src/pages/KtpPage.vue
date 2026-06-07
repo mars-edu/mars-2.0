@@ -121,11 +121,13 @@
                   >
                     {{ item.learningOutcome }}
                   </p>
+                  <!-- TODO: journals accordion disabled for now
                   <KtpJournalsAccordion
                     :journals="getKtpJournals(item.ktpId)"
                     dense
                     class="mt-0.5"
                   />
+                  -->
                 </div>
 
                 <!-- Divider -->

@@ -33,7 +33,10 @@
       </div>
 
       <!-- Journals using this KTP -->
+      <!-- TODO: journals accordion disabled for now
       <KtpJournalsAccordion :journals="journals" class="mb-6" />
+      -->
+
 
       <!-- Title (hidden in embedded hosts that already show the discipline) -->
       <h2 v-if="!embedded" class="text-3xl font-bold mb-8">{{ moduleTitle }}</h2>
