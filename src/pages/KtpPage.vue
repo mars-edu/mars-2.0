@@ -121,26 +121,11 @@
                   >
                     {{ item.learningOutcome }}
                   </p>
-                  <details
-                    v-if="getKtpJournals(item.ktpId).length"
-                    class="ktp-journals mt-0.5"
-                    @click.stop
-                  >
-                    <summary class="ktp-journals__summary">
-                      <IconChevronRight class="ktp-journals__chev w-3 h-3 flex-shrink-0" />
-                      <IconClock class="w-3 h-3 flex-shrink-0" />
-                      Журналы ({{ getKtpJournals(item.ktpId).length }})
-                    </summary>
-                    <ul class="mt-1 space-y-0.5">
-                      <li
-                        v-for="j in getKtpJournals(item.ktpId)"
-                        :key="j.id"
-                        class="text-xs text-muted-foreground pl-5"
-                      >
-                        {{ journalStore.getDisciplineTitle(j) }} · {{ journalStore.getJournalSubtitle(j) }}
-                      </li>
-                    </ul>
-                  </details>
+                  <KtpJournalsAccordion
+                    :journals="getKtpJournals(item.ktpId)"
+                    dense
+                    class="mt-0.5"
+                  />
                 </div>
 
                 <!-- Divider -->
@@ -234,7 +219,6 @@ import { ref, onMounted, computed, watch, onUnmounted } from "vue";
 import { f7Page, f7 } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
 import IconBookOpen from "~icons/lucide/book-open";
-import IconClock from "~icons/lucide/clock";
 import IconChevronRight from "~icons/lucide/chevron-right";
 import IconPaperclip from "~icons/lucide/paperclip";
 import IconMoreVertical from "~icons/lucide/more-vertical";
@@ -256,6 +240,7 @@ import { useCourseStore } from "@/stores/courseStore";
 import { useKtpStore } from "@/stores/ktpStore";
 import { useJournalStore } from "@/stores/journalStore";
 import { collectKtpJournals } from "@/composables/useKtpJournals";
+import KtpJournalsAccordion from "@/components/KtpJournalsAccordion.vue";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { storeToRefs } from "pinia";
 import { useSidebar } from "@/composables/useSidebar";
@@ -495,18 +480,4 @@ watch(
 );
 </script>
 
-<style scoped>
-.ktp-journals__summary {
-  @apply flex items-center gap-1 text-xs text-muted-foreground/70 cursor-pointer select-none;
-  list-style: none;
-}
-.ktp-journals__summary::-webkit-details-marker {
-  display: none;
-}
-.ktp-journals__chev {
-  transition: transform 0.15s;
-}
-.ktp-journals[open] .ktp-journals__chev {
-  transform: rotate(90deg);
-}
-</style>
+<style scoped></style>
