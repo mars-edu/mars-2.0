@@ -182,7 +182,7 @@ import Select from "@/components/ui/Select.vue";
 import IconAlertCircle from "~icons/lucide/alert-circle";
 import IconInfo from "~icons/lucide/info";
 import IconBookOpen from "~icons/lucide/book-open";
-import { KTP_COLORS, KTP_LANGUAGES, semesterIdsMatch } from "@/lib/ktpHelpers";
+import { KTP_COLORS, KTP_LANGUAGES } from "@/lib/ktpHelpers";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 
 const props = defineProps<{
@@ -202,12 +202,6 @@ const { rupEntryOptions } = storeToRefs(rupEntryStore);
 const { specialtyOptions } = storeToRefs(specialtyStore);
 const { academicYears } = storeToRefs(academicYearStore);
 
-// Maps an academicYearSemesters Convex id to its semesterNumber string
-// (distributionEntries store Convex ids, the page passes semester numbers)
-const resolveSemesterNumber = (id: string): string | null => {
-  const ays = academicYearSemesterStore.getAcademicYearSemesterById(id);
-  return ays ? String(ays.semesterNumber) : null;
-};
 const formError = ref("");
 
 const rupEntryId = ref("");
@@ -270,10 +264,13 @@ const toggleLanguage = (lang: string) => {
   }
 };
 
-// Disciplines filtered by the in-form specialty + academic year + semester
+// Disciplines filtered by the in-form specialty + RUP academic year.
+// Semester deliberately does NOT hide disciplines: requiring a РУП hour
+// distribution for the selected semester left teachers with a near-empty
+// list (most РУПs only have rows for one semester). The semester is still
+// used for the KTP record and the planned-hours budget lookup.
 const filteredRupEntryOptions = computed(() => {
   const yearId = innerAcademicYearId.value;
-  const semId = innerSemesterId.value;
   const specialtyId = selectedSpecialtyId.value;
 
   return rupEntryOptions.value.filter((option) => {
@@ -284,15 +281,7 @@ const filteredRupEntryOptions = computed(() => {
       return false;
     }
 
-    if (!yearId || !semId) return true;
-
-    // Check if rupEntryItem has distributionEntries with matching academicYearId and semesterId.
-    // semesterIdsMatch handles the Convex-id vs semester-number-string mismatch.
-    return rupEntryItem.distributionEntries.some(
-      (entry) =>
-        entry.academicYearId === yearId &&
-        semesterIdsMatch(entry.semesterId, semId, resolveSemesterNumber)
-    );
+    return !yearId || rupEntryItem.academicYearId === yearId;
   });
 });
 
