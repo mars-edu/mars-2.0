@@ -214,9 +214,11 @@
                     class="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-4 md:p-8"
                     :class="currentEvent?.isClosed ? 'pointer-events-none opacity-80' : ''"
                   >
-                    <KtpDetailPopupBody
+                    <KtpDetailView
                       v-if="ktpIdForJournal"
                       :ktp-id="ktpIdForJournal"
+                      embedded
+                      show-date
                     />
                     <div
                       v-else
@@ -397,7 +399,7 @@ import JournalDebugPanel from "@/components/JournalDebugPanel.vue";
 import FloatingJournalRow from "@/components/FloatingJournalRow.vue";
 import DateColumnFocus from "@/components/DateColumnFocus.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
-import KtpDetailPopupBody from "@/components/KtpDetailPopupBody.vue";
+import KtpDetailView from "@/components/KtpDetailView.vue";
 import RupEntryPopup from "@/components/RupEntryPopup.vue";
 import StudentListTable from "@/components/StudentListTable.vue";
 import StudentTable from "@/components/StudentTable.vue";
