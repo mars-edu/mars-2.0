@@ -183,6 +183,8 @@
                   :ktp-id="ktpIdForJournal"
                   :journal-settings="journalSettings"
                   :resolved-participants="resolvedParticipants"
+                  :show-individual-journals="isPlainGroupJournal"
+                  :has-individual-journals="individualChildJournals.length > 0"
                   @close-journal="handleCloseJournal"
                   @open-journal="handleOpenJournal"
                   @download="onDownloadClick"
@@ -194,6 +196,7 @@
                   @open-settings="openJournalSettings"
                   @save-journal-settings="saveJournalSettings"
                   @open-rup="openRupDialog"
+                  @open-individual-journals="openIndividualConfig"
                 />
               </f7-tab>
 

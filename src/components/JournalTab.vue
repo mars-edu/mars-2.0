@@ -10,6 +10,8 @@
     <JournalToolbar
       v-model:viewMode="viewMode"
       :is-view-only="isViewOnly"
+      :show-individual-journals="showIndividualJournals"
+      :has-individual-journals="hasIndividualJournals"
       @download="onDownloadClick"
       @open-retake="isRetakeModalOpen = true"
       @open-rup="onOpenRupClick"
@@ -19,6 +21,7 @@
       @open-makeup-hours="onMakeupHoursClick"
       @close-journal="onCloseJournalClick"
       @open-journal="onOpenJournalClick"
+      @open-individual-journals="onOpenIndividualJournalsClick"
     />
 
     <!-- Academic Year Mismatch Warning Banner -->
@@ -498,6 +501,8 @@ interface Props {
   };
   ktpId?: string | null;
   resolvedParticipants?: ResolvedParticipant[];
+  showIndividualJournals?: boolean;
+  hasIndividualJournals?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -512,6 +517,7 @@ const emit = defineEmits<{
   "close-journal": [];
   "open-journal": [];
   download: [];
+  "open-individual-journals": [];
 
   "save-journal-settings": [any];
 }>();
@@ -2096,6 +2102,7 @@ const onPaperclipClick = async (
 
 const onOpenRupClick = () => emit("open-rup");
 const onSettingsClick = () => emit("open-settings");
+const onOpenIndividualJournalsClick = () => emit("open-individual-journals");
 const onHistoryClick = () => {
   isHistoryDialogOpen.value = true;
 };

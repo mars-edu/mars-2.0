@@ -68,6 +68,16 @@
             РУП
           </button>
           <button
+            v-if="showIndividualJournals"
+            id="journal-individual-journals-button"
+            type="button"
+            class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3"
+            @click="close(); $emit('open-individual-journals')"
+          >
+            <IconUsers class="w-4 h-4" />
+            {{ hasIndividualJournals ? "Индивидуальные журналы" : "Добавить индивидуальные журналы" }}
+          </button>
+          <button
             id="journal-history-button"
             type="button"
             class="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-3"
@@ -149,6 +159,7 @@ import IconRefreshCw from "~icons/lucide/refresh-cw";
 import IconMoreVertical from "~icons/lucide/more-vertical";
 import IconCalculator from "~icons/lucide/calculator";
 import IconFileSpreadsheet from "~icons/lucide/file-spreadsheet";
+import IconUsers from "~icons/lucide/users";
 
 import {
   journal_view_general,
@@ -162,6 +173,8 @@ import {
 defineProps<{
   viewMode: 'general' | 'monitoring';
   isViewOnly: boolean;
+  showIndividualJournals?: boolean;
+  hasIndividualJournals?: boolean;
 }>();
 
 defineEmits<{
@@ -175,5 +188,6 @@ defineEmits<{
   'open-makeup-hours': [];
   'close-journal': [];
   'open-journal': [];
+  'open-individual-journals': [];
 }>();
 </script>
