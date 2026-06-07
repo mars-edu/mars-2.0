@@ -715,20 +715,27 @@ watch(
     currentEvent.value?.rupEntryId,
     currentEvent.value?.semester,
     academicYearSemesterStore.academicYearSemesters.length,
+    ktpStore.ktps.length,
   ] as const,
   async ([_jid, _eventId, eventKtpId, eventRupEntryId, eventSemesterId]) => {
     ensuredKtpId.value = eventKtpId || null;
     if (!journalId.value || !currentEvent.value) return;
     if (isEnsuringKtp.value) return;
 
-    // If already linked, just ensure store data is present.
+    // If already linked AND the referenced KTP still exists, just load it.
+    // A dangling ktpId (e.g. the KTP was deleted) falls through to re-create.
     if (eventKtpId) {
-      try {
-        await ensureKtpDataLoaded(eventKtpId);
-      } catch (e) {
-        console.error("[JournalDetails] load KTP failed:", e);
+      if (ktpStore.findKtpById(eventKtpId)) {
+        try {
+          await ensureKtpDataLoaded(eventKtpId);
+        } catch (e) {
+          console.error("[JournalDetails] load KTP failed:", e);
+        }
+        return;
       }
-      return;
+      // Store not hydrated yet — wait; watcher re-runs on ktps.length change.
+      if (ktpStore.loading) return;
+      // Otherwise the reference is dangling — fall through to re-create/link.
     }
 
     // Otherwise, create/link an event-specific KTP.
