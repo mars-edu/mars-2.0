@@ -159,7 +159,7 @@
                 <div class="relative flex-shrink-0" @click.stop>
                   <button
                     class="p-2 rounded-xl text-muted-foreground/60 hover:text-primary hover:bg-primary/10 transition-colors"
-                    :data-testid="`ktp-card-menu-${item.id}`"
+                    :data-testid="`ktp-card-menu-${item.ktpId}`"
                     @click="toggleCardMenu(item.ktpId)"
                   >
                     <IconMoreVertical class="w-5 h-5" />
