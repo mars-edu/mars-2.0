@@ -11,7 +11,7 @@ export interface Vacation {
   startDate: string;
   endDate: string;
   academicYearId: string;
-  semesterId?: string;
+  semesterId: string;
   createdAt: Date;
   updatedAt: Date;
 }

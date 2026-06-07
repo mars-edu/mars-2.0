@@ -423,8 +423,7 @@ export default defineSchema({
     startDate: v.string(),
     endDate: v.string(),
     rupEntryId: v.optional(v.string()),
-    // Optional: legacy seed rows predate semester linkage.
-    semesterId: v.optional(v.id("academicYearSemesters")),
+    semesterId: v.id("academicYearSemesters"),
     date: v.optional(v.string()), // ISO date (legacy)
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -443,8 +442,7 @@ export default defineSchema({
     startDate: v.string(),
     endDate: v.string(),
     rupEntryId: v.optional(v.string()),
-    // Optional: legacy seed rows predate semester linkage.
-    semesterId: v.optional(v.id("academicYearSemesters")),
+    semesterId: v.id("academicYearSemesters"),
     date: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -663,9 +661,7 @@ export default defineSchema({
     endTime: v.string(),
     order: v.number(),
     academicYearId: v.string(),
-    // Optional: legacy pre-semester-migration slots (inactive years with
-    // no academicYearSemesters) have no semester to point at.
-    semesterId: v.optional(v.id("academicYearSemesters")),
+    semesterId: v.id("academicYearSemesters"),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -681,8 +677,7 @@ export default defineSchema({
     shortName: v.string(),
     fullName: v.string(),
     academicYearId: v.string(), // Reference to academicYears
-    // Optional: legacy seed rows predate semester linkage.
-    semesterId: v.optional(v.id("academicYearSemesters")),
+    semesterId: v.id("academicYearSemesters"),
     startDate: v.string(), // ISO date
     endDate: v.string(), // ISO date
     createdAt: v.number(),
