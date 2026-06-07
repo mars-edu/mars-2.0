@@ -318,7 +318,7 @@ const selectedDistributionRow = computed(
 
 // Auto-select: single row, or the row matching the page filters
 watch(
-  () => [rupEntryId.value, distributionRows.value] as const,
+  [rupEntryId, distributionRows],
   () => {
     const rows = distributionRows.value;
     if (

@@ -216,29 +216,25 @@ test.describe('KTP Page (Тематические планы)', () => {
     await expect(popover).toBeVisible();
   });
 
-  test('create popover shows color swatches and language toggles', async ({ page }) => {
+  test("create popover shows RUP-flow selects and color swatches", async ({ page }) => {
     const url = page.url();
-    if (url.includes('login')) return;
+    if (url.includes("login")) return;
 
     await page.waitForTimeout(2000);
 
-    await page.locator('button', { hasText: 'Создать' }).click();
+    await page.locator("button", { hasText: "Создать" }).first().click();
     await page.waitForTimeout(500);
-
-    const popover = page.locator('#add-ktp-item-popover');
+    const popover = page.locator("#add-ktp-item-popover");
     await expect(popover).toBeVisible();
 
-    // Color swatches should be rendered
-    await expect(popover.getByTestId('ktp-color-FACC15')).toBeVisible();
+    // Cascade selects: study year, specialty, discipline
+    await expect(popover.locator('[name="ktp-item-academic-year"]')).toBeAttached();
+    await expect(popover.locator('[name="ktp-item-specialty"]')).toBeAttached();
+    await expect(popover.locator('[name="ktp-item-rupEntry"]')).toBeAttached();
 
-    // All three language pills should be rendered
-    await expect(popover.getByTestId('ktp-lang-KZ')).toBeVisible();
-    await expect(popover.getByTestId('ktp-lang-RU')).toBeVisible();
-    await expect(popover.getByTestId('ktp-lang-EN')).toBeVisible();
-
-    // Language toggle is clickable and toggles selection styling
-    await popover.getByTestId('ktp-lang-KZ').click();
-    await expect(popover.getByTestId('ktp-lang-KZ')).toHaveClass(/bg-primary/);
+    // Color swatches present, language pills gone
+    await expect(popover.getByTestId("ktp-color-FACC15")).toBeVisible();
+    await expect(popover.locator('[data-testid^="ktp-lang-"]')).toHaveCount(0);
   });
 
   test('card action menu opens with edit and delete entries', async ({ page }) => {
