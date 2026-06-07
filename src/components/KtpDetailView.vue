@@ -32,8 +32,8 @@
         </div>
       </div>
 
-      <!-- Title -->
-      <h2 class="text-3xl font-bold mb-8">{{ moduleTitle }}</h2>
+      <!-- Title (hidden in embedded hosts that already show the discipline) -->
+      <h2 v-if="!embedded" class="text-3xl font-bold mb-8">{{ moduleTitle }}</h2>
 
       <!-- Action bar: single row (scrolls horizontally on narrow screens) -->
       <div class="w-fit flex flex-nowrap gap-3 mb-8 overflow-x-auto max-w-full">

@@ -1,7 +1,7 @@
 import { ref, computed, type ComputedRef, type Ref } from "vue";
 import { f7 } from "framework7-vue";
 import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
-import { useCalendarStore } from "@/stores/calendarStore";
+import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { getEventDays } from "@/utils/eventDate";
@@ -31,21 +31,21 @@ export function useKtpDetail(
     return ktpStore.getDetailsByKtpId(ktpId.value);
   });
 
-  const linkedEvent = computed(() => {
+  const linkedEvent = computed<CalendarEvent | null>(() => {
     if (!ktpId.value) return null;
-    const ktp = ktpStore.ktps.find((k: any) => k.id === ktpId.value);
+    const ktp = ktpStore.ktps.find((k) => k.id === ktpId.value);
     const byEventId = ktp?.eventId
-      ? calendarStore.events.find((e: any) => e.id === ktp.eventId)
+      ? calendarStore.events.find((e) => e.id === ktp.eventId)
       : null;
     return (
       byEventId ||
-      calendarStore.events.find((e: any) => e.ktpId === ktpId.value) ||
+      calendarStore.events.find((e) => e.ktpId === ktpId.value) ||
       null
     );
   });
 
   const learningOutcome = computed(() => {
-    const event = linkedEvent.value as any;
+    const event = linkedEvent.value;
     if (!event?.rupEntryId) return null;
     const rupEntryItem = rupEntryStore.getRupEntryById(event.rupEntryId);
     return rupEntryItem?.learningOutcome || null;
@@ -54,7 +54,7 @@ export function useKtpDetail(
   // Module title for headers (moved from KtpDetailPopup.computedModuleTitle)
   const moduleTitle = computed(() => {
     if (!ktpId.value) return "Рабочие учебные программы";
-    const ktpItem = ktpStore.ktps.find((ktp: any) => ktp.id === ktpId.value);
+    const ktpItem = ktpStore.ktps.find((k) => k.id === ktpId.value);
     if (!ktpItem) return "Рабочие учебные программы";
     const rupEntryItem = rupEntryStore.getRupEntryById(ktpItem.rupEntryId);
     if (!rupEntryItem) return "Рабочие учебные программы";
@@ -62,21 +62,13 @@ export function useKtpDetail(
   });
 
   const lessonDates = computed(() => {
-    const event = linkedEvent.value as any;
+    const event = linkedEvent.value;
     if (!event) return [];
 
-    const getSemesterById = (id: string) => {
-      const fn = (academicYearSemesterStore as any)
-        .getAcademicYearSemesterById;
-      if (typeof fn === "function") return fn(id);
-      if (fn && typeof fn.value === "function") return fn.value(id);
-      return academicYearSemesterStore.academicYearSemesters.find(
-        (s: any) => s.id === id
-      );
-    };
-
     const semester = event.semester
-      ? getSemesterById(String(event.semester))
+      ? academicYearSemesterStore.getAcademicYearSemesterById(
+          String(event.semester)
+        )
       : null;
     const semesterInfo = semester
       ? { startDate: semester.startDate, endDate: semester.endDate }
