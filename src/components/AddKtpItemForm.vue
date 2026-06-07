@@ -25,6 +25,20 @@
           {{ formError }}
         </div>
 
+        <!-- Study year -->
+        <div>
+          <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
+            Учебный год
+          </label>
+          <Select
+            placeholder="Учебный год"
+            v-model="selectedYearId"
+            :options="academicYearOptions"
+            name="ktp-item-academic-year"
+            id="ktp-item-academic-year"
+          />
+        </div>
+
         <!-- Specialty (faculty) -->
         <div>
           <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
@@ -38,34 +52,6 @@
             id="ktp-item-specialty"
             searchable
           />
-        </div>
-
-        <!-- Study year + Semester -->
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
-              Учебный год
-            </label>
-            <Select
-              placeholder="Учебный год"
-              v-model="innerAcademicYearId"
-              :options="academicYearOptions"
-              name="ktp-item-academic-year"
-              id="ktp-item-academic-year"
-            />
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
-              Семестр
-            </label>
-            <Select
-              placeholder="Семестр"
-              v-model="innerSemesterId"
-              :options="innerSemesterOptions"
-              name="ktp-item-semester"
-              id="ktp-item-semester"
-            />
-          </div>
         </div>
 
         <!-- RUP Entry Select -->
@@ -89,10 +75,7 @@
           class="flex items-start gap-3 p-4 rounded-xl bg-muted/50 text-muted-foreground text-sm"
         >
           <IconInfo class="w-5 h-5 flex-shrink-0 mt-0.5" />
-          <div>
-            Тематический план будет привязан к выбранной дисциплине
-            для выбранного учебного года и семестра.
-          </div>
+          <div>Тематический план будет привязан к выбранной дисциплине и строке распределения.</div>
         </div>
 
         <!-- Selected entry preview -->
@@ -103,6 +86,12 @@
           <div class="flex items-center gap-2">
             <IconBookOpen class="w-4 h-4 text-primary" />
             <span class="text-sm font-semibold">{{ selectedEntry.moduleIndex }} — {{ selectedEntry.moduleName }}</span>
+            <span
+              v-if="selectedEntry.language"
+              class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary flex-shrink-0"
+            >
+              {{ selectedEntry.language.toUpperCase() }}
+            </span>
           </div>
           <p
             v-if="selectedEntry.learningOutcome"
@@ -110,6 +99,41 @@
           >
             {{ selectedEntry.learningOutcome }}
           </p>
+        </div>
+
+        <!-- Распределение по курсам и семестрам -->
+        <div v-if="selectedEntry">
+          <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
+            Распределение по курсам и семестрам
+          </label>
+          <div v-if="distributionRows.length" class="flex flex-col gap-2">
+            <button
+              v-for="row in distributionRows"
+              :key="row.id"
+              type="button"
+              data-testid="ktp-dist-row"
+              class="w-full flex items-center gap-3 p-3 rounded-xl border text-left text-sm transition-all"
+              :class="selectedDistributionId === row.id
+                ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                : 'border-border hover:border-primary/50'"
+              @click="selectedDistributionId = row.id"
+            >
+              <span
+                class="w-3 h-3 rounded-full flex-shrink-0 border"
+                :class="selectedDistributionId === row.id
+                  ? 'bg-primary border-primary'
+                  : 'border-muted-foreground/40'"
+              />
+              {{ row.label }}
+            </button>
+          </div>
+          <div
+            v-else
+            class="flex items-start gap-3 p-4 rounded-xl bg-amber-500/10 text-amber-600 text-sm"
+          >
+            <IconAlertCircle class="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div>Нет распределения по семестрам — заполните РУП для этой дисциплины.</div>
+          </div>
         </div>
 
         <!-- Color -->
@@ -128,28 +152,6 @@
               :data-testid="`ktp-color-${color.slice(1)}`"
               @click="selectedColor = color"
             />
-          </div>
-        </div>
-
-        <!-- Languages -->
-        <div>
-          <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
-            Языки обучения
-          </label>
-          <div class="flex gap-2">
-            <button
-              v-for="lang in KTP_LANGUAGES"
-              :key="lang"
-              type="button"
-              class="px-4 py-2 rounded-xl text-sm font-bold transition-all"
-              :class="selectedLanguages.includes(lang)
-                ? 'bg-primary text-primary-foreground scale-105'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'"
-              :data-testid="`ktp-lang-${lang}`"
-              @click="toggleLanguage(lang)"
-            >
-              {{ lang }}
-            </button>
           </div>
         </div>
       </div>
@@ -182,7 +184,7 @@ import Select from "@/components/ui/Select.vue";
 import IconAlertCircle from "~icons/lucide/alert-circle";
 import IconInfo from "~icons/lucide/info";
 import IconBookOpen from "~icons/lucide/book-open";
-import { KTP_COLORS, KTP_LANGUAGES } from "@/lib/ktpHelpers";
+import { KTP_COLORS, deriveKtpLanguages } from "@/lib/ktpHelpers";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 
 const props = defineProps<{
@@ -200,18 +202,17 @@ const specialtyStore = useSpecialtyStore();
 const academicYearStore = useAcademicYearStore();
 const { rupEntryOptions } = storeToRefs(rupEntryStore);
 const { specialtyOptions } = storeToRefs(specialtyStore);
-const { academicYears } = storeToRefs(academicYearStore);
+const { academicYears, getActiveAcademicYear } = storeToRefs(academicYearStore);
 
 const formError = ref("");
 
 const rupEntryId = ref("");
 const selectedColor = ref(KTP_COLORS[0]);
-const selectedLanguages = ref<string[]>([]);
 
-// In-form context selectors (defaulted from the page filters via props)
+// RUP-style cascade: study year → specialty → discipline → distribution row
 const selectedSpecialtyId = ref("");
-const innerAcademicYearId = ref(props.selectedAcademicYearId ?? "");
-const innerSemesterId = ref(props.selectedSemesterId ?? "");
+const selectedYearId = ref("");
+const selectedDistributionId = ref("");
 
 const specialtySelectOptions = computed(() => [
   { value: "", text: "Все специальности" },
@@ -222,68 +223,46 @@ const academicYearOptions = computed(() =>
   academicYears.value.map((year) => ({ value: year.id, text: year.name }))
 );
 
-const innerSemesterOptions = computed(() => {
-  const yearId = innerAcademicYearId.value;
-  const list = yearId
-    ? academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(yearId)
-    : [];
-  return list.map((ays) => ({
-    // academicYearSemesters Convex id — matches ktps.semesterId validator
-    value: ays.id,
-    text: `Семестр ${ays.semesterNumber}`,
-  }));
-});
+// Default year: page filter if set, else the active academic year (rup.vue pattern)
+const defaultYearId = () =>
+  props.selectedAcademicYearId || getActiveAcademicYear.value?.id || "";
 
-// Sync defaults from page filters each time the popover opens
 watch(
   () => props.opened,
   (opened) => {
     if (!opened) return;
-    if (props.selectedAcademicYearId) {
-      innerAcademicYearId.value = props.selectedAcademicYearId;
-    }
-    if (props.selectedSemesterId) {
-      innerSemesterId.value = props.selectedSemesterId;
-    }
-  }
+    selectedYearId.value = defaultYearId();
+  },
+  { immediate: true }
 );
 
-// Year change invalidates the semester choice; auto-select when possible
-watch(innerAcademicYearId, (newYearId, oldYearId) => {
-  if (newYearId === oldYearId) return;
-  const auto = newYearId
-    ? academicYearSemesterStore.getAutoSelectedSemesterForYear(newYearId)
-    : null;
-  innerSemesterId.value = auto ? auto.id : "";
+// Year/specialty change invalidates discipline + row
+watch([selectedYearId, selectedSpecialtyId], () => {
+  rupEntryId.value = "";
+  selectedDistributionId.value = "";
 });
 
-// Single-select: picking a language replaces the previous one; clicking
-// the selected language deselects it. Stored as array for schema compat.
-const toggleLanguage = (lang: string) => {
-  selectedLanguages.value = selectedLanguages.value.includes(lang)
-    ? []
-    : [lang];
-};
-
-// Disciplines filtered by the in-form specialty + RUP academic year.
-// Semester deliberately does NOT hide disciplines: requiring a РУП hour
-// distribution for the selected semester left teachers with a near-empty
-// list (most РУПs only have rows for one semester). The semester is still
-// used for the KTP record and the planned-hours budget lookup.
+// Disciplines of the selected RUP year (+specialty). Language variants are
+// separate rupEntries — each shows with an [RU]/[KK]/[EN] suffix.
 const filteredRupEntryOptions = computed(() => {
-  const yearId = innerAcademicYearId.value;
+  const yearId = selectedYearId.value;
   const specialtyId = selectedSpecialtyId.value;
 
-  return rupEntryOptions.value.filter((option) => {
-    const rupEntryItem = rupEntryStore.getRupEntryById(option.value);
-    if (!rupEntryItem) return false;
-
-    if (specialtyId && !rupEntryItem.specialtyIds.includes(specialtyId)) {
-      return false;
-    }
-
-    return !yearId || rupEntryItem.academicYearId === yearId;
-  });
+  return rupEntryOptions.value
+    .filter((option) => {
+      const rupEntryItem = rupEntryStore.getRupEntryById(option.value);
+      if (!rupEntryItem) return false;
+      if (specialtyId && !rupEntryItem.specialtyIds.includes(specialtyId)) {
+        return false;
+      }
+      return !yearId || rupEntryItem.academicYearId === yearId;
+    })
+    .map((option) => {
+      const lang = rupEntryStore.getRupEntryById(option.value)?.language;
+      return lang
+        ? { ...option, text: `${option.text} [${lang.toUpperCase()}]` }
+        : option;
+    });
 });
 
 // Clear a discipline that fell out of the filtered list
@@ -302,20 +281,78 @@ const selectedEntry = computed(() => {
   return rupEntryStore.getRupEntryById(rupEntryId.value) ?? null;
 });
 
+interface DistributionRowOption {
+  id: string;
+  academicYearId: string;
+  semesterId: string;
+  label: string;
+}
+
+// «Распределение по курсам и семестрам» rows of the selected discipline.
+// Each row's academicYearId+semesterId directly key the KTP.
+const distributionRows = computed<DistributionRowOption[]>(() => {
+  const entry = selectedEntry.value;
+  if (!entry) return [];
+  return entry.distributionEntries.map((d) => {
+    const year = academicYearStore.getAcademicYearById(d.academicYearId);
+    const yearLabel = year ? `${year.startYear}-${year.endYear}` : "—";
+    const ays = academicYearSemesterStore.getAcademicYearSemesterById(
+      d.semesterId
+    );
+    const semLabel = ays ? `Семестр ${ays.semesterNumber}` : "—";
+    const hours = d.hours ? `${d.hours} ч.` : "— ч.";
+    return {
+      id: d.id,
+      academicYearId: d.academicYearId,
+      semesterId: d.semesterId,
+      label: `${yearLabel} · ${semLabel} · ${hours}`,
+    };
+  });
+});
+
+const selectedDistributionRow = computed(
+  () =>
+    distributionRows.value.find((r) => r.id === selectedDistributionId.value) ??
+    null
+);
+
+// Auto-select: single row, or the row matching the page filters
+watch(
+  () => [rupEntryId.value, distributionRows.value] as const,
+  () => {
+    const rows = distributionRows.value;
+    if (
+      selectedDistributionId.value &&
+      rows.some((r) => r.id === selectedDistributionId.value)
+    ) {
+      return; // current selection still valid
+    }
+    if (rows.length === 1) {
+      selectedDistributionId.value = rows[0].id;
+      return;
+    }
+    const fromFilters = rows.find(
+      (r) =>
+        props.selectedAcademicYearId &&
+        props.selectedSemesterId &&
+        r.academicYearId === props.selectedAcademicYearId &&
+        r.semesterId === props.selectedSemesterId
+    );
+    selectedDistributionId.value = fromFilters ? fromFilters.id : "";
+  }
+);
+
 const isFormValid = computed(() => {
-  return (
-    !!rupEntryId.value &&
-    !!innerAcademicYearId.value &&
-    !!innerSemesterId.value
-  );
+  return !!rupEntryId.value && !!selectedDistributionRow.value;
 });
 
 const resetForm = () => {
   rupEntryId.value = "";
   formError.value = "";
   selectedColor.value = KTP_COLORS[0];
-  selectedLanguages.value = [];
   selectedSpecialtyId.value = "";
+  selectedDistributionId.value = "";
+  selectedYearId.value = defaultYearId();
 };
 
 const onPopoverClosed = () => {
@@ -338,17 +375,21 @@ const handleSave = async () => {
       return;
     }
 
+    const row = selectedDistributionRow.value;
+    if (!row) {
+      formError.value = "Выберите строку распределения.";
+      return;
+    }
+
     const ktp = await ktpStore.ensureKtpForRupEntry(
       rupEntryId.value,
-      innerAcademicYearId.value,
-      innerSemesterId.value,
+      row.academicYearId,
+      row.semesterId,
       undefined,
       undefined,
       {
         color: selectedColor.value,
-        languages: selectedLanguages.value.length
-          ? selectedLanguages.value
-          : undefined,
+        languages: deriveKtpLanguages(selectedItem.language),
       }
     );
 
