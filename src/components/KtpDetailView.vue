@@ -32,6 +32,24 @@
         </div>
       </div>
 
+      <!-- Journals using this KTP -->
+      <details v-if="journals.length" class="ktp-journals mb-6">
+        <summary class="ktp-journals__summary">
+          <IconChevronRight class="ktp-journals__chev w-3.5 h-3.5 flex-shrink-0" />
+          <IconBookOpen class="w-3.5 h-3.5 flex-shrink-0" />
+          Журналы ({{ journals.length }})
+        </summary>
+        <ul class="mt-2 space-y-1">
+          <li
+            v-for="j in journals"
+            :key="j.id"
+            class="text-sm text-muted-foreground pl-6"
+          >
+            {{ journalStore.getDisciplineTitle(j) }} · {{ journalStore.getJournalSubtitle(j) }}
+          </li>
+        </ul>
+      </details>
+
       <!-- Title (hidden in embedded hosts that already show the discipline) -->
       <h2 v-if="!embedded" class="text-3xl font-bold mb-8">{{ moduleTitle }}</h2>
 
@@ -198,17 +216,21 @@ import { computed } from "vue";
 import { f7 } from "framework7-vue";
 import { saveAs } from "file-saver";
 import IconChevronLeft from "~icons/lucide/chevron-left";
+import IconChevronRight from "~icons/lucide/chevron-right";
 import IconFileDown from "~icons/lucide/file-down";
 import IconFileUp from "~icons/lucide/file-up";
 import IconSquareArrowDown from "~icons/lucide/square-arrow-down";
 import IconPlus from "~icons/lucide/plus";
 import IconMenu from "~icons/lucide/menu";
 import IconLock from "~icons/lucide/lock";
+import IconBookOpen from "~icons/lucide/book-open";
 import { useKtpStore } from "@/stores/ktpStore";
+import { useJournalStore } from "@/stores/journalStore";
 import KtpDetailFormPopover from "@/components/KtpDetailFormPopover.vue";
 import RupImportDialog from "@/components/RupImportDialog.vue";
 import DropdownMenu from "@/components/ui/DropdownMenu.vue";
 import { useKtpDetail } from "@/composables/useKtpDetail";
+import { useKtpJournals } from "@/composables/useKtpJournals";
 
 const props = defineProps<{
   ktpId: string;
@@ -223,6 +245,8 @@ const emit = defineEmits<{
 }>();
 
 const ktpStore = useKtpStore();
+const journalStore = useJournalStore();
+const journals = useKtpJournals(computed(() => props.ktpId));
 
 // Grid template adapts to the optional Дата column (inserted after Тема)
 const gridCols = computed(() =>
@@ -283,3 +307,19 @@ const downloadWordTemplate = () =>
 const downloadExcelTemplate = () =>
   downloadTemplateFile("/rup_templates/Шаблон КТП Марса.xlsx", "Шаблон КТП Марса.xlsx");
 </script>
+
+<style scoped>
+.ktp-journals__summary {
+  @apply flex items-center gap-1.5 text-xs font-semibold text-muted-foreground/80 uppercase tracking-widest cursor-pointer select-none;
+  list-style: none;
+}
+.ktp-journals__summary::-webkit-details-marker {
+  display: none;
+}
+.ktp-journals__chev {
+  transition: transform 0.15s;
+}
+.ktp-journals[open] .ktp-journals__chev {
+  transform: rotate(90deg);
+}
+</style>

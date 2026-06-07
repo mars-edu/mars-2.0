@@ -121,13 +121,26 @@
                   >
                     {{ item.learningOutcome }}
                   </p>
-                  <p
-                    v-if="getKtpSubtitle(item)"
-                    class="text-xs text-muted-foreground/70 flex items-center gap-1"
+                  <details
+                    v-if="getKtpJournals(item.ktpId).length"
+                    class="ktp-journals mt-0.5"
+                    @click.stop
                   >
-                    <IconClock class="w-3 h-3 flex-shrink-0" />
-                    {{ getKtpSubtitle(item) }}
-                  </p>
+                    <summary class="ktp-journals__summary">
+                      <IconChevronRight class="ktp-journals__chev w-3 h-3 flex-shrink-0" />
+                      <IconClock class="w-3 h-3 flex-shrink-0" />
+                      Журналы ({{ getKtpJournals(item.ktpId).length }})
+                    </summary>
+                    <ul class="mt-1 space-y-0.5">
+                      <li
+                        v-for="j in getKtpJournals(item.ktpId)"
+                        :key="j.id"
+                        class="text-xs text-muted-foreground pl-5"
+                      >
+                        {{ journalStore.getDisciplineTitle(j) }} · {{ journalStore.getJournalSubtitle(j) }}
+                      </li>
+                    </ul>
+                  </details>
                 </div>
 
                 <!-- Divider -->
@@ -242,6 +255,7 @@ import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore
 import { useCourseStore } from "@/stores/courseStore";
 import { useKtpStore } from "@/stores/ktpStore";
 import { useJournalStore } from "@/stores/journalStore";
+import { collectKtpJournals } from "@/composables/useKtpJournals";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { storeToRefs } from "pinia";
 import { useSidebar } from "@/composables/useSidebar";
@@ -417,32 +431,9 @@ const getCourseNumber = (courseId: string) => {
   return course ? course.number : "—";
 };
 
-const getKtpSubtitle = (item: any) => {
-  // Find the calendar event that corresponds to this KTP's rupEntryId and semester
-  const events = calendarStore.filteredEvents;
-  const matchingEvent = events.find((event: any) => {
-    const actualEvent = event._custom?.value || event;
-    return (
-      actualEvent.rupEntryId === item.id &&
-      actualEvent.semester === item.semesterId
-    );
-  });
-
-  if (!matchingEvent) {
-    return "";
-  }
-
-  // Get the journal using the event ID
-  const eventId = matchingEvent._custom?.value?.id || matchingEvent.id;
-  const journal = journalStore.getJournalById(eventId);
-
-  if (!journal) {
-    return "";
-  }
-
-  // Use the journalStore's subtitle method
-  return journalStore.getJournalSubtitle(journal);
-};
+// Journals using a KTP: linked group journal + its individual children
+const getKtpJournals = (ktpId: string) =>
+  collectKtpJournals(ktpId, ktpStore, calendarStore, journalStore);
 
 const getTopicCount = (item: any): number => {
   const ktpId = getKtpIdForRupEntry.value(
@@ -504,4 +495,18 @@ watch(
 );
 </script>
 
-<style scoped></style>
+<style scoped>
+.ktp-journals__summary {
+  @apply flex items-center gap-1 text-xs text-muted-foreground/70 cursor-pointer select-none;
+  list-style: none;
+}
+.ktp-journals__summary::-webkit-details-marker {
+  display: none;
+}
+.ktp-journals__chev {
+  transition: transform 0.15s;
+}
+.ktp-journals[open] .ktp-journals__chev {
+  transform: rotate(90deg);
+}
+</style>
