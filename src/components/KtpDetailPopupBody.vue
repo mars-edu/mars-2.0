@@ -202,421 +202,56 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { f7, f7Button } from "framework7-vue";
+import { computed } from "vue";
+import { f7Button } from "framework7-vue";
 import IconFileDown from "~icons/lucide/file-down";
 import IconFileUp from "~icons/lucide/file-up";
 import IconSquareArrowDown from "~icons/lucide/square-arrow-down";
 import IconPlus from "~icons/lucide/plus";
 import IconMenu from "~icons/lucide/menu";
 import IconLock from "~icons/lucide/lock";
-import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
-import { useCalendarStore } from "@/stores/calendarStore";
-import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
-import { useRupEntryStore } from "@/stores/rupEntryStore";
-import { getEventDays } from "@/utils/eventDate";
-import { DATE_UI_FORMAT } from "@/constants/calendar";
+import { useKtpStore } from "@/stores/ktpStore";
 import KtpDetailFormPopover from "@/components/KtpDetailFormPopover.vue";
 import DownloadTemplateDialog from "@/components/DownloadTemplateDialog.vue";
 import RupImportDialog from "@/components/RupImportDialog.vue";
 import { storeToRefs } from "pinia";
-import {
-  parseEducationalScheduleViaConvex,
-  exportKtpToExcelViaConvex,
-} from "@/services/convex-excel-export";
-import { parseKtpDocxFile } from "@/services/docx-ktp-parser";
-import { useKtpPlannedHours } from "@/composables/useKtpPlannedHours";
+import { useKtpDetail } from "@/composables/useKtpDetail";
 
 const props = defineProps<{
   ktpId: string | null;
 }>();
 
 const ktpStore = useKtpStore();
-const calendarStore = useCalendarStore();
-const academicYearSemesterStore = useAcademicYearSemesterStore();
-const rupEntryStore = useRupEntryStore();
 const { loading } = storeToRefs(ktpStore);
-const { getPlannedHoursForKtp } = useKtpPlannedHours();
-const selectedDetailId = ref("ktp-detail-3");
 
-// Computed property to get filtered details for the current parent
-const ktpDetails = computed(() => {
-  if (!props.ktpId) return [];
-  return ktpStore.getDetailsByKtpId(props.ktpId);
-});
-
-const linkedEvent = computed(() => {
-  if (!props.ktpId) return null;
-  const ktp = ktpStore.ktps.find((k: any) => k.id === props.ktpId);
-  const byEventId = ktp?.eventId
-    ? calendarStore.events.find((e: any) => e.id === ktp.eventId)
-    : null;
-  return byEventId || calendarStore.events.find((e: any) => e.ktpId === props.ktpId) || null;
-});
-
-const learningOutcome = computed(() => {
-  const event = linkedEvent.value as any;
-  if (!event?.rupEntryId) return null;
-  const rupEntryItem = rupEntryStore.getRupEntryById(event.rupEntryId);
-  return rupEntryItem?.learningOutcome || null;
-});
-
-const lessonDates = computed(() => {
-  const event = linkedEvent.value as any;
-  if (!event) return [];
-
-  const getSemesterById = (id: string) => {
-    const fn = (academicYearSemesterStore as any).getAcademicYearSemesterById;
-    if (typeof fn === "function") return fn(id);
-    if (fn && typeof fn.value === "function") return fn.value(id);
-    return academicYearSemesterStore.academicYearSemesters.find(
-      (s: any) => s.id === id
-    );
-  };
-
-  const semester = event.semester ? getSemesterById(String(event.semester)) : null;
-  const semesterInfo = semester
-    ? { startDate: semester.startDate, endDate: semester.endDate }
-    : undefined;
-
-  try {
-    const days = getEventDays(event, semesterInfo);
-    return days.map((d) => d.day.format(DATE_UI_FORMAT));
-  } catch (e) {
-    console.error("[KtpDetailPopupBody] Failed to compute lesson dates:", e);
-    return [];
-  }
-});
-
-const getLessonDateByIndex = (idx: number) => lessonDates.value[idx] || "—";
-
-// Computed properties for hour calculations
-const plannedHoursFromKtp = computed(() => {
-  const details = ktpDetails.value;
-  const totalHours = details.reduce((sum, detail) => {
-    const hours = detail.totalHours || 0;
-    return sum + hours;
-  }, 0);
-  return totalHours;
-});
-
-// Planned-hours budget from the RUP distributionEntry (null = unknown)
-const semesterPlannedHours = computed(() => {
-  if (!props.ktpId) return null;
-  return getPlannedHoursForKtp(props.ktpId);
-});
-
-const isFormPopoverOpen = ref(false);
-const editingDetail = ref<KtpDetail | null>(null);
-const isEditingLocked = ref(false);
-const isImporting = ref(false);
-const isRupImportDialogOpen = ref(false);
-const dragSourceId = ref<string | null>(null);
-const dragOverId = ref<string | null>(null);
-const dropIndex = ref<number | null>(null);
-
-const downloadTemplate = () => {
-  f7.popover.open("#download-template-popover", "#download-template-button");
-};
-
-const downloadRup = async () => {
-  if (!props.ktpId) {
-    f7.toast
-      .create({
-        text: "Ошибка: не указан родительский элемент",
-        closeTimeout: 3000,
-        cssClass: "color-red",
-      })
-      .open();
-    return;
-  }
-
-  f7.preloader.show();
-  try {
-    // Template columns: № занятия, Тема, Часы, Тип занятий, Домашнее задание, Примечание
-    const dataRows = ktpDetails.value.map((item) => [
-      item.position,
-      item.theme,
-      item.totalHours ?? null,
-      null, // Тип занятий (lesson type) - not available in KTP details
-      item.homework ?? null,
-      item.notes ?? null,
-    ]);
-
-    const templatePath = "/rup_templates/Шаблон КТП Марса.xlsx";
-    await exportKtpToExcelViaConvex(dataRows, templatePath, learningOutcome.value);
-
-    f7.toast
-      .create({
-        text: "РУП успешно скачан",
-        closeTimeout: 3000,
-        cssClass: "color-green",
-      })
-      .open();
-  } catch (error) {
-    console.error("Error downloading RUP:", error);
-    f7.toast
-      .create({
-        text: `Ошибка: ${(error as Error).message}`,
-        closeTimeout: 5000,
-        cssClass: "color-red",
-      })
-      .open();
-  } finally {
-    f7.preloader.hide();
-  }
-};
-
-const uploadDocument = () => {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = ".xlsx,.xls,.docx";
-  input.style.display = "none";
-
-  input.onchange = async (event) => {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-
-    if (!props.ktpId) {
-      f7.toast
-        .create({
-          text: "Ошибка: не указан родительский элемент",
-          closeTimeout: 3000,
-          cssClass: "color-red",
-        })
-        .open();
-      return;
-    }
-
-    f7.preloader.show();
-    try {
-      isImporting.value = true;
-      ktpStore.error = null;
-
-      const isDocx =
-        file.name.toLowerCase().endsWith(".docx") ||
-        file.type ===
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-
-      const parseResult = isDocx
-        ? await parseKtpDocxFile(file)
-        : await parseEducationalScheduleViaConvex(file);
-
-      if (!parseResult.lessons.length) {
-        throw new Error("В файле не найдено ни одного урока для импорта");
-      }
-
-      const importResult = await ktpStore.bulkImportKtpDetails(
-        props.ktpId,
-        parseResult.lessons
-      );
-
-      if (importResult.success) {
-        f7.toast
-          .create({
-            text: `Успешно импортировано ${importResult.imported} уроков из файла ${parseResult.metadata.fileName}`,
-            closeTimeout: 4000,
-            cssClass: "color-green",
-          })
-          .open();
-        // Refresh current list to ensure view shows imported data for this parent
-        ktpStore.fetchDetailsForKtp(props.ktpId);
-      } else {
-        throw new Error(importResult.error || "Ошибка импорта данных");
-      }
-    } catch (error) {
-      console.error("Error processing import file:", error);
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Неизвестная ошибка при обработке файла";
-
-      f7.toast
-        .create({
-          text: `Ошибка: ${errorMessage}`,
-          closeTimeout: 5000,
-          cssClass: "color-red",
-        })
-        .open();
-
-      ktpStore.error = errorMessage;
-    } finally {
-      isImporting.value = false;
-      f7.preloader.hide();
-    }
-  };
-
-  document.body.appendChild(input);
-  input.click();
-  document.body.removeChild(input);
-};
-
-const importData = () => {
-  isRupImportDialogOpen.value = true;
-};
-
-const addManually = () => {
-  openAddPopover();
-};
-
-const openAddPopover = () => {
-  editingDetail.value = null;
-  isFormPopoverOpen.value = true;
-};
-
-// const clearAllThemes = () => { ... } // disabled (see template note)
-
-const openEditPopover = (detail: KtpDetail) => {
-  editingDetail.value = detail;
-  isEditingLocked.value = false;
-  selectedDetailId.value = detail.id;
-  isFormPopoverOpen.value = true;
-};
-
-// Date-based locking: check if a row's date is in the past
-const isRowLocked = (idx: number): boolean => {
-  const dateStr = lessonDates.value[idx];
-  if (!dateStr || dateStr === "—") return false;
-  // Parse DD.MM.YYYY format
-  const parts = dateStr.split(".");
-  if (parts.length !== 3) return false;
-  const parsed = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return parsed < today;
-};
-
-const handleRowClick = (item: KtpDetail, idx: number) => {
-  if (isRowLocked(idx)) {
-    // Open in view-only mode for locked rows
-    editingDetail.value = item;
-    isEditingLocked.value = true;
-    selectedDetailId.value = item.id;
-    isFormPopoverOpen.value = true;
-  } else {
-    openEditPopover(item);
-  }
-};
-
-// Hours validation: remaining hours available for the form.
-// Budget comes from the RUP distributionEntry; undefined disables the warning.
-const remainingHoursForForm = computed(() => {
-  const planned = semesterPlannedHours.value;
-  if (planned === null) return undefined;
-  const editId = editingDetail.value?.id;
-  const usedByOthers = ktpDetails.value.reduce((sum, d) => {
-    if (d.id === editId) return sum;
-    return sum + (d.totalHours || 0);
-  }, 0);
-  return planned - usedByOthers;
-});
-
-function onDragStart(item: KtpDetail) {
-  dragSourceId.value = item.id;
-}
-
-function onDragEnter(item: KtpDetail, idx: number, event?: DragEvent) {
-  if (dragSourceId.value === item.id) return;
-
-  dragOverId.value = item.id;
-
-  // Calculate drop position based on mouse position within the item
-  if (event) {
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    const mouseY = event.clientY;
-    const itemMiddle = rect.top + rect.height / 2;
-
-    // If mouse is in the upper half, drop before this item
-    // If mouse is in the lower half, drop after this item
-    dropIndex.value = mouseY < itemMiddle ? idx : idx + 1;
-  } else {
-    dropIndex.value = idx;
-  }
-}
-
-function onDragOver(item: KtpDetail, idx: number, event: DragEvent) {
-  if (dragSourceId.value === item.id) return;
-
-  // Continuously update drop position based on mouse position for smooth feedback
-  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-  const mouseY = event.clientY;
-  const itemMiddle = rect.top + rect.height / 2;
-
-  // Update drop index based on mouse position
-  dropIndex.value = mouseY < itemMiddle ? idx : idx + 1;
-  dragOverId.value = item.id;
-}
-
-async function onDrop() {
-  if (!props.ktpId || dragSourceId.value == null || dropIndex.value == null) {
-    dragSourceId.value = null;
-    dragOverId.value = null;
-    dropIndex.value = null;
-    return;
-  }
-  const ids = ktpDetails.value.map((d) => d.id);
-  const fromIndex = ids.indexOf(dragSourceId.value);
-  let toIndex = dropIndex.value;
-
-  // Adjust the target index if we're moving an item down
-  if (fromIndex < toIndex) {
-    toIndex--;
-  }
-
-  if (
-    fromIndex === -1 ||
-    toIndex < 0 ||
-    toIndex >= ktpDetails.value.length ||
-    fromIndex === toIndex
-  ) {
-    dragSourceId.value = null;
-    dragOverId.value = null;
-    dropIndex.value = null;
-    return;
-  }
-
-  const newOrder = [...ids];
-  const [moved] = newOrder.splice(fromIndex, 1);
-  newOrder.splice(toIndex, 0, moved);
-
-  // Clear immediately so a second drop is a no-op during the pending mutation
-  dragSourceId.value = null;
-  dragOverId.value = null;
-  dropIndex.value = null;
-
-  const result = await ktpStore.reorderKtpDetails(props.ktpId, newOrder);
-  if (result.success) {
-    f7.toast
-      .create({
-        text: `Порядок элементов обновлен`,
-        closeTimeout: 1500,
-        cssClass: "color-green",
-      })
-      .open();
-    ktpStore.fetchDetailsForKtp(props.ktpId);
-  } else {
-    f7.toast
-      .create({
-        text: `Ошибка при изменении порядка: ${result.error}`,
-        closeTimeout: 3000,
-        cssClass: "color-red",
-      })
-      .open();
-  }
-}
-
-function onDragEnd() {
-  dragSourceId.value = null;
-  dragOverId.value = null;
-  dropIndex.value = null;
-}
-
-const onThemesImported = (count: number) => {
-  if (props.ktpId) {
-    ktpStore.fetchDetailsForKtp(props.ktpId);
-  }
-};
-
+const {
+  ktpDetails,
+  getLessonDateByIndex,
+  plannedHoursFromKtp,
+  semesterPlannedHours,
+  remainingHoursForForm,
+  isRowLocked,
+  isFormPopoverOpen,
+  editingDetail,
+  isEditingLocked,
+  handleRowClick,
+  addManually,
+  dragSourceId,
+  dragOverId,
+  dropIndex,
+  onDragStart,
+  onDragEnter,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  isImporting,
+  isRupImportDialogOpen,
+  uploadDocument,
+  importData,
+  onThemesImported,
+  downloadRup,
+  downloadTemplate,
+} = useKtpDetail(computed(() => props.ktpId));
 </script>
 
 <style scoped>
