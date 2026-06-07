@@ -14,8 +14,8 @@ import { parseKtpDocxFile } from "@/services/docx-ktp-parser";
 import { useKtpPlannedHours } from "@/composables/useKtpPlannedHours";
 
 /**
- * Shared KTP detail logic for KtpDetailPopupBody (popup) and
- * KtpDetailView (in-page). Extracted verbatim from KtpDetailPopupBody.
+ * Shared KTP detail logic for KtpDetailView (KTP page, detail popup,
+ * and journal planning tab).
  */
 export function useKtpDetail(
   ktpId: ComputedRef<string | null> | Ref<string | null>

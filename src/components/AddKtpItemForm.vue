@@ -108,7 +108,6 @@
             v-if="specialtyChips.length"
             class="flex items-center gap-1.5 mt-2 ml-6"
           >
-            <span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Специальности</span>
             <span
               v-for="sp in specialtyChips"
               :key="sp.id"

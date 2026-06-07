@@ -15,8 +15,7 @@ export function useKtpPlannedHours() {
   const academicYearSemesterStore = useAcademicYearSemesterStore();
 
   const resolveSemesterNumber = (id: string): string | null => {
-    // Defensive against getter shape (fn vs computed-ref), mirrors
-    // KtpDetailPopupBody's existing fallback pattern.
+    // Defensive against getter shape (fn vs computed-ref).
     const getter: any = (academicYearSemesterStore as any)
       .getAcademicYearSemesterById;
     const ays =
