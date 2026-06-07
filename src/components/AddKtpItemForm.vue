@@ -54,9 +54,9 @@
             search-placeholder="Поиск по дисциплине..."
           >
             <template #option="{ option, selected }">
-              <div class="flex-1 text-left min-w-0">
+              <div class="flex-1 text-left min-w-0 overflow-hidden">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-[15px] font-semibold truncate" :class="selected ? 'text-primary' : ''">
+                  <span class="text-[15px] font-semibold" :class="selected ? 'text-primary' : ''">
                     {{ option.moduleIndex }} {{ option.moduleName }} — {{ option.learningOutcome }}
                   </span>
                   <span
@@ -66,7 +66,7 @@
                     {{ option.language.toUpperCase() }}
                   </span>
                 </div>
-                <div v-if="option.specialtyChips && option.specialtyChips.length" class="flex items-center gap-1 mt-1.5">
+                <div v-if="option.specialtyChips && option.specialtyChips.length" class="flex flex-wrap items-center gap-1 mt-1.5">
                   <span
                     v-for="sp in option.specialtyChips"
                     :key="sp.id"
