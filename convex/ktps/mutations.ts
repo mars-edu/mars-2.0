@@ -215,6 +215,7 @@ export const clearDetails = mutation({
 export const bulkImportDetails = mutation({
   args: {
     ktpId: v.id("ktps"),
+    replace: v.optional(v.boolean()),
     details: v.array(
       v.object({
         position: v.number(),
@@ -231,6 +232,16 @@ export const bulkImportDetails = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    if (args.replace) {
+      const existing = await ctx.db
+        .query("ktpDetails")
+        .withIndex("by_ktpId", (q) => q.eq("ktpId", args.ktpId))
+        .collect();
+      for (const detail of existing) {
+        await ctx.db.delete(detail._id);
+      }
+    }
+
     const timestamps = createTimestamps();
     const insertedIds = [];
 
