@@ -709,8 +709,8 @@ const getSemesterById = (id: string) => {
 };
 
 async function ensureKtpDataLoaded(ktpId: string) {
-  if (loadedForKtpId.value === ktpId) return;
-  await ktpStore.loadFromBackend();
+  // KTP data arrives via the store's reactive Convex subscription;
+  // nothing to load imperatively anymore.
   loadedForKtpId.value = ktpId;
 }
 

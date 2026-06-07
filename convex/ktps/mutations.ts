@@ -146,7 +146,26 @@ export const updateDetail = mutation({
 export const removeDetail = mutation({
   args: { id: v.id("ktpDetails") },
   handler: async (ctx, args) => {
+    const detail = await ctx.db.get(args.id);
     await ctx.db.delete(args.id);
+
+    // Renumber remaining siblings so positions stay contiguous 1..n
+    if (detail) {
+      const siblings = await ctx.db
+        .query("ktpDetails")
+        .withIndex("by_ktpId", (q) => q.eq("ktpId", detail.ktpId))
+        .collect();
+      siblings.sort((a, b) => a.position - b.position);
+      for (let i = 0; i < siblings.length; i++) {
+        if (siblings[i].position !== i + 1) {
+          await ctx.db.patch(siblings[i]._id, {
+            position: i + 1,
+            ...updateTimestamp(),
+          });
+        }
+      }
+    }
+
     return { success: true };
   },
 });

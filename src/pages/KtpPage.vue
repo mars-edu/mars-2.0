@@ -296,13 +296,6 @@ const semesterStore = useSemesterStore();
 const { sortedSemesters } = storeToRefs(semesterStore);
 const ktpStore = useKtpStore();
 
-// ktpStore is imperative (no reactive Convex subscription) — without this,
-// the page renders only stale persisted state and freshly created KTPs
-// vanish on reload. Hydrate on every visit.
-onMounted(() => {
-  ktpStore.loadFromBackend();
-});
-
 const selectedItemsStore = useSelectedItemsStore();
 const {
   selectedAcademicYearId,

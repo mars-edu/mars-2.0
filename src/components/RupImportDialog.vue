@@ -280,15 +280,17 @@ const handleImport = async () => {
       })
     );
 
-    // Clear existing themes for this KTP, then add imported ones
+    // Replace existing themes for this KTP server-side (atomic clear + insert)
     const ktp = ktpStore.findKtpById(props.currentKtpId);
     if (!ktp) {
       throw new Error("KTP не найден");
     }
-    ktpStore.ktpDetails = ktpStore.ktpDetails.filter((d) => d.ktpId !== ktp.id);
-
-    for (const themeData of importedThemes) {
-      ktpStore.addKtpDetail(ktp.id, themeData);
+    const result = await ktpStore.bulkReplaceKtpDetails(
+      ktp.id,
+      importedThemes as Array<Partial<KtpDetail> & { position: number }>
+    );
+    if (!result.success) {
+      throw new Error(result.error || "Ошибка импорта тем");
     }
 
     f7.toast
