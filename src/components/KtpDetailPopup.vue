@@ -153,7 +153,6 @@ watch(ktpId, (newKtpId) => {
 });
 
 watch(opened, (isOpened, wasOpened) => {
-  console.log("🔄 KtpDetailPopup opened watch triggered", { isOpened, wasOpened, ktpId: ktpId.value });
   if (isOpened && !wasOpened) {
     // Only open if transitioning from closed to open
     if (ktpId.value) {

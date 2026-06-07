@@ -25,7 +25,6 @@ export function useKtpDetail(
   const academicYearSemesterStore = useAcademicYearSemesterStore();
   const rupEntryStore = useRupEntryStore();
   const { getPlannedHoursForKtp } = useKtpPlannedHours();
-  const selectedDetailId = ref("ktp-detail-3");
 
   const ktpDetails = computed(() => {
     if (!ktpId.value) return [];
@@ -274,7 +273,6 @@ export function useKtpDetail(
   const openEditPopover = (detail: KtpDetail) => {
     editingDetail.value = detail;
     isEditingLocked.value = false;
-    selectedDetailId.value = detail.id;
     isFormPopoverOpen.value = true;
   };
 
@@ -300,7 +298,6 @@ export function useKtpDetail(
       // Open in view-only mode for locked rows
       editingDetail.value = item;
       isEditingLocked.value = true;
-      selectedDetailId.value = item.id;
       isFormPopoverOpen.value = true;
     } else {
       openEditPopover(item);
@@ -437,7 +434,6 @@ export function useKtpDetail(
     isFormPopoverOpen,
     editingDetail,
     isEditingLocked,
-    selectedDetailId,
     openAddPopover,
     addManually,
     openEditPopover,
