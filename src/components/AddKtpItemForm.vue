@@ -54,9 +54,9 @@
             search-placeholder="Поиск по дисциплине..."
           >
             <template #option="{ option, selected }">
-              <div class="flex-1 text-left min-w-0 overflow-hidden">
+              <div class="flex-1 text-left min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-[15px] font-semibold" :class="selected ? 'text-primary' : ''">
+                  <span class="text-[15px] font-semibold whitespace-normal break-words" :class="selected ? 'text-primary' : ''">
                     {{ option.moduleIndex }} {{ option.moduleName }} — {{ option.learningOutcome }}
                   </span>
                   <span
