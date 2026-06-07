@@ -10,7 +10,7 @@
       <!-- Header -->
       <PopoverHeader
         title="Создание КТП"
-        subtitle="Выберите результат обучения/дисциплину для нового плана"
+        subtitle="Выберите дисциплину для нового плана"
         :on-cancel="requestClose"
       />
 
@@ -28,7 +28,7 @@
         <!-- RUP Entry Select -->
         <div>
           <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
-            Результат обучения / дисциплина
+            Дисциплина
           </label>
           <Select
             placeholder="Выберите из списка..."
@@ -137,7 +137,8 @@ import Select from "@/components/ui/Select.vue";
 import IconAlertCircle from "~icons/lucide/alert-circle";
 import IconInfo from "~icons/lucide/info";
 import IconBookOpen from "~icons/lucide/book-open";
-import { KTP_COLORS, KTP_LANGUAGES } from "@/lib/ktpHelpers";
+import { KTP_COLORS, KTP_LANGUAGES, semesterIdsMatch } from "@/lib/ktpHelpers";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 
 const props = defineProps<{
   opened: boolean;
@@ -149,7 +150,15 @@ const emit = defineEmits(["update:opened"]);
 
 const rupEntryStore = useRupEntryStore();
 const ktpStore = useKtpStore();
+const academicYearSemesterStore = useAcademicYearSemesterStore();
 const { rupEntryOptions } = storeToRefs(rupEntryStore);
+
+// Maps an academicYearSemesters Convex id to its semesterNumber string
+// (distributionEntries store Convex ids, the page passes semester numbers)
+const resolveSemesterNumber = (id: string): string | null => {
+  const ays = academicYearSemesterStore.getAcademicYearSemesterById(id);
+  return ays ? String(ays.semesterNumber) : null;
+};
 const formError = ref("");
 
 const rupEntryId = ref("");
@@ -174,11 +183,16 @@ const filteredRupEntryOptions = computed(() => {
     const rupEntryItem = rupEntryStore.getRupEntryById(option.value);
     if (!rupEntryItem) return false;
 
-    // Check if rupEntryItem has distributionEntries with matching academicYearId and semesterId
+    // Check if rupEntryItem has distributionEntries with matching academicYearId and semesterId.
+    // semesterIdsMatch handles the Convex-id vs semester-number-string mismatch.
     return rupEntryItem.distributionEntries.some(
       (entry) =>
         entry.academicYearId === props.selectedAcademicYearId &&
-        entry.semesterId === props.selectedSemesterId
+        semesterIdsMatch(
+          entry.semesterId,
+          props.selectedSemesterId!,
+          resolveSemesterNumber
+        )
     );
   });
 });
