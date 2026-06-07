@@ -17,7 +17,7 @@
           <div class="flex justify-between mb-2">
             <span class="text-foreground">Запланировано на семестр:</span>
             <span class="text-foreground font-medium"
-              >{{ semesterPlannedHours }} часов</span
+              >{{ semesterPlannedHours ?? "—" }} часов</span
             >
           </div>
         </div>
@@ -225,6 +225,7 @@ import {
   exportKtpToExcelViaConvex,
 } from "@/services/convex-excel-export";
 import { parseKtpDocxFile } from "@/services/docx-ktp-parser";
+import { useKtpPlannedHours } from "@/composables/useKtpPlannedHours";
 
 const props = defineProps<{
   ktpId: string | null;
@@ -235,6 +236,7 @@ const calendarStore = useCalendarStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const rupEntryStore = useRupEntryStore();
 const { loading } = storeToRefs(ktpStore);
+const { getPlannedHoursForKtp } = useKtpPlannedHours();
 const selectedDetailId = ref("ktp-detail-3");
 
 // Computed property to get filtered details for the current parent
@@ -298,13 +300,10 @@ const plannedHoursFromKtp = computed(() => {
   return totalHours;
 });
 
+// Planned-hours budget from the RUP distributionEntry (null = unknown)
 const semesterPlannedHours = computed(() => {
-  const details = ktpDetails.value;
-  const totalHours = details.reduce((sum, detail) => {
-    const hours = detail.totalHours || 0;
-    return sum + hours;
-  }, 0);
-  return totalHours.toString();
+  if (!props.ktpId) return null;
+  return getPlannedHoursForKtp(props.ktpId);
 });
 
 const isFormPopoverOpen = ref(false);
@@ -499,18 +498,17 @@ const handleRowClick = (item: KtpDetail, idx: number) => {
   }
 };
 
-// Hours validation: remaining hours available for the form
+// Hours validation: remaining hours available for the form.
+// Budget comes from the RUP distributionEntry; undefined disables the warning.
 const remainingHoursForForm = computed(() => {
-  const details = ktpDetails.value;
+  const planned = semesterPlannedHours.value;
+  if (planned === null) return undefined;
   const editId = editingDetail.value?.id;
-  // Sum hours of all details except the one being edited
-  const usedHours = details.reduce((sum, d) => {
+  const usedByOthers = ktpDetails.value.reduce((sum, d) => {
     if (d.id === editId) return sum;
     return sum + (d.totalHours || 0);
   }, 0);
-  // If editing, add back the current detail's hours as available
-  const currentHours = editingDetail.value?.totalHours || 0;
-  return currentHours + (plannedHoursFromKtp.value - usedHours);
+  return planned - usedByOthers;
 });
 
 function onDragStart(item: KtpDetail) {
@@ -549,7 +547,7 @@ function onDragOver(item: KtpDetail, idx: number, event: DragEvent) {
   dragOverId.value = item.id;
 }
 
-function onDrop() {
+async function onDrop() {
   if (!props.ktpId || dragSourceId.value == null || dropIndex.value == null) {
     dragSourceId.value = null;
     dragOverId.value = null;
@@ -581,7 +579,7 @@ function onDrop() {
   const [moved] = newOrder.splice(fromIndex, 1);
   newOrder.splice(toIndex, 0, moved);
 
-  const result = ktpStore.reorderKtpDetails(props.ktpId, newOrder);
+  const result = await ktpStore.reorderKtpDetails(props.ktpId, newOrder);
   if (result.success) {
     f7.toast
       .create({
