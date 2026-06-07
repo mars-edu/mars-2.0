@@ -4,7 +4,7 @@
     id="add-ktp-item-popover"
     :opened="opened"
     @popover:closed="onPopoverClosed"
-    style="width: 575px !important; max-width: calc(100vw - 32px) !important"
+    style="width: 600px !important; max-width: calc(100vw - 32px) !important"
   >
     <div class="bg-card text-card-foreground rounded-2xl overflow-hidden flex flex-col" style="max-height: 80dvh">
       <!-- Header -->
@@ -55,22 +55,20 @@
           >
             <template #option="{ option, selected }">
               <div class="flex-1 text-left min-w-0">
-                <div class="flex items-center gap-2">
-                  <span class="text-[15px] font-semibold whitespace-normal break-words" :class="selected ? 'text-primary' : ''">
-                    {{ option.moduleIndex }} {{ option.moduleName }} — {{ option.learningOutcome }}
-                  </span>
-                  <span
-                    v-if="option.language"
-                    class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary flex-shrink-0"
-                  >
-                    {{ option.language.toUpperCase() }}
-                  </span>
-                </div>
-                <div v-if="option.specialtyChips && option.specialtyChips.length" class="flex flex-wrap gap-1 mt-1.5 max-w-full overflow-hidden">
+                <span class="text-[15px] font-semibold whitespace-normal break-words" :class="selected ? 'text-primary' : ''">
+                  {{ option.moduleIndex }} {{ option.moduleName }} — {{ option.learningOutcome }}
+                </span>
+                <span
+                  v-if="option.language"
+                  class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary flex-shrink-0 ml-2 align-middle"
+                >
+                  {{ option.language.toUpperCase() }}
+                </span>
+                <div v-if="option.specialtyChips && option.specialtyChips.length" class="flex flex-wrap items-center gap-1 mt-1.5">
                   <span
                     v-for="sp in option.specialtyChips"
                     :key="sp.id"
-                    class="inline-block px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 max-w-full break-words"
+                    class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/30"
                   >
                     {{ sp.codeName || sp.name }}
                   </span>
@@ -112,7 +110,7 @@
             <span
               v-for="sp in specialtyChips"
               :key="sp.id"
-              class="inline-block px-2 py-0.5 text-[11px] font-bold rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 max-w-full break-words"
+              class="px-2 py-0.5 text-[11px] font-bold rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/30"
             >
               {{ sp.codeName || sp.name }}
             </span>
