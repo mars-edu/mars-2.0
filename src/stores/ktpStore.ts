@@ -135,13 +135,17 @@ export const useKtpStore = defineStore(
       id: string,
       data: { name?: string; color?: string; languages?: string[] }
     ) {
+      // Drop undefined keys so "not provided" never clobbers existing values
+      const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([, v]) => v !== undefined)
+      );
       await convex.mutation(api.ktps.mutations.update, {
         id: id as any,
-        ...data,
+        ...cleanData,
       });
       const index = ktps.value.findIndex((k) => k.id === id);
       if (index !== -1) {
-        ktps.value[index] = { ...ktps.value[index], ...data };
+        ktps.value[index] = { ...ktps.value[index], ...cleanData };
       }
     }
 
