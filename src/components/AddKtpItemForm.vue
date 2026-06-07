@@ -39,19 +39,79 @@
           />
         </div>
 
-        <!-- RUP Entry Select -->
+        <!-- Discipline picker (custom: each option shows language badge + specialty chips) -->
         <div>
           <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
             Дисциплина
           </label>
-          <Select
-            placeholder="Выберите из списка..."
-            v-model="rupEntryId"
-            :options="filteredRupEntryOptions"
-            name="ktp-item-rupEntry"
-            id="ktp-item-rupEntry"
-            searchable
-          />
+          <div ref="discRootRef" class="relative">
+            <button
+              type="button"
+              class="relative flex items-center gap-2 w-full border border-border rounded-xl bg-card px-4 py-3 text-sm transition-colors"
+              :class="isDiscDropdownOpen ? 'border-primary ring-1 ring-primary' : 'hover:border-muted-foreground/30'"
+              @click="isDiscDropdownOpen = !isDiscDropdownOpen"
+            >
+              <span class="truncate text-left flex-1" :class="rupEntryId ? '' : 'text-muted-foreground'">
+                {{ selectedEntry ? `${selectedEntry.moduleIndex} ${selectedEntry.moduleName} — ${selectedEntry.learningOutcome}` : 'Выберите из списка...' }}
+              </span>
+              <IconChevronDown class="w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform" :class="isDiscDropdownOpen ? 'rotate-180' : ''" />
+            </button>
+            <Teleport to="body">
+              <template v-if="isDiscDropdownOpen">
+                <div class="fixed inset-0 z-[9989]" @click="isDiscDropdownOpen = false" />
+                <div class="fixed bg-card border border-border rounded-2xl shadow-2xl z-[9990] overflow-hidden flex flex-col" style="width: 530px; max-width: calc(100vw - 32px); max-height: 60vh; top: 50%; left: 50%; transform: translate(-50%, -50%)" @click.stop>
+                  <div class="p-3 border-b border-border flex-shrink-0">
+                    <input
+                      ref="discSearchRef"
+                      v-model="discSearchQuery"
+                      type="text"
+                      placeholder="Поиск..."
+                      class="w-full bg-muted/50 border-0 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                  <div class="overflow-y-auto flex-1">
+                    <div v-if="filteredDiscOptions.length" class="py-1">
+                      <button
+                        v-for="opt in filteredDiscOptions"
+                        :key="opt.value"
+                        type="button"
+                        class="w-full flex items-start gap-3 px-4 py-3 text-left transition-colors"
+                        :class="rupEntryId === opt.value ? 'bg-primary/5' : 'hover:bg-muted/50'"
+                        @click="selectDiscOption(opt)"
+                      >
+                        <div class="flex-1 min-w-0">
+                          <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-sm font-semibold truncate" :class="rupEntryId === opt.value ? 'text-primary' : ''">
+                              {{ opt.moduleIndex }} {{ opt.moduleName }} — {{ opt.learningOutcome }}
+                            </span>
+                            <span
+                              v-if="opt.language"
+                              class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary flex-shrink-0"
+                            >
+                              {{ opt.language.toUpperCase() }}
+                            </span>
+                          </div>
+                          <div v-if="opt.specialtyChips && opt.specialtyChips.length" class="flex items-center gap-1 mt-1.5">
+                            <span
+                              v-for="sp in opt.specialtyChips"
+                              :key="sp.id"
+                              class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/30"
+                            >
+                              {{ sp.codeName || sp.name }}
+                            </span>
+                          </div>
+                        </div>
+                        <IconCheck v-if="rupEntryId === opt.value" class="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                      </button>
+                    </div>
+                    <div v-else class="p-6 text-center text-sm text-muted-foreground">
+                      Ничего не найдено
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </Teleport>
+          </div>
         </div>
 
         <!-- Info hint -->
@@ -168,7 +228,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 import { f7 } from "framework7-vue";
 import { storeToRefs } from "pinia";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
@@ -182,6 +242,8 @@ import Select from "@/components/ui/Select.vue";
 import IconAlertCircle from "~icons/lucide/alert-circle";
 import IconInfo from "~icons/lucide/info";
 import IconBookOpen from "~icons/lucide/book-open";
+import IconChevronDown from "~icons/lucide/chevron-down";
+import IconCheck from "~icons/lucide/check";
 import { KTP_COLORS, deriveKtpLanguages } from "@/lib/ktpHelpers";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 
@@ -210,6 +272,12 @@ const selectedColor = ref(KTP_COLORS[0]);
 const selectedYearId = ref("");
 const selectedDistributionId = ref("");
 
+// Custom discipline dropdown state
+const isDiscDropdownOpen = ref(false);
+const discSearchQuery = ref("");
+const discRootRef = ref<HTMLDivElement | null>(null);
+const discSearchRef = ref<HTMLInputElement | null>(null);
+
 const academicYearOptions = computed(() =>
   academicYears.value.map((year) => ({ value: year.id, text: year.name }))
 );
@@ -233,9 +301,18 @@ watch(selectedYearId, () => {
   selectedDistributionId.value = "";
 });
 
-// Disciplines of the selected RUP year. Language variants are separate
-// rupEntries — each shows with an [RU]/[KK]/[EN] suffix.
-const filteredRupEntryOptions = computed(() => {
+// Disciplines of the selected RUP year, enriched with language badge and
+// specialty chips for display in the custom picker dropdown.
+interface DiscOption {
+  value: string;
+  moduleIndex: string;
+  moduleName: string;
+  learningOutcome: string;
+  language?: string;
+  specialtyChips: Specialty[];
+}
+
+const enrichedDiscOptions = computed<DiscOption[]>(() => {
   const yearId = selectedYearId.value;
 
   return rupEntryOptions.value
@@ -245,15 +322,48 @@ const filteredRupEntryOptions = computed(() => {
       return !yearId || rupEntryItem.academicYearId === yearId;
     })
     .map((option) => {
-      const lang = rupEntryStore.getRupEntryById(option.value)?.language;
-      return lang
-        ? { ...option, text: `${option.text} [${lang.toUpperCase()}]` }
-        : option;
+      const rupEntryItem = rupEntryStore.getRupEntryById(option.value)!;
+      return {
+        value: option.value,
+        moduleIndex: option.moduleIndex || rupEntryItem.moduleIndex,
+        moduleName: option.moduleName || rupEntryItem.moduleName,
+        learningOutcome:
+          option.learningOutcome || rupEntryItem.learningOutcome,
+        language: rupEntryItem.language,
+        specialtyChips: (rupEntryItem.specialtyIds || [])
+          .map((id) => specialtyStore.specialties.find((s: Specialty) => s.id === id))
+          .filter((s): s is Specialty => !!s),
+      };
     });
 });
 
-// Clear a discipline that fell out of the filtered list
-watch(filteredRupEntryOptions, (options) => {
+const filteredDiscOptions = computed(() => {
+  const q = discSearchQuery.value.toLowerCase().trim();
+  if (!q) return enrichedDiscOptions.value;
+  return enrichedDiscOptions.value.filter(
+    (o) =>
+      o.moduleIndex.toLowerCase().includes(q) ||
+      o.moduleName.toLowerCase().includes(q) ||
+      o.learningOutcome.toLowerCase().includes(q)
+  );
+});
+
+const selectDiscOption = (opt: DiscOption) => {
+  rupEntryId.value = opt.value;
+  isDiscDropdownOpen.value = false;
+  discSearchQuery.value = "";
+};
+
+// Auto-focus search input when dropdown opens
+watch(isDiscDropdownOpen, async (open) => {
+  if (open) {
+    await nextTick();
+    discSearchRef.value?.focus();
+  }
+});
+
+// Clear a discipline that fell out of the year-filtered list
+watch(enrichedDiscOptions, (options) => {
   if (
     rupEntryId.value &&
     !options.some((o) => o.value === rupEntryId.value)
@@ -348,6 +458,8 @@ const resetForm = () => {
   selectedColor.value = KTP_COLORS[0];
   selectedDistributionId.value = "";
   selectedYearId.value = defaultYearId();
+  isDiscDropdownOpen.value = false;
+  discSearchQuery.value = "";
 };
 
 const onPopoverClosed = () => {
