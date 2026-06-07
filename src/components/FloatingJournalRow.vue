@@ -304,7 +304,7 @@ const handleCellClick = withEditPermission((row: number, col: number) => {
     // Empty cell, edit directly
     editCell(row, col);
   }
-};
+});
 
 const editCell = withEditPermission((row: number, col: number) => {
   console.log("[FloatingJournalRow] Editing cell:", { row, col });
