@@ -215,4 +215,51 @@ test.describe('KTP Page (Тематические планы)', () => {
     // Popover should STILL be open after closing the dropdown
     await expect(popover).toBeVisible();
   });
+
+  test('create popover shows color swatches and language toggles', async ({ page }) => {
+    const url = page.url();
+    if (url.includes('login')) return;
+
+    await page.waitForTimeout(2000);
+
+    await page.locator('button', { hasText: 'Создать' }).click();
+    await page.waitForTimeout(500);
+
+    const popover = page.locator('#add-ktp-item-popover');
+    await expect(popover).toBeVisible();
+
+    // Color swatches should be rendered
+    await expect(popover.getByTestId('ktp-color-FACC15')).toBeVisible();
+
+    // All three language pills should be rendered
+    await expect(popover.getByTestId('ktp-lang-KZ')).toBeVisible();
+    await expect(popover.getByTestId('ktp-lang-RU')).toBeVisible();
+    await expect(popover.getByTestId('ktp-lang-EN')).toBeVisible();
+
+    // Language toggle is clickable and toggles selection styling
+    await popover.getByTestId('ktp-lang-KZ').click();
+    await expect(popover.getByTestId('ktp-lang-KZ')).toHaveClass(/bg-primary/);
+  });
+
+  test('card action menu opens with edit and delete entries', async ({ page }) => {
+    const url = page.url();
+    if (url.includes('login')) return;
+
+    await page.waitForTimeout(2000);
+
+    const menuButtons = page.locator('[data-testid^="ktp-card-menu-"]');
+    if ((await menuButtons.count()) === 0) return; // no cards in this environment
+
+    await menuButtons.first().click();
+    await page.waitForTimeout(300);
+
+    await expect(page.getByRole('button', { name: 'Редактировать' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Удалить' })).toBeVisible();
+
+    // Edit opens the edit popover
+    await page.getByRole('button', { name: 'Редактировать' }).click();
+    await page.waitForTimeout(500);
+
+    await expect(page.locator('#ktp-edit-popover')).toBeVisible();
+  });
 });
