@@ -44,7 +44,7 @@
           <template #trigger="{ toggle }">
             <button
               id="download-template-button"
-              class="flex items-center gap-2 whitespace-nowrap bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+              class="w-fit flex items-center gap-2 whitespace-nowrap bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
               @click="toggle"
             >
               <IconFileDown class="w-4 h-4" /> Скачать шаблон
@@ -66,25 +66,25 @@
           </template>
         </DropdownMenu>
         <button
-          class="flex items-center gap-2 whitespace-nowrap flex-shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+          class="w-fit flex items-center gap-2 whitespace-nowrap flex-shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
           @click="downloadRup"
         >
           <IconFileDown class="w-4 h-4" /> Скачать план
         </button>
         <button
-          class="flex items-center gap-2 whitespace-nowrap flex-shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+          class="w-fit flex items-center gap-2 whitespace-nowrap flex-shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
           @click="uploadDocument"
         >
           <IconFileUp class="w-4 h-4" /> Загрузить план
         </button>
         <button
-          class="flex items-center gap-2 whitespace-nowrap flex-shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+          class="w-fit flex items-center gap-2 whitespace-nowrap flex-shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
           @click="importData"
         >
           <IconSquareArrowDown class="w-4 h-4" /> Импорт
         </button>
         <button
-          class="flex items-center gap-2 whitespace-nowrap flex-shrink-0 bg-emerald-500 text-white hover:bg-emerald-600 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+          class="w-fit flex items-center gap-2 whitespace-nowrap flex-shrink-0 bg-emerald-500 text-white hover:bg-emerald-600 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
           data-testid="ktp-detail-add"
           @click="addManually"
         >
