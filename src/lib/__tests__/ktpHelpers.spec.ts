@@ -11,6 +11,10 @@ describe("toNullableNumber", () => {
     expect(toNullableNumber(null)).toBeNull();
     expect(toNullableNumber(undefined)).toBeNull();
   });
+  it("returns null for whitespace-only strings", () => {
+    expect(toNullableNumber(" ")).toBeNull();
+    expect(toNullableNumber("\t")).toBeNull();
+  });
   it("preserves zero", () => {
     expect(toNullableNumber(0)).toBe(0);
     expect(toNullableNumber("0")).toBe(0);
