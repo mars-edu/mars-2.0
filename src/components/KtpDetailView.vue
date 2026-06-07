@@ -30,40 +30,65 @@
       <!-- Title -->
       <h2 class="text-3xl font-bold mb-8">{{ moduleTitle }}</h2>
 
-      <!-- Action bar -->
-      <div class="flex flex-wrap gap-3 mb-8">
+      <!-- Action bar: single row (scrolls horizontally on narrow screens).
+           The dropdown lives OUTSIDE the scroll container — overflow-x-auto
+           would clip it vertically — anchored to this relative wrapper
+           (the template button is the first item, so left-0 aligns). -->
+      <div ref="downloadDropdownRef" class="relative mb-8">
+        <div class="flex flex-nowrap gap-3 overflow-x-auto">
+        <!-- concept-v2 pattern: «Скачать шаблон» opens an inline dropdown -->
         <button
           id="download-template-button"
-          class="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
-          @click="downloadTemplate"
+          class="flex items-center gap-2 whitespace-nowrap flex-shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+          @click.stop="isDownloadDropdownOpen = !isDownloadDropdownOpen"
         >
           <IconFileDown class="w-4 h-4" /> Скачать шаблон
         </button>
         <button
-          class="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+          class="flex items-center gap-2 whitespace-nowrap flex-shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
           @click="downloadRup"
         >
           <IconFileDown class="w-4 h-4" /> Скачать план
         </button>
         <button
-          class="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+          class="flex items-center gap-2 whitespace-nowrap flex-shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
           @click="uploadDocument"
         >
           <IconFileUp class="w-4 h-4" /> Загрузить план
         </button>
         <button
-          class="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+          class="flex items-center gap-2 whitespace-nowrap flex-shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
           @click="importData"
         >
           <IconSquareArrowDown class="w-4 h-4" /> Импорт
         </button>
         <button
-          class="flex items-center gap-2 bg-emerald-500 text-white hover:bg-emerald-600 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+          class="flex items-center gap-2 whitespace-nowrap flex-shrink-0 bg-emerald-500 text-white hover:bg-emerald-600 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
           data-testid="ktp-detail-add"
           @click="addManually"
         >
           <IconPlus class="w-4 h-4" /> Добавить
         </button>
+        </div>
+
+        <!-- Dropdown outside the scroll container, under the first button -->
+        <div
+          v-if="isDownloadDropdownOpen"
+          class="absolute top-full mt-2 left-0 bg-card border border-border rounded-2xl shadow-xl z-20 w-48 overflow-hidden"
+        >
+          <button
+            class="block w-full text-left px-5 py-3 hover:bg-muted text-sm transition-colors"
+            @click="downloadWordTemplate"
+          >
+            Word (.docx)
+          </button>
+          <button
+            class="block w-full text-left px-5 py-3 hover:bg-muted text-sm transition-colors"
+            @click="downloadExcelTemplate"
+          >
+            Excel (.xlsx)
+          </button>
+        </div>
       </div>
 
       <!-- Topic table -->
@@ -157,7 +182,6 @@
       :locked="isEditingLocked"
       :remaining-hours="remainingHoursForForm"
     />
-    <DownloadTemplateDialog />
     <RupImportDialog
       v-model:opened="isRupImportDialogOpen"
       :currentKtpId="ktpId"
@@ -167,7 +191,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, onMounted, onUnmounted } from "vue";
+import { f7 } from "framework7-vue";
+import { saveAs } from "file-saver";
 import IconChevronLeft from "~icons/lucide/chevron-left";
 import IconFileDown from "~icons/lucide/file-down";
 import IconFileUp from "~icons/lucide/file-up";
@@ -177,7 +203,6 @@ import IconMenu from "~icons/lucide/menu";
 import IconLock from "~icons/lucide/lock";
 import { useKtpStore } from "@/stores/ktpStore";
 import KtpDetailFormPopover from "@/components/KtpDetailFormPopover.vue";
-import DownloadTemplateDialog from "@/components/DownloadTemplateDialog.vue";
 import RupImportDialog from "@/components/RupImportDialog.vue";
 import { useKtpDetail } from "@/composables/useKtpDetail";
 
@@ -218,6 +243,45 @@ const {
   importData,
   onThemesImported,
   downloadRup,
-  downloadTemplate,
 } = useKtpDetail(computed(() => props.ktpId));
+
+// «Скачать шаблон» dropdown (concept-v2 pattern: inline dropdown
+// with Word/Excel options, closed by outside click)
+const isDownloadDropdownOpen = ref(false);
+const downloadDropdownRef = ref<HTMLElement | null>(null);
+
+const closeDownloadDropdown = (event: MouseEvent) => {
+  if (
+    downloadDropdownRef.value &&
+    !downloadDropdownRef.value.contains(event.target as Node)
+  ) {
+    isDownloadDropdownOpen.value = false;
+  }
+};
+onMounted(() => window.addEventListener("click", closeDownloadDropdown));
+onUnmounted(() => window.removeEventListener("click", closeDownloadDropdown));
+
+const downloadTemplateFile = async (path: string, filename: string) => {
+  try {
+    const response = await fetch(path);
+    const blob = await response.blob();
+    saveAs(blob, filename);
+  } catch (error) {
+    console.error("Error downloading template:", error);
+    f7.toast
+      .create({
+        text: "Не удалось скачать шаблон",
+        closeTimeout: 3000,
+        cssClass: "color-red",
+      })
+      .open();
+  } finally {
+    isDownloadDropdownOpen.value = false;
+  }
+};
+
+const downloadWordTemplate = () =>
+  downloadTemplateFile("/rup_templates/Шаблон КТП Мрас.docx", "Шаблон КТП Мрас.docx");
+const downloadExcelTemplate = () =>
+  downloadTemplateFile("/rup_templates/Шаблон КТП Марса.xlsx", "Шаблон КТП Марса.xlsx");
 </script>
