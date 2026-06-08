@@ -44,40 +44,14 @@
           <label class="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
             Дисциплина
           </label>
-          <Select
-            placeholder="Выберите из списка..."
+          <DisciplineSelect
             v-model="rupEntryId"
-            :options="enrichedDiscOptions"
+            :year-id="selectedYearId"
             name="ktp-item-rupEntry"
             id="ktp-item-rupEntry"
-            searchable
+            placeholder="Выберите из списка..."
             search-placeholder="Поиск по дисциплине..."
-          >
-            <template #option="{ option, selected }">
-              <div class="flex-1 text-left min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-[15px] font-semibold whitespace-normal break-words" :class="selected ? 'text-primary' : ''">
-                    {{ option.moduleIndex }} {{ option.moduleName }} — {{ option.learningOutcome }}
-                  </span>
-                  <span
-                    v-if="option.language"
-                    class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary flex-shrink-0"
-                  >
-                    {{ option.language.toUpperCase() }}
-                  </span>
-                </div>
-                <div v-if="option.specialtyChips && option.specialtyChips.length" class="flex flex-wrap items-center gap-1 mt-1.5">
-                  <span
-                    v-for="sp in option.specialtyChips"
-                    :key="sp.id"
-                    class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/30"
-                  >
-                    {{ sp.codeName || sp.name }}
-                  </span>
-                </div>
-              </div>
-            </template>
-          </Select>
+          />
         </div>
 
         <!-- Info hint -->
@@ -204,6 +178,7 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Select from "@/components/ui/Select.vue";
+import DisciplineSelect from "@/components/DisciplineSelect.vue";
 import IconAlertCircle from "~icons/lucide/alert-circle";
 import IconInfo from "~icons/lucide/info";
 import IconBookOpen from "~icons/lucide/book-open";
@@ -223,7 +198,6 @@ const ktpStore = useKtpStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const academicYearStore = useAcademicYearStore();
 const specialtyStore = useSpecialtyStore();
-const { rupEntryOptions } = storeToRefs(rupEntryStore);
 const { academicYears, getActiveAcademicYear } = storeToRefs(academicYearStore);
 
 const formError = ref("");
@@ -256,42 +230,6 @@ watch(
 watch(selectedYearId, () => {
   rupEntryId.value = "";
   selectedDistributionId.value = "";
-});
-
-// Disciplines of the selected RUP year, enriched with language badge and
-// specialty chips for display via the Select component's #option slot.
-const enrichedDiscOptions = computed(() => {
-  const yearId = selectedYearId.value;
-
-  return rupEntryOptions.value
-    .filter((option) => {
-      const rupEntryItem = rupEntryStore.getRupEntryById(option.value);
-      if (!rupEntryItem) return false;
-      return !yearId || rupEntryItem.academicYearId === yearId;
-    })
-    .map((option) => {
-      const rupEntryItem = rupEntryStore.getRupEntryById(option.value)!;
-      return {
-        ...option,
-        moduleIndex: option.moduleIndex || rupEntryItem.moduleIndex,
-        moduleName: option.moduleName || rupEntryItem.moduleName,
-        learningOutcome: option.learningOutcome || rupEntryItem.learningOutcome,
-        language: rupEntryItem.language,
-        specialtyChips: (rupEntryItem.specialtyIds || [])
-          .map((id) => specialtyStore.specialties.find((s: Specialty) => s.id === id))
-          .filter((s): s is Specialty => !!s),
-      };
-    });
-});
-
-// Clear a discipline that fell out of the year-filtered list
-watch(enrichedDiscOptions, (options) => {
-  if (
-    rupEntryId.value &&
-    !options.some((o) => o.value === rupEntryId.value)
-  ) {
-    rupEntryId.value = "";
-  }
 });
 
 // Show a preview of the selected RUP entry

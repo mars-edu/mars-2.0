@@ -32,11 +32,11 @@
           <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70 ml-1">
             Дисциплина
           </div>
-          <Select
+          <DisciplineSelect
             id="event-rupEntry-generic"
             placeholder="Выберите дисциплину"
             v-model="rupEntryIdModel"
-            :options="rupEntryOptions"
+            :searchable="false"
           />
         </div>
 
@@ -415,6 +415,7 @@ import { withAllOption, getGenderOptions } from "@/lib/utils";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import Select from "@/components/ui/Select.vue";
+import DisciplineSelect from "@/components/DisciplineSelect.vue";
 import ColorPicker from "@/components/ui/ColorPicker.vue";
 import DateInput from "@/components/ui/DateInput.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
@@ -510,8 +511,6 @@ const courseStore = useCourseStore();
 const educationScheduleStore = useEducationScheduleStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const ktpStore = useKtpStore();
-
-const { rupEntryOptions } = storeToRefs(rupEntryStore);
 const { students } = storeToRefs(studentStore);
 const { specialtyOptions: storeSpecialtyOptions } = storeToRefs(specialtyStore);
 const { languageOptions: storeLanguageOptions } = storeToRefs(languageStore);

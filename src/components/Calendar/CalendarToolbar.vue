@@ -8,10 +8,10 @@
     />
     <slot name="navigation"></slot>
     <div class="h-6 w-px bg-border mx-1"></div>
-    <Select
+    <DisciplineSelect
       id="calendar-search"
       v-model="searchValue"
-      :options="disciplineOptions"
+      :searchable="false"
       :placeholder="searchPlaceholder"
       class="w-[200px]"
     />
@@ -20,13 +20,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from "vue";
+import { ref, watch, nextTick } from "vue";
 import AddEventButton from "./AddEventButton.vue";
 import MonthNavigator from "./MonthNavigator.vue";
-import Select from "@/components/ui/Select.vue";
+import DisciplineSelect from "@/components/DisciplineSelect.vue";
 import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
-import { storeToRefs } from "pinia";
 
 const props = defineProps<{
   class?: string;
@@ -45,9 +44,6 @@ const emit = defineEmits<{
 
 const calendarStore = useCalendarStore();
 const rupEntryStore = useRupEntryStore();
-const { rupEntryOptions } = storeToRefs(rupEntryStore);
-
-const disciplineOptions = computed(() => rupEntryOptions.value);
 
 // Local model for the search select — acts as a persistent filter.
 const searchValue = ref<string | null>(null);
@@ -57,12 +53,8 @@ watch(searchValue, (value) => {
     emit("search", "");
     return;
   }
-  const selected = disciplineOptions.value.find(o => o.value === value);
-  if (selected) {
-    emit("search", selected.text);
-  } else {
-    emit("search", "");
-  }
+  const e = rupEntryStore.getRupEntryById(value);
+  emit("search", e ? `${e.moduleIndex} ${e.moduleName} - ${e.learningOutcome}` : "");
 });
 
 const handleEventAdded = (event: CalendarEvent) => {

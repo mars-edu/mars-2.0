@@ -1,13 +1,11 @@
 <template>
   <div class="p-4 space-y-4">
-    <Select
+    <DisciplineSelect
       label="Результат обучения/дисциплина"
       placeholder="Выберите результат обучения/дисциплину"
       v-model="rupEntryIdModel"
-      :options="rupEntryOptions"
       name="event-rupEntry-generic"
       id="event-rupEntry-generic"
-      searchable
     />
 
     <div class="flex items-center">
@@ -188,6 +186,7 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 import "dayjs/locale/ru";
 
 import Select from "@/components/ui/Select.vue";
+import DisciplineSelect from "@/components/DisciplineSelect.vue";
 import ColorPicker from "@/components/ui/ColorPicker.vue";
 import DateInput from "@/components/ui/DateInput.vue";
 import StudentSelectionPopup from "./StudentSelectionPopup.vue";
@@ -241,7 +240,6 @@ const emit = defineEmits<{
 }>();
 
 const rupEntryStore = useRupEntryStore();
-const { rupEntryOptions } = storeToRefs(rupEntryStore);
 
 const educationScheduleStore = useEducationScheduleStore();
 const { getActiveYearSchedules, getSchedulesBySemester } = storeToRefs(educationScheduleStore);
