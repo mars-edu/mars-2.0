@@ -87,9 +87,12 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-border">
-                  <tr v-for="item in currentWorkloadItems" :key="item.id" class="hover:bg-muted/20 transition-colors group">
+                  <tr v-for="item in currentWorkloadItems" :key="item.id" class="hover:bg-muted/20 transition-colors group" :class="{ 'bg-amber-500/5': item.id.endsWith('_ind') }">
                     <td class="px-4 py-2.5 font-bold text-foreground border-r border-border">
-                      <div class="truncate max-w-[320px]" :title="item.description">{{ item.description }}</div>
+                      <div class="flex items-center gap-2">
+                        <div class="truncate max-w-[320px]" :title="item.description">{{ item.id.endsWith('_ind') ? 'Индивидуальные' : item.description }}</div>
+                        <span v-if="item.id.endsWith('_ind')" class="text-[9px] font-black text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded uppercase shrink-0">инд.</span>
+                      </div>
                       <div class="text-[10px] text-muted-foreground font-medium mt-0.5">{{ item.index }}</div>
                     </td>
                     <td class="px-2 py-2.5 border-r border-border">
@@ -308,19 +311,19 @@
                 <div class="w-px h-10 bg-border"></div>
                 <div class="text-center">
                   <div class="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1">Предметов</div>
-                  <div class="text-3xl font-black text-foreground">{{ workload.items.length }}</div>
+                  <div class="text-3xl font-black text-foreground">{{ disciplineCount(workload.items) }}</div>
                 </div>
               </div>
 
               <div class="flex-1 flex flex-col gap-1.5 text-sm">
-                <div v-for="(item, idx) in workload.items.slice(0, 2)" :key="idx" class="flex items-center justify-between text-sm">
+                <div v-for="(item, idx) in previewItems(workload.items).slice(0, 2)" :key="idx" class="flex items-center justify-between text-sm">
                   <span class="text-muted-foreground font-bold truncate max-w-[220px]">
                     {{ item.description }}
                   </span>
                   <span class="text-muted-foreground/60 font-black">{{ item.totalHours }} ч.</span>
                 </div>
-                <div v-if="workload.items.length > 2" class="text-xs font-bold text-primary">
-                  + еще {{ workload.items.length - 2 }} предмета
+                <div v-if="disciplineCount(workload.items) > 2" class="text-xs font-bold text-primary">
+                  + еще {{ disciplineCount(workload.items) - 2 }} предмета
                 </div>
               </div>
 
@@ -454,43 +457,99 @@
       kind="popup"
       :guard-unsaved="false"
       :opened="isAddingSubject"
-      @popup:closed="isAddingSubject = false"
+      @popup:closed="onAddModalClosed"
     >
       <template #default="{ requestClose }">
       <div class="flex flex-col h-full bg-background">
-        <PopoverHeader title="Добавить предмет в нагрузку" :on-cancel="requestClose" />
+        <PopoverHeader title="Добавить дисциплину в нагрузку" :on-cancel="requestClose" />
 
-        <div class="p-4 border-b border-border">
-          <SearchInput
-            v-model="subjectSearchQuery"
-            placeholder="Поиск по названию или коду..."
-          />
+        <!-- Source tabs -->
+        <div class="flex gap-1 mx-4 mt-3 p-1 bg-muted/40 rounded-xl">
+          <button
+            @click="addTab = 'rup'"
+            class="flex-1 py-2 text-xs font-black rounded-lg transition-all uppercase tracking-wider"
+            :class="addTab === 'rup' ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+          >
+            Учебный план (РУП)
+          </button>
+          <button
+            @click="addTab = 'spectrum'"
+            class="flex-1 py-2 text-xs font-black rounded-lg transition-all uppercase tracking-wider"
+            :class="addTab === 'spectrum' ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+          >
+            Спектр дисциплин
+          </button>
         </div>
 
-        <div class="overflow-y-auto flex-1 p-2">
-          <button
-            v-for="rup in filteredRup"
+        <div class="p-4 pb-2">
+          <SearchInput v-model="subjectSearchQuery" placeholder="Поиск по названию или коду..." />
+        </div>
+
+        <div class="overflow-y-auto flex-1 px-2 pb-2 space-y-1.5">
+          <div
+            v-for="rup in addTabEntries"
             :key="rup.id"
-            @click="addSubjectFromRup(rup)"
-            class="w-full text-left p-4 hover:bg-muted/30 rounded-xl transition-colors border border-transparent hover:border-border flex items-start gap-4 group mb-1"
+            @click="toggleSelectSubject(rup)"
+            class="w-full text-left p-3 rounded-xl transition-all border flex items-start gap-3 cursor-pointer relative"
+            :class="isSubjectSelected(rup.id)
+              ? 'bg-primary/5 border-primary/40'
+              : 'border-transparent hover:bg-muted/30 hover:border-border'"
           >
-            <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0 group-hover:scale-110 transition-transform">
+            <div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
               <IconBookOpen class="w-5 h-5" />
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2 mb-1 flex-wrap">
-                <span class="text-xs font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded">{{ rup.moduleIndex }}</span>
+                <span class="text-[10px] font-black text-muted-foreground bg-muted px-2 py-0.5 rounded uppercase">{{ rup.moduleIndex }}</span>
                 <h3 class="font-bold text-foreground truncate">{{ rup.moduleName }}</h3>
+                <span
+                  v-if="hasIndividual(rup)"
+                  class="text-[10px] font-black text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded uppercase"
+                >
+                  + инд. {{ rup.individualHours }}ч
+                </span>
               </div>
-              <p class="text-sm text-muted-foreground line-clamp-1">
-                Специальность: {{ getSpecialtyCodes(rup.specialtyIds) }} | {{ rup.language }}
+              <p class="text-xs text-muted-foreground line-clamp-1">
+                {{ getSpecialtyCodes(rup.specialtyIds) }} · {{ rup.language }}
               </p>
+
+              <!-- per-row controls -->
+              <div
+                v-if="isSubjectSelected(rup.id)"
+                @click.stop
+                class="flex items-center gap-3 mt-2 flex-wrap"
+              >
+                <Select
+                  :model-value="selectedAdds[rup.id].language"
+                  @update:model-value="selectedAdds[rup.id].language = ($event as string)"
+                  :options="languageOptions"
+                  placeholder="Язык"
+                  class="w-28"
+                />
+                <label v-if="hasIndividual(rup)" class="flex items-center gap-1.5 text-xs font-bold text-foreground cursor-pointer">
+                  <input type="checkbox" v-model="selectedAdds[rup.id].individual" />
+                  Индив. часы
+                </label>
+              </div>
             </div>
-          </button>
-          <div v-if="filteredRup.length === 0" class="p-8 text-center text-muted-foreground">
-            Предметы в РУП не найдены
+            <div
+              v-if="isSubjectSelected(rup.id)"
+              class="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shrink-0"
+            >
+              <IconCheckSm class="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div v-if="addTabEntries.length === 0" class="p-8 text-center text-muted-foreground">
+            {{ addTab === 'rup' ? 'Предметы в РУП не найдены' : 'Дисциплины спектра не найдены' }}
           </div>
         </div>
+
+        <PopoverFooter
+          :save-text="`Добавить (${selectedAddCount})`"
+          :disabled="selectedAddCount === 0"
+          :on-save="confirmAddSubjects"
+          :on-cancel="requestClose"
+        />
       </div>
       </template>
     </GuardedPopover>
@@ -520,6 +579,7 @@ import type { WorkloadItem, SavedWorkload } from "@/types/workload";
 
 // Icons
 import IconUser from "~icons/lucide/user";
+import IconCheckSm from "~icons/lucide/check";
 import IconPlus from "~icons/lucide/plus";
 import IconTrash from "~icons/lucide/trash-2";
 import IconSave from "~icons/lucide/save";
@@ -548,6 +608,16 @@ const { allWorkloads, selectedTeacherId, selectedAcademicYearId, currentWorkload
 const activeNavItem = ref("workload");
 const isAddingSubject = ref(false);
 const subjectSearchQuery = ref("");
+const addTab = ref<"rup" | "spectrum">("rup");
+const selectedAdds = ref<Record<string, { language: string; individual: boolean }>>({});
+
+const languageOptions = [
+  { value: "ru", text: "RU" },
+  { value: "kk", text: "ҚАЗ" },
+  { value: "en", text: "EN" },
+];
+// concept spectrum catalog → resolved against real RUP entries by title
+const SPECTRUM_TITLES = ["История Казахстана", "Всемирная история", "Гармония"];
 const savedWorkloadSearchQuery = ref("");
 const deleteConfirmId = ref<string | null>(null);
 const showSaveConfirm = ref(false);
@@ -601,6 +671,43 @@ const filteredRup = computed(() => {
   });
 });
 
+// Spectrum = curated subset of real RUP entries by title (safe: real rupEntry ids).
+const addTabEntries = computed(() => {
+  if (addTab.value === "rup") return filteredRup.value;
+  return filteredRup.value.filter((r) => SPECTRUM_TITLES.includes(r.moduleName));
+});
+
+function hasIndividual(rup: RupEntry) {
+  return parseFloat((rup as any).individualHours || "0") > 0;
+}
+function isSubjectSelected(id: string) {
+  return id in selectedAdds.value;
+}
+function toggleSelectSubject(rup: RupEntry) {
+  if (isSubjectSelected(rup.id)) {
+    delete selectedAdds.value[rup.id];
+  } else {
+    selectedAdds.value[rup.id] = { language: rup.language || "ru", individual: false };
+  }
+}
+const selectedAddCount = computed(() => Object.keys(selectedAdds.value).length);
+
+function confirmAddSubjects() {
+  for (const [rupId, opts] of Object.entries(selectedAdds.value)) {
+    const rup = rupEntries.value.find((r) => r.id === rupId);
+    if (rup) addSubjectFromRup(rup, opts);
+  }
+  selectedAdds.value = {};
+  isAddingSubject.value = false;
+}
+
+function onAddModalClosed() {
+  isAddingSubject.value = false;
+  selectedAdds.value = {};
+  subjectSearchQuery.value = "";
+  addTab.value = "rup";
+}
+
 const filteredWorkloads = computed(() => {
   return allWorkloads.value.filter(w => {
     if (selectedAcademicYearId.value && w.academicYearId !== selectedAcademicYearId.value) return false;
@@ -622,7 +729,10 @@ function onSelectTeacher(id: string | null) {
   }
 }
 
-function addSubjectFromRup(rup: RupEntry) {
+function addSubjectFromRup(
+  rup: RupEntry,
+  opts: { language?: string; individual?: boolean } = {}
+) {
   const newItem: WorkloadItem = {
     id: crypto.randomUUID(),
     subjectId: rup.id,
@@ -639,7 +749,8 @@ function addSubjectFromRup(rup: RupEntry) {
     groupCount2: "1",
     totalHours: "0",
     index: rup.moduleIndex,
-    description: rup.moduleName
+    description: rup.moduleName,
+    language: opts.language || rup.language || "ru",
   };
 
   // Set initial hours from distribution entries if available
@@ -654,7 +765,44 @@ function addSubjectFromRup(rup: RupEntry) {
 
   currentWorkloadItems.value.push(newItem);
   recalculateItem(newItem.id);
-  isAddingSubject.value = false;
+
+  // Paired individual-hours child row (excluded from journal wizard & counts).
+  if (opts.individual && hasIndividual(rup)) {
+    const indHours = (rup as any).individualHours as string;
+    const indItem: WorkloadItem = {
+      id: `${newItem.id}_ind`,
+      subjectId: rup.id,
+      department: "Индивидуальные",
+      course: newItem.course,
+      studentCount: newItem.studentCount,
+      weeks1: "18",
+      weeks2: "20",
+      hours1: "0",
+      hours2: "0",
+      hoursPerGroup1: "0",
+      hoursPerGroup2: "0",
+      groupCount1: "0",
+      groupCount2: "0",
+      totalHours: "0",
+      index: rup.moduleIndex,
+      description: "",
+      language: newItem.language,
+    };
+    for (let i = 1; i <= semesterCount.value; i++) {
+      if (parseFloat(newItem[`hoursPerGroup${i}`] || "0") > 0) {
+        indItem[`hoursPerGroup${i}`] = indHours;
+        indItem[`groupCount${i}`] = "1";
+        const weeks = parseFloat(indItem[`weeks${i}`] || "1") || 1;
+        indItem[`hours${i}`] = (parseFloat(indHours) / weeks).toFixed(1);
+      }
+    }
+    let indTotal = 0;
+    for (let i = 1; i <= semesterCount.value; i++) {
+      indTotal += parseFloat(indItem[`hoursPerGroup${i}`] || "0") * parseFloat(indItem[`groupCount${i}`] || "0");
+    }
+    indItem.totalHours = Math.round(indTotal).toString();
+    currentWorkloadItems.value.push(indItem);
+  }
 }
 
 function getSpecialtyCodes(ids: string[]) {
@@ -688,7 +836,19 @@ function adjustValue(id: string, field: string, delta: number) {
 }
 
 function deleteItem(id: string) {
-  currentWorkloadItems.value = currentWorkloadItems.value.filter(i => i.id !== id);
+  // Cascade: deleting a discipline also removes its paired individual-hours row.
+  const indId = `${id}_ind`;
+  currentWorkloadItems.value = currentWorkloadItems.value.filter(
+    i => i.id !== id && i.id !== indId
+  );
+}
+
+// Disciplines excluding paired individual-hours (_ind) rows.
+function disciplineCount(items: WorkloadItem[]) {
+  return items.filter(i => !i.id.endsWith("_ind")).length;
+}
+function previewItems(items: WorkloadItem[]) {
+  return items.filter(i => !i.id.endsWith("_ind"));
 }
 
 function formatHours(val: any) {

@@ -1025,6 +1025,7 @@ export default defineSchema({
         teacherName: v.optional(v.string()),
         index: v.optional(v.string()),
         description: v.optional(v.string()),
+        language: v.optional(v.string()),
       })
     ),
     // Workflow status (ported from concept SavedWorkload flags)

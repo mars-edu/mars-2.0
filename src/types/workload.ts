@@ -20,6 +20,7 @@ export interface WorkloadItem {
   teacherName?: string;
   index?: string;
   description?: string;
+  language?: string;
   [key: string]: string | undefined;
 }
 

@@ -284,7 +284,7 @@ function selectSemester(sem: number) {
       groupCount,
       plannedHours: Math.round(parseFloat(semesterValue(item as any, sem as any, "hoursPerGroup")) || 0),
       specialtyKeys: specialtyKeysFor(rup?.specialtyIds ?? []),
-      language: rup?.language,
+      language: (item as any).language ?? rup?.language,
       groups: [emptyGroup()],
     } as DiscPlan;
   });

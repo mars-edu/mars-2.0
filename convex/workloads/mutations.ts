@@ -36,6 +36,7 @@ export const save = mutation({
         teacherName: v.optional(v.string()),
         index: v.optional(v.string()),
         description: v.optional(v.string()),
+        language: v.optional(v.string()),
       })
     ),
   },
