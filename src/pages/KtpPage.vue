@@ -104,7 +104,6 @@
               :key="item.ktpId"
               data-testid="ktp-card"
               class="group relative bg-card border border-border rounded-2xl p-5 cursor-pointer transition-all duration-200 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5"
-              :style="{ zIndex: activeMenuKtpId === item.ktpId ? 30 : undefined }"
               @click="selectItem(item)"
             >
               <div
@@ -205,32 +204,33 @@
 
                 <!-- Action menu -->
                 <div class="relative flex-shrink-0" @click.stop>
-                  <button
-                    class="p-2 rounded-xl text-muted-foreground/60 hover:text-primary hover:bg-primary/10 transition-colors"
-                    :data-testid="`ktp-card-menu-${item.ktpId}`"
-                    @click="toggleCardMenu(item.ktpId)"
-                  >
-                    <IconMoreVertical class="w-5 h-5" />
-                  </button>
-                  <div
-                    v-if="activeMenuKtpId === item.ktpId"
-                    class="absolute right-0 top-full mt-1 w-48 bg-card border border-border rounded-xl shadow-xl py-1 z-20 overflow-hidden"
-                  >
-                    <button
-                      class="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-muted transition-colors"
-                      @click="onEditKtp(item.ktpId)"
-                    >
-                      <IconEdit2 class="w-4 h-4 text-primary" />
-                      Редактировать
-                    </button>
-                    <button
-                      class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
-                      @click="onDeleteKtp(item.ktpId)"
-                    >
-                      <IconTrash2 class="w-4 h-4" />
-                      Удалить
-                    </button>
-                  </div>
+                  <DropdownMenu align="right" width="12rem">
+                    <template #trigger="{ toggle }">
+                      <button
+                        class="p-2 rounded-xl text-muted-foreground/60 hover:text-primary hover:bg-primary/10 transition-colors"
+                        :data-testid="`ktp-card-menu-${item.ktpId}`"
+                        @click="toggle"
+                      >
+                        <IconMoreVertical class="w-5 h-5" />
+                      </button>
+                    </template>
+                    <template #default="{ close }">
+                      <button
+                        class="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-muted transition-colors"
+                        @click="onEditKtp(item.ktpId); close()"
+                      >
+                        <IconEdit2 class="w-4 h-4 text-primary" />
+                        Редактировать
+                      </button>
+                      <button
+                        class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                        @click="onDeleteKtp(item.ktpId); close()"
+                      >
+                        <IconTrash2 class="w-4 h-4" />
+                        Удалить
+                      </button>
+                    </template>
+                  </DropdownMenu>
                 </div>
 
                 <!-- Arrow -->
@@ -273,6 +273,7 @@ import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
 import SearchInput from "@/components/ui/SearchInput.vue";
+import DropdownMenu from "@/components/ui/DropdownMenu.vue";
 import KtpDetailView from "@/components/KtpDetailView.vue";
 import AddKtpItemForm from "@/components/AddKtpItemForm.vue";
 import KtpEditPopover from "@/components/KtpEditPopover.vue";
@@ -359,28 +360,15 @@ const { getKtpIdForRupEntry, getModuleTitleForKtp } = storeToRefs(ktpStore);
 const { getPlannedHoursForKtp } = useKtpPlannedHours();
 
 // Card action menu
-const activeMenuKtpId = ref<string | null>(null);
 const editingKtp = ref<Ktp | null>(null);
 const isEditPopoverOpen = ref(false);
 
-const closeMenus = () => {
-  activeMenuKtpId.value = null;
-};
-window.addEventListener("click", closeMenus);
-onUnmounted(() => window.removeEventListener("click", closeMenus));
-
-const toggleCardMenu = (ktpId: string) => {
-  activeMenuKtpId.value = activeMenuKtpId.value === ktpId ? null : ktpId;
-};
-
 const onEditKtp = (ktpId: string) => {
-  activeMenuKtpId.value = null;
   editingKtp.value = ktpStore.findKtpById(ktpId) ?? null;
   if (editingKtp.value) isEditPopoverOpen.value = true;
 };
 
 const onDeleteKtp = (ktpId: string) => {
-  activeMenuKtpId.value = null;
   const title = getModuleTitleForKtp.value(ktpId);
   f7.dialog.confirm(
     `Удалить КТП «${title}» со всеми темами? Это действие нельзя отменить.`,
