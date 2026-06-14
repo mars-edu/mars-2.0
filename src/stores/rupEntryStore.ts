@@ -4,6 +4,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { withLoading } from "@/utils/storeAction";
 import type { DistributionEntry, RupEntry } from "@/types/rup-entry";
 
@@ -78,12 +79,24 @@ export const useRupEntryStore = defineStore(
           const entriesWithHours = entry.distributionEntries.filter((e: any) => Number(e.hours) > 0 && e.semesterId);
           
           if (activeSemesterId) {
-            const matchingActive = entriesWithHours.find((e: any) => e.semesterId === activeSemesterId);
+            const activeSemesterStore = useAcademicYearSemesterStore();
+            const activeSemester = activeSemesterStore.getAcademicYearSemesterById(activeSemesterId);
+            const activeSemesterNumber = activeSemester ? String(activeSemester.semesterNumber) : null;
+            
+            const matchingActive = entriesWithHours.find((e: any) => {
+              const entrySemesterId = String(e.semesterId ?? "");
+              return entrySemesterId === activeSemesterId || (activeSemesterNumber && entrySemesterId === activeSemesterNumber);
+            });
             if (matchingActive) return activeSemesterId;
           }
           
           if (entriesWithHours.length > 0) {
-            return entriesWithHours[0].semesterId;
+            const firstEntrySemesterId = String(entriesWithHours[0].semesterId ?? "");
+            // If it's a number, we should try to find the actual semester ID for that number in the active year
+            const activeSemesterStore = useAcademicYearSemesterStore();
+            const activeYearSemesters = activeSemesterStore.getActiveAcademicYearSemesters;
+            const matchingRealSemester = activeYearSemesters.find(s => String(s.semesterNumber) === firstEntrySemesterId);
+            return matchingRealSemester ? matchingRealSemester.id : firstEntrySemesterId;
           }
         }
         return activeSemesterId || "";

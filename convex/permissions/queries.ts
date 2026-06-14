@@ -9,12 +9,14 @@ export const getMyPermissions = query({
     if (!user) return [];
 
     const now = Date.now();
-    const all = await ctx.db.query("permissions").collect();
+    const navigatePerms = await ctx.db
+      .query("permissions")
+      .withIndex("by_action", (q) => q.eq("action", "navigate"))
+      .collect();
 
-    return all
+    return navigatePerms
       .filter(
         (p) =>
-          p.action === "navigate" &&
           hasRoleAccess(user.roles, p.roles as string[]) &&
           isPermissionActive(p.activeFrom, p.activeTo, now)
       )

@@ -17,10 +17,12 @@
 </template>
 
 <script setup lang="ts">
+import { defineAsyncComponent } from 'vue';
 import { f7, f7Fab } from 'framework7-vue';
 import IconSparkles from '~icons/lucide/sparkles';
 import GuardedPopover from '@/components/ui/GuardedPopover.vue';
-import AiAssistantPanel from './AiAssistantPanel.vue';
+
+const AiAssistantPanel = defineAsyncComponent(() => import('./AiAssistantPanel.vue'));
 
 function openAssistant() {
   f7.popup.open('#ai-assistant-popup');

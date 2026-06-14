@@ -440,7 +440,7 @@ const currentJournal = computed(() => {
   if (!props.journalId) return null;
   return journalStore.getJournalById(props.journalId);
 });
-const DEBUG_JOURNAL_COLUMNS = true;
+const DEBUG_JOURNAL_COLUMNS = false;
 const debugLog = (...args: any[]) => {
   if (!DEBUG_JOURNAL_COLUMNS) return;
   console.log("[JournalTab][Columns]", ...args);
@@ -751,40 +751,12 @@ const generateDates = () => {
     })
     .map((entry: any) => entry);
 
-  // Debug: Log distribution entries filtering in detail
-  console.log("[JournalTab] РУП Distribution Entries Analysis:", {
-    disciplineId: rupEntryItem?.id,
-    disciplineName: rupEntryItem?.moduleName,
-    totalDistributionEntries: rupEntryItem?.distributionEntries?.length || 0,
-    allDistributionEntries: rupEntryItem?.distributionEntries?.map((e: any) => ({
-      id: e.id,
-      academicYearId: e.academicYearId,
-      semesterId: e.semesterId,
-      intermediateControlId: e.intermediateControlId,
-      finalControlId: e.finalControlId,
-    })),
-    filters: {
-      semesterUUID: semesterFilter,
-      academicYearId,
-    },
-    matching: {
-      info: "Entries match only by UUID: entry.semesterId === semesterUUID",
-    },
-    afterSemesterFilter: (rupEntryItem?.distributionEntries || []).filter(
-      (entry: any) => {
-        if (!semesterFilter) return true;
-        if (entry?.semesterId == null) return false;
-        return String(entry.semesterId) === semesterFilter;
-      }
-    ).length,
-    afterBothFilters: relevantDistributionEntries.length,
-    relevantDistributionEntries: relevantDistributionEntries.map((e: any) => ({
-      id: e.id,
-      academicYearId: e.academicYearId,
-      semesterId: e.semesterId,
-      intermediateControlId: e.intermediateControlId,
-      finalControlId: e.finalControlId,
-    })),
+  debugGroup("РУП Distribution Entries Analysis", () => {
+    debugLog("disciplineId", rupEntryItem?.id);
+    debugLog("disciplineName", rupEntryItem?.moduleName);
+    debugLog("totalDistributionEntries", rupEntryItem?.distributionEntries?.length || 0);
+    debugLog("filters", { semesterUUID: semesterFilter, academicYearId });
+    debugLog("afterBothFilters", relevantDistributionEntries.length);
   });
 
   debugGroup("Distribution Entries Analysis", () => {
@@ -850,21 +822,7 @@ const generateDates = () => {
     )
   );
 
-  console.log("[JournalTab] DEBUG - Extracted from distribution:", {
-    distributionFinalControlIds,
-    allDistributionEntries: relevantDistributionEntries.map((e: any) => {
-      const finalControl =
-        typeof getFinalControlById.value === "function"
-          ? getFinalControlById.value(e.finalControlId)
-          : null;
-      return {
-        id: e.id,
-        finalControlId: e.finalControlId,
-        finalControlName: finalControl?.name,
-        finalControlShortName: finalControl?.shortName,
-      };
-    }),
-  });
+  if (DEBUG_JOURNAL_COLUMNS) console.log("[JournalTab] DEBUG - Extracted from distribution:", { distributionFinalControlIds });
 
   const scheduledIntermediateForYear =
     academicYearId &&
@@ -879,82 +837,25 @@ const generateDates = () => {
       ? getScheduledFinalControlsByAcademicYear.value(academicYearId) || []
       : [];
 
-  // 🔍 DIAGNOSTIC: Check intermediate controls availability
-  console.log("[JournalTab] 🔍 INTERMEDIATE CONTROLS DIAGNOSTIC:", {
-    academicYearId,
-    academicYearSource: currentSemester
-      ? `semester (${currentSemester.id})`
-      : "rupEntry/РУП fallback",
-    rupEntryItemExists: !!rupEntryItem,
-    rupEntryAcademicYearId: rupEntryItem?.academicYearId,
-    semesterId: semesterFilter,
-    semesterAcademicYearId: currentSemester?.academicYearId,
-    scheduledIntermediateCount: scheduledIntermediateForYear.length,
-    scheduledIntermediateDetails: scheduledIntermediateForYear.map((c: any) => ({
-      id: c.id,
-      intermediateControlId: c.intermediateControlId,
-      shortName: c.shortName,
-      startDate: c.startDate,
-      endDate: c.endDate,
-      academicYearId: c.academicYearId,
-    })),
-  });
-
-  if (scheduledIntermediateForYear.length === 0) {
-    console.warn(
-      "⚠️ [JournalTab] NO INTERMEDIATE CONTROLS SCHEDULED FOR ACADEMIC YEAR:",
+  if (DEBUG_JOURNAL_COLUMNS) {
+    console.log("[JournalTab] 🔍 INTERMEDIATE CONTROLS DIAGNOSTIC:", {
       academicYearId,
-      "\n  This is why intermediate control columns (РК1, РК2, etc.) are NOT appearing!",
-      "\n  To fix: Go to Education Schedule page → expand 'Промежуточный контроль' → add scheduled controls for this academic year"
-    );
-
-    // Show ALL scheduled controls in the store to diagnose academic year mismatch
-    console.log("🔍 [JournalTab] ALL SCHEDULED INTERMEDIATE CONTROLS IN STORE:", {
-      totalCount: scheduledIntermediateControls.value.length,
-      allControls: scheduledIntermediateControls.value.map((c: any) => ({
-        id: c.id,
-        academicYearId: c.academicYearId,
-        intermediateControlId: c.intermediateControlId,
-        shortName: c.shortName,
-        startDate: c.startDate,
-        endDate: c.endDate,
-      })),
+      scheduledIntermediateCount: scheduledIntermediateForYear.length,
     });
-
-    if (scheduledIntermediateControls.value.length > 0) {
-      const uniqueAcademicYears = Array.from(
-        new Set(scheduledIntermediateControls.value.map((c: any) => c.academicYearId))
-      );
-      console.error(
-        "❌ [JournalTab] ACADEMIC YEAR MISMATCH DETECTED!",
-        "\n  Journal's academic year ID:",
-        academicYearId,
-        "\n  Scheduled controls exist for academic year IDs:",
-        uniqueAcademicYears,
-        "\n  FIX: Update the journal's rupEntry discipline to use the correct academic year ID,",
-        "\n       OR add scheduled controls for academic year ID",
+    if (scheduledIntermediateForYear.length === 0) {
+      console.warn(
+        "⚠️ [JournalTab] NO INTERMEDIATE CONTROLS SCHEDULED FOR ACADEMIC YEAR:",
         academicYearId
       );
+      if (scheduledIntermediateControls.value.length > 0) {
+        const uniqueAcademicYears = Array.from(
+          new Set(scheduledIntermediateControls.value.map((c: any) => c.academicYearId))
+        );
+        console.error("❌ [JournalTab] ACADEMIC YEAR MISMATCH DETECTED! IDs:", uniqueAcademicYears);
+      }
     }
+    console.log("[JournalTab] Scheduled final controls for year:", { academicYearId, count: scheduledFinalForYear.length });
   }
-
-  console.log("[JournalTab] Scheduled final controls for year:", {
-    academicYearId,
-    count: scheduledFinalForYear.length,
-    controls: scheduledFinalForYear.map((c: any) => {
-      const finalControl =
-        typeof getFinalControlById.value === "function"
-          ? getFinalControlById.value(c.finalControlId)
-          : null;
-      return {
-        id: c.id,
-        finalControlId: c.finalControlId,
-        finalControlName: finalControl?.name,
-        finalControlShortName: finalControl?.shortName,
-        shortName: c.shortName,
-      };
-    }),
-  });
 
   // ALWAYS show intermediate controls (РК1, РК2) regardless of distribution
   const filteredScheduledIntermediate = scheduledIntermediateForYear;
@@ -962,16 +863,6 @@ const generateDates = () => {
   // Only show final controls that are specified in distribution
   const filteredScheduledFinal = scheduledFinalForYear.filter(
     (control: any) => {
-      console.log("[JournalTab] Checking scheduled final control:", {
-        controlId: control.id,
-        finalControlId: control.finalControlId,
-        distributionFinalControlIds,
-        includesById: distributionFinalControlIds.includes(control.id),
-        includesByFinalControlId: distributionFinalControlIds.includes(
-          control.finalControlId
-        ),
-      });
-
       if (distributionFinalControlIds.length === 0) {
         return false;
       }
@@ -982,17 +873,7 @@ const generateDates = () => {
     }
   );
 
-  console.log("[JournalTab] After filtering scheduled final controls:", {
-    filteredCount: filteredScheduledFinal.length,
-    scheduled: scheduledFinalForYear.map((c: any) => ({
-      id: c.id,
-      finalControlId: c.finalControlId,
-    })),
-    filtered: filteredScheduledFinal.map((c: any) => ({
-      id: c.id,
-      finalControlId: c.finalControlId,
-    })),
-  });
+  if (DEBUG_JOURNAL_COLUMNS) console.log("[JournalTab] After filtering scheduled final controls:", { filteredCount: filteredScheduledFinal.length });
 
   const uniqueIds = (values: Array<string | null | undefined>) =>
     Array.from(
@@ -1013,50 +894,17 @@ const generateDates = () => {
     )
   );
 
-  // 🔍 DIAGNOSTIC: Check extracted control IDs
-  console.log("[JournalTab] 🔍 EXTRACTED CONTROL IDs:", {
-    intermediateControlIds,
-    intermediateControlIdsCount: intermediateControlIds.length,
-    finalControlIds,
-    finalControlIdsCount: finalControlIds.length,
-  });
-
-  if (intermediateControlIds.length === 0 && scheduledIntermediateForYear.length > 0) {
-    console.error(
-      "❌ [JournalTab] CRITICAL: Scheduled intermediate controls exist but intermediateControlIds is EMPTY!",
-      "\n  scheduledIntermediateForYear:",
-      scheduledIntermediateForYear,
-      "\n  This means intermediate controls are missing 'intermediateControlId' field!",
-      "\n  Check the data structure in scheduledIntermediateControlStore"
-    );
+  if (DEBUG_JOURNAL_COLUMNS) {
+    console.log("[JournalTab] 🔍 EXTRACTED CONTROL IDs:", { intermediateControlIds, finalControlIds });
+    if (intermediateControlIds.length === 0 && scheduledIntermediateForYear.length > 0) {
+      console.error("❌ [JournalTab] CRITICAL: intermediateControlIds is EMPTY but scheduled controls exist!");
+    }
+    console.log("[JournalTab] DEBUG - Extract from entries:", { distributionIntermediateControlIds, distributionFinalControlIds });
+    console.log("[JournalTab] DEBUG - Extract from scheduled:", {
+      filteredScheduledIntermediateCount: filteredScheduledIntermediate.length,
+      filteredScheduledFinalCount: filteredScheduledFinal.length,
+    });
   }
-
-  console.log("[JournalTab] DEBUG - Extract from entries:", {
-    relevantDistributionEntriesControlIds: relevantDistributionEntries.map(
-      (e: any) => ({
-        id: e.id,
-        intermediateControlId: e.intermediateControlId,
-        finalControlId: e.finalControlId,
-      })
-    ),
-    distributionIntermediateControlIds,
-    distributionFinalControlIds,
-  });
-
-  console.log("[JournalTab] DEBUG - Extract from scheduled:", {
-    scheduledIntermediateForYear: scheduledIntermediateForYear.map(
-      (c: any) => ({
-        id: c.id,
-        intermediateControlId: c.intermediateControlId,
-      })
-    ),
-    scheduledFinalForYear: scheduledFinalForYear.map((c: any) => ({
-      id: c.id,
-      finalControlId: c.finalControlId,
-    })),
-    filteredScheduledIntermediateCount: filteredScheduledIntermediate.length,
-    filteredScheduledFinalCount: filteredScheduledFinal.length,
-  });
 
   debugGroup("Control IDs Collection", () => {
     debugLog("intermediateControlIds found:", intermediateControlIds);
@@ -1174,27 +1022,11 @@ const generateDates = () => {
     const controlKey = `${type}:${controlId}`;
     const previousMax = lastAssignedDatePosByControlKey.get(controlKey) ?? -1;
 
-    console.log(`[registerScheduledControl] Registering ${type} control:`, {
-      type,
-      controlId,
-      label: rawControl.shortName || 'unlabeled',
-      startDate: rawControl.startDate,
-      endDate: rawControl.endDate,
-      parsedStart: start?.format(DATE_STORAGE_FORMAT),
-      parsedEnd: end?.format(DATE_STORAGE_FORMAT),
-      insertAfterDatePos,
-      previousMax,
-      dateMetaLength: dateMeta.length,
-    });
+    if (DEBUG_JOURNAL_COLUMNS) console.log(`[registerScheduledControl] Registering ${type}:`, { controlId, label: rawControl.shortName, insertAfterDatePos });
 
     let sessionDateIndices = collectSessionDateIndices(start, end)
       .filter((idx) => idx > previousMax)
       .filter((idx) => insertAfterDatePos < 0 || idx <= insertAfterDatePos);
-
-    console.log(`[registerScheduledControl] After collectSessionDateIndices:`, {
-      sessionDateIndices,
-      length: sessionDateIndices.length,
-    });
 
     if (!sessionDateIndices.length && insertAfterDatePos >= 0) {
       sessionDateIndices = dateMeta
@@ -1203,9 +1035,6 @@ const generateDates = () => {
             meta.datePos > previousMax && meta.datePos <= insertAfterDatePos
         )
         .map((meta) => meta.datePos);
-      console.log(`[registerScheduledControl] Fallback 1 - using dateMeta filter:`, {
-        sessionDateIndices,
-      });
     }
 
     if (!sessionDateIndices.length) {
@@ -1216,16 +1045,10 @@ const generateDates = () => {
             (insertAfterDatePos < 0 || meta.datePos <= insertAfterDatePos)
         )
         .map((meta) => meta.datePos);
-      console.log(`[registerScheduledControl] Fallback 2 - broader dateMeta filter:`, {
-        sessionDateIndices,
-      });
     }
 
     if (!sessionDateIndices.length && insertAfterDatePos >= 0) {
       sessionDateIndices = [insertAfterDatePos];
-      console.log(`[registerScheduledControl] Fallback 3 - using insertAfterDatePos:`, {
-        sessionDateIndices,
-      });
     }
 
     if (!sessionDateIndices.length && dateMeta.length) {
@@ -1233,19 +1056,9 @@ const generateDates = () => {
       sessionDateIndices = nextMeta
         ? [nextMeta.datePos]
         : [dateMeta[dateMeta.length - 1].datePos];
-      console.log(`[registerScheduledControl] Fallback 4 - using last resort:`, {
-        sessionDateIndices,
-        nextMeta: nextMeta?.datePos,
-        lastDatePos: dateMeta[dateMeta.length - 1]?.datePos,
-      });
     }
 
-    console.log(`[registerScheduledControl] Final sessionDateIndices:`, {
-      type,
-      label: rawControl.shortName,
-      sessionDateIndices,
-      length: sessionDateIndices.length,
-    });
+    if (DEBUG_JOURNAL_COLUMNS) console.log(`[registerScheduledControl] Final:`, { type, label: rawControl.shortName, sessionDateIndices });
 
     if (sessionDateIndices.length) {
       lastAssignedDatePosByControlKey.set(
@@ -1414,37 +1227,12 @@ const generateDates = () => {
     debugLog("columns", summary);
   });
 
-  // 🔍 DIAGNOSTIC: Final column summary
-  const sessionColumns = marksWithSessions.filter((m: any) => m.type === "session");
-  const intermediateColumns = sessionColumns.filter((m: any) =>
-    m.sessionType === "intermediate"
-  );
-  const finalColumns = sessionColumns.filter((m: any) =>
-    m.sessionType === "final"
-  );
-
-  console.log("[JournalTab] 🔍 FINAL COLUMNS SUMMARY:", {
-    totalColumns: marksWithSessions.length,
-    dateColumns: marksWithSessions.filter((m: any) => m.type === "date").length,
-    sessionColumns: sessionColumns.length,
-    intermediateControlColumns: intermediateColumns.length,
-    intermediateControlLabels: intermediateColumns.map((m: any) => m.label),
-    finalControlColumns: finalColumns.length,
-    finalControlLabels: finalColumns.map((m: any) => m.label),
-  });
-
-  if (intermediateColumns.length === 0) {
-    console.warn(
-      "⚠️ [JournalTab] NO INTERMEDIATE CONTROL COLUMNS were created!",
-      "\n  Check the diagnostics above to see why."
-    );
-  } else {
-    console.log(
-      "✅ [JournalTab] Successfully created",
-      intermediateColumns.length,
-      "intermediate control columns:",
-      intermediateColumns.map((m: any) => m.label).join(", ")
-    );
+  if (DEBUG_JOURNAL_COLUMNS) {
+    const sessionColumns = marksWithSessions.filter((m: any) => m.type === "session");
+    console.log("[JournalTab] 🔍 FINAL COLUMNS SUMMARY:", {
+      totalColumns: marksWithSessions.length,
+      sessionColumns: sessionColumns.length,
+    });
   }
 
   return marksWithSessions;

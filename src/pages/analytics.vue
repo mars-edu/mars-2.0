@@ -478,7 +478,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch, defineAsyncComponent } from "vue";
 import {
   f7Page,
   f7Button,
@@ -499,7 +499,7 @@ import Accordion from "@/components/ui/accordion/Accordion.vue";
 import AccordionItem from "@/components/ui/accordion/AccordionItem.vue";
 import AnalyticsReportTable from "@/components/AnalyticsReportTable.vue";
 import AnalyticsStatCards from "@/components/AnalyticsStatCards.vue";
-import AnalyticsCharts from "@/components/AnalyticsCharts.vue";
+const AnalyticsCharts = defineAsyncComponent(() => import("@/components/AnalyticsCharts.vue"));
 import AnalyticsAttendanceSheet from "@/components/AnalyticsAttendanceSheet.vue";
 import AnalyticsTranscriptView from "@/components/AnalyticsTranscriptView.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";

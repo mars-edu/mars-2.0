@@ -107,7 +107,7 @@ export default async () => {
     publicDir: PUBLIC_DIR,
     build: {
       outDir: BUILD_DIR,
-      assetsInlineLimit: 0,
+      assetsInlineLimit: 4096,
       emptyOutDir: true,
       rolldownOptions: {
         treeshake: true,
@@ -130,18 +130,33 @@ export default async () => {
                 test: /node_modules\/convex/,
                 priority: 15,
               },
+              {
+                name: "apexcharts",
+                test: /node_modules\/(apexcharts|vue3-apexcharts)/,
+                priority: 25,
+              },
+              {
+                name: "ai-sdk",
+                test: /node_modules\/(@ai-sdk|ai(?!-sdk)\/|marked|dompurify)/,
+                priority: 25,
+              },
+              {
+                name: "excel",
+                test: /node_modules\/(exceljs|file-saver)/,
+                priority: 22,
+              },
+              {
+                name: "sortable",
+                test: /node_modules\/sortablejs/,
+                priority: 22,
+              },
             ],
           },
         },
       },
-      // Enable compression and optimization
-      minify: 'terser',
-      terserOptions: {
-        compress: {
-          drop_console: true,
-          drop_debugger: true,
-          pure_funcs: ['console.log', 'console.info'],
-        },
+      minify: 'esbuild',
+      esbuildOptions: {
+        drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
       },
       // Enable source maps for debugging but with smaller size
       sourcemap: false,

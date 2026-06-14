@@ -70,7 +70,8 @@ export default defineSchema({
     activeFrom: v.optional(v.number()),
     activeTo: v.optional(v.number()),
   })
-    .index("by_resource_action", ["resource", "action"]),
+    .index("by_resource_action", ["resource", "action"])
+    .index("by_action", ["action"]),
 
   /**
    * Permission history - audit trail for permission changes
