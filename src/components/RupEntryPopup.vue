@@ -25,17 +25,17 @@
         <div class="space-y-4 pb-60 px-6 py-4">
           <div>
             <!-- Integration with other specialties from other years -->
-            <div class="pb-4 border-b border-gray-100">
+            <div class="pb-4 border-b border-border">
               <label class="flex items-center gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   v-model="isIntegrationEnabled"
                   class="form-checkbox h-5 w-5 rounded border-gray-300 text-green-500 focus:ring-green-200 cursor-pointer"
                 />
-                <span class="flex items-center gap-2 text-gray-700 font-medium">
+                <span class="flex items-center gap-2 text-foreground font-medium">
                   <IconLink
                     class="w-4 h-4"
-                    :class="isIntegrationEnabled ? 'text-green-600' : 'text-gray-400'"
+                    :class="isIntegrationEnabled ? 'text-green-600' : 'text-muted-foreground'"
                   />
                   Добавить интеграцию с другими специальностями других годов
                 </span>
@@ -63,17 +63,17 @@
             </div>
 
             <!-- Connect with base-9 (only for base-11 items) -->
-            <div v-if="(baseClass ?? 9) === 11" class="pb-4 border-b border-gray-100">
+            <div v-if="(baseClass ?? 9) === 11" class="pb-4 border-b border-border">
               <label class="flex items-center gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   v-model="isConnectChecked"
                   class="form-checkbox h-5 w-5 rounded border-gray-300 text-yellow-500 focus:ring-yellow-200 cursor-pointer"
                 />
-                <span class="flex items-center gap-2 text-gray-700 font-medium">
+                <span class="flex items-center gap-2 text-foreground font-medium">
                   <IconLink
                     class="w-4 h-4"
-                    :class="isConnectChecked ? 'text-yellow-600' : 'text-gray-400'"
+                    :class="isConnectChecked ? 'text-yellow-600' : 'text-muted-foreground'"
                   />
                   Связать с базой 9 класса
                 </span>
@@ -99,7 +99,7 @@
                     @update:modelValue="handleConnect"
                   />
                 </div>
-                <p class="text-xs text-gray-400">
+                <p class="text-xs text-muted-foreground">
                   Выберите предмет из сохранённой базы 9 класса, чтобы автоматически заполнить поля.
                 </p>
               </div>
@@ -147,7 +147,7 @@
               <div
                 v-for="lang in selectedLanguages"
                 :key="lang"
-                class="p-4 bg-gray-50 rounded-xl border border-gray-100"
+                class="p-4 bg-muted/50 rounded-xl border border-border"
               >
                 <div class="flex items-center gap-2 mb-4">
                   <div
@@ -186,7 +186,7 @@
               </div>
             </div>
 
-            <div class="mt-6 pt-4 border-t border-gray-100 grid grid-cols-2 gap-x-8 gap-y-4">
+            <div class="mt-6 pt-4 border-t border-border grid grid-cols-2 gap-x-8 gap-y-4">
                 <Input
                   :id="'total-credits-'"
                   v-model="step.totalCredits"
@@ -301,9 +301,9 @@
                 </Input>
               </div>
 
-              <div class="mt-6 pt-4 border-t border-gray-100">
+              <div class="mt-6 pt-4 border-t border-border">
                 <div class="flex items-center justify-between mb-2">
-                  <div class="text-sm font-semibold text-gray-900">
+                  <div class="text-sm font-semibold text-foreground">
                     Распределение по курсам и семестрам
                   </div>
                   <f7-button
@@ -335,7 +335,7 @@
 
                     <div
                       v-if="step.distributionEntries.length === 0"
-                      class="text-center py-6 text-gray-400 text-sm bg-white"
+                      class="text-center py-6 text-muted-foreground text-sm bg-card"
                     >
                       Нет записей распределения. Нажмите «Добавить», чтобы создать первую запись.
                     </div>
@@ -456,30 +456,30 @@
 
               <div
                 v-if="step.distributionEntries.length > 0"
-                class="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200 text-sm"
+                class="mt-4 p-4 bg-muted/50 rounded-xl border border-border text-sm"
               >
                 <div class="font-semibold mb-2">Итоги распределения:</div>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
-                    <span class="text-gray-500">Групп:</span>
+                    <span class="text-muted-foreground">Групп:</span>
                     <span :class="distributionSummary.group === distributionSummary.targetGroup ? 'text-green-600 font-medium' : 'text-red-600 font-medium'">
                       {{ distributionSummary.group }} / {{ distributionSummary.targetGroup }}
                     </span>
                   </div>
                   <div v-if="visibleColumns.srs">
-                    <span class="text-gray-500">СРС:</span>
+                    <span class="text-muted-foreground">СРС:</span>
                     <span :class="distributionSummary.srs === distributionSummary.targetSrs ? 'text-green-600 font-medium' : 'text-red-600 font-medium'">
                       {{ distributionSummary.srs }} / {{ distributionSummary.targetSrs }}
                     </span>
                   </div>
                   <div v-if="visibleColumns.srsp">
-                    <span class="text-gray-500">СРСП:</span>
+                    <span class="text-muted-foreground">СРСП:</span>
                     <span :class="distributionSummary.srsp === distributionSummary.targetSrsp ? 'text-green-600 font-medium' : 'text-red-600 font-medium'">
                       {{ distributionSummary.srsp }} / {{ distributionSummary.targetSrsp }}
                     </span>
                   </div>
                   <div v-if="visibleColumns.individual">
-                    <span class="text-gray-500">Индивидуальные:</span>
+                    <span class="text-muted-foreground">Индивидуальные:</span>
                     <span :class="distributionSummary.individual === distributionSummary.targetIndividual ? 'text-green-600 font-medium' : 'text-red-600 font-medium'">
                       {{ distributionSummary.individual }} / {{ distributionSummary.targetIndividual }}
                     </span>
@@ -1543,7 +1543,7 @@ function showDeleteConfirmation() {
 }
 
 .lang-pill-inactive {
-  background-color: #f3f4f6;
+  background-color: theme('colors.muted.DEFAULT');
   color: #6b7280;
 }
 

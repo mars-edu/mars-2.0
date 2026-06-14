@@ -5,14 +5,14 @@
     style="width: min(960px, 96vw) !important"
     @popover:closed="$emit('close')"
   >
-    <div class="rup-entry-view-popover bg-white text-gray-900">
+    <div class="rup-entry-view-popover bg-card text-foreground">
       <PopoverHeader
         cancel-text="Закрыть"
         :on-cancel="requestClose"
       >
         <template v-if="item" #title>
           <div class="flex items-center gap-3 flex-wrap leading-none">
-            <span class="text-2xl font-bold text-gray-900 leading-none">
+            <span class="text-2xl font-bold text-foreground leading-none">
               {{ item.moduleIndex || "—" }}
             </span>
             <div class="flex items-center gap-1.5 flex-wrap">
@@ -37,10 +37,10 @@
         </template>
         <template v-if="item" #subtitle>
           <div class="space-y-1 mt-1">
-            <div class="text-xl font-medium text-gray-800 leading-snug">
+            <div class="text-xl font-medium text-foreground leading-snug">
               {{ item.moduleName || "Без названия" }}
             </div>
-            <div class="text-[15px] text-gray-500 leading-relaxed">
+            <div class="text-[15px] text-muted-foreground leading-relaxed">
               {{ item.learningOutcome || "—" }}
             </div>
           </div>
@@ -54,10 +54,10 @@
             <div
               v-for="lang in allLanguageSlots"
               :key="lang.code"
-              class="p-4 bg-gray-50 rounded-xl border border-gray-100"
+              class="p-4 bg-muted/50 rounded-xl border border-border"
             >
               <h4
-                class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-2"
+                class="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-2"
               >
                 <span
                   class="lang-dot"
@@ -66,14 +66,14 @@
                 {{ lang.fullName }}
               </h4>
               <template v-if="lang.variant">
-                <p class="font-semibold text-gray-900">
+                <p class="font-semibold text-foreground">
                   <span v-if="lang.variant.moduleIndex">{{ lang.variant.moduleIndex }} — </span>{{ lang.variant.moduleName || "—" }}
                 </p>
-                <p class="text-sm text-gray-600 mt-1">
+                <p class="text-sm text-muted-foreground mt-1">
                   {{ lang.variant.learningOutcome || "—" }}
                 </p>
               </template>
-              <span v-else class="text-sm text-gray-400">—</span>
+              <span v-else class="text-sm text-muted-foreground">—</span>
             </div>
           </div>
 
@@ -84,40 +84,40 @@
           >
             <div class="metric-card metric-card-yellow">
               <IconGraduationCap class="w-5 h-5 text-yellow-600 mb-1" />
-              <div class="text-2xl font-bold text-gray-900">
+              <div class="text-2xl font-bold text-foreground">
                 {{ item.totalCredits || "0" }}
               </div>
               <div
-                class="text-xs font-medium text-gray-500 uppercase tracking-wide"
+                class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
               >
                 Кредитов
               </div>
             </div>
             <div class="metric-card metric-card-green">
               <IconClock class="w-5 h-5 text-green-600 mb-1" />
-              <div class="text-2xl font-bold text-gray-900">
+              <div class="text-2xl font-bold text-foreground">
                 {{ item.totalHours || "0" }}
               </div>
               <div
-                class="text-xs font-medium text-gray-500 uppercase tracking-wide"
+                class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
               >
                 Всего часов
               </div>
             </div>
             <div v-if="currentSemHours" class="metric-card metric-card-gray">
-              <IconCalendar class="w-5 h-5 text-gray-700 mb-1" />
-              <div class="text-2xl font-bold text-gray-900">
+              <IconCalendar class="w-5 h-5 text-foreground mb-1" />
+              <div class="text-2xl font-bold text-foreground">
                 {{ currentSemHours.hours }}
               </div>
               <div
-                class="text-xs font-medium text-gray-500 uppercase tracking-wide"
+                class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
               >
                 Часов ({{ currentSemHours.semesterName }})
               </div>
             </div>
             <div class="metric-card metric-card-gray col-span-2">
               <div
-                class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2"
+                class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2"
               >
                 Специальности
               </div>
@@ -130,7 +130,7 @@
                   {{ specialty.codeName || specialty.name }}
                 </span>
               </div>
-              <span v-else class="text-sm text-gray-400">—</span>
+              <span v-else class="text-sm text-muted-foreground">—</span>
             </div>
           </div>
 
@@ -141,38 +141,38 @@
               class="grid grid-cols-2 sm:grid-cols-4 gap-y-4 gap-x-8 text-sm"
             >
               <div>
-                <span class="text-gray-500 block">Теоретических</span>
-                <span class="font-semibold text-gray-900">{{
+                <span class="text-muted-foreground block">Теоретических</span>
+                <span class="font-semibold text-foreground">{{
                   item.theoreticalHours || "—"
                 }}</span>
               </div>
               <div>
-                <span class="text-gray-500 block">Лаб/Практ</span>
-                <span class="font-semibold text-gray-900">{{
+                <span class="text-muted-foreground block">Лаб/Практ</span>
+                <span class="font-semibold text-foreground">{{
                   item.labPracticalHours || "—"
                 }}</span>
               </div>
               <div>
-                <span class="text-gray-500 block">СРС</span>
-                <span class="font-semibold text-gray-900">{{
+                <span class="text-muted-foreground block">СРС</span>
+                <span class="font-semibold text-foreground">{{
                   item.srsHours || "—"
                 }}</span>
               </div>
               <div>
-                <span class="text-gray-500 block">СРСП</span>
-                <span class="font-semibold text-gray-900">{{
+                <span class="text-muted-foreground block">СРСП</span>
+                <span class="font-semibold text-foreground">{{
                   item.srspHours || "—"
                 }}</span>
               </div>
               <div>
-                <span class="text-gray-500 block">Практика (ПО/АС)</span>
-                <span class="font-semibold text-gray-900">{{
+                <span class="text-muted-foreground block">Практика (ПО/АС)</span>
+                <span class="font-semibold text-foreground">{{
                   item.trainingPracticeHours || "—"
                 }}</span>
               </div>
               <div>
-                <span class="text-gray-500 block">Индивидуальные</span>
-                <span class="font-semibold text-gray-900">{{
+                <span class="text-muted-foreground block">Индивидуальные</span>
+                <span class="font-semibold text-foreground">{{
                   item.individualAdditionalHours || item.individualHours || "—"
                 }}</span>
               </div>
@@ -182,11 +182,11 @@
           <!-- 5. Semester plan -->
           <div>
             <h4 class="section-heading">Семестровый план</h4>
-            <div class="border border-gray-200 rounded-lg overflow-hidden">
+            <div class="border border-border rounded-lg overflow-hidden">
               <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left">
                   <thead
-                    class="bg-gray-50 text-gray-500 font-semibold border-b border-gray-200"
+                    class="bg-muted/50 text-muted-foreground font-semibold border-b border-border"
                   >
                     <tr>
                       <th class="px-4 py-3">Год / Семестр</th>
@@ -197,11 +197,11 @@
                       <th class="px-4 py-3 text-center">Контроль</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-gray-100">
+                  <tbody class="divide-y divide-border">
                     <tr v-if="!item.distributionEntries?.length">
                       <td
                         colspan="6"
-                        class="px-4 py-6 text-center text-gray-400"
+                        class="px-4 py-6 text-center text-muted-foreground"
                       >
                         Нет записей распределения
                       </td>
@@ -210,28 +210,28 @@
                       v-else
                       v-for="entry in item.distributionEntries"
                       :key="entry.id"
-                      class="hover:bg-gray-50 transition-colors"
+                      class="hover:bg-muted/50 transition-colors"
                     >
                       <td class="px-4 py-3">
-                        <div class="font-medium text-gray-900">
+                        <div class="font-medium text-foreground">
                           {{ getAcademicYearLabel(entry.academicYearId) }}
                         </div>
-                        <div class="text-xs text-gray-500">
+                        <div class="text-xs text-muted-foreground">
                           {{ getSemesterLabel(entry.semesterId) }}
                         </div>
                       </td>
                       <td
-                        class="px-4 py-3 text-center font-medium text-gray-900"
+                        class="px-4 py-3 text-center font-medium text-foreground"
                       >
                         {{ entry.hours || "—" }}
                       </td>
-                      <td class="px-4 py-3 text-center text-gray-600">
+                      <td class="px-4 py-3 text-center text-muted-foreground">
                         {{ semesterSharedValue(entry.srsHours) }}
                       </td>
-                      <td class="px-4 py-3 text-center text-gray-600">
+                      <td class="px-4 py-3 text-center text-muted-foreground">
                         {{ semesterSharedValue(entry.srspHours) }}
                       </td>
-                      <td class="px-4 py-3 text-center text-gray-600">
+                      <td class="px-4 py-3 text-center text-muted-foreground">
                         {{ semesterSharedValue(entry.individualHours) }}
                       </td>
                       <td class="px-4 py-3 text-center">
@@ -244,15 +244,15 @@
                             class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
                             :class="
                               label === 'Экз.' || label === 'Экзамен'
-                                ? 'bg-red-50 text-red-700'
-                                : 'bg-gray-100 text-gray-700'
+                                ? 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                : 'bg-muted text-foreground'
                             "
                           >
                             {{ label }}
                           </span>
                           <span
                             v-if="!getControlLabelsArray(entry).length"
-                            class="text-gray-400 text-xs"
+                            class="text-muted-foreground text-xs"
                             >—</span
                           >
                         </div>
