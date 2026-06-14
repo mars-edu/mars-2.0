@@ -38,7 +38,7 @@
           </div>
 
           <!-- Row 2: Search + Filters -->
-          <div class="flex flex-col md:flex-row gap-3 mb-6">
+          <div class="flex flex-col md:flex-row gap-3 mb-4">
             <SearchInput
               v-model="searchQuery"
               placeholder="Поиск по названию, модулю или результату обучения..."
@@ -58,6 +58,33 @@
               name="semester"
               class="w-full md:w-[200px]"
             />
+          </div>
+
+          <!-- Tabs -->
+          <div class="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+            <button
+              class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap"
+              :class="filterTab === 'all' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80'"
+              @click="filterTab = 'all'"
+            >
+              Все КТП
+            </button>
+            <button
+              class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-1.5"
+              :class="filterTab === 'attached' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80'"
+              @click="filterTab = 'attached'"
+            >
+              <IconPaperclip class="w-3.5 h-3.5" />
+              Прикрепленные к журналу
+            </button>
+            <button
+              class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-1.5"
+              :class="filterTab === 'library' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80'"
+              @click="filterTab = 'library'"
+            >
+              <IconBookOpen class="w-3.5 h-3.5" />
+              Библиотека (Свободные)
+            </button>
           </div>
 
           <!-- Cards -->
@@ -81,9 +108,9 @@
               @click="selectItem(item)"
             >
               <div
-                v-if="isItemFullyLoaded(item)"
+                v-if="isKtpAttachedToJournal(item)"
                 class="absolute -top-2.5 -right-2.5 bg-primary text-primary-foreground p-2 rounded-xl shadow-lg rotate-12 group-hover:rotate-0 transition-transform z-10"
-                title="План полностью заполнен"
+                title="Прикреплен к журналу"
               >
                 <IconPaperclip class="w-4 h-4" />
               </div>
@@ -121,6 +148,19 @@
                   >
                     {{ item.learningOutcome }}
                   </p>
+                  
+                  <div class="mt-2 flex flex-col gap-1">
+                    <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span class="font-medium text-foreground/80">Специальности:</span>
+                      <span class="truncate max-w-[200px] sm:max-w-[300px]">{{ getKtpSpecialtiesDisplay(item).text }}</span>
+                      <span v-if="getKtpSpecialtiesDisplay(item).isFromJournal" class="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-medium text-[9px] uppercase tracking-wider">
+                        с журнала
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-2 text-[11px] text-muted-foreground">
+                      <span>Создан: {{ formatDate(item.createdAt.valueOf()) }}</span>
+                    </div>
+                  </div>
                   <!-- TODO: journals accordion disabled for now
                   <KtpJournalsAccordion
                     :journals="getKtpJournals(item.ktpId)"
@@ -141,10 +181,13 @@
                       {{ item.ktpTotalHours || 0 }}
                     </span>
                   </div>
-                  <div class="flex flex-col items-center min-w-[50px]">
+                  <div class="flex flex-col items-center min-w-[50px] relative">
                     <span class="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">Курс</span>
                     <span class="text-sm font-semibold group-hover:text-primary transition-colors">
-                      {{ getCourseNumber((item as any).courseId || "") || "—" }}
+                      {{ getCourseDisplay(item).text }}
+                    </span>
+                    <span v-if="getCourseDisplay(item).isFromJournal" class="absolute -top-4 whitespace-nowrap px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-medium text-[9px] uppercase tracking-wider">
+                        с журнала
                     </span>
                   </div>
                   <div class="flex flex-col items-center min-w-[50px]">
@@ -249,10 +292,13 @@ import { useSidebar } from "@/composables/useSidebar";
 import { useKtpPlannedHours } from "@/composables/useKtpPlannedHours";
 import { isKtpFullyLoaded } from "@/lib/ktpHelpers";
 import type { Ktp } from "@/stores/ktpStore";
+import { useSpecialtyStore } from "@/stores/specialtyStore";
+import { formatDate } from "@/utils/dateUtils";
 
 const { contentMargin } = useSidebar();
 const activeNavItem = ref("ktp");
 const searchQuery = ref("");
+const filterTab = ref<"all" | "attached" | "library">("all");
 
 const academicYearStore = useAcademicYearStore();
 const { academicYears } = storeToRefs(academicYearStore);
@@ -261,6 +307,7 @@ const academicYearSemesterStore = useAcademicYearSemesterStore();
 const rupEntryStore = useRupEntryStore();
 const journalStore = useJournalStore();
 const calendarStore = useCalendarStore();
+const specialtyStore = useSpecialtyStore();
 
 // Get KTP data and enrich with rupEntry information
 const ktpItems = computed(() => {
@@ -397,6 +444,11 @@ const filteredKtpItems = computed(() => {
     .filter((item) => {
       if (yearId && item.academicYearId !== yearId) return false;
       if (semId && item.semesterId !== semId) return false;
+      
+      const isAttached = isKtpAttachedToJournal(item);
+      if (filterTab.value === 'attached' && !isAttached) return false;
+      if (filterTab.value === 'library' && isAttached) return false;
+      
       if (query) {
         const haystack = [
           item.moduleIndex,
@@ -412,10 +464,45 @@ const filteredKtpItems = computed(() => {
     });
 });
 
+const isKtpAttachedToJournal = (item: any) => {
+  return getKtpJournals(item.ktpId).length > 0;
+};
 
-const getCourseNumber = (courseId: string) => {
-  const course = courseStore.getCourseById(courseId);
-  return course ? course.number : "—";
+const getKtpSpecialtiesDisplay = (item: any) => {
+  const journals = getKtpJournals(item.ktpId);
+  if (journals.length > 0) {
+    const names = journals.map(j => j.group || j.customTitle || "Группа журнала");
+    const uniqueNames = Array.from(new Set(names));
+    return { text: uniqueNames.join(", "), isFromJournal: true };
+  }
+  
+  if (item.specialtyIds && item.specialtyIds.length > 0) {
+    const codes = item.specialtyIds.map((id: string) => {
+      const spec = specialtyStore.getSpecialtyById(id);
+      return spec ? spec.codeName : id;
+    });
+    return { text: codes.join(", "), isFromJournal: false };
+  }
+  return { text: "—", isFromJournal: false };
+};
+
+const getCourseDisplay = (item: any) => {
+  const journals = getKtpJournals(item.ktpId);
+  if (journals.length > 0) {
+    const courses = new Set<number>();
+    journals.forEach(j => {
+      if (j.courseNumber) courses.add(j.courseNumber);
+    });
+    if (courses.size > 0) {
+      return { text: Array.from(courses).join(", "), isFromJournal: true };
+    }
+  }
+  
+  const baseClasses = item.baseClass;
+  if (baseClasses && baseClasses.length > 0) {
+    return { text: baseClasses.join(", "), isFromJournal: false };
+  }
+  return { text: "—", isFromJournal: false };
 };
 
 // Journals using a KTP: linked group journal + its individual children
