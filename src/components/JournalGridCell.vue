@@ -7,7 +7,7 @@
         : 'hover:bg-muted/80',
       {
         'bg-muted/40 font-semibold': header.type === 'session' || header.type === 'pk' || header.type === 'e' || header.type === 'i',
-        'bg-muted/30 cursor-not-allowed': header.type === 'date' && header.isoDate && (isFuture || isPast),
+        'bg-muted/30 cursor-not-allowed': header.type === 'date' && header.isoDate && isFuture,
       },
     ]"
   >
@@ -44,14 +44,12 @@
           :title="
             header.type === 'date' && isFuture
               ? 'Нельзя выставлять оценки авансом'
-              : header.type === 'date' && isPast
-                ? 'Нельзя изменять оценки за прошедшие даты'
-                : undefined
+              : undefined
           "
         >
           <MarkCell
             :mark="marks[mIdx - 1]"
-            :disabled="header.type === 'date' && header.isoDate && (isFuture || isPast)"
+            :disabled="header.type === 'date' && header.isoDate && isFuture"
           />
         </div>
       </div>
@@ -89,14 +87,6 @@ const onCellClick = (markIndex: number) => {
     if (props.isFuture) {
       f7.toast.create({
         text: 'Нельзя выставлять оценки авансом',
-        position: 'center',
-        closeTimeout: 2000,
-      }).open();
-      return;
-    }
-    if (props.isPast) {
-      f7.toast.create({
-        text: 'Нельзя изменять оценки за прошедшие даты',
         position: 'center',
         closeTimeout: 2000,
       }).open();

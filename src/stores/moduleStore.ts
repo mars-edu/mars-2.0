@@ -1,12 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-
-export interface Module {
-  id: string;
-  specialtyId: string;
-  courseId: string;
-  [key: string]: string;
-}
+import type { Module } from "@/types/module";
 
 export const useModuleStore = defineStore(
   "module",

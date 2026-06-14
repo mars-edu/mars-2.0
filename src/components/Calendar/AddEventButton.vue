@@ -105,11 +105,20 @@ const useIndividualJournals = ref(false);
 const gradingType = ref<"combined" | "separate" | "">("");
 const individualJournals = ref<IndividualJournalDraft[]>([]);
 
+import { useRupEntryStore } from "@/stores/rupEntryStore";
+
 const isPopupOpen = ref(false);
 const sessionKey = ref(0);
 const addEventPopupRef = ref<{ allowNextClose: () => void } | null>(null);
+const rupEntryStore = useRupEntryStore();
 
-const semesterId = computed(() => getActiveAcademicYearSemester.value?.id || "");
+const semesterId = computed(() => {
+  const activeSemesterId = getActiveAcademicYearSemester.value?.id;
+  if (rupEntryId.value) {
+    return rupEntryStore.getAutoSelectedSemesterForRupEntry(rupEntryId.value, activeSemesterId);
+  }
+  return activeSemesterId || "";
+});
 
 const {
   semesterDates,

@@ -1,14 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { withLoading } from "@/utils/storeAction";
-
-export interface Language {
-  id: string;
-  name: string;
-  code: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { Language } from "@/types/language";
 
 const DEFAULT_LANGUAGES: Language[] = [
   {

@@ -128,7 +128,7 @@ const academicYearSemesterSchema = z
       data.endDate.length > 0 &&
       !isNaN(data.startDate[0].getTime()) &&
       !isNaN(data.endDate[0].getTime()) &&
-      data.endDate[0] > data.startDate[0],
+      data.endDate[0] >= data.startDate[0],
     {
       message: "Дата окончания должна быть позже даты начала",
       path: ["endDate"],

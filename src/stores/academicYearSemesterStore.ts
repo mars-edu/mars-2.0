@@ -7,18 +7,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
-
-export interface AcademicYearSemester {
-  id: string;
-  academicYearId: string;
-  semesterDefinitionId: string;
-  semesterNumber: number; // Derived from semesterDefinition
-  semesterName: string; // Derived from semesterDefinition
-  startDate: string;
-  endDate: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { AcademicYearSemester } from "@/types/academic-year-semester";
 
 const DEFAULT_ACADEMIC_YEAR_SEMESTERS: AcademicYearSemester[] = [];
 
@@ -235,13 +224,15 @@ export const useAcademicYearSemesterStore = defineStore(
 
     async function loadFromBackend() {
       return await withLoading(loading, error, async () => {
-        const data = await convex.query(api.semesters.queries.list, {});
+        const data = await convex.query(api.academicYearSemesters.queries.list, {});
                 academicYearSemesters.value = data
-                  .filter((s) => s.academicYearId) // Only those with academic year
-                  .map((s) => ({
+                  .filter((s: any) => s.academicYearId) // Only those with academic year
+                  .map((s: any) => ({
                     id: s._id,
                     academicYearId: s.academicYearId as string,
-                    semesterNumber: s.number || 1,
+                    semesterDefinitionId: s.semesterDefinitionId || "",
+                    semesterNumber: s.semester?.number || s.number || 1,
+                    semesterName: s.semester?.name || s.semesterName || `Семестр ${s.semester?.number || s.number || 1}`,
                     startDate: s.startDate || "",
                     endDate: s.endDate || "",
                     createdAt: new Date(s.createdAt),

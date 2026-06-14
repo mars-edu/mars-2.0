@@ -4,10 +4,14 @@ import {
   WorkerOptions,
   cli,
   voice,
+  llm
 } from '@livekit/agents';
 import * as google from '@livekit/agents-plugin-google';
 import { fileURLToPath } from 'node:url';
 import { Modality } from '@google/genai';
+
+// Share tool schemas between Convex and LiveKit!
+import { MARS_TOOLS_CONFIG } from '../convex/livekit/toolsConfig.js';
 
 const MARS_INSTRUCTIONS = `Ты — голосовой ИИ-ассистент системы MARS 2.0 (Минимальная Автоматизация Расписания Специальностей). Это система управления образованием для казахстанских колледжей.
 
@@ -92,8 +96,49 @@ export default defineAgent({
   entry: async (ctx: JobContext) => {
     await ctx.connect();
 
+    // Find the user token from participant metadata
+    let userToken = '';
+    for (const p of ctx.room.remoteParticipants.values()) {
+      if (p.metadata) {
+        try {
+          const meta = JSON.parse(p.metadata);
+          if (meta.token) userToken = meta.token;
+        } catch {}
+      }
+    }
+
+    const CONVEX_SITE_URL = process.env.VITE_CONVEX_SITE_URL || 'https://sleek-bird-839.convex.site';
+
+    const callTool = async (toolName: string, args: any) => {
+      try {
+        const res = await fetch(`${CONVEX_SITE_URL}/api/livekit/tool`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(userToken ? { Authorization: `Bearer ${userToken}` } : {})
+          },
+          body: JSON.stringify({ tool: toolName, args })
+        });
+        return await res.json();
+      } catch (err) {
+        console.error(`Error calling tool ${toolName}:`, err);
+        return { error: `Failed to call tool ${toolName}` };
+      }
+    };
+
+    // Dynamically build tools from the shared config
+    const tools: Record<string, any> = {};
+    for (const [toolName, config] of Object.entries(MARS_TOOLS_CONFIG)) {
+      tools[toolName] = llm.tool({
+        description: config.description,
+        parameters: config.parameters,
+        execute: async (args: any) => callTool(toolName, args),
+      });
+    }
+
     const agent = new voice.Agent({
       instructions: MARS_INSTRUCTIONS,
+      tools: tools,
     });
 
     const session = new voice.AgentSession({

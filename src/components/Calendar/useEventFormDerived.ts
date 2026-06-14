@@ -100,7 +100,7 @@ export function useEventFormDerived(args: {
     const semesterNumber = String(semester.value.semesterNumber ?? "");
     const activeYearId = semester.value.academicYearId;
 
-    const matchedEntry = item.distributionEntries.find((entry) => {
+    const matchedEntry = item.distributionEntries.find((entry: any) => {
       const entrySemesterId = String((entry as any).semesterId ?? "");
       const matchesSemester =
         entrySemesterId === String(semester.value?.id ?? "") ||

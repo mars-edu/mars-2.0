@@ -4,30 +4,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
-
-export interface Specialty {
-  id: string;
-  legacyId?: string;
-  name: string;
-  codeName: string;
-  code: string;
-  year?: number;
-  orderNumber?: string;
-  hasModule: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  details: string;
-  isHighlighted?: boolean;
-}
-
-export interface AddSpecialtyPayload {
-  code: string;
-  name: string;
-  details: string;
-  codeName: string;
-  year?: number;
-  orderNumber?: string;
-}
+import type { Specialty, AddSpecialtyPayload } from "@/types/specialty";
 
 export const useSpecialtyStore = defineStore(
   "specialty",

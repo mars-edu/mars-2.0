@@ -5,6 +5,8 @@ import { api } from '../_generated/api';
 import type { ActionCtx } from '../_generated/server';
 import type { Id, Doc } from '../_generated/dataModel';
 
+import { MARS_TOOLS_CONFIG } from './toolsConfig';
+
 export interface ResolvedUser {
   userId: Id<'users'>;
   roles: string[];
@@ -44,8 +46,8 @@ export function createMarsTools(
   return {
     // ── Identity ─────────────────────────────────────────────────────────────
     getCurrentUser: dynamicTool({
-      description: 'Get the current logged-in user: name, roles, linked IDs.',
-      inputSchema: z.object({}).passthrough(),
+      description: MARS_TOOLS_CONFIG.getCurrentUser.description,
+      inputSchema: MARS_TOOLS_CONFIG.getCurrentUser.parameters,
       execute: async (): Promise<ToolResult> => ({
         name: `${user.firstName} ${user.lastName}`,
         roles: user.roles,
@@ -56,8 +58,8 @@ export function createMarsTools(
 
     // ── Academic Year ─────────────────────────────────────────────────────────
     getAcademicYear: dynamicTool({
-      description: 'Get the current active academic year and its semesters.',
-      inputSchema: z.object({}).passthrough(),
+      description: MARS_TOOLS_CONFIG.getAcademicYear.description,
+      inputSchema: MARS_TOOLS_CONFIG.getAcademicYear.parameters,
       execute: async (): Promise<ToolResult> => {
         const year = await ctx.runQuery(api.academicYears.queries.getActive, {});
         return (year as Record<string, unknown>) ?? { error: 'No active academic year found' };
@@ -66,17 +68,16 @@ export function createMarsTools(
 
     // ── Disciplines ───────────────────────────────────────────────────────────
     getDisciplineList: dynamicTool({
-      description: 'List all disciplines (subjects) in the system.',
-      inputSchema: z.object({}).passthrough(),
+      description: MARS_TOOLS_CONFIG.getDisciplineList.description,
+      inputSchema: MARS_TOOLS_CONFIG.getDisciplineList.parameters,
       execute: async (): Promise<ToolResult> =>
         await ctx.runQuery(api.disciplines.queries.list, {}),
     }),
 
     // ── Journals ──────────────────────────────────────────────────────────────
     listMyJournals: dynamicTool({
-      description:
-        'List journals for the current user. Teachers see their own journals. Students see journals they are enrolled in. Admins see all.',
-      inputSchema: z.object({}).passthrough(),
+      description: MARS_TOOLS_CONFIG.listMyJournals.description,
+      inputSchema: MARS_TOOLS_CONFIG.listMyJournals.parameters,
       execute: async (): Promise<ToolResult> => {
         if (isAdmin) {
           return await ctx.runQuery(api.journals.queries.list, {});
@@ -100,11 +101,8 @@ export function createMarsTools(
     }),
 
     getJournalMarks: dynamicTool({
-      description:
-        'Get marks in a specific journal. Teachers and admins see all marks. Students only see their own marks.',
-      inputSchema: z.object({
-        journalId: z.string().describe('The journal _id'),
-      }),
+      description: MARS_TOOLS_CONFIG.getJournalMarks.description,
+      inputSchema: MARS_TOOLS_CONFIG.getJournalMarks.parameters,
       execute: async (input: unknown): Promise<ToolResult> => {
         const { journalId } = input as { journalId: string };
         if (isAdmin || isTeacher) {
@@ -123,9 +121,8 @@ export function createMarsTools(
     }),
 
     getMyMarks: dynamicTool({
-      description:
-        'Get all marks for the current student across all enrolled journals. Only works for STUDENT role.',
-      inputSchema: z.object({}).passthrough(),
+      description: MARS_TOOLS_CONFIG.getMyMarks.description,
+      inputSchema: MARS_TOOLS_CONFIG.getMyMarks.parameters,
       execute: async (): Promise<ToolResult> => {
         if (!isStudent || !user.studentId) {
           return { error: 'Only students can use this tool' };
@@ -138,12 +135,8 @@ export function createMarsTools(
 
     // ── Schedule ──────────────────────────────────────────────────────────────
     getSchedule: dynamicTool({
-      description:
-        'Get calendar events / schedule. Teachers see their own events. Students see events they are participants in. Admins see all. Optionally filter by date range (ISO date strings).',
-      inputSchema: z.object({
-        startDate: z.string().optional().describe('ISO date, e.g. 2026-03-01'),
-        endDate: z.string().optional().describe('ISO date, e.g. 2026-03-31'),
-      }),
+      description: MARS_TOOLS_CONFIG.getSchedule.description,
+      inputSchema: MARS_TOOLS_CONFIG.getSchedule.parameters,
       execute: async (input: unknown): Promise<ToolResult> => {
         const { startDate, endDate } = input as { startDate?: string; endDate?: string };
         if (isTeacher && user.teacherId) {
@@ -176,12 +169,8 @@ export function createMarsTools(
 
     // ── Students ──────────────────────────────────────────────────────────────
     getStudentList: dynamicTool({
-      description:
-        'List students. Use this FIRST when looking up a student by name — pass the name as "search" to get their _id. Returns specialtyName resolved to a human-readable string. Optionally filter by specialty. Teacher and admin only.',
-      inputSchema: z.object({
-        search: z.string().optional().describe('Name fragment to search'),
-        specialty: z.string().optional().describe('Filter by specialty'),
-      }),
+      description: MARS_TOOLS_CONFIG.getStudentList.description,
+      inputSchema: MARS_TOOLS_CONFIG.getStudentList.parameters,
       execute: async (input: unknown): Promise<ToolResult> => {
         if (!isAdmin && !isTeacher) return accessDenied();
         const { search, specialty } = input as { search?: string; specialty?: string };
@@ -203,11 +192,8 @@ export function createMarsTools(
     }),
 
     getStudentCard: dynamicTool({
-      description:
-        'Get full info for one student by their _id. Use after finding the student via getStudentList. Never ask the user for this ID — resolve it from search results. Teacher and admin only.',
-      inputSchema: z.object({
-        studentId: z.string().describe('The student _id'),
-      }),
+      description: MARS_TOOLS_CONFIG.getStudentCard.description,
+      inputSchema: MARS_TOOLS_CONFIG.getStudentCard.parameters,
       execute: async (input: unknown): Promise<ToolResult> => {
         if (!isAdmin && !isTeacher) return accessDenied();
         const { studentId } = input as { studentId: string };
@@ -225,11 +211,8 @@ export function createMarsTools(
     }),
 
     getStudentJournals: dynamicTool({
-      description:
-        "Get all journals a specific student is enrolled in, with human-readable discipline names resolved. Use when asked about a student's subjects, classes, or journals. Call after finding the student via getStudentList. Teacher and admin only.",
-      inputSchema: z.object({
-        studentId: z.string().describe('The student _id (from getStudentList results)'),
-      }),
+      description: MARS_TOOLS_CONFIG.getStudentJournals.description,
+      inputSchema: MARS_TOOLS_CONFIG.getStudentJournals.parameters,
       execute: async (input: unknown): Promise<ToolResult> => {
         if (!isAdmin && !isTeacher) return accessDenied();
         const { studentId } = input as { studentId: string };
@@ -253,11 +236,8 @@ export function createMarsTools(
     }),
 
     getMarksForStudent: dynamicTool({
-      description:
-        'Get ALL marks for a specific student across all their journals in one call. Use this instead of calling getJournalMarks for each journal separately — it avoids hitting tool call limits. Returns marks with columnDate (ISO date) and columnLabel for sorting. Teacher and admin only.',
-      inputSchema: z.object({
-        studentId: z.string().describe('The student _id (from getStudentList results)'),
-      }),
+      description: MARS_TOOLS_CONFIG.getMarksForStudent.description,
+      inputSchema: MARS_TOOLS_CONFIG.getMarksForStudent.parameters,
       execute: async (input: unknown): Promise<ToolResult> => {
         if (!isAdmin && !isTeacher) return accessDenied();
         const { studentId } = input as { studentId: string };
@@ -267,10 +247,8 @@ export function createMarsTools(
 
     // ── Teachers ──────────────────────────────────────────────────────────────
     getTeacherList: dynamicTool({
-      description: 'List all teachers. Admin only.',
-      inputSchema: z.object({
-        search: z.string().optional().describe('Name fragment to search'),
-      }),
+      description: MARS_TOOLS_CONFIG.getTeacherList.description,
+      inputSchema: MARS_TOOLS_CONFIG.getTeacherList.parameters,
       execute: async (input: unknown): Promise<ToolResult> => {
         if (!isAdmin) return { error: 'Access denied — admin only' };
         const { search } = input as { search?: string };
@@ -283,11 +261,8 @@ export function createMarsTools(
 
     // ── KTP ───────────────────────────────────────────────────────────────────
     getKTP: dynamicTool({
-      description:
-        'Get the calendar-thematic plan (КТП) for a calendar event. Teacher and admin only.',
-      inputSchema: z.object({
-        eventId: z.string().describe('calendarEvent _id'),
-      }),
+      description: MARS_TOOLS_CONFIG.getKTP.description,
+      inputSchema: MARS_TOOLS_CONFIG.getKTP.parameters,
       execute: async (input: unknown): Promise<ToolResult> => {
         if (!isAdmin && !isTeacher) return accessDenied();
         const { eventId } = input as { eventId: string };
@@ -299,14 +274,8 @@ export function createMarsTools(
 
     // ── Substitutions ─────────────────────────────────────────────────────────
     getSubstitutions: dynamicTool({
-      description:
-        'Get substitution (замена) requests involving the current teacher. Optionally filter by status.',
-      inputSchema: z.object({
-        status: z
-          .enum(['pending', 'accepted', 'rejected', 'completed'])
-          .optional()
-          .describe('Filter by status'),
-      }),
+      description: MARS_TOOLS_CONFIG.getSubstitutions.description,
+      inputSchema: MARS_TOOLS_CONFIG.getSubstitutions.parameters,
       execute: async (input: unknown): Promise<ToolResult> => {
         const { status } = input as { status?: 'pending' | 'accepted' | 'rejected' | 'completed' };
         if (isTeacher) {
@@ -327,8 +296,8 @@ export function createMarsTools(
 
     // ── Notifications ─────────────────────────────────────────────────────────
     getNotifications: dynamicTool({
-      description: 'Get unread notifications for the current user.',
-      inputSchema: z.object({}).passthrough(),
+      description: MARS_TOOLS_CONFIG.getNotifications.description,
+      inputSchema: MARS_TOOLS_CONFIG.getNotifications.parameters,
       execute: async (): Promise<ToolResult> =>
         (await ctx.runQuery(api.notifications.queries.getUserNotifications, {
           userId: user.userId,

@@ -4,24 +4,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
-
-export interface Cabinet {
-  id: string;
-  name: string;
-  capacity: number;
-  type: string;
-  description?: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface AddCabinetPayload {
-  name: string;
-  capacity: number;
-  type: string;
-  description?: string;
-}
+import type { Cabinet, AddCabinetPayload } from "@/types/cabinet";
 
 export const useCabinetStore = defineStore(
   "cabinet",

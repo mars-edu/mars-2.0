@@ -26,9 +26,9 @@ import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermediateControlStore";
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
-import type { EducationSchedule } from "@/stores/educationScheduleStore";
-import type { CalendarEvent } from "@/stores/calendarStore";
 import type { Mark } from "@/types/marks";
+import type { EducationSchedule } from "@/types/education-schedule";
+import type { CalendarEvent } from "@/types/calendar";
 
 // ---------------------------------------------------------------------------
 // Pure helpers (mirrors JournalTab helpers, kept private to this module)

@@ -4,16 +4,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
-
-export interface AcademicYear {
-  id: string;
-  name: string;
-  startYear: number;
-  endYear: number;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { AcademicYear } from "@/types/academic-year";
 
 const DEFAULT_ACADEMIC_YEARS: AcademicYear[] = [];
 

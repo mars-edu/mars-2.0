@@ -1,5 +1,6 @@
 // src/composables/useAgentSession.ts
 import { ref, computed, onUnmounted } from 'vue';
+import { useUserStore } from '@/stores/userStore';
 import {
   Room,
   RoomEvent,
@@ -131,10 +132,17 @@ export function useAgentSession() {
   // ── Public API ────────────────────────────────────────────────────────────
   async function connect() {
     agentState.value = 'connecting';
+    const userStore = useUserStore();
+    
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (userStore.token) {
+        headers['Authorization'] = `Bearer ${userStore.token}`;
+      }
+      
       const res = await fetch(`${CONVEX_SITE_URL}/api/livekit/token`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
       });
 
       if (!res.ok) throw new Error('Failed to get LiveKit token');
@@ -148,6 +156,27 @@ export function useAgentSession() {
       // Enable microphone
       await room.localParticipant.setMicrophoneEnabled(true);
       isMicMuted.value = false;
+
+      // Wait for agent to join
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          room.off(RoomEvent.ParticipantConnected, onJoin);
+          disconnect();
+          reject(new Error('Agent unavailable. Timeout waiting for agent to join.'));
+        }, 10000);
+
+        const onJoin = () => {
+          clearTimeout(timeout);
+          room.off(RoomEvent.ParticipantConnected, onJoin);
+          resolve();
+        };
+
+        if (room.remoteParticipants.size > 0) {
+          onJoin();
+        } else {
+          room.on(RoomEvent.ParticipantConnected, onJoin);
+        }
+      });
 
     } catch (err) {
       console.error('[useAgentSession] connect error:', err);

@@ -5,47 +5,7 @@ import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { withLoading } from "@/utils/storeAction";
-
-export interface DistributionEntry {
-  id: string;
-  academicYearId: string;
-  semesterId: string;
-  hours: string;
-  srsHours?: string;
-  srspHours?: string;
-  individualHours?: string;
-  intermediateControlId?: string | null;
-  finalControlId?: string | null;
-  examEnabled?: boolean;
-  creditEnabled?: boolean;
-  controlLessonEnabled?: boolean;
-}
-
-export interface RupEntry {
-  id: string;
-  specialtyIds: string[]; // Changed from specialtyId to specialtyIds array
-  academicYearId: string;
-  baseClass: number[]; // e.g. [9], [11], or [9, 11]
-  language: string;
-  groupId?: string;
-  moduleIndex: string;
-  moduleName: string;
-  learningOutcome: string;
-  totalCredits: string;
-  totalHours: string;
-  theoreticalHours: string;
-  labPracticalHours: string;
-  field3Value: string;
-  srspHours: string;
-  srsHours: string;
-  trainingPracticeHours: string;
-  individualHours: string;
-  individualAdditionalHours: string;
-  distributionEntries: DistributionEntry[];
-  position: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { DistributionEntry, RupEntry } from "@/types/rup-entry";
 
 export const useRupEntryStore = defineStore(
   "rupEntryStore",
@@ -109,6 +69,25 @@ export const useRupEntryStore = defineStore(
 
     const getRupEntryById = computed(() => {
       return (id: string) => rupEntries.value.find((c) => c.id === id);
+    });
+
+    const getAutoSelectedSemesterForRupEntry = computed(() => {
+      return (rupEntryId: string, activeSemesterId?: string) => {
+        const entry = getRupEntryById.value(rupEntryId);
+        if (entry && entry.distributionEntries && entry.distributionEntries.length > 0) {
+          const entriesWithHours = entry.distributionEntries.filter((e: any) => Number(e.hours) > 0 && e.semesterId);
+          
+          if (activeSemesterId) {
+            const matchingActive = entriesWithHours.find((e: any) => e.semesterId === activeSemesterId);
+            if (matchingActive) return activeSemesterId;
+          }
+          
+          if (entriesWithHours.length > 0) {
+            return entriesWithHours[0].semesterId;
+          }
+        }
+        return activeSemesterId || "";
+      };
     });
 
     const getGroupedVariants = computed(() => {
@@ -641,6 +620,7 @@ export const useRupEntryStore = defineStore(
       loading,
       error,
       getRupEntryById,
+      getAutoSelectedSemesterForRupEntry,
       getGroupedVariants,
       getRupEntriesByContext,
       getAllRupEntries,

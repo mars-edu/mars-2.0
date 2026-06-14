@@ -57,12 +57,12 @@ export const listMakeupRequestsInternal = internalQuery({
   },
 });
 
-export const listMakeupRequestsWithRoleAccess: any = action({
+export const listMakeupRequestsWithRoleAccess = action({
   args: {
     token: v.string(),
     selectedTeacherId: v.optional(v.union(v.string(), v.null())),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<any[]> => {
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) return [];
 

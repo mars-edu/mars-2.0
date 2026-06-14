@@ -1,7 +1,8 @@
 import { computed, type ComputedRef, type Ref } from "vue";
 import { useKtpStore } from "@/stores/ktpStore";
 import { useCalendarStore } from "@/stores/calendarStore";
-import { useJournalStore, type Journal } from "@/stores/journalStore";
+import { useJournalStore } from "@/stores/journalStore";
+import type { Journal } from "@/types/journal";
 
 /**
  * Journals using a given KTP: the group journal the KTP is linked to

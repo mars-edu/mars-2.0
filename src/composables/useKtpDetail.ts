@@ -1,7 +1,7 @@
 import { ref, computed, type ComputedRef, type Ref } from "vue";
 import { f7 } from "framework7-vue";
-import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
-import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
+import { useKtpStore } from "@/stores/ktpStore";
+import { useCalendarStore } from "@/stores/calendarStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { getEventDays } from "@/utils/eventDate";
@@ -12,6 +12,8 @@ import {
 } from "@/services/convex-excel-export";
 import { parseKtpDocxFile } from "@/services/docx-ktp-parser";
 import { useKtpPlannedHours } from "@/composables/useKtpPlannedHours";
+import type { KtpDetail } from "@/types/ktp";
+import type { CalendarEvent } from "@/types/calendar";
 
 /**
  * Shared KTP detail logic for KtpDetailView (KTP page, detail popup,

@@ -4,18 +4,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
-
-export interface ScheduledIntermediateControl {
-  id: string;
-  academicYearId: string;
-  intermediateControlId: string;
-  shortName: string;
-  startDate: string;
-  endDate: string;
-  semesterId?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { ScheduledIntermediateControl } from "@/types/scheduled-intermediate-control";
 
 const DEFAULT_SCHEDULED_INTERMEDIATE_CONTROLS: ScheduledIntermediateControl[] =
   [];
@@ -90,6 +79,7 @@ export const useScheduledIntermediateControlStore = defineStore(
                   shortName: controlData.shortName,
                   startDate: controlData.startDate,
                   endDate: controlData.endDate,
+                  semesterId: controlData.semesterId as string,
                 });
                 // Don't push to scheduledIntermediateControls.value - the reactive subscription will handle it
                 error.value = null;
@@ -111,6 +101,7 @@ export const useScheduledIntermediateControlStore = defineStore(
                   shortName: controlData.shortName,
                   startDate: controlData.startDate,
                   endDate: controlData.endDate,
+                  semesterId: controlData.semesterId as string,
                 });
                 // Don't update scheduledIntermediateControls.value - the reactive subscription will handle it
                 error.value = null;

@@ -1,6 +1,6 @@
 import { storeToRefs } from "pinia";
 import { useLocaleStore } from "@/stores/localeStore";
-import type { LocaleCode } from "@/stores/localeStore";
+import type { LocaleCode } from "@/types/locale";
 
 export function useI18n() {
   const store = useLocaleStore();

@@ -4,14 +4,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
-
-export interface Base {
-  id: string;
-  value: string;
-  text: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { Base } from "@/types/base";
 
 const DEFAULT_BASES: Base[] = [
   {

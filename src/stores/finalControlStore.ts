@@ -4,14 +4,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
-
-export interface FinalControl {
-  id: string;
-  name: string;
-  shortName: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { FinalControl } from "@/types/final-control";
 
 const DEFAULT_FINAL_CONTROLS: FinalControl[] = [];
 

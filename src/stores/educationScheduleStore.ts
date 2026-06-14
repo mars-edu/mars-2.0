@@ -5,17 +5,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
-
-export interface EducationSchedule {
-  id: string;
-  lessonNumber: number;
-  startTime: string;
-  endTime: string;
-  academicYearId: string;
-  semesterId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { EducationSchedule } from "@/types/education-schedule";
 
 export const useEducationScheduleStore = defineStore(
   "educationSchedule",
@@ -91,7 +81,7 @@ export const useEducationScheduleStore = defineStore(
                   endTime: scheduleData.endTime,
                   order: nextLessonNumber,
                   academicYearId: scheduleData.academicYearId,
-                  semesterId: scheduleData.semesterId,
+                  semesterId: scheduleData.semesterId as any,
                 });
                 // Don't push to schedules.value - the reactive subscription will handle it
                 error.value = null;
@@ -113,7 +103,7 @@ export const useEducationScheduleStore = defineStore(
                   startTime: scheduleData.startTime,
                   endTime: scheduleData.endTime,
                   order: scheduleData.lessonNumber,
-                  semesterId: scheduleData.semesterId,
+                  semesterId: scheduleData.semesterId as any,
                 });
                 // Don't update schedules.value - the reactive subscription will handle it
                 error.value = null;

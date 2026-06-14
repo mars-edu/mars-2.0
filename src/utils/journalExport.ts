@@ -8,11 +8,11 @@
 import dayjs from "dayjs";
 import type { Mark } from "@/types/marks";
 import { DATE_STORAGE_FORMAT, DATE_UI_FORMAT } from "@/constants/calendar";
-import type { Journal } from "@/stores/journalStore";
-import type { CalendarEvent } from "@/stores/calendarStore";
 import type { Student } from "@/types/student";
+import type { Journal } from "@/types/journal";
+import type { CalendarEvent } from "@/types/calendar";
 import type { AcademicYear } from "@/types/academic-year";
-import type { RupEntryItem, DistributionEntry } from "@/stores/rupEntryStore";
+import type { RupEntry, DistributionEntry } from "@/types/rup-entry";
 
 export interface ExportColumn {
   type: string;
@@ -128,7 +128,7 @@ export interface PrepareMetadataParams {
   students: Student[];
   academicYear: AcademicYear | null;
   selectedAcademicYearId: string | null;
-  rupEntries: RupEntryItem[];
+  rupEntries: RupEntry[];
   academicYearSemesters: any[];
   scheduledFinalControls: any[];
   finalControls: any[];

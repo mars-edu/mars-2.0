@@ -4,18 +4,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
-
-export interface Vacation {
-  id: string;
-  shortName: string;
-  fullName: string;
-  startDate: string;
-  endDate: string;
-  academicYearId: string;
-  semesterId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { Vacation } from "@/types/vacation";
 
 const DEFAULT_VACATIONS: Vacation[] = [];
 
@@ -79,7 +68,7 @@ export const useVacationStore = defineStore(
                   academicYearId: vacationData.academicYearId,
                   startDate: vacationData.startDate,
                   endDate: vacationData.endDate,
-                  semesterId: vacationData.semesterId,
+                  semesterId: vacationData.semesterId as any,
                 });
                 // Don't push to vacations.value - the reactive subscription will handle it
                 error.value = null;
@@ -99,7 +88,7 @@ export const useVacationStore = defineStore(
                   academicYearId: vacationData.academicYearId,
                   startDate: vacationData.startDate,
                   endDate: vacationData.endDate,
-                  semesterId: vacationData.semesterId,
+                  semesterId: vacationData.semesterId as any,
                 });
                 // Don't update vacations.value - the reactive subscription will handle it
                 error.value = null;

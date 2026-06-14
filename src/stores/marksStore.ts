@@ -98,7 +98,7 @@ export const useMarksStore = defineStore(
     const preloadPromiseCache = ref<Record<string, Promise<any>>>({});
 
     const preloadJournalMarks = (journalId: string) => {
-      if (preloadPromiseCache.value[journalId]) return preloadPromiseCache.value[journalId];
+      if (journalId in preloadPromiseCache.value) return preloadPromiseCache.value[journalId];
       
       const promise = (async () => {
         try {
@@ -125,7 +125,7 @@ export const useMarksStore = defineStore(
         error.value = null;
 
         let result = null;
-        if (preloadPromiseCache.value[journalId]) {
+        if (journalId in preloadPromiseCache.value) {
           console.log("[marksStore] Using preloaded marks for journal:", journalId);
           result = await preloadPromiseCache.value[journalId];
           // Clear cache after use so subsequent reloads fetch fresh data

@@ -4,18 +4,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
-
-export interface ScheduledFinalControl {
-  id: string;
-  academicYearId: string;
-  finalControlId: string;
-  shortName: string;
-  startDate: string;
-  endDate: string;
-  semesterId?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { ScheduledFinalControl } from "@/types/scheduled-final-control";
 
 const DEFAULT_SCHEDULED_FINAL_CONTROLS: ScheduledFinalControl[] = [];
 
@@ -86,6 +75,7 @@ export const useScheduledFinalControlStore = defineStore(
                   shortName: controlData.shortName,
                   startDate: controlData.startDate,
                   endDate: controlData.endDate,
+                  semesterId: controlData.semesterId as string,
                 });
                 // Don't push to scheduledFinalControls.value - the reactive subscription will handle it
                 error.value = null;
@@ -107,6 +97,7 @@ export const useScheduledFinalControlStore = defineStore(
                   shortName: controlData.shortName,
                   startDate: controlData.startDate,
                   endDate: controlData.endDate,
+                  semesterId: controlData.semesterId as string,
                 });
                 // Don't update scheduledFinalControls.value - the reactive subscription will handle it
                 error.value = null;

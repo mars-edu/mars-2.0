@@ -5,13 +5,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useUserStore } from "@/stores/userStore";
 import type { Id } from "@convex/_generated/dataModel";
-
-export type LocaleCode = "ru" | "kk" | "en";
-
-export interface AvailableLocale {
-  code: LocaleCode;
-  name: string;
-}
+import type { AvailableLocale, LocaleCode } from "@/types/locale";
 
 export const AVAILABLE_LOCALES: AvailableLocale[] = [
   { code: "ru", name: "Русский" },
@@ -38,7 +32,7 @@ export const useLocaleStore = defineStore(
     async function syncLocaleToBackend(code: LocaleCode) {
       try {
         const userStore = useUserStore();
-        const userId = userStore.currentUser?.userId;
+        const userId = userStore.currentUser?.id;
         if (!userId) return;
         await convex.mutation(api.users.mutations.updateLocale, {
           userId: userId as Id<"users">,

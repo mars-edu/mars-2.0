@@ -1,37 +1,9 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import type { ParsedLesson } from "@/services/excel-parser";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
-
-export interface Ktp {
-  id: string;
-  rupEntryId: string;
-  academicYearId: string;
-  semesterId: string;
-  eventId?: string; // Back-reference to the calendar event (if KTP is event-specific)
-  name?: string; // Optional custom name for the KTP
-  color?: string; // hex, e.g. '#FACC15'
-  languages?: string[]; // subset of ['KZ','RU','EN']
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface KtpDetail {
-  id: string;
-  ktpId: string;
-  position: number;
-  theme: string;
-  totalHours: number | null;
-  srsp: number | null;
-  srs: number | null;
-  theoretical: number | null;
-  practical: number | null;
-  individual: number | null;
-  homework: string;
-  notes: string;
-}
+import type { ParsedLesson, Ktp, KtpDetail } from "@/types/ktp";
 
 function mapKtp(ktp: any): Ktp {
   return {
@@ -297,8 +269,8 @@ export const useKtpStore = defineStore("ktp", () => {
       error.value = null;
 
       const details = lessons.map((lesson, index) => ({
-        position: lesson.lessonNumber || index + 1,
-        theme: lesson.subject || lesson.lessonType || "",
+        position: typeof lesson.lessonNumber === 'number' ? lesson.lessonNumber : parseInt(lesson.lessonNumber as string) || index + 1,
+        theme: lesson.topic || lesson.subject || lesson.lessonType || "",
         totalHours: typeof lesson.hours === "number" ? lesson.hours : undefined,
         srsp: undefined,
         srs: undefined,

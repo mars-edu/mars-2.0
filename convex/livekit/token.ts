@@ -7,6 +7,7 @@ export interface TokenOptions {
   roomName: string;
   participantIdentity: string;
   participantName: string;
+  metadata?: string;
   ttlSeconds?: number;
 }
 
@@ -30,6 +31,7 @@ export async function createLiveKitToken(opts: TokenOptions): Promise<string> {
       canSubscribe: true,
       canPublishData: true,
     },
+    metadata: opts.metadata,
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuer(opts.apiKey)

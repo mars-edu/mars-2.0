@@ -219,12 +219,12 @@ export const listProtocolWithRoleAccessInternal = internalQuery({
   },
 });
 
-export const listProtocolWithRoleAccess: any = action({
+export const listProtocolWithRoleAccess = action({
   args: {
     token: v.string(),
     selectedTeacherId: v.optional(v.union(v.string(), v.null())),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<any[]> => {
     const { token, selectedTeacherId } = args;
 
     const jwtSecret = process.env.JWT_SECRET;

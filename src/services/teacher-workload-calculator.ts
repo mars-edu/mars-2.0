@@ -1,9 +1,6 @@
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
-import type { CalendarEvent, WeeklySchedule } from "@/stores/calendarStore";
-import type { RupEntry } from "@/stores/rupEntryStore";
 import type { Student } from "@/types/student";
-import type { AcademicYearSemester } from "@/stores/academicYearSemesterStore";
 import { getEventDays, parseEventDate } from "@/utils/eventDate";
 import type {
   WorkloadEntry,
@@ -12,8 +9,11 @@ import type {
   MonthInfo,
   MonthWorkloadData,
 } from "@/lib/excel/workloadExport.types";
-import type { Journal } from "@/stores/journalStore";
 import type { JournalMarks } from "@/types/marks";
+import type { CalendarEvent, WeeklySchedule } from "@/types/calendar";
+import type { RupEntry } from "@/types/rup-entry";
+import type { AcademicYearSemester } from "@/types/academic-year-semester";
+import type { Journal } from "@/types/journal";
 
 /**
  * Calculate lesson hours from time range
@@ -114,7 +114,7 @@ function generateGroupName(students: Student[]): string {
   if (students.length === 0) return "Без группы";
 
   // Get unique courses
-  const courses = [...new Set(students.map((s) => s.course))].sort();
+  const courses = [...new Set(students.map((s) => (s as any).course))].sort();
 
   if (courses.length === 1) {
     // Single course group
@@ -276,8 +276,8 @@ function calculateActualHours(
     if (hours) {
       const lessonDate = dayjs(dateKey);
       if (
-        lessonDate.isSameOrAfter(septemberStart) &&
-        lessonDate.isSameOrBefore(currentMonthEnd)
+        lessonDate.valueOf() >= septemberStart.valueOf() &&
+        lessonDate.valueOf() <= currentMonthEnd.valueOf()
       ) {
         cumulativeHoursYear += hours;
       }
@@ -402,8 +402,8 @@ export function generateDailyWorkload(
     const dailyHours = dailyActualHours;
 
     // monthTotal is sum of daily actual hours
-    const monthTotal = dailyHours.reduce(
-      (sum, hours) => sum + (hours || 0),
+    const monthTotal = dailyHours.reduce<number>(
+      (sum: number, hours) => sum + (hours || 0),
       0
     );
 
@@ -718,9 +718,9 @@ export function generateMonthlyDistribution(
     if (total > 0) {
       distributions.push({
         groupName: group.groupName,
-        monthlyHours,
+        ...monthlyHours,
         total,
-      });
+      } as any);
     }
   }
 
@@ -730,7 +730,6 @@ export function generateMonthlyDistribution(
     monthsOrder: academicMonths.map(m => m.key),
     firstDistribution: distributions[0] ? {
       groupName: distributions[0].groupName,
-      monthlyHoursKeys: Object.keys(distributions[0].monthlyHours),
     } : null,
   });
 

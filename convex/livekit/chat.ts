@@ -21,7 +21,7 @@ function errorResponse(message: string, status: number): Response {
   });
 }
 
-async function resolveUser(
+export async function resolveUser(
   ctx: ActionCtx,
   token: string,
 ): Promise<ResolvedUser | null> {

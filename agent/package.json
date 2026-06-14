@@ -11,10 +11,14 @@
     "@google/genai": "^0.7.0",
     "@livekit/agents": "^1.0.0",
     "@livekit/agents-plugin-google": "^1.0.0",
-    "livekit-server-sdk": "^2.13.2"
+    "convex": "^1.41.0",
+    "livekit-server-sdk": "^2.13.2",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@types/node": "^22.0.0",
+    "@types/ws": "^8.18.1",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0"
   }

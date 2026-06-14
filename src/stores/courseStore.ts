@@ -4,15 +4,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
-
-export interface Course {
-  id: string;
-  number: string;
-  admissionYear: string;
-  semesters: string[];
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { Course } from "@/types/course";
 
 const DEFAULT_COURSES: Course[] = [];
 

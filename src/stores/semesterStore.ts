@@ -4,15 +4,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
-
-export interface Semester {
-  id: string;
-  shortName: string;
-  fullName?: string;
-  number?: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { Semester } from "@/types/semester";
 
 const DEFAULT_SEMESTERS: Semester[] = [];
 

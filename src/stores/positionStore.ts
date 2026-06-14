@@ -3,11 +3,7 @@ import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
-
-export interface Position {
-  id: string;
-  name: string;
-}
+import type { Position } from "@/types/position";
 
 const DEFAULT_POSITIONS: Position[] = [
   { id: "1", name: "Преподаватель" },

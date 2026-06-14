@@ -1,21 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-
-export interface Lesson {
-  id?: string | number;
-  startTime: string;
-  endTime: string;
-  subject: string;
-  room: string;
-  group: string;
-  type: 'lecture' | 'seminar' | 'lab';
-  color: string;
-}
-
-export interface ScheduleState {
-  selectedDate: Date;
-  scheduleData: Record<string, Lesson[]>;
-}
+import type { Lesson, ScheduleState } from "@/types/schedule";
 
 const DEFAULT_SCHEDULE_DATA: Record<string, Lesson[]> = {
   "2025-03-09": [

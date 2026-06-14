@@ -1,7 +1,8 @@
 import { defineStore, storeToRefs } from "pinia";
 import { ref, computed, watch } from "vue";
 import { useAcademicYearStore } from "./academicYearStore";
-import { useCourseStore, type Course } from "./courseStore";
+import { useCourseStore } from "./courseStore";
+import type { Course } from "@/types/course";
 import { useSpecialtyStore } from "./specialtyStore";
 import type {
   Student,

@@ -11,20 +11,7 @@ import { useEducationScheduleStore } from "./educationScheduleStore";
 import { getWeekDays, DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import dayjs from "dayjs";
 import { withLoading } from "@/utils/storeAction";
-
-export interface Journal {
-  id: string;
-  courseNumber: number;
-  disciplineId: string;
-  group: string;
-  students: string[];
-  isMixedGroup?: boolean;
-  isIndividualJournal?: boolean;
-  mergedJournalIds?: string[];
-  parentIndividualJournalId?: string;
-  sourceGroupEventId?: string;
-  customTitle?: string;
-}
+import type { Journal } from "@/types/journal";
 
 export const useJournalStore = defineStore(
   "journal",
@@ -218,8 +205,8 @@ export const useJournalStore = defineStore(
             .sort((a: number, b: number) => a - b);
 
           // Get unique course numbers for mixed group
-          const uniqueCourses = Array.from(new Set(courseNumbers)).sort(
-            (a, b) => a - b
+          const uniqueCourses = Array.from(new Set<number>(courseNumbers)).sort(
+            (a: number, b: number) => a - b
           );
 
           mixedJournals.push(
@@ -256,10 +243,10 @@ export const useJournalStore = defineStore(
 
         const courseNumbers = actualEvent.participants
           .map((id: string) => studentStore.getCourseByStudentId(id) ?? 1)
-          .filter((num): num is number => num !== null);
+          .filter((num: any): num is number => num !== null);
 
-        const uniqueCourses = Array.from(new Set(courseNumbers)).sort(
-          (a, b) => a - b
+        const uniqueCourses = Array.from(new Set<number>(courseNumbers)).sort(
+          (a: number, b: number) => a - b
         );
 
         const journal = createJournalFromEvent(
@@ -350,7 +337,7 @@ export const useJournalStore = defineStore(
 
                 const newEvent = await calendarStore.addEvent(eventData);
                 error.value = null;
-                return newEvent.id;
+                return newEvent?.id;
         }, "Failed to add journal");
     }
 
@@ -390,16 +377,18 @@ export const useJournalStore = defineStore(
                 });
 
                 // Update children with parent ID
-                await Promise.all(
-                  journalIds.map((id) =>
-                    calendarStore.updateEvent(id, {
-                      parentIndividualJournalId: newEvent.id,
-                    })
-                  )
-                );
+                if (newEvent) {
+                  await Promise.all(
+                    journalIds.map((id) =>
+                      calendarStore.updateEvent(id, {
+                        parentIndividualJournalId: newEvent.id,
+                      })
+                    )
+                  );
+                }
 
                 error.value = null;
-                return newEvent.id;
+                return newEvent?.id;
         }, "Failed to merge journals");
     }
 

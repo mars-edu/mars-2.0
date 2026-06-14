@@ -155,7 +155,7 @@ const controlSchema = z
     (data) =>
       data.startDate.length > 0 &&
       data.endDate.length > 0 &&
-      data.endDate[0] > data.startDate[0],
+      data.endDate[0] >= data.startDate[0],
     {
       message: "Дата окончания должна быть позже даты начала",
       path: ["endDate"],

@@ -4,17 +4,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
-
-export interface Session {
-  id: string;
-  shortName: string;
-  fullName: string;
-  startDate: string;
-  endDate: string;
-  academicYearId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { Session } from "@/types/session";
 
 const DEFAULT_SESSIONS: Session[] = [];
 

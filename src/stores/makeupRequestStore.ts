@@ -3,13 +3,7 @@ import { ref } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-
-export interface MakeupDateEntry {
-  existingDate: string;
-  newDate: string;
-  startScheduleId: string;
-  endScheduleId: string;
-}
+import type { MakeupDateEntry } from "@/types/makeup-request";
 
 export const useMakeupRequestStore = defineStore("makeupRequests", () => {
   const loading = ref(false);

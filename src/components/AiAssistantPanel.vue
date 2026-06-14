@@ -198,6 +198,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import {
   XIcon,
   BotIcon,
@@ -231,8 +232,12 @@ async function handleConnect() {
   voiceError.value = '';
   try {
     await connect();
-  } catch {
-    voiceError.value = 'Не удалось подключиться. Проверьте микрофон и попробуйте снова.';
+  } catch (err: any) {
+    if (err.message && err.message.includes('unavailable')) {
+      voiceError.value = 'Агент сейчас недоступен (сервер не отвечает).';
+    } else {
+      voiceError.value = 'Не удалось подключиться. Проверьте микрофон и попробуйте снова.';
+    }
   }
 }
 
@@ -289,7 +294,8 @@ function barClass(band: number): string {
 marked.setOptions({ breaks: true, gfm: true });
 
 function renderMarkdown(text: string): string {
-  return marked.parse(text) as string;
+  const rawHtml = marked.parse(text) as string;
+  return DOMPurify.sanitize(rawHtml);
 }
 
 // ── Chat (Vercel AI SDK) ──────────────────────────────────────────────────────

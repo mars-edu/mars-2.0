@@ -2,7 +2,7 @@ import { query, internalQuery, action } from "../_generated/server";
 import { v } from "convex/values";
 import { validateToken } from "../auth/helpers";
 import { internal } from "../_generated/api";
-import { Id } from "../_generated/dataModel";
+import type { Id } from "../_generated/dataModel";
 
 /**
  * Get all calendar events, optionally filtered by teacher

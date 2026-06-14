@@ -97,11 +97,11 @@ export const useRupStore = defineStore(
 
       const sum = selectedRupEntry.value.distributionEntries
         .filter(
-          (entry) =>
+          (entry: any) =>
             entry.semesterId === getActiveAcademicYearSemester.value?.id
         )
-        .filter((entry) => entry.hours && entry.hours.toString().trim() !== "")
-        .reduce((acc, entry) => acc + Number(entry.hours), 0);
+        .filter((entry: any) => entry.hours && entry.hours.toString().trim() !== "")
+        .reduce((acc: number, entry: any) => acc + Number(entry.hours), 0);
 
       return sum.toString();
     });

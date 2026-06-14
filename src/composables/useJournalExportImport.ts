@@ -133,7 +133,7 @@ export function useJournalExportImport(
         journal,
         event,
         students: studentStoreStudents.value,
-        academicYear,
+        academicYear: academicYear || null,
         selectedAcademicYearId: academicYearId,
         rupEntries: rupEntryStore.rupEntries,
         academicYearSemesters: semesters,

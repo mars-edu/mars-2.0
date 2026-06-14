@@ -4,14 +4,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
-
-export interface IntermediateControl {
-  id: string;
-  name: string;
-  shortName: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { IntermediateControl } from "@/types/intermediate-control";
 
 const DEFAULT_INTERMEDIATE_CONTROLS: IntermediateControl[] = [];
 

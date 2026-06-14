@@ -4,7 +4,7 @@ import { api } from "@convex/_generated/api";
 export async function uploadFile(file: File): Promise<string> {
   try {
     // Generate upload URL from Convex
-    const uploadUrl = await convex.mutation(api.files.mutations.generateUploadUrl);
+    const uploadUrl = await convex.mutation(api.files.mutations.generateUploadUrl, {});
 
     // Upload file directly to Convex storage
     const response = await fetch(uploadUrl, {

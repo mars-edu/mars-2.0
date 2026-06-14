@@ -1,13 +1,7 @@
 import { defineStore } from "pinia";
+import type { SyncEntry } from "@/types/sync";
 
 const syncTimeoutsById: Record<string, number> = {};
-
-export interface SyncEntry {
-  storeId: string;
-  startedAt: number;
-  label?: string;
-}
-
 export const useSyncStore = defineStore("sync", {
   state: () => ({
     syncingById: {} as Record<string, SyncEntry>,
