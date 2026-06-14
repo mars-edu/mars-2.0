@@ -81,8 +81,8 @@ export function useEventFormDerived(args: {
     const end = dayjs(args.customEndDate.value, DATE_UI_FORMAT, true);
     if (!start.isValid() || !end.isValid()) return null;
 
-    if (!end.isAfter(start, "day")) {
-      return "Дата окончания должна быть как минимум на один день позже даты начала";
+    if (end.isBefore(start, "day")) {
+      return "Дата окончания не может быть раньше даты начала";
     }
 
     return null;
@@ -176,7 +176,7 @@ export function useEventFormDerived(args: {
 
     const start = dayjs(args.customStartDate.value, DATE_UI_FORMAT, true);
     const end = dayjs(args.customEndDate.value, DATE_UI_FORMAT, true);
-    return start.isValid() && end.isValid() && end.isAfter(start, "day");
+    return start.isValid() && end.isValid() && !end.isBefore(start, "day");
   });
 
   return {

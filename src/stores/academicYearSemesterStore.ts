@@ -72,7 +72,7 @@ export const useAcademicYearSemesterStore = defineStore(
           const startDate = new Date(semester.startDate);
           const endDate = new Date(semester.endDate);
           return today >= startDate && today <= endDate;
-        }) || yearSemesters[0] || null
+        }) || yearSemesters[yearSemesters.length - 1] || null
       );
     });
 
