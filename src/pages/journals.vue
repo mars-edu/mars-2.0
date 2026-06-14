@@ -537,26 +537,39 @@ const selectedAcademicYearModel = computed({
   },
 });
 
-// Auto-select semester when academic year changes or semesters finish loading
+// Auto-select semester when academic year changes or semesters finish loading.
+// A flag tracks whether initial setup is complete to avoid overwriting persisted
+// semester on re-mount (immediate watchers always receive oldValue=undefined).
+let _semesterInitDone = false;
+
 watch(
   [() => selectedItemsStore.selectedAcademicYearId, () => academicYearSemesterStore.academicYearSemesters],
-  ([newYearId, semesters], [oldYearId, oldSemesters]) => {
-    // Only auto-select if year actually changed — don't overwrite on re-mount
-    if (newYearId && newYearId !== oldYearId) {
+  ([newYearId, _semesters], [oldYearId]) => {
+    if (!newYearId) return;
+
+    const isInitCall = !_semesterInitDone;
+    _semesterInitDone = true;
+
+    // On initial call (mount/re-mount): only auto-select if the store has NO semester yet
+    if (isInitCall) {
+      if (!selectedSemesterId.value) {
+        const autoSemester = academicYearSemesterStore.getAutoSelectedSemesterForYear(newYearId);
+        if (autoSemester) {
+          selectedSemesterId.value = autoSemester.id;
+          console.log(`   ✅ Initial auto-selected semester "${autoSemester.semesterNumber}" with ID: ${autoSemester.id}`);
+        }
+      }
+      return;
+    }
+
+    // Subsequent calls: year actually changed by the user → pick new semester
+    if (newYearId !== oldYearId) {
       const autoSemester = academicYearSemesterStore.getAutoSelectedSemesterForYear(newYearId);
       if (autoSemester) {
         selectedSemesterId.value = autoSemester.id;
         console.log(`   ✅ Reactively auto-selected semester "${autoSemester.semesterNumber}" with ID: ${autoSemester.id}`);
       } else {
-        // Year changed but no semesters available
         selectedSemesterId.value = "";
-      }
-    } else if (newYearId && !selectedSemesterId.value) {
-      // First load or store was reset — no semester selected yet
-      const autoSemester = academicYearSemesterStore.getAutoSelectedSemesterForYear(newYearId);
-      if (autoSemester) {
-        selectedSemesterId.value = autoSemester.id;
-        console.log(`   ✅ Reactively auto-selected semester "${autoSemester.semesterNumber}" with ID: ${autoSemester.id}`);
       }
     }
   },
