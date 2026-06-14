@@ -6,11 +6,11 @@
       aria-label="Копировать из предыдущего семестра"
       type="button"
       @click.stop="openCopySchedulePopover"
-      :disabled="!hasOtherYearsWithSchedules"
-      :title="hasOtherYearsWithSchedules ? 'Копировать расписание' : 'Нет доступных расписаний для копирования'"
+      :disabled="!hasOtherSemestersWithSchedules"
+      :title="hasOtherSemestersWithSchedules ? 'Копировать расписание' : 'Нет доступных расписаний для копирования'"
     >
       <IconCopy class="w-3.5 h-3.5 text-white" />
-      <span>Копировать из предыдущего семестра</span>
+      <span>Копировать</span>
     </button>
 
     <GuardedPopover
@@ -19,51 +19,54 @@
       style="width: 600px !important"
       target="#copy-education-schedule-button"
     
-      :on-closed="resetForm">
+      :on-closed="resetForm"
+    >
       <div class="copy-schedule-popover bg-card text-card-foreground">
         <PopoverHeader
           title="Копировать расписание звонков"
           :on-cancel="requestClose"
         />
         <div
-          v-if="formError || educationScheduleStore.getError"
+          v-if="formError || educationScheduleStore.error"
           class="px-4 pt-2 text-destructive text-sm"
         >
-          {{ formError || educationScheduleStore.getError }}
+          {{ formError || educationScheduleStore.error }}
         </div>
 
         <div class="p-4 space-y-4">
           <div class="space-y-2">
             <label class="text-sm text-foreground">
-              Выберите учебный год для копирования
+              Выберите семестр для копирования
               <span class="text-destructive ml-1">*</span>
             </label>
             <div
-              v-if="availableYearsWithSchedules.length === 0"
+              v-if="availableSemestersWithSchedules.length === 0"
               class="p-4 text-center text-muted-foreground"
             >
-              Нет доступных учебных годов с расписанием звонков
+              Нет доступных семестров с расписанием звонков
             </div>
             <div v-else class="space-y-2">
               <div
-                v-for="yearData in availableYearsWithSchedules"
-                :key="yearData.year.id"
-                @click="selectedYearId = yearData.year.id"
+                v-for="semData in availableSemestersWithSchedules"
+                :key="semData.semester.id"
+                @click="selectedSemesterId = semData.semester.id"
                 class="flex items-center justify-between p-3 border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
                 :class="{
                   'border-primary bg-primary/5':
-                    selectedYearId === yearData.year.id,
+                    selectedSemesterId === semData.semester.id,
                 }"
               >
                 <div class="flex flex-col">
-                  <span class="font-medium">{{ yearData.year.name }}</span>
+                  <span class="font-medium">
+                    {{ semData.yearName }} — {{ semData.semester.semesterName || `Семестр ${semData.semester.semesterNumber}` }}
+                  </span>
                   <span class="text-xs text-muted-foreground">
-                    {{ yearData.scheduleCount }}
-                    {{ pluralizeSchedule(yearData.scheduleCount) }}
+                    {{ semData.scheduleCount }}
+                    {{ pluralizeSchedule(semData.scheduleCount) }}
                   </span>
                 </div>
                 <IconCircleCheck
-                  v-if="selectedYearId === yearData.year.id"
+                  v-if="selectedSemesterId === semData.semester.id"
                   class="w-6 h-6 text-primary"
                 />
               </div>
@@ -71,23 +74,20 @@
           </div>
 
           <div
-            v-if="selectedYearId"
+            v-if="selectedSemesterId"
             class="p-3 bg-muted/30 rounded-lg border border-border"
           >
             <p class="text-sm text-muted-foreground">
-              Расписание звонков из выбранного учебного года будет скопировано в
-              активный учебный год
-              <span class="font-medium text-foreground">
-                ({{ activeAcademicYear?.name }})
-              </span>
+              Расписание звонков из выбранного семестра будет скопировано в
+              текущий семестр. Существующие записи будут заменены.
             </p>
           </div>
         </div>
 
         <PopoverFooter
           :on-save="handleCopySchedule"
-          :disabled="!selectedYearId || educationScheduleStore.isLoading"
-          :is-loading="educationScheduleStore.isLoading"
+          :disabled="!selectedSemesterId || educationScheduleStore.loading"
+          :is-loading="educationScheduleStore.loading"
           save-text="Копировать"
         />
       </div>
@@ -97,46 +97,58 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { f7, f7Popover } from "framework7-vue";
+import { f7 } from "framework7-vue";
 import IconCopy from "~icons/lucide/copy";
 import IconCircleCheck from "~icons/lucide/circle-check";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
+const props = defineProps<{
+  semesterId: string;
+}>();
+
 const educationScheduleStore = useEducationScheduleStore();
 const academicYearStore = useAcademicYearStore();
+const academicYearSemesterStore = useAcademicYearSemesterStore();
 
-const selectedYearId = ref<string | null>(null);
+const selectedSemesterId = ref<string | null>(null);
 const formError = ref("");
 
 const activeAcademicYear = computed(
   () => academicYearStore.getActiveAcademicYear
 );
 
-const availableYearsWithSchedules = computed(() => {
-  const activeYear = activeAcademicYear.value;
-  if (!activeYear) return [];
+const availableSemestersWithSchedules = computed(() => {
+  if (!activeAcademicYear.value) return [];
 
-  return academicYearStore.getSortedAcademicYears
-    .filter((year) => year.id !== activeYear.id)
-    .map((year) => {
-      const schedules = educationScheduleStore.getSchedulesByAcademicYear(
-        year.id
-      );
+  // Get all semesters across all academic years
+  const allSemesters = academicYearSemesterStore.academicYearSemesters;
+
+  return allSemesters
+    .filter((semester) => semester.id !== props.semesterId) // Exclude current semester
+    .map((semester) => {
+      const schedules = educationScheduleStore.getSchedulesBySemester(semester.id);
+      const year = academicYearStore.getAcademicYearById(semester.academicYearId);
       return {
-        year,
+        semester,
+        yearName: year?.name || "",
         scheduleCount: schedules.length,
       };
     })
-    .filter((yearData) => yearData.scheduleCount > 0)
-    .reverse();
+    .filter((semData) => semData.scheduleCount > 0)
+    .sort((a, b) => {
+      // Sort by year name desc, then semester number desc (most recent first)
+      if (a.yearName !== b.yearName) return b.yearName.localeCompare(a.yearName);
+      return b.semester.semesterNumber - a.semester.semesterNumber;
+    });
 });
 
-const hasOtherYearsWithSchedules = computed(
-  () => availableYearsWithSchedules.value.length > 0
+const hasOtherSemestersWithSchedules = computed(
+  () => availableSemestersWithSchedules.value.length > 0
 );
 
 const pluralizeSchedule = (count: number): string => {
@@ -153,18 +165,10 @@ const pluralizeSchedule = (count: number): string => {
 };
 
 const openCopySchedulePopover = () => {
-  console.log("[CopyEducationScheduleButton] openCopySchedulePopover called");
-  console.log("[CopyEducationScheduleButton] hasOtherYearsWithSchedules:", hasOtherYearsWithSchedules.value);
-  console.log("[CopyEducationScheduleButton] availableYearsWithSchedules:", availableYearsWithSchedules.value);
-  console.log("[CopyEducationScheduleButton] activeAcademicYear:", activeAcademicYear.value);
-  console.log("[CopyEducationScheduleButton] allAcademicYears:", academicYearStore.getSortedAcademicYears);
-
-  if (!hasOtherYearsWithSchedules.value) {
-    console.log("[CopyEducationScheduleButton] No other years with schedules, not opening popover");
+  if (!hasOtherSemestersWithSchedules.value) {
     return;
   }
 
-  console.log("[CopyEducationScheduleButton] Opening popover...");
   f7.popover.open(
     "#copy-education-schedule-popover",
     "#copy-education-schedule-button"
@@ -177,8 +181,8 @@ const closeCopySchedulePopover = () => {
 };
 
 const handleCopySchedule = async () => {
-  if (!selectedYearId.value) {
-    formError.value = "Пожалуйста, выберите учебный год";
+  if (!selectedSemesterId.value) {
+    formError.value = "Пожалуйста, выберите семестр";
     return;
   }
 
@@ -189,8 +193,9 @@ const handleCopySchedule = async () => {
   }
 
   try {
-    await educationScheduleStore.copySchedulesFromYear(
-      selectedYearId.value,
+    await educationScheduleStore.copySchedulesFromSemester(
+      selectedSemesterId.value,
+      props.semesterId,
       activeYear.id
     );
 
@@ -208,9 +213,8 @@ const handleCopySchedule = async () => {
 };
 
 const resetForm = () => {
-  selectedYearId.value = null;
+  selectedSemesterId.value = null;
   formError.value = "";
   educationScheduleStore.clearError();
 };
 </script>
-

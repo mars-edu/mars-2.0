@@ -14,31 +14,9 @@
       >
         <div class="max-w-[1600px] mx-auto space-y-6">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div class="flex flex-col gap-2">
-              <h1 class="text-xl md:text-2xl font-bold text-foreground">
-                {{ edu_schedule_title() }}
-              </h1>
-              <!-- Breadcrumb navigation -->
-              <nav
-                v-if="activeAcademicYear"
-                class="flex items-center gap-1.5 text-sm"
-              >
-                <button
-                  type="button"
-                  class="font-medium transition-colors"
-                  :class="selectedSemesterId ? 'text-primary hover:text-primary/80 cursor-pointer' : 'text-foreground cursor-default'"
-                  @click="clearSemesterSelection"
-                >
-                  {{ activeAcademicYear.name }}
-                </button>
-                <template v-if="selectedSemesterData">
-                  <IconChevronRight class="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                  <span class="font-medium text-foreground">
-                    {{ edu_schedule_semester_label({ number: selectedSemesterData.semesterNumber }) }}
-                  </span>
-                </template>
-              </nav>
-            </div>
+            <h1 class="text-xl md:text-2xl font-bold text-foreground">
+              {{ edu_schedule_title() }}
+            </h1>
             <div class="flex gap-2">
 
               <f7-button
@@ -216,6 +194,7 @@
                 <template #title>{{ edu_schedule_bell() }}</template>
                 <template #actions>
                   <div class="flex gap-2">
+                    <CopyEducationScheduleButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
                     <AddEducationScheduleButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
                   </div>
                 </template>
@@ -527,8 +506,6 @@ import IconCircleCheck from "~icons/lucide/circle-check";
 import IconPencil from "~icons/lucide/pencil";
 import IconChevronUp from "~icons/lucide/chevron-up";
 import IconChevronDown from "~icons/lucide/chevron-down";
-import IconChevronRight from "~icons/lucide/chevron-right";
-import IconChevronLeft from "~icons/lucide/chevron-left";
 import IconTrash from "~icons/lucide/trash-2";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -615,14 +592,6 @@ const selectedVacationId = ref<string | null>(null);
 const selectedScheduledFinalControlId = ref<string | null>(null);
 const selectedScheduledIntermediateControlId = ref<string | null>(null);
 
-// Active academic year (for breadcrumb)
-const activeAcademicYear = computed(() => academicYearStore.getActiveAcademicYear);
-
-// Selected semester data (for breadcrumb label)
-const selectedSemesterData = computed(() => {
-  if (!selectedSemesterId.value) return null;
-  return academicYearSemesters.value.find(s => s.id === selectedSemesterId.value) ?? null;
-});
 
 // Accordion IDs depend on whether a semester is selected
 const topLevelAccordionIds = [
@@ -843,10 +812,6 @@ const handleSemesterCardClick = (academicYearSemester: AcademicYearSemester) => 
   selectedAcademicYearSemesterId.value = academicYearSemester.id;
 };
 
-// Clear the semester selection — go back to top-level view
-const clearSemesterSelection = () => {
-  selectedSemesterId.value = null;
-};
 
 // Semester card styling — highlight the selected (drilled-into) semester
 const getSemesterCardClass = (semester: AcademicYearSemester) => {

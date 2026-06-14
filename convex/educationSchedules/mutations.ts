@@ -143,3 +143,61 @@ export const reorder = mutation({
     return { success: true };
   },
 });
+
+/**
+ * Copy education schedules from one semester to another
+ * Deletes all existing schedules in the target semester before copying
+ */
+export const copySchedulesFromSemester = mutation({
+  args: {
+    sourceSemesterId: v.id("academicYearSemesters"),
+    targetSemesterId: v.id("academicYearSemesters"),
+    targetAcademicYearId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { sourceSemesterId, targetSemesterId, targetAcademicYearId } = args;
+
+    // Get source schedules
+    const sourceSchedules = await ctx.db
+      .query("educationSchedules")
+      .withIndex("by_semester", (q) => q.eq("semesterId", sourceSemesterId))
+      .collect();
+
+    if (sourceSchedules.length === 0) {
+      throw new Error("No schedules found in source semester");
+    }
+
+    // Delete existing schedules in target semester
+    const existingTargetSchedules = await ctx.db
+      .query("educationSchedules")
+      .withIndex("by_semester", (q) => q.eq("semesterId", targetSemesterId))
+      .collect();
+
+    for (const schedule of existingTargetSchedules) {
+      await ctx.db.delete(schedule._id);
+    }
+
+    // Copy schedules to target semester
+    const timestamps = createTimestamps();
+    const copiedScheduleIds = [];
+
+    for (const schedule of sourceSchedules) {
+      const newId = await ctx.db.insert("educationSchedules", {
+        name: schedule.name,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        order: schedule.order,
+        academicYearId: targetAcademicYearId,
+        semesterId: targetSemesterId,
+        ...timestamps,
+      });
+      copiedScheduleIds.push(newId);
+    }
+
+    return {
+      success: true,
+      copiedCount: copiedScheduleIds.length,
+      ids: copiedScheduleIds,
+    };
+  },
+});

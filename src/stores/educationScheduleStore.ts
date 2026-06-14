@@ -198,6 +198,22 @@ export const useEducationScheduleStore = defineStore(
         }, "Failed to copy schedules");
     }
 
+    async function copySchedulesFromSemester(
+      sourceSemesterId: string,
+      targetSemesterId: string,
+      targetAcademicYearId: string
+    ) {
+      return await withLoading(loading, error, async () => {
+        await convex.mutation(api.educationSchedules.mutations.copySchedulesFromSemester, {
+          sourceSemesterId: sourceSemesterId as any,
+          targetSemesterId: targetSemesterId as any,
+          targetAcademicYearId,
+        });
+        error.value = null;
+        return;
+      }, "Failed to copy schedules from semester");
+    }
+
     function clearError() {
       error.value = null;
     }
@@ -223,6 +239,7 @@ export const useEducationScheduleStore = defineStore(
       deleteSchedule,
       reorderSchedules,
       copySchedulesFromYear,
+      copySchedulesFromSemester,
       clearError,
       reset,
       loadFromBackend,
