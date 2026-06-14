@@ -154,10 +154,7 @@ export default async () => {
           },
         },
       },
-      minify: 'esbuild',
-      esbuildOptions: {
-        drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
-      },
+      minify: true,
       // Enable source maps for debugging but with smaller size
       sourcemap: false,
       // Optimize chunk size
