@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import { withLoading } from "@/utils/storeAction";
 
 export interface Cabinet {
   id: string;
@@ -55,82 +56,46 @@ export const useCabinetStore = defineStore(
         cabinets.value.find((c) => c.id === id);
     });
 
-    const isLoading = computed(() => loading.value);
-    const getError = computed(() => error.value);
-
     async function fetchCabinets() {
-      loading.value = true;
-      try {
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to load cabinets";
-      } finally {
-        loading.value = false;
-      }
+      return await withLoading(loading, error, async () => {
+
+        }, "Failed to load cabinets");
     }
 
     const addCabinet = async (payload: AddCabinetPayload) => {
-      try {
-        loading.value = true;
-        error.value = null;
-
+      return await withLoading(loading, error, async () => {
         await convex.mutation(api.cabinets.mutations.create, {
-          name: payload.name,
-          capacity: payload.capacity,
-          type: payload.type,
-          description: payload.description,
-          isActive: true,
-        });
-      } catch (e) {
-        error.value =
-          e instanceof Error ? e.message : "Failed to add cabinet";
-        throw e;
-      } finally {
-        loading.value = false;
-      }
+                  name: payload.name,
+                  capacity: payload.capacity,
+                  type: payload.type,
+                  description: payload.description,
+                  isActive: true,
+                });
+        }, "Failed to add cabinet");
     };
 
     const updateCabinet = async (
       id: string,
       payload: Partial<AddCabinetPayload> & { isActive?: boolean }
     ) => {
-      try {
-        loading.value = true;
-        error.value = null;
-
+      return await withLoading(loading, error, async () => {
         await convex.mutation(api.cabinets.mutations.update, {
-          id: id as any,
-          name: payload.name,
-          capacity: payload.capacity,
-          type: payload.type,
-          description: payload.description,
-          isActive: payload.isActive,
-        });
-      } catch (e) {
-        error.value =
-          e instanceof Error ? e.message : "Failed to update cabinet";
-        throw e;
-      } finally {
-        loading.value = false;
-      }
+                  id: id as any,
+                  name: payload.name,
+                  capacity: payload.capacity,
+                  type: payload.type,
+                  description: payload.description,
+                  isActive: payload.isActive,
+                });
+        }, "Failed to update cabinet");
     };
 
     const deleteCabinet = async (id: string) => {
-      try {
-        loading.value = true;
-        error.value = null;
-
+      return await withLoading(loading, error, async () => {
         await convex.mutation(api.cabinets.mutations.remove, {
-          id: id as any,
-        });
-      } catch (e) {
-        error.value =
-          e instanceof Error ? e.message : "Failed to delete cabinet";
-        throw e;
-      } finally {
-        loading.value = false;
-      }
+                  id: id as any,
+                });
+        }, "Failed to delete cabinet");
     };
 
     const toggleActive = async (id: string) => {
@@ -154,8 +119,6 @@ export const useCabinetStore = defineStore(
       loading,
       error,
       getCabinetById,
-      isLoading,
-      getError,
       fetchCabinets,
       addCabinet,
       updateCabinet,

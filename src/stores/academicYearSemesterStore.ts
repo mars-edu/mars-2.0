@@ -6,6 +6,7 @@ import { useAcademicYearStore } from "./academicYearStore";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import { withLoading } from "@/utils/storeAction";
 
 export interface AcademicYearSemester {
   id: string;
@@ -120,55 +121,43 @@ export const useAcademicYearSemesterStore = defineStore(
       };
     });
 
-    const isLoading = computed(() => loading.value);
-    const getError = computed(() => error.value);
-
     async function addAcademicYearSemester(semesterData: {
       academicYearId: string;
       semesterDefinitionId: string;
       startDate: string;
       endDate: string;
     }) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Validate that dates are not empty
-        if (!semesterData.startDate || !semesterData.endDate) {
-          error.value = "Даты начала и окончания семестра обязательны";
-          throw new Error(error.value);
-        }
+                if (!semesterData.startDate || !semesterData.endDate) {
+                  error.value = "Даты начала и окончания семестра обязательны";
+                  throw new Error(error.value);
+                }
 
-        // Validate that dates are valid
-        const startDate = new Date(semesterData.startDate);
-        const endDate = new Date(semesterData.endDate);
+                // Validate that dates are valid
+                const startDate = new Date(semesterData.startDate);
+                const endDate = new Date(semesterData.endDate);
 
-        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-          error.value = "Указаны некорректные даты";
-          throw new Error(error.value);
-        }
+                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                  error.value = "Указаны некорректные даты";
+                  throw new Error(error.value);
+                }
 
-        if (endDate <= startDate) {
-          error.value = "Дата окончания должна быть позже даты начала";
-          throw new Error(error.value);
-        }
+                if (endDate <= startDate) {
+                  error.value = "Дата окончания должна быть позже даты начала";
+                  throw new Error(error.value);
+                }
 
-        // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.academicYearSemesters.mutations.create, {
-          academicYearId: semesterData.academicYearId as any,
-          semesterDefinitionId: semesterData.semesterDefinitionId as any,
-          startDate: semesterData.startDate,
-          endDate: semesterData.endDate,
-        });
-        // Don't push to academicYearSemesters.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error
-            ? err.message
-            : "Failed to add academic year semester";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                // Use Convex - the reactive subscription will handle updating the local state
+                await convex.mutation(api.academicYearSemesters.mutations.create, {
+                  academicYearId: semesterData.academicYearId as any,
+                  semesterDefinitionId: semesterData.semesterDefinitionId as any,
+                  startDate: semesterData.startDate,
+                  endDate: semesterData.endDate,
+                });
+                // Don't push to academicYearSemesters.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to add academic year semester");
     }
 
     async function updateAcademicYearSemester(
@@ -179,111 +168,87 @@ export const useAcademicYearSemesterStore = defineStore(
         endDate?: string;
       }
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Validate dates if they're being updated
-        if (semesterData.startDate !== undefined || semesterData.endDate !== undefined) {
-          // If either date is being updated, validate both
-          if (semesterData.startDate !== undefined && !semesterData.startDate) {
-            error.value = "Дата начала семестра обязательна";
-            throw new Error(error.value);
-          }
+                if (semesterData.startDate !== undefined || semesterData.endDate !== undefined) {
+                  // If either date is being updated, validate both
+                  if (semesterData.startDate !== undefined && !semesterData.startDate) {
+                    error.value = "Дата начала семестра обязательна";
+                    throw new Error(error.value);
+                  }
 
-          if (semesterData.endDate !== undefined && !semesterData.endDate) {
-            error.value = "Дата окончания семестра обязательна";
-            throw new Error(error.value);
-          }
+                  if (semesterData.endDate !== undefined && !semesterData.endDate) {
+                    error.value = "Дата окончания семестра обязательна";
+                    throw new Error(error.value);
+                  }
 
-          // Validate date values if provided
-          if (semesterData.startDate) {
-            const startDate = new Date(semesterData.startDate);
-            if (isNaN(startDate.getTime())) {
-              error.value = "Дата начала указана некорректно";
-              throw new Error(error.value);
-            }
-          }
+                  // Validate date values if provided
+                  if (semesterData.startDate) {
+                    const startDate = new Date(semesterData.startDate);
+                    if (isNaN(startDate.getTime())) {
+                      error.value = "Дата начала указана некорректно";
+                      throw new Error(error.value);
+                    }
+                  }
 
-          if (semesterData.endDate) {
-            const endDate = new Date(semesterData.endDate);
-            if (isNaN(endDate.getTime())) {
-              error.value = "Дата окончания указана некорректно";
-              throw new Error(error.value);
-            }
-          }
+                  if (semesterData.endDate) {
+                    const endDate = new Date(semesterData.endDate);
+                    if (isNaN(endDate.getTime())) {
+                      error.value = "Дата окончания указана некорректно";
+                      throw new Error(error.value);
+                    }
+                  }
 
-          // Validate date order if both are provided
-          if (semesterData.startDate && semesterData.endDate) {
-            const startDate = new Date(semesterData.startDate);
-            const endDate = new Date(semesterData.endDate);
-            if (endDate <= startDate) {
-              error.value = "Дата окончания должна быть позже даты начала";
-              throw new Error(error.value);
-            }
-          }
-        }
+                  // Validate date order if both are provided
+                  if (semesterData.startDate && semesterData.endDate) {
+                    const startDate = new Date(semesterData.startDate);
+                    const endDate = new Date(semesterData.endDate);
+                    if (endDate <= startDate) {
+                      error.value = "Дата окончания должна быть позже даты начала";
+                      throw new Error(error.value);
+                    }
+                  }
+                }
 
-        // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.academicYearSemesters.mutations.update, {
-          id: id as any,
-          semesterDefinitionId: semesterData.semesterDefinitionId as any,
-          startDate: semesterData.startDate,
-          endDate: semesterData.endDate,
-        });
-        // Don't update academicYearSemesters.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error
-            ? err.message
-            : "Failed to update academic year semester";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                // Use Convex - the reactive subscription will handle updating the local state
+                await convex.mutation(api.academicYearSemesters.mutations.update, {
+                  id: id as any,
+                  semesterDefinitionId: semesterData.semesterDefinitionId as any,
+                  startDate: semesterData.startDate,
+                  endDate: semesterData.endDate,
+                });
+                // Don't update academicYearSemesters.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to update academic year semester");
     }
 
     async function deleteAcademicYearSemester(id: string) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.academicYearSemesters.mutations.remove, {
-          id: id as any,
-        });
-        // Don't filter academicYearSemesters.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error
-            ? err.message
-            : "Failed to delete academic year semester";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.academicYearSemesters.mutations.remove, {
+                  id: id as any,
+                });
+                // Don't filter academicYearSemesters.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to delete academic year semester");
     }
 
     async function loadFromBackend() {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         const data = await convex.query(api.semesters.queries.list, {});
-        academicYearSemesters.value = data
-          .filter((s) => s.academicYearId) // Only those with academic year
-          .map((s) => ({
-            id: s._id,
-            academicYearId: s.academicYearId as string,
-            semesterNumber: s.number || 1,
-            startDate: s.startDate || "",
-            endDate: s.endDate || "",
-            createdAt: new Date(s.createdAt),
-            updatedAt: new Date(s.updatedAt),
-          }));
-        error.value = null;
-      } catch (err) {
-        console.error("[academicYearSemesterStore] Failed to load from Convex:", err);
-        error.value = "Failed to load academic year semesters";
-      } finally {
-        loading.value = false;
-      }
+                academicYearSemesters.value = data
+                  .filter((s) => s.academicYearId) // Only those with academic year
+                  .map((s) => ({
+                    id: s._id,
+                    academicYearId: s.academicYearId as string,
+                    semesterNumber: s.number || 1,
+                    startDate: s.startDate || "",
+                    endDate: s.endDate || "",
+                    createdAt: new Date(s.createdAt),
+                    updatedAt: new Date(s.updatedAt),
+                  }));
+                error.value = null;
+        }, "Operation failed");
     }
 
     function clearError() {
@@ -306,8 +271,6 @@ export const useAcademicYearSemesterStore = defineStore(
       getActiveAcademicYearSemesters,
       getAutoSelectedSemesterForYear,
       isSemesterActive,
-      isLoading,
-      getError,
       addAcademicYearSemester,
       updateAcademicYearSemester,
       deleteAcademicYearSemester,

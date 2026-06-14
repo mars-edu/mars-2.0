@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import { withLoading } from "@/utils/storeAction";
 
 export interface Course {
   id: string;
@@ -61,32 +62,22 @@ export const useCourseStore = defineStore(
       }))
     );
 
-    const isLoading = computed(() => loading.value);
-    const getError = computed(() => error.value);
-
     async function addCourse(
       courseData: Omit<
         Course,
         "id" | "createdAt" | "updatedAt" | "academicYearId"
       >
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - reactive subscription will automatically update the list
-        await convex.mutation(api.courses.mutations.create, {
-          number: courseData.number,
-          name: courseData.admissionYear,
-          semesters: courseData.semesters,
-        });
-        // No need to manually push - the watch on convexCourses handles it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to add course";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.courses.mutations.create, {
+                  number: courseData.number,
+                  name: courseData.admissionYear,
+                  semesters: courseData.semesters,
+                });
+                // No need to manually push - the watch on convexCourses handles it
+                error.value = null;
+        }, "Failed to add course");
     }
 
     async function updateCourse(
@@ -95,64 +86,44 @@ export const useCourseStore = defineStore(
         Omit<Course, "id" | "createdAt" | "updatedAt" | "academicYearId">
       >
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - reactive subscription will automatically update the list
-        await convex.mutation(api.courses.mutations.update, {
-          id: id as any,
-          number: courseData.number,
-          name: courseData.admissionYear,
-          semesters: courseData.semesters,
-        });
-        // No need to manually update - the watch on convexCourses handles it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to update course";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.courses.mutations.update, {
+                  id: id as any,
+                  number: courseData.number,
+                  name: courseData.admissionYear,
+                  semesters: courseData.semesters,
+                });
+                // No need to manually update - the watch on convexCourses handles it
+                error.value = null;
+        }, "Failed to update course");
     }
 
     async function deleteCourse(id: string) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.courses.mutations.remove, {
-          id: id as any,
-        });
-        // Don't filter courses.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to delete course";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.courses.mutations.remove, {
+                  id: id as any,
+                });
+                // Don't filter courses.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to delete course");
     }
 
     async function loadFromBackend() {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         const data = await convex.query(api.courses.queries.list, {});
-        courses.value = data.map((c) => ({
-          id: c._id,
-          number: c.number,
-          admissionYear: c.name || "",
-          semesters: c.semesters || [],
-          createdAt: new Date(c.createdAt),
-          updatedAt: new Date(c.updatedAt),
-        }));
-        sortCourses();
-        error.value = null;
-      } catch (err) {
-        console.error("[courseStore] Failed to load from Convex:", err);
-        error.value = "Failed to load courses";
-      } finally {
-        loading.value = false;
-      }
+                courses.value = data.map((c) => ({
+                  id: c._id,
+                  number: c.number,
+                  admissionYear: c.name || "",
+                  semesters: c.semesters || [],
+                  createdAt: new Date(c.createdAt),
+                  updatedAt: new Date(c.updatedAt),
+                }));
+                sortCourses();
+                error.value = null;
+        }, "Operation failed");
     }
 
     function clearError() {
@@ -173,8 +144,6 @@ export const useCourseStore = defineStore(
       getCourseById,
       getCoursesByAcademicYear,
       courseOptions,
-      isLoading,
-      getError,
       addCourse,
       updateCourse,
       deleteCourse,

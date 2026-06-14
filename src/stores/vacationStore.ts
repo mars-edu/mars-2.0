@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import { withLoading } from "@/utils/storeAction";
 
 export interface Vacation {
   id: string;
@@ -67,101 +68,71 @@ export const useVacationStore = defineStore(
         vacations.value.filter((v) => v.semesterId === semesterId);
     });
 
-    const isLoading = computed(() => loading.value);
-    const getError = computed(() => error.value);
-
     async function addVacation(
       vacationData: Omit<Vacation, "id" | "createdAt" | "updatedAt">
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.vacations.mutations.create, {
-          shortName: vacationData.shortName,
-          fullName: vacationData.fullName,
-          academicYearId: vacationData.academicYearId,
-          startDate: vacationData.startDate,
-          endDate: vacationData.endDate,
-          semesterId: vacationData.semesterId,
-        });
-        // Don't push to vacations.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to add vacation";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.vacations.mutations.create, {
+                  shortName: vacationData.shortName,
+                  fullName: vacationData.fullName,
+                  academicYearId: vacationData.academicYearId,
+                  startDate: vacationData.startDate,
+                  endDate: vacationData.endDate,
+                  semesterId: vacationData.semesterId,
+                });
+                // Don't push to vacations.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to add vacation");
     }
 
     async function updateVacation(
       id: string,
       vacationData: Partial<Omit<Vacation, "id" | "createdAt" | "updatedAt">>
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.vacations.mutations.update, {
-          id: id as any,
-          shortName: vacationData.shortName,
-          fullName: vacationData.fullName,
-          academicYearId: vacationData.academicYearId,
-          startDate: vacationData.startDate,
-          endDate: vacationData.endDate,
-          semesterId: vacationData.semesterId,
-        });
-        // Don't update vacations.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to update vacation";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.vacations.mutations.update, {
+                  id: id as any,
+                  shortName: vacationData.shortName,
+                  fullName: vacationData.fullName,
+                  academicYearId: vacationData.academicYearId,
+                  startDate: vacationData.startDate,
+                  endDate: vacationData.endDate,
+                  semesterId: vacationData.semesterId,
+                });
+                // Don't update vacations.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to update vacation");
     }
 
     async function deleteVacation(id: string) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.vacations.mutations.remove, {
-          id: id as any,
-        });
-        // Don't filter vacations.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to delete vacation";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.vacations.mutations.remove, {
+                  id: id as any,
+                });
+                // Don't filter vacations.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to delete vacation");
     }
 
     async function loadFromBackend() {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         const data = await convex.query(api.vacations.queries.list, {});
-        vacations.value = data.map((v) => ({
-          id: v._id,
-          shortName: v.shortName,
-          fullName: v.fullName,
-          startDate: v.startDate,
-          endDate: v.endDate,
-          academicYearId: v.academicYearId,
-          semesterId: v.semesterId,
-          createdAt: new Date(v.createdAt),
-          updatedAt: new Date(v.updatedAt),
-        }));
-        error.value = null;
-      } catch (err) {
-        console.error("[vacationStore] Failed to load from Convex:", err);
-        error.value = "Failed to load vacations";
-      } finally {
-        loading.value = false;
-      }
+                vacations.value = data.map((v) => ({
+                  id: v._id,
+                  shortName: v.shortName,
+                  fullName: v.fullName,
+                  startDate: v.startDate,
+                  endDate: v.endDate,
+                  academicYearId: v.academicYearId,
+                  semesterId: v.semesterId,
+                  createdAt: new Date(v.createdAt),
+                  updatedAt: new Date(v.updatedAt),
+                }));
+                error.value = null;
+        }, "Operation failed");
     }
 
     function clearError() {
@@ -217,8 +188,6 @@ export const useVacationStore = defineStore(
       sortedVacations,
       getVacationsByAcademicYear,
       getVacationsBySemester,
-      isLoading,
-      getError,
       addVacation,
       updateVacation,
       deleteVacation,

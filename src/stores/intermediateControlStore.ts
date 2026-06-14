@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import { withLoading } from "@/utils/storeAction";
 
 export interface IntermediateControl {
   id: string;
@@ -57,30 +58,18 @@ export const useIntermediateControlStore = defineStore(
       );
     });
 
-    const isLoading = computed(() => loading.value);
-    const getError = computed(() => error.value);
-
     async function addIntermediateControl(
       controlData: Omit<IntermediateControl, "id" | "createdAt" | "updatedAt">
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.intermediateControls.mutations.create, {
-          name: controlData.name,
-          shortName: controlData.shortName,
-        });
-        // Don't push to intermediateControls.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error
-            ? err.message
-            : "Failed to add intermediate control";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.intermediateControls.mutations.create, {
+                  name: controlData.name,
+                  shortName: controlData.shortName,
+                });
+                // Don't push to intermediateControls.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to add intermediate control");
     }
 
     async function updateIntermediateControl(
@@ -89,66 +78,42 @@ export const useIntermediateControlStore = defineStore(
         Omit<IntermediateControl, "id" | "createdAt" | "updatedAt">
       >
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.intermediateControls.mutations.update, {
-          id: id as any,
-          name: controlData.name,
-          shortName: controlData.shortName,
-        });
-        // Don't update intermediateControls.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error
-            ? err.message
-            : "Failed to update intermediate control";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.intermediateControls.mutations.update, {
+                  id: id as any,
+                  name: controlData.name,
+                  shortName: controlData.shortName,
+                });
+                // Don't update intermediateControls.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to update intermediate control");
     }
 
     async function deleteIntermediateControl(id: string) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.intermediateControls.mutations.remove, {
-          id: id as any,
-        });
-        // Don't filter intermediateControls.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error
-            ? err.message
-            : "Failed to delete intermediate control";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.intermediateControls.mutations.remove, {
+                  id: id as any,
+                });
+                // Don't filter intermediateControls.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to delete intermediate control");
     }
 
     async function loadFromBackend() {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         const data = await convex.query(api.intermediateControls.queries.list, {});
-        intermediateControls.value = data.map((c) => ({
-          id: c._id,
-          name: c.name,
-          shortName: c.shortName,
-          createdAt: new Date(c.createdAt),
-          updatedAt: new Date(c.updatedAt),
-        }));
-        sortIntermediateControls();
-        error.value = null;
-      } catch (err) {
-        console.error("[intermediateControlStore] Failed to load from Convex:", err);
-        error.value = "Failed to load intermediate controls";
-      } finally {
-        loading.value = false;
-      }
+                intermediateControls.value = data.map((c) => ({
+                  id: c._id,
+                  name: c.name,
+                  shortName: c.shortName,
+                  createdAt: new Date(c.createdAt),
+                  updatedAt: new Date(c.updatedAt),
+                }));
+                sortIntermediateControls();
+                error.value = null;
+        }, "Operation failed");
     }
 
     function clearError() {
@@ -168,8 +133,6 @@ export const useIntermediateControlStore = defineStore(
       error,
       getIntermediateControlById,
       sortedIntermediateControls,
-      isLoading,
-      getError,
       addIntermediateControl,
       updateIntermediateControl,
       deleteIntermediateControl,

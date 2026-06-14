@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import { withLoading } from "@/utils/storeAction";
 
 export type NotificationType = "substitution" | "journal_closure" | "system";
 export type NotificationStatus = "unread" | "read" | "archived";
@@ -69,33 +70,20 @@ export const useNotificationStore = defineStore("notifications", () => {
       return;
     }
 
-    try {
-      loading.value = true;
-      error.value = null;
-
+    return await withLoading(loading, error, async () => {
       const data = await convex.query(
-        api.notifications.queries.getUserNotifications,
-        {
-          userId,
-          status: options?.status,
-          limit: options?.limit,
-        }
-      );
+              api.notifications.queries.getUserNotifications,
+              {
+                userId,
+                status: options?.status,
+                limit: options?.limit,
+              }
+            );
 
-      if (requestId !== lastRequestId) return;
+            if (requestId !== lastRequestId) return;
 
-      notifications.value = (data as Notification[]) ?? [];
-    } catch (err) {
-      console.error("[notificationStore] Failed to load notifications:", err);
-      if (requestId !== lastRequestId) return;
-
-      notifications.value = [];
-      error.value = "Не удалось загрузить уведомления";
-    } finally {
-      if (requestId === lastRequestId) {
-        loading.value = false;
-      }
-    }
+            notifications.value = (data as Notification[]) ?? [];
+      }, "Operation failed");
   };
 
   /**

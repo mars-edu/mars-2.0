@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import { withLoading } from "@/utils/storeAction";
 
 export interface FinalControl {
   id: string;
@@ -56,90 +57,60 @@ export const useFinalControlStore = defineStore(
       );
     });
 
-    const isLoading = computed(() => loading.value);
-    const getError = computed(() => error.value);
-
     async function addFinalControl(
       controlData: Omit<FinalControl, "id" | "createdAt" | "updatedAt">
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.finalControls.mutations.create, {
-          name: controlData.name,
-          shortName: controlData.shortName,
-        });
-        // Don't push to finalControls.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to add final control";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.finalControls.mutations.create, {
+                  name: controlData.name,
+                  shortName: controlData.shortName,
+                });
+                // Don't push to finalControls.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to add final control");
     }
 
     async function updateFinalControl(
       id: string,
       controlData: Partial<Omit<FinalControl, "id" | "createdAt" | "updatedAt">>
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.finalControls.mutations.update, {
-          id: id as any,
-          name: controlData.name,
-          shortName: controlData.shortName,
-        });
-        // Don't update finalControls.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to update final control";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.finalControls.mutations.update, {
+                  id: id as any,
+                  name: controlData.name,
+                  shortName: controlData.shortName,
+                });
+                // Don't update finalControls.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to update final control");
     }
 
     async function deleteFinalControl(id: string) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.finalControls.mutations.remove, {
-          id: id as any,
-        });
-        // Don't filter finalControls.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to delete final control";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.finalControls.mutations.remove, {
+                  id: id as any,
+                });
+                // Don't filter finalControls.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to delete final control");
     }
 
     async function loadFromBackend() {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         const data = await convex.query(api.finalControls.queries.list, {});
-        finalControls.value = data.map((c) => ({
-          id: c._id,
-          name: c.name,
-          shortName: c.shortName,
-          createdAt: new Date(c.createdAt),
-          updatedAt: new Date(c.updatedAt),
-        }));
-        sortFinalControls();
-        error.value = null;
-      } catch (err) {
-        console.error("[finalControlStore] Failed to load from Convex:", err);
-        error.value = "Failed to load final controls";
-      } finally {
-        loading.value = false;
-      }
+                finalControls.value = data.map((c) => ({
+                  id: c._id,
+                  name: c.name,
+                  shortName: c.shortName,
+                  createdAt: new Date(c.createdAt),
+                  updatedAt: new Date(c.updatedAt),
+                }));
+                sortFinalControls();
+                error.value = null;
+        }, "Operation failed");
     }
 
     function clearError() {
@@ -159,8 +130,6 @@ export const useFinalControlStore = defineStore(
       error,
       getFinalControlById,
       sortedFinalControls,
-      isLoading,
-      getError,
       addFinalControl,
       updateFinalControl,
       deleteFinalControl,

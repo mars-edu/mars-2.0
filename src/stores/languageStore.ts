@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
+import { withLoading } from "@/utils/storeAction";
 
 export interface Language {
   id: string;
@@ -51,73 +52,49 @@ export const useLanguageStore = defineStore(
       }))
     );
 
-    const isLoading = computed(() => loading.value);
-    const getError = computed(() => error.value);
-
     async function addLanguage(
       languageData: Omit<Language, "id" | "createdAt" | "updatedAt">
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         const newLanguage: Language = {
-          ...languageData,
-          id: crypto.randomUUID(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        languages.value.push(newLanguage);
-        error.value = null;
-        return newLanguage;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to add language";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                  ...languageData,
+                  id: crypto.randomUUID(),
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                };
+                languages.value.push(newLanguage);
+                error.value = null;
+                return newLanguage;
+        }, "Failed to add language");
     }
 
     async function updateLanguage(
       id: string,
       languageData: Partial<Omit<Language, "id" | "createdAt" | "updatedAt">>
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         const index = languages.value.findIndex((l) => l.id === id);
-        if (index === -1) {
-          throw new Error("Language not found");
-        }
+                if (index === -1) {
+                  throw new Error("Language not found");
+                }
 
-        const updatedLanguage = {
-          ...languages.value[index],
-          ...languageData,
-          updatedAt: new Date(),
-        };
+                const updatedLanguage = {
+                  ...languages.value[index],
+                  ...languageData,
+                  updatedAt: new Date(),
+                };
 
-        languages.value[index] = updatedLanguage;
-        error.value = null;
-        return updatedLanguage;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to update language";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                languages.value[index] = updatedLanguage;
+                error.value = null;
+                return updatedLanguage;
+        }, "Failed to update language");
     }
 
     async function deleteLanguage(id: string) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         languages.value = languages.value.filter((l) => l.id !== id);
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to delete language";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                error.value = null;
+        }, "Failed to delete language");
     }
 
     function clearError() {
@@ -136,8 +113,6 @@ export const useLanguageStore = defineStore(
       error,
       getLanguageById,
       languageOptions,
-      isLoading,
-      getError,
       addLanguage,
       updateLanguage,
       deleteLanguage,

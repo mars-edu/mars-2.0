@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import { withLoading } from "@/utils/storeAction";
 
 export interface ScheduledFinalControl {
   id: string;
@@ -74,33 +75,21 @@ export const useScheduledFinalControlStore = defineStore(
         );
     });
 
-    const isLoading = computed(() => loading.value);
-    const getError = computed(() => error.value);
-
     async function addScheduledFinalControl(
       controlData: Omit<ScheduledFinalControl, "id" | "createdAt" | "updatedAt">
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.scheduledControls.mutations.createFinal, {
-          finalControlId: controlData.finalControlId,
-          academicYearId: controlData.academicYearId,
-          shortName: controlData.shortName,
-          startDate: controlData.startDate,
-          endDate: controlData.endDate,
-        });
-        // Don't push to scheduledFinalControls.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error
-            ? err.message
-            : "Failed to add scheduled final control";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.scheduledControls.mutations.createFinal, {
+                  finalControlId: controlData.finalControlId,
+                  academicYearId: controlData.academicYearId,
+                  shortName: controlData.shortName,
+                  startDate: controlData.startDate,
+                  endDate: controlData.endDate,
+                });
+                // Don't push to scheduledFinalControls.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to add scheduled final control");
     }
 
     async function updateScheduledFinalControl(
@@ -109,71 +98,47 @@ export const useScheduledFinalControlStore = defineStore(
         Omit<ScheduledFinalControl, "id" | "createdAt" | "updatedAt">
       >
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.scheduledControls.mutations.updateFinal, {
-          id: id as any,
-          finalControlId: controlData.finalControlId,
-          academicYearId: controlData.academicYearId,
-          shortName: controlData.shortName,
-          startDate: controlData.startDate,
-          endDate: controlData.endDate,
-        });
-        // Don't update scheduledFinalControls.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error
-            ? err.message
-            : "Failed to update scheduled final control";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.scheduledControls.mutations.updateFinal, {
+                  id: id as any,
+                  finalControlId: controlData.finalControlId,
+                  academicYearId: controlData.academicYearId,
+                  shortName: controlData.shortName,
+                  startDate: controlData.startDate,
+                  endDate: controlData.endDate,
+                });
+                // Don't update scheduledFinalControls.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to update scheduled final control");
     }
 
     async function deleteScheduledFinalControl(id: string) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.scheduledControls.mutations.removeFinal, {
-          id: id as any,
-        });
-        // Don't filter scheduledFinalControls.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error
-            ? err.message
-            : "Failed to delete scheduled final control";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.scheduledControls.mutations.removeFinal, {
+                  id: id as any,
+                });
+                // Don't filter scheduledFinalControls.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to delete scheduled final control");
     }
 
     async function loadFromBackend() {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         const data = await convex.query(api.scheduledControls.queries.listFinal, {});
-        scheduledFinalControls.value = data.map((c) => ({
-          id: c._id,
-          academicYearId: c.academicYearId,
-          finalControlId: c.finalControlId,
-          shortName: c.shortName,
-          startDate: c.startDate,
-          endDate: c.endDate,
-          createdAt: new Date(c.createdAt),
-          updatedAt: new Date(c.updatedAt),
-        }));
-        error.value = null;
-      } catch (err) {
-        console.error("[scheduledFinalControlStore] Failed to load from Convex:", err);
-        error.value = "Failed to load scheduled final controls";
-      } finally {
-        loading.value = false;
-      }
+                scheduledFinalControls.value = data.map((c) => ({
+                  id: c._id,
+                  academicYearId: c.academicYearId,
+                  finalControlId: c.finalControlId,
+                  shortName: c.shortName,
+                  startDate: c.startDate,
+                  endDate: c.endDate,
+                  createdAt: new Date(c.createdAt),
+                  updatedAt: new Date(c.updatedAt),
+                }));
+                error.value = null;
+        }, "Operation failed");
     }
 
     function clearError() {
@@ -194,8 +159,6 @@ export const useScheduledFinalControlStore = defineStore(
       sortedScheduledFinalControls,
       getScheduledFinalControlsByAcademicYear,
       getScheduledFinalControlsBySemester,
-      isLoading,
-      getError,
       addScheduledFinalControl,
       updateScheduledFinalControl,
       deleteScheduledFinalControl,

@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import { withLoading } from "@/utils/storeAction";
 
 export interface Base {
   id: string;
@@ -67,98 +68,63 @@ export const useBaseStore = defineStore(
       }))
     );
 
-    const isLoading = computed(() => loading.value);
-    const getError = computed(() => error.value);
-
     async function fetchBases() {
-      loading.value = true;
-      try {
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to load bases";
-      } finally {
-        loading.value = false;
-      }
+      return await withLoading(loading, error, async () => {
+
+        }, "Failed to load bases");
     }
 
     async function addBase(
       baseData: Omit<Base, "id" | "createdAt" | "updatedAt">
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - reactive subscription will automatically update the list
-        await convex.mutation(api.bases.mutations.create, {
-          value: parseInt(baseData.value),
-          name: baseData.text,
-        });
-        // No need to manually push - the watch on convexBases handles it
-        error.value = null;
-      } catch (err) {
-        error.value = err instanceof Error ? err.message : "Failed to add base";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.bases.mutations.create, {
+                  value: parseInt(baseData.value),
+                  name: baseData.text,
+                });
+                // No need to manually push - the watch on convexBases handles it
+                error.value = null;
+        }, "Failed to add base");
     }
 
     async function updateBase(
       id: string,
       baseData: Partial<Omit<Base, "id" | "createdAt" | "updatedAt">>
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - reactive subscription will automatically update the list
-        await convex.mutation(api.bases.mutations.update, {
-          id: id as any,
-          value: baseData.value ? parseInt(baseData.value) : undefined,
-          name: baseData.text,
-        });
-        // No need to manually update - the watch on convexBases handles it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to update base";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.bases.mutations.update, {
+                  id: id as any,
+                  value: baseData.value ? parseInt(baseData.value) : undefined,
+                  name: baseData.text,
+                });
+                // No need to manually update - the watch on convexBases handles it
+                error.value = null;
+        }, "Failed to update base");
     }
 
     async function deleteBase(id: string) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         await convex.mutation(api.bases.mutations.remove, {
-          id: id as any,
-        });
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to delete base";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                  id: id as any,
+                });
+                error.value = null;
+        }, "Failed to delete base");
     }
 
     async function loadFromBackend() {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         const data = await convex.query(api.bases.queries.list, {});
-        bases.value = data.map((b) => ({
-          id: b._id,
-          value: b.value.toString(),
-          text: b.name,
-          createdAt: new Date(b.createdAt),
-          updatedAt: new Date(b.updatedAt),
-        }));
-        error.value = null;
-      } catch (err) {
-        console.error("[baseStore] Failed to load from Convex:", err);
-        error.value = "Failed to load bases";
-      } finally {
-        loading.value = false;
-      }
+                bases.value = data.map((b) => ({
+                  id: b._id,
+                  value: b.value.toString(),
+                  text: b.name,
+                  createdAt: new Date(b.createdAt),
+                  updatedAt: new Date(b.updatedAt),
+                }));
+                error.value = null;
+        }, "Operation failed");
     }
 
     function clearError() {
@@ -177,8 +143,6 @@ export const useBaseStore = defineStore(
       error,
       getBaseById,
       baseOptions,
-      isLoading,
-      getError,
       fetchBases,
       addBase,
       updateBase,

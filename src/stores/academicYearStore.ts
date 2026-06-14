@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import { withLoading } from "@/utils/storeAction";
 
 export interface AcademicYear {
   id: string;
@@ -71,43 +72,33 @@ export const useAcademicYearStore = defineStore(
       }))
     );
 
-    const isLoading = computed(() => loading.value);
-    const getError = computed(() => error.value);
-
     async function addAcademicYear(
       academicYearData: Omit<AcademicYear, "id" | "createdAt" | "updatedAt">
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        const id = await convex.mutation(api.academicYears.mutations.create, {
-          name: academicYearData.name,
-          startYear: academicYearData.startYear,
-          endYear: academicYearData.endYear,
-          isActive: academicYearData.isActive,
-        });
-        const newAcademicYear = await convex.query(api.academicYears.queries.getById, { id });
-        if (newAcademicYear) {
-          const mappedYear: AcademicYear = {
-            id: newAcademicYear._id,
-            name: newAcademicYear.name,
-            startYear: newAcademicYear.startYear,
-            endYear: newAcademicYear.endYear,
-            isActive: newAcademicYear.isActive,
-            createdAt: new Date(newAcademicYear.createdAt),
-            updatedAt: new Date(newAcademicYear.updatedAt),
-          };
-          // Don't push to academicYears.value - the reactive subscription will handle it
-          error.value = null;
-          return mappedYear;
-        }
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to add academic year";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                const id = await convex.mutation(api.academicYears.mutations.create, {
+                  name: academicYearData.name,
+                  startYear: academicYearData.startYear,
+                  endYear: academicYearData.endYear,
+                  isActive: academicYearData.isActive,
+                });
+                const newAcademicYear = await convex.query(api.academicYears.queries.getById, { id });
+                if (newAcademicYear) {
+                  const mappedYear: AcademicYear = {
+                    id: newAcademicYear._id,
+                    name: newAcademicYear.name,
+                    startYear: newAcademicYear.startYear,
+                    endYear: newAcademicYear.endYear,
+                    isActive: newAcademicYear.isActive,
+                    createdAt: new Date(newAcademicYear.createdAt),
+                    updatedAt: new Date(newAcademicYear.updatedAt),
+                  };
+                  // Don't push to academicYears.value - the reactive subscription will handle it
+                  error.value = null;
+                  return mappedYear;
+                }
+        }, "Failed to add academic year");
     }
 
     async function updateAcademicYear(
@@ -116,99 +107,70 @@ export const useAcademicYearStore = defineStore(
         Omit<AcademicYear, "id" | "createdAt" | "updatedAt">
       >
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        const updated = await convex.mutation(api.academicYears.mutations.update, {
-          id: id as any,
-          name: academicYearData.name,
-          startYear: academicYearData.startYear,
-          endYear: academicYearData.endYear,
-          isActive: academicYearData.isActive,
-        });
+                const updated = await convex.mutation(api.academicYears.mutations.update, {
+                  id: id as any,
+                  name: academicYearData.name,
+                  startYear: academicYearData.startYear,
+                  endYear: academicYearData.endYear,
+                  isActive: academicYearData.isActive,
+                });
 
-        if (updated) {
-          const mappedYear: AcademicYear = {
-            id: updated._id,
-            name: updated.name,
-            startYear: updated.startYear,
-            endYear: updated.endYear,
-            isActive: updated.isActive,
-            createdAt: new Date(updated.createdAt),
-            updatedAt: new Date(updated.updatedAt),
-          };
-          // Don't update academicYears.value - the reactive subscription will handle it
-          error.value = null;
-          return mappedYear;
-        }
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to update academic year";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                if (updated) {
+                  const mappedYear: AcademicYear = {
+                    id: updated._id,
+                    name: updated.name,
+                    startYear: updated.startYear,
+                    endYear: updated.endYear,
+                    isActive: updated.isActive,
+                    createdAt: new Date(updated.createdAt),
+                    updatedAt: new Date(updated.updatedAt),
+                  };
+                  // Don't update academicYears.value - the reactive subscription will handle it
+                  error.value = null;
+                  return mappedYear;
+                }
+        }, "Failed to update academic year");
     }
 
     async function deleteAcademicYear(id: string) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.academicYears.mutations.remove, {
-          id: id as any,
-        });
-        // Don't filter academicYears.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to delete academic year";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.academicYears.mutations.remove, {
+                  id: id as any,
+                });
+                // Don't filter academicYears.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to delete academic year");
     }
 
     async function setActiveAcademicYear(id: string) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex
-        await convex.mutation(api.academicYears.mutations.setActive, {
-          id: id as any,
-        });
-        // Refresh data from backend
-        await loadFromBackend();
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error
-            ? err.message
-            : "Failed to set active academic year";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.academicYears.mutations.setActive, {
+                  id: id as any,
+                });
+                // Refresh data from backend
+                await loadFromBackend();
+                error.value = null;
+        }, "Failed to set active academic year");
     }
 
     async function loadFromBackend() {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         const data = await convex.query(api.academicYears.queries.list, {});
-        academicYears.value = data.map((year) => ({
-          id: year._id,
-          name: year.name,
-          startYear: year.startYear,
-          endYear: year.endYear,
-          isActive: year.isActive,
-          createdAt: new Date(year.createdAt),
-          updatedAt: new Date(year.updatedAt),
-        }));
-        error.value = null;
-      } catch (err) {
-        console.error("[academicYearStore] Failed to load from Convex:", err);
-        error.value = "Failed to load academic years";
-      } finally {
-        loading.value = false;
-      }
+                academicYears.value = data.map((year) => ({
+                  id: year._id,
+                  name: year.name,
+                  startYear: year.startYear,
+                  endYear: year.endYear,
+                  isActive: year.isActive,
+                  createdAt: new Date(year.createdAt),
+                  updatedAt: new Date(year.updatedAt),
+                }));
+                error.value = null;
+        }, "Operation failed");
     }
 
     function clearError() {
@@ -230,8 +192,6 @@ export const useAcademicYearStore = defineStore(
       getSortedAcademicYears,
       academicYearsAsNumbers,
       academicYearOptions,
-      isLoading,
-      getError,
       addAcademicYear,
       updateAcademicYear,
       deleteAcademicYear,

@@ -280,15 +280,11 @@ export const useTeacherStore = defineStore("teacher", () => {
       searchTerm: "",
     };
   };
-
-  const getError = computed(() => error.value);
-
   return {
     teachers,
     pageSize,
     currentPage,
     totalPages,
-    isLoading,
     isPaginatedLoading,
     filters,
     getAllTeachers,
@@ -302,7 +298,6 @@ export const useTeacherStore = defineStore("teacher", () => {
     deleteTeacher,
     clearError,
     reset,
-    getError,
     getTeacherFullName,
     getTeacherById,
     getTeacherByUserId,

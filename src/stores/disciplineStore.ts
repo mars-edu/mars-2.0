@@ -106,19 +106,14 @@ export const useDisciplineStore = defineStore("discipline", () => {
     isLoading.value = false;
     error.value = null;
   };
-
-  const getError = computed(() => error.value);
-
   return {
     disciplines,
-    isLoading,
     getAllDisciplines,
     getDisciplineById,
     addDiscipline,
     updateDiscipline,
     deleteDiscipline,
     clearError,
-    reset,
-    getError,
+    reset
   };
 });

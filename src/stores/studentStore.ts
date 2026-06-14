@@ -298,9 +298,6 @@ export const useStudentStore = defineStore("student", () => {
       course: "",
     };
   };
-
-  const getError = computed(() => error.value);
-
   const getCourseByStudentId = (id: string): number | null => {
     const student = studentsById.value.get(id);
     if (!student) return null;
@@ -334,7 +331,6 @@ export const useStudentStore = defineStore("student", () => {
     pageSize,
     currentPage,
     totalPages,
-    isLoading,
     isPaginatedLoading,
     filters,
     getAllStudents,
@@ -347,7 +343,6 @@ export const useStudentStore = defineStore("student", () => {
     deleteStudent,
     clearError,
     reset,
-    getError,
     getCourseByStudentId,
     getStudentFullName,
     getStudentById,

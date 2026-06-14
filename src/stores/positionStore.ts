@@ -39,7 +39,6 @@ export const usePositionStore = defineStore("position", () => {
   });
 
   const getAllPositions = computed(() => positions.value);
-  const getError = computed(() => error.value);
 
   async function addPosition(positionData: Omit<Position, "id">) {
     isLoading.value = true;
@@ -124,10 +123,8 @@ export const usePositionStore = defineStore("position", () => {
 
   return {
     positions,
-    isLoading,
     error,
     getAllPositions,
-    getError,
     addPosition,
     updatePosition,
     deletePosition,

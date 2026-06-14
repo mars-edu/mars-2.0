@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import { withLoading } from "@/utils/storeAction";
 
 export interface Semester {
   id: string;
@@ -55,97 +56,67 @@ export const useSemesterStore = defineStore(
       return (academicYearId: string) => semesters.value; // All semesters are now global
     });
 
-    const isLoading = computed(() => loading.value);
-    const getError = computed(() => error.value);
-
     async function addSemester(
       semesterData: Omit<Semester, "id" | "createdAt" | "updatedAt">
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         if (semesterData.number === undefined) {
-          throw new Error("Semester number is required");
-        }
-        // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.semesterDefinitions.mutations.create, {
-          name: semesterData.shortName,
-          shortName: semesterData.shortName,
-          fullName: semesterData.fullName,
-          number: semesterData.number,
-        });
-        // Don't push to semesters.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to add semester";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                  throw new Error("Semester number is required");
+                }
+                // Use Convex - the reactive subscription will handle updating the local state
+                await convex.mutation(api.semesterDefinitions.mutations.create, {
+                  name: semesterData.shortName,
+                  shortName: semesterData.shortName,
+                  fullName: semesterData.fullName,
+                  number: semesterData.number,
+                });
+                // Don't push to semesters.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to add semester");
     }
 
     async function updateSemester(
       id: string,
       semesterData: Partial<Omit<Semester, "id" | "createdAt" | "updatedAt">>
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.semesterDefinitions.mutations.update, {
-          id: id as any,
-          name: semesterData.shortName,
-          shortName: semesterData.shortName,
-          fullName: semesterData.fullName,
-          number: semesterData.number,
-        });
-        // Don't update semesters.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to update semester";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.semesterDefinitions.mutations.update, {
+                  id: id as any,
+                  name: semesterData.shortName,
+                  shortName: semesterData.shortName,
+                  fullName: semesterData.fullName,
+                  number: semesterData.number,
+                });
+                // Don't update semesters.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to update semester");
     }
 
     async function deleteSemester(id: string) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.semesterDefinitions.mutations.remove, {
-          id: id as any,
-        });
-        // Don't filter semesters.value - the reactive subscription will handle it
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to delete semester";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.semesterDefinitions.mutations.remove, {
+                  id: id as any,
+                });
+                // Don't filter semesters.value - the reactive subscription will handle it
+                error.value = null;
+        }, "Failed to delete semester");
     }
 
     async function loadFromBackend() {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         const data = await convex.query(api.semesterDefinitions.queries.list, {});
-        semesters.value = data.map((sem) => ({
-          id: sem._id,
-          shortName: sem.shortName,
-          fullName: sem.fullName,
-          number: sem.number,
-          createdAt: new Date(sem.createdAt),
-          updatedAt: new Date(sem.updatedAt),
-        }));
-        error.value = null;
-      } catch (err) {
-        console.error("[semesterStore] Failed to load from Convex:", err);
-        error.value = "Failed to load semesters";
-      } finally {
-        loading.value = false;
-      }
+                semesters.value = data.map((sem) => ({
+                  id: sem._id,
+                  shortName: sem.shortName,
+                  fullName: sem.fullName,
+                  number: sem.number,
+                  createdAt: new Date(sem.createdAt),
+                  updatedAt: new Date(sem.updatedAt),
+                }));
+                error.value = null;
+        }, "Operation failed");
     }
 
     function clearError() {
@@ -165,8 +136,6 @@ export const useSemesterStore = defineStore(
       getSemesterById,
       sortedSemesters,
       getSemestersByAcademicYear,
-      isLoading,
-      getError,
       addSemester,
       updateSemester,
       deleteSemester,

@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import { withLoading } from "@/utils/storeAction";
 
 export interface Specialty {
   id: string;
@@ -79,120 +80,78 @@ export const useSpecialtyStore = defineStore(
       }))
     );
 
-    const isLoading = computed(() => loading.value);
-    const getError = computed(() => error.value);
-
     async function fetchSpecialties() {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Data will be automatically loaded by Pinia persistence
-        error.value = null;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to load specialties";
-      } finally {
-        loading.value = false;
-      }
+                error.value = null;
+        }, "Failed to load specialties");
     }
 
     const addSpecialty = async (payload: AddSpecialtyPayload) => {
-      try {
-        loading.value = true;
-        error.value = null;
-
+      return await withLoading(loading, error, async () => {
         // Use Convex - reactive subscription will automatically update the list
-        await convex.mutation(api.specialties.mutations.create, {
-          name: payload.name,
-          code: payload.code,
-          codeName: payload.codeName,
-          details: payload.details,
-          year: payload.year,
-          orderNumber: payload.orderNumber,
-          hasModule: false,
-          isHighlighted: false,
-        });
-        // No need to manually push - the watch on convexSpecialties handles it
-      } catch (e) {
-        error.value =
-          e instanceof Error ? e.message : "Failed to add specialty";
-        throw e;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.specialties.mutations.create, {
+                  name: payload.name,
+                  code: payload.code,
+                  codeName: payload.codeName,
+                  details: payload.details,
+                  year: payload.year,
+                  orderNumber: payload.orderNumber,
+                  hasModule: false,
+                  isHighlighted: false,
+                });
+                // No need to manually push - the watch on convexSpecialties handles it
+        }, "Failed to add specialty");
     };
 
     const updateSpecialty = async (
       id: string,
       payload: AddSpecialtyPayload
     ) => {
-      try {
-        loading.value = true;
-        error.value = null;
-
+      return await withLoading(loading, error, async () => {
         // Use Convex - reactive subscription will automatically update the list
-        await convex.mutation(api.specialties.mutations.update, {
-          id: id as any,
-          name: payload.name,
-          code: payload.code,
-          codeName: payload.codeName,
-          details: payload.details,
-          year: payload.year,
-          orderNumber: payload.orderNumber,
-        });
-        // No need to manually update - the watch on convexSpecialties handles it
-      } catch (e) {
-        error.value =
-          e instanceof Error ? e.message : "Failed to update specialty";
-        throw e;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.specialties.mutations.update, {
+                  id: id as any,
+                  name: payload.name,
+                  code: payload.code,
+                  codeName: payload.codeName,
+                  details: payload.details,
+                  year: payload.year,
+                  orderNumber: payload.orderNumber,
+                });
+                // No need to manually update - the watch on convexSpecialties handles it
+        }, "Failed to update specialty");
     };
 
     const deleteSpecialty = async (id: string) => {
-      try {
-        loading.value = true;
-        error.value = null;
-
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.specialties.mutations.remove, {
-          id: id as any,
-        });
-        // Don't filter specialties.value - the reactive subscription will handle it
-      } catch (e) {
-        error.value =
-          e instanceof Error ? e.message : "Failed to delete specialty";
-        throw e;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.specialties.mutations.remove, {
+                  id: id as any,
+                });
+                // Don't filter specialties.value - the reactive subscription will handle it
+        }, "Failed to delete specialty");
     };
 
     const loadFromBackend = async () => {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         const data = await convex.query(api.specialties.queries.list, {});
-        specialties.value = data.map((specialty) => ({
-          id: specialty._id,
-          legacyId: specialty.legacyId,
-          name: specialty.name,
-          code: specialty.code,
-          codeName: specialty.codeName,
-          year: specialty.year,
-          orderNumber: specialty.orderNumber,
-          details: specialty.details || "",
-          hasModule: specialty.hasModule || false,
-          isHighlighted: specialty.isHighlighted,
-          createdAt: new Date(specialty.createdAt),
-          updatedAt: new Date(specialty.updatedAt),
-        }));
-        error.value = null;
-      } catch (err) {
-        console.error("[specialtyStore] Failed to load from Convex:", err);
-        error.value = "Failed to load specialties";
-      } finally {
-        loading.value = false;
-      }
+                specialties.value = data.map((specialty) => ({
+                  id: specialty._id,
+                  legacyId: specialty.legacyId,
+                  name: specialty.name,
+                  code: specialty.code,
+                  codeName: specialty.codeName,
+                  year: specialty.year,
+                  orderNumber: specialty.orderNumber,
+                  details: specialty.details || "",
+                  hasModule: specialty.hasModule || false,
+                  isHighlighted: specialty.isHighlighted,
+                  createdAt: new Date(specialty.createdAt),
+                  updatedAt: new Date(specialty.updatedAt),
+                }));
+                error.value = null;
+        }, "Operation failed");
     };
 
     const clearError = () => {
@@ -212,8 +171,6 @@ export const useSpecialtyStore = defineStore(
       getSpecialtyById,
       getSpecialtyByCode,
       specialtyOptions,
-      isLoading,
-      getError,
       fetchSpecialties,
       addSpecialty,
       updateSpecialty,

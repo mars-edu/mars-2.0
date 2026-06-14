@@ -4,6 +4,7 @@ import { useAcademicYearStore } from "./academicYearStore";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import { withLoading } from "@/utils/storeAction";
 
 export interface EducationSchedule {
   id: string;
@@ -74,38 +75,28 @@ export const useEducationScheduleStore = defineStore(
         .sort((a, b) => a.lessonNumber - b.lessonNumber);
     });
 
-    const isLoading = computed(() => loading.value);
-    const getError = computed(() => error.value);
-
     async function addSchedule(
       scheduleData: Omit<EducationSchedule, "id" | "createdAt" | "updatedAt" | "lessonNumber">
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         const currentSchedules = getSchedulesByAcademicYear.value(scheduleData.academicYearId);
-        const nextLessonNumber = currentSchedules.length > 0 
-          ? Math.max(...currentSchedules.map(s => s.lessonNumber)) + 1 
-          : 1;
+                const nextLessonNumber = currentSchedules.length > 0 
+                  ? Math.max(...currentSchedules.map(s => s.lessonNumber)) + 1 
+                  : 1;
 
-        // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.educationSchedules.mutations.create, {
-          name: `Lesson ${nextLessonNumber}`,
-          startTime: scheduleData.startTime,
-          endTime: scheduleData.endTime,
-          order: nextLessonNumber,
-          academicYearId: scheduleData.academicYearId,
-          semesterId: scheduleData.semesterId,
-        });
-        // Don't push to schedules.value - the reactive subscription will handle it
-        error.value = null;
-        return;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to add schedule";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                // Use Convex - the reactive subscription will handle updating the local state
+                await convex.mutation(api.educationSchedules.mutations.create, {
+                  name: `Lesson ${nextLessonNumber}`,
+                  startTime: scheduleData.startTime,
+                  endTime: scheduleData.endTime,
+                  order: nextLessonNumber,
+                  academicYearId: scheduleData.academicYearId,
+                  semesterId: scheduleData.semesterId,
+                });
+                // Don't push to schedules.value - the reactive subscription will handle it
+                error.value = null;
+                return;
+        }, "Failed to add schedule");
     }
 
     async function updateSchedule(
@@ -114,46 +105,32 @@ export const useEducationScheduleStore = defineStore(
         Omit<EducationSchedule, "id" | "createdAt" | "updatedAt">
       >
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.educationSchedules.mutations.update, {
-          id: id as any,
-          name: scheduleData.lessonNumber ? `Lesson ${scheduleData.lessonNumber}` : undefined,
-          startTime: scheduleData.startTime,
-          endTime: scheduleData.endTime,
-          order: scheduleData.lessonNumber,
-          semesterId: scheduleData.semesterId,
-        });
-        // Don't update schedules.value - the reactive subscription will handle it
-        error.value = null;
-        return;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to update schedule";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.educationSchedules.mutations.update, {
+                  id: id as any,
+                  name: scheduleData.lessonNumber ? `Lesson ${scheduleData.lessonNumber}` : undefined,
+                  startTime: scheduleData.startTime,
+                  endTime: scheduleData.endTime,
+                  order: scheduleData.lessonNumber,
+                  semesterId: scheduleData.semesterId,
+                });
+                // Don't update schedules.value - the reactive subscription will handle it
+                error.value = null;
+                return;
+        }, "Failed to update schedule");
     }
 
     async function deleteSchedule(id: string) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.educationSchedules.mutations.remove, {
-          id: id as any,
-        });
-        // Don't filter schedules.value - the reactive subscription will handle it
-        error.value = null;
-        return;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to delete schedule";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.educationSchedules.mutations.remove, {
+                  id: id as any,
+                });
+                // Don't filter schedules.value - the reactive subscription will handle it
+                error.value = null;
+                return;
+        }, "Failed to delete schedule");
     }
 
     async function reorderSchedules(newOrderIds: string[]) {
@@ -189,50 +166,36 @@ export const useEducationScheduleStore = defineStore(
     }
 
     async function loadFromBackend() {
-
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         const data = await convex.query(api.educationSchedules.queries.list, {});
-        schedules.value = data.map((s) => ({
-          id: s._id,
-          lessonNumber: s.order,
-          startTime: s.startTime,
-          endTime: s.endTime,
-          academicYearId: s.academicYearId,
-          semesterId: s.semesterId,
-          createdAt: new Date(s.createdAt),
-          updatedAt: new Date(s.updatedAt),
-        }));
-        sortSchedules();
-        error.value = null;
-      } catch (err) {
-        console.error("[educationScheduleStore] Failed to load from Convex:", err);
-        error.value = "Failed to load schedules";
-      } finally {
-        loading.value = false;
-      }
+                schedules.value = data.map((s) => ({
+                  id: s._id,
+                  lessonNumber: s.order,
+                  startTime: s.startTime,
+                  endTime: s.endTime,
+                  academicYearId: s.academicYearId,
+                  semesterId: s.semesterId,
+                  createdAt: new Date(s.createdAt),
+                  updatedAt: new Date(s.updatedAt),
+                }));
+                sortSchedules();
+                error.value = null;
+        }, "Operation failed");
     }
 
     async function copySchedulesFromYear(
       sourceAcademicYearId: string,
       targetAcademicYearId: string
     ) {
-      loading.value = true;
-      try {
+      return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-        await convex.mutation(api.educationSchedules.mutations.copySchedulesFromYear, {
-          sourceAcademicYearId,
-          targetAcademicYearId,
-        });
-        error.value = null;
-        return;
-      } catch (err) {
-        error.value =
-          err instanceof Error ? err.message : "Failed to copy schedules";
-        throw err;
-      } finally {
-        loading.value = false;
-      }
+                await convex.mutation(api.educationSchedules.mutations.copySchedulesFromYear, {
+                  sourceAcademicYearId,
+                  targetAcademicYearId,
+                });
+                error.value = null;
+                return;
+        }, "Failed to copy schedules");
     }
 
     function clearError() {
@@ -255,8 +218,6 @@ export const useEducationScheduleStore = defineStore(
       getSchedulesByAcademicYear,
       getSchedulesBySemester,
       getActiveYearSchedules,
-      isLoading,
-      getError,
       addSchedule,
       updateSchedule,
       deleteSchedule,
