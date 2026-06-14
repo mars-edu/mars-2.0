@@ -86,13 +86,22 @@ export const useWorkloadStore = defineStore("workload", () => {
     }
   };
 
-  const generateJournals = async (workloadId: string, semester: number) => {
+  const generateJournalGroups = async (
+    workloadId: string,
+    semester: number,
+    groups: Array<{
+      subjectId: string;
+      groupName?: string;
+      studentIds: string[];
+      weeklySchedules: Array<{ weekId: number; startId?: string; endId?: string }>;
+    }>
+  ) => {
     loading.value = true;
     error.value = null;
     try {
       return await convex.mutation(
-        api.workloads.mutations.createJournalsFromWorkload,
-        { workloadId: workloadId as Id<"workloads">, semester }
+        api.workloads.mutations.createJournalsFromWorkloadGroups,
+        { workloadId: workloadId as Id<"workloads">, semester, groups }
       );
     } catch (err: any) {
       error.value = err.message || "Failed to generate journals";
@@ -132,7 +141,7 @@ export const useWorkloadStore = defineStore("workload", () => {
     editingWorkloadId,
     saveWorkload,
     deleteWorkload,
-    generateJournals,
+    generateJournalGroups,
     setAddedToSchedule,
     resetCurrentWorkload,
   };

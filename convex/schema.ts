@@ -575,11 +575,13 @@ export default defineSchema({
     isIndividualJournal: v.optional(v.boolean()),
     mergedJournalIds: v.optional(v.array(v.string())),
     parentIndividualJournalId: v.optional(v.string()),
+    workloadId: v.optional(v.string()), // Back-ref when generated from a workload
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_calendarEvent", ["calendarEventId"])
-    .index("by_academicYear_semester", ["academicYearId", "semesterId"]),
+    .index("by_academicYear_semester", ["academicYearId", "semesterId"])
+    .index("by_workload", ["workloadId"]),
 
   /**
    * Journal-Student relationships

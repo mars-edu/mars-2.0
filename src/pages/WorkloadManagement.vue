@@ -20,46 +20,15 @@
 
           <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
             <!-- Teacher Selection -->
-            <div class="relative w-full sm:w-auto">
-              <button
-                @click="isTeacherDropdownOpen = !isTeacherDropdownOpen"
-                class="flex items-center gap-3 px-5 py-3 bg-card border border-border rounded-2xl hover:border-primary/50 hover:shadow-md transition-all cursor-pointer shadow-sm min-w-[250px] justify-between group"
-              >
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors">
-                    <IconUser class="w-[18px] h-[18px]" />
-                  </div>
-                  <span class="text-sm font-bold text-foreground">{{ selectedTeacherName || 'Выберите преподавателя' }}</span>
-                </div>
-                <IconChevronDown
-                  class="w-[18px] h-[18px] text-muted-foreground transition-transform duration-300"
-                  :class="{ 'rotate-180': isTeacherDropdownOpen }"
-                />
-              </button>
-
-              <div
-                v-if="isTeacherDropdownOpen"
-                class="absolute right-0 top-full mt-2 w-full sm:w-[300px] bg-card rounded-2xl shadow-2xl border border-border z-50 overflow-hidden"
-              >
-                <div class="p-3 border-b border-border">
-                  <SearchInput
-                    v-model="teacherSearchQuery"
-                    placeholder="Поиск преподавателя..."
-                  />
-                </div>
-                <div class="max-h-72 overflow-y-auto p-2">
-                  <button
-                    v-for="teacher in filteredTeachers"
-                    :key="teacher.id"
-                    @click="selectTeacher(teacher)"
-                    class="w-full text-left px-4 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-between mb-1"
-                    :class="selectedTeacherId === teacher.id ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
-                  >
-                    <span>{{ getTeacherFullName(teacher) }}</span>
-                    <IconCheck v-if="selectedTeacherId === teacher.id" class="w-[18px] h-[18px] text-primary" />
-                  </button>
-                </div>
-              </div>
+            <div class="flex items-center gap-4 bg-card p-2 rounded-2xl shadow-sm border border-border w-full sm:w-auto">
+              <Select
+                :model-value="selectedTeacherId"
+                @update:model-value="onSelectTeacher(($event as string | null))"
+                :options="teacherOptions"
+                placeholder="Выберите преподавателя"
+                search-placeholder="Поиск преподавателя..."
+                class="w-full sm:w-[250px]"
+              />
             </div>
 
             <div class="flex items-center gap-4 bg-card p-2 rounded-2xl shadow-sm border border-border w-full sm:w-auto">
@@ -472,50 +441,12 @@
       </template>
     </GuardedPopover>
 
-    <!-- Generate Journals: semester picker -->
-    <GuardedPopover
-      id="workload-generate-popup"
-      kind="popup"
-      :guard-unsaved="false"
-      :opened="!!generateTarget"
-      @popup:closed="generateTarget = null"
-    >
-      <template #default="{ requestClose }">
-        <div class="flex flex-col h-full bg-background">
-          <PopoverHeader title="Сформировать журналы" :on-cancel="requestClose" />
-          <div class="flex-1 flex flex-col items-center justify-center p-8 text-center">
-            <div class="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mb-6 text-blue-500">
-              <IconBookOpen class="w-8 h-8" />
-            </div>
-            <p class="text-muted-foreground font-medium leading-relaxed max-w-md mb-8">
-              Для каждой дисциплины будут созданы журналы по числу групп, студенты подберутся
-              автоматически по специальности и языку. Выберите семестр:
-            </p>
-            <div class="flex gap-3">
-              <button
-                v-for="sem in 2"
-                :key="sem"
-                @click="selectedSemester = sem"
-                class="px-8 py-4 rounded-2xl font-black text-lg transition-all active:scale-95 border-2"
-                :class="selectedSemester === sem
-                  ? 'bg-blue-500 text-white border-blue-500 shadow-xl shadow-blue-500/30'
-                  : 'bg-card text-muted-foreground border-border hover:border-blue-500/50'"
-              >
-                {{ sem }} семестр
-              </button>
-            </div>
-          </div>
-          <PopoverFooter
-            save-text="Сформировать"
-            save-variant="primary"
-            :disabled="!selectedSemester"
-            :is-loading="generating"
-            :on-save="confirmGenerate"
-            :on-cancel="requestClose"
-          />
-        </div>
-      </template>
-    </GuardedPopover>
+    <!-- Journal-creation wizard -->
+    <WorkloadJournalWizard
+      :workload="generateTarget"
+      @close="generateTarget = null"
+      @created="onJournalsCreated"
+    />
 
     <!-- Add Subject Modal -->
     <GuardedPopover
@@ -577,6 +508,7 @@ import SearchInput from "@/components/ui/SearchInput.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
+import WorkloadJournalWizard from "@/components/Workload/WorkloadJournalWizard.vue";
 import { useWorkloadStore } from "@/stores/workloadStore";
 import { useTeacherStore, type Teacher } from "@/stores/teacherStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
@@ -588,8 +520,6 @@ import type { WorkloadItem, SavedWorkload } from "@/types/workload";
 
 // Icons
 import IconUser from "~icons/lucide/user";
-import IconChevronDown from "~icons/lucide/chevron-down";
-import IconCheck from "~icons/lucide/check";
 import IconPlus from "~icons/lucide/plus";
 import IconTrash from "~icons/lucide/trash-2";
 import IconSave from "~icons/lucide/save";
@@ -616,21 +546,20 @@ const { specialties } = storeToRefs(specialtyStore);
 const { allWorkloads, selectedTeacherId, selectedAcademicYearId, currentWorkloadItems, editingWorkloadId } = storeToRefs(workloadStore);
 
 const activeNavItem = ref("workload");
-const isTeacherDropdownOpen = ref(false);
-const teacherSearchQuery = ref("");
 const isAddingSubject = ref(false);
 const subjectSearchQuery = ref("");
 const savedWorkloadSearchQuery = ref("");
 const deleteConfirmId = ref<string | null>(null);
 const showSaveConfirm = ref(false);
 const generateTarget = ref<SavedWorkload | null>(null);
-const generating = ref(false);
-const selectedSemester = ref<number | null>(null);
 
 function openGenerate(workload: SavedWorkload) {
-  if (workload.journalsCreated) return;
-  selectedSemester.value = null;
   generateTarget.value = workload;
+}
+
+function onJournalsCreated(count: number) {
+  generateTarget.value = null;
+  f7.toast.create({ text: `Создано журналов: ${count}`, closeTimeout: 2500 }).open();
 }
 
 async function toggleAddedToSchedule(workload: SavedWorkload) {
@@ -639,27 +568,6 @@ async function toggleAddedToSchedule(workload: SavedWorkload) {
     await workloadStore.setAddedToSchedule(workload.id, !workload.addedToSchedule);
   } catch {
     f7.dialog.alert("Ошибка при обновлении статуса");
-  }
-}
-
-async function confirmGenerate() {
-  const target = generateTarget.value;
-  const semester = selectedSemester.value;
-  if (!target?.id || !semester) return;
-  generating.value = true;
-  try {
-    const res = await workloadStore.generateJournals(target.id, semester);
-    f7.toast
-      .create({
-        text: `Создано журналов: ${res?.journalsCreated ?? 0}`,
-        closeTimeout: 2500,
-      })
-      .open();
-    generateTarget.value = null;
-  } catch {
-    f7.dialog.alert("Ошибка при создании журналов");
-  } finally {
-    generating.value = false;
   }
 }
 
@@ -681,11 +589,9 @@ function getTeacherFullName(teacher: Teacher) {
   return `${teacher.surname} ${teacher.firstName} ${teacher.patronymic}`.trim();
 }
 
-const filteredTeachers = computed(() => {
-  return teachers.value.filter(t => 
-    getTeacherFullName(t).toLowerCase().includes(teacherSearchQuery.value.toLowerCase())
-  );
-});
+const teacherOptions = computed(() =>
+  teachers.value.map((t) => ({ value: t.id, text: getTeacherFullName(t) }))
+);
 
 const filteredRup = computed(() => {
   return rupEntries.value.filter(item => {
@@ -709,10 +615,8 @@ const totalCurrentWorkloadHours = computed(() => {
   return currentWorkloadItems.value.reduce((sum, item) => sum + parseInt(item.totalHours || '0'), 0);
 });
 
-function selectTeacher(teacher: Teacher) {
-  selectedTeacherId.value = teacher.id;
-  isTeacherDropdownOpen.value = false;
-  teacherSearchQuery.value = "";
+function onSelectTeacher(id: string | null) {
+  selectedTeacherId.value = id;
   if (!editingWorkloadId.value) {
     currentWorkloadItems.value = [];
   }
