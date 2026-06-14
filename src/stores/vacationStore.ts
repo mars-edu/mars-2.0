@@ -135,6 +135,22 @@ export const useVacationStore = defineStore(
         }, "Operation failed");
     }
 
+    async function copyFromSemester(
+      sourceSemesterId: string,
+      targetSemesterId: string,
+      targetAcademicYearId: string
+    ) {
+      return await withLoading(loading, error, async () => {
+        await convex.mutation(api.vacations.mutations.copyFromSemester, {
+          sourceSemesterId: sourceSemesterId as any,
+          targetSemesterId: targetSemesterId as any,
+          targetAcademicYearId,
+        });
+        error.value = null;
+        return;
+      }, "Failed to copy vacations from semester");
+    }
+
     function clearError() {
       error.value = null;
     }
@@ -192,6 +208,7 @@ export const useVacationStore = defineStore(
       updateVacation,
       deleteVacation,
       clearError,
+      copyFromSemester,
       reset,
       migrateOldVacationData,
       handleLegacyVacationData,

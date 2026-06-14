@@ -271,7 +271,10 @@
               >
                     <template #title>{{ edu_schedule_final_controls() }}</template>
                     <template #actions>
-                      <AddScheduledFinalControlButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
+                      <div class="flex gap-2">
+                        <CopyScheduledFinalControlButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
+                        <AddScheduledFinalControlButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
+                      </div>
                     </template>
                     <div
                       v-if="scheduledFinalControlStore.isLoading"
@@ -348,7 +351,10 @@
                   >
                     <template #title>{{ edu_schedule_intermediate_controls() }}</template>
                     <template #actions>
-                      <AddScheduledIntermediateControlButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
+                      <div class="flex gap-2">
+                        <CopyScheduledIntermediateControlButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
+                        <AddScheduledIntermediateControlButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
+                      </div>
                     </template>
                     <div
                       v-if="scheduledIntermediateControlStore.isLoading"
@@ -421,7 +427,10 @@
               <AccordionItem id="vacations" >
                 <template #title>{{ edu_schedule_vacations() }}</template>
                 <template #actions>
-                  <AddVacationButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
+                  <div class="flex gap-2">
+                    <CopyVacationButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
+                    <AddVacationButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
+                  </div>
                 </template>
                 <div
                   v-if="vacationStore.isLoading"
@@ -527,10 +536,13 @@ import EditAcademicYearSemesterButton from "@/components/EditAcademicYearSemeste
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import type { AcademicYearSemester } from "@/stores/academicYearSemesterStore";
 import AddVacationButton from "@/components/AddVacationButton.vue";
+import CopyVacationButton from "@/components/CopyVacationButton.vue";
 import EditVacationButton from "@/components/EditVacationButton.vue";
 import AddScheduledFinalControlButton from "@/components/AddScheduledFinalControlButton.vue";
+import CopyScheduledFinalControlButton from "@/components/CopyScheduledFinalControlButton.vue";
 import EditScheduledFinalControlButton from "@/components/EditScheduledFinalControlButton.vue";
 import AddScheduledIntermediateControlButton from "@/components/AddScheduledIntermediateControlButton.vue";
+import CopyScheduledIntermediateControlButton from "@/components/CopyScheduledIntermediateControlButton.vue";
 import EditScheduledIntermediateControlButton from "@/components/EditScheduledIntermediateControlButton.vue";
 import { useVacationStore } from "@/stores/vacationStore";
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";

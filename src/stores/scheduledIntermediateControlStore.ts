@@ -145,6 +145,22 @@ export const useScheduledIntermediateControlStore = defineStore(
         }, "Operation failed");
     }
 
+    async function copyFromSemester(
+      sourceSemesterId: string,
+      targetSemesterId: string,
+      targetAcademicYearId: string
+    ) {
+      return await withLoading(loading, error, async () => {
+        await convex.mutation(api.scheduledControls.mutations.copyIntermediateFromSemester, {
+          sourceSemesterId: sourceSemesterId as any,
+          targetSemesterId: targetSemesterId as any,
+          targetAcademicYearId,
+        });
+        error.value = null;
+        return;
+      }, "Failed to copy intermediate controls from semester");
+    }
+
     function clearError() {
       error.value = null;
     }
@@ -169,6 +185,7 @@ export const useScheduledIntermediateControlStore = defineStore(
       updateScheduledIntermediateControl,
       deleteScheduledIntermediateControl,
       clearError,
+      copyFromSemester,
       reset,
       loadFromBackend,
     };
