@@ -125,6 +125,7 @@ import { useSpecialtyStore } from "@/stores/specialtyStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
+import { useFormValidation } from "@/composables/useFormValidation";
 
 const props = defineProps<{
   specialtyId: string;
