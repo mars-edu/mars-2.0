@@ -102,7 +102,7 @@
                 </div>
                 <template v-else>
                   <div
-                    v-for="specialty in specialties"
+                    v-for="specialty in filteredSpecialties"
                     :key="specialty.id"
                     class="group flex items-center justify-between gap-2 px-3.5 py-2.5 border rounded-lg bg-muted/20 transition-all duration-200 cursor-pointer min-w-[72px] sm:min-w-[88px]"
                     :class="{
@@ -128,7 +128,7 @@
                     />
                   </div>
                   <div
-                    v-if="specialties.length === 0"
+                    v-if="filteredSpecialties.length === 0"
                     class="w-full text-muted-foreground rounded-lg border border-dashed border-border px-3 py-5 text-center"
                   >
                     {{ rup_no_specialties() }}
@@ -339,6 +339,16 @@ const selectedAcademicYear = computed({
   get: () =>
     rupStore.selectedAcademicYearId || getActiveAcademicYear?.value?.id || "",
   set: (value) => rupStore.setSelectedAcademicYear(value || null),
+});
+
+const filteredSpecialties = computed(() => {
+  const allSpecialties = specialtyStore.specialties || [];
+  if (!selectedAcademicYear.value) return allSpecialties;
+  
+  const yearDoc = academicYearStore.getAcademicYearById(selectedAcademicYear.value);
+  const targetYear = yearDoc?.startYear;
+  
+  return allSpecialties.filter(s => !targetYear || s.year === targetYear || !s.year);
 });
 
 const selectedClassLevel = ref<9 | 11>(9);

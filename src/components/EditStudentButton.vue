@@ -67,14 +67,14 @@
             :id="`student-academic-year-edit-${student.id}`"
           />
 
-          <Select
-            label="Специальность"
-            :name="`specialty-edit-${student.id}`"
-            placeholder="Выберите специальность"
-            v-model="specialty"
-            :options="specialtyOptions"
-            :id="`student-specialty-edit-${student.id}`"
-          />
+            <Select
+              label="Специальность"
+              name="specialty"
+              placeholder="Выберите специальность"
+              v-model="specialty"
+              :options="filteredSpecialtyOptions"
+              :id="`student-specialty-edit-${studentId}`"
+            />
 
           <Select
             label="Язык обучения"
@@ -167,7 +167,6 @@ const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
 const baseStore = useBaseStore();
 const academicYearStore = useAcademicYearStore();
-const { specialtyOptions } = storeToRefs(specialtyStore);
 const { languageOptions } = storeToRefs(languageStore);
 const { baseOptions } = storeToRefs(baseStore);
 const { academicYearOptions } = storeToRefs(academicYearStore);
@@ -183,6 +182,31 @@ const language = ref("");
 const base = ref("9");
 const gender = ref<"male" | "female">("male");
 const academicYear = ref("");
+
+const filteredSpecialtyOptions = computed(() => {
+  if (!academicYear.value) {
+    return specialtyStore.specialties.map(s => ({
+      value: s.id,
+      text: `${s.name} - ${s.details}`,
+    }));
+  }
+  const yearDoc = academicYearStore.getAcademicYearById(academicYear.value);
+  const targetYear = yearDoc?.startYear;
+  
+  return specialtyStore.specialties
+    .filter(s => !targetYear || s.year === targetYear || !s.year) // Include if matching year or no year set
+    .map(s => ({
+      value: s.id,
+      text: `${s.name} - ${s.details}`,
+    }));
+});
+
+watch(academicYear, (newVal, oldVal) => {
+  if (oldVal && newVal !== oldVal) {
+    specialty.value = "";
+  }
+});
+
 const formError = ref("");
 
 // Update form fields whenever student data changes

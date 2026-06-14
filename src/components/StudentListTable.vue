@@ -288,14 +288,29 @@ const genderOptions = [
 ];
 
 const specialtyOptions = computed(() => {
-  const specialties = specialtyStore.specialties || [];
+  let specialties = specialtyStore.specialties || [];
+  
+  if (selectedAcademicYearId.value) {
+    const yearDoc = academicYearStore.getAcademicYearById(selectedAcademicYearId.value);
+    const targetYear = yearDoc?.startYear;
+    if (targetYear) {
+      specialties = specialties.filter(s => s.year === targetYear || !s.year);
+    }
+  }
+
   return [
     { value: "", text: "Все специальности" },
     ...specialties.map((s) => ({
       value: s.id,
-      text: s.codeName,
+      text: s.codeName || s.name,
     })),
   ];
+});
+
+watch(selectedAcademicYearId, (newVal, oldVal) => {
+  if (oldVal && newVal !== oldVal) {
+    selectedSpecialty.value = "";
+  }
 });
 
 const languageOptions = computed(() => {

@@ -435,9 +435,23 @@ const languageOptions = computed(() =>
   withAllOption(storeLanguageOptions.value, "Все", "all")
 );
 
-const specialtyOptions = computed(() =>
-  withAllOption(storeSpecialtyOptions.value, "Все", "all")
-);
+const specialtyOptions = computed(() => {
+  const activeYear = getActiveAcademicYear.value;
+  let options = storeSpecialtyOptions.value;
+  
+  if (activeYear) {
+    const targetYear = activeYear.startYear;
+    const allSpecialties = specialtyStore.specialties;
+    const validIds = new Set(
+      allSpecialties
+        .filter(s => s.year === targetYear || !s.year)
+        .map(s => s.id)
+    );
+    options = options.filter(o => validIds.has(o.value as string));
+  }
+  
+  return withAllOption(options, "Все", "all");
+});
 
 const courseOptions = computed(() =>
   withAllOption(storeCourseOptions.value, "Все", "all")

@@ -117,7 +117,7 @@
               name="specialty"
               placeholder="Выберите специальность"
               v-model="specialty"
-              :options="specialtyOptions"
+              :options="filteredSpecialtyOptions"
               id="student-specialty-add"
             />
 
@@ -192,7 +192,6 @@ const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
 const academicYearStore = useAcademicYearStore();
 const baseStore = useBaseStore();
-const { specialtyOptions } = storeToRefs(specialtyStore);
 const { languageOptions } = storeToRefs(languageStore);
 const { academicYearOptions } = storeToRefs(academicYearStore);
 const { baseOptions } = storeToRefs(baseStore);
@@ -202,8 +201,31 @@ const firstName = ref("");
 const patronymic = ref("");
 const academicYear = ref("");
 const specialty = ref("");
-const language = ref("");
-const base = ref("");
+
+const filteredSpecialtyOptions = computed(() => {
+  if (!academicYear.value) {
+    return specialtyStore.specialties.map(s => ({
+      value: s.id,
+      text: `${s.name} - ${s.details}`,
+    }));
+  }
+  const yearDoc = academicYearStore.getAcademicYearById(academicYear.value);
+  const targetYear = yearDoc?.startYear;
+  
+  return specialtyStore.specialties
+    .filter(s => !targetYear || s.year === targetYear || !s.year) // Include if matching year or no year set (legacy)
+    .map(s => ({
+      value: s.id,
+      text: `${s.name} - ${s.details}`,
+    }));
+});
+
+watch(academicYear, (newVal, oldVal) => {
+  if (oldVal && newVal !== oldVal) {
+    specialty.value = "";
+  }
+});
+
 const gender = ref<"male" | "female" | null>(null);
 const orderNumber = ref("");
 const orderDate = ref(new Date().toISOString().split("T")[0]);
