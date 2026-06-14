@@ -10,6 +10,10 @@ export const useSelectedItemsStore = defineStore("selectedItems", () => {
   const selectedSpecialtyId = ref<string | null>(null);
   const selectedCourseId = ref<string | null>(null);
   const selectedRupEntryId = ref<string | null>(null);
+
+  // Journal page filters — persisted across navigation (list ↔ detail)
+  const selectedJournalSemesterId = ref<string>("");
+  const selectedJournalFilter = ref<string>("all");
   function setSelectedAcademicYear(id: string | null) {
     selectedAcademicYearId.value = id;
   }
@@ -29,11 +33,21 @@ export const useSelectedItemsStore = defineStore("selectedItems", () => {
     selectedRupEntryId.value = id;
   }
 
+  function setSelectedJournalSemester(id: string) {
+    selectedJournalSemesterId.value = id;
+  }
+
+  function setSelectedJournalFilter(filter: string) {
+    selectedJournalFilter.value = filter;
+  }
+
   function clear() {
     selectedAcademicYearId.value = null;
     selectedSpecialtyId.value = null;
     selectedCourseId.value = null;
     selectedRupEntryId.value = null;
+    selectedJournalSemesterId.value = "";
+    selectedJournalFilter.value = "all";
   }
 
   function reset() {
@@ -41,6 +55,8 @@ export const useSelectedItemsStore = defineStore("selectedItems", () => {
     selectedSpecialtyId.value = null;
     selectedCourseId.value = null;
     selectedRupEntryId.value = null;
+    selectedJournalSemesterId.value = "";
+    selectedJournalFilter.value = "all";
   }
 
   const selectedSpecialty = computed(() => {
@@ -72,6 +88,8 @@ export const useSelectedItemsStore = defineStore("selectedItems", () => {
     selectedSpecialtyId,
     selectedCourseId,
     selectedRupEntryId,
+    selectedJournalSemesterId,
+    selectedJournalFilter,
     setSelectedAcademicYear,
     selectedSpecialty,
     selectedCourse,
@@ -79,6 +97,8 @@ export const useSelectedItemsStore = defineStore("selectedItems", () => {
     setSelectedSpecialty,
     setSelectedCourse,
     setSelectedRupEntryId,
+    setSelectedJournalSemester,
+    setSelectedJournalFilter,
     clear,
     reset,
   };

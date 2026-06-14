@@ -510,7 +510,10 @@ const { sortedSemesters } = storeToRefs(semesterStore);
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const selectedItemsStore = useSelectedItemsStore();
 
-const selectedSemesterId = ref("");
+const selectedSemesterId = computed({
+  get: () => selectedItemsStore.selectedJournalSemesterId,
+  set: (v: string) => selectedItemsStore.setSelectedJournalSemester(v),
+});
 const { getActiveAcademicYearSemester } = storeToRefs(
   academicYearSemesterStore
 );
@@ -538,15 +541,22 @@ const selectedAcademicYearModel = computed({
 watch(
   [() => selectedItemsStore.selectedAcademicYearId, () => academicYearSemesterStore.academicYearSemesters],
   ([newYearId, semesters], [oldYearId, oldSemesters]) => {
-    // Only trigger if we have a year, AND either the year just changed, OR we don't have a semester selected yet
-    if (newYearId && (newYearId !== oldYearId || !selectedSemesterId.value)) {
+    // Only auto-select if year actually changed — don't overwrite on re-mount
+    if (newYearId && newYearId !== oldYearId) {
       const autoSemester = academicYearSemesterStore.getAutoSelectedSemesterForYear(newYearId);
       if (autoSemester) {
         selectedSemesterId.value = autoSemester.id;
         console.log(`   ✅ Reactively auto-selected semester "${autoSemester.semesterNumber}" with ID: ${autoSemester.id}`);
-      } else if (newYearId !== oldYearId) {
-        // Only clear if the year actually changed and there are no semesters
+      } else {
+        // Year changed but no semesters available
         selectedSemesterId.value = "";
+      }
+    } else if (newYearId && !selectedSemesterId.value) {
+      // First load or store was reset — no semester selected yet
+      const autoSemester = academicYearSemesterStore.getAutoSelectedSemesterForYear(newYearId);
+      if (autoSemester) {
+        selectedSemesterId.value = autoSemester.id;
+        console.log(`   ✅ Reactively auto-selected semester "${autoSemester.semesterNumber}" with ID: ${autoSemester.id}`);
       }
     }
   },
@@ -660,7 +670,8 @@ watch(selectedSemesterId, (newVal, oldVal) => {
   console.log(`\n   Old: "${oldVal || "(none)"}"`);
   console.log(`   New: "${newVal || "(none)"}"`);
   console.log("\n" + "─".repeat(60));
-  activeFilter.value = 'all'
+  // Note: activeFilter is no longer reset here — it's persisted in the store.
+  // Users can still manually switch tab after changing semester.
 });
 
 // Watch for academicYearSemester data to arrive and auto-select
@@ -923,7 +934,10 @@ const pageReady = ref(false)
 const isDataReady = computed(() => pageReady.value && rupEntryStore.rupEntries.length > 0)
 
 type JournalFilter = 'all' | 'course-1' | 'course-2' | 'course-3' | 'course-4' | 'mixed' | 'individual'
-const activeFilter = ref<JournalFilter>('all')
+const activeFilter = computed({
+  get: () => selectedItemsStore.selectedJournalFilter as JournalFilter,
+  set: (v: JournalFilter) => selectedItemsStore.setSelectedJournalFilter(v),
+})
 
 const isYearPillOpen = ref(false)
 const isSemesterPillOpen = ref(false)
