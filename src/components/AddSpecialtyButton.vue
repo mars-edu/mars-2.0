@@ -142,25 +142,14 @@ const specialtySchema = z.object({
   orderNumber: z.string().optional().default(""),
 });
 
-const validationResult = computed(() => {
-  return specialtySchema.safeParse({
+const { formError, isFormValid } = useFormValidation(specialtySchema, () => ({
     code: specialtyCode.value,
     name: specialtyName.value,
     details: specialtyDetails.value,
     codeName: specialtyCodeName.value,
     year: Number(specialtyYear.value),
     orderNumber: specialtyOrderNumber.value,
-  });
-});
-
-const formError = computed(() => {
-  if (validationResult.value.success) return "";
-  const issues = validationResult.value.error.issues;
-  if (issues.length > 0) return issues[0].message;
-  return "";
-});
-
-const isFormValid = computed(() => validationResult.value.success);
+  }));
 
 const openAddSpecialtyPopover = () => {
   f7.popover.open("#add-specialty-popover", "#add-specialty-button");

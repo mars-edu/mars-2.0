@@ -95,6 +95,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { useFormValidation } from "@/composables/useFormValidation";
 import { f7, f7Input } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
 import { z } from "zod";
@@ -117,23 +118,12 @@ const cabinetSchema = z.object({
   description: z.string().optional().default(""),
 });
 
-const validationResult = computed(() => {
-  return cabinetSchema.safeParse({
+const { formError, isFormValid } = useFormValidation(cabinetSchema, () => ({
     name: cabinetName.value,
     capacity: Number(cabinetCapacity.value),
     type: cabinetType.value,
     description: cabinetDescription.value,
-  });
-});
-
-const formError = computed(() => {
-  if (validationResult.value.success) return "";
-  const issues = validationResult.value.error.issues;
-  if (issues.length > 0) return issues[0].message;
-  return "";
-});
-
-const isFormValid = computed(() => validationResult.value.success);
+  }));
 
 const openAddCabinetPopover = () => {
   f7.popover.open("#add-cabinet-popover", "#add-cabinet-button");
