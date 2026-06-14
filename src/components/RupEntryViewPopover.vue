@@ -226,13 +226,13 @@
                         {{ entry.hours || "—" }}
                       </td>
                       <td class="px-4 py-3 text-center text-gray-600">
-                        {{ semesterSharedValue(item.srsHours) }}
+                        {{ semesterSharedValue(entry.srsHours) }}
                       </td>
                       <td class="px-4 py-3 text-center text-gray-600">
-                        {{ semesterSharedValue(item.srspHours) }}
+                        {{ semesterSharedValue(entry.srspHours) }}
                       </td>
                       <td class="px-4 py-3 text-center text-gray-600">
-                        {{ semesterSharedValue(item.individualAdditionalHours || item.individualHours) }}
+                        {{ semesterSharedValue(entry.individualHours) }}
                       </td>
                       <td class="px-4 py-3 text-center">
                         <div
