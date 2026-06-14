@@ -33,6 +33,8 @@ export const useWorkloadStore = defineStore("workload", () => {
       academicYearId: item.academicYearId,
       items: item.items,
       totalHours: item.totalHours,
+      journalsCreated: item.journalsCreated,
+      addedToSchedule: item.addedToSchedule,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
     }));
@@ -84,6 +86,36 @@ export const useWorkloadStore = defineStore("workload", () => {
     }
   };
 
+  const generateJournals = async (workloadId: string, semester: number) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      return await convex.mutation(
+        api.workloads.mutations.createJournalsFromWorkload,
+        { workloadId: workloadId as Id<"workloads">, semester }
+      );
+    } catch (err: any) {
+      error.value = err.message || "Failed to generate journals";
+      console.error("Error generating journals from workload:", err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const setAddedToSchedule = async (id: string, value: boolean) => {
+    try {
+      await convex.mutation(api.workloads.mutations.setAddedToSchedule, {
+        id: id as Id<"workloads">,
+        value,
+      });
+    } catch (err: any) {
+      error.value = err.message || "Failed to update workload status";
+      console.error("Error updating workload status:", err);
+      throw err;
+    }
+  };
+
   function resetCurrentWorkload() {
     currentWorkloadItems.value = [];
     editingWorkloadId.value = null;
@@ -100,6 +132,8 @@ export const useWorkloadStore = defineStore("workload", () => {
     editingWorkloadId,
     saveWorkload,
     deleteWorkload,
+    generateJournals,
+    setAddedToSchedule,
     resetCurrentWorkload,
   };
 });

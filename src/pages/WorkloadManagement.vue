@@ -42,15 +42,10 @@
                 class="absolute right-0 top-full mt-2 w-full sm:w-[300px] bg-card rounded-2xl shadow-2xl border border-border z-50 overflow-hidden"
               >
                 <div class="p-3 border-b border-border">
-                  <div class="relative">
-                    <IconSearch class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                    <input
-                      type="text"
-                      placeholder="Поиск преподавателя..."
-                      v-model="teacherSearchQuery"
-                      class="w-full pl-10 pr-4 py-2.5 bg-muted/50 border-transparent rounded-xl text-sm focus:bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary/20 transition-all outline-none font-medium text-foreground"
-                    />
-                  </div>
+                  <SearchInput
+                    v-model="teacherSearchQuery"
+                    placeholder="Поиск преподавателя..."
+                  />
                 </div>
                 <div class="max-h-72 overflow-y-auto p-2">
                   <button
@@ -294,15 +289,11 @@
                 <IconLayoutGrid class="w-6 h-6 text-primary" />
                 Сохраненная нагрузка
               </h2>
-              <div class="relative flex-1 max-w-md">
-                <IconSearch class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-[18px] h-[18px]" />
-                <input
-                  type="text"
-                  placeholder="Поиск по ФИО или дисциплине..."
-                  v-model="savedWorkloadSearchQuery"
-                  class="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-transparent transition-all text-foreground"
-                />
-              </div>
+              <SearchInput
+                v-model="savedWorkloadSearchQuery"
+                placeholder="Поиск по ФИО или дисциплине..."
+                wrapperClass="flex-1 max-w-md"
+              />
             </div>
             <button
               @click="downloadAllWorkloads"
@@ -328,6 +319,14 @@
                   <div class="flex items-center gap-2 text-muted-foreground text-xs font-bold mt-1 uppercase tracking-wider">
                     <IconCalendar class="w-3 h-3" />
                     {{ getAcademicYearName(workload.academicYearId) }}
+                  </div>
+                  <div v-if="workload.journalsCreated || workload.addedToSchedule" class="flex items-center gap-1.5 mt-2">
+                    <span v-if="workload.journalsCreated" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/10 text-blue-500">
+                      Журналы созданы
+                    </span>
+                    <span v-if="workload.addedToSchedule" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500">
+                      В расписании
+                    </span>
                   </div>
                 </div>
               </div>
@@ -357,6 +356,24 @@
               </div>
 
               <div class="flex items-center gap-2">
+                <button
+                  @click="openGenerate(workload)"
+                  :disabled="workload.journalsCreated"
+                  class="p-2 hover:bg-blue-500/10 text-muted-foreground hover:text-blue-500 rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                  :title="workload.journalsCreated ? 'Журналы уже созданы' : 'Сформировать журналы'"
+                >
+                  <IconBookOpen class="w-5 h-5" />
+                </button>
+                <button
+                  @click="toggleAddedToSchedule(workload)"
+                  class="p-2 rounded-xl transition-colors"
+                  :class="workload.addedToSchedule
+                    ? 'bg-emerald-500/10 text-emerald-500'
+                    : 'hover:bg-emerald-500/10 text-muted-foreground hover:text-emerald-500'"
+                  :title="workload.addedToSchedule ? 'Убрать из расписания' : 'Добавить в расписание'"
+                >
+                  <IconCalendar class="w-5 h-5" />
+                </button>
                 <button
                   @click="editWorkload(workload)"
                   class="p-2 hover:bg-primary/10 text-muted-foreground hover:text-primary rounded-xl transition-colors"
@@ -394,82 +411,129 @@
 
     <!-- Modals -->
     <!-- Save Confirmation -->
-    <f7-popup :opened="showSaveConfirm" @popup:closed="showSaveConfirm = false">
-      <div class="flex flex-col items-center justify-center h-full p-8 bg-background text-center">
-        <div class="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mb-6 text-green-500">
-          <IconSave class="w-8 h-8" />
+    <GuardedPopover
+      id="workload-save-popup"
+      kind="popup"
+      :guard-unsaved="false"
+      :opened="showSaveConfirm"
+      @popup:closed="showSaveConfirm = false"
+    >
+      <template #default="{ requestClose }">
+        <div class="flex flex-col h-full bg-background">
+          <PopoverHeader title="Сохранить нагрузку?" :on-cancel="requestClose" />
+          <div class="flex-1 flex flex-col items-center justify-center p-8 text-center">
+            <div class="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mb-6 text-green-500">
+              <IconSave class="w-8 h-8" />
+            </div>
+            <p class="text-muted-foreground font-medium leading-relaxed max-w-md">
+              Вы собираетесь сохранить распределение нагрузки для преподавателя <span class="text-foreground font-bold">{{ selectedTeacherName }}</span>. Данные будут доступны в списке ниже.
+            </p>
+          </div>
+          <PopoverFooter
+            save-text="Сохранить"
+            :is-loading="workloadStore.loading"
+            :on-save="handleSaveWorkload"
+            :on-cancel="requestClose"
+          />
         </div>
-        <h3 class="text-2xl font-black text-foreground mb-4">Сохранить нагрузку?</h3>
-        <p class="text-muted-foreground font-medium mb-10 leading-relaxed max-w-md">
-          Вы собираетесь сохранить распределение нагрузки для преподавателя <span class="text-foreground font-bold">{{ selectedTeacherName }}</span>. Данные будут доступны в списке ниже.
-        </p>
-        <div class="flex flex-col gap-3 w-full max-w-sm">
-          <button
-            @click="handleSaveWorkload"
-            class="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-green-500/30 transition-all active:scale-95"
-          >
-            ДА, СОХРАНИТЬ
-          </button>
-          <button
-            @click="showSaveConfirm = false"
-            class="w-full py-4 bg-muted hover:bg-muted/80 text-muted-foreground rounded-2xl font-bold transition-all active:scale-95"
-          >
-            ОТМЕНА
-          </button>
-        </div>
-      </div>
-    </f7-popup>
+      </template>
+    </GuardedPopover>
 
     <!-- Delete Confirmation -->
-    <f7-popup :opened="!!deleteConfirmId" @popup:closed="deleteConfirmId = null">
-      <div class="flex flex-col items-center justify-center h-full p-8 bg-background text-center">
-        <div class="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mb-6 text-red-500">
-          <IconTrash class="w-8 h-8" />
+    <GuardedPopover
+      id="workload-delete-popup"
+      kind="popup"
+      :guard-unsaved="false"
+      :opened="!!deleteConfirmId"
+      @popup:closed="deleteConfirmId = null"
+    >
+      <template #default="{ requestClose }">
+        <div class="flex flex-col h-full bg-background">
+          <PopoverHeader title="Удалить нагрузку?" :on-cancel="requestClose" />
+          <div class="flex-1 flex flex-col items-center justify-center p-8 text-center">
+            <div class="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mb-6 text-red-500">
+              <IconTrash class="w-8 h-8" />
+            </div>
+            <p class="text-muted-foreground font-medium leading-relaxed max-w-md">
+              Это действие необратимо. Вся информация о нагрузке этого преподавателя будет удалена.
+            </p>
+          </div>
+          <PopoverFooter :on-cancel="requestClose">
+            <template #save>
+              <button
+                @click="handleDeleteWorkload"
+                class="w-auto py-3.5 px-8 text-[15px] font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-red-500/20 active:scale-95 bg-red-500 text-white hover:bg-red-600 transition-all"
+              >
+                Удалить навсегда
+              </button>
+            </template>
+          </PopoverFooter>
         </div>
-        <h3 class="text-2xl font-black text-foreground mb-4">Удалить нагрузку?</h3>
-        <p class="text-muted-foreground font-medium mb-10 leading-relaxed max-w-md">
-          Это действие необратимо. Вся информация о нагрузке этого преподавателя будет удалена.
-        </p>
-        <div class="flex flex-col gap-3 w-full max-w-sm">
-          <button
-            @click="handleDeleteWorkload"
-            class="w-full py-4 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-red-500/30 transition-all active:scale-95"
-          >
-            УДАЛИТЬ НАВСЕГДА
-          </button>
-          <button
-            @click="deleteConfirmId = null"
-            class="w-full py-4 bg-muted hover:bg-muted/80 text-muted-foreground rounded-2xl font-bold transition-all active:scale-95"
-          >
-            ОТМЕНА
-          </button>
+      </template>
+    </GuardedPopover>
+
+    <!-- Generate Journals: semester picker -->
+    <GuardedPopover
+      id="workload-generate-popup"
+      kind="popup"
+      :guard-unsaved="false"
+      :opened="!!generateTarget"
+      @popup:closed="generateTarget = null"
+    >
+      <template #default="{ requestClose }">
+        <div class="flex flex-col h-full bg-background">
+          <PopoverHeader title="Сформировать журналы" :on-cancel="requestClose" />
+          <div class="flex-1 flex flex-col items-center justify-center p-8 text-center">
+            <div class="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mb-6 text-blue-500">
+              <IconBookOpen class="w-8 h-8" />
+            </div>
+            <p class="text-muted-foreground font-medium leading-relaxed max-w-md mb-8">
+              Для каждой дисциплины будут созданы журналы по числу групп, студенты подберутся
+              автоматически по специальности и языку. Выберите семестр:
+            </p>
+            <div class="flex gap-3">
+              <button
+                v-for="sem in 2"
+                :key="sem"
+                @click="selectedSemester = sem"
+                class="px-8 py-4 rounded-2xl font-black text-lg transition-all active:scale-95 border-2"
+                :class="selectedSemester === sem
+                  ? 'bg-blue-500 text-white border-blue-500 shadow-xl shadow-blue-500/30'
+                  : 'bg-card text-muted-foreground border-border hover:border-blue-500/50'"
+              >
+                {{ sem }} семестр
+              </button>
+            </div>
+          </div>
+          <PopoverFooter
+            save-text="Сформировать"
+            save-variant="primary"
+            :disabled="!selectedSemester"
+            :is-loading="generating"
+            :on-save="confirmGenerate"
+            :on-cancel="requestClose"
+          />
         </div>
-      </div>
-    </f7-popup>
+      </template>
+    </GuardedPopover>
 
     <!-- Add Subject Modal -->
-    <f7-popup :opened="isAddingSubject" @popup:closed="isAddingSubject = false">
+    <GuardedPopover
+      id="workload-add-subject-popup"
+      kind="popup"
+      :guard-unsaved="false"
+      :opened="isAddingSubject"
+      @popup:closed="isAddingSubject = false"
+    >
+      <template #default="{ requestClose }">
       <div class="flex flex-col h-full bg-background">
-        <div class="p-6 border-b border-border flex items-center justify-between bg-muted/10">
-          <h2 class="text-xl font-bold text-foreground">Добавить предмет в нагрузку</h2>
-          <button
-            @click="isAddingSubject = false"
-            class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
-          >
-            <IconX class="w-6 h-6" />
-          </button>
-        </div>
+        <PopoverHeader title="Добавить предмет в нагрузку" :on-cancel="requestClose" />
 
         <div class="p-4 border-b border-border">
-          <div class="relative">
-            <IconSearch class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Поиск по названию или коду..."
-              v-model="subjectSearchQuery"
-              class="w-full pl-12 pr-4 py-3 bg-muted/30 border border-border rounded-xl text-sm focus:bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-foreground"
-            />
-          </div>
+          <SearchInput
+            v-model="subjectSearchQuery"
+            placeholder="Поиск по названию или коду..."
+          />
         </div>
 
         <div class="overflow-y-auto flex-1 p-2">
@@ -497,17 +561,22 @@
           </div>
         </div>
       </div>
-    </f7-popup>
+      </template>
+    </GuardedPopover>
   </f7-page>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
-import { f7Page, f7Popup, f7 } from "framework7-vue";
+import { f7Page, f7 } from "framework7-vue";
 import { storeToRefs } from "pinia";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";
+import SearchInput from "@/components/ui/SearchInput.vue";
+import GuardedPopover from "@/components/ui/GuardedPopover.vue";
+import PopoverHeader from "@/components/ui/PopoverHeader.vue";
+import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import { useWorkloadStore } from "@/stores/workloadStore";
 import { useTeacherStore, type Teacher } from "@/stores/teacherStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
@@ -520,7 +589,6 @@ import type { WorkloadItem, SavedWorkload } from "@/types/workload";
 // Icons
 import IconUser from "~icons/lucide/user";
 import IconChevronDown from "~icons/lucide/chevron-down";
-import IconSearch from "~icons/lucide/search";
 import IconCheck from "~icons/lucide/check";
 import IconPlus from "~icons/lucide/plus";
 import IconTrash from "~icons/lucide/trash-2";
@@ -532,7 +600,6 @@ import IconMoreVertical from "~icons/lucide/more-vertical";
 import IconBookOpen from "~icons/lucide/book-open";
 import IconUsers from "~icons/lucide/users";
 import IconLayoutGrid from "~icons/lucide/layout-grid";
-import IconX from "~icons/lucide/x";
 
 const { contentMargin } = useSidebar();
 const workloadStore = useWorkloadStore();
@@ -556,6 +623,45 @@ const subjectSearchQuery = ref("");
 const savedWorkloadSearchQuery = ref("");
 const deleteConfirmId = ref<string | null>(null);
 const showSaveConfirm = ref(false);
+const generateTarget = ref<SavedWorkload | null>(null);
+const generating = ref(false);
+const selectedSemester = ref<number | null>(null);
+
+function openGenerate(workload: SavedWorkload) {
+  if (workload.journalsCreated) return;
+  selectedSemester.value = null;
+  generateTarget.value = workload;
+}
+
+async function toggleAddedToSchedule(workload: SavedWorkload) {
+  if (!workload.id) return;
+  try {
+    await workloadStore.setAddedToSchedule(workload.id, !workload.addedToSchedule);
+  } catch {
+    f7.dialog.alert("Ошибка при обновлении статуса");
+  }
+}
+
+async function confirmGenerate() {
+  const target = generateTarget.value;
+  const semester = selectedSemester.value;
+  if (!target?.id || !semester) return;
+  generating.value = true;
+  try {
+    const res = await workloadStore.generateJournals(target.id, semester);
+    f7.toast
+      .create({
+        text: `Создано журналов: ${res?.journalsCreated ?? 0}`,
+        closeTimeout: 2500,
+      })
+      .open();
+    generateTarget.value = null;
+  } catch {
+    f7.dialog.alert("Ошибка при создании журналов");
+  } finally {
+    generating.value = false;
+  }
+}
 
 const activeAcademicYearId = computed(() => getActiveAcademicYear.value?.id || "");
 

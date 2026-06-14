@@ -1025,6 +1025,9 @@ export default defineSchema({
         description: v.optional(v.string()),
       })
     ),
+    // Workflow status (ported from concept SavedWorkload flags)
+    journalsCreated: v.optional(v.boolean()),
+    addedToSchedule: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
