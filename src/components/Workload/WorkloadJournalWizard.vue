@@ -4,7 +4,7 @@
     kind="popup"
     :guard-unsaved="false"
     :opened="!!workload"
-    style="width: 1200px; max-width: 95vw; height: 88vh"
+    class="workload-journal-wizard-popup"
     @popup:closed="$emit('close')"
   >
     <template #default="{ requestClose }">
@@ -494,3 +494,10 @@ async function finish() {
   }
 }
 </script>
+
+<style scoped>
+.workload-journal-wizard-popup {
+  --f7-popup-tablet-width: min(1200px, calc(100vw - 64px));
+  --f7-popup-tablet-height: min(860px, calc(100vh - 80px));
+}
+</style>
