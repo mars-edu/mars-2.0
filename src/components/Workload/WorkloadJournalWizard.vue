@@ -123,7 +123,7 @@
                   <span class="text-[12px] font-black text-muted-foreground uppercase tracking-widest">Языки обучения</span>
                   <div class="flex flex-wrap gap-2">
                     <button v-for="l in LANGS" :key="l.value" @click="toggleLang(l.value)"
-                      class="px-3 py-1.5 rounded-xl text-xs font-black border transition-all"
+                      class="!w-auto shrink-0 px-3 py-1.5 rounded-xl text-xs font-black border transition-all"
                       :class="draft.langs.includes(l.value) ? 'bg-amber-500/10 border-amber-500/40 text-amber-600' : 'bg-card border-border text-muted-foreground hover:border-amber-400/40'">
                       {{ l.text }}
                     </button>
@@ -137,7 +137,7 @@
                   </div>
                   <div class="flex flex-wrap gap-2">
                     <button v-for="sp in active.specialties" :key="sp.id" @click="toggleSpec(sp.id)"
-                      class="min-w-10 h-10 px-2 rounded-xl text-xs font-black border transition-all flex items-center justify-center"
+                      class="!w-auto shrink-0 min-w-[40px] h-10 px-2 rounded-xl text-xs font-black border transition-all inline-flex items-center justify-center"
                       :class="draft.specIds.includes(sp.id) ? 'bg-foreground border-foreground text-background' : 'bg-card border-border text-foreground hover:border-foreground/40'">
                       {{ sp.label }}
                     </button>
@@ -224,7 +224,7 @@
                     <span class="text-[11px] font-black text-muted-foreground uppercase tracking-widest">Расписание</span>
                     <div class="flex flex-wrap gap-1.5 my-2">
                       <button v-for="wd in WEEKDAYS" :key="wd.weekId" @click="toggleDay(j, wd.weekId)"
-                        class="px-2.5 py-1 rounded-lg text-xs font-bold border transition-all"
+                        class="!w-auto shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold border transition-all"
                         :class="j.daySlots.some(s => s.weekId === wd.weekId) ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-card text-muted-foreground border-border hover:border-emerald-500/40'">
                         {{ wd.abbr }}
                       </button>
