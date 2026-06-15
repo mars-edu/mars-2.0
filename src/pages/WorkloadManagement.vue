@@ -775,6 +775,8 @@ function onAddModalClosed() {
 const filteredWorkloads = computed(() => {
   return allWorkloads.value.filter(w => {
     if (selectedAcademicYearId.value && w.academicYearId !== selectedAcademicYearId.value) return false;
+    // When a teacher is selected, narrow the saved list to that teacher.
+    if (selectedTeacherId.value && w.teacherId !== selectedTeacherId.value) return false;
     const search = savedWorkloadSearchQuery.value.toLowerCase();
     const matchesTeacher = w.teacherName.toLowerCase().includes(search);
     const matchesSubject = w.items.some(item => item.description?.toLowerCase().includes(search));
