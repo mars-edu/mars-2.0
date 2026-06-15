@@ -327,46 +327,57 @@
                 </div>
               </div>
 
-              <div class="flex items-center gap-2">
+              <div class="relative shrink-0">
                 <button
-                  @click="openGenerate(workload)"
-                  :disabled="workload.journalsCreated"
-                  class="p-2 hover:bg-blue-500/10 text-muted-foreground hover:text-blue-500 rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                  :title="workload.journalsCreated ? 'Журналы уже созданы' : 'Сформировать журналы'"
+                  @click="openMenuId = openMenuId === workload.id ? null : (workload.id ?? null)"
+                  class="p-2 hover:bg-muted text-muted-foreground hover:text-foreground rounded-xl transition-colors"
+                  title="Действия"
                 >
-                  <IconBookOpen class="w-5 h-5" />
+                  <IconMoreVertical class="w-5 h-5" />
                 </button>
-                <button
-                  @click="toggleAddedToSchedule(workload)"
-                  class="p-2 rounded-xl transition-colors"
-                  :class="workload.addedToSchedule
-                    ? 'bg-emerald-500/10 text-emerald-500'
-                    : 'hover:bg-emerald-500/10 text-muted-foreground hover:text-emerald-500'"
-                  :title="workload.addedToSchedule ? 'Убрать из расписания' : 'Добавить в расписание'"
-                >
-                  <IconCalendar class="w-5 h-5" />
-                </button>
-                <button
-                  @click="editWorkload(workload)"
-                  class="p-2 hover:bg-primary/10 text-muted-foreground hover:text-primary rounded-xl transition-colors"
-                  title="Редактировать"
-                >
-                  <IconEdit class="w-5 h-5" />
-                </button>
-                <button
-                  @click="downloadWorkload(workload)"
-                  class="p-2 hover:bg-green-500/10 text-muted-foreground hover:text-green-500 rounded-xl transition-colors"
-                  title="Скачать CSV"
-                >
-                  <IconDownload class="w-5 h-5" />
-                </button>
-                <button
-                  @click="deleteConfirmId = workload.id"
-                  class="p-2 hover:bg-red-500/10 text-muted-foreground hover:text-red-500 rounded-xl transition-colors"
-                  title="Удалить"
-                >
-                  <IconTrash class="w-5 h-5" />
-                </button>
+
+                <template v-if="openMenuId === workload.id">
+                  <div class="fixed inset-0 z-40" @click="openMenuId = null" />
+                  <div class="absolute right-0 top-full mt-2 w-64 bg-card rounded-2xl shadow-2xl border border-border z-50 overflow-hidden py-1.5">
+                    <button
+                      @click="toggleAddedToSchedule(workload); openMenuId = null"
+                      class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-foreground hover:bg-muted transition-colors text-left"
+                    >
+                      <IconCalendar class="w-[18px] h-[18px] text-emerald-500 shrink-0" />
+                      <span>{{ workload.addedToSchedule ? 'Убрать из расписания' : 'Добавить в управление расписанием' }}</span>
+                    </button>
+                    <button
+                      @click="openGenerate(workload); openMenuId = null"
+                      :disabled="workload.journalsCreated"
+                      class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-foreground hover:bg-muted transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                    >
+                      <IconBookOpen class="w-[18px] h-[18px] text-blue-500 shrink-0" />
+                      <span>{{ workload.journalsCreated ? 'Журналы уже созданы' : 'Создать журналы у преподавателя' }}</span>
+                    </button>
+                    <button
+                      @click="editWorkload(workload); openMenuId = null"
+                      class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-foreground hover:bg-muted transition-colors text-left"
+                    >
+                      <IconEdit class="w-[18px] h-[18px] text-muted-foreground shrink-0" />
+                      <span>Редактировать нагрузку</span>
+                    </button>
+                    <button
+                      @click="downloadWorkload(workload); openMenuId = null"
+                      class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-foreground hover:bg-muted transition-colors text-left"
+                    >
+                      <IconDownload class="w-[18px] h-[18px] text-muted-foreground shrink-0" />
+                      <span>Скачать нагрузку</span>
+                    </button>
+                    <div class="my-1 border-t border-border" />
+                    <button
+                      @click="deleteConfirmId = workload.id ?? null; openMenuId = null"
+                      class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-500/10 transition-colors text-left"
+                    >
+                      <IconTrash class="w-[18px] h-[18px] shrink-0" />
+                      <span>Удалить нагрузку</span>
+                    </button>
+                  </div>
+                </template>
               </div>
             </div>
           </div>
@@ -622,6 +633,7 @@ const savedWorkloadSearchQuery = ref("");
 const deleteConfirmId = ref<string | null>(null);
 const showSaveConfirm = ref(false);
 const generateTarget = ref<SavedWorkload | null>(null);
+const openMenuId = ref<string | null>(null);
 
 function openGenerate(workload: SavedWorkload) {
   generateTarget.value = workload;
