@@ -360,7 +360,7 @@ function selectSemester(sem: number) {
     const specSource: string[] = itemSpecs?.length ? itemSpecs : (rup?.specialtyIds ?? []);
     const specialties: Spec[] = specSource.map((sid: string) => {
       const sp: any = specialtyStore.specialties.find((s: any) => s.id === sid || s._id === sid);
-      return { id: sid, legacyId: sp?.legacyId, label: specLabel(sp?.name ?? sid) };
+      return { id: sid, legacyId: sp?.legacyId, label: sp?.codeName || specLabel(sp?.name ?? sid) };
     });
     return {
       id: item.id, subjectId: item.subjectId,

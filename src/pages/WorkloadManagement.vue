@@ -712,7 +712,7 @@ const selectedAddCount = computed(() => Object.keys(selectedAdds.value).length);
 // --- per-row chips ---
 function specShortLabel(id: string) {
   const sp: any = specialties.value.find((s: any) => s.id === id || s._id === id);
-  return (sp?.name || sp?.codeName || id).split(/[\s-]+/)[0];
+  return sp?.codeName || (sp?.name || id).split(/[\s-]+/)[0];
 }
 function rupSpecialtyChips(rup: RupEntry) {
   return (rup.specialtyIds || []).map((id) => ({ id, label: specShortLabel(id) }));
