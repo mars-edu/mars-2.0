@@ -520,26 +520,35 @@
                   + инд. {{ rup.individualHours }}ч
                 </span>
               </div>
-              <p class="text-xs text-muted-foreground line-clamp-1">
-                {{ getSpecialtyCodes(rup.specialtyIds) }} · {{ rup.language }}
-              </p>
 
-              <!-- per-row controls -->
-              <div
-                v-if="isSubjectSelected(rup.id)"
-                @click.stop
-                class="flex items-center gap-3 mt-2 flex-wrap"
-              >
-                <Select
-                  :model-value="selectedAdds[rup.id].language"
-                  @update:model-value="selectedAdds[rup.id].language = ($event as string)"
-                  :options="languageOptions"
-                  placeholder="Язык"
-                  class="w-28"
-                />
-                <label v-if="hasIndividual(rup)" class="flex items-center gap-1.5 text-xs font-bold text-foreground cursor-pointer">
-                  <input type="checkbox" v-model="selectedAdds[rup.id].individual" />
-                  Индив. часы
+              <!-- meta + inline specialty/language chips -->
+              <div class="flex items-center gap-2 flex-wrap mt-1.5" @click.stop>
+                <span class="text-[11px] font-black text-muted-foreground uppercase">Семестр: {{ rupSemesters(rup) }}</span>
+                <span class="w-1 h-1 rounded-full bg-muted-foreground/40" />
+                <span class="text-[11px] font-black text-muted-foreground uppercase">{{ rup.totalHours }} ч.</span>
+                <span class="w-1 h-1 rounded-full bg-muted-foreground/40" />
+                <button
+                  v-for="sp in rupSpecialtyChips(rup)"
+                  :key="sp.id"
+                  @click.stop="toggleRowSpec(rup, sp.id)"
+                  class="!w-auto shrink-0 px-1.5 py-0.5 text-[10px] font-black rounded border transition-all"
+                  :class="rowSpecsFor(rup).includes(sp.id)
+                    ? 'bg-emerald-600 text-white border-emerald-600'
+                    : 'bg-card border-border text-muted-foreground hover:border-emerald-500/40'"
+                >{{ sp.label }}</button>
+                <span class="w-1 h-1 rounded-full bg-muted-foreground/40" />
+                <button
+                  v-for="l in LANG_CODES"
+                  :key="l"
+                  @click.stop="toggleRowLang(rup, l)"
+                  class="!w-auto shrink-0 px-1.5 py-0.5 text-[10px] font-black rounded border uppercase transition-all"
+                  :class="rowLangsFor(rup).includes(l)
+                    ? 'bg-amber-500/15 text-amber-600 border-amber-500/40'
+                    : 'bg-card border-border text-muted-foreground hover:border-amber-500/40'"
+                >{{ l }}</button>
+                <label v-if="hasIndividual(rup)" class="flex items-center gap-1.5 text-[11px] font-bold text-foreground cursor-pointer ml-1">
+                  <input type="checkbox" :checked="rowIndivFor(rup)" @change="toggleRowIndiv(rup)" />
+                  инд.
                 </label>
               </div>
             </div>
@@ -620,13 +629,12 @@ const activeNavItem = ref("workload");
 const isAddingSubject = ref(false);
 const subjectSearchQuery = ref("");
 const addTab = ref<"rup" | "spectrum">("rup");
-const selectedAdds = ref<Record<string, { language: string; individual: boolean }>>({});
-
-const languageOptions = [
-  { value: "ru", text: "RU" },
-  { value: "kk", text: "ҚАЗ" },
-  { value: "en", text: "EN" },
-];
+const selectedAdds = ref<Record<string, true>>({});
+// Per-row chip state (independent of selection), keyed by rupEntry id.
+const rowSpecs = ref<Record<string, string[]>>({});
+const rowLangs = ref<Record<string, string[]>>({});
+const rowIndiv = ref<Record<string, boolean>>({});
+const LANG_CODES = ["ru", "kk", "en"];
 // concept spectrum catalog → resolved against real RUP entries by title
 const SPECTRUM_TITLES = ["История Казахстана", "Всемирная история", "Гармония"];
 const savedWorkloadSearchQuery = ref("");
@@ -696,18 +704,61 @@ function isSubjectSelected(id: string) {
   return id in selectedAdds.value;
 }
 function toggleSelectSubject(rup: RupEntry) {
-  if (isSubjectSelected(rup.id)) {
-    delete selectedAdds.value[rup.id];
-  } else {
-    selectedAdds.value[rup.id] = { language: rup.language || "ru", individual: false };
-  }
+  if (isSubjectSelected(rup.id)) delete selectedAdds.value[rup.id];
+  else selectedAdds.value[rup.id] = true;
 }
 const selectedAddCount = computed(() => Object.keys(selectedAdds.value).length);
 
+// --- per-row chips ---
+function specShortLabel(id: string) {
+  const sp: any = specialties.value.find((s: any) => s.id === id || s._id === id);
+  return (sp?.name || sp?.codeName || id).split(/[\s-]+/)[0];
+}
+function rupSpecialtyChips(rup: RupEntry) {
+  return (rup.specialtyIds || []).map((id) => ({ id, label: specShortLabel(id) }));
+}
+function rowSpecsFor(rup: RupEntry): string[] {
+  return rowSpecs.value[rup.id] ?? rup.specialtyIds ?? [];
+}
+function toggleRowSpec(rup: RupEntry, sid: string) {
+  const cur = rowSpecs.value[rup.id] ? [...rowSpecs.value[rup.id]] : [...(rup.specialtyIds ?? [])];
+  const i = cur.indexOf(sid);
+  if (i >= 0) cur.splice(i, 1);
+  else cur.push(sid);
+  rowSpecs.value[rup.id] = cur;
+}
+function rowLangsFor(rup: RupEntry): string[] {
+  return rowLangs.value[rup.id] ?? [rup.language || "ru"];
+}
+function toggleRowLang(rup: RupEntry, l: string) {
+  const cur = rowLangs.value[rup.id] ? [...rowLangs.value[rup.id]] : [rup.language || "ru"];
+  const i = cur.indexOf(l);
+  if (i >= 0) { if (cur.length > 1) cur.splice(i, 1); }
+  else cur.push(l);
+  rowLangs.value[rup.id] = cur;
+}
+function rowIndivFor(rup: RupEntry) {
+  return rowIndiv.value[rup.id] ?? false;
+}
+function toggleRowIndiv(rup: RupEntry) {
+  rowIndiv.value[rup.id] = !rowIndivFor(rup);
+}
+function rupSemesters(rup: RupEntry) {
+  const nums = (rup.distributionEntries || [])
+    .filter((d) => parseFloat(d.hours || "0") > 0)
+    .map((d) => academicYearSemesterStore.getAcademicYearSemesterById(d.semesterId)?.semesterNumber)
+    .filter((n): n is number => typeof n === "number");
+  return [...new Set(nums)].sort((a, b) => a - b).join(", ") || "—";
+}
+
 function confirmAddSubjects() {
-  for (const [rupId, opts] of Object.entries(selectedAdds.value)) {
+  for (const rupId of Object.keys(selectedAdds.value)) {
     const rup = rupEntries.value.find((r) => r.id === rupId);
-    if (rup) addSubjectFromRup(rup, opts);
+    if (rup) addSubjectFromRup(rup, {
+      specialtyIds: rowSpecsFor(rup),
+      language: rowLangsFor(rup)[0],
+      individual: rowIndivFor(rup),
+    });
   }
   selectedAdds.value = {};
   isAddingSubject.value = false;
@@ -716,6 +767,9 @@ function confirmAddSubjects() {
 function onAddModalClosed() {
   isAddingSubject.value = false;
   selectedAdds.value = {};
+  rowSpecs.value = {};
+  rowLangs.value = {};
+  rowIndiv.value = {};
   subjectSearchQuery.value = "";
   addTab.value = "rup";
 }
@@ -743,12 +797,14 @@ function onSelectTeacher(id: string | null) {
 
 function addSubjectFromRup(
   rup: RupEntry,
-  opts: { language?: string; individual?: boolean } = {}
+  opts: { language?: string; individual?: boolean; specialtyIds?: string[] } = {}
 ) {
+  const chosenSpecs = opts.specialtyIds?.length ? opts.specialtyIds : rup.specialtyIds;
   const newItem: WorkloadItem = {
     id: crypto.randomUUID(),
     subjectId: rup.id,
-    department: getSpecialtyCodes(rup.specialtyIds),
+    department: getSpecialtyCodes(chosenSpecs),
+    specialtyIds: chosenSpecs,
     course: "1", // Fallback, could be derived
     studentCount: "0",
     weeks1: "18",

@@ -356,7 +356,9 @@ function selectSemester(sem: number) {
   if (!wl) return;
   disciplines.value = itemsNeedingJournals(wl.items as any, sem as any).map((item) => {
     const rup: any = rupEntryStore.getRupEntryById(item.subjectId);
-    const specialties: Spec[] = (rup?.specialtyIds ?? []).map((sid: string) => {
+    const itemSpecs = (item as any).specialtyIds as string[] | undefined;
+    const specSource: string[] = itemSpecs?.length ? itemSpecs : (rup?.specialtyIds ?? []);
+    const specialties: Spec[] = specSource.map((sid: string) => {
       const sp: any = specialtyStore.specialties.find((s: any) => s.id === sid || s._id === sid);
       return { id: sid, legacyId: sp?.legacyId, label: specLabel(sp?.name ?? sid) };
     });

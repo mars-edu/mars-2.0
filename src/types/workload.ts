@@ -21,7 +21,8 @@ export interface WorkloadItem {
   index?: string;
   description?: string;
   language?: string;
-  [key: string]: string | undefined;
+  specialtyIds?: string[];
+  [key: string]: string | string[] | undefined;
 }
 
 export interface SavedWorkload {

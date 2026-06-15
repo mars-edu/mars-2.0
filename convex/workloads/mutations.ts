@@ -37,6 +37,7 @@ export const save = mutation({
         index: v.optional(v.string()),
         description: v.optional(v.string()),
         language: v.optional(v.string()),
+        specialtyIds: v.optional(v.array(v.string())),
       })
     ),
   },
