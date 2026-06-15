@@ -575,7 +575,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch } from "vue";
 import { f7Page, f7 } from "framework7-vue";
 import { storeToRefs } from "pinia";
 import Header from "@/components/Header/Header.vue";
@@ -1048,11 +1048,16 @@ function downloadAllWorkloads() {
   document.body.removeChild(link);
 }
 
-onMounted(() => {
-  if (!selectedAcademicYearId.value) {
-    selectedAcademicYearId.value = activeAcademicYearId.value;
-  }
-});
+// Default the year to the active one once academic years have loaded.
+watch(
+  activeAcademicYearId,
+  (id) => {
+    if (id && !selectedAcademicYearId.value) {
+      selectedAcademicYearId.value = id;
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>
