@@ -57,7 +57,7 @@
         </div>
 
         <!-- Content -->
-        <div class="p-8 overflow-y-auto flex-1 bg-[#F2F2F7]/30">
+        <div class="p-8 overflow-y-auto flex-1 bg-muted/30">
           
           <!-- Info Tab -->
           <div v-if="activeTab === 'info'" class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-300">
@@ -121,7 +121,7 @@
                   </div>
                 </div>
                 <div class="text-right">
-                  <div class="text-[12px] font-bold bg-[#F2F2F7] px-3 py-1.5 rounded-lg text-foreground border border-border/20">
+                  <div class="text-[12px] font-bold bg-muted px-3 py-1.5 rounded-lg text-foreground border border-border/20">
                     {{ m.student_details_transfer_order_number() }} {{ record.orderNumber }}
                   </div>
                 </div>
@@ -227,7 +227,7 @@
                   <f7-button 
                     fill
                     large
-                    class="rounded-xl font-bold bg-[#FFCC00] text-black shadow-lg shadow-yellow-500/20"
+                    class="rounded-xl font-bold bg-[#FFCC00] text-foreground shadow-lg shadow-yellow-500/20"
                     @click="handleTransfer"
                     :disabled="!newSpecialty || !orderNumber || studentStore.isLoading"
                   >

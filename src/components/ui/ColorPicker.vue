@@ -9,7 +9,7 @@
       type="button"
       @click="isOpen = !isOpen"
       class="w-full flex items-center justify-between px-4 py-3 rounded-xl min-h-[52px] transition-all border-2"
-      :class="isOpen ? 'bg-white border-black shadow-sm' : 'bg-[#F2F2F7] border-transparent hover:bg-[#E5E5EA]'"
+      :class="isOpen ? 'bg-card border-border shadow-sm' : 'bg-muted border-transparent hover:bg-muted/80'"
     >
       <div class="flex items-center gap-3">
         <div
@@ -27,7 +27,7 @@
     <!-- Custom Dropdown Palette -->
     <div
       v-if="isOpen"
-      class="absolute z-[100] top-[calc(100%+8px)] left-0 right-0 bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-black/5 p-6 animate-in fade-in zoom-in-95 duration-200"
+      class="absolute z-[100] top-[calc(100%+8px)] left-0 right-0 bg-card rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-border p-6 animate-in fade-in zoom-in-95 duration-200"
     >
       <div class="flex flex-col gap-6">
         <!-- Row 1: 11 Primary Colors -->
@@ -48,7 +48,7 @@
                 :style="{ borderColor: `var(${color.var})` }"
               ></div>
               <div
-                class="absolute inset-[-2px] rounded-full border-2 border-white"
+                class="absolute inset-[-2px] rounded-full border-2 border-card"
               ></div>
             </template>
           </button>
@@ -72,7 +72,7 @@
                 :style="{ borderColor: `var(${color.var})` }"
               ></div>
               <div
-                class="absolute inset-[-2px] rounded-full border-2 border-white"
+                class="absolute inset-[-2px] rounded-full border-2 border-card"
               ></div>
             </template>
           </button>

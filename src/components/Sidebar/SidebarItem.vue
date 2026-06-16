@@ -27,7 +27,7 @@
     <!-- Tooltip when collapsed -->
     <div
       v-if="collapsed"
-      class="absolute left-full top-1/2 -translate-y-1/2 ml-4 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all duration-200 whitespace-nowrap z-[9999] shadow-lg border border-gray-800 pointer-events-none"
+      class="absolute left-full top-1/2 -translate-y-1/2 ml-4 px-3 py-1.5 bg-popover text-popover-foreground text-xs font-medium rounded-lg opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all duration-200 whitespace-nowrap z-[9999] shadow-lg border border-border pointer-events-none"
     >
       {{ label }}
     </div>

@@ -32,9 +32,9 @@
         </div>
       </div>
 
-      <div class="border-t border-input flex items-center justify-between px-8 py-6 flex-shrink-0 bg-white/80 backdrop-blur-xl gap-4">
+      <div class="border-t border-input flex items-center justify-between px-8 py-6 flex-shrink-0 bg-card/80 backdrop-blur-xl gap-4">
         <button
-          class="w-auto py-3.5 px-6 text-[15px] font-semibold transition-colors rounded-2xl text-gray-500 hover:bg-gray-50 flex-1 border border-border"
+          class="w-auto py-3 px-6 text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 text-muted-foreground hover:bg-muted flex-1 border border-border"
           @click="requestClose"
         >
           Закрыть

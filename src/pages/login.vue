@@ -58,7 +58,7 @@
                 v-model:checked="showPassword"
                 class="!flex-shrink-0"
               />
-              <span class="text-sm text-gray-600"> {{ auth_show_password() }} </span>
+              <span class="text-sm text-muted-foreground"> {{ auth_show_password() }} </span>
             </div>
 
             <div class="flex items-center justify-between py-2">

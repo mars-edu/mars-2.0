@@ -2,7 +2,7 @@
   <div>
     <div
       v-if="isViewOnly"
-      class="mb-3 p-3 bg-gray-50 border border-gray-200 text-gray-700 rounded-md text-sm"
+      class="mb-3 p-3 bg-muted/50 border border-border text-muted-foreground rounded-md text-sm"
       role="status"
     >
       Журнал закрыт. Доступен только просмотр.
@@ -27,7 +27,7 @@
     <!-- Academic Year Mismatch Warning Banner -->
     <div
       v-if="academicYearMismatchInfo"
-      class="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded-md"
+      class="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 dark:border-yellow-700 text-yellow-800 dark:text-yellow-300 rounded-md"
       role="alert"
     >
       <div class="flex items-start">
@@ -41,10 +41,10 @@
             расписании не настроены промежуточные контроли для учебного года
             {{ academicYearMismatchInfo.usingSemesterYear ? 'семестра' : 'дисциплины' }} этого журнала.
           </p>
-          <div class="bg-white p-3 rounded border border-yellow-200 mb-3">
+          <div class="bg-card dark:bg-yellow-950/20 p-3 rounded border border-yellow-200 dark:border-yellow-800 mb-3">
             <p class="text-sm mb-1">
               <strong>ID учебного года {{ academicYearMismatchInfo.usingSemesterYear ? '(из семестра)' : '(из РУП)' }}:</strong>
-              <code class="bg-gray-100 px-2 py-1 rounded text-xs ml-1">
+              <code class="bg-muted px-2 py-1 rounded text-xs ml-1">
                 {{ academicYearMismatchInfo.journalAcademicYearId }}
               </code>
             </p>
@@ -55,7 +55,7 @@
                 :key="yearId"
                 class="inline-block"
               >
-                <code class="bg-gray-100 px-2 py-1 rounded text-xs ml-1">{{ yearId }}</code>
+                <code class="bg-muted px-2 py-1 rounded text-xs ml-1">{{ yearId }}</code>
                 <span v-if="index < academicYearMismatchInfo.availableAcademicYearIds.length - 1">,</span>
               </span>
             </p>

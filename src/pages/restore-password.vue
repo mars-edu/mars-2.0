@@ -1,7 +1,7 @@
 <template>
   <f7-page
     name="restore-password"
-    class="flex flex-col min-h-screen bg-gray-50"
+    class="flex flex-col min-h-screen bg-background"
   >
     <div class="hidden md:flex h-full">
       <div
@@ -20,22 +20,22 @@
       </div>
 
       <div
-        class="w-1/2 flex items-center justify-center p-8 bg-gray-50 relative"
+        class="w-1/2 flex items-center justify-center p-8 bg-background relative"
       >
         <Logo
           class="absolute top-8 right-8 text-red-600 transform hover:scale-105 transition-transform duration-300"
         />
         <div
-          class="bg-white rounded-3xl p-12 shadow-xl max-w-md w-full transform hover:shadow-2xl transition-all duration-300"
+          class="bg-card rounded-3xl p-12 shadow-xl max-w-md w-full transform hover:shadow-2xl transition-all duration-300"
         >
           <!-- Step 1: IIN Verification -->
           <div v-if="currentStep === 1">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">
+            <h2 class="text-2xl font-bold text-foreground mb-6">
               {{ auth_step1_title() }}
             </h2>
             <form @submit.prevent="handleIINSubmit" class="space-y-6">
               <div class="space-y-2">
-                <label class="block text-sm font-semibold text-gray-800 mb-2">
+                <label class="block text-sm font-semibold text-foreground mb-2">
                   {{ auth_iin() }}
                 </label>
                 <f7-input
@@ -69,12 +69,12 @@
 
           <!-- Step 2: New Password -->
           <div v-if="currentStep === 2">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">
+            <h2 class="text-2xl font-bold text-foreground mb-6">
               {{ auth_step2_title() }}
             </h2>
             <form @submit.prevent="handlePasswordReset" class="space-y-6">
               <div class="space-y-2">
-                <label class="block text-sm font-semibold text-gray-800 mb-2">
+                <label class="block text-sm font-semibold text-foreground mb-2">
                   {{ auth_new_password() }}
                 </label>
                 <f7-input
@@ -88,7 +88,7 @@
               </div>
 
               <div class="space-y-2">
-                <label class="block text-sm font-semibold text-gray-800 mb-2">
+                <label class="block text-sm font-semibold text-foreground mb-2">
                   {{ auth_new_password_confirm() }}
                 </label>
                 <f7-input
@@ -139,14 +139,14 @@
         />
       </div>
 
-      <div class="flex-1 px-6 py-8 bg-gray-50">
+      <div class="flex-1 px-6 py-8 bg-background">
         <div
-          class="bg-white rounded-3xl p-8 shadow-xl mb-4 -mt-12 transform hover:shadow-2xl transition-all duration-300"
+          class="bg-card rounded-3xl p-8 shadow-xl mb-4 -mt-12 transform hover:shadow-2xl transition-all duration-300"
         >
-          <h2 class="text-2xl font-bold text-gray-900 mb-2">
+          <h2 class="text-2xl font-bold text-foreground mb-2">
             {{ auth_restore_password_title() }}
           </h2>
-          <p class="text-gray-600 mb-8">
+          <p class="text-muted-foreground mb-8">
             {{ auth_restore_password_subtitle() }}
           </p>
 
@@ -154,7 +154,7 @@
           <div v-if="currentStep === 1">
             <form @submit.prevent="handleIINSubmit" class="space-y-6">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
+                <label class="block text-sm font-medium text-foreground mb-2">
                   {{ auth_iin() }}
                 </label>
                 <f7-input
@@ -184,7 +184,7 @@
           <div v-if="currentStep === 2">
             <form @submit.prevent="handlePasswordReset" class="space-y-6">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
+                <label class="block text-sm font-medium text-foreground mb-2">
                   {{ auth_new_password() }}
                 </label>
                 <f7-input
@@ -198,7 +198,7 @@
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
+                <label class="block text-sm font-medium text-foreground mb-2">
                   {{ auth_new_password_confirm() }}
                 </label>
                 <f7-input

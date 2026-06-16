@@ -77,14 +77,14 @@ const emit = defineEmits<{
 
 const saveButtonClasses = computed(() => {
   if (props.disabled) {
-    return "bg-[#F2F2F7] text-gray-400 cursor-not-allowed shadow-none";
+    return "bg-muted text-muted-foreground cursor-not-allowed shadow-none";
   }
 
   switch (props.saveVariant) {
     case "primary":
-      return "bg-[#FFCC00] text-black hover:bg-[#F5C300] shadow-yellow-500/20";
+      return "bg-[#FFCC00] text-foreground hover:bg-[#F5C300] shadow-yellow-500/20";
     case "neutral":
-      return "bg-[#F2F2F7] text-gray-900 hover:bg-[#E5E5EA] shadow-none";
+      return "bg-muted text-foreground hover:bg-muted/80 shadow-none";
     case "success":
     default:
       return "bg-[#2ECC71] text-white hover:bg-[#27AE60] shadow-green-500/20";

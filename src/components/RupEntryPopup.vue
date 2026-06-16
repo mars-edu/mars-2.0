@@ -1420,15 +1420,15 @@ function showDeleteConfirmation() {
 }
 
 .remove-entry-btn:hover {
-  background: #f3f4f6 !important;
-  color: #6b7280 !important;
+  background: hsl(var(--muted)) !important;
+  color: hsl(var(--muted-foreground)) !important;
 }
 
 .distribution-table {
   margin-top: 0.25rem;
-  border: 1px solid #d9dee5 !important;
+  border: 1px solid hsl(var(--border)) !important;
   border-radius: 0.6rem !important;
-  background: #fff;
+  background: hsl(var(--card));
   overflow: hidden;
 }
 
@@ -1441,23 +1441,23 @@ function showDeleteConfirmation() {
 
 .distribution-header {
   padding: 0.5rem 0.75rem;
-  background: #f3f4f6;
-  border-bottom: 1px solid #d9dee5;
+  background: hsl(var(--muted));
+  border-bottom: 1px solid hsl(var(--border));
   font-size: 0.8rem;
   line-height: 1rem;
   font-weight: 600;
-  color: #5f6b7a;
+  color: hsl(var(--muted-foreground));
   align-items: center;
 }
 
 .distribution-body {
-  background: #fff;
+  background: hsl(var(--card));
 }
 
 .distribution-row {
   padding: 0.35rem 0.75rem;
   align-items: center;
-  border-bottom: 1px solid #eceff3;
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 .distribution-row:last-child {
@@ -1477,8 +1477,8 @@ function showDeleteConfirmation() {
 
 :deep(.distribution-row .select-item .item-content) {
   min-height: 34px !important;
-  background: #ffffff !important;
-  border: 1px solid #d7dde5 !important;
+  background: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
   border-radius: 0.5rem !important;
 }
 
@@ -1496,7 +1496,7 @@ function showDeleteConfirmation() {
 
 :deep(.distribution-row .select-item .item-after) {
   font-size: 0.95rem !important;
-  color: #1f2937 !important;
+  color: hsl(var(--foreground)) !important;
 }
 
 :deep(.distribution-row .select-item .item-inner::after) {
@@ -1513,7 +1513,7 @@ function showDeleteConfirmation() {
 }
 
 :deep(.distribution-row .distribution-hours-input .input) {
-  background: #f3f4f6 !important;
+  background: hsl(var(--muted)) !important;
   min-height: 34px !important;
   border-radius: 0.5rem !important;
 }
@@ -1543,12 +1543,13 @@ function showDeleteConfirmation() {
 }
 
 .lang-pill-inactive {
-  background-color: theme('colors.muted.DEFAULT');
-  color: #6b7280;
+  background-color: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
 }
 
 .lang-pill-inactive:hover {
-  background-color: #e5e7eb;
+  background-color: hsl(var(--muted));
+  opacity: 0.8;
 }
 
 .lang-pill-active {
@@ -1565,8 +1566,14 @@ function showDeleteConfirmation() {
 .lang-pill-active.lang-pill-ru {
   background-color: #111827;
 }
+:global(.dark) .lang-pill-active.lang-pill-ru {
+  background-color: #374151;
+}
 .lang-pill-active.lang-pill-ru:hover {
   background-color: #1f2937;
+}
+:global(.dark) .lang-pill-active.lang-pill-ru:hover {
+  background-color: #4b5563;
 }
 
 .lang-pill-active.lang-pill-en {
@@ -1624,9 +1631,16 @@ function showDeleteConfirmation() {
   border-color: #111827;
   box-shadow: 0 2px 8px rgba(17, 24, 39, 0.3);
 }
+:global(.dark) .language-chip-ru.language-chip-active {
+  background-color: #374151;
+  border-color: #374151;
+}
 
 .language-chip-ru.language-chip-active:hover {
   background-color: #1f2937;
+}
+:global(.dark) .language-chip-ru.language-chip-active:hover {
+  background-color: #4b5563;
 }
 
 .language-chip-en.language-chip-active {

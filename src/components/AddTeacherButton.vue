@@ -210,7 +210,7 @@ const handleSaveTeacher = async () => {
           <p class="mb-2"><strong>Логин:</strong> ${newTeacher.username}</p>
           <p class="mb-2"><strong>Email:</strong> ${newTeacher.email}</p>
           <p class="mb-2"><strong>Пароль:</strong> ${newTeacher.password}</p>
-          <p class="text-sm text-gray-600 mt-3">Пожалуйста, сохраните эти данные. Пароль больше не будет показан.</p>
+          <p class="text-sm text-muted-foreground mt-3">Пожалуйста, сохраните эти данные. Пароль больше не будет показан.</p>
         </div>`,
         "Учётные данные созданы"
       );

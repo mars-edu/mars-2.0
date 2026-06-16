@@ -20,26 +20,26 @@
     <transition name="add-menu">
       <div
         v-if="isMenuOpen"
-        class="add-menu absolute right-0 top-full mt-2 z-50 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden w-56"
+        class="add-menu absolute right-0 top-full mt-2 z-50 bg-card rounded-xl shadow-xl border border-border overflow-hidden w-56"
         @click.stop
       >
         <button
           type="button"
-          class="menu-item w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
+          class="menu-item w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-green-500/10 hover:text-green-700 dark:hover:text-green-400 transition-colors"
           @click="handleSelect(9)"
         >
-          <span class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-sm font-bold flex-shrink-0">
+          <span class="w-8 h-8 rounded-full bg-green-500/20 text-green-700 dark:text-green-400 flex items-center justify-center text-sm font-bold flex-shrink-0">
             9
           </span>
           <span class="font-medium">На базе 9 классов</span>
         </button>
-        <div class="border-t border-gray-100"></div>
+        <div class="border-t border-border"></div>
         <button
           type="button"
-          class="menu-item w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          class="menu-item w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors"
           @click="handleSelect(11)"
         >
-          <span class="w-8 h-8 rounded-full bg-gray-100 text-gray-900 flex items-center justify-center text-sm font-bold flex-shrink-0">
+          <span class="w-8 h-8 rounded-full bg-muted text-foreground flex items-center justify-center text-sm font-bold flex-shrink-0">
             11
           </span>
           <span class="font-medium">На базе 11 классов</span>

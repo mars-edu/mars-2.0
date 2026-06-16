@@ -29,7 +29,7 @@
           <div
             v-for="entry in history"
             :key="entry._id"
-            class="bg-white rounded-lg shadow-sm p-4 border border-gray-200"
+            class="bg-card rounded-lg shadow-sm p-4 border border-border"
           >
             <div class="flex items-start justify-between">
               <div class="flex-1">
@@ -40,21 +40,21 @@
                   >
                     {{ getChangeTypeLabel(entry.changeType) }}
                   </span>
-                  <span class="text-sm text-gray-500">
+                  <span class="text-sm text-muted-foreground">
                     {{ formatDate(entry.createdAt) }}
                   </span>
                 </div>
 
-                <div class="text-sm text-gray-700 mb-1">
+                <div class="text-sm text-foreground mb-1">
                   <strong>Изменено:</strong> {{ entry.changedByName }}
                 </div>
 
-                <div v-if="entry.notes" class="text-sm text-gray-600 italic">
+                <div v-if="entry.notes" class="text-sm text-muted-foreground italic">
                   {{ entry.notes }}
                 </div>
               </div>
 
-              <div class="text-xs text-gray-400">
+              <div class="text-xs text-muted-foreground">
                 {{ formatTime(entry.createdAt) }}
               </div>
             </div>
@@ -119,13 +119,13 @@ const getChangeTypeLabel = (type: string) => {
 const getChangeTypeBadgeClass = (type: string) => {
   switch (type) {
     case "initial":
-      return "bg-blue-100 text-blue-800";
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300";
     case "regenerated":
-      return "bg-green-100 text-green-800";
+      return "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300";
     case "reset":
-      return "bg-yellow-100 text-yellow-800";
+      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-gray-100 text-gray-800 dark:bg-muted dark:text-foreground";
   }
 };
 

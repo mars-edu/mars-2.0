@@ -5,10 +5,10 @@
       class="bg-card rounded-[24px] p-6 shadow-sm border border-border flex flex-col justify-between h-36 hover:shadow-md transition-all cursor-default"
     >
       <div class="flex justify-between items-start">
-        <div class="p-2.5 bg-yellow-50 text-yellow-600 rounded-full">
+        <div class="p-2.5 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 rounded-full">
           <IconUsers class="text-xl w-5 h-5" />
         </div>
-        <span class="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1">
+        <span class="text-[10px] font-bold bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-2 py-1 rounded-full flex items-center gap-1">
           <IconTrendingUp class="w-3 h-3" /> +2.4%
         </span>
       </div>

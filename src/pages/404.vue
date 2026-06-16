@@ -1,5 +1,5 @@
 <template>
-  <f7-page name="not-found" class="flex flex-col min-h-screen bg-gray-50">
+  <f7-page name="not-found" class="flex flex-col min-h-screen bg-background">
     <div class="hidden md:flex h-full">
       <div
         class="w-1/2 bg-gradient-to-br from-red-500 to-red-700 flex flex-col items-center justify-center p-12 relative overflow-hidden"
@@ -17,16 +17,16 @@
       </div>
 
       <div
-        class="w-1/2 flex items-center justify-center p-8 bg-gray-50 relative"
+        class="w-1/2 flex items-center justify-center p-8 bg-background relative"
       >
         <Logo
           class="absolute top-8 right-8 text-red-600 transform hover:scale-105 transition-transform duration-300"
         />
         <div
-          class="bg-white rounded-3xl p-12 shadow-xl max-w-md w-full transform hover:shadow-2xl transition-all duration-300"
+          class="bg-card rounded-3xl p-12 shadow-xl max-w-md w-full transform hover:shadow-2xl transition-all duration-300"
         >
-          <h2 class="text-2xl font-bold text-gray-900 mb-4">404</h2>
-          <p class="text-gray-600 mb-6">
+          <h2 class="text-2xl font-bold text-foreground mb-4">404</h2>
+          <p class="text-muted-foreground mb-6">
             Запрошенный путь не найден:
             <span class="font-medium">{{ path }}</span>
           </p>
@@ -52,12 +52,12 @@
         />
       </div>
 
-      <div class="flex-1 px-6 py-8 bg-gray-50">
+      <div class="flex-1 px-6 py-8 bg-background">
         <div
-          class="bg-white rounded-3xl p-8 shadow-xl mb-4 -mt-12 transform hover:shadow-2xl transition-all duration-300"
+          class="bg-card rounded-3xl p-8 shadow-xl mb-4 -mt-12 transform hover:shadow-2xl transition-all duration-300"
         >
-          <h2 class="text-2xl font-bold text-gray-900 mb-2">404</h2>
-          <p class="text-gray-600 mb-6">
+          <h2 class="text-2xl font-bold text-foreground mb-2">404</h2>
+          <p class="text-muted-foreground mb-6">
             Запрошенный путь не найден:
             <span class="font-medium">{{ path }}</span>
           </p>

@@ -332,7 +332,7 @@ const generateCredentials = async (teacher: Teacher) => {
         <p class="mb-2"><strong>${teacher_card_credential_login()}</strong> ${response.username}</p>
         <p class="mb-2"><strong>Email:</strong> ${response.email}</p>
         <p class="mb-2"><strong>${teacher_card_credential_password()}</strong> ${response.password}</p>
-        <p class="text-sm text-gray-600 mt-3">${teacher_card_credential_save_note()}</p>
+        <p class="text-sm text-muted-foreground mt-3">${teacher_card_credential_save_note()}</p>
       </div>`,
       teacher_card_credentials_created()
     );
@@ -367,7 +367,7 @@ const regeneratePassword = async (teacher: Teacher) => {
         <p class="mb-2"><strong>${teacher_card_credential_login()}</strong> ${teacher.username}</p>
         <p class="mb-2"><strong>Email:</strong> ${teacher.email}</p>
         <p class="mb-2"><strong>${teacher_card_credential_new_password()}</strong> ${response.password}</p>
-        <p class="text-sm text-gray-600 mt-3">${teacher_card_credential_save_new_note()}</p>
+        <p class="text-sm text-muted-foreground mt-3">${teacher_card_credential_save_new_note()}</p>
       </div>`,
       teacher_card_password_updated()
     );

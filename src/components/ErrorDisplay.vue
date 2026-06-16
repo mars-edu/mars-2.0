@@ -47,8 +47,8 @@ defineProps<{
 }
 
 .error-card {
-  @apply w-full max-w-[380px] bg-white rounded-[32px] p-8 text-center;
-  @apply shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-white/50;
+  @apply w-full max-w-[380px] bg-card rounded-[32px] p-8 text-center;
+  @apply shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-border;
 }
 
 .error-icon-wrapper {
@@ -56,11 +56,11 @@ defineProps<{
 }
 
 .error-title {
-  @apply text-xl font-bold text-gray-900 mb-2 tracking-tight;
+  @apply text-xl font-bold text-foreground mb-2 tracking-tight;
 }
 
 .error-message {
-  @apply text-gray-500 mb-8 leading-relaxed text-sm;
+  @apply text-muted-foreground mb-8 leading-relaxed text-sm;
 }
 
 .error-actions {
@@ -72,6 +72,6 @@ defineProps<{
 }
 
 .btn-dismiss {
-  @apply w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold rounded-2xl transition-all active:scale-[0.98];
+  @apply w-full px-4 py-3 bg-muted hover:bg-muted/80 text-foreground font-bold rounded-2xl transition-all active:scale-[0.98];
 }
 </style>

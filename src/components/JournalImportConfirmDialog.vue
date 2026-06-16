@@ -69,7 +69,7 @@
           <div
             v-for="(warning, index) in warnings"
             :key="index"
-            class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs text-yellow-800"
+            class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-3 text-xs text-yellow-800 dark:text-yellow-300"
           >
             {{ warning }}
           </div>

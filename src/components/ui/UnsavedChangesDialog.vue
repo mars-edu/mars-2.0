@@ -1,12 +1,12 @@
 <template>
   <div
     v-if="opened"
-    class="fixed inset-0 z-[20000] flex items-center justify-center bg-white/65 backdrop-blur-[6px] p-4"
+    class="fixed inset-0 z-[20000] flex items-center justify-center bg-black/50 backdrop-blur-[6px] p-4"
     role="dialog"
     aria-modal="true"
     @click.self="handleCancel"
   >
-    <div class="w-full max-w-[352px] rounded-[14px] border border-[#e7e7eb] bg-[#f2f2f4] p-[18px_16px_16px] text-center shadow-[0_14px_40px_rgba(0,0,0,0.18)]">
+    <div class="w-full max-w-[352px] rounded-[14px] border border-border bg-card p-[18px_16px_16px] text-center shadow-[0_14px_40px_rgba(0,0,0,0.25)]">
       <div
         class="mx-auto mb-2.5 flex h-11 w-11 items-center justify-center rounded-full bg-[#f8dfe1] text-[#ef4444]"
         aria-hidden="true"
@@ -14,17 +14,16 @@
         <IconTriangleAlert class="w-5 h-5" />
       </div>
 
-      <h3 class="m-0 text-[30px] font-bold leading-[1.2] text-[#1f2937] max-[480px]:text-2xl">
+      <h3 class="m-0 text-[30px] font-bold leading-[1.2] text-foreground max-[480px]:text-2xl">
         {{ title }}
       </h3>
-      <p class="my-2.5 mb-4 text-sm leading-[1.45] text-[#6b7280]">
+      <p class="my-2.5 mb-4 text-sm leading-[1.45] text-muted-foreground">
         {{ message }}
       </p>
 
       <div class="flex gap-2.5">
         <button
-          class="min-h-12 flex-1 rounded-lg border-0 bg-[#e5e7eb] px-2.5 py-3 text-base font-medium leading-[1.25] text-[#374151] max-[480px]:text-[15px]"
-          type="button"
+          class="min-h-12 flex-1 rounded-lg border-0 bg-secondary px-2.5 py-3 text-base font-medium leading-[1.25] text-secondary-foreground max-[480px]:text-[15px] transition-colors hover:bg-secondary/80"type="button"
           @click="handleCancel"
         >
           {{ cancelText }}

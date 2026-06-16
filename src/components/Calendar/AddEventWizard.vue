@@ -45,7 +45,7 @@
             Нагрузка
           </div>
           <div class="grid grid-cols-2 gap-3">
-            <div class="rounded-2xl border border-input bg-[#F2F2F7] p-4">
+            <div class="rounded-2xl border border-input bg-muted p-4">
               <div class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 План
               </div>

@@ -16,7 +16,7 @@
       <slot name="actions"></slot>
       <button
         v-if="onCancel"
-        class="w-9 h-9 rounded-full bg-[#F2F2F7] flex items-center justify-center text-muted-foreground hover:bg-[#E5E5EA] transition-colors"
+        class="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/80 transition-colors"
         @click="handleCancel"
         :title="cancelText"
       >

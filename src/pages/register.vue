@@ -1,5 +1,5 @@
 <template>
-  <f7-page name="register" class="flex flex-col min-h-screen bg-gray-50">
+  <f7-page name="register" class="flex flex-col min-h-screen bg-background">
     <div class="hidden md:flex h-full min-h-screen">
       <div
         class="w-1/2 bg-gradient-to-br from-red-500 to-red-700 flex flex-col items-center justify-center p-12 relative overflow-hidden"
@@ -15,17 +15,17 @@
       </div>
 
       <div
-        class="w-1/2 flex items-start justify-center p-8 bg-gray-50 relative overflow-y-auto h-screen"
+        class="w-1/2 flex items-start justify-center p-8 bg-background relative overflow-y-auto h-screen"
       >
         <div
-          class="bg-white rounded-3xl p-12 shadow-xl max-w-md w-full transform hover:shadow-2xl transition-all duration-300 my-8"
+          class="bg-card rounded-3xl p-12 shadow-xl max-w-md w-full transform hover:shadow-2xl transition-all duration-300 my-8"
         >
           <div class="flex justify-center mb-8">
             <Logo class="h-16 w-auto" />
           </div>
           <form @submit.prevent="handleRegister" class="space-y-4">
             <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-800 mb-2">
+              <label class="block text-sm font-semibold text-foreground mb-2">
                 {{ auth_last_name() }}
               </label>
               <f7-input
@@ -38,7 +38,7 @@
             </div>
 
             <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-800 mb-2">
+              <label class="block text-sm font-semibold text-foreground mb-2">
                 {{ auth_first_name() }}
               </label>
               <f7-input
@@ -51,7 +51,7 @@
             </div>
 
             <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-800 mb-2">
+              <label class="block text-sm font-semibold text-foreground mb-2">
                 {{ auth_middle_name() }}
               </label>
               <f7-input
@@ -63,7 +63,7 @@
             </div>
 
             <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-800 mb-2">
+              <label class="block text-sm font-semibold text-foreground mb-2">
                 {{ auth_iin() }}
               </label>
               <f7-input
@@ -79,7 +79,7 @@
             </div>
 
             <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-800 mb-2">
+              <label class="block text-sm font-semibold text-foreground mb-2">
                 {{ auth_email() }}
               </label>
               <f7-input
@@ -92,7 +92,7 @@
             </div>
 
             <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-800 mb-2">
+              <label class="block text-sm font-semibold text-foreground mb-2">
                 {{ auth_password() }}
               </label>
               <f7-input
@@ -105,7 +105,7 @@
             </div>
 
             <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-800 mb-2">
+              <label class="block text-sm font-semibold text-foreground mb-2">
                 {{ auth_confirm_password() }}
               </label>
               <f7-input
@@ -122,7 +122,7 @@
                 v-model:checked="showPassword"
                 class="!flex-shrink-0"
               />
-              <span class="text-sm text-gray-600">
+              <span class="text-sm text-muted-foreground">
                 {{ auth_show_password() }}
               </span>
             </div>
@@ -132,7 +132,7 @@
                 v-model:checked="formData.acceptTerms"
                 class="!flex-shrink-0"
               />
-              <span class="text-sm text-gray-600">
+              <span class="text-sm text-muted-foreground">
                 {{ auth_accept_terms() }}
               </span>
             </div>
@@ -174,22 +174,22 @@
         />
       </div>
 
-      <div class="flex-1 px-6 py-8 bg-gray-50">
+      <div class="flex-1 px-6 py-8 bg-background">
         <div
-          class="bg-white rounded-3xl p-8 shadow-xl mb-4 -mt-12 transform hover:shadow-2xl transition-all duration-300"
+          class="bg-card rounded-3xl p-8 shadow-xl mb-4 -mt-12 transform hover:shadow-2xl transition-all duration-300"
         >
           <div class="flex justify-center mb-6">
             <Logo class="h-14 w-auto" />
           </div>
-          <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ auth_register_title() }}</h2>
-          <p class="text-gray-600">
+          <h2 class="text-2xl font-bold text-foreground mb-2">{{ auth_register_title() }}</h2>
+          <p class="text-muted-foreground">
             {{ auth_register_subtitle() }}
           </p>
 
           <form @submit.prevent="handleRegister" class="space-y-6 mt-8">
             <!-- Mobile form fields mirror desktop fields -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
+              <label class="block text-sm font-medium text-foreground mb-2">
                 {{ auth_last_name() }}
               </label>
               <f7-input
@@ -202,7 +202,7 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
+              <label class="block text-sm font-medium text-foreground mb-2">
                 {{ auth_first_name() }}
               </label>
               <f7-input
@@ -215,7 +215,7 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
+              <label class="block text-sm font-medium text-foreground mb-2">
                 {{ auth_middle_name() }}
               </label>
               <f7-input
@@ -227,7 +227,7 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
+              <label class="block text-sm font-medium text-foreground mb-2">
                 {{ auth_iin() }}
               </label>
               <f7-input
@@ -243,7 +243,7 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
+              <label class="block text-sm font-medium text-foreground mb-2">
                 {{ auth_email() }}
               </label>
               <f7-input
@@ -256,7 +256,7 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
+              <label class="block text-sm font-medium text-foreground mb-2">
                 {{ auth_password() }}
               </label>
               <f7-input
@@ -273,13 +273,13 @@
                 v-model:checked="showPassword"
                 class="!flex-shrink-0"
               />
-              <span class="text-sm text-gray-600">
+              <span class="text-sm text-muted-foreground">
                 {{ auth_show_password() }}
               </span>
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
+              <label class="block text-sm font-medium text-foreground mb-2">
                 {{ auth_confirm_password() }}
               </label>
               <f7-input
@@ -296,7 +296,7 @@
                 v-model:checked="showPassword"
                 class="!flex-shrink-0"
               />
-              <span class="text-sm text-gray-600">
+              <span class="text-sm text-muted-foreground">
                 {{ auth_show_password() }}
               </span>
             </div>
@@ -306,7 +306,7 @@
                 v-model:checked="formData.acceptTerms"
                 class="!flex-shrink-0"
               />
-              <span class="text-sm text-gray-600">
+              <span class="text-sm text-muted-foreground">
                 {{ auth_accept_terms() }}
               </span>
             </div>

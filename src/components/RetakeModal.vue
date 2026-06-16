@@ -167,7 +167,7 @@
         <button 
           v-if="step === 'form'"
           @click="close"
-          class="px-6 py-3 rounded-xl font-semibold bg-[#F2F2F7] text-muted-foreground hover:bg-[#E5E5EA] transition-colors"
+          class="px-6 py-3 rounded-xl font-semibold bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
         >
           Отмена
         </button>
@@ -183,7 +183,7 @@
         <button 
           v-if="step === 'confirm'"
           @click="step = 'form'"
-          class="px-6 py-3 rounded-xl font-semibold bg-[#F2F2F7] text-muted-foreground hover:bg-[#E5E5EA] transition-colors"
+          class="px-6 py-3 rounded-xl font-semibold bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
         >
           Назад
         </button>

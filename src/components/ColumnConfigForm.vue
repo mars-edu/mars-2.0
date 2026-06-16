@@ -31,10 +31,10 @@
         </div>
         <div class="p-4 space-y-6">
           <div class="grid grid-cols-[1fr,auto] gap-4 mb-2">
-            <div class="text-gray-700 text-sm font-medium">
+            <div class="text-foreground text-sm font-medium">
               Наименование столбца
             </div>
-            <div class="text-gray-700 text-sm font-medium w-24 text-center">
+            <div class="text-foreground text-sm font-medium w-24 text-center">
               Ширина
             </div>
           </div>
@@ -46,7 +46,7 @@
                 placeholder="Столбец"
               />
               <button
-                class="w-24 px-3 py-2 bg-[#007aff] text-white rounded-[10px] font-medium text-[15px]"
+                class="w-24 px-3 py-2 bg-primary text-primary-foreground rounded-[10px] font-medium text-[15px]"
                 @click="toggleWidth(index)"
               >
                 {{ column.width === 1 ? "Узкий" : "Широкий" }}
