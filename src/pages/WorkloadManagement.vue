@@ -698,17 +698,10 @@ const addTabEntries = computed(() => {
 function hasIndividual(rup: RupEntry) {
   return individualTotal(rup) > 0;
 }
-// Total individual hours: prefer per-semester distribution, else the
-// «Индивидуальные (дополнительно)» / «Индивидуальные» module fields.
+// Total individual hours = sum of per-semester individual hours from the RUP distribution.
 function individualTotal(rup: RupEntry) {
-  const distSum = (rup.distributionEntries || []).reduce(
-    (s, d) => s + (parseFloat((d as any).individualHours || "0") || 0),
-    0
-  );
-  if (distSum > 0) return distSum;
-  return (
-    parseFloat((rup as any).individualAdditionalHours || "0") ||
-    parseFloat((rup as any).individualHours || "0") ||
+  return (rup.distributionEntries || []).reduce(
+    (sum, d) => sum + (parseFloat(d.individualHours || "0") || 0),
     0
   );
 }
@@ -873,7 +866,7 @@ function addSubjectFromRup(
     rup.distributionEntries.forEach((entry, idx) => {
       const semNum = idx + 1;
       if (semNum > semesterCount.value) return;
-      const ih = parseFloat((entry as any).individualHours || "0") || 0;
+      const ih = parseFloat(entry.individualHours || "0") || 0;
       if (ih > 0) {
         indItem[`hoursPerGroup${semNum}`] = String(ih);
         indItem[`groupCount${semNum}`] = "1";
@@ -881,17 +874,6 @@ function addSubjectFromRup(
         indItem[`hours${semNum}`] = (ih / weeks).toFixed(1);
       }
     });
-    // Fallback: no per-semester values but module has additional hours —
-    // attach the whole amount to the first semester with planned hours.
-    const hasPerSem = [1, 2, 3].some((i) => parseFloat(indItem[`hoursPerGroup${i}`] || "0") > 0);
-    if (!hasPerSem) {
-      const add = individualTotal(rup);
-      const target = [1, 2, 3].find((i) => parseFloat(newItem[`hoursPerGroup${i}`] || "0") > 0) || 1;
-      indItem[`hoursPerGroup${target}`] = String(add);
-      indItem[`groupCount${target}`] = "1";
-      const weeks = parseFloat(indItem[`weeks${target}`] || "1") || 1;
-      indItem[`hours${target}`] = (add / weeks).toFixed(1);
-    }
     let indTotal = 0;
     for (let i = 1; i <= semesterCount.value; i++) {
       indTotal += parseFloat(indItem[`hoursPerGroup${i}`] || "0") * parseFloat(indItem[`groupCount${i}`] || "0");
