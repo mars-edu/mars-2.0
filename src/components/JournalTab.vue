@@ -857,8 +857,15 @@ const generateDates = () => {
     console.log("[JournalTab] Scheduled final controls for year:", { academicYearId, count: scheduledFinalForYear.length });
   }
 
-  // ALWAYS show intermediate controls (РК1, РК2) regardless of distribution
-  const filteredScheduledIntermediate = scheduledIntermediateForYear;
+  // ALWAYS show intermediate controls (РК1, РК2) regardless of distribution,
+  // but only the ones for this journal's semester (avoids showing the other
+  // semester's РК as duplicate columns).
+  const filteredScheduledIntermediate = scheduledIntermediateForYear.filter(
+    (control: any) =>
+      !semesterFilter ||
+      control?.semesterId == null ||
+      String(control.semesterId) === semesterFilter
+  );
 
   // Only show final controls that are specified in distribution
   const filteredScheduledFinal = scheduledFinalForYear.filter(
@@ -982,7 +989,10 @@ const generateDates = () => {
         }
         return maxBefore;
       }
-      return -1;
+      // Control dated entirely before the first lesson (e.g. РК carrying the
+      // wrong semester's dates) — append it after the lessons instead of
+      // forcing it to the front of the grid.
+      return lastDatePos >= 0 ? lastDatePos + 1000 : -1;
     }
 
     return fallback;
