@@ -515,7 +515,7 @@
                   v-if="hasIndividual(rup)"
                   class="text-[10px] font-black text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded uppercase"
                 >
-                  + инд. {{ rup.individualHours }}ч
+                  + инд. {{ individualTotal(rup) }}ч
                 </span>
               </div>
 
@@ -696,7 +696,21 @@ const addTabEntries = computed(() => {
 });
 
 function hasIndividual(rup: RupEntry) {
-  return parseFloat((rup as any).individualHours || "0") > 0;
+  return individualTotal(rup) > 0;
+}
+// Total individual hours: prefer per-semester distribution, else the
+// «Индивидуальные (дополнительно)» / «Индивидуальные» module fields.
+function individualTotal(rup: RupEntry) {
+  const distSum = (rup.distributionEntries || []).reduce(
+    (s, d) => s + (parseFloat((d as any).individualHours || "0") || 0),
+    0
+  );
+  if (distSum > 0) return distSum;
+  return (
+    parseFloat((rup as any).individualAdditionalHours || "0") ||
+    parseFloat((rup as any).individualHours || "0") ||
+    0
+  );
 }
 function isSubjectSelected(id: string) {
   return id in selectedAdds.value;
@@ -836,7 +850,6 @@ function addSubjectFromRup(
 
   // Paired individual-hours child row (excluded from journal wizard & counts).
   if (opts.individual && hasIndividual(rup)) {
-    const indHours = (rup as any).individualHours as string;
     const indItem: WorkloadItem = {
       id: `${newItem.id}_ind`,
       subjectId: rup.id,
@@ -856,13 +869,28 @@ function addSubjectFromRup(
       description: "",
       language: newItem.language,
     };
-    for (let i = 1; i <= semesterCount.value; i++) {
-      if (parseFloat(newItem[`hoursPerGroup${i}`] || "0") > 0) {
-        indItem[`hoursPerGroup${i}`] = indHours;
-        indItem[`groupCount${i}`] = "1";
-        const weeks = parseFloat(indItem[`weeks${i}`] || "1") || 1;
-        indItem[`hours${i}`] = (parseFloat(indHours) / weeks).toFixed(1);
+    // Per-semester individual hours from the RUP distribution.
+    rup.distributionEntries.forEach((entry, idx) => {
+      const semNum = idx + 1;
+      if (semNum > semesterCount.value) return;
+      const ih = parseFloat((entry as any).individualHours || "0") || 0;
+      if (ih > 0) {
+        indItem[`hoursPerGroup${semNum}`] = String(ih);
+        indItem[`groupCount${semNum}`] = "1";
+        const weeks = parseFloat(indItem[`weeks${semNum}`] || "1") || 1;
+        indItem[`hours${semNum}`] = (ih / weeks).toFixed(1);
       }
+    });
+    // Fallback: no per-semester values but module has additional hours —
+    // attach the whole amount to the first semester with planned hours.
+    const hasPerSem = [1, 2, 3].some((i) => parseFloat(indItem[`hoursPerGroup${i}`] || "0") > 0);
+    if (!hasPerSem) {
+      const add = individualTotal(rup);
+      const target = [1, 2, 3].find((i) => parseFloat(newItem[`hoursPerGroup${i}`] || "0") > 0) || 1;
+      indItem[`hoursPerGroup${target}`] = String(add);
+      indItem[`groupCount${target}`] = "1";
+      const weeks = parseFloat(indItem[`weeks${target}`] || "1") || 1;
+      indItem[`hours${target}`] = (add / weeks).toFixed(1);
     }
     let indTotal = 0;
     for (let i = 1; i <= semesterCount.value; i++) {
