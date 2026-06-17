@@ -244,7 +244,7 @@ import { useCalendarStore } from "@/stores/calendarStore";
 import { useStudentStore } from "@/stores/studentStore";
 import { useMarksStore } from "@/stores/marksStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
-import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
+import { useJournalKtp } from "@/components/journal/useJournalKtp";
 import { useJournalStore } from "@/stores/journalStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
@@ -313,7 +313,6 @@ const recalcControlOptions = computed(() => {
   return opts;
 });
 const educationScheduleStore = useEducationScheduleStore();
-const ktpStore = useKtpStore();
 const journalStore = useJournalStore();
 const academicYearStore = useAcademicYearStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
@@ -1433,27 +1432,21 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   }
 };
 
-const ktpViewPopoverOpened = ref(false);
 const isHistoryDialogOpen = ref(false);
-const ktpViewPopoverTarget = ref("");
-const selectedKtpDetail = ref<KtpDetail | null>(null);
 
-const effectiveSemesterIdForKtp = computed(() => {
-  const eventSemester = currentEvent.value?.semester;
-  if (eventSemester != null && String(eventSemester).length) {
-    return String(eventSemester);
-  }
-  const activeSemester = academicYearSemesterStore.getActiveAcademicYearSemester as any;
-  return activeSemester?.id ? String(activeSemester.id) : null;
-});
-
-const effectiveAcademicYearIdForKtp = computed(() => {
-  const semesterId = effectiveSemesterIdForKtp.value;
-  const semester =
-    semesterId && typeof getAcademicYearSemesterById.value === "function"
-      ? getAcademicYearSemesterById.value(semesterId)
-      : null;
-  return semester?.academicYearId || currentRupEntry.value?.academicYearId || null;
+const {
+  ktpViewPopoverOpened,
+  ktpViewPopoverTarget,
+  selectedKtpDetail,
+  getKtpForHeader,
+  onPaperclipClick,
+} = useJournalKtp({
+  currentEvent,
+  currentJournal,
+  currentRupEntry,
+  // visibleHeaders is declared further down; the closure defers access.
+  visibleHeaders: computed(() => visibleHeaders.value),
+  ktpId: computed(() => props.ktpId),
 });
 
 const localJournalSettings = ref({
@@ -1477,98 +1470,6 @@ const saveJournalSettings = withEditPermission((settings: any) => {
   emit("save-journal-settings", settings);
   localJournalSettings.value = settings;
 });
-
-/**
- * Get KTP detail for a specific header index.
- * Returns KtpDetail only if it exists and has a non-empty theme.
- * @param headerIndex - The index of the header in visibleHeaders
- * @returns KtpDetail if exists and has theme, null otherwise
- */
-const getKtpForHeader = (headerIndex: number): KtpDetail | null => {
-  const rupEntryId = currentJournal.value?.disciplineId;
-  if (!rupEntryId) return null;
-
-  const academicYearId = effectiveAcademicYearIdForKtp.value;
-  const semesterId = effectiveSemesterIdForKtp.value;
-  if (!academicYearId || !semesterId) return null;
-
-  const ktpId = props.ktpId || null;
-  if (!ktpId) return null;
-
-  // Find dayIndex - position of this date among all date columns
-  let dayIndex = 0;
-  for (let i = 0; i < visibleHeaders.value.length; i++) {
-    const h = visibleHeaders.value[i];
-    if (h.index === headerIndex) break;
-    if (h.type === "date") dayIndex++;
-  }
-
-  const details = ktpStore.getDetailsByKtpId(ktpId);
-  const detail = details[dayIndex];
-
-  // Check that KTP exists AND theme is not empty
-  if (!detail || !detail.theme || detail.theme.trim() === "") {
-    return null;
-  }
-
-  return detail;
-};
-
-const onPaperclipClick = async (
-  header: { type: string; label: string },
-  index: number
-) => {
-  if (header.type !== "date") return;
-
-  // Find the date for this header to get KTP details
-  const currentEventData = currentEvent.value;
-  if (!currentEventData || !currentJournal.value?.disciplineId) return;
-
-  // Get active semester info for fallback date range
-  const activeSemester =
-    academicYearSemesterStore.getActiveAcademicYearSemester;
-  const semesterInfo: SemesterInfo | undefined = activeSemester
-    ? {
-        startDate: activeSemester.startDate,
-        endDate: activeSemester.endDate,
-      }
-    : undefined;
-
-  const days = getEventDays(currentEventData as any, semesterInfo);
-
-  // Map the column index to actual day index
-  // We need to find which day this column represents by looking at the visible headers
-  const visibleHeader = visibleHeaders.value[index];
-  if (!visibleHeader) return;
-
-  // Find the actual day index by counting date columns up to this point
-  let dayIndex = 0;
-  for (let i = 0; i < visibleHeaders.value.length; i++) {
-    const h = visibleHeaders.value[i];
-    if (h.index === visibleHeader.index) break;
-    if (h.type === "date") dayIndex++;
-  }
-
-  const dayData = days[dayIndex];
-  if (!dayData) return;
-
-  // Get KTP details using the ensured event-linked KTP.
-  try {
-    const ktpId = props.ktpId || null;
-    if (!ktpId) return;
-
-    const details = ktpStore.getDetailsByKtpId(ktpId);
-
-    // Select the detail based on day index (0-based)
-    const detailForDate = details[dayIndex] || null;
-
-    selectedKtpDetail.value = detailForDate;
-    ktpViewPopoverTarget.value = `#paperclip-${index}`;
-    ktpViewPopoverOpened.value = true;
-  } catch (error) {
-    console.error("Error fetching KTP details:", error);
-  }
-};
 
 const onOpenRupClick = () => emit("open-rup");
 const onSettingsClick = () => emit("open-settings");
