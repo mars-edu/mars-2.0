@@ -40,9 +40,16 @@ export const useScheduledIntermediateControlStore = defineStore(
       }
     });
 
+    const _scheduledIntermediateControlById = computed(() => {
+      const m = new Map<
+        string,
+        (typeof scheduledIntermediateControls.value)[number]
+      >();
+      for (const c of scheduledIntermediateControls.value) m.set(c.id, c);
+      return m;
+    });
     const getScheduledIntermediateControlById = computed(() => {
-      return (id: string) =>
-        scheduledIntermediateControls.value.find((c) => c.id === id);
+      return (id: string) => _scheduledIntermediateControlById.value.get(id);
     });
 
     const sortedScheduledIntermediateControls = computed(() => {

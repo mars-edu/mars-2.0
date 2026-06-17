@@ -25,8 +25,13 @@ export const useDisciplineStore = defineStore("discipline", () => {
 
   const getAllDisciplines = computed(() => disciplines.value);
 
+  const _disciplineById = computed(() => {
+    const m = new Map<string, (typeof disciplines.value)[number]>();
+    for (const d of disciplines.value) m.set(d._id, d);
+    return m;
+  });
   const getDisciplineById = computed(() => {
-    return (id: string) => disciplines.value.find((d) => d._id === id);
+    return (id: string) => _disciplineById.value.get(id);
   });
 
   const addDiscipline = async (payload: AddDisciplinePayload) => {

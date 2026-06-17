@@ -42,9 +42,13 @@ export const useAcademicYearSemesterStore = defineStore(
       }
     });
 
+    const _academicYearSemesterById = computed(() => {
+      const m = new Map<string, (typeof academicYearSemesters.value)[number]>();
+      for (const s of academicYearSemesters.value) m.set(s.id, s);
+      return m;
+    });
     const getAcademicYearSemesterById = computed(() => {
-      return (id: string) =>
-        academicYearSemesters.value.find((s) => s.id === id);
+      return (id: string) => _academicYearSemesterById.value.get(id);
     });
 
     const getAcademicYearSemestersByAcademicYear = computed(() => {

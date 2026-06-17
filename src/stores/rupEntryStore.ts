@@ -68,8 +68,13 @@ export const useRupEntryStore = defineStore(
       }));
     });
 
+    const _rupEntryById = computed(() => {
+      const m = new Map<string, (typeof rupEntries.value)[number]>();
+      for (const c of rupEntries.value) m.set(c.id, c);
+      return m;
+    });
     const getRupEntryById = computed(() => {
-      return (id: string) => rupEntries.value.find((c) => c.id === id);
+      return (id: string) => _rupEntryById.value.get(id);
     });
 
     const getAutoSelectedSemesterForRupEntry = computed(() => {

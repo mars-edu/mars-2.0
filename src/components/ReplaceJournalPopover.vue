@@ -215,7 +215,7 @@ const isFormValid = computed(() => localData.value.teacherId.trim().length > 0);
 watch(
   () => props.data,
   (newData) => { if (newData) resetLocalData(); },
-  { deep: true }
+  { deep: false }
 );
 
 const onSave = () => {

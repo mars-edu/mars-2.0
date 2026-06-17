@@ -174,9 +174,9 @@ const emit = defineEmits<{
 
 const localSettings = ref(JSON.parse(JSON.stringify(props.initialSettings)));
 
-watch(() => props.initialSettings, (newVal) => {
-  localSettings.value = JSON.parse(JSON.stringify(newVal));
-}, { deep: true });
+watch(() => JSON.stringify(props.initialSettings), () => {
+  localSettings.value = JSON.parse(JSON.stringify(props.initialSettings));
+});
 
 const calculationMethodOptions = computed(() => [
   { value: 'only-assigned', text: journal_settings_account_assigned() },

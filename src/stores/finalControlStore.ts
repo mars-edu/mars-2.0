@@ -40,8 +40,13 @@ export const useFinalControlStore = defineStore(
       }
     });
 
+    const _finalControlById = computed(() => {
+      const m = new Map<string, (typeof finalControls.value)[number]>();
+      for (const c of finalControls.value) m.set(c.id, c);
+      return m;
+    });
     const getFinalControlById = computed(() => {
-      return (id: string) => finalControls.value.find((c) => c.id === id);
+      return (id: string) => _finalControlById.value.get(id);
     });
 
     const sortedFinalControls = computed(() => {

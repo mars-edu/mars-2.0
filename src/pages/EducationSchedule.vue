@@ -728,13 +728,13 @@ const initSortable = () => {
   }
 };
 
-watch(() => schedules.value, () => {
+watch(() => schedules.value.length, () => {
   nextTick(() => {
     if (schedulesGridRef.value && !sortableInstance) {
       initSortable();
     }
   });
-}, { deep: true });
+});
 
 // Auto-select the currently active semester when semesters load or year changes
 watch(

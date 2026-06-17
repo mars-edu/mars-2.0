@@ -34,9 +34,13 @@ export const useCabinetStore = defineStore(
       }
     });
 
+    const _cabinetById = computed(() => {
+      const m = new Map<string, (typeof cabinets.value)[number]>();
+      for (const c of cabinets.value) m.set(c.id, c);
+      return m;
+    });
     const getCabinetById = computed(() => {
-      return (id: string) =>
-        cabinets.value.find((c) => c.id === id);
+      return (id: string) => _cabinetById.value.get(id);
     });
 
     async function fetchCabinets() {

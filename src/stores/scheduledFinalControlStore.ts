@@ -39,9 +39,16 @@ export const useScheduledFinalControlStore = defineStore(
       }
     });
 
+    const _scheduledFinalControlById = computed(() => {
+      const m = new Map<
+        string,
+        (typeof scheduledFinalControls.value)[number]
+      >();
+      for (const c of scheduledFinalControls.value) m.set(c.id, c);
+      return m;
+    });
     const getScheduledFinalControlById = computed(() => {
-      return (id: string) =>
-        scheduledFinalControls.value.find((c) => c.id === id);
+      return (id: string) => _scheduledFinalControlById.value.get(id);
     });
 
     const sortedScheduledFinalControls = computed(() => {

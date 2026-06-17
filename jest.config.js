@@ -12,6 +12,9 @@ module.exports = {
   },
   moduleFileExtensions: ["ts", "tsx", "js", "json", "vue"],
   moduleNameMapper: {
+    // Stub compiled-ESM paraglide messages (untransformable by ts-jest).
+    // Must precede the generic "@/" mapping below.
+    "^@/paraglide/messages$": "<rootDir>/src/test/paraglideMessagesStub.ts",
     "^@/(.*)$": "<rootDir>/src/$1",
   },
   testMatch: ["**/__tests__/**/*.spec.(ts|tsx|js)"],

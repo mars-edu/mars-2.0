@@ -84,8 +84,13 @@ export const useCalendarStore = defineStore(
       { immediate: true }
     );
 
+    const _eventById = computed(() => {
+      const m = new Map<string, (typeof events.value)[number]>();
+      for (const e of events.value) m.set(e.id, e);
+      return m;
+    });
     const getEventById = computed(() => {
-      return (id: string) => events.value.find((e) => e.id === id);
+      return (id: string) => _eventById.value.get(id);
     });
 
     // Events are already filtered at the backend level via queryArgs

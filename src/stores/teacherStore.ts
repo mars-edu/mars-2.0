@@ -95,12 +95,23 @@ export const useTeacherStore = defineStore("teacher", () => {
     return `${teacher.surname} ${teacher.firstName} ${teacher.patronymic}`;
   };
 
+  const _teacherById = computed(() => {
+    const m = new Map<string, Teacher>();
+    for (const t of teachers.value) m.set(t.id, t);
+    return m;
+  });
+  const _teacherByUserId = computed(() => {
+    const m = new Map<string, Teacher>();
+    for (const t of teachers.value) if (t.userId) m.set(t.userId, t);
+    return m;
+  });
+
   const getTeacherById = (id: string): Teacher | undefined => {
-    return teachers.value.find((t) => t.id === id);
+    return _teacherById.value.get(id);
   };
 
   const getTeacherByUserId = (userId: string): Teacher | undefined => {
-    return teachers.value.find((t) => t.userId === userId);
+    return _teacherByUserId.value.get(userId);
   };
 
   const getTeacherFullNameByUserId = (userId: string): string => {

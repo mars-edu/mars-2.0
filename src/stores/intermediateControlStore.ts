@@ -40,9 +40,13 @@ export const useIntermediateControlStore = defineStore(
       }
     });
 
+    const _intermediateControlById = computed(() => {
+      const m = new Map<string, (typeof intermediateControls.value)[number]>();
+      for (const c of intermediateControls.value) m.set(c.id, c);
+      return m;
+    });
     const getIntermediateControlById = computed(() => {
-      return (id: string) =>
-        intermediateControls.value.find((c) => c.id === id);
+      return (id: string) => _intermediateControlById.value.get(id);
     });
 
     const sortedIntermediateControls = computed(() => {

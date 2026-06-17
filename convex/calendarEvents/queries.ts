@@ -13,16 +13,12 @@ export const list = query({
     teacherUserId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // If teacherId is provided, filter by teacher
+    // If teacherId is provided, filter by teacher using the by_teacherId index
+    // (O(log n + k) vs O(n) full scan). event.teacherId may store either the
+    // teacher record id or the user id depending on who created the event.
     if (args.teacherId || args.teacherUserId) {
-      const allEvents = await ctx.db.query("calendarEvents").collect();
-      // Filter by either teacherId (teacher record ID) or teacherUserId (user ID)
-      // because events may store either depending on who created them
-      return allEvents.filter(
-        (event) =>
-          event.teacherId === args.teacherId ||
-          event.teacherId === args.teacherUserId
-      );
+      const recordId = args.teacherId ?? args.teacherUserId!;
+      return await fetchEventsByTeacherIds(ctx, recordId, args.teacherUserId);
     }
     return await ctx.db.query("calendarEvents").collect();
   },
@@ -297,10 +293,12 @@ export const getByDateRange = query({
     endDate: v.string(),
   },
   handler: async (ctx, args) => {
-    const allEvents = await ctx.db.query("calendarEvents").collect();
-
-    return allEvents.filter((event) => {
-      return event.startDate >= args.startDate && event.startDate <= args.endDate;
-    });
+    // Range-scan the by_startDate index instead of a full table scan + JS filter.
+    return await ctx.db
+      .query("calendarEvents")
+      .withIndex("by_startDate", (q) =>
+        q.gte("startDate", args.startDate).lte("startDate", args.endDate)
+      )
+      .collect();
   },
 });

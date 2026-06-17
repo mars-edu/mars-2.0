@@ -689,8 +689,9 @@ watch(selectedSemesterId, (newVal, oldVal) => {
 
 // Watch for academicYearSemester data to arrive and auto-select
 watch(
-  () => academicYearSemesterStore.academicYearSemesters,
-  (semesters) => {
+  () => academicYearSemesterStore.academicYearSemesters.map((s) => s.id).join(),
+  () => {
+    const semesters = academicYearSemesterStore.academicYearSemesters;
     console.log("\n🔔 AcademicYearSemesters changed, count:", semesters.length);
 
     // Only auto-select if no semester is currently selected and we have data
@@ -703,8 +704,7 @@ watch(
         console.log(`   ✅ Auto-selected semester: ${activeSemesters[0].semesterNumber} (ID: ${activeSemesters[0].id})`);
       }
     }
-  },
-  { deep: true }
+  }
 );
 
 // Filtering journals by selected year/semester/teacher

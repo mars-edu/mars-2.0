@@ -27,8 +27,7 @@ watch(
     ) {
       expandedItems.value = [...newItems];
     }
-  },
-  { deep: true }
+  }
 );
 
 // Watch for internal changes and emit them

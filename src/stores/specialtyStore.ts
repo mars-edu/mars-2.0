@@ -38,9 +38,16 @@ export const useSpecialtyStore = defineStore(
       }
     });
 
+    const _specialtyById = computed(() => {
+      const m = new Map<string, (typeof specialties.value)[number]>();
+      for (const s of specialties.value) {
+        m.set(s.id, s);
+        if (s.legacyId) m.set(s.legacyId, s);
+      }
+      return m;
+    });
     const getSpecialtyById = computed(() => {
-      return (id: string) =>
-        specialties.value.find((s) => s.id === id || s.legacyId === id);
+      return (id: string) => _specialtyById.value.get(id);
     });
 
     const getSpecialtyByCode = computed(() => {

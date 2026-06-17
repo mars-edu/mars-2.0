@@ -42,8 +42,13 @@ export const useEducationScheduleStore = defineStore(
       }
     });
 
+    const _scheduleById = computed(() => {
+      const m = new Map<string, (typeof schedules.value)[number]>();
+      for (const s of schedules.value) m.set(s.id, s);
+      return m;
+    });
     const getScheduleById = computed(() => {
-      return (id: string) => schedules.value.find((s) => s.id === id);
+      return (id: string) => _scheduleById.value.get(id);
     });
 
     const getSchedules = computed(() => schedules.value);
