@@ -236,10 +236,7 @@ import IconRefreshCw from "~icons/lucide/refresh-cw";
 import MakeupHoursPopover from "@/components/MakeupHoursPopover.vue";
 import JournalSettingsPopover from "./JournalSettingsPopover.vue";
 import RecalcControlsPopup from "./RecalcControlsPopup.vue";
-import type { MakeupHoursData } from "@/components/MakeupHoursPopover.vue";
-import { useMakeupRequestStore } from "@/stores/makeupRequestStore";
-import { useUserStore } from "@/stores/userStore";
-import { useTeacherStore } from "@/stores/teacherStore";
+import { useMakeupHours } from "@/components/journal/useMakeupHours";
 import { useCalendarStore } from "@/stores/calendarStore";
 import { useStudentStore } from "@/stores/studentStore";
 import { useMarksStore } from "@/stores/marksStore";
@@ -1492,58 +1489,17 @@ const onRecalcPopupClosed = () => {
 };
 
 // Makeup Hours
-const makeupRequestStore = useMakeupRequestStore();
-const userStore = useUserStore();
-const teacherStore = useTeacherStore();
-const isMakeupRequestLoading = computed(() => makeupRequestStore.loading);
-
-const journalDatesForMakeup = computed(() =>
-  (canonicalTemplate.value ?? [])
-    .filter((m: any) => m.type === "date" && m.isoDate)
-    .map((m: any) => ({
-      isoDate: m.isoDate as string,
-      label: String(m.label).replace("\n", " "),
-    }))
-);
-
-const onMakeupHoursClick = () => {
-  f7.popover.open("#makeup-hours-popover", "#journal-tools-button");
-};
-
-const onMakeupHoursSave = async (data: MakeupHoursData) => {
-  const userId = userStore.currentUser?.id;
-  if (!userId) {
-    f7.dialog.alert("Пользователь не авторизован");
-    return;
-  }
-
-  const teacherId = currentEvent.value?.teacherId;
-  if (!teacherId) {
-    f7.dialog.alert("Преподаватель не найден");
-    return;
-  }
-
-  try {
-    await makeupRequestStore.createMakeupRequest({
-      journalId: props.journalId,
-      teacherId,
-      createdBy: userId,
-      reason: data.reason || undefined,
-      dates: data.dates,
-    });
-    f7.toast
-      .create({
-        text: "Запрос на отработку часов отправлен на модерацию",
-        position: "center",
-        closeTimeout: 2500,
-      })
-      .open();
-  } catch {
-    f7.dialog.alert(
-      makeupRequestStore.error ?? "Не удалось отправить запрос"
-    );
-  }
-};
+const {
+  isMakeupRequestLoading,
+  journalDatesForMakeup,
+  onMakeupHoursClick,
+  onMakeupHoursSave,
+} = useMakeupHours({
+  // canonicalTemplate is declared further down; the closure defers access.
+  canonicalTemplate: computed(() => canonicalTemplate.value),
+  currentEvent,
+  journalId: computed(() => props.journalId),
+});
 
 const handleRecalcSubmit = async (control: string, studentIds: string[]) => {
   if (control === '__finals__') {
