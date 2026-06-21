@@ -137,8 +137,14 @@
                   </div>
                   <div class="flex flex-wrap gap-2">
                     <button v-for="sp in active.specialties" :key="sp.id" @click="toggleSpec(sp.id)"
-                      class="!w-auto shrink-0 min-w-[40px] h-10 px-2 rounded-xl text-xs font-black border transition-all inline-flex items-center justify-center"
-                      :class="draft.specIds.includes(sp.id) ? 'bg-foreground border-foreground text-background' : 'bg-card border-border text-foreground hover:border-foreground/40'">
+                      :disabled="isSpecUsed(sp.id)"
+                      :title="isSpecUsed(sp.id) ? 'Уже добавлена для выбранного языка' : ''"
+                      class="!w-auto shrink-0 min-w-[40px] h-10 px-2 rounded-xl text-xs font-black border transition-all inline-flex items-center justify-center disabled:cursor-not-allowed"
+                      :class="draft.specIds.includes(sp.id)
+                        ? 'bg-foreground border-foreground text-background'
+                        : isSpecUsed(sp.id)
+                          ? 'bg-muted border-border text-muted-foreground/40 line-through opacity-50'
+                          : 'bg-card border-border text-foreground hover:border-foreground/40'">
                       {{ sp.label }}
                     </button>
                   </div>
@@ -231,8 +237,8 @@
                     </div>
                     <div v-for="slot in j.daySlots" :key="slot.weekId" class="flex items-center gap-2 mb-1.5">
                       <span class="text-xs font-bold text-foreground w-7">{{ abbrFor(slot.weekId) }}</span>
-                      <Select :model-value="slot.startId" @update:model-value="slot.startId = ($event as string)" :options="slotOptions" placeholder="с" class="w-24" />
-                      <Select :model-value="slot.endId" @update:model-value="slot.endId = ($event as string)" :options="slotOptions" placeholder="по" class="w-24" />
+                      <Select :model-value="slot.startId" @update:model-value="slot.startId = ($event as string)" :options="slotStartOptions" placeholder="с" class="w-24" />
+                      <Select :model-value="slot.endId" @update:model-value="slot.endId = ($event as string)" :options="slotEndOptions" placeholder="по" class="w-24" />
                     </div>
                   </div>
                 </div>
@@ -339,7 +345,11 @@ const scheduleSlots = computed(() => {
   const list = r ? educationScheduleStore.getSchedulesBySemester(r.id) : educationScheduleStore.getActiveYearSchedules;
   return [...list].sort((a: any, b: any) => a.lessonNumber - b.lessonNumber);
 });
-const slotOptions = computed(() => scheduleSlots.value.map((s: any) => ({ value: s.id, text: s.startTime })));
+// Start select shows each slot's start time; end select shows its END time.
+// (Showing startTime on the end select made e.g. 08:45 read as 08:50 — the next
+// slot's start.)
+const slotStartOptions = computed(() => scheduleSlots.value.map((s: any) => ({ value: s.id, text: s.startTime })));
+const slotEndOptions = computed(() => scheduleSlots.value.map((s: any) => ({ value: s.id, text: s.endTime })));
 
 const allStudents = computed(() =>
   studentStore.getAllStudents.map((s: any) => ({
@@ -421,7 +431,23 @@ function toggleLang(l: string) {
   else draft.value.langs.push(l);
   autoSelect();
 }
+// Specialties already staged for the active discipline under a language that
+// overlaps the current draft — disabled+dimmed so it's clear they're taken.
+const usedSpecIds = computed(() => {
+  const used = new Set<string>();
+  const d = active.value;
+  if (!d) return used;
+  const langs = new Set(draft.value.langs);
+  for (const s of stagedFor(d.id)) {
+    if (s.langs.some((l) => langs.has(l))) s.specIds.forEach((id) => used.add(id));
+  }
+  return used;
+});
+const isSpecUsed = (id: string) =>
+  usedSpecIds.value.has(id) && !draft.value.specIds.includes(id);
+
 function toggleSpec(id: string) {
+  if (isSpecUsed(id)) return;
   const i = draft.value.specIds.indexOf(id);
   if (i >= 0) draft.value.specIds.splice(i, 1);
   else draft.value.specIds.push(id);

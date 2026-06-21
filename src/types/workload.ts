@@ -33,6 +33,7 @@ export interface SavedWorkload {
   items: WorkloadItem[];
   totalHours: number;
   journalsCreated?: boolean;
+  journalsCreatedSemesters?: number[];
   addedToSchedule?: boolean;
   createdAt?: number;
   updatedAt?: number;

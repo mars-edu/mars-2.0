@@ -292,8 +292,11 @@
                     <IconCalendar class="w-3 h-3" />
                     {{ getAcademicYearName(workload.academicYearId) }}
                   </div>
-                  <div v-if="workload.journalsCreated || workload.addedToSchedule" class="flex items-center gap-1.5 mt-2">
-                    <span v-if="workload.journalsCreated" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/10 text-blue-500">
+                  <div v-if="workload.journalsCreated || workload.addedToSchedule" class="flex items-center gap-1.5 mt-2 flex-wrap">
+                    <span v-if="workload.journalsCreatedSemesters?.length" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/10 text-blue-500">
+                      Журналы: {{ workload.journalsCreatedSemesters.join(', ') }} сем
+                    </span>
+                    <span v-else-if="workload.journalsCreated" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/10 text-blue-500">
                       Журналы созданы
                     </span>
                     <span v-if="workload.addedToSchedule" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500">
@@ -339,6 +342,14 @@
                 </template>
                 <template #default="{ close }">
                   <button
+                    @click="viewingWorkload = workload; close()"
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-foreground hover:bg-muted transition-colors text-left"
+                  >
+                    <IconEye class="w-[18px] h-[18px] text-primary shrink-0" />
+                    <span>Просмотр нагрузки</span>
+                  </button>
+                  <div class="my-1 border-t border-border" />
+                  <button
                     @click="toggleAddedToSchedule(workload); close()"
                     class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-foreground hover:bg-muted transition-colors text-left"
                   >
@@ -347,11 +358,10 @@
                   </button>
                   <button
                     @click="openGenerate(workload); close()"
-                    :disabled="workload.journalsCreated"
-                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-foreground hover:bg-muted transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-foreground hover:bg-muted transition-colors text-left"
                   >
                     <IconBookOpen class="w-[18px] h-[18px] text-blue-500 shrink-0" />
-                    <span>{{ workload.journalsCreated ? 'Журналы уже созданы' : 'Создать журналы у преподавателя' }}</span>
+                    <span>{{ workload.journalsCreatedSemesters?.length ? 'Журналы (создать/обновить)' : 'Создать журналы у преподавателя' }}</span>
                   </button>
                   <button
                     @click="editWorkload(workload); close()"
@@ -449,6 +459,56 @@
               </button>
             </template>
           </PopoverFooter>
+        </div>
+      </template>
+    </GuardedPopover>
+
+    <!-- View workload (read-only) -->
+    <GuardedPopover
+      id="workload-view-popup"
+      kind="popup"
+      :guard-unsaved="false"
+      :opened="!!viewingWorkload"
+      @popup:closed="viewingWorkload = null"
+    >
+      <template #default="{ requestClose }">
+        <div class="flex flex-col h-full bg-background">
+          <PopoverHeader title="Просмотр нагрузки" :on-cancel="requestClose" />
+          <div v-if="viewingWorkload" class="flex-1 overflow-y-auto p-5">
+            <div class="flex items-center gap-4 mb-5">
+              <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                <IconUser class="w-6 h-6" />
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-foreground leading-tight">{{ viewingWorkload.teacherName }}</h3>
+                <div class="text-muted-foreground text-xs font-bold mt-0.5 uppercase tracking-wider">
+                  {{ getAcademicYearName(viewingWorkload.academicYearId) }} • {{ viewingWorkload.totalHours }} ч. • {{ disciplineCount(viewingWorkload.items) }} предм.
+                </div>
+              </div>
+            </div>
+            <div class="space-y-2.5">
+              <div
+                v-for="(item, idx) in previewItems(viewingWorkload.items)"
+                :key="idx"
+                class="bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-4"
+              >
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 mb-1 flex-wrap">
+                    <span class="text-[10px] font-black text-muted-foreground bg-muted px-2 py-0.5 rounded uppercase">{{ item.index }}</span>
+                    <h4 class="font-bold text-foreground truncate">{{ item.description }}</h4>
+                  </div>
+                  <div class="flex items-center gap-2 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                    <span v-if="item.department">{{ item.department }}</span>
+                    <span v-if="item.department">•</span>
+                    <span>{{ item.course }} курс</span>
+                    <span>•</span>
+                    <span>группы {{ item.groupCount1 }}/{{ item.groupCount2 }}</span>
+                  </div>
+                </div>
+                <span class="text-xl font-black text-foreground shrink-0">{{ item.totalHours }} ч.</span>
+              </div>
+            </div>
+          </div>
         </div>
       </template>
     </GuardedPopover>
@@ -602,6 +662,7 @@ import IconCheckSm from "~icons/lucide/check";
 import IconPlus from "~icons/lucide/plus";
 import IconTrash from "~icons/lucide/trash-2";
 import IconSave from "~icons/lucide/save";
+import IconEye from "~icons/lucide/eye";
 import IconDownload from "~icons/lucide/download";
 import IconCalendar from "~icons/lucide/calendar";
 import IconEdit from "~icons/lucide/edit-2";
@@ -639,6 +700,7 @@ const SPECTRUM_TITLES = ["История Казахстана", "Всемирн�
 const savedWorkloadSearchQuery = ref("");
 const deleteConfirmId = ref<string | null>(null);
 const showSaveConfirm = ref(false);
+const viewingWorkload = ref<SavedWorkload | null>(null);
 const generateTarget = ref<SavedWorkload | null>(null);
 
 function openGenerate(workload: SavedWorkload) {
@@ -719,8 +781,16 @@ function specShortLabel(id: string) {
   const sp: any = specialties.value.find((s: any) => s.id === id || s._id === id);
   return sp?.codeName || (sp?.name || id).split(/[\s-]+/)[0];
 }
-function rupSpecialtyChips(rup: RupEntry) {
-  return (rup.specialtyIds || []).map((id) => ({ id, label: specShortLabel(id) }));
+// Offer every specialty (not only the ones already on the RUP entry) so a
+// subject whose RUP carries no specialties can still have specialties assigned
+// to this teacher. Pre-selection comes from rowSpecsFor (defaults to rup's).
+function rupSpecialtyChips(_rup: RupEntry) {
+  return [...specialties.value]
+    .map((s: any) => ({
+      id: s.id,
+      label: s.codeName || specShortLabel(s.id),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, "ru"));
 }
 function rowSpecsFor(rup: RupEntry): string[] {
   return rowSpecs.value[rup.id] ?? rup.specialtyIds ?? [];

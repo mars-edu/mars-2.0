@@ -117,14 +117,17 @@ export const createJournalsFromWorkloadGroups = mutation({
     const semesterRecord = semesters[args.semester - 1];
     if (!semesterRecord) throw new Error("Семестр не найден для учебного года");
 
-    // Idempotency: drop journals previously generated from this workload
-    // (plus their calendar events and student links).
-    const existing = await ctx.db
-      .query("journals")
-      .withIndex("by_workload", (q) =>
-        q.eq("workloadId", args.workloadId as string)
-      )
-      .collect();
+    // Idempotency: drop journals previously generated from this workload FOR
+    // THIS SEMESTER only (plus their calendar events and student links) — so
+    // regenerating semester 1 does not wipe semester 2's journals.
+    const existing = (
+      await ctx.db
+        .query("journals")
+        .withIndex("by_workload", (q) =>
+          q.eq("workloadId", args.workloadId as string)
+        )
+        .collect()
+    ).filter((j) => j.semesterId === semesterRecord._id);
     for (const j of existing) {
       const links = await ctx.db
         .query("journalStudents")
@@ -175,8 +178,17 @@ export const createJournalsFromWorkloadGroups = mutation({
       }
     }
 
+    // Track which semesters have journals (union add / remove for this run).
+    const prevSemesters = (workload.journalsCreatedSemesters ?? []).filter(
+      (s) => s !== args.semester
+    );
+    const createdSemesters =
+      journalsCreated > 0 ? [...prevSemesters, args.semester] : prevSemesters;
+    createdSemesters.sort((a, b) => a - b);
+
     await ctx.db.patch(args.workloadId, {
-      journalsCreated: journalsCreated > 0,
+      journalsCreated: createdSemesters.length > 0,
+      journalsCreatedSemesters: createdSemesters,
       ...updateTimestamp(),
     });
 

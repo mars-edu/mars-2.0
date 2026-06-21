@@ -1031,6 +1031,8 @@ export default defineSchema({
     ),
     // Workflow status (ported from concept SavedWorkload flags)
     journalsCreated: v.optional(v.boolean()),
+    // Semester numbers (1/2) that already have journals generated.
+    journalsCreatedSemesters: v.optional(v.array(v.number())),
     addedToSchedule: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),

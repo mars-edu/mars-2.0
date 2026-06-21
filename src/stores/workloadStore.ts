@@ -34,6 +34,7 @@ export const useWorkloadStore = defineStore("workload", () => {
       items: item.items,
       totalHours: item.totalHours,
       journalsCreated: item.journalsCreated,
+      journalsCreatedSemesters: item.journalsCreatedSemesters,
       addedToSchedule: item.addedToSchedule,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
