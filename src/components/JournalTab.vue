@@ -239,6 +239,7 @@ import { useMarksStore } from "@/stores/marksStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useJournalKtp } from "@/components/journal/useJournalKtp";
 import { useJournalColumns } from "@/components/journal/useJournalColumns";
+import { useJournalStudents } from "@/components/journal/useJournalStudents";
 import { debugLog, debugGroup } from "@/components/journal/journalGrid.lib";
 import { useJournalStore } from "@/stores/journalStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
@@ -435,6 +436,19 @@ const {
   journalId: computed(() => props.journalId),
 });
 
+const {
+  students,
+  displayedStudents,
+  visibleStudentsCount,
+  startChunkedRendering,
+  marksByStudentId,
+  getStudentIdByIndex,
+} = useJournalStudents({
+  currentJournal,
+  journalId: computed(() => props.journalId),
+  resolvedParticipants: computed(() => props.resolvedParticipants),
+});
+
 // Detect academic year mismatch for intermediate controls
 const academicYearMismatchInfo = computed(() => {
   // Use semester's academic year (from calendar/planning), not discipline's academic year (from РУП)
@@ -470,77 +484,6 @@ const academicYearMismatchInfo = computed(() => {
   }
 
   return null;
-});
-
-const getStudentIdByIndex = (index: number): string | null => {
-  if (
-    !currentJournal.value?.students ||
-    index < 0 ||
-    index >= currentJournal.value.students.length
-  ) {
-    return null;
-  }
-  return currentJournal.value.students[index];
-};
-
-const students = computed(() => {
-  if (!props.journalId || !currentJournal.value?.students?.length) return [];
-
-  const resolvedById = new Map(
-    (props.resolvedParticipants ?? []).map((p) => [p.id, p]),
-  );
-
-  // O(1) lookup map for student marks to prevent O(N^2) fetching overhead
-  const journalMarksEntry = marksStore.journalMarks[props.journalId];
-  const marksMap = new Map();
-  if (journalMarksEntry && journalMarksEntry.studentMarks) {
-    for (const sm of journalMarksEntry.studentMarks) {
-      marksMap.set(sm.studentId, sm.marks);
-    }
-  }
-
-  return currentJournal.value.students.map(
-    (studentId: string, index: number) => {
-      const studentMarks = marksMap.get(studentId) || [];
-      const resolved = resolvedById.get(studentId);
-      const name = resolved
-        ? `${resolved.surname} ${resolved.firstName} ${resolved.patronymic}`.trim()
-        : getStudentFullName(studentId);
-      return {
-        id: index + 1,
-        name: name === studentId ? "" : name,
-        marks: studentMarks,
-        studentId: studentId,
-      };
-    }
-  );
-});
-
-// --- TIME SLICING OPTIMIZATION ---
-const visibleStudentsCount = ref(15);
-const displayedStudents = computed(() => {
-  return students.value.slice(0, visibleStudentsCount.value);
-});
-
-let renderInterval: any = null;
-const startChunkedRendering = () => {
-  if (renderInterval) clearInterval(renderInterval);
-  renderInterval = setInterval(() => {
-    if (visibleStudentsCount.value >= students.value.length) {
-      clearInterval(renderInterval);
-      return;
-    }
-    visibleStudentsCount.value += 15;
-  }, 50); // Yield thread every 15 students
-};
-// ---------------------------------
-
-const marksByStudentId = computed(() => {
-  const map = new Map<string, any>();
-  for (const student of students.value) {
-    map.set(student.studentId, student.marks);
-  }
-  return map;
 });
 
 const getMark = (studentIndex: number, colIndex: number, markIndex: number) => {
@@ -1680,7 +1623,6 @@ onUpdated(() => {
 });
 
 onUnmounted(() => {
-  if (renderInterval) clearInterval(renderInterval);
   window.removeEventListener("keydown", handleGlobalKeydown);
 });
 
