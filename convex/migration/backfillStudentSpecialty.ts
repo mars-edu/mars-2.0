@@ -25,7 +25,7 @@ export const backfillStudentSpecialty = internalMutation({
     const canonical = new Set<string>(); // valid _id set
     for (const s of specialties) {
       canonical.add(s._id);
-      if (s.legacyId) byLegacy.set(s.legacyId, s._id);
+      if ((s as any).legacyId) byLegacy.set((s as any).legacyId, s._id);
     }
 
     // Resolve one specialty ref: canonical -> unchanged; legacy -> canonical;

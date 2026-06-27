@@ -15,7 +15,7 @@ export const auditSpecialtyRefs = internalQuery({
     const legacy = new Set<string>();
     for (const s of specialties) {
       canonical.add(s._id);
-      if (s.legacyId) legacy.add(s.legacyId);
+      if ((s as any).legacyId) legacy.add((s as any).legacyId);
     }
 
     const classify = (id: string) =>

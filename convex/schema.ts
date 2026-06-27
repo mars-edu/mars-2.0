@@ -169,7 +169,6 @@ export default defineSchema({
    * Migrated from: specialtyStore.ts
    */
   specialties: defineTable({
-    legacyId: v.optional(v.string()),
     name: v.string(),
     code: v.string(),
     codeName: v.string(),

@@ -20,16 +20,11 @@ export interface ResolvedUser {
 type ToolError = { error: string };
 type ToolResult = Record<string, unknown> | Record<string, unknown>[] | ToolError | unknown[];
 
-// students.specialty stores the canonical specialties._id (legacy D1 ids were
-// migrated). Map _id → name; keep legacyId as a fallback for any env not yet
-// migrated.
+// students.specialty stores the canonical specialties._id. Map _id → name.
 async function buildSpecialtyMap(ctx: ActionCtx): Promise<Record<string, string>> {
   const all = await ctx.runQuery(api.specialties.queries.list, {});
   const map: Record<string, string> = {};
-  for (const sp of all) {
-    map[sp._id] = sp.name;
-    if (sp.legacyId) map[sp.legacyId] = sp.name;
-  }
+  for (const sp of all) map[sp._id] = sp.name;
   return map;
 }
 
