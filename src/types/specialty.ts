@@ -2,7 +2,6 @@
 
 export interface Specialty {
   id: string;
-  legacyId?: string;
   name: string;
   codeName: string;
   code: string;

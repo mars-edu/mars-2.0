@@ -1,9 +1,8 @@
-import { defineStore, storeToRefs } from "pinia";
+import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import { useAcademicYearStore } from "./academicYearStore";
 import { useCourseStore } from "./courseStore";
 import type { Course } from "@/types/course";
-import { useSpecialtyStore } from "./specialtyStore";
 import type {
   Student,
   StudentWithCourse,
@@ -38,27 +37,15 @@ export const useStudentStore = defineStore("student", () => {
   });
 
   const academicYearStore = useAcademicYearStore();
-  const specialtyStore = useSpecialtyStore();
-  const { specialties } = storeToRefs(specialtyStore);
 
   // Reactive arguments for paginated query
   const paginatedArgs = computed(() => {
     const activeStartYear = academicYearStore.getActiveAcademicYear?.startYear;
 
-    const selectedSpecialtyRecord = filters.value.specialty
-      ? specialtyStore.getSpecialtyById(filters.value.specialty)
-      : undefined;
-    const specialtyLegacyId =
-      selectedSpecialtyRecord?.legacyId &&
-      selectedSpecialtyRecord.legacyId !== filters.value.specialty
-        ? selectedSpecialtyRecord.legacyId
-        : undefined;
-
     return {
       page: currentPage.value,
       pageSize: pageSize.value,
       specialty: filters.value.specialty || undefined,
-      specialtyLegacyId,
       language: filters.value.language || undefined,
       gender: filters.value.gender || undefined,
       base: filters.value.base ? Number(filters.value.base) : undefined,
@@ -84,17 +71,6 @@ export const useStudentStore = defineStore("student", () => {
     ref({})
   );
 
-  const buildSpecialtyMap = () => {
-    const specialtyMap = new Map<string, string>();
-    specialties.value.forEach((specialty) => {
-      specialtyMap.set(specialty.id, specialty.id);
-      if (specialty.legacyId) {
-        specialtyMap.set(specialty.legacyId, specialty.id);
-      }
-    });
-    return specialtyMap;
-  };
-
   const normalizeStudent = (student: {
     _id: string;
     firstName: string;
@@ -108,13 +84,12 @@ export const useStudentStore = defineStore("student", () => {
     status?: any;
     history?: any[];
   }) => {
-    const specialtyMap = buildSpecialtyMap();
     return {
       id: student._id,
       firstName: student.firstName,
       surname: student.surname,
       patronymic: student.patronymic,
-      specialty: specialtyMap.get(student.specialty) ?? student.specialty,
+      specialty: student.specialty,
       language: student.language,
       gender: student.gender,
       base: student.base,
@@ -124,7 +99,7 @@ export const useStudentStore = defineStore("student", () => {
     };
   };
 
-  watch([convexStudents, specialties], ([newData]) => {
+  watch(convexStudents, (newData) => {
     if (newData) {
       students.value = newData.map(normalizeStudent);
     }

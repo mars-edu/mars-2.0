@@ -23,7 +23,6 @@ export const useSpecialtyStore = defineStore(
       if (newData) {
         specialties.value = newData.map((s) => ({
           id: s._id,
-          legacyId: s.legacyId,
           name: s.name,
           codeName: s.codeName,
           code: s.code,
@@ -40,10 +39,7 @@ export const useSpecialtyStore = defineStore(
 
     const _specialtyById = computed(() => {
       const m = new Map<string, (typeof specialties.value)[number]>();
-      for (const s of specialties.value) {
-        m.set(s.id, s);
-        if (s.legacyId) m.set(s.legacyId, s);
-      }
+      for (const s of specialties.value) m.set(s.id, s);
       return m;
     });
     const getSpecialtyById = computed(() => {
@@ -52,9 +48,7 @@ export const useSpecialtyStore = defineStore(
 
     const getSpecialtyByCode = computed(() => {
       return (code: string) =>
-        specialties.value.find(
-          (s) => s.code === code || s.id === code || s.legacyId === code
-        );
+        specialties.value.find((s) => s.code === code || s.id === code);
     });
 
     const specialtyOptions = computed(() =>
@@ -122,7 +116,6 @@ export const useSpecialtyStore = defineStore(
         const data = await convex.query(api.specialties.queries.list, {});
                 specialties.value = data.map((specialty) => ({
                   id: specialty._id,
-                  legacyId: specialty.legacyId,
                   name: specialty.name,
                   code: specialty.code,
                   codeName: specialty.codeName,

@@ -20,12 +20,14 @@ export interface ResolvedUser {
 type ToolError = { error: string };
 type ToolResult = Record<string, unknown> | Record<string, unknown>[] | ToolError | unknown[];
 
-// students.specialty stores a legacyId UUID, not a Convex Id<'specialties'>.
-// Build a map from legacyId → name by loading all specialties once.
+// students.specialty stores the canonical specialties._id (legacy D1 ids were
+// migrated). Map _id → name; keep legacyId as a fallback for any env not yet
+// migrated.
 async function buildSpecialtyMap(ctx: ActionCtx): Promise<Record<string, string>> {
   const all = await ctx.runQuery(api.specialties.queries.list, {});
   const map: Record<string, string> = {};
   for (const sp of all) {
+    map[sp._id] = sp.name;
     if (sp.legacyId) map[sp.legacyId] = sp.name;
   }
   return map;
@@ -182,7 +184,7 @@ export function createMarsTools(
         } else {
           students = await ctx.runQuery(api.students.queries.list, {});
         }
-        // students.specialty stores legacyId (UUID), not Convex _id — resolve via map.
+        // resolve student.specialty (canonical specialties._id) to a name via the map.
         const specialtyMap = await buildSpecialtyMap(ctx);
         return students.map((s) => ({
           ...s,
@@ -201,7 +203,7 @@ export function createMarsTools(
           id: studentId as Id<'students'>,
         });
         if (!student) return { error: 'Student not found' };
-        // students.specialty stores legacyId (UUID), not Convex _id — resolve via map.
+        // resolve student.specialty (canonical specialties._id) to a name via the map.
         const specialtyMap = await buildSpecialtyMap(ctx);
         return {
           ...student,
