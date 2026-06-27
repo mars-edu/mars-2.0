@@ -82,9 +82,8 @@ export const listPaginated = query({
     if (args.course !== undefined && args.activeStartYear && args.activeStartYear > 0) {
       const academicYears = await ctx.db.query("academicYears").collect();
       const ayMap = new Map(academicYears.map(ay => [ay._id, ay]));
-      const ayLegacyMap = new Map(academicYears.filter(ay => ay.legacyId).map(ay => [ay.legacyId!, ay]));
       results = results.filter((s) => {
-        const studentAy = s.academicYearId ? (ayMap.get(s.academicYearId as any) || ayLegacyMap.get(s.academicYearId)) : undefined;
+        const studentAy = s.academicYearId ? ayMap.get(s.academicYearId as any) : undefined;
         if (!studentAy) return false;
         const course = args.activeStartYear! - studentAy.startYear + 1;
         return course === args.course;

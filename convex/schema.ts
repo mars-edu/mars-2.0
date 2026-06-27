@@ -122,7 +122,6 @@ export default defineSchema({
    * Migrated from: academicYearStore.ts
    */
   academicYears: defineTable({
-    legacyId: v.optional(v.string()), // D1 ID for mapping during migration
     name: v.string(),
     startYear: v.number(),
     endYear: v.number(),
@@ -131,8 +130,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_active", ["isActive"])
-    .index("by_startYear", ["startYear"])
-    .index("by_legacyId", ["legacyId"]),
+    .index("by_startYear", ["startYear"]),
 
   /**
    * Global semester definitions (settings)
