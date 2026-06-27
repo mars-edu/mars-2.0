@@ -20,7 +20,6 @@ export const listPaginated = query({
     page: v.number(),
     pageSize: v.number(),
     specialty: v.optional(v.string()),
-    specialtyLegacyId: v.optional(v.string()),
     language: v.optional(v.string()),
     gender: v.optional(v.string()),
     base: v.optional(v.number()),
@@ -39,8 +38,7 @@ export const listPaginated = query({
         .withSearchIndex("search_by_name", (q) => {
           let sq = q.search("searchName", args.searchTerm!);
           if (args.gender) sq = sq.eq("gender", args.gender as "male" | "female");
-          // Use the primary specialty value as filterField if no legacy ID ambiguity
-          if (args.specialty && !args.specialtyLegacyId) {
+          if (args.specialty) {
             sq = sq.eq("specialty", args.specialty);
           }
           if (args.language) sq = sq.eq("language", args.language);
@@ -48,12 +46,6 @@ export const listPaginated = query({
         })
         .collect();
 
-      // Post-filter for cases that can't be in filterFields
-      if (args.specialtyLegacyId && args.specialty && args.specialty !== args.specialtyLegacyId) {
-        results = results.filter(
-          (s) => s.specialty === args.specialty || s.specialty === args.specialtyLegacyId
-        );
-      }
       if (args.base !== undefined) {
         results = results.filter((s) => s.base === args.base);
       }
@@ -64,21 +56,10 @@ export const listPaginated = query({
       // No search term — use regular index-based query
       let query = ctx.db.query("students").order("asc");
 
-      if (args.specialty || args.specialtyLegacyId) {
-        query = query.filter((q) => {
-          const field = q.field("specialty");
-          if (
-            args.specialty &&
-            args.specialtyLegacyId &&
-            args.specialty !== args.specialtyLegacyId
-          ) {
-            return q.or(
-              q.eq(field, args.specialty),
-              q.eq(field, args.specialtyLegacyId)
-            );
-          }
-          return q.eq(field, args.specialty ?? args.specialtyLegacyId!);
-        });
+      if (args.specialty) {
+        query = query.filter((q) =>
+          q.eq(q.field("specialty"), args.specialty)
+        );
       }
       if (args.language) {
         query = query.filter((q) => q.eq(q.field("language"), args.language));
