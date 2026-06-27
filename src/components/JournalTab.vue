@@ -472,8 +472,7 @@ const {
   currentEvent,
   currentJournal,
   currentRupEntry,
-  // visibleHeaders is declared further down; the closure defers access.
-  visibleHeaders: computed(() => visibleHeaders.value),
+  visibleHeaders,
   ktpId: computed(() => props.ktpId),
 });
 
@@ -584,8 +583,7 @@ const {
   onMakeupHoursClick,
   onMakeupHoursSave,
 } = useMakeupHours({
-  // canonicalTemplate is declared further down; the closure defers access.
-  canonicalTemplate: computed(() => canonicalTemplate.value),
+  canonicalTemplate,
   currentEvent,
   journalId: computed(() => props.journalId),
 });

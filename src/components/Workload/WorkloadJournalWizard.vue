@@ -302,7 +302,7 @@ const WEEKDAYS = [
 ];
 const abbrFor = (w: number) => WEEKDAYS.find((x) => x.weekId === w)?.abbr ?? "";
 
-interface Spec { id: string; legacyId?: string; label: string }
+interface Spec { id: string; label: string }
 interface Discipline {
   id: string; subjectId: string; name: string; index: string; course: string;
   groupCount: number; plannedHours: number; specialties: Spec[]; defaultLang: string;
@@ -323,10 +323,6 @@ const draft = ref<{ langs: string[]; specIds: string[]; studentIds: string[] }>(
 let seq = 0;
 
 const specLabel = (name: string) => (name || "").split(/[\s-]+/)[0] || name;
-const specKeys = (id: string): string[] => {
-  const sp: any = specialtyStore.specialties.find((s: any) => s.id === id || s._id === id);
-  return sp?.legacyId ? [id, sp.legacyId] : [id];
-};
 
 const semesterRecord = computed(() => {
   if (!props.workload) return null;
@@ -369,8 +365,8 @@ function selectSemester(sem: number) {
     const itemSpecs = (item as any).specialtyIds as string[] | undefined;
     const specSource: string[] = itemSpecs?.length ? itemSpecs : (rup?.specialtyIds ?? []);
     const specialties: Spec[] = specSource.map((sid: string) => {
-      const sp: any = specialtyStore.specialties.find((s: any) => s.id === sid || s._id === sid);
-      return { id: sid, legacyId: sp?.legacyId, label: sp?.codeName || specLabel(sp?.name ?? sid) };
+      const sp: any = specialtyStore.specialties.find((s: any) => s.id === sid);
+      return { id: sid, label: sp?.codeName || specLabel(sp?.name ?? sid) };
     });
     return {
       id: item.id, subjectId: item.subjectId,
@@ -414,7 +410,9 @@ const stagedFor = (itemId: string) => staged.value.filter((s) => s.itemId === it
 const candidates = computed(() => {
   const d = active.value;
   if (!d || draft.value.specIds.length === 0) return [];
-  const keys = new Set(draft.value.specIds.flatMap((id) => specKeys(id)));
+  // Students' specialty is normalized to the canonical specialty id at ingestion,
+  // so match canonical-to-canonical (no legacyId).
+  const keys = new Set(draft.value.specIds);
   const taken = new Set(stagedFor(d.id).flatMap((s) => s.studentIds));
   return allStudents.value.filter(
     (st) =>

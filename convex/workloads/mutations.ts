@@ -134,6 +134,18 @@ export const createJournalsFromWorkloadGroups = mutation({
         .withIndex("by_journal", (q) => q.eq("journalId", j._id))
         .collect();
       for (const link of links) await ctx.db.delete(link._id);
+      // Cascade marks + history so regeneration does not orphan graded rows
+      // (mirrors the canonical journals.remove delete path).
+      const oldMarks = await ctx.db
+        .query("marks")
+        .withIndex("by_journal", (q) => q.eq("journalId", j._id))
+        .collect();
+      for (const m of oldMarks) await ctx.db.delete(m._id);
+      const oldHistory = await ctx.db
+        .query("markHistory")
+        .withIndex("by_journal", (q) => q.eq("journalId", j._id))
+        .collect();
+      for (const h of oldHistory) await ctx.db.delete(h._id);
       if (j.calendarEventId) {
         try {
           await ctx.db.delete(j.calendarEventId as Id<"calendarEvents">);
@@ -146,12 +158,15 @@ export const createJournalsFromWorkloadGroups = mutation({
 
     let journalsCreated = 0;
     for (const g of args.groups) {
+      // Dedup defensively: duplicate (journalId, studentId) rows would break
+      // downstream .unique() queries on by_journal_student.
+      const studentIds = [...new Set(g.studentIds)];
       const calendarEventId = await ctx.db.insert("calendarEvents", {
         rupEntryId: g.subjectId,
         teacherId: workload.teacherId as string | undefined,
         startDate: semesterRecord.startDate,
         endDate: semesterRecord.endDate,
-        participants: g.studentIds,
+        participants: studentIds,
         semester: semesterRecord._id,
         useCustomPeriod: false,
         weeklySchedules: g.weeklySchedules,
@@ -169,7 +184,7 @@ export const createJournalsFromWorkloadGroups = mutation({
       });
       journalsCreated++;
 
-      for (const studentId of g.studentIds) {
+      for (const studentId of studentIds) {
         await ctx.db.insert("journalStudents", {
           journalId,
           studentId,

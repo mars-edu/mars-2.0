@@ -10,6 +10,7 @@ import { computed, type Ref } from "vue";
 import { f7 } from "framework7-vue";
 import { useMakeupRequestStore } from "@/stores/makeupRequestStore";
 import { useUserStore } from "@/stores/userStore";
+import { useTeacherStore } from "@/stores/teacherStore";
 import type { MakeupHoursData } from "@/components/MakeupHoursPopover.vue";
 
 export interface UseMakeupHoursOptions {
@@ -23,6 +24,7 @@ export function useMakeupHours(opts: UseMakeupHoursOptions) {
 
   const makeupRequestStore = useMakeupRequestStore();
   const userStore = useUserStore();
+  const teacherStore = useTeacherStore();
 
   const isMakeupRequestLoading = computed(() => makeupRequestStore.loading);
 
@@ -46,11 +48,17 @@ export function useMakeupHours(opts: UseMakeupHoursOptions) {
       return;
     }
 
-    const teacherId = currentEvent.value?.teacherId;
-    if (!teacherId) {
+    const eventTeacherId = currentEvent.value?.teacherId;
+    if (!eventTeacherId) {
       f7.dialog.alert("Преподаватель не найден");
       return;
     }
+    // event.teacherId may hold a teachers._id OR a users._id (depends who
+    // created the event); the backend expects teachers._id. Resolve both forms.
+    const teacherRecord =
+      teacherStore.getTeacherById(eventTeacherId) ??
+      teacherStore.getTeacherByUserId(eventTeacherId);
+    const teacherId = teacherRecord?.id ?? eventTeacherId;
 
     try {
       await makeupRequestStore.createMakeupRequest({

@@ -49,19 +49,19 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
     if (!studentId || !journalId.value) return null;
     const storeColIndex = getStoreIndexForDatePosition(datePos);
 
-    console.log("[computeDayAverage] Processing:", {
+    debugLog("[computeDayAverage] Processing:", {
       studentId,
       datePos,
       storeColIndex,
     });
 
     if (storeColIndex == null || storeColIndex < 0) {
-      console.warn("[computeDayAverage] Invalid store column index:", storeColIndex);
+      debugLog("[computeDayAverage] Invalid store column index:", storeColIndex);
       return null;
     }
     const studentMarks = marksStore.getStudentMarks(journalId.value, studentId);
     if (!studentMarks || storeColIndex >= studentMarks.length) {
-      console.warn("[computeDayAverage] No student marks or column out of bounds:", {
+      debugLog("[computeDayAverage] No student marks or column out of bounds:", {
         hasMarks: !!studentMarks,
         storeColIndex,
         marksLength: studentMarks?.length,
@@ -75,23 +75,7 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
       )
       .filter((v): v is number => v !== null);
 
-    console.log("[computeDayAverage] Result:", {
-      datePos,
-      storeColIndex,
-      rawValues: values,
-      valuesDetailed: values.map((v, i) => ({
-        index: i,
-        value: v,
-        type: typeof v,
-        isNull: v === null,
-        isEmpty: v === "",
-        isNumeric: !isNaN(Number(v)),
-        asNumber: Number(v)
-      })),
-      nums,
-      numsLength: nums.length,
-      avg: nums.length > 0 ? nums.reduce((s, v) => s + v, 0) / nums.length : null,
-    });
+    debugLog("[computeDayAverage] Result", { datePos, storeColIndex, nums });
 
     if (nums.length === 0) return null;
     const avg = nums.reduce((s, v) => s + v, 0) / nums.length;
@@ -103,7 +87,7 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
     sessionDateIndices: number[],
     method: "only-assigned" | "all-days"
   ): string | null => {
-    console.log("[computeSessionGradeForStudent] Called with:", {
+    debugLog("[computeSessionGradeForStudent] Called with:", {
       studentId,
       sessionDateIndices,
       method,
@@ -111,7 +95,7 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
     });
 
     if (sessionDateIndices.length === 0) {
-      console.warn("[computeSessionGradeForStudent] sessionDateIndices is empty, returning null");
+      debugLog("[computeSessionGradeForStudent] sessionDateIndices is empty, returning null");
       return null;
     }
 
@@ -125,7 +109,7 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
         dayAverages.push({ idx, avg: dayAvg });
         sum += dayAvg ?? 0;
       });
-      console.log("[computeSessionGradeForStudent] all-days method:", {
+      debugLog("[computeSessionGradeForStudent] all-days method:", {
         totalDays,
         dayAverages,
         sum,
@@ -148,7 +132,7 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
       }
     });
 
-    console.log("[computeSessionGradeForStudent] only-assigned method:", {
+    debugLog("[computeSessionGradeForStudent] only-assigned method:", {
       sessionDateIndices,
       dayAverages,
       sum,
@@ -157,7 +141,7 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
     });
 
     if (count === 0) {
-      console.warn("[computeSessionGradeForStudent] No valid marks found in date range, returning null");
+      debugLog("[computeSessionGradeForStudent] No valid marks found in date range, returning null");
       return null;
     }
     const grade = sum / count;
@@ -175,7 +159,7 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
       localJournalSettings.value.calculationType ||
       "calculated";
 
-    console.log("[computeAllSessionGrades] Starting calculation:", {
+    debugLog("[computeAllSessionGrades] Starting calculation:", {
       force,
       calculationType,
       hasLabels: !!opts?.labels,
@@ -183,11 +167,11 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
     });
 
     if (!journalId.value) {
-      console.warn("[computeAllSessionGrades] No journal ID, exiting");
+      debugLog("[computeAllSessionGrades] No journal ID, exiting");
       return;
     }
     if (!force && calculationType !== "calculated") {
-      console.warn("[computeAllSessionGrades] Not forced and calculationType is not 'calculated', exiting");
+      debugLog("[computeAllSessionGrades] Not forced and calculationType is not 'calculated', exiting");
       return;
     }
 
@@ -195,13 +179,13 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
     // when the user clicks the "Расчитать" button (force: true)
     // Automatic computation should NOT compute intermediate controls
     if (!force) {
-      console.warn("[computeAllSessionGrades] Not forced - skipping automatic computation of intermediate controls");
+      debugLog("[computeAllSessionGrades] Not forced - skipping automatic computation of intermediate controls");
       return;
     }
 
     const canonical = canonicalTemplate.value;
     if (!Array.isArray(canonical) || canonical.length === 0) {
-      console.warn("[computeAllSessionGrades] No canonical template, exiting");
+      debugLog("[computeAllSessionGrades] No canonical template, exiting");
       return;
     }
 
@@ -218,7 +202,7 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
       localJournalSettings.value.calculationMethod ||
       "only-assigned";
 
-    console.log("[computeAllSessionGrades] Using calculation method:", calculationMethod);
+    debugLog("[computeAllSessionGrades] Using calculation method:", calculationMethod);
 
     const sessionColumns = canonical
       .map((mark, canonicalIndex) => ({ mark, canonicalIndex }))
@@ -228,7 +212,7 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
         matchesLabel(mark.label)
       );
 
-    console.log("[computeAllSessionGrades] Found session columns:", {
+    debugLog("[computeAllSessionGrades] Found session columns:", {
       totalCanonical: canonical.length,
       sessionColumnsCount: sessionColumns.length,
       sessionColumns: sessionColumns.map(({ mark, canonicalIndex }) => ({
@@ -241,13 +225,13 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
     });
 
     if (sessionColumns.length === 0) {
-      console.warn("[computeAllSessionGrades] No session columns found, exiting");
+      debugLog("[computeAllSessionGrades] No session columns found, exiting");
       return;
     }
 
     let allStudents = marksStore.getJournalStudentMarks(journalId.value);
     if (!Array.isArray(allStudents) || allStudents.length === 0) {
-      console.warn("[computeAllSessionGrades] No students found, exiting");
+      debugLog("[computeAllSessionGrades] No students found, exiting");
       return;
     }
 
@@ -256,7 +240,7 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
       ? allStudents.filter(s => opts.studentIds!.includes(s.studentId))
       : allStudents;
 
-    console.log("[computeAllSessionGrades] Processing students:", {
+    debugLog("[computeAllSessionGrades] Processing students:", {
       totalStudents: allStudents.length,
       filteredStudents: filteredStudents.length,
       hasStudentFilter: !!opts?.studentIds,
@@ -272,7 +256,7 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
         : [];
       const storeIndex = getStoreIndexForCanonicalIndex(canonicalIndex);
 
-      console.log("[computeAllSessionGrades] Processing session column:", {
+      debugLog("[computeAllSessionGrades] Processing session column:", {
         canonicalIndex,
         label: mark?.label,
         controlType: mark?.controlType,
@@ -281,7 +265,7 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
       });
 
       if (storeIndex == null || storeIndex < 0) {
-        console.warn("[computeAllSessionGrades] Invalid store index for column, skipping:", {
+        debugLog("[computeAllSessionGrades] Invalid store index for column, skipping:", {
           canonicalIndex,
           storeIndex,
         });
@@ -298,7 +282,7 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
         const existingValue =
           studentMark.marks?.[storeIndex]?.values?.[0] ?? null;
 
-        console.log("[computeAllSessionGrades] Student grade computed:", {
+        debugLog("[computeAllSessionGrades] Student grade computed:", {
           studentId: studentMark.studentId,
           canonicalIndex,
           label: mark?.label,
@@ -324,7 +308,7 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
     // Wait for all session grade updates to complete before returning
     await Promise.all(updatePromises);
 
-    console.log("[computeAllSessionGrades] Completed:", {
+    debugLog("[computeAllSessionGrades] Completed:", {
       totalUpdates: updatePromises.length,
     });
   };
@@ -553,7 +537,8 @@ export function useSessionGrades(opts: UseSessionGradesOptions) {
       const finalRaw = getStudentFinalGrade(student.studentId);
       const finalNum = Number(finalRaw);
       if (!finalRaw || finalRaw === "—" || isNaN(finalNum)) continue;
-      counts[scoreToLetter(finalNum)] += 1;
+      // Final grades are on the 0-5 scale; LETTER_GRADE_BUCKETS are 0-100.
+      counts[scoreToLetter(finalNum * 20)] += 1;
       totalGraded += 1;
     }
     return {

@@ -7,7 +7,7 @@
  * Stores are resolved internally; component-specific reactive context is passed
  * in.
  */
-import { computed, watch, type Ref } from "vue";
+import { computed, type Ref } from "vue";
 import { storeToRefs } from "pinia";
 import dayjs from "dayjs";
 import {
@@ -338,12 +338,20 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
         String(control.semesterId) === semesterFilter
     );
 
-    // Only show final controls that are specified in distribution
+    // Only show final controls that are specified in distribution, and only for
+    // this journal's semester (same guard as intermediates — the year-level
+    // getter returns both semesters, so without this the other semester's final
+    // leaks in as a duplicate Итог column).
     const filteredScheduledFinal = scheduledFinalForYear.filter(
       (control: any) => {
         if (distributionFinalControlIds.length === 0) {
           return false;
         }
+        const semesterOk =
+          !semesterFilter ||
+          control?.semesterId == null ||
+          String(control.semesterId) === semesterFilter;
+        if (!semesterOk) return false;
         return (
           distributionFinalControlIds.includes(control.id) ||
           distributionFinalControlIds.includes(control.finalControlId)
@@ -686,6 +694,16 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
           });
           insertIndex =
             insertIndex === -1 ? marksWithSessions.length : insertIndex + 1;
+        }
+
+        // Controls are processed in ascending sorted order. Advance past any
+        // controls already inserted right after this same date anchor so equal-
+        // anchor controls keep their sorted order instead of being reversed.
+        while (
+          insertIndex < marksWithSessions.length &&
+          (marksWithSessions[insertIndex] as any).type !== "date"
+        ) {
+          insertIndex++;
         }
 
         debugGroup("insert control column", () => {
