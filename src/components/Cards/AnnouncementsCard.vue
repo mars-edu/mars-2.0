@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 md:mb-6 gap-4">
       <div class="flex items-center gap-3">
-        <div class="bg-orange-100 text-orange-600 p-2 rounded-xl">
+        <div class="bg-orange-500/15 text-orange-600 p-2 rounded-xl">
           <IconMegaphone class="text-xl w-5 h-5" />
         </div>
         <h3 class="text-lg font-bold text-foreground">{{ home_announcements_title() }}</h3>
@@ -158,14 +158,14 @@ const getBadge = (type: string) => {
 
 const getBadgeClass = (type: string, category: string) => {
   return type === "alert"
-      ? "bg-red-50 text-red-600"
+      ? "bg-red-500/10 text-red-600 dark:text-red-400"
       : type === "system"
       ? "bg-muted text-muted-foreground border border-border"
       : category === "contests"
-      ? "bg-yellow-50 text-yellow-600"
+      ? "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
       : category === "events"
-      ? "bg-purple-50 text-purple-600"
-      : "bg-blue-50 text-blue-600";
+      ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
+      : "bg-blue-500/10 text-blue-600 dark:text-blue-400";
 };
 
 const filteredItems = computed<AnnouncementCardItem[]>(() =>

@@ -11,7 +11,7 @@
       <div class="bg-mars-muted rounded-xl shadow-lg p-4 w-full max-w-md max-h-[90vh] flex flex-col">
         <div
           class="bg-card rounded-lg p-2 overflow-y-auto"
-          :class="{ 'bg-gray-100': isColumnFutureDate }"
+          :class="{ 'bg-muted': isColumnFutureDate }"
         >
           <table class="w-full">
             <thead class="sticky top-0 bg-card z-10">

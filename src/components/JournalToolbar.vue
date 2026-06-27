@@ -65,8 +65,8 @@
             id="journal-tools-button"
             type="button"
             @click="toggle"
-            class="w-12 h-12 bg-card rounded-2xl border border-border flex items-center justify-center text-muted-foreground hover:text-yellow-600 hover:border-yellow-200 hover:bg-yellow-50 transition-all shadow-sm"
-            :class="{ 'text-yellow-600 border-yellow-200 bg-yellow-50': isOpen }"
+            class="w-12 h-12 bg-card rounded-2xl border border-border flex items-center justify-center text-muted-foreground hover:text-yellow-600 hover:border-yellow-500/40 hover:bg-yellow-500/10 transition-all shadow-sm"
+            :class="{ 'text-yellow-600 border-yellow-500/40 bg-yellow-500/10': isOpen }"
           >
             <IconMoreVertical class="w-7 h-7" />
           </button>

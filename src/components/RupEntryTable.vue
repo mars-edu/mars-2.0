@@ -67,7 +67,7 @@
                   >
                     <span
                       v-if="entry.finalControlId"
-                      class="inline-flex items-center px-2 py-1 rounded-md border border-red-100 bg-red-50 text-red-700 text-xs font-medium"
+                      class="inline-flex items-center px-2 py-1 rounded-md border border-red-500/25 bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-medium"
                     >
                       {{
                         finalControlStore.getFinalControlById(entry.finalControlId)
@@ -76,7 +76,7 @@
                     </span>
                     <span
                       v-if="entry.intermediateControlId"
-                      class="inline-flex items-center px-2 py-1 rounded-md border border-red-100 bg-red-50 text-red-700 text-xs font-medium"
+                      class="inline-flex items-center px-2 py-1 rounded-md border border-red-500/25 bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-medium"
                     >
                       {{
                         intermediateControlStore.getIntermediateControlById(
@@ -86,26 +86,26 @@
                     </span>
                     <span
                       v-if="entry.examEnabled"
-                      class="inline-flex items-center px-2 py-1 rounded-md border border-red-100 bg-red-50 text-red-700 text-xs font-medium"
+                      class="inline-flex items-center px-2 py-1 rounded-md border border-red-500/25 bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-medium"
                     >
                       Экз.
                     </span>
                     <span
                       v-if="entry.creditEnabled"
-                      class="inline-flex items-center px-2 py-1 rounded-md border border-red-100 bg-red-50 text-red-700 text-xs font-medium"
+                      class="inline-flex items-center px-2 py-1 rounded-md border border-red-500/25 bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-medium"
                     >
                       Зач.
                     </span>
                     <span
                       v-if="entry.controlLessonEnabled"
-                      class="inline-flex items-center px-2 py-1 rounded-md border border-red-100 bg-red-50 text-red-700 text-xs font-medium"
+                      class="inline-flex items-center px-2 py-1 rounded-md border border-red-500/25 bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-medium"
                     >
                       Контр.
                     </span>
                   </template>
                   <span
                     v-if="item.totalHours"
-                    class="inline-flex items-center px-2 py-1 rounded-md border border-red-100 bg-red-50 text-red-700 text-xs font-medium"
+                    class="inline-flex items-center px-2 py-1 rounded-md border border-red-500/25 bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-medium"
                   >
                     {{ item.totalHours }} ч.
                   </span>

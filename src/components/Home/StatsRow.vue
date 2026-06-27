@@ -25,7 +25,7 @@
       class="bg-card rounded-[24px] p-6 shadow-sm border border-border flex flex-col justify-between h-36 hover:shadow-md transition-all cursor-default"
     >
       <div class="flex justify-between items-start">
-        <div class="p-2.5 bg-orange-50 text-orange-600 rounded-full">
+        <div class="p-2.5 bg-orange-500/10 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded-full">
           <IconCalendar class="text-xl w-5 h-5" />
         </div>
         <span class="text-[10px] font-bold bg-muted text-muted-foreground px-2 py-1 rounded-full">
@@ -47,10 +47,10 @@
       class="bg-card rounded-[24px] p-6 shadow-sm border border-border flex flex-col justify-between h-36 hover:shadow-md transition-all cursor-default"
     >
       <div class="flex justify-between items-start">
-        <div class="p-2.5 bg-red-50 text-red-500 rounded-full">
+        <div class="p-2.5 bg-red-500/10 dark:bg-red-900/20 text-red-500 rounded-full">
           <IconClock class="text-xl w-5 h-5" />
         </div>
-        <span class="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-1 rounded-full">
+        <span class="text-[10px] font-bold text-red-500 bg-red-500/10 dark:bg-red-900/20 px-2 py-1 rounded-full">
           -1.2%
         </span>
       </div>

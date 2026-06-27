@@ -2,7 +2,7 @@
   <div>
     <button
       id="import-working-plan-button"
-      class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors shadow-sm"
+      class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-colors shadow-sm"
       :class="{
         'opacity-50 cursor-not-allowed border-border bg-muted text-muted-foreground':
           disabled,

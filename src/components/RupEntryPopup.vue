@@ -43,7 +43,7 @@
 
               <div
                 v-if="isIntegrationEnabled"
-                class="mt-3 bg-green-50 border border-green-200 rounded-xl p-4 grid grid-cols-1 md:grid-cols-2 gap-4"
+                class="mt-3 bg-green-500/8 border border-green-500/25 rounded-xl p-4 grid grid-cols-1 md:grid-cols-2 gap-4"
               >
                 <Select
                   v-model="integrationYear"
@@ -81,7 +81,7 @@
 
               <div
                 v-if="isConnectChecked"
-                class="mt-3 bg-yellow-50 border border-yellow-200 rounded-xl p-4 space-y-2"
+                class="mt-3 bg-yellow-500/8 border border-yellow-500/25 rounded-xl p-4 space-y-2"
               >
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Select

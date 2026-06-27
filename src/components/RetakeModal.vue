@@ -131,9 +131,9 @@
             </div>
           </div>
 
-          <div class="bg-orange-50/50 border border-orange-100 p-4 rounded-2xl flex gap-3 items-start">
+          <div class="bg-orange-500/8 border border-orange-500/25 p-4 rounded-2xl flex gap-3 items-start">
             <IconInfo class="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
-            <div class="text-sm text-orange-800 leading-relaxed font-medium">
+            <div class="text-sm text-orange-700 dark:text-orange-300 leading-relaxed font-medium">
               Заявка будет отправлена администратору по академическим вопросам на рассмотрение. После одобрения поле пересдачи станет активным.
             </div>
           </div>
@@ -141,7 +141,7 @@
 
         <!-- Step 2: Confirmation -->
         <section v-if="step === 'confirm'" class="flex flex-col items-center justify-center text-center py-8">
-          <div class="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mb-6 text-orange-500 shadow-sm border border-orange-100">
+          <div class="w-20 h-20 bg-orange-500/10 rounded-full flex items-center justify-center mb-6 text-orange-500 shadow-sm border border-orange-500/20">
             <IconAlertCircle class="w-10 h-10" />
           </div>
           <h3 class="text-2xl font-bold text-foreground tracking-tight mb-3">Подтверждение</h3>
@@ -152,7 +152,7 @@
 
         <!-- Step 3: Success -->
         <section v-if="step === 'success'" class="flex flex-col items-center justify-center text-center py-8">
-          <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-6 text-green-500 shadow-sm border border-green-100">
+          <div class="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mb-6 text-green-500 shadow-sm border border-green-500/20">
             <IconCheckCircle class="w-10 h-10" />
           </div>
           <h3 class="text-2xl font-bold text-foreground tracking-tight mb-3">Заявка отправлена</h3>

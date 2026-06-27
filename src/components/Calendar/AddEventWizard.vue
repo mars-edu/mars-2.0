@@ -54,14 +54,14 @@
               </div>
               <div class="mt-1 text-xs text-muted-foreground font-medium">Полный курс</div>
             </div>
-            <div class="rounded-2xl border border-orange-100 bg-orange-50/50 p-4">
-              <div class="text-[11px] font-semibold uppercase tracking-wide text-orange-600">
+            <div class="rounded-2xl border border-orange-500/30 bg-orange-500/10 p-4">
+              <div class="text-[11px] font-semibold uppercase tracking-wide text-orange-600 dark:text-orange-400">
                 Семестр
               </div>
-              <div class="mt-1 text-[34px] font-bold text-orange-600 leading-none">
+              <div class="mt-1 text-[34px] font-bold text-orange-600 dark:text-orange-400 leading-none">
                 {{ semesterPlannedHours }} ч.
               </div>
-              <div class="mt-1 text-xs text-orange-500 font-medium">К распределению</div>
+              <div class="mt-1 text-xs text-orange-500 dark:text-orange-400 font-medium">К распределению</div>
             </div>
           </div>
         </div>
@@ -83,14 +83,14 @@
           <div class="bg-muted p-1 rounded-xl flex gap-1">
             <button 
               class="flex-1 py-1.5 text-sm font-medium rounded-lg transition-all"
-              :class="!useCustomPeriodModel ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-black/5'"
+              :class="!useCustomPeriodModel ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'"
               @click="useCustomPeriodModel = false"
             >
               Семестр
             </button>
             <button 
               class="flex-1 py-1.5 text-sm font-medium rounded-lg transition-all"
-              :class="useCustomPeriodModel ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-black/5'"
+              :class="useCustomPeriodModel ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'"
               @click="useCustomPeriodModel = true"
             >
               Свой период
@@ -136,7 +136,7 @@
             <div class="text-[13px] font-semibold uppercase tracking-widest text-foreground opacity-70">Расписание</div>
             <span
               class="rounded-lg px-2 py-1 text-[12px] font-medium"
-              :class="isSelectedHoursExceeded ? 'bg-red-100 text-red-600' : (selectedHours === semesterPlannedHours && semesterPlannedHours > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600')"
+              :class="isSelectedHoursExceeded ? 'bg-red-500/15 text-red-600 dark:text-red-400' : (selectedHours === semesterPlannedHours && semesterPlannedHours > 0 ? 'bg-green-500/15 text-green-600 dark:text-green-400' : 'bg-red-500/15 text-red-600 dark:text-red-400')"
             >{{ selectedHours }} / {{ semesterPlannedHours }} ч.</span>
           </div>
           <div class="grid grid-cols-7 gap-1.5 w-full">

@@ -7,7 +7,7 @@
             {{ currentMonthYear }}
           </h2>
           <button
-            class="flex items-center space-x-2 px-3 py-1 bg-red-100 text-red-600 rounded-full text-xs font-medium hover:bg-red-200 transition-colors"
+            class="flex items-center space-x-2 px-3 py-1 bg-red-500/15 text-red-600 dark:text-red-400 rounded-full text-xs font-medium hover:bg-red-500/25 transition-colors"
             @click="navigateToPlanning"
           >
             <IconCalendarPlus class="text-xs w-3 h-3" />
@@ -52,9 +52,9 @@
           class="w-8 h-8 flex items-center justify-center text-xs rounded-full"
           :class="[
             date.isToday
-              ? 'bg-red-400 text-white'
+              ? 'bg-red-500 text-white'
               : date.isCurrentMonth && isSelectedDate(date)
-              ? 'bg-red-200 text-red-700'
+              ? 'bg-red-500/20 text-red-600 dark:text-red-400'
               : date.isCurrentMonth
               ? 'text-foreground hover:bg-muted'
               : 'text-muted-foreground/50 hover:bg-muted/50',

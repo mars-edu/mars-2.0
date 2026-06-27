@@ -187,7 +187,7 @@ const statusLabel = (status: Assignment["status"]) => {
 const statusBadgeClass = (status: Assignment["status"]) => {
   if (status === "active") return "bg-muted text-foreground";
   if (status === "closed") return "bg-muted text-muted-foreground";
-  return "bg-yellow-100 text-yellow-700";
+  return "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400";
 };
 
 const onCreateClick = () => {
