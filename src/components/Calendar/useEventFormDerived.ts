@@ -131,9 +131,17 @@ export function useEventFormDerived(args: {
 
   const selectedHours = computed(() => {
     if (weekCount.value <= 0) return "0";
-    const scheduleIds = educationScheduleStore.getActiveYearSchedules.map(
-      (s) => s.id
-    );
+    // Count slots against THIS semester's schedule (the same list the start/end
+    // pickers use). getActiveYearSchedules holds both semesters' slots, which
+    // share lessonNumbers — interleaving them inflates the start→end index gap
+    // (e.g. 2 lessons counted as 3 → 40ч shown as 60ч).
+    const semId = semester.value?.id;
+    const scheduleList = semId
+      ? educationScheduleStore.getSchedulesBySemester(semId)
+      : educationScheduleStore.getActiveYearSchedules;
+    const scheduleIds = [...scheduleList]
+      .sort((a, b) => a.lessonNumber - b.lessonNumber)
+      .map((s) => s.id);
     const hoursPerWeek = computeWeeklySlotHours(
       args.selectedWeekDays.value,
       scheduleIds
