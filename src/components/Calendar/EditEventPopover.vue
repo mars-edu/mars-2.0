@@ -72,6 +72,7 @@ import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useUserStore } from "@/stores/userStore";
+import { useTeacherStore } from "@/stores/teacherStore";
 import { useNestedPopover } from "@/composables/useNestedPopover";
 import { storeToRefs } from "pinia";
 import { getWeekDays, DATE_UI_FORMAT } from "@/constants/calendar";
@@ -97,13 +98,16 @@ const rupEntryStore = useRupEntryStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const educationScheduleStore = useEducationScheduleStore();
 const userStore = useUserStore();
+const teacherStore = useTeacherStore();
 
 const effectiveTeacherId = computed(() => {
   if (userStore.isAdmin) {
     return calendarStore.selectedTeacherId || undefined;
   }
   if (userStore.isTeacher) {
-    return userStore.currentUser?.id;
+    // Write the canonical teachers._id, not the user id, so event.teacherId is consistent.
+    const uid = userStore.currentUser?.id;
+    return teacherStore.getTeacherByUserId(uid ?? "")?.id ?? uid;
   }
   return undefined;
 });

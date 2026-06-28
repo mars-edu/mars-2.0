@@ -63,6 +63,7 @@ import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import AddEventWizard from "./AddEventWizard.vue";
 import { useCalendarStore, type CalendarEvent } from "@/stores/calendarStore";
 import { useUserStore } from "@/stores/userStore";
+import { useTeacherStore } from "@/stores/teacherStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useEventFormDerived, type WeekDaySchedule } from "./useEventFormDerived";
 import {
@@ -79,6 +80,7 @@ const emit = defineEmits<{
 
 const calendarStore = useCalendarStore();
 const userStore = useUserStore();
+const teacherStore = useTeacherStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const { getActiveAcademicYearSemester } = storeToRefs(academicYearSemesterStore);
 
@@ -87,7 +89,9 @@ const effectiveTeacherId = computed(() => {
     return calendarStore.selectedTeacherId || undefined;
   }
   if (userStore.isTeacher) {
-    return userStore.currentUser?.id;
+    // Write the canonical teachers._id, not the user id, so event.teacherId is consistent.
+    const uid = userStore.currentUser?.id;
+    return teacherStore.getTeacherByUserId(uid ?? "")?.id ?? uid;
   }
   return undefined;
 });
