@@ -20,10 +20,10 @@
           {{ option.moduleIndex }} {{ option.moduleName }} — {{ option.learningOutcome }}<template v-if="option.year"> ({{ option.year }})</template>
         </span>
         <span
-          v-if="option.semesters && option.semesters.length"
+          v-if="option.semester"
           class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 flex-shrink-0 ml-2 align-middle"
         >
-          {{ option.semesters.join(", ") }} семестр
+          {{ option.semester }} семестр
         </span>
         <span
           v-if="option.language"
@@ -62,6 +62,13 @@ const props = withDefaults(
     modelValue: string | null;
     /** Filter to a single academicYearId; omit to show all years. */
     yearId?: string;
+    /**
+     * Semester context used to resolve each option's semester badge (same logic
+     * the wizard uses to auto-pick a semester). Defaults to the active semester
+     * (current year / month). Pass the planning filter's selected-month semester
+     * to override.
+     */
+    semesterContextId?: string;
     searchable?: boolean;
     placeholder?: string;
     searchPlaceholder?: string;
@@ -99,21 +106,27 @@ const options = computed(() =>
       const year = academicYearStore.getAcademicYearById(
         rupEntryItem.academicYearId
       )?.startYear;
-      // Semester(s) the entry is distributed in (hours > 0), so both-semester
-      // lists are tellable apart.
-      const semesters = [
-        ...new Set(
-          (rupEntryItem.distributionEntries || [])
-            .filter((d: any) => Number(d.hours) > 0 && d.semesterId)
-            .map(
-              (d: any) =>
-                academicYearSemesterStore.getAcademicYearSemesterById(
-                  d.semesterId
-                )?.semesterNumber
-            )
-            .filter((n: any): n is number => typeof n === "number")
-        ),
-      ].sort((a, b) => a - b);
+      // Semester resolved for the current context (the active semester, or the
+      // passed-in selected-month one) — same logic the wizard uses to auto-pick
+      // a semester, so the badge matches what gets selected next. No badge when
+      // the entry has no distributed hours.
+      const hasDistribution = (rupEntryItem.distributionEntries || []).some(
+        (d: any) => Number(d.hours) > 0 && d.semesterId
+      );
+      const contextSemesterId =
+        props.semesterContextId ||
+        academicYearSemesterStore.getActiveAcademicYearSemester?.id;
+      const resolvedSemesterId = hasDistribution
+        ? rupEntryStore.getAutoSelectedSemesterForRupEntry(
+            option.value,
+            contextSemesterId
+          )
+        : undefined;
+      const semester = resolvedSemesterId
+        ? academicYearSemesterStore.getAcademicYearSemesterById(
+            resolvedSemesterId
+          )?.semesterNumber
+        : undefined;
       return {
         ...option,
         moduleIndex: option.moduleIndex || rupEntryItem.moduleIndex,
@@ -121,7 +134,7 @@ const options = computed(() =>
         learningOutcome: option.learningOutcome || rupEntryItem.learningOutcome,
         language: rupEntryItem.language,
         year,
-        semesters,
+        semester,
         specialtyChips: (rupEntryItem.specialtyIds || [])
           .map((sid) => specialtyStore.specialties.find((s: Specialty) => s.id === sid))
           .filter((s): s is Specialty => !!s),
