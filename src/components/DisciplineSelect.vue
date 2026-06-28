@@ -17,7 +17,13 @@
           class="text-[15px] font-semibold whitespace-normal break-words"
           :class="selected ? 'text-primary' : ''"
         >
-          {{ option.moduleIndex }} {{ option.moduleName }} — {{ option.learningOutcome }}
+          {{ option.moduleIndex }} {{ option.moduleName }} — {{ option.learningOutcome }}<template v-if="option.year"> ({{ option.year }})</template>
+        </span>
+        <span
+          v-if="option.semesters && option.semesters.length"
+          class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 flex-shrink-0 ml-2 align-middle"
+        >
+          {{ option.semesters.join(", ") }} семестр
         </span>
         <span
           v-if="option.language"
@@ -48,6 +54,8 @@ import { storeToRefs } from "pinia";
 import Select from "@/components/ui/Select.vue";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useSpecialtyStore, type Specialty } from "@/stores/specialtyStore";
+import { useAcademicYearStore } from "@/stores/academicYearStore";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 
 const props = withDefaults(
   defineProps<{
@@ -71,6 +79,8 @@ const emit = defineEmits<{
 
 const rupEntryStore = useRupEntryStore();
 const specialtyStore = useSpecialtyStore();
+const academicYearStore = useAcademicYearStore();
+const academicYearSemesterStore = useAcademicYearSemesterStore();
 const { rupEntryOptions } = storeToRefs(rupEntryStore);
 
 // rupEntry options enriched with language badge + specialty chips for the
@@ -84,12 +94,34 @@ const options = computed(() =>
     })
     .map((option) => {
       const rupEntryItem = rupEntryStore.getRupEntryById(option.value)!;
+      // Admission/РУП year — indicator so the same subject for different intake
+      // years (e.g. История Казахстана 2023 vs 2024) is distinguishable.
+      const year = academicYearStore.getAcademicYearById(
+        rupEntryItem.academicYearId
+      )?.startYear;
+      // Semester(s) the entry is distributed in (hours > 0), so both-semester
+      // lists are tellable apart.
+      const semesters = [
+        ...new Set(
+          (rupEntryItem.distributionEntries || [])
+            .filter((d: any) => Number(d.hours) > 0 && d.semesterId)
+            .map(
+              (d: any) =>
+                academicYearSemesterStore.getAcademicYearSemesterById(
+                  d.semesterId
+                )?.semesterNumber
+            )
+            .filter((n: any): n is number => typeof n === "number")
+        ),
+      ].sort((a, b) => a - b);
       return {
         ...option,
         moduleIndex: option.moduleIndex || rupEntryItem.moduleIndex,
         moduleName: option.moduleName || rupEntryItem.moduleName,
         learningOutcome: option.learningOutcome || rupEntryItem.learningOutcome,
         language: rupEntryItem.language,
+        year,
+        semesters,
         specialtyChips: (rupEntryItem.specialtyIds || [])
           .map((sid) => specialtyStore.specialties.find((s: Specialty) => s.id === sid))
           .filter((s): s is Specialty => !!s),
