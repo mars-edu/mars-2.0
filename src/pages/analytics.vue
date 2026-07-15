@@ -989,6 +989,22 @@ const reportRows = computed<ReportTableRow[]>(() => {
   const studentsList = selectedAnalyticsStudents.value;
   const disciplines = relevantJournals.value;
 
+  // Pre-fetch all marks once into a cache keyed by "disciplineId:studentId".
+  // This eliminates the duplicate getStudentMarks() call that previously occurred
+  // inside computeWithoutFinalValue() — cutting store reads in half per row.
+  const marksCache = new Map<string, Mark[] | null>();
+  for (const student of studentsList) {
+    for (const discipline of disciplines) {
+      const key = `${discipline.id}:${student.id}`;
+      if (!marksCache.has(key)) {
+        marksCache.set(
+          key,
+          marksStore.getStudentMarks(discipline.id, student.id) as Mark[] | null
+        );
+      }
+    }
+  }
+
   return studentsList.map((student, index) => {
     const disciplineScores: Record<string, number | null> = {};
     const numericScores: number[] = [];
@@ -1006,9 +1022,7 @@ const reportRows = computed<ReportTableRow[]>(() => {
         return;
       }
 
-      const marks = marksStore.getStudentMarks(discipline.id, student.id) as
-        | Mark[]
-        | null;
+      const marks = marksCache.get(`${discipline.id}:${student.id}`) ?? null;
       const average = computeAverageFromMarks(marks);
       if (average !== null) {
         numericScores.push(average);
@@ -1044,6 +1058,7 @@ const reportRows = computed<ReportTableRow[]>(() => {
       });
     });
 
+    // Uses marksCache — no additional store reads.
     const computeWithoutFinalValue = (): Record<string, number | null> => {
       const result: Record<string, number | null> = {};
 
@@ -1057,9 +1072,7 @@ const reportRows = computed<ReportTableRow[]>(() => {
           return;
         }
 
-        const marks = marksStore.getStudentMarks(discipline.id, student.id) as
-          | Mark[]
-          | null;
+        const marks = marksCache.get(`${discipline.id}:${student.id}`) ?? null;
         if (!marks) {
           result[discipline.id] = null;
           return;

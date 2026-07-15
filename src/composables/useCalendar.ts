@@ -78,96 +78,101 @@ export function useCalendar() {
     return months[monthIndex.value];
   });
 
-  // Helper function to get events for a specific date
-  const getEventsForDate = (targetDate: dayjs.Dayjs) => {
-    const weekIdOfCurrent = (targetDate.day() + 6) % 7; // Convert Sunday=0 to Monday=0
-
-    return calendarStore.filteredEvents
-      .filter((event) => {
-        return isEventOnDate(event as any, targetDate);
-      })
-      .map((event) => {
-        let time = event.startTime || "...";
-
-        // Prefer weekly schedule slots if present. Use direct ID lookup instead of
-        // "active year" schedules to avoid showing "..." while active year loads.
-        if (Array.isArray(event.weeklySchedules) && event.weeklySchedules.length > 0) {
-          const ws = event.weeklySchedules.find((w) => w.weekId === weekIdOfCurrent);
-          if (ws) {
-            const start =
-              (ws as any).startTime ||
-              ((ws as any).startId
-                ? educationScheduleStore.getScheduleById((ws as any).startId)?.startTime
-                : "");
-            const end =
-              (ws as any).endTime ||
-              ((ws as any).endId
-                ? educationScheduleStore.getScheduleById((ws as any).endId)?.endTime
-                : "");
-
-            if (start || end) {
-              time = [start, end].filter(Boolean).join("-");
-            }
-          }
-        }
-
-        // Get group information from journal
-        let group: string | undefined = undefined;
-        const journal = journalStore.getJournalById(event.id);
-        if (journal) {
-          group = journalStore.getJournalSubtitle(journal);
-        }
-
-        return {
-          id: event.id,
-          title: calendarStore.getEventTitle(event),
-          time,
-          group,
-          color: event.color, // pass through the color from store event
-        };
-      })
-      .filter((eventInfo) => {
-        if (!searchQuery.value) return true;
-        const q = searchQuery.value.toLowerCase();
-        return (
-          eventInfo.title.toLowerCase().includes(q) ||
-          (eventInfo.group && eventInfo.group.toLowerCase().includes(q))
-        );
-      });
+  // ── Pre-resolve event metadata ─────────────────────────────────────────────
+  // Recomputes only when filteredEvents, educationScheduleStore, or journalStore
+  // change — NOT on year/monthIndex or searchQuery changes.
+  // Cost: O(N_events) store reads, executed once per event-list update.
+  type ResolvedEventInfo = {
+    title: string;
+    group?: string;
+    /** weekId (Mon=0 … Sun=6) → "HH:mm-HH:mm" time string */
+    weekTimeMap: Map<number, string>;
+    defaultTime: string;
+    color?: string;
   };
 
-  // Generate calendar days for the month
-  const calendarDays = computed<CalendarDay[]>(() => {
+  const resolvedEventInfoMap = computed<Map<string, ResolvedEventInfo>>(() => {
+    const map = new Map<string, ResolvedEventInfo>();
+
+    for (const event of calendarStore.filteredEvents) {
+      const weekTimeMap = new Map<number, string>();
+
+      if (Array.isArray(event.weeklySchedules) && event.weeklySchedules.length > 0) {
+        for (const ws of event.weeklySchedules as any[]) {
+          const start =
+            ws.startTime ||
+            (ws.startId
+              ? educationScheduleStore.getScheduleById(ws.startId)?.startTime
+              : "");
+          const end =
+            ws.endTime ||
+            (ws.endId
+              ? educationScheduleStore.getScheduleById(ws.endId)?.endTime
+              : "");
+          if (start || end) {
+            weekTimeMap.set(ws.weekId, [start, end].filter(Boolean).join("-"));
+          }
+        }
+      }
+
+      const journal = journalStore.getJournalById(event.id);
+      const group = journal ? journalStore.getJournalSubtitle(journal) : undefined;
+
+      map.set(event.id, {
+        title: calendarStore.getEventTitle(event),
+        group,
+        weekTimeMap,
+        defaultTime: event.startTime || "...",
+        color: event.color,
+      });
+    }
+
+    return map;
+  });
+
+  // ── Calendar grid (unfiltered) ─────────────────────────────────────────────
+  // Recomputes when year/monthIndex change or when the event list changes.
+  // Uses resolvedEventInfoMap so inner-loop work is pure date arithmetic (O(1)
+  // map lookup) — no store reads per calendar cell.
+  const calendarDaysBase = computed<CalendarDay[]>(() => {
+    const infoMap = resolvedEventInfoMap.value;
+    const events = calendarStore.filteredEvents;
+
+    const getEventsForDate = (targetDate: dayjs.Dayjs): CalendarEvent[] => {
+      const weekIdOfCurrent = (targetDate.day() + 6) % 7; // Mon=0 … Sun=6
+
+      return events
+        .filter((event) => isEventOnDate(event as any, targetDate))
+        .flatMap((event): CalendarEvent[] => {
+          const info = infoMap.get(event.id);
+          if (!info) return [];
+          const time = info.weekTimeMap.get(weekIdOfCurrent) ?? info.defaultTime;
+          return [{
+            id: event.id,
+            title: info.title,
+            time,
+            group: info.group,
+            color: info.color,
+          }];
+        });
+    };
+
     const days: CalendarDay[] = [];
     const date = new Date(parseInt(year.value), monthIndex.value, 1);
     const today = new Date();
 
-    // Get the first day of the month
     const firstDay = new Date(date);
-    // Get the last day of the month
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
-    // Get the day of the week for the first day (0 = Sunday, 1 = Monday, etc.)
     let firstDayOfWeek = firstDay.getDay();
-    // Adjust for Monday as first day of week
     firstDayOfWeek = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
 
-    // Add days from previous month to fill the first week
-    const prevMonthLastDay = new Date(
-      date.getFullYear(),
-      date.getMonth(),
-      0
-    ).getDate();
+    const prevMonthLastDay = new Date(date.getFullYear(), date.getMonth(), 0).getDate();
     for (let i = firstDayOfWeek - 1; i >= 0; i--) {
       const dayNumber = prevMonthLastDay - i;
-      const prevMonthDate = dayjs(
-        new Date(date.getFullYear(), date.getMonth() - 1, dayNumber)
-      );
-
+      const prevMonthDate = dayjs(new Date(date.getFullYear(), date.getMonth() - 1, dayNumber));
       days.push({
-        date: dayjs(
-          new Date(date.getFullYear(), date.getMonth() - 1, dayNumber)
-        ).format(DATE_STORAGE_FORMAT),
+        date: prevMonthDate.format(DATE_STORAGE_FORMAT),
         dayNumber,
         isCurrentMonth: false,
         isToday: false,
@@ -175,21 +180,14 @@ export function useCalendar() {
       });
     }
 
-    // Add days of current month
     for (let i = 1; i <= lastDay.getDate(); i++) {
       const isToday =
         today.getDate() === i &&
         today.getMonth() === date.getMonth() &&
         today.getFullYear() === date.getFullYear();
-
-      const currentDate = dayjs(
-        new Date(parseInt(year.value), monthIndex.value, i)
-      );
-
+      const currentDate = dayjs(new Date(parseInt(year.value), monthIndex.value, i));
       days.push({
-        date: dayjs(new Date(parseInt(year.value), monthIndex.value, i)).format(
-          DATE_STORAGE_FORMAT
-        ),
+        date: currentDate.format(DATE_STORAGE_FORMAT),
         dayNumber: i,
         isCurrentMonth: true,
         isToday,
@@ -197,17 +195,11 @@ export function useCalendar() {
       });
     }
 
-    // Add days from next month to complete the grid (6 rows x 7 columns = 42 cells)
     const remainingDays = 42 - days.length;
     for (let i = 1; i <= remainingDays; i++) {
-      const nextMonthDate = dayjs(
-        new Date(date.getFullYear(), date.getMonth() + 1, i)
-      );
-
+      const nextMonthDate = dayjs(new Date(date.getFullYear(), date.getMonth() + 1, i));
       days.push({
-        date: dayjs(
-          new Date(date.getFullYear(), date.getMonth() + 1, i)
-        ).format(DATE_STORAGE_FORMAT),
+        date: nextMonthDate.format(DATE_STORAGE_FORMAT),
         dayNumber: i,
         isCurrentMonth: false,
         isToday: false,
@@ -216,6 +208,24 @@ export function useCalendar() {
     }
 
     return days;
+  });
+
+  // ── Search filter layer ────────────────────────────────────────────────────
+  // Separated so that typing in the search box only triggers a shallow O(42 × M)
+  // filter over already-built CalendarDay objects — it does NOT rebuild the grid
+  // or re-read any store. calendarDaysBase stays cached.
+  const calendarDays = computed<CalendarDay[]>(() => {
+    if (!searchQuery.value) return calendarDaysBase.value;
+
+    const q = searchQuery.value.toLowerCase();
+    return calendarDaysBase.value.map((day) => ({
+      ...day,
+      events: day.events.filter(
+        (e) =>
+          e.title.toLowerCase().includes(q) ||
+          (e.group && e.group.toLowerCase().includes(q))
+      ),
+    }));
   });
 
   return {

@@ -53,6 +53,7 @@ import {
 import routes from "./js/routes";
 import store from "./js/store";
 import { initVisibilityDetector } from "./composables/useVisibility";
+import { initRBAC } from "./composables/useRBAC";
 
 const userStore = useUserStore();
 const themeStore = useThemeStore();
@@ -158,6 +159,9 @@ const f7params = computed<Framework7Parameters>(() => {
 onBeforeMount(async () => {
   // Initialize user store before mounting so route guards have access to auth state
   await userStore.initialize();
+  // Start the single app-lifetime RBAC permission subscription.
+  // Must run after userStore.initialize() so currentUser is available immediately.
+  initRBAC();
   console.log("[App] User store initialized");
 });
 

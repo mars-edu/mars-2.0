@@ -56,38 +56,79 @@ const ALL_NAV_ITEMS: Omit<NavigationItem, "label">[] = [
   { id: "settings", resource: "settings", icon: "settings", route: "/settings/" },
 ];
 
-export function useRBAC() {
-  const userStore = useUserStore();
-  const localeStore = useLocaleStore();
+// ── Singleton permissions state ────────────────────────────────────────────────
+// One shared reactive ref for the entire app. All consumers (components, route
+// guards, middleware) read from this same ref — no per-call subscriptions.
+const myPermissions = ref<string[]>([]);
+let _convexUnsub: (() => void) | null = null;
+let _initialized = false;
 
-  const myPermissions = ref<string[]>([]);
+/**
+ * Initialize the RBAC permission subscription.
+ *
+ * Call exactly ONCE at app startup (app.vue onBeforeMount, after
+ * userStore.initialize()). The watch runs for the app's entire lifetime —
+ * this is intentional. When the user logs out the subscription is torn down
+ * and permissions are cleared; when a new user logs in a fresh subscription
+ * is started automatically.
+ */
+export function initRBAC(): void {
+  if (_initialized) return;
+  _initialized = true;
+
+  const userStore = useUserStore();
 
   watch(
     () => userStore.currentUser?.id,
-    (userId, _prev, onCleanup) => {
+    (userId) => {
+      // Tear down previous subscription whenever user changes.
+      if (_convexUnsub) {
+        _convexUnsub();
+        _convexUnsub = null;
+      }
+
       if (!userId) {
         myPermissions.value = [];
         return;
       }
 
-      const unsubscribe = convex.onUpdate(
+      _convexUnsub = convex.onUpdate(
         api.permissions.queries.getMyPermissions,
         { userId: userId as Id<"users"> },
         (data) => {
           myPermissions.value = data ?? [];
         }
       );
-
-      onCleanup(unsubscribe);
     },
     { immediate: true }
   );
+}
+
+/**
+ * Standalone, side-effect-free permission check.
+ *
+ * Safe to call anywhere — stores, route middleware, plain functions — without
+ * creating any Vue reactive side-effects (no watch, no computed).
+ */
+export function canNavigateGlobal(resource: string): boolean {
+  return myPermissions.value.includes(resource);
+}
+
+/**
+ * Composable for use inside Vue component <script setup> / setup().
+ *
+ * Returns reactive `getNavigationItems` (derived from singleton permissions)
+ * and a `canNavigate` helper. Does NOT create any new subscriptions or
+ * watchers — it only reads from the already-initialized singleton.
+ */
+export function useRBAC() {
+  const localeStore = useLocaleStore();
 
   const canNavigate = (resource: string): boolean =>
     myPermissions.value.includes(resource);
 
   const getNavigationItems = computed<NavigationItem[]>(() => {
-    void localeStore.locale;
+    void localeStore.locale; // reactive dependency for i18n re-render
 
     const labels: Record<string, () => string> = {
       home: nav_home,

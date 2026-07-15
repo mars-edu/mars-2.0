@@ -131,6 +131,8 @@ export function useAgentSession() {
 
   // ── Public API ────────────────────────────────────────────────────────────
   async function connect() {
+    // Guard against double-tap / concurrent calls: only start a connection from idle.
+    if (agentState.value !== 'idle' && agentState.value !== 'disconnected') return;
     agentState.value = 'connecting';
     const userStore = useUserStore();
     
@@ -199,6 +201,9 @@ export function useAgentSession() {
 
   onUnmounted(() => {
     stopVisualizer();
+    // Remove all EventEmitter listeners before disconnecting so they don't
+    // accumulate if the component is remounted (e.g. hot-reload, popover toggle).
+    room.removeAllListeners();
     room.disconnect();
   });
 
