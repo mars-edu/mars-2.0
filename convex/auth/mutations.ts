@@ -185,7 +185,9 @@ export const login = action({
       degree?: string;
     };
   }> => {
-    // Get user by username
+    // Get user by username. NB: never log the attempted username or the password
+    // hash (even a prefix) — those end up in provider logs and enable user
+    // enumeration / hash-leak attacks.
     const user = await ctx.runQuery(
       internal.auth.mutations.getUserWithPasswordInternal,
       { username: args.username }
@@ -195,7 +197,6 @@ export const login = action({
       throw new ConvexError({ code: "auth_invalid_credentials" });
     }
 
-    // Verify password
     const isValidPassword = verifyPassword(args.password, user.passwordHash);
     if (!isValidPassword) {
       throw new ConvexError({ code: "auth_invalid_credentials" });
@@ -249,9 +250,9 @@ export const validateTokenAction = action({
     }
 
     try {
-      console.log("[validateTokenAction] Validating token...");
+      // Never log token payload / userId — those are per-request identifiers
+      // that end up in provider logs and enable session-hijacking / IDOR aid.
       const payload = await validateToken(args.token, jwtSecret);
-      console.log("[validateTokenAction] Token payload:", payload);
 
       // Get user to ensure they still exist
       const user = await ctx.runQuery(api.auth.queries.getUser, {
@@ -259,11 +260,9 @@ export const validateTokenAction = action({
       });
 
       if (!user) {
-        console.log("[validateTokenAction] User not found:", payload.userId);
         throw new ConvexError({ code: "auth_token_invalid" });
       }
 
-      console.log("[validateTokenAction] Token valid, user found");
       return {
         valid: true,
         userId: payload.userId,
@@ -283,8 +282,9 @@ export const validateTokenAction = action({
           degree: user.degree,
         },
       };
-    } catch (error) {
-      console.log("[validateTokenAction] Token validation failed:", error);
+    } catch {
+      // Swallow the error class silently — logging exception text can leak
+      // JWT internals or crypto library states.
       return {
         valid: false,
         userId: null,
