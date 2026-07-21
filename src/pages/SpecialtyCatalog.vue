@@ -38,16 +38,13 @@
                 </div>
 
                 <div class="flex items-center gap-2 w-full md:w-auto">
-                  <span class="text-xs font-medium text-muted-foreground whitespace-nowrap">{{ catalog_filter_year_foundation() }}:</span>
-                  <select
+                  <Select
                     v-model="selectedYear"
-                    class="bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer min-w-[120px]"
-                  >
-                    <option value="all">{{ catalog_base_all() }}</option>
-                    <option v-for="year in foundationYears" :key="year" :value="year">
-                      {{ year }}
-                    </option>
-                  </select>
+                    :options="foundationYearOptions"
+                    :placeholder="catalog_base_all()"
+                    name="foundation-year"
+                    class="w-[160px]"
+                  />
                 </div>
               </div>
 
@@ -150,6 +147,8 @@ import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import AddSpecialtyButton from "@/components/AddSpecialtyButton.vue";
 import EditSpecialtyButton from "@/components/EditSpecialtyButton.vue";
 import { useSpecialtyStore, type Specialty } from "@/stores/specialtyStore";
+import { useAcademicYearStore } from "@/stores/academicYearStore";
+import Select from "@/components/ui/Select.vue";
 import { storeToRefs } from "pinia";
 import Fuse from "fuse.js";
 import { useSidebar } from "@/composables/useSidebar";
@@ -180,21 +179,24 @@ const { contentMargin } = useSidebar();
 const activeNavItem = ref("specialty-catalog");
 const specialtyStore = useSpecialtyStore();
 const { specialties } = storeToRefs(specialtyStore);
+const academicYearStore = useAcademicYearStore();
 const selectedSpecialtyId = ref<string | null>(null);
 const searchTerm = ref("");
-const selectedYear = ref<number | string>("all");
+const selectedYear = ref<number | null>(null);
 
-const foundationYears = computed(() => {
-  const years = specialties.value
-    .map((s) => s.year)
+const foundationYearOptions = computed(() => {
+  const years = academicYearStore.academicYears
+    .map((ay) => ay.startYear)
     .filter((y): y is number => !!y);
-  return [...new Set(years)].sort((a, b) => b - a);
+  return [...new Set(years)]
+    .sort((a, b) => b - a)
+    .map((y) => ({ value: y, text: String(y) }));
 });
 
 const filteredSpecialties = computed(() => {
   let result = specialties.value;
 
-  if (selectedYear.value !== "all") {
+  if (selectedYear.value !== null) {
     result = result.filter((s) => s.year === selectedYear.value);
   }
 
