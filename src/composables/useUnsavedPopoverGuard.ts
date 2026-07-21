@@ -159,11 +159,11 @@ export function useUnsavedPopoverGuard(options: UseUnsavedPopoverGuardOptions) {
       return true;
     }
 
-    // If click landed on a teleported UI element (e.g. Select dropdown outside the popover DOM),
+    // If click landed on a teleported UI element (e.g. Select dropdown, DatePicker menu),
     // block the close entirely — it's not a real "dismiss" interaction.
     if (ctx.event) {
       const target = ctx.event.target as HTMLElement | null;
-      if (target?.closest("[data-popover-ignore]")) return false;
+      if (target?.closest("[data-popover-ignore], .dp--menu-wrapper, .dp--main")) return false;
     }
 
     const reason = ctx.reason || "programmatic";
