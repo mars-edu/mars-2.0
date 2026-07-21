@@ -60,14 +60,14 @@
               <table class="w-full text-sm text-left border-collapse">
                 <thead class="text-[11px] text-muted-foreground uppercase bg-muted/30 border-b border-border">
                   <tr>
-                    <th rowspan="2" class="px-4 py-3 font-bold border-r border-border min-w-[280px]">Предмет</th>
-                    <th rowspan="2" class="px-3 py-3 font-bold border-r border-border min-w-[140px]">Специальность</th>
+                    <th rowspan="2" class="px-4 py-3 font-bold border-r border-border min-w-[240px]">Дисциплина</th>
+                    <th rowspan="2" class="px-3 py-3 font-bold border-r border-border min-w-[180px]">Специальность / Язык</th>
                     <th rowspan="2" class="px-2 py-3 font-bold text-center border-r border-border w-16">Курс</th>
-                    <th rowspan="2" class="px-2 py-3 font-bold text-center border-r border-border w-16 whitespace-nowrap">Студ.</th>
-                    <th :colspan="semesterCount" class="px-2 py-2 text-center border-b border-r border-border font-bold bg-orange-50/10 text-orange-600">Недели в семестрах</th>
-                    <th :colspan="semesterCount" class="px-2 py-2 text-center border-b border-r border-border font-bold bg-slate-50/10 text-slate-600">Часы в неделю</th>
-                    <th :colspan="semesterCount" class="px-2 py-2 text-center border-b border-r border-border font-bold bg-green-50/10 text-green-600">Часы на предмет</th>
-                    <th :colspan="semesterCount" class="px-2 py-2 text-center border-b border-r border-border font-bold">Количество групп по семестрам</th>
+                    <th rowspan="2" class="px-2 py-3 font-bold text-center border-r border-border w-16 whitespace-nowrap">Студенты</th>
+                    <th :colspan="semesterCount" class="px-2 py-2 text-center border-b border-r border-border font-bold bg-orange-50/10 text-orange-600">Недели по семестрам</th>
+                    <th :colspan="semesterCount" class="px-2 py-2 text-center border-b border-r border-border font-bold bg-slate-50/10 text-slate-600">Часы на дисциплину</th>
+                    <th :colspan="semesterCount" class="px-2 py-2 text-center border-b border-r border-border font-bold bg-green-50/10 text-green-600">Часы в группе</th>
+                    <th :colspan="semesterCount" class="px-2 py-2 text-center border-b border-r border-border font-bold">Количество групп</th>
                     <th rowspan="2" class="px-4 py-3 text-center font-bold border-r border-border w-20">Всего</th>
                     <th rowspan="2" class="px-4 py-3 text-center w-16 font-bold">Удалить</th>
                   </tr>
@@ -87,29 +87,52 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-border">
-                  <tr v-for="item in currentWorkloadItems" :key="item.id" class="hover:bg-muted/20 transition-colors group" :class="{ 'bg-amber-500/5': item.id.endsWith('_ind') }">
+                  <tr
+                    v-for="item in currentWorkloadItems"
+                    :key="item.id"
+                    class="hover:bg-muted/20 transition-colors group"
+                    :class="{
+                      'bg-amber-500/5': item.id.endsWith('_ind'),
+                      '!border-t-0': item.id.endsWith('_ind'),
+                    }"
+                  >
                     <td class="px-4 py-2.5 font-bold text-foreground border-r border-border">
-                      <div class="flex items-center gap-2">
-                        <div class="truncate max-w-[320px]" :title="item.description">{{ item.id.endsWith('_ind') ? 'Индивидуальные' : item.description }}</div>
-                        <span v-if="item.id.endsWith('_ind')" class="text-[9px] font-black text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded uppercase shrink-0">инд.</span>
-                      </div>
-                      <div class="text-[10px] text-muted-foreground font-medium mt-0.5">{{ item.index }}</div>
-                      <template v-if="!item.id.endsWith('_ind')">
+                      <template v-if="item.id.endsWith('_ind')">
+                        <!-- Individual sub-row: name only, indented + amber badge; parent's code + spec/lang chips still visible above. -->
+                        <div class="flex items-center gap-2 pl-4">
+                          <span class="text-[9px] font-black text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded uppercase shrink-0">инд.</span>
+                          <span class="text-sm text-foreground">Индивидуальные</span>
+                        </div>
+                      </template>
+                      <template v-else>
+                        <!-- Discipline: learningOutcome as title (falls back to moduleName), moduleIndex as subtitle — matches concept. -->
                         <template v-for="entry in [rupEntryStore.getRupEntryById(item.subjectId)]" :key="item.id">
-                          <div
-                            v-if="entry?.learningOutcome"
-                            class="text-[10px] text-muted-foreground/70 truncate max-w-[320px] mt-0.5"
-                          >{{ entry.learningOutcome }}</div>
+                          <div class="truncate max-w-[320px]" :title="entry?.learningOutcome || item.description">
+                            {{ entry?.learningOutcome || item.description }}
+                          </div>
+                          <div class="text-[10px] text-muted-foreground font-medium mt-0.5">{{ item.index }}</div>
                         </template>
                       </template>
                     </td>
                     <td class="px-2 py-2.5 border-r border-border">
-                      <select
-                        v-model="item.department"
-                        class="w-full bg-transparent border-none focus:ring-0 text-xs p-0 font-bold text-muted-foreground cursor-pointer outline-none"
-                      >
-                        <option v-for="spec in specialties" :key="spec.id" :value="spec.codeName">{{ spec.codeName }}</option>
-                      </select>
+                      <template v-if="item.id.endsWith('_ind')">
+                        <!-- Empty: chips already shown on the parent row directly above. -->
+                      </template>
+                      <template v-else>
+                        <div class="flex flex-wrap items-center gap-1">
+                          <!-- Language chip -->
+                          <span
+                            v-if="item.language"
+                            class="text-[9px] font-black px-1.5 py-0.5 rounded uppercase bg-amber-500/15 text-amber-600 border border-amber-500/30"
+                          >{{ item.language }}</span>
+                          <!-- Specialty chips -->
+                          <span
+                            v-for="sid in (item.specialtyIds || [])"
+                            :key="sid"
+                            class="text-[9px] font-black px-1.5 py-0.5 rounded uppercase bg-emerald-500/10 text-emerald-600 border border-emerald-500/30"
+                          >{{ specialtyStore.getSpecialtyById(sid)?.codeName || specShortLabel(sid) }}</span>
+                        </div>
+                      </template>
                     </td>
                     <td class="px-1 py-2.5 border-r border-border">
                       <input
@@ -200,8 +223,12 @@
                       </td>
                     </template>
 
-                    <td class="px-4 py-2.5 text-center font-black text-base text-foreground bg-muted/10 border-r border-border">
+                    <td
+                      class="px-4 py-2.5 text-center font-black text-base border-r border-border"
+                      :class="item.id.endsWith('_ind') ? 'bg-amber-500/10 text-amber-600' : 'bg-muted/10 text-foreground'"
+                    >
                       {{ item.totalHours }}
+                      <div v-if="item.id.endsWith('_ind')" class="text-[9px] font-black uppercase tracking-tight mt-0.5">Инд. часы</div>
                     </td>
                     <td class="px-4 py-2.5 text-center">
                       <button
