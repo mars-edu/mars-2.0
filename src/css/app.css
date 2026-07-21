@@ -32,6 +32,36 @@
   /* Add view transition duration */
   --sidebar-width: 13rem;
 
+  /* ── VueDatePicker token bridge ────────────────────────────────────────── */
+  --dp-font-family:           "Inter", sans-serif;
+  --dp-font-size:             0.875rem;
+  --dp-border-radius:         12px;
+  --dp-cell-border-radius:    8px;
+  --dp-menu-min-width:        280px;
+  --dp-input-padding:         10px 40px 10px 14px;
+  --dp-menu-padding:          4px 0;
+  --dp-month-year-row-height: 36px;
+  --dp-month-year-row-button-size: 28px;
+  --dp-button-icon-height:    16px;
+  --dp-common-transition:     all 0.12s ease;
+  --dp-multi-calendars-spacing: 8px;
+  --dp-input-icon-padding:    40px;
+  --dp-background-color:      hsl(220 20% 97%);
+  --dp-text-color:            hsl(0 0% 3.9%);
+  --dp-border-color:          hsl(0 0% 89.8%);
+  --dp-border-color-hover:    hsl(0 0% 75%);
+  --dp-border-color-focus:    hsl(0 0% 60%);
+  --dp-primary-color:         hsl(1 77% 55%);
+  --dp-primary-text-color:    hsl(0 0% 98%);
+  --dp-hover-color:           hsl(0 0% 96.1%);
+  --dp-hover-text-color:      hsl(0 0% 3.9%);
+  --dp-secondary-color:       hsl(0 0% 45.1%);
+  --dp-menu-border-color:     hsl(0 0% 89.8%);
+  --dp-icon-color:            hsl(0 0% 45.1%);
+  --dp-disabled-color:        hsl(0 0% 96.1%);
+  --dp-disabled-color-text:   hsl(0 0% 45.1%);
+  --dp-highlight-color:       hsl(1 77% 55% / 0.1);
+
   --f7-fab-bg-color: #e53935;
   --f7-fab-text-color: #ffffff;
   --f7-fab-box-shadow: 0px 2px 8px rgba(229, 57, 53, 0.4);

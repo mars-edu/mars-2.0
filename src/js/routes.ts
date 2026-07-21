@@ -235,6 +235,11 @@ const routes: RouteConfig[] = [
     asyncComponent: () => import("../pages/suspense/ProfilePage.vue"),
     beforeEnter: [createAuthGuard()],
   },
+  // Dev/demo routes
+  {
+    path: "/datepicker-demo",
+    asyncComponent: () => import("../pages/suspense/DatepickerDemoPage.vue"),
+  },
   // Public routes - no auth required, but redirect if already authenticated
   {
     path: "/login",

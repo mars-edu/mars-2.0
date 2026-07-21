@@ -1,0 +1,291 @@
+/*
+ * VueDatePicker visual + spacing overrides for MARS.
+ * Loaded AFTER @vuepic/vue-datepicker/dist/main.css.
+ * Uses correct dp-- (double dash) class names.
+ */
+
+/* ── Menu container ───────────────────────────────────────────────────────── */
+.dp--menu {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 14px !important;
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.08),
+    0 14px 32px -4px rgb(0 0 0 / 0.13) !important;
+  font-family: "Inter", sans-serif !important;
+  overflow: hidden !important;
+}
+.dp--menu-inner {
+  padding: 6px 8px 2px !important;
+}
+/* Anonymous time-toggle wrapper — sits directly after menu-inner in dp--instance-calendar */
+.dp--instance-calendar > div:not(.dp--menu-inner) {
+  padding: 2px 8px 4px !important;
+  margin-top: 0 !important;
+}
+
+/* ── Input field ──────────────────────────────────────────────────────────── */
+.dp--input {
+  background-color: hsl(var(--muted) / 0.5) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 10px !important;
+  color: hsl(var(--foreground)) !important;
+  font-family: "Inter", sans-serif !important;
+  min-height: 42px !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease !important;
+  box-shadow: none !important;
+}
+.dp--input:hover:not(.dp--input-focus) {
+  background-color: hsl(var(--muted)) !important;
+  border-color: hsl(var(--muted-foreground) / 0.35) !important;
+}
+.dp--input:focus,
+.dp--input-focus,
+.dp--input-focus:hover,
+.dp--main .dp--input-focus,
+.dp--input-wrap:focus-within .dp--input {
+  border-color: hsl(215 20% 65%) !important;
+  box-shadow: 0 0 0 3px hsl(215 20% 65% / 0.15) !important;
+  background-color: hsl(var(--card)) !important;
+  outline: none !important;
+  outline-offset: 0 !important;
+}
+
+/* ── Month/year nav header ────────────────────────────────────────────────── */
+.dp--header-wrap {
+  padding: 0 2px 6px !important;
+}
+.dp--month-year-select-base {
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  color: hsl(var(--foreground)) !important;
+  padding: 3px 6px !important;
+  transition: background-color 0.12s !important;
+}
+.dp--month-year-select-base:hover {
+  background-color: hsl(var(--muted)) !important;
+}
+.dp--inner-nav {
+  border-radius: 6px !important;
+  color: hsl(var(--muted-foreground)) !important;
+  transition: background-color 0.12s, color 0.12s !important;
+  width: 26px !important;
+  height: 26px !important;
+}
+.dp--inner-nav:hover {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* ── Weekday header row ───────────────────────────────────────────────────── */
+.dp--calendar-header {
+  margin-bottom: 2px !important;
+}
+.dp--calendar-header-item {
+  font-size: 0.65rem !important;
+  font-weight: 700 !important;
+  color: hsl(var(--muted-foreground)) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 2px 0 4px !important;
+}
+.dp--calendar-header-separator {
+  background: hsl(var(--border)) !important;
+  margin-bottom: 2px !important;
+}
+
+/* ── Calendar grid rows — kill the default 5px margin ────────────────────── */
+.dp--calendar-row {
+  margin: 1px 0 !important;
+}
+.dp--calendar-item {
+  padding: 1px !important;
+}
+
+/* ── Day cells ────────────────────────────────────────────────────────────── */
+.dp--cell-inner {
+  border-radius: 7px !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  color: hsl(var(--foreground)) !important;
+  width: 32px !important;
+  height: 32px !important;
+  transition: background-color 0.1s ease, color 0.1s ease, transform 0.1s ease !important;
+}
+.dp--date-hoverable:hover .dp--cell-inner {
+  background-color: hsl(var(--muted)) !important;
+  transform: scale(1.08) !important;
+}
+
+/* Today */
+.dp--today {
+  border: 1px solid hsl(var(--primary)) !important;
+}
+.dp--today .dp--cell-inner {
+  background-color: hsl(var(--primary) / 0.07) !important;
+}
+
+/* Selected */
+.dp--active .dp--cell-inner {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 6px hsl(var(--primary) / 0.35) !important;
+  transform: scale(1.07) !important;
+}
+
+/* Range */
+.dp--range-between .dp--cell-inner {
+  background-color: hsl(var(--primary) / 0.12) !important;
+  color: hsl(var(--primary)) !important;
+  border-radius: 0 !important;
+}
+.dp--range-border-start .dp--cell-inner {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border-radius: 7px 0 0 7px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 6px hsl(var(--primary) / 0.35) !important;
+}
+.dp--range-border-end .dp--cell-inner {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border-radius: 0 7px 7px 0 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 6px hsl(var(--primary) / 0.35) !important;
+}
+
+/* Other-month / disabled */
+.dp--cell-offset .dp--cell-inner {
+  color: hsl(var(--muted-foreground) / 0.3) !important;
+}
+.dp--cell-disabled {
+  opacity: 0.3 !important;
+}
+.dp--past .dp--cell-inner {
+  color: hsl(var(--muted-foreground) / 0.6) !important;
+}
+
+/* Highlighted (multi-select) */
+.dp--cell-highlight .dp--cell-inner {
+  background-color: hsl(var(--primary) / 0.14) !important;
+}
+
+/* ── Time picker ──────────────────────────────────────────────────────────── */
+.dp--tp-wrap {
+  padding: 4px 0 0 !important;
+  gap: 2px !important;
+}
+.dp--time-display {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: hsl(var(--foreground)) !important;
+  min-width: 2.2ch !important;
+}
+.dp--inc-dec-button {
+  border-radius: 6px !important;
+  width: 28px !important;
+  height: 24px !important;
+  color: hsl(var(--muted-foreground)) !important;
+  transition: background-color 0.1s, color 0.1s !important;
+}
+.dp--inc-dec-button:hover {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+/* ── Time toggle button (clock icon at bottom of calendar) ───────────────── */
+/* Only show it for datetime pickers — hidden by default, shown via component prop */
+.dp--button-bottom,
+.dp--button {
+  color: hsl(var(--muted-foreground)) !important;
+  font-size: 0.75rem !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  margin-top: 2px !important;
+  transition: background-color 0.1s, color 0.1s !important;
+}
+.dp--button-bottom:hover,
+.dp--button:hover {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+/* Hide the whole time-toggle wrapper when time is not enabled */
+.dp--instance-calendar > div:not(.dp--menu-inner):empty,
+.dp--tp-wrap:not(:has(> .dp--time-col)) {
+  display: none !important;
+}
+/* Hide specifically the "open time picker" toggle button (clock icon below calendar) */
+[data-test-id="open-time-picker-btn"] {
+  display: none !important;
+}
+.dp--instance-calendar > div:not(.dp--menu-inner):has([data-test-id="open-time-picker-btn"]) {
+  display: none !important;
+}
+
+/* ── Action buttons ───────────────────────────────────────────────────────── */
+.dp--action-row {
+  padding: 6px 4px 2px !important;
+  margin-top: 2px !important;
+  border-top: 1px solid hsl(var(--border) / 0.6) !important;
+  gap: 6px !important;
+}
+.dp--action-cancel {
+  border-radius: 7px !important;
+  font-size: 0.78rem !important;
+  font-weight: 500 !important;
+  color: hsl(var(--muted-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  background: transparent !important;
+  padding: 5px 12px !important;
+  transition: background-color 0.1s, color 0.1s !important;
+}
+.dp--action-cancel:hover {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+.dp--action-select {
+  border-radius: 7px !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border: none !important;
+  box-shadow: 0 1px 4px hsl(var(--primary) / 0.3) !important;
+  padding: 5px 14px !important;
+  transition: opacity 0.1s, transform 0.1s !important;
+}
+.dp--action-select:hover {
+  opacity: 0.88 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ── Month/year overlay ───────────────────────────────────────────────────── */
+.dp--overlay {
+  background-color: hsl(var(--card)) !important;
+  border-radius: 10px !important;
+}
+.dp--overlay-cell {
+  border-radius: 6px !important;
+  color: hsl(var(--foreground)) !important;
+  font-size: 0.8rem !important;
+  transition: background-color 0.1s !important;
+}
+.dp--overlay-cell:hover:not(.dp--overlay-cell-active) {
+  background-color: hsl(var(--muted)) !important;
+}
+.dp--overlay-cell-active {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  font-weight: 600 !important;
+}
+
+/* ── Open animation ───────────────────────────────────────────────────────── */
+.dp-menu-appear-bottom-enter-active,
+.dp-menu-appear-top-enter-active {
+  animation: dp-appear 0.14s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+@keyframes dp-appear {
+  from { opacity: 0; transform: translateY(-5px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}

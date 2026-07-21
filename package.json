@@ -55,6 +55,7 @@
     "@ai-sdk/vue": "^3.0.233",
     "@inlang/paraglide-js": "^2.22.0",
     "@types/sortablejs": "^1.15.9",
+    "@vuepic/vue-datepicker": "^14.0.0",
     "@vueuse/core": "^14.3.0",
     "ai": "^6.0.233",
     "apexcharts": "^5.16.0",
