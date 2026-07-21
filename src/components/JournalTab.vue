@@ -239,7 +239,6 @@ import { useJournalStudents } from "@/components/journal/useJournalStudents";
 import { useStoreIndexMapping } from "@/components/journal/useStoreIndexMapping";
 import { useSessionGrades } from "@/components/journal/useSessionGrades";
 import { useJournalMarks } from "@/components/journal/useJournalMarks";
-import { debugLog, debugGroup } from "@/components/journal/journalGrid.lib";
 import { useJournalStore } from "@/stores/journalStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
@@ -647,12 +646,6 @@ const intermediateControlsForRecalc = computed(() => {
 watch(
   () => visibleHeaders.value,
   (headers) => {
-    debugGroup("visibleHeaders changed", () => {
-      debugLog(
-        "headers",
-        headers.map((h) => ({ index: h.index, type: h.type, label: h.label }))
-      );
-    });
   },
   { deep: true, immediate: true }
 );

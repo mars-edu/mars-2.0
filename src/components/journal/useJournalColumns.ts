@@ -31,9 +31,6 @@ import {
   initialValuesForType,
   headerLabelFor,
   resolveScheduleIds,
-  debugLog,
-  debugGroup,
-  DEBUG_JOURNAL_COLUMNS,
 } from "@/components/journal/journalGrid.lib";
 
 const FINAL_SUMMARY_LABEL = "Итог";
@@ -104,34 +101,9 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
         }
       : undefined;
 
-    debugLog("activeSemester", {
-      exists: !!activeSemester,
-      semester: activeSemester
-        ? {
-            id: activeSemester.id,
-            semesterNumber: activeSemester.semesterNumber,
-            startDate: activeSemester.startDate,
-            endDate: activeSemester.endDate,
-          }
-        : null,
-      semesterInfo,
-    });
 
     const days = getEventDays(currentEvent.value as any, semesterInfo);
 
-    debugGroup("generateDates() inputs", () => {
-      debugLog("journalId", journalId.value);
-      debugLog("students", currentJournal.value?.students?.length || 0);
-      debugLog("event", {
-        startDate: (currentEvent.value as any)?.startDate,
-        endDate: (currentEvent.value as any)?.endDate,
-        weeklySchedulesCount: weeklySchedules.length,
-      });
-      debugLog(
-        "days",
-        days.map((d: any) => d.day?.format?.(DATE_STORAGE_FORMAT))
-      );
-    });
 
     days.forEach(({ day, weekId }) => {
       const dateStr = `${day.format(DATE_DAY_MONTH_FORMAT)}\n${day.format(
@@ -148,12 +120,6 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
       const { startId, endId } = resolveScheduleIds(daySchedule, schedulesArr);
       const rows = countLessonsInRange(startId, endId);
 
-      debugGroup(`day ${isoDate}`, () => {
-        debugLog("weekId", weekId);
-        debugLog("daySchedule", daySchedule || null);
-        debugLog("resolved schedule", { startId, endId });
-        debugLog("rows", rows);
-      });
 
       dateMarks.push({
         type: "date",
@@ -164,7 +130,6 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
       });
     });
 
-    debugLog("dateMarks length", dateMarks.length);
 
     const marksWithSessions: Mark[] = [...dateMarks];
     const event = currentEvent.value;
@@ -222,60 +187,7 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
       })
       .map((entry: any) => entry);
 
-    debugGroup("РУП Distribution Entries Analysis", () => {
-      debugLog("disciplineId", rupEntryItem?.id);
-      debugLog("disciplineName", rupEntryItem?.moduleName);
-      debugLog("totalDistributionEntries", rupEntryItem?.distributionEntries?.length || 0);
-      debugLog("filters", { semesterUUID: semesterFilter, academicYearId });
-      debugLog("afterBothFilters", relevantDistributionEntries.length);
-    });
 
-    debugGroup("Distribution Entries Analysis", () => {
-      debugLog(
-        "rupEntryItem",
-        rupEntryItem
-          ? { id: rupEntryItem.id, moduleName: rupEntryItem.moduleName }
-          : null
-      );
-      debugLog("academicYearId", academicYearId);
-      debugLog("semesterFilter", semesterFilter);
-      debugLog(
-        "All distribution entries in rupEntryItem",
-        rupEntryItem?.distributionEntries?.length || 0
-      );
-      debugLog(
-        "rupEntryItem.distributionEntries (full):",
-        rupEntryItem?.distributionEntries
-      );
-      debugLog(
-        "Relevant distribution entries after filtering",
-        relevantDistributionEntries.length
-      );
-      debugLog(
-        "Relevant entries detail:",
-        relevantDistributionEntries.map((e: any) => ({
-          id: e.id,
-          academicYearId: e.academicYearId,
-          semesterId: e.semesterId,
-          intermediateControlId: e.intermediateControlId,
-          finalControlId: e.finalControlId,
-          ...Object.keys(e).reduce((acc: any, key: string) => {
-            if (
-              ![
-                "id",
-                "academicYearId",
-                "semesterId",
-                "intermediateControlId",
-                "finalControlId",
-              ].includes(key)
-            ) {
-              acc[key] = e[key];
-            }
-            return acc;
-          }, {}),
-        }))
-      );
-    });
 
     const distributionIntermediateControlIds = Array.from(
       new Set(
@@ -293,7 +205,6 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
       )
     );
 
-    if (DEBUG_JOURNAL_COLUMNS) console.log("[JournalTab] DEBUG - Extracted from distribution:", { distributionFinalControlIds });
 
     const scheduledIntermediateForYear =
       academicYearId &&
@@ -308,25 +219,6 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
         ? getScheduledFinalControlsByAcademicYear.value(academicYearId) || []
         : [];
 
-    if (DEBUG_JOURNAL_COLUMNS) {
-      console.log("[JournalTab] 🔍 INTERMEDIATE CONTROLS DIAGNOSTIC:", {
-        academicYearId,
-        scheduledIntermediateCount: scheduledIntermediateForYear.length,
-      });
-      if (scheduledIntermediateForYear.length === 0) {
-        console.warn(
-          "⚠️ [JournalTab] NO INTERMEDIATE CONTROLS SCHEDULED FOR ACADEMIC YEAR:",
-          academicYearId
-        );
-        if (scheduledIntermediateControls.value.length > 0) {
-          const uniqueAcademicYears = Array.from(
-            new Set(scheduledIntermediateControls.value.map((c: any) => c.academicYearId))
-          );
-          console.error("❌ [JournalTab] ACADEMIC YEAR MISMATCH DETECTED! IDs:", uniqueAcademicYears);
-        }
-      }
-      console.log("[JournalTab] Scheduled final controls for year:", { academicYearId, count: scheduledFinalForYear.length });
-    }
 
     // ALWAYS show intermediate controls (РК1, РК2) regardless of distribution,
     // but only the ones for this journal's semester (avoids showing the other
@@ -359,7 +251,6 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
       }
     );
 
-    if (DEBUG_JOURNAL_COLUMNS) console.log("[JournalTab] After filtering scheduled final controls:", { filteredCount: filteredScheduledFinal.length });
 
     const uniqueIds = (values: Array<string | null | undefined>) =>
       Array.from(
@@ -380,49 +271,8 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
       )
     );
 
-    if (DEBUG_JOURNAL_COLUMNS) {
-      console.log("[JournalTab] 🔍 EXTRACTED CONTROL IDs:", { intermediateControlIds, finalControlIds });
-      if (intermediateControlIds.length === 0 && scheduledIntermediateForYear.length > 0) {
-        console.error("❌ [JournalTab] CRITICAL: intermediateControlIds is EMPTY but scheduled controls exist!");
-      }
-      console.log("[JournalTab] DEBUG - Extract from entries:", { distributionIntermediateControlIds, distributionFinalControlIds });
-      console.log("[JournalTab] DEBUG - Extract from scheduled:", {
-        filteredScheduledIntermediateCount: filteredScheduledIntermediate.length,
-        filteredScheduledFinalCount: filteredScheduledFinal.length,
-      });
-    }
 
-    debugGroup("Control IDs Collection", () => {
-      debugLog("intermediateControlIds found:", intermediateControlIds);
-      debugLog("intermediateControlIds count:", intermediateControlIds.length);
-      debugLog("finalControlIds found:", finalControlIds);
-      debugLog("finalControlIds count:", finalControlIds.length);
-    });
 
-    debugGroup("Scheduled Controls Lookup", () => {
-      debugLog("academicYearId:", academicYearId);
-      debugLog(
-        "scheduledIntermediateForYear count:",
-        scheduledIntermediateForYear.length
-      );
-      debugLog(
-        "filteredScheduledIntermediate count:",
-        filteredScheduledIntermediate.length
-      );
-      debugLog(
-        "scheduledIntermediateForYear details:",
-        scheduledIntermediateForYear.map((c: any) => ({
-          id: c.id,
-          intermediateControlId: c.intermediateControlId,
-          shortName: c.shortName,
-          startDate: c.startDate,
-          endDate: c.endDate,
-          academicYearId: c.academicYearId,
-        }))
-      );
-      debugLog("filteredScheduledFinal count:", filteredScheduledFinal.length);
-      debugLog("scheduledFinalForYear count:", scheduledFinalForYear.length);
-    });
 
     const seenSessionIds = new Set<string>();
     const lastAssignedDatePosByControlKey = new Map<string, number>();
@@ -511,7 +361,6 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
       const controlKey = `${type}:${controlId}`;
       const previousMax = lastAssignedDatePosByControlKey.get(controlKey) ?? -1;
 
-      if (DEBUG_JOURNAL_COLUMNS) console.log(`[registerScheduledControl] Registering ${type}:`, { controlId, label: rawControl.shortName, insertAfterDatePos });
 
       let sessionDateIndices = collectSessionDateIndices(start, end)
         .filter((idx) => idx > previousMax)
@@ -547,7 +396,6 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
           : [dateMeta[dateMeta.length - 1].datePos];
       }
 
-      if (DEBUG_JOURNAL_COLUMNS) console.log(`[registerScheduledControl] Final:`, { type, label: rawControl.shortName, sessionDateIndices });
 
       if (sessionDateIndices.length) {
         lastAssignedDatePosByControlKey.set(
@@ -611,38 +459,9 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
         .sort((a, b) => (a.startDate || "").localeCompare(b.startDate || ""));
 
       if (!scheduled.length) {
-        debugLog(
-          "No scheduled intermediate controls found for id",
-          controlId,
-          "in academicYear",
-          academicYearId
-        );
-        debugLog(
-          "DEBUG: All filteredScheduledIntermediate controls:",
-          filteredScheduledIntermediate.map((c: any) => ({
-            id: c.id,
-            intermediateControlId: c.intermediateControlId,
-            shortName: c.shortName,
-            startDate: c.startDate,
-            endDate: c.endDate,
-          }))
-        );
         return;
       }
 
-      debugGroup(`Processing intermediate control: ${controlId}`, () => {
-        debugLog("Found scheduled controls count:", scheduled.length);
-        debugLog(
-          "Scheduled controls:",
-          scheduled.map((c: any) => ({
-            id: c.id,
-            intermediateControlId: c.intermediateControlId,
-            shortName: c.shortName,
-            startDate: c.startDate,
-            endDate: c.endDate,
-          }))
-        );
-      });
 
       scheduled.forEach((control) =>
         registerScheduledControl("intermediate", controlId, control)
@@ -655,12 +474,6 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
         .sort((a, b) => (a.startDate || "").localeCompare(b.startDate || ""));
 
       if (!scheduled.length) {
-        debugLog(
-          "Skipping final control column, no scheduled control found for id",
-          controlId,
-          "in academicYear",
-          academicYearId
-        );
         return;
       }
 
@@ -706,33 +519,11 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
           insertIndex++;
         }
 
-        debugGroup("insert control column", () => {
-          debugLog("label", mark.label);
-          debugLog("insertAfterDatePos", insertAfterDatePos);
-          debugLog("insertIndex", insertIndex);
-          debugLog("metadata", debug || {});
-        });
 
         marksWithSessions.splice(insertIndex, 0, mark);
       });
 
-    debugGroup("final marks template summary", () => {
-      const summary = marksWithSessions.map((m, idx) => ({
-        idx,
-        type: (m as any).type,
-        label: (m as any).label || (m as any).date || null,
-        values: m.values?.length,
-      }));
-      debugLog("columns", summary);
-    });
 
-    if (DEBUG_JOURNAL_COLUMNS) {
-      const sessionColumns = marksWithSessions.filter((m: any) => m.type === "session");
-      console.log("[JournalTab] 🔍 FINAL COLUMNS SUMMARY:", {
-        totalColumns: marksWithSessions.length,
-        sessionColumns: sessionColumns.length,
-      });
-    }
 
     return marksWithSessions;
   };

@@ -12,25 +12,6 @@ import type { EducationSchedule } from "@/stores/educationScheduleStore";
 
 dayjs.extend(customParseFormat);
 
-// ── Debug logging (column building) ──────────────────────────────────────────
-
-export const DEBUG_JOURNAL_COLUMNS = false;
-
-export const debugLog = (...args: any[]) => {
-  if (!DEBUG_JOURNAL_COLUMNS) return;
-  console.log("[JournalTab][Columns]", ...args);
-};
-
-export const debugGroup = (title: string, fn: () => void) => {
-  if (!DEBUG_JOURNAL_COLUMNS) return;
-  console.group(title);
-  try {
-    fn();
-  } finally {
-    console.groupEnd();
-  }
-};
-
 // ── Mark types ──────────────────────────────────────────────────────────────
 
 export const MARK_TYPES = [
