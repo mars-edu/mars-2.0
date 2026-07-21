@@ -2,12 +2,7 @@ import type { MutationCtx } from "../_generated/server";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { m, getUserLocale, type Locale, withI18nMutation, setLocale } from "../lib/i18n";
-import { requirePermission } from "../lib/rbac";
-
-async function getAdminUsers(ctx: MutationCtx) {
-  const allUsers = await ctx.db.query("users").collect();
-  return allUsers.filter((u) => u.roles.includes("ADMIN"));
-}
+import { requirePermission, getAdminUsers } from "../lib/rbac";
 
 function formatTeacherName(teacher: any | null) {
   if (!teacher) return m.backend_unknown_teacher();

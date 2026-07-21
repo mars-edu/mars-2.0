@@ -20,15 +20,8 @@ function createGuestGuard() {
     const userStore = useUserStore();
     const hasToken = localStorage.getItem("auth_token");
 
-    console.log("[Routes] Guest guard check:", {
-      path: ctx.to.url,
-      isAuthenticated: userStore.isAuthenticated,
-      hasToken: !!hasToken,
-    });
-
     // If already authenticated, redirect to home
     if (userStore.isAuthenticated) {
-      console.log("[Routes] User already authenticated, redirecting to home");
       ctx.router.navigate("/home", { reloadCurrent: true, clearPreviousHistory: true });
       ctx.reject();
       return;
@@ -36,13 +29,9 @@ function createGuestGuard() {
 
     // If we have a token but user store isn't authenticated yet, initialize it
     if (hasToken && !userStore.isAuthenticated) {
-      console.log("[Routes] Token found, initializing user store...");
       userStore.initialize().then(() => {
-        console.log("[Routes] User store initialized, authenticated:", userStore.isAuthenticated);
-
         if (userStore.isAuthenticated) {
           // User is authenticated, redirect to home
-          console.log("[Routes] Redirecting authenticated user to home");
           ctx.router.navigate("/home", { reloadCurrent: true, clearPreviousHistory: true });
           ctx.reject();
           return;
@@ -69,13 +58,6 @@ function createAuthGuard(resource?: string) {
     const userStore = useUserStore();
     const hasToken = localStorage.getItem("auth_token");
 
-    console.log("[Routes] Auth guard check:", {
-      path: ctx.to.url,
-      isAuthenticated: userStore.isAuthenticated,
-      hasToken: !!hasToken,
-      resource,
-    });
-
     const checkResource = async () => {
       if (!resource) return true;
       const userId = userStore.currentUser?.id;
@@ -88,7 +70,6 @@ function createAuthGuard(resource?: string) {
     };
 
     if (!userStore.isAuthenticated && hasToken) {
-      console.log("[Routes] Waiting for user store initialization...");
       userStore.initialize().then(async () => {
         if (!userStore.isAuthenticated) {
           const redirectUrl = `/login?redirect=${encodeURIComponent(ctx.to.url)}`;
@@ -99,7 +80,6 @@ function createAuthGuard(resource?: string) {
 
         const hasAccess = await checkResource();
         if (!hasAccess) {
-          console.log("[Routes] Insufficient permissions, redirecting to home");
           ctx.router.navigate("/home", { reloadCurrent: true });
           ctx.reject();
           return;
@@ -119,7 +99,6 @@ function createAuthGuard(resource?: string) {
 
     checkResource().then((hasAccess) => {
       if (!hasAccess) {
-        console.log("[Routes] Insufficient permissions, redirecting to home");
         ctx.router.navigate("/home", { reloadCurrent: true });
         ctx.reject();
         return;

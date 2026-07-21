@@ -16,6 +16,11 @@ export function hasRoleAccess(userRoles: string[], allowedRoles: string[]): bool
   return userRoles.some((r) => allowedRoles.includes(r));
 }
 
+export async function getAdminUsers(ctx: QueryCtx | MutationCtx) {
+  const allUsers = await ctx.db.query("users").collect();
+  return allUsers.filter((u) => u.roles.includes("ADMIN"));
+}
+
 export async function requirePermission(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"users">,
