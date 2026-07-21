@@ -201,8 +201,7 @@ import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useKtpStore } from "@/stores/ktpStore";
-import { useNestedPopover } from "@/composables/useNestedPopover";
-import { useNestedPopup } from "@/composables/useNestedPopup";
+import { useNestedParent } from "@/composables/useNestedParent";
 import type { SemesterDates, WeekDaySchedule } from "./useEventFormDerived";
 
 dayjs.extend(customParseFormat);
@@ -247,36 +246,10 @@ const { getActiveYearSchedules, getSchedulesBySemester } = storeToRefs(education
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const ktpStore = useKtpStore();
 
-const popoverNested = useNestedPopover({
-  parentPopoverId: computed(() => props.parentPopoverId),
+const { closeParent, openParent, withParentToggle } = useNestedParent({
+  parentId: computed(() => props.parentPopoverId),
+  kind: computed(() => props.parentPopoverType ?? "popover"),
 });
-const popupNested = useNestedPopup({
-  parentPopupId: computed(() => props.parentPopoverId),
-});
-const isParentPopup = computed(() => (props.parentPopoverType ?? "popover") === "popup");
-
-const closeParent = () => {
-  if (isParentPopup.value) {
-    popupNested.closeParent();
-    return;
-  }
-  popoverNested.closeParent();
-};
-
-const openParent = () => {
-  if (isParentPopup.value) {
-    popupNested.openParent();
-    return;
-  }
-  popoverNested.openParent();
-};
-
-const withParentToggle = <T extends (...args: any[]) => any>(fn: T): T => {
-  return ((...args: any[]) => {
-    closeParent();
-    return fn(...args);
-  }) as T;
-};
 
 const checkboxId = computed(() => {
   return props.mode === "edit" ? "use-custom-period-edit" : "use-custom-period";

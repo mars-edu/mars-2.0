@@ -79,7 +79,7 @@ import IconTrash from "~icons/lucide/trash-2";
 import { z } from "zod";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSemesterStore } from "@/stores/semesterStore";
-import { useNestedPopover } from "@/composables/useNestedPopover";
+import { useNestedParent } from "@/composables/useNestedParent";
 import Select from "@/components/ui/Select.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
@@ -96,8 +96,8 @@ const semesterStore = useSemesterStore();
 const popoverId = computed(() => `#edit-settings-course-popover-${props.courseId}`);
 const targetSelector = computed(() => `#course-item-${props.courseId}`);
 
-const { confirmWithParent } = useNestedPopover({
-  parentPopoverId: popoverId,
+const { confirmWithParent } = useNestedParent({
+  parentId: popoverId,
   parentTargetSelector: targetSelector,
 });
 

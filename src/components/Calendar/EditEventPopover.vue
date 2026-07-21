@@ -73,7 +73,7 @@ import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useUserStore } from "@/stores/userStore";
 import { useTeacherStore } from "@/stores/teacherStore";
-import { useNestedPopover } from "@/composables/useNestedPopover";
+import { useNestedParent } from "@/composables/useNestedParent";
 import { storeToRefs } from "pinia";
 import { getWeekDays, DATE_UI_FORMAT } from "@/constants/calendar";
 import { useEventFormDerived, type WeekDaySchedule } from "./useEventFormDerived";
@@ -88,8 +88,8 @@ const emit = defineEmits<{
 const calendarStore = useCalendarStore();
 
 // Nested popover management
-const { confirmWithParent } = useNestedPopover({
-  parentPopoverId: "#edit-event-popover",
+const { confirmWithParent } = useNestedParent({
+  parentId: "#edit-event-popover",
 });
 
 // Get event from store by ID - always fresh data

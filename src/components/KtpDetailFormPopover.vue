@@ -179,7 +179,7 @@ import IconLock from "~icons/lucide/lock";
 import IconAlertTriangle from "~icons/lucide/alert-triangle";
 import { z } from "zod";
 import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
-import { useNestedPopover } from "@/composables/useNestedPopover";
+import { useNestedParent } from "@/composables/useNestedParent";
 import { toNullableNumber } from "@/lib/ktpHelpers";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
@@ -198,8 +198,8 @@ const emit = defineEmits(["update:opened"]);
 const ktpStore = useKtpStore();
 
 // Nested popover management
-const { confirmWithParent } = useNestedPopover({
-  parentPopoverId: "#ktp-detail-form-popover",
+const { confirmWithParent } = useNestedParent({
+  parentId: "#ktp-detail-form-popover",
 });
 
 const isEditMode = computed(() => !!props.detailToEdit);

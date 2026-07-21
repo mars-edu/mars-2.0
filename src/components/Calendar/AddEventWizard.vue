@@ -423,7 +423,7 @@ import {
   getWeekDays,
   DATE_UI_FORMAT,
 } from "@/constants/calendar";
-import { useNestedPopup } from "@/composables/useNestedPopup";
+import { useNestedParent } from "@/composables/useNestedParent";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
@@ -521,8 +521,9 @@ const parentPopupId = computed(() =>
   props.mode === "edit" ? "#edit-journal-popup" : "#add-event-popup"
 );
 
-const { closeParent, openParent } = useNestedPopup({
-  parentPopupId,
+const { closeParent, openParent } = useNestedParent({
+  parentId: parentPopupId,
+  kind: "popup",
 });
 
 const rupEntryIdModel = computed({
