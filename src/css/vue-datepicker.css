@@ -1,8 +1,23 @@
+@import '@vuepic/vue-datepicker/dist/main.css';
+
 /*
  * VueDatePicker visual + spacing overrides for MARS.
- * Loaded AFTER @vuepic/vue-datepicker/dist/main.css.
  * Uses correct dp-- (double dash) class names.
  */
+
+/* ── Icon constraints ─────────────────────────────────────────────────────── */
+.dp--icon {
+  width: 1rem !important;
+  height: 1rem !important;
+  max-width: 1rem !important;
+  max-height: 1rem !important;
+  display: inline-block !important;
+}
+
+/* ── Menu wrapper (teleported to body) ─────────────────────────────────────── */
+.dp--menu-wrapper {
+  z-index: 999999 !important;
+}
 
 /* ── Menu container ───────────────────────────────────────────────────────── */
 .dp--menu {
@@ -49,6 +64,44 @@
   background-color: hsl(var(--card)) !important;
   outline: none !important;
   outline-offset: 0 !important;
+}
+
+/* ── Clear button inside input ────────────────────────────────────────────── */
+.dp--clear-btn {
+  width: auto !important;
+  min-width: auto !important;
+  max-width: 24px !important;
+  height: 24px !important;
+  min-height: auto !important;
+  padding: 4px !important;
+  margin: 0 !important;
+  position: absolute !important;
+  right: 10px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: hsl(var(--muted-foreground)) !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: color 0.12s ease, background-color 0.12s ease !important;
+}
+.dp--clear-btn:hover {
+  color: hsl(var(--foreground)) !important;
+  background-color: hsl(var(--muted)) !important;
+}
+.dp--clear-btn .dp--icon,
+.dp--clear-btn .dp--input-icons {
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
 }
 
 /* ── Month/year nav header ────────────────────────────────────────────────── */
@@ -210,16 +263,8 @@
   background-color: hsl(var(--muted)) !important;
   color: hsl(var(--foreground)) !important;
 }
-/* Hide the whole time-toggle wrapper when time is not enabled */
-.dp--instance-calendar > div:not(.dp--menu-inner):empty,
-.dp--tp-wrap:not(:has(> .dp--time-col)) {
-  display: none !important;
-}
-/* Hide specifically the "open time picker" toggle button (clock icon below calendar) */
-[data-test-id="open-time-picker-btn"] {
-  display: none !important;
-}
-.dp--instance-calendar > div:not(.dp--menu-inner):has([data-test-id="open-time-picker-btn"]) {
+/* Hide the whole time-toggle wrapper when empty */
+.dp--instance-calendar > div:not(.dp--menu-inner):empty {
   display: none !important;
 }
 

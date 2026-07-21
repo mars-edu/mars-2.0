@@ -1,79 +1,98 @@
 <template>
-  <div
-    class="date-input-wrapper flex items-center w-full bg-muted rounded-xl text-sm border border-transparent hover:bg-muted/80 transition-all cursor-pointer"
-    :class="{ 'ring-2 ring-foreground/80 bg-card': focused }"
-  >
-    <input
-      ref="inputRef"
-      type="date"
-      :value="nativeValue"
-      :placeholder="placeholder"
-      @input="onInput"
-      @focus="focused = true"
-      @blur="focused = false"
-      class="w-full h-full bg-transparent text-foreground text-sm px-4 py-2.5 outline-none border-none rounded-xl cursor-pointer"
+  <div class="date-input-container w-full" data-popover-ignore="true">
+    <VueDatePicker
+      v-model="modelDate"
+      :time-config="{ enableTimePicker: enableTime }"
+      :formats="{ input: enableTime ? 'dd.MM.yyyy, HH:mm' : 'dd.MM.yyyy' }"
+      :input-attrs="{ clearable: true, alwaysClearable: true }"
+      :locale="ruLocale"
+      hide-offset-dates
+      :teleport="true"
+      :placeholder="placeholder || (enableTime ? 'дд.мм.гггг, чч:мм' : 'дд.мм.гггг')"
+      auto-apply
+      :disabled="disabled"
+      :dark="isDark"
+      @menu-mounted="onMenuMounted"
+      @update:model-value="onDateChange"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import dayjs from "dayjs";
-import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
+import { ref, watch, onMounted, onUnmounted } from "vue";
+import { VueDatePicker } from "@vuepic/vue-datepicker";
+import "@/css/vue-datepicker.css";
+import { ru as ruLocale } from "date-fns/locale";
 
 const props = withDefaults(
   defineProps<{
-    value?: Date[];
+    value?: Date[] | Date | null;
     placeholder?: string;
+    enableTime?: boolean;
+    disabled?: boolean;
   }>(),
   {
     value: () => [],
     placeholder: "дд.мм.гггг",
+    enableTime: false,
+    disabled: false,
   }
 );
 
 const emit = defineEmits<{
   "update:value": [val: Date[]];
+  "change": [val: Date[]];
 }>();
 
-const focused = ref(false);
+// Dark mode state
+const isDark = ref(typeof document !== "undefined" && document.documentElement.classList.contains("dark"));
+let observer: MutationObserver | null = null;
 
-const nativeValue = computed(() => {
-  if (!props.value || props.value.length === 0) return "";
-  return dayjs(props.value[0]).format(DATE_STORAGE_FORMAT);
+onMounted(() => {
+  if (typeof document !== "undefined") {
+    observer = new MutationObserver(() => {
+      isDark.value = document.documentElement.classList.contains("dark");
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+  }
 });
 
-function onInput(event: Event) {
-  const str = (event.target as HTMLInputElement).value;
-  if (!str) {
-    emit("update:value", []);
-    return;
+onUnmounted(() => {
+  observer?.disconnect();
+});
+
+// Convert incoming props.value (Date[] or Date) to internal Date model
+const modelDate = ref<Date | null>(parseIncoming(props.value));
+
+watch(
+  () => props.value,
+  (newVal) => {
+    modelDate.value = parseIncoming(newVal);
+  },
+  { deep: true }
+);
+
+function parseIncoming(val: Date[] | Date | null | undefined): Date | null {
+  if (!val) return null;
+  if (Array.isArray(val)) {
+    return val.length > 0 && val[0] instanceof Date ? val[0] : null;
   }
-  emit("update:value", [dayjs(str).toDate()]);
+  if (val instanceof Date) return val;
+  return null;
+}
+
+function onMenuMounted(el: HTMLElement) {
+  if (el) {
+    el.setAttribute("data-popover-ignore", "true");
+    if (el.parentElement) {
+      el.parentElement.setAttribute("data-popover-ignore", "true");
+    }
+  }
+}
+
+function onDateChange(selected: Date | null) {
+  const result = selected ? [selected] : [];
+  emit("update:value", result);
+  emit("change", result);
 }
 </script>
-
-<style scoped>
-.date-input-wrapper {
-  min-height: 44px;
-}
-
-input[type="date"] {
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-input[type="date"]::-webkit-calendar-picker-indicator {
-  @apply opacity-50;
-  cursor: pointer;
-}
-
-input[type="date"]::-webkit-datetime-edit-fields-wrapper {
-  @apply text-foreground;
-}
-
-input[type="date"]:invalid::-webkit-datetime-edit,
-input[type="date"][value=""]::-webkit-datetime-edit {
-  @apply text-muted-foreground;
-}
-</style>
