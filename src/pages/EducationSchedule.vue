@@ -58,9 +58,9 @@
                 <div
                   v-for="academicYear in academicYearStore.getSortedAcademicYears"
                   :key="academicYear.id"
-                  @click.stop="handleSetActiveAcademicYear(academicYear)"
+                  @click.stop="handleSelectAcademicYear(academicYear)"
                   class="relative group p-4 rounded-xl border transition-all cursor-pointer"
-                  :class="academicYear.isActive ? 'bg-card border-primary ring-1 ring-primary/20 shadow-md' : 'bg-muted/30 border-border hover:border-border/80 hover:bg-card hover:shadow-sm'"
+                  :class="getAcademicYearCardClass(academicYear)"
                   :id="`academic-year-item-${academicYear.id}`"
                 >
                   <div class="flex flex-col gap-1 w-full">
@@ -597,6 +597,9 @@ const scheduledIntermediateControlStore =
 const selectedAcademicYearId = ref<string | null>(null);
 const selectedAcademicYearSemesterId = ref<string | null>(null);
 
+// Year selected for *viewing* its contents (semesters, schedules, etc.) — does NOT affect isActive
+const selectedViewYearId = ref<string | null>(null);
+
 // Selected semester for drill-down view
 const selectedSemesterId = ref<string | null>(null);
 
@@ -643,11 +646,16 @@ const toggleAllAccordions = () => {
   }
 };
 
+// The year whose contents (semesters, schedules, etc.) are currently displayed.
+// Defaults to the active year but can be overridden by clicking any card.
+const viewYearId = computed(() => {
+  return selectedViewYearId.value ?? academicYearStore.getActiveAcademicYear?.id ?? null;
+});
+
 const academicYearSemesters = computed(() => {
-  const activeYear = academicYearStore.getActiveAcademicYear;
-  if (!activeYear) return [];
+  if (!viewYearId.value) return [];
   return academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(
-    activeYear.id
+    viewYearId.value
   );
 });
 
@@ -655,10 +663,9 @@ const schedules = computed(() => {
   if (selectedSemesterId.value) {
     return educationScheduleStore.getSchedulesBySemester(selectedSemesterId.value);
   }
-  const activeYear = academicYearStore.getActiveAcademicYear;
-  if (!activeYear) return [];
+  if (!viewYearId.value) return [];
   return educationScheduleStore.getSchedulesByAcademicYear(
-    activeYear.id
+    viewYearId.value
   );
 });
 
@@ -666,9 +673,8 @@ const vacations = computed(() => {
   if (selectedSemesterId.value) {
     return vacationStore.getVacationsBySemester(selectedSemesterId.value);
   }
-  const activeYear = academicYearStore.getActiveAcademicYear;
-  if (!activeYear) return [];
-  return vacationStore.getVacationsByAcademicYear(activeYear.id);
+  if (!viewYearId.value) return [];
+  return vacationStore.getVacationsByAcademicYear(viewYearId.value);
 });
 
 const scheduledFinalControls = computed(() => {
@@ -677,10 +683,9 @@ const scheduledFinalControls = computed(() => {
       selectedSemesterId.value
     );
   }
-  const activeYear = academicYearStore.getActiveAcademicYear;
-  if (!activeYear) return [];
+  if (!viewYearId.value) return [];
   return scheduledFinalControlStore.getScheduledFinalControlsByAcademicYear(
-    activeYear.id
+    viewYearId.value
   );
 });
 
@@ -690,10 +695,9 @@ const scheduledIntermediateControls = computed(() => {
       selectedSemesterId.value
     );
   }
-  const activeYear = academicYearStore.getActiveAcademicYear;
-  if (!activeYear) return [];
+  if (!viewYearId.value) return [];
   return scheduledIntermediateControlStore.getScheduledIntermediateControlsByAcademicYear(
-    activeYear.id
+    viewYearId.value
   );
 });
 
@@ -805,6 +809,29 @@ const openEditSchedule = async (schedule: EducationSchedule) => {
 
 const handleSetActiveAcademicYear = (academicYear: AcademicYear) => {
   academicYearStore.setActiveAcademicYear(academicYear.id);
+};
+
+// Select a year for viewing without changing the active year
+const handleSelectAcademicYear = (academicYear: AcademicYear) => {
+  selectedViewYearId.value = academicYear.id;
+  // Reset semester drill-down when switching year view
+  selectedSemesterId.value = null;
+  selectedAcademicYearSemesterId.value = null;
+};
+
+// Card styling: "selected for viewing" gets a secondary highlight, "active" gets primary
+const getAcademicYearCardClass = (academicYear: AcademicYear) => {
+  const isViewing = viewYearId.value === academicYear.id;
+  if (academicYear.isActive && isViewing) {
+    return 'bg-card border-primary ring-1 ring-primary/20 shadow-md';
+  }
+  if (academicYear.isActive) {
+    return 'bg-card border-primary ring-1 ring-primary/20 shadow-md';
+  }
+  if (isViewing) {
+    return 'bg-card border-secondary ring-1 ring-secondary/20 shadow-sm';
+  }
+  return 'bg-muted/30 border-border hover:border-border/80 hover:bg-card hover:shadow-sm';
 };
 
 const openEditAcademicYear = async (academicYear: AcademicYear) => {
