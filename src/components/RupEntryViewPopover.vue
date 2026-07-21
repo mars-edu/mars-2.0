@@ -5,7 +5,7 @@
     style="width: min(960px, 96vw) !important"
     @popover:closed="$emit('close')"
   >
-    <div class="rup-entry-view-popover bg-card text-foreground">
+    <div class="flex flex-col max-h-[92vh] bg-card text-foreground">
       <PopoverHeader
         cancel-text="Закрыть"
         :on-cancel="requestClose"
@@ -19,8 +19,8 @@
               <span
                 v-for="lang in itemLanguages"
                 :key="lang"
-                class="lang-badge"
-                :class="`lang-badge-${lang}`"
+                class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded"
+                :class="langBadgeClass(lang)"
               >
                 {{ lang.toUpperCase() }}
               </span>
@@ -28,8 +28,8 @@
             <span
               v-for="base in itemBases"
               :key="`b-${base}`"
-              class="base-badge"
-              :class="`base-badge-${base}`"
+              class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded"
+              :class="baseBadgeClass(base)"
             >
               База {{ base }} кл
             </span>
@@ -47,7 +47,7 @@
         </template>
       </PopoverHeader>
 
-      <div class="rup-entry-view-content px-8 pb-2 space-y-7">
+      <div class="flex-1 overflow-y-auto px-8 pb-2 space-y-7">
         <template v-if="item">
           <!-- Localized info (per-language slots — always show all configured languages) -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -60,8 +60,8 @@
                 class="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-2"
               >
                 <span
-                  class="lang-dot"
-                  :class="`lang-dot-${lang.code}`"
+                  class="w-2 h-2 rounded-full inline-block"
+                  :class="langDotClass(lang.code)"
                 />
                 {{ lang.fullName }}
               </h4>
@@ -82,50 +82,42 @@
             class="grid grid-cols-2 gap-4"
             :class="currentSemHours ? 'md:grid-cols-5' : 'md:grid-cols-4'"
           >
-            <div class="metric-card metric-card-yellow">
-              <IconGraduationCap class="w-5 h-5 text-yellow-600 mb-1" />
+            <div class="p-4 rounded-xl border bg-yellow-50 border-yellow-200 dark:bg-yellow-400/10 dark:border-yellow-400/25">
+              <IconGraduationCap class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mb-1" />
               <div class="text-2xl font-bold text-foreground">
                 {{ item.totalCredits || "0" }}
               </div>
-              <div
-                class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
-              >
+              <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Кредитов
               </div>
             </div>
-            <div class="metric-card metric-card-green">
-              <IconClock class="w-5 h-5 text-green-600 mb-1" />
+            <div class="p-4 rounded-xl border bg-green-50 border-green-200 dark:bg-green-400/10 dark:border-green-400/25">
+              <IconClock class="w-5 h-5 text-green-600 dark:text-green-400 mb-1" />
               <div class="text-2xl font-bold text-foreground">
                 {{ item.totalHours || "0" }}
               </div>
-              <div
-                class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
-              >
+              <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Всего часов
               </div>
             </div>
-            <div v-if="currentSemHours" class="metric-card metric-card-gray">
+            <div v-if="currentSemHours" class="p-4 rounded-xl border bg-muted border-border">
               <IconCalendar class="w-5 h-5 text-foreground mb-1" />
               <div class="text-2xl font-bold text-foreground">
                 {{ currentSemHours.hours }}
               </div>
-              <div
-                class="text-xs font-medium text-muted-foreground uppercase tracking-wide"
-              >
+              <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Часов ({{ currentSemHours.semesterName }})
               </div>
             </div>
-            <div class="metric-card metric-card-gray col-span-2">
-              <div
-                class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2"
-              >
+            <div class="p-4 rounded-xl border bg-muted border-border col-span-2">
+              <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
                 Специальности
               </div>
               <div v-if="specialtyChips.length" class="flex flex-wrap gap-1.5">
                 <span
                   v-for="specialty in specialtyChips"
                   :key="specialty.id"
-                  class="px-2 py-0.5 text-[11px] font-bold rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/30"
+                  class="px-2 py-0.5 text-[11px] font-bold rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 dark:text-emerald-400"
                 >
                   {{ specialty.codeName || specialty.name }}
                 </span>
@@ -136,7 +128,7 @@
 
           <!-- 4. Hours structure (concept order: Теор | Лаб/Практ | СРС | СРСП | Практика | Индивидуальные) -->
           <div>
-            <h4 class="section-heading">Структура часов</h4>
+            <h4 class="text-sm font-bold text-muted-foreground mb-3 pb-2 border-b border-border">Структура часов</h4>
             <div
               class="grid grid-cols-2 sm:grid-cols-4 gap-y-4 gap-x-8 text-sm"
             >
@@ -181,7 +173,7 @@
 
           <!-- 5. Semester plan -->
           <div>
-            <h4 class="section-heading">Семестровый план</h4>
+            <h4 class="text-sm font-bold text-muted-foreground mb-3 pb-2 border-b border-border">Семестровый план</h4>
             <div class="border border-border rounded-lg overflow-hidden">
               <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left">
@@ -232,7 +224,7 @@
                         {{ semesterSharedValue(entry.srspHours) }}
                       </td>
                       <td class="px-4 py-3 text-center text-muted-foreground">
-                        {{ semesterSharedValue(entry.individualHours) }}
+                        {{ individualCellValue(entry) }}
                       </td>
                       <td class="px-4 py-3 text-center">
                         <div
@@ -397,6 +389,39 @@ function semesterSharedValue(value: string | undefined) {
   return value;
 }
 
+// Individual-hours cell: prefer per-semester value; fall back to the RUP entry's
+// top-level individualAdditionalHours/individualHours, split evenly across the
+// semesters that carry hours (so the "Индив." column is populated when the data
+// only lives at the entry level — the case for prod's История Казахстана etc.).
+function individualCellValue(entry: DistributionEntry) {
+  const own = parseFloat(entry.individualHours || "0") || 0;
+  if (own > 0) return String(own);
+  const item = props.item;
+  if (!item) return "—";
+  const distSum = (item.distributionEntries || []).reduce(
+    (s: number, d: any) => s + (parseFloat(d.individualHours || "0") || 0),
+    0
+  );
+  if (distSum > 0) return "—"; // this row has none, but other rows do — leave "—"
+  const fallback =
+    parseFloat(item.individualAdditionalHours || "0") ||
+    parseFloat(item.individualHours || "0") ||
+    0;
+  if (fallback <= 0) return "—";
+  const active = (item.distributionEntries || []).filter(
+    (d: any) => (parseFloat(d.hours || "0") || 0) > 0
+  );
+  const count = active.length || (item.distributionEntries || []).length || 1;
+  if (
+    active.length &&
+    !active.some((d: any) => d.id === entry.id || d.semesterId === entry.semesterId)
+  ) {
+    return "—";
+  }
+  const per = fallback / count;
+  return per % 1 === 0 ? String(per) : per.toFixed(1);
+}
+
 function getLanguageFullName(code: string | undefined) {
   if (!code) return "—";
   const lang = (languageStore.languages as any[]).find((l) => l.code === code);
@@ -437,119 +462,33 @@ function getControlLabelsArray(entry: DistributionEntry): string[] {
   return labels;
 }
 
+function langBadgeClass(lang: string): string {
+  const map: Record<string, string> = {
+    kk: 'bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-300',
+    ru: 'bg-gray-200 text-gray-800 dark:bg-gray-400/15 dark:text-gray-300',
+    en: 'bg-purple-100 text-purple-700 dark:bg-purple-400/15 dark:text-purple-300',
+  };
+  return map[lang] ?? 'bg-muted text-muted-foreground';
+}
+
+function baseBadgeClass(base: number): string {
+  const map: Record<number, string> = {
+    9:  'bg-orange-100 text-orange-700 dark:bg-orange-400/15 dark:text-orange-300',
+    11: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-400/15 dark:text-yellow-300',
+  };
+  return map[base] ?? 'bg-muted text-muted-foreground';
+}
+
+function langDotClass(code: string): string {
+  const map: Record<string, string> = {
+    kk: 'bg-yellow-400',
+    ru: 'bg-gray-500 dark:bg-gray-400',
+    en: 'bg-purple-500',
+  };
+  return map[code] ?? 'bg-muted-foreground';
+}
+
 function handleEdit() {
   emit("edit");
 }
 </script>
-
-<style scoped>
-.rup-entry-view-popover {
-  display: flex;
-  flex-direction: column;
-  max-height: 92vh;
-}
-
-.rup-entry-view-content {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.section-heading {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-/* Language badges (concept colors) */
-.lang-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.125rem 0.5rem;
-  font-size: 0.625rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-radius: 0.25rem;
-}
-.lang-badge-kk {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-.lang-badge-ru {
-  background-color: #e5e7eb;
-  color: #1f2937;
-}
-.lang-badge-en {
-  background-color: #ede9fe;
-  color: #6d28d9;
-}
-
-/* Base badges */
-.base-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.125rem 0.5rem;
-  font-size: 0.625rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-radius: 0.25rem;
-}
-.base-badge-9 {
-  background-color: #ffedd5;
-  color: #c2410c;
-}
-.base-badge-11 {
-  background-color: #fef9c3;
-  color: #854d0e;
-}
-
-/* Language dots */
-.lang-dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  display: inline-block;
-}
-.lang-dot-kk {
-  background-color: #eab308;
-}
-.lang-dot-ru {
-  background-color: #111827;
-}
-.lang-dot-en {
-  background-color: #a855f7;
-}
-
-/* Metric cards */
-.metric-card {
-  padding: 1rem;
-  border-radius: 0.75rem;
-  border: 1px solid;
-}
-.metric-card-yellow {
-  background-color: #fefce8;
-  border-color: #fef3c7;
-}
-.metric-card-green {
-  background-color: #f0fdf4;
-  border-color: #dcfce7;
-}
-.metric-card-gray {
-  background-color: #f9fafb;
-  border-color: #f3f4f6;
-}
-
-/* Table */
-table {
-  border-collapse: collapse;
-}
-thead th {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-</style>

@@ -42,7 +42,7 @@
           </div>
         </div>
 
-        <div v-if="selectedAcademicYearId === activeAcademicYearId" class="mb-12">
+        <div v-if="selectedAcademicYearId" class="mb-12">
           <div class="flex flex-col md:flex-row justify-end items-center mb-6 gap-4">
             <div v-if="selectedTeacherId" class="flex items-center gap-3">
               <button
@@ -94,6 +94,13 @@
                         <span v-if="item.id.endsWith('_ind')" class="text-[9px] font-black text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded uppercase shrink-0">инд.</span>
                       </div>
                       <div class="text-[10px] text-muted-foreground font-medium mt-0.5">{{ item.index }}</div>
+                      <template v-if="!item.id.endsWith('_ind')">
+                        <div
+                          v-for="entry in [rupEntryStore.getRupEntryById(item.subjectId)]" :key="item.id"
+                          v-if="entry?.learningOutcome"
+                          class="text-[10px] text-muted-foreground/70 truncate max-w-[320px] mt-0.5"
+                        >{{ entry.learningOutcome }}</div>
+                      </template>
                     </td>
                     <td class="px-2 py-2.5 border-r border-border">
                       <select
@@ -578,6 +585,10 @@
                   + инд. {{ individualTotal(rup) }}ч
                 </span>
               </div>
+              <p
+                v-if="rup.learningOutcome"
+                class="text-xs text-muted-foreground truncate mt-0.5 mb-0"
+              >{{ rup.learningOutcome }}</p>
 
               <!-- meta + inline specialty/language chips -->
               <div class="flex items-center gap-2 flex-wrap mt-1.5" @click.stop>
@@ -743,9 +754,39 @@ const teacherOptions = computed(() =>
   teachers.value.map((t) => ({ value: t.id, text: getTeacherFullName(t) }))
 );
 
+// Semester IDs that belong to the selected academic year — used as secondary
+// signal when a distributionEntry's academicYearId is missing.
+const selectedYearSemesterIds = computed<Set<string>>(() => {
+  if (!selectedAcademicYearId.value) return new Set();
+  return new Set(
+    academicYearSemesterStore
+      .getAcademicYearSemestersByAcademicYear(selectedAcademicYearId.value)
+      .map((s) => s.id)
+  );
+});
+
 const filteredRup = computed(() => {
   return rupEntries.value.filter(item => {
-    if (selectedAcademicYearId.value && item.academicYearId !== selectedAcademicYearId.value) return false;
+    if (!selectedAcademicYearId.value) {
+      // No year filter applied — show everything.
+      const search = subjectSearchQuery.value.toLowerCase();
+      return item.moduleName.toLowerCase().includes(search) || item.moduleIndex.toLowerCase().includes(search);
+    }
+
+    const dists = item.distributionEntries ?? [];
+
+    const matchesYear = dists.length === 0
+      // No distribution rows: fall back to the RUP entry's own year.
+      ? item.academicYearId === selectedAcademicYearId.value
+      : dists.some((d) => {
+          // 1st: distributionEntry.academicYearId (most explicit).
+          if (d.academicYearId) return d.academicYearId === selectedAcademicYearId.value;
+          // 2nd: resolve semesterId → academicYearSemester → academicYearId.
+          return selectedYearSemesterIds.value.has(d.semesterId);
+        });
+
+    if (!matchesYear) return false;
+
     const search = subjectSearchQuery.value.toLowerCase();
     return item.moduleName.toLowerCase().includes(search) || item.moduleIndex.toLowerCase().includes(search);
   });
@@ -760,12 +801,19 @@ const addTabEntries = computed(() => {
 function hasIndividual(rup: RupEntry) {
   return individualTotal(rup) > 0;
 }
-// Total individual hours = sum of per-semester individual hours from the RUP distribution.
+// Total individual hours for a subject: sum of per-semester distribution
+// individualHours, else fall back to the RUP entry's top-level fields
+// (individualAdditionalHours wins over individualHours, matching
+// scheduleHours.resolveIndividualBudget + RupEntryViewPopover's convention).
 function individualTotal(rup: RupEntry) {
-  return (rup.distributionEntries || []).reduce(
+  const distSum = (rup.distributionEntries || []).reduce(
     (sum, d) => sum + (parseFloat(d.individualHours || "0") || 0),
     0
   );
+  if (distSum > 0) return distSum;
+  const additional = parseFloat(rup.individualAdditionalHours || "0") || 0;
+  if (additional > 0) return additional;
+  return parseFloat(rup.individualHours || "0") || 0;
 }
 function isSubjectSelected(id: string) {
   return id in selectedAdds.value;
@@ -781,11 +829,11 @@ function specShortLabel(id: string) {
   const sp: any = specialties.value.find((s: any) => s.id === id || s._id === id);
   return sp?.codeName || (sp?.name || id).split(/[\s-]+/)[0];
 }
-// Offer every specialty (not only the ones already on the RUP entry) so a
-// subject whose RUP carries no specialties can still have specialties assigned
-// to this teacher. Pre-selection comes from rowSpecsFor (defaults to rup's).
-function rupSpecialtyChips(_rup: RupEntry) {
+// Show only the specialties that are actually listed on this RUP entry.
+function rupSpecialtyChips(rup: RupEntry) {
+  const ids = new Set(rup.specialtyIds ?? []);
   return [...specialties.value]
+    .filter((s: any) => ids.has(s.id))
     .map((s: any) => ({
       id: s.id,
       label: s.codeName || specShortLabel(s.id),
@@ -933,17 +981,47 @@ function addSubjectFromRup(
       language: newItem.language,
     };
     // Per-semester individual hours from the RUP distribution.
+    let filledFromDist = false;
     rup.distributionEntries.forEach((entry, idx) => {
       const semNum = idx + 1;
       if (semNum > semesterCount.value) return;
       const ih = parseFloat(entry.individualHours || "0") || 0;
       if (ih > 0) {
+        filledFromDist = true;
         indItem[`hoursPerGroup${semNum}`] = String(ih);
         indItem[`groupCount${semNum}`] = "1";
         const weeks = parseFloat(indItem[`weeks${semNum}`] || "1") || 1;
         indItem[`hours${semNum}`] = (ih / weeks).toFixed(1);
       }
     });
+    // Fallback: no per-semester individualHours, but the RUP entry carries a
+    // top-level individualAdditionalHours / individualHours. Distribute evenly
+    // across the semesters the subject actually runs in (those with hours > 0).
+    if (!filledFromDist) {
+      const fallback =
+        parseFloat(rup.individualAdditionalHours || "0") ||
+        parseFloat(rup.individualHours || "0") ||
+        0;
+      if (fallback > 0) {
+        const activeSemesters: number[] = [];
+        rup.distributionEntries.forEach((entry, idx) => {
+          const semNum = idx + 1;
+          if (semNum > semesterCount.value) return;
+          if ((parseFloat(entry.hours || "0") || 0) > 0) activeSemesters.push(semNum);
+        });
+        // If no distribution rows have hours (edge case), spread across all semesters.
+        const targetSemesters = activeSemesters.length
+          ? activeSemesters
+          : Array.from({ length: semesterCount.value }, (_, i) => i + 1);
+        const per = fallback / targetSemesters.length;
+        for (const semNum of targetSemesters) {
+          indItem[`hoursPerGroup${semNum}`] = String(per);
+          indItem[`groupCount${semNum}`] = "1";
+          const weeks = parseFloat(indItem[`weeks${semNum}`] || "1") || 1;
+          indItem[`hours${semNum}`] = (per / weeks).toFixed(1);
+        }
+      }
+    }
     let indTotal = 0;
     for (let i = 1; i <= semesterCount.value; i++) {
       indTotal += parseFloat(indItem[`hoursPerGroup${i}`] || "0") * parseFloat(indItem[`groupCount${i}`] || "0");
