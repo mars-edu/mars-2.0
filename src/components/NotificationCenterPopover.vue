@@ -202,7 +202,7 @@ const notificationsResult = useConvexQuery(
   computed(() => currentUserId.value ? {
     userId: currentUserId.value,
     limit: 50,
-  } : "skip")
+  } : undefined)
 ) as any;
 
 const activeRemindersResult = useConvexQuery(

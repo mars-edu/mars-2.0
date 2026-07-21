@@ -91,7 +91,7 @@ const unreadCountResult = useConvexQuery(
   api.notifications.queries.getUnreadCount,
   computed(() => userStore.currentUser?.id ? {
     userId: userStore.currentUser.id as Id<"users">,
-  } : "skip")
+  } : undefined)
 );
 
 const unreadCount = computed(() => (unreadCountResult as any).data.value ?? 0);

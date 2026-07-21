@@ -694,7 +694,7 @@ watch(
 const eventWithParticipantsResult = useConvexQuery(
   api.calendarEvents.queries.getByIdWithParticipants,
   computed(() =>
-    effectiveJournalId.value ? { id: effectiveJournalId.value as any } : "skip",
+    effectiveJournalId.value ? { id: effectiveJournalId.value as any } : undefined,
   ),
 ) as any;
 
