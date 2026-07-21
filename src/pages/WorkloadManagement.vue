@@ -95,11 +95,12 @@
                       </div>
                       <div class="text-[10px] text-muted-foreground font-medium mt-0.5">{{ item.index }}</div>
                       <template v-if="!item.id.endsWith('_ind')">
-                        <div
-                          v-for="entry in [rupEntryStore.getRupEntryById(item.subjectId)]" :key="item.id"
-                          v-if="entry?.learningOutcome"
-                          class="text-[10px] text-muted-foreground/70 truncate max-w-[320px] mt-0.5"
-                        >{{ entry.learningOutcome }}</div>
+                        <template v-for="entry in [rupEntryStore.getRupEntryById(item.subjectId)]" :key="item.id">
+                          <div
+                            v-if="entry?.learningOutcome"
+                            class="text-[10px] text-muted-foreground/70 truncate max-w-[320px] mt-0.5"
+                          >{{ entry.learningOutcome }}</div>
+                        </template>
                       </template>
                     </td>
                     <td class="px-2 py-2.5 border-r border-border">
@@ -566,10 +567,13 @@
             v-for="rup in addTabEntries"
             :key="rup.id"
             @click="toggleSelectSubject(rup)"
-            class="w-full text-left p-3 rounded-xl transition-all border flex items-start gap-3 cursor-pointer relative"
-            :class="isSubjectSelected(rup.id)
-              ? 'bg-primary/5 border-primary/40'
-              : 'border-transparent hover:bg-muted/30 hover:border-border'"
+            class="w-full text-left p-3 rounded-xl transition-all border flex items-start gap-3 relative"
+            :class="isAlreadyAdded(rup)
+              ? 'bg-muted/30 border-border opacity-50 cursor-not-allowed'
+              : isSubjectSelected(rup.id)
+                ? 'bg-primary/5 border-primary/40 cursor-pointer'
+                : 'border-transparent hover:bg-muted/30 hover:border-border cursor-pointer'"
+            :title="isAlreadyAdded(rup) ? 'Уже добавлено в нагрузку' : ''"
           >
             <div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
               <IconBookOpen class="w-5 h-5" />
@@ -583,6 +587,12 @@
                   class="text-[10px] font-black text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded uppercase"
                 >
                   + инд. {{ individualTotal(rup) }}ч
+                </span>
+                <span
+                  v-if="isAlreadyAdded(rup)"
+                  class="text-[10px] font-black text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded uppercase"
+                >
+                  Уже добавлено
                 </span>
               </div>
               <p
@@ -818,7 +828,20 @@ function individualTotal(rup: RupEntry) {
 function isSubjectSelected(id: string) {
   return id in selectedAdds.value;
 }
+// Subjects already in the current workload (by rupEntry id, ignoring _ind children).
+const alreadyAddedSubjectIds = computed(() => {
+  const ids = new Set<string>();
+  for (const it of currentWorkloadItems.value) {
+    if (it.id.endsWith("_ind")) continue;
+    if (it.subjectId) ids.add(it.subjectId);
+  }
+  return ids;
+});
+function isAlreadyAdded(rup: RupEntry) {
+  return alreadyAddedSubjectIds.value.has(rup.id);
+}
 function toggleSelectSubject(rup: RupEntry) {
+  if (isAlreadyAdded(rup)) return; // guard: prevent double-add
   if (isSubjectSelected(rup.id)) delete selectedAdds.value[rup.id];
   else selectedAdds.value[rup.id] = true;
 }
@@ -861,7 +884,10 @@ function toggleRowLang(rup: RupEntry, l: string) {
   rowLangs.value[rup.id] = cur;
 }
 function rowIndivFor(rup: RupEntry) {
-  return rowIndiv.value[rup.id] ?? false;
+  // Default ON when the RUP carries individual hours — matches concept behaviour
+  // (concept unconditionally spawns the paired _ind row); the user can still
+  // uncheck it in the add-modal.
+  return rowIndiv.value[rup.id] ?? hasIndividual(rup);
 }
 function toggleRowIndiv(rup: RupEntry) {
   rowIndiv.value[rup.id] = !rowIndivFor(rup);
@@ -877,7 +903,11 @@ function rupSemesters(rup: RupEntry) {
 function confirmAddSubjects() {
   for (const rupId of Object.keys(selectedAdds.value)) {
     const rup = rupEntries.value.find((r) => r.id === rupId);
-    if (rup) addSubjectFromRup(rup, {
+    if (!rup) continue;
+    // Belt-and-suspenders: skip if the subject slipped through (e.g. added in
+    // another tab / from stale selection).
+    if (isAlreadyAdded(rup)) continue;
+    addSubjectFromRup(rup, {
       specialtyIds: rowSpecsFor(rup),
       language: rowLangsFor(rup)[0],
       individual: rowIndivFor(rup),
