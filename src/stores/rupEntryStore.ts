@@ -300,67 +300,6 @@ export const useRupEntryStore = defineStore(
         }, "Failed to add RUP entry");
     }
 
-    async function linkExistingRupEntry(
-      academicYearId: string,
-      specialtyIds: string[],
-      existingItemId: string,
-      customData?: Partial<
-        Pick<
-          RupEntry,
-          | "totalHours"
-          | "theoreticalHours"
-          | "labPracticalHours"
-          | "srspHours"
-          | "srsHours"
-          | "trainingPracticeHours"
-          | "individualHours"
-          | "individualAdditionalHours"
-        >
-      >
-    ) {
-      return await withLoading(loading, error, async () => {
-        const existingItem = getRupEntryById.value(existingItemId);
-                if (!existingItem) {
-                  throw new Error("Existing item not found");
-                }
-
-                // Create a new item in Convex based on the existing one
-                const contextItems = getRupEntriesByContext.value(
-                  academicYearId,
-                  specialtyIds
-                );
-
-                const id = await convex.mutation(api.rupEntries.mutations.create, {
-                  specialtyIds,
-                  academicYearId,
-                  baseClass: existingItem.baseClass ?? [9],
-                  language: existingItem.language ?? "",
-                  groupId: existingItem.groupId,
-                  moduleIndex: existingItem.moduleIndex,
-                  moduleName: existingItem.moduleName,
-                  learningOutcome: existingItem.learningOutcome,
-                  totalCredits: existingItem.totalCredits,
-                  totalHours: customData?.totalHours || existingItem.totalHours,
-                  theoreticalHours: customData?.theoreticalHours || existingItem.theoreticalHours,
-                  labPracticalHours: customData?.labPracticalHours || existingItem.labPracticalHours,
-                  field3Value: existingItem.field3Value,
-                  srspHours: customData?.srspHours || existingItem.srspHours,
-                  srsHours: customData?.srsHours || existingItem.srsHours,
-                  trainingPracticeHours: customData?.trainingPracticeHours || existingItem.trainingPracticeHours,
-                  individualHours: customData?.individualHours || existingItem.individualHours,
-                  individualAdditionalHours:
-                    customData?.individualAdditionalHours ||
-                    existingItem.individualAdditionalHours ||
-                    "",
-                  position: contextItems.length,
-                });
-
-                // The reactive query will automatically update rupEntries
-                error.value = null;
-                return id;
-        }, "Failed to link RUP entry");
-    }
-
     async function addRupEntries(items: RupEntry[]) {
       return await withLoading(loading, error, async () => {
         // Create all items in Convex
@@ -511,7 +450,10 @@ export const useRupEntryStore = defineStore(
                   academicYearId: itemToDuplicate.academicYearId,
                   baseClass: itemToDuplicate.baseClass ?? [9],
                   language: itemToDuplicate.language ?? "",
-                  groupId: itemToDuplicate.groupId,
+                  // Standalone duplicate: no groupId, so the copy is NOT treated as a
+                  // language-variant of the original (groupId groups variants together —
+                  // reusing the source's would make the copy a phantom variant).
+                  groupId: undefined,
                   moduleIndex: itemToDuplicate.moduleIndex,
                   moduleName: itemToDuplicate.moduleName,
                   learningOutcome: itemToDuplicate.learningOutcome,
@@ -646,7 +588,6 @@ export const useRupEntryStore = defineStore(
       rupEntryOptions,
       createEmptyRupEntry,
       addRupEntry,
-      linkExistingRupEntry,
       addRupEntries,
       updateRupEntry,
       updateRupEntryOrder,

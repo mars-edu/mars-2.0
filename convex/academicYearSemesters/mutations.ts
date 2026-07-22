@@ -48,13 +48,23 @@ export const update = mutation({
 });
 
 /**
- * Remove an academic year semester
+ * Remove an academic year semester (also deletes its distribution entries)
  */
 export const remove = mutation({
   args: {
     id: v.id("academicYearSemesters"),
   },
   handler: async (ctx, args) => {
+    // Delete all distribution entries for this semester
+    const distributions = await ctx.db
+      .query("distributionEntries")
+      .withIndex("by_semester", (q) => q.eq("semesterId", args.id))
+      .collect();
+
+    for (const dist of distributions) {
+      await ctx.db.delete(dist._id);
+    }
+
     await ctx.db.delete(args.id);
     return args.id;
   },

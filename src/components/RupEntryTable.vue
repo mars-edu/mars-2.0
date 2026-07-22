@@ -5,7 +5,6 @@
         v-for="(item, idx) in rupEntryList"
         :key="item.id"
         class="overflow-hidden bg-card border-b border-border last:border-b-0 transition-colors duration-150"
-        :class="{ 'is-selected': rupStore.isRupEntrySelected(item.id) }"
         @click="handleRowClick(item)"
       >
         <div class="flex items-stretch w-full">
@@ -166,18 +165,16 @@ import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { f7 } from "framework7-vue";
 import IconGripVertical from "~icons/lucide/grip-vertical";
-import IconCopy from "~icons/lucide/copy";
 import IconTrash2 from "~icons/lucide/trash-2";
+import IconCopy from "~icons/lucide/copy";
 import RupEntryPopup from "@/components/RupEntryPopup.vue";
 import RupEntryViewPopover from "@/components/RupEntryViewPopover.vue";
-import { useRupStore } from "@/stores/rupStore";
 import Sortable from "sortablejs";
 
 const props = defineProps<{
   specialtyIds?: string[];
   academicYearId: string;
   teacherId?: string;
-  selectMode?: boolean;
   baseClass?: number;
 }>();
 
@@ -186,7 +183,6 @@ const emit = defineEmits<{
 }>();
 
 const rupEntryStore = useRupEntryStore();
-const rupStore = useRupStore();
 const finalControlStore = useFinalControlStore();
 const intermediateControlStore = useIntermediateControlStore();
 const sortableList = ref<HTMLElement | null>(null);
@@ -236,11 +232,7 @@ const viewPopupOpen = ref(false);
 const viewData = ref<RupEntry | null>(null);
 
 function handleRowClick(item: RupEntry) {
-  if (props.selectMode) {
-    rupStore.toggleRupEntryItemSelection(item.id);
-  } else {
-    openViewPopup(item);
-  }
+  openViewPopup(item);
 }
 
 function openEditPopup(item: RupEntry) {
@@ -298,10 +290,6 @@ function handlePopupSubmit() {
   closePopup();
 }
 
-function duplicateItem(item: RupEntry) {
-  emit("duplicate-item", item);
-}
-
 function escapeHtml(s: string) {
   return s
     .replace(/&/g, "&amp;")
@@ -309,6 +297,10 @@ function escapeHtml(s: string) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function duplicateItem(item: RupEntry) {
+  emit("duplicate-item", item);
 }
 
 function confirmDeleteItem(item: RupEntry) {
@@ -387,9 +379,5 @@ defineExpose({
 .rup-entry-table > div > div:hover {
   background-color: hsl(var(--muted) / 0.35) !important;
   cursor: pointer;
-}
-
-.is-selected {
-  background-color: hsl(var(--primary) / 0.12) !important;
 }
 </style>

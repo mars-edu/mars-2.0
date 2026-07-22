@@ -225,7 +225,7 @@ const activeAcademicYearId = computed(() => {
 });
 
 const filteredItems = computed(() => {
-  let items = rupEntryStore.getAllRupEntryItems;
+  let items = rupEntryStore.getAllRupEntries;
 
   // Filter by Active Academic Year
   if (activeAcademicYearId.value) {

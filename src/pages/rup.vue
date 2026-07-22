@@ -12,37 +12,6 @@
         class="flex-1 overflow-y-auto px-2 py-3 sm:px-3 md:p-4 bg-background pb-16 md:pb-6 relative transition-all duration-200"
         :class="contentMargin"
       >
-        <div
-          v-if="isSelectMode"
-          class="bg-primary text-primary-foreground p-4 mb-4 rounded-lg flex items-center justify-between shadow-lg"
-          role="alert"
-        >
-          <div class="flex items-center">
-            <IconInfo class="w-6 h-6 mr-3" />
-            <div>
-              <p class="font-bold">{{ rup_import_mode() }}</p>
-              <p class="text-sm opacity-90">
-                {{ rup_import_hint() }}
-              </p>
-            </div>
-          </div>
-          <div class="flex items-center gap-3">
-            <button
-              @click="handleImport"
-              class="flex items-center gap-2 px-4 py-2 bg-primary-foreground text-primary rounded-lg shadow-lg hover:bg-primary-foreground/90 transition-colors"
-            >
-              <IconSquareArrowUp class="w-5 h-5" />
-              <span>{{ rup_import_btn() }}</span>
-            </button>
-            <button
-              @click="cancelSelectMode"
-              class="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg shadow-lg hover:bg-red-600 transition-colors"
-            >
-              <IconX class="w-5 h-5" />
-              <span>{{ common_cancel() }}</span>
-            </button>
-          </div>
-        </div>
         <div class="bg-card text-card-foreground rounded-2xl border border-border/80 p-3 sm:p-4 md:p-5 shadow-sm">
           <div
             class="flex flex-col gap-3 md:flex-row md:items-center md:gap-4 mb-4"
@@ -171,12 +140,6 @@
               </template>
               <template #actions>
                 <div class="flex items-center gap-2">
-                  <ImportWorkingPlanDialog
-                    :disabled="!(selectedAcademicYear && selectedSpecialtyId)"
-                    :specialty-id="selectedSpecialtyId || ''"
-                    @enable-select-mode="enableSelectMode"
-                  />
-
                   <AddWorkingPlanDialog
                     :disabled="!(selectedAcademicYear && selectedSpecialtyId)"
                     @add="addRupEntry"
@@ -208,7 +171,6 @@
                     :specialty-ids="[selectedSpecialtyId]"
                     :academic-year-id="selectedAcademicYear"
                     :teacher-id="effectiveTeacherId"
-                    :select-mode="isSelectMode"
                     :base-class="selectedClassLevel"
                     @duplicate-item="handleDuplicateRupEntryItem"
                   />
@@ -257,8 +219,6 @@
 import { ref, onMounted, computed } from "vue";
 import { f7Page, f7SkeletonBlock, f7, f7Popover } from "framework7-vue";
 import IconInfo from "~icons/lucide/info";
-import IconSquareArrowUp from "~icons/lucide/square-arrow-up";
-import IconX from "~icons/lucide/x";
 import IconArrowUp from "~icons/lucide/arrow-up";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
@@ -270,7 +230,6 @@ import Accordion from "@/components/ui/accordion/Accordion.vue";
 import AccordionItem from "@/components/ui/accordion/AccordionItem.vue";
 import Select from "@/components/ui/Select.vue";
 import { storeToRefs } from "pinia";
-import ImportWorkingPlanDialog from "@/components/ImportWorkingPlanDialog.vue";
 import { useRupStore } from "@/stores/rupStore";
 import { useRupEntryStore, type RupEntry } from "@/stores/rupEntryStore";
 import { useUserStore } from "@/stores/userStore";
@@ -287,17 +246,7 @@ import {
   rup_select_year_first,
   rup_select_specialty_first,
   rup_no_extra_info,
-  rup_import_mode,
-  rup_import_hint,
-  rup_import_btn,
-  rup_import_nothing,
-  rup_import_nothing_title,
-  rup_import_no_specialty,
-  rup_import_error_title,
-  rup_import_done_title,
-  rup_import_done_msg,
   rup_module_duplicated,
-  common_cancel,
   common_menu,
   home_home,
   home_schedule,
@@ -356,8 +305,6 @@ const selectedClassLevel = ref<9 | 11>(9);
 const rupStore = useRupStore();
 const rupEntryStore = useRupEntryStore();
 
-const isSelectMode = ref(false);
-
 const selectedSpecialtyInfo = ref<Specialty | null>(null);
 
 const handleSpecialtyInfoClick = (specialty: Specialty, targetEl: string) => {
@@ -369,25 +316,8 @@ const onPopoverClosed = () => {
   selectedSpecialtyInfo.value = null;
 };
 
-const enableSelectMode = () => {
-  rupStore.setItemsForImport(rupEntryStore.getAllRupEntryItems);
-  rupStore.setTargetContext(
-    rupStore.selectedSpecialtyId,
-    rupStore.selectedAcademicYearId
-  );
-  isSelectMode.value = true;
-  rupStore.clearSelection();
-};
-
-const cancelSelectMode = () => {
-  isSelectMode.value = false;
-  rupStore.clearTargetContext();
-  rupStore.clearRupEntrySelection();
-  rupStore.clearItemsForImport();
-};
-
 const handleDuplicateRupEntryItem = (item: RupEntry) => {
-  rupEntryStore.duplicateRupEntryItem(item);
+  rupEntryStore.duplicateRupEntry(item);
   f7.toast
     .create({
       text: rup_module_duplicated(),
@@ -396,44 +326,6 @@ const handleDuplicateRupEntryItem = (item: RupEntry) => {
       cssClass: "bg-primary",
     })
     .open();
-};
-
-const handleImport = () => {
-  const selectedIds = rupStore.selectedRupEntryItemIds;
-  if (selectedIds.length === 0) {
-    f7.dialog.alert(rup_import_nothing(), rup_import_nothing_title());
-    return;
-  }
-
-  const targetSpecialtyId = rupStore.targetSpecialtyId;
-  const targetAcademicYearId = rupStore.targetAcademicYearId;
-
-  if (!targetSpecialtyId) {
-    f7.dialog.alert(rup_import_no_specialty(), rup_import_error_title());
-    return;
-  }
-
-  const allItems = rupStore.itemsForImport;
-  const itemsToImport = allItems.filter((item) =>
-    selectedIds.includes(item.id)
-  );
-
-  const newItems = itemsToImport.map((item) => ({
-    ...item,
-    id: crypto.randomUUID(),
-    specialtyId: targetSpecialtyId,
-    academicYearId: targetAcademicYearId || item.academicYearId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }));
-
-  rupEntryStore.addRupEntryItems(newItems);
-
-  cancelSelectMode();
-  f7.dialog.alert(
-    rup_import_done_msg({ count: newItems.length }),
-    rup_import_done_title()
-  );
 };
 
 const addRupEntry = (baseClass?: number) => {

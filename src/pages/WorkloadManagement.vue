@@ -182,8 +182,8 @@
                           <input
                             type="number"
                             step="0.5"
-                            v-model="item[`hours${i}`]"
-                            @input="recalculateItem(item.id)"
+                            :value="formatHours(item[`hours${i}`])"
+                            @input="item[`hours${i}`] = ($event.target as HTMLInputElement).value; recalculateItem(item.id)"
                             class="w-10 bg-transparent border-none focus:ring-0 text-sm p-0 text-center text-slate-600 font-bold outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <button
@@ -703,6 +703,7 @@ import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useSidebar } from "@/composables/useSidebar";
 import type { WorkloadItem, SavedWorkload } from "@/types/workload";
+import { MAX_WORKLOAD_SEMESTERS } from "@convex/schema/workloadItem";
 
 // Icons
 import IconUser from "~icons/lucide/user";
@@ -967,7 +968,7 @@ const filteredWorkloads = computed(() => {
 });
 
 const totalCurrentWorkloadHours = computed(() => {
-  return currentWorkloadItems.value.reduce((sum, item) => sum + parseInt(item.totalHours || '0'), 0);
+  return currentWorkloadItems.value.reduce((sum, item) => sum + (item.totalHours || 0), 0);
 });
 
 function onSelectTeacher(id: string | null) {
@@ -997,7 +998,7 @@ function addSubjectFromRup(
     hoursPerGroup2: "0",
     groupCount1: "1",
     groupCount2: "1",
-    totalHours: "0",
+    totalHours: 0,
     index: rup.moduleIndex,
     description: rup.moduleName,
     language: opts.language || rup.language || "ru",
@@ -1009,7 +1010,7 @@ function addSubjectFromRup(
     if (semNum <= semesterCount.value) {
         newItem[`hoursPerGroup${semNum}`] = entry.hours || "0";
         const weeks = parseFloat(newItem[`weeks${semNum}`]) || 1;
-        newItem[`hours${semNum}`] = (parseFloat(entry.hours || "0") / weeks).toFixed(1);
+        newItem[`hours${semNum}`] = (parseFloat(entry.hours || "0") / weeks).toString();
     }
   });
 
@@ -1032,7 +1033,7 @@ function addSubjectFromRup(
       hoursPerGroup2: "0",
       groupCount1: "0",
       groupCount2: "0",
-      totalHours: "0",
+      totalHours: 0,
       index: rup.moduleIndex,
       description: "",
       language: newItem.language,
@@ -1048,7 +1049,7 @@ function addSubjectFromRup(
         indItem[`hoursPerGroup${semNum}`] = String(ih);
         indItem[`groupCount${semNum}`] = "1";
         const weeks = parseFloat(indItem[`weeks${semNum}`] || "1") || 1;
-        indItem[`hours${semNum}`] = (ih / weeks).toFixed(1);
+        indItem[`hours${semNum}`] = (ih / weeks).toString();
       }
     });
     // Fallback: no per-semester individualHours, but the RUP entry carries a
@@ -1075,7 +1076,7 @@ function addSubjectFromRup(
           indItem[`hoursPerGroup${semNum}`] = String(per);
           indItem[`groupCount${semNum}`] = "1";
           const weeks = parseFloat(indItem[`weeks${semNum}`] || "1") || 1;
-          indItem[`hours${semNum}`] = (per / weeks).toFixed(1);
+          indItem[`hours${semNum}`] = (per / weeks).toString();
         }
       }
     }
@@ -1083,7 +1084,7 @@ function addSubjectFromRup(
     for (let i = 1; i <= semesterCount.value; i++) {
       indTotal += parseFloat(indItem[`hoursPerGroup${i}`] || "0") * parseFloat(indItem[`groupCount${i}`] || "0");
     }
-    indItem.totalHours = Math.round(indTotal).toString();
+    indItem.totalHours = Math.round(indTotal);
     currentWorkloadItems.value.push(indItem);
   }
 }
@@ -1107,7 +1108,7 @@ function recalculateItem(id: string) {
     total += hoursPerGroup * groupCount;
   }
 
-  item.totalHours = Math.round(total).toString();
+  item.totalHours = Math.round(total);
 }
 
 function adjustValue(id: string, field: string, delta: number) {
@@ -1142,6 +1143,17 @@ function formatHours(val: any) {
 async function handleSaveWorkload() {
   if (!selectedTeacherId.value || currentWorkloadItems.value.length === 0) return;
 
+  // The workload item stores per-semester hours as flat numbered fields capped
+  // at MAX_WORKLOAD_SEMESTERS. A year with more semesters would emit extra keys
+  // the Convex validator rejects, failing the whole save — refuse with a clear
+  // message instead of a cryptic ArgumentValidationError.
+  if (semesterCount.value > MAX_WORKLOAD_SEMESTERS) {
+    f7.dialog.alert(
+      `Учебный год содержит ${semesterCount.value} семестров — сохранение поддерживает не более ${MAX_WORKLOAD_SEMESTERS}. Проверьте настройки семестров учебного года.`
+    );
+    return;
+  }
+
   const workload: SavedWorkload = {
     teacherId: selectedTeacherId.value,
     teacherName: selectedTeacherName.value,
@@ -1160,6 +1172,9 @@ async function handleSaveWorkload() {
     workloadStore.resetCurrentWorkload();
     showSaveConfirm.value = false;
   } catch (err) {
+    // Surface the real cause (validation, network) — it was previously
+    // swallowed, which is why save failures were hard to diagnose.
+    console.error("saveWorkload failed", err);
     f7.dialog.alert("Ошибка при сохранении нагрузки");
   }
 }
@@ -1187,6 +1202,17 @@ function getAcademicYearName(id: string) {
   return academicYearOptions.value.find(o => o.value === id)?.text || id;
 }
 
+// Escapes a CSV cell: neutralizes formula injection (=, +, -, @, tab, CR)
+// by prefixing a leading apostrophe, then doubles embedded quotes and wraps
+// the value in quotes.
+function escapeCsvCell(value: unknown): string {
+  let str = String(value ?? '');
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = `'${str}`;
+  }
+  return `"${str.replace(/"/g, '""')}"`;
+}
+
 function downloadWorkload(workload: SavedWorkload) {
   const headers = ['Предмет', 'Отделение', 'Курс', 'Студенты', 'Недели 1', 'Недели 2', 'Часы 1', 'Часы 2', 'На группу 1', 'На группу 2', 'Группы 1', 'Группы 2', 'Всего часов'];
   const rows = workload.items.map(item => [
@@ -1206,8 +1232,8 @@ function downloadWorkload(workload: SavedWorkload) {
   ]);
 
   const csvContent = [
-    headers.join(','),
-    ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    headers.map(escapeCsvCell).join(','),
+    ...rows.map(row => row.map(escapeCsvCell).join(','))
   ].join('\n');
 
   const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1249,8 +1275,8 @@ function downloadAllWorkloads() {
   });
 
   const csvContent = [
-    headers.join(','),
-    ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    headers.map(escapeCsvCell).join(','),
+    ...rows.map(row => row.map(escapeCsvCell).join(','))
   ].join('\n');
 
   const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });

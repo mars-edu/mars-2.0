@@ -26,9 +26,6 @@ export const useRupStore = defineStore(
       selectedRupEntryId.value = id;
     }
 
-    const targetSpecialtyId = ref<string | null>(null);
-    const targetAcademicYearId = ref<string | null>(null);
-
     function setSelectedAcademicYear(id: string | null) {
       selectedAcademicYearId.value = id;
       selectedSpecialtyId.value = null;
@@ -38,22 +35,6 @@ export const useRupStore = defineStore(
     }
     function setSelectedTeacher(id: string | null) {
       selectedTeacherId.value = id;
-    }
-    function clearSelection() {
-      selectedSpecialtyId.value = null;
-    }
-
-    function setTargetContext(
-      specialtyId: string | null,
-      academicYearId: string | null
-    ) {
-      targetSpecialtyId.value = specialtyId;
-      targetAcademicYearId.value = academicYearId;
-    }
-
-    function clearTargetContext() {
-      targetSpecialtyId.value = null;
-      targetAcademicYearId.value = null;
     }
 
     const selectedAcademicYear = computed(() => {
@@ -106,66 +87,22 @@ export const useRupStore = defineStore(
       return sum.toString();
     });
 
-    const itemsForImport = ref<any[]>([]);
-    const selectedRupEntryIds = ref<string[]>([]);
-
-    const isRupEntrySelected = computed(() => {
-      return (itemId: string) => selectedRupEntryIds.value.includes(itemId);
-    });
-
-    function toggleRupEntrySelection(itemId: string) {
-      const index = selectedRupEntryIds.value.indexOf(itemId);
-      if (index > -1) {
-        selectedRupEntryIds.value.splice(index, 1);
-      } else {
-        selectedRupEntryIds.value.push(itemId);
-      }
-    }
-
-    function clearRupEntrySelection() {
-      selectedRupEntryIds.value = [];
-    }
-
-    function setItemsForImport(items: any[]) {
-      itemsForImport.value = items;
-    }
-
-    function clearItemsForImport() {
-      itemsForImport.value = [];
-    }
-
     function reset() {
       selectedAcademicYearId.value = null;
       selectedSpecialtyId.value = null;
       selectedTeacherId.value = null;
-      targetSpecialtyId.value = null;
-      targetAcademicYearId.value = null;
       selectedRupEntryId.value = null;
-      selectedRupEntryIds.value = [];
-      itemsForImport.value = [];
     }
 
     return {
       selectedAcademicYearId,
       selectedSpecialtyId,
       selectedTeacherId,
-      targetSpecialtyId,
-      targetAcademicYearId,
       setSelectedAcademicYear,
       setSelectedSpecialty,
       setSelectedTeacher,
-      setTargetContext,
-      clearTargetContext,
-      clearSelection,
       selectedAcademicYear,
       selectedSpecialty,
-      selectedRupEntryIds,
-      isRupEntrySelected,
-      toggleRupEntrySelection,
-      clearRupEntrySelection,
-      itemsForImport,
-      setItemsForImport,
-      clearItemsForImport,
 
       selectedRupEntryId,
       setSelectedRupEntryId,

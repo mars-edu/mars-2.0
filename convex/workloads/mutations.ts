@@ -2,6 +2,7 @@ import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
+import { workloadItemValidator } from "../schema/workloadItem";
 
 /**
  * Save a workload (create or update)
@@ -13,33 +14,7 @@ export const save = mutation({
     teacherName: v.string(),
     academicYearId: v.string(),
     totalHours: v.number(),
-    items: v.array(
-      v.object({
-        id: v.string(),
-        subjectId: v.string(),
-        department: v.string(),
-        course: v.string(),
-        studentCount: v.string(),
-        weeks1: v.string(),
-        weeks2: v.string(),
-        weeks3: v.optional(v.string()),
-        hours1: v.string(),
-        hours2: v.string(),
-        hours3: v.optional(v.string()),
-        hoursPerGroup1: v.string(),
-        hoursPerGroup2: v.string(),
-        hoursPerGroup3: v.optional(v.string()),
-        groupCount1: v.string(),
-        groupCount2: v.string(),
-        groupCount3: v.optional(v.string()),
-        totalHours: v.string(),
-        teacherName: v.optional(v.string()),
-        index: v.optional(v.string()),
-        description: v.optional(v.string()),
-        language: v.optional(v.string()),
-        specialtyIds: v.optional(v.array(v.string())),
-      })
-    ),
+    items: v.array(workloadItemValidator),
   },
   handler: async (ctx, args) => {
     const { id, ...data } = args;
