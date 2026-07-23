@@ -7,7 +7,7 @@ Education Management System built with Vue 3, Convex, and Framework7.
 **Comprehensive documentation is available in the [`/docs`](./docs) folder.**
 
 - [Documentation Index](./docs/README.md) - Start here for guides and architecture overview
-- [Migrations Guide](./docs/MIGRATIONS.md) - Database migration system documentation
+- Migrations — [@convex-dev/migrations](https://www.convex.dev/components/migrations) component; define in `convex/*Migrations.ts`, run via `npx convex run <file>:<name>` (see `convex/migrations.ts`)
 
 ## 🚀 Quick Start
 
@@ -33,7 +33,7 @@ npm run dev         # Frontend only
 | `npm run dev:convex` | Start Convex dev server only |
 | `npm run build` | Build frontend for production |
 | `npm run build:convex` | Deploy Convex backend (includes migrations) |
-| `npm run migrate` | Run database migrations |
+| `npm run migrate:status` | Show migration status (@convex-dev/migrations) |
 | `npm run test` | Run unit tests |
 | `npm run test:e2e` | Run E2E tests |
 | `npm run preview` | Preview production build |

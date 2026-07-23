@@ -28,6 +28,7 @@ export interface RupEntry {
   learningOutcome: string;
   totalCredits: string;
   totalHours: string;
+  groupHours: string;
   theoreticalHours: string;
   labPracticalHours: string;
   field3Value: string;

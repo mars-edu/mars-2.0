@@ -25,7 +25,7 @@ export interface WorkloadItemLike {
   groupCount1: string;
   groupCount2: string;
   groupCount3?: string;
-  totalHours: string;
+  totalHours: number;
   index?: string;
   description?: string;
   teacherName?: string;

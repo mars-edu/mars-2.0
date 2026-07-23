@@ -183,7 +183,7 @@
                             type="number"
                             step="0.5"
                             :value="formatHours(item[`hours${i}`])"
-                            @input="item[`hours${i}`] = ($event.target as HTMLInputElement).value; recalculateItem(item.id)"
+                            @change="item[`hours${i}`] = ($event.target as HTMLInputElement).value; recalculateItem(item.id)"
                             class="w-10 bg-transparent border-none focus:ring-0 text-sm p-0 text-center text-slate-600 font-bold outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <button

@@ -348,6 +348,7 @@ export default defineSchema({
     learningOutcome: v.string(),
     totalCredits: v.string(),
     totalHours: v.string(),
+    groupHours: v.optional(v.string()),
     theoreticalHours: v.string(),
     labPracticalHours: v.string(),
     field3Value: v.string(),

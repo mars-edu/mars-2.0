@@ -20,7 +20,7 @@ const item = (over: Partial<WorkloadItemLike> = {}): WorkloadItemLike => ({
   hoursPerGroup2: "40",
   groupCount1: "1",
   groupCount2: "1",
-  totalHours: "76",
+  totalHours: 76,
   ...over,
 });
 

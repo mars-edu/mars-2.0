@@ -204,6 +204,14 @@
                 />
 
                 <Input
+                  :id="'group-hours-'"
+                  v-model="step.groupHours"
+                  label="Групповые"
+                  type="text" inputmode="numeric"
+                  placeholder="0"
+                />
+
+                <Input
                   :id="'theoretical-hours-'"
                   v-model="step.theoreticalHours"
                   label="Теоретических"
@@ -462,25 +470,25 @@
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <span class="text-muted-foreground">Групп:</span>
-                    <span :class="distributionSummary.group === distributionSummary.targetGroup ? 'text-green-600 font-medium' : 'text-red-600 font-medium'">
+                    <span class="text-muted-foreground font-medium">
                       {{ distributionSummary.group }} / {{ distributionSummary.targetGroup }}
                     </span>
                   </div>
                   <div v-if="visibleColumns.srs">
                     <span class="text-muted-foreground">СРС:</span>
-                    <span :class="distributionSummary.srs === distributionSummary.targetSrs ? 'text-green-600 font-medium' : 'text-red-600 font-medium'">
+                    <span class="text-muted-foreground font-medium">
                       {{ distributionSummary.srs }} / {{ distributionSummary.targetSrs }}
                     </span>
                   </div>
                   <div v-if="visibleColumns.srsp">
                     <span class="text-muted-foreground">СРСП:</span>
-                    <span :class="distributionSummary.srsp === distributionSummary.targetSrsp ? 'text-green-600 font-medium' : 'text-red-600 font-medium'">
+                    <span class="text-muted-foreground font-medium">
                       {{ distributionSummary.srsp }} / {{ distributionSummary.targetSrsp }}
                     </span>
                   </div>
                   <div v-if="visibleColumns.individual">
                     <span class="text-muted-foreground">Индивидуальные:</span>
-                    <span :class="distributionSummary.individual === distributionSummary.targetIndividual ? 'text-green-600 font-medium' : 'text-red-600 font-medium'">
+                    <span class="text-muted-foreground font-medium">
                       {{ distributionSummary.individual }} / {{ distributionSummary.targetIndividual }}
                     </span>
                   </div>
@@ -687,6 +695,7 @@ function copyFromSource(source: any) {
   // Copy numeric fields
   step.value.totalCredits = source.totalCredits ?? "";
   step.value.totalHours = source.totalHours ?? "";
+  step.value.groupHours = source.groupHours ?? "";
   step.value.theoreticalHours = source.theoreticalHours ?? "";
   step.value.labPracticalHours = source.labPracticalHours ?? "";
   step.value.field3Value = source.field3Value ?? "";
@@ -950,6 +959,12 @@ const rupEntrySchema = z.object({
       message: "Общие часы должны быть положительным числом",
     })
     .optional(),
+  groupHours: z
+    .string()
+    .refine((v) => v === "" || (!isNaN(Number(v)) && Number(v) >= 0), {
+      message: "Групповые часы должны быть числом ≥ 0",
+    })
+    .optional(),
   theoreticalHours: z
     .string()
     .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
@@ -1012,6 +1027,7 @@ const validationResult = computed(() => {
     learningOutcome: texts.learningOutcome,
     totalCredits: String(s.totalCredits),
     totalHours: String(s.totalHours),
+    groupHours: String(s.groupHours ?? ""),
     theoreticalHours: String(s.theoreticalHours),
     labPracticalHours: String(s.labPracticalHours),
     field3Value: String(s.field3Value),

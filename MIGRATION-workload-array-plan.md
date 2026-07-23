@@ -1,7 +1,19 @@
-# Migration Plan: `workloads.items[].{weeks,hours,hoursPerGroup,groupCount}N` (flat) → `semesters: [{weeks, hours, groupCount}]` (array)
+# Migration Plan: `workloads.items[].{weeks,hours,hoursPerGroup,groupCount}N` (flat) → `semesters: [{semesterId, weeks, hours, groupCount}]` (array, keyed by semesterId)
 
 Status: **planning only** — no code changed by this document.
 Repo: `mars-2.0` (Vue 3 + Pinia + Convex).
+
+> **Решения v2 (2026-07-22):**
+> 1. **Элемент массива ключуется по `semesterId` = `academicYearSemesters._id`,
+>    НЕ по индексу и НЕ по `semesterDefinitionId`.** Как `distributionEntries`/
+>    `journals` (вся схема: `*.semesterId = v.id("academicYearSemesters")`).
+>    Убивает defect #2 (позиционный маппинг), не только #1.
+> 2. **Канон порядка/резолва = `semesterDefinition.number`, прямой матч** (через
+>    джойн `semesterDefinitionId`), НЕ сортировка по `startDate`. Раскол
+>    startDate↔number разрешён в пользу number; чинит и `mutations.ts:91`.
+> 3. **Миграции — официальный компонент `@convex-dev/migrations`** (установлен,
+>    легаси-система удалена — см. §4). Самописный `backfillWorkloadTotalHoursNumber`
+>    удалён.
 
 ---
 
@@ -9,18 +21,20 @@ Repo: `mars-2.0` (Vue 3 + Pinia + Convex).
 
 - Тип: `WorkloadItem` хранит семестровые данные как 24 плоских необязательных
   поля (`weeks1..6`, `hours1..6`, `hoursPerGroup1..6`, `groupCount1..6`),
-  все строки. Целевая модель — один массив `semesters: {weeks:number,
-  hours:number, groupCount:number}[]`, `hoursPerGroup` больше не хранится
-  (вычисляется на лету = `weeks*hours`).
+  все строки. Целевая модель — один массив
+  `semesters: {semesterId:string, weeks:number, hours:number, groupCount:number}[]`,
+  **ключ = `semesterId`** (не позиция), `hoursPerGroup` больше не хранится
+  (вычисляется на лету = `weeks*hours`). `semesterId` — транзиторно `string`
+  (держит легаси числовые id), позже сузить до `v.id("academicYearSemesters")`.
 - Затронуто 8 файлов кода + 1 тестовый файл, ключевая логика
   сосредоточена в **одном** компоненте — `src/pages/WorkloadManagement.vue`
   (~45 сайтов чтения/записи).
 - Рекомендуемая стратегия: **дуал-write / strangler**, НЕ big-bang
   (см. §3 «Почему»).
-- Бэкенд migration idiom этого репо: `convex/migration/actions.ts`
-  (internalMutation + public action wrapper) + файл-указатель в
-  `convex/migrations/YYYYMMDD_HHMMSS_name.txt`, исполняемый
-  `scripts/run-migrations.sh` (см. `docs/MIGRATIONS.md`).
+- Миграции — **официальный компонент `@convex-dev/migrations`** (стейт-трекинг,
+  батчинг, возобновление по курсору, dryRun, serial-раннер). **Уже установлен**,
+  самописный `run-migrations.sh` + `.txt` + `convex/migration/*` (27 функций)
+  **удалены**, `build:convex` расцеплён от миграций (снимает union-хазард). §4.
 - Характеризационных тестов на сегодня **ноль** для
   `WorkloadManagement.vue` (только `convex/workloads/__tests__/lib.spec.ts`
   покрывает `lib.ts`). Их нужно написать до рефакторинга.
@@ -126,6 +140,8 @@ export interface WorkloadItem {
 Целевое (пример):
 ```ts
 export interface WorkloadSemesterEntry {
+  semesterId: string;   // ключ = реальный семестр (academicYearSemesters._id);
+                        // транзиторно string ради легаси числовых id, позже v.id
   weeks: number;
   hours: number;
   groupCount: number;
@@ -137,7 +153,9 @@ export interface WorkloadItem {
   department: string;
   course: string;
   studentCount: string;
-  semesters: WorkloadSemesterEntry[];   // index 0 = семестр 1
+  semesters: WorkloadSemesterEntry[];   // ПОРЯДОК в массиве не значим — привязка
+                                        // по semesterId; отображение сортируется
+                                        // по канону semesterNumber (см. §6)
   totalHours: string;                   // остаётся string (совместимость с остальным UI) либо тоже number — решить в фазе типов
   teacherName?: string;
   index?: string;
@@ -147,6 +165,26 @@ export interface WorkloadItem {
   // NO index signature — намеренно, чтобы компилятор подсветил все динамические доступы
 }
 ```
+
+**Почему `semesterId`, а не индекс:** позиционный ключ (`semesters[0]`=семестр 1)
+— это сам корень defect #2 (позиционный маппинг: строки распределения/колонки
+игнорят `semesterId`/`academicYearId` → не по порядку и межгодовые попадают не
+туда). Ключ по `semesterId` даёт: (1) позиционные баги исчезают; (2)
+порядко-независимость; (3) межгодовую безопасность (id кодирует год); (4) один
+ключ с `distributionEntries`/`journals`/`createJournalsFromWorkloadGroups`
+(пропадает слой трансляции); (5) заодно #1 (семестр либо есть в массиве, либо
+нет — нет «weeks3 не инициализирован»). Один сдвиг модели закрывает **#1 И #2**.
+
+**Почему `academicYearSemesters._id`, а НЕ `semesterDefinitionId`:** вся схема
+ключует семестры так — `distributionEntries.semesterId`, `journals.semesterId`
+и все прочие `*.semesterId` = `v.id("academicYearSemesters")`; RUP-попап тоже
+даёт выбрать `academicYearSemester.id`. Нагрузка зеркалит distributionEntries и
+генерит journals — тот же ключ = ноль трансляции. `academicYearSemesters` = «этот
+семестр этого года» (с датами, нужны в `createJournalsFromWorkloadGroups`);
+`semesterDefinitions` = абстракция «семестр №N» (между годами). Часы привязаны к
+конкретному семестру года → `academicYearSemesters._id`. `semesterDefinition.number`
+(через `semesterDefinitionId`) — только для **резолва/порядка** (прямой матч
+number, не сортировка), не для хранения.
 
 Убирание `[key: string]: ...` — это диагностический инструмент: как только его снять
 (после того как схема поменяется на массив), `tsc` покажет каждое место
@@ -198,7 +236,7 @@ CSV-экспорт shape, save payload shape. Без реализации — т
 
 **Фаза 1 — Schema: добавить `semesters` рядом с плоскими полями (аддитивно).**
 - `convex/schema/workloadItem.ts`: добавить
-  `semesters: v.optional(v.array(v.object({ weeks: v.number(), hours: v.number(), groupCount: v.number() })))`
+  `semesters: v.optional(v.array(v.object({ semesterId: v.string(), weeks: v.number(), hours: v.number(), groupCount: v.number() })))`
   как optional-поле, плоские поля временно остаются как есть (не трогать
   валидатор для существующих 24 полей).
 - `convex/workloads/mutations.ts` `save`: без изменений логики (уже
@@ -207,15 +245,20 @@ CSV-экспорт shape, save payload shape. Без реализации — т
   UI продолжают работать нетронутыми.
 
 **Фаза 2 — Backfill migration (см. §4 за скриптом).**
-- Написать `convex/migration/actions.ts` функцию, которая для каждой
-  `workloads` записи проходит по `items[]`, строит `semesters[]` из
+- Написана через официальный компонент `@convex-dev/migrations`
+  (`migrations.define`), а не самописный `internalMutation`+`.txt`. Для
+  каждой `workloads` записи проходит по `items[]` и строит `semesters[]` из
   `weeks{N}/hours{N}/groupCount{N}` (без `hoursPerGroup` — не переносится,
-  он производный), останавливаясь на последнем присутствующем номере
-  семестра, парсит `string→number` с явной обработкой `''`/`undefined`/
-  нечисловых значений → `0` + `console.warn` для аудита. Патчит запись,
-  добавляя `semesters` к каждому item, **оставляя плоские поля нетронутыми**
-  (dual state).
-- Зарегистрировать в `convex/migrations/YYYYMMDD_HHMMSS_backfill_workload_semesters.txt`.
+  он производный). Ключевая часть — **резолв позиции N → `semesterId`**:
+  колонка N сама по себе не хранит, какому семестру она соответствует, поэтому
+  бэкфилл строит `map: number → academicYearSemesters._id` (джойн
+  `academicYearSemesters.semesterDefinitionId → semesterDefinitions.number`) и
+  **прямым матчем** берёт колонку N → семестр с `number === N` (НЕ сортировка,
+  НЕ позиция); хранит `academicYearSemesters._id`. Логирует нагрузки, где для
+  колонки N нет семестра с таким number (сигнал возможной рассинхронизации). Парсит `string→number` с явной обработкой
+  `''`/`undefined`/нечисловых значений → `0` + `console.warn` для аудита.
+  Патчит запись, добавляя `semesters` к каждому item, **оставляя плоские
+  поля нетронутыми** (dual state). Код — см. §4.
 - Independently shippable: да, аддитивный патч, идемпотентен (пропускать
   items, где `semesters` уже есть).
 
@@ -226,22 +269,30 @@ CSV-экспорт shape, save payload shape. Без реализации — т
   постепенном переходе), **пока не убирать index signature**.
 - `src/pages/WorkloadManagement.vue`:
   - `recalculateItem`, `addSubjectFromRup`, `adjustValue`, шаблон
-    (weeks/hours/groupCount колонки) — переключить на `item.semesters[i-1]`,
-    но при записи **также** синхронно писать плоские поля (`item[\`weeks${i}\`] = ...`)
-    ради обратной совместимости с ещё не переписанными потребителями
-    (CSV-экспорт, wizard) в течение переходного периода.
+    (weeks/hours/groupCount колонки) — переключить на поиск по `semesterId`:
+    для каждого семестра года (в порядке `semesterDefinition.number`) искать
+    соответствующую запись в `item.semesters` по `semesterId` (helper вида
+    `findSemesterEntry(item, semesterId)`), **не** обращаться по позиции
+    `item.semesters[i-1]`. При записи **также** синхронно писать плоские
+    поля (`item[\`weeks${i}\`] = ...`, где `i` — порядковый номер семестра по
+    `semesterNumber`, используемый только для имени legacy-поля, не как ключ
+    массива) ради обратной совместимости с ещё не переписанными
+    потребителями (CSV-экспорт, wizard) в течение переходного периода.
   - Проще и безопаснее: сделать `recalculateItem` источником истины,
-    вычисляющим `semesters[]`, и одной функцией `syncFlatFieldsFromSemesters(item)`
-    генерировать плоские поля из массива для legacy-читателей — так логика
-    расчёта не дублируется в двух представлениях.
+    вычисляющим `semesters[]` (каждый элемент с явным `semesterId`), и одной
+    функцией `syncFlatFieldsFromSemesters(item)` генерировать плоские поля из
+    массива для legacy-читателей — так логика расчёта не дублируется в двух
+    представлениях.
 - `convex/workloads/lib.ts`: добавить новые версии `semesterValue`/
-  `itemsNeedingJournals`, принимающие `semesters[]`-форму (или
-  перегрузить/сделать полиморфными: если `item.semesters` есть — читать
-  оттуда, иначе fallback на плоские поля). Обновить
-  `convex/workloads/__tests__/lib.spec.ts` добавив параллельные кейсы под
-  массив (не удаляя старые, пока dual-write жив).
+  `itemsNeedingJournals`, принимающие `semesters[]`-форму и ключующиеся по
+  `semesterId` (ищут элемент массива с нужным `semesterId`, а не по индексу;
+  или перегрузить/сделать полиморфными: если `item.semesters` есть — читать
+  оттуда по `semesterId`, иначе fallback на плоские поля по позиции).
+  Обновить `convex/workloads/__tests__/lib.spec.ts` добавив параллельные
+  кейсы под массив (не удаляя старые, пока dual-write жив).
 - `WorkloadJournalWizard.vue`: переключить `selectSemester` на новую
-  сигнатуру `lib.ts`.
+  сигнатуру `lib.ts` — вызывает `semesterValue`/`itemsNeedingJournals` уже
+  ключом `semesterId`, а не номером семестра как позицией.
 - CSV-экспорт (`downloadWorkload`, `downloadAllWorkloads`): переписать цикл
   по семестрам динамически (`item.semesters.length` вместо хардкода 1-2) —
   это заодно чинит существующий баг «семестр 3+ не экспортируется» (см.
@@ -270,117 +321,134 @@ CSV-экспорт shape, save payload shape. Без реализации — т
   массив снимает ограничение по построению.
 - `convex/workloads/lib.ts`: удалить legacy-ветки/`WorkloadItemLike`
   плоскую форму, оставить только `semesters[]`-путь.
-- Написать **вторую** миграцию, которая **убирает** плоские поля из
-  существующих записей БД (`ctx.db.patch(id, {weeks1: undefined, ...})` —
+- Написать **вторую** миграцию — ещё один `migrations.define` (не
+  hand-written `internalMutation`+`.txt`), которая **убирает** плоские поля
+  из существующих записей БД (`ctx.db.patch(id, {weeks1: undefined, ...})` —
   Convex позволяет явно `undefined` для optional полей чтобы удалить ключ;
   если поля станут required→removed в схеме, Convex потребует, чтобы
   данные уже не содержали лишних необязательных ключей только если валидатор
   `v.object` строгий — на практике Convex validator не отклоняет лишние
   поля в документе автоматически при patch/insert без явного strict-режима,
   но чище явно вычистить старые ключи, чтобы не копить мёртвые данные).
+  Запускается serial-раннером компонента ПОСЛЕ сужения схемы (см. §4).
 - Independently shippable: да, но это **последний**, необратимый шаг — делать
   только после подтверждения, что все читатели (Фаза 3-4) в проде стабильны
   минимум один релизный цикл.
 
 ---
 
-## 4. Скетч скрипта миграции данных (репо-идиома)
+## 4. Миграция данных — официальный компонент `@convex-dev/migrations`
 
-Идиома репозитория (см. `docs/MIGRATIONS.md`, `convex/migration/actions.ts`,
-`convex/migration/backfillSemesterId.ts` как образец backfill-паттерна):
-внутренняя мутация делает работу + публичный `action`-обёртка для CLI +
-файл-указатель в `convex/migrations/*.txt`.
+Самописная `run-migrations.sh` + `.txt`-идиома **удалена** (2026-07-22): не
+было стейт-трекинга (перезапуск на каждом билде), батчинга (лимиты Convex на
+больших таблицах), была связана с deploy. Компонент `@convex-dev/migrations`
+даёт стейт-трекинг, батчинг, возобновление по курсору, dryRun и serial-раннер
+из коробки.
+
+### Установка — ✅ УЖЕ СДЕЛАНО (2026-07-22)
+
+Компонент установлен, легаси-система (`run-migrations.sh` + `.txt` +
+`convex/migration/*.ts`, 27 функций) удалена. В репо уже есть:
 
 ```ts
-// convex/migration/actions.ts (добавить)
+// convex/convex.config.ts
+import { defineApp } from "convex/server";
+import migrations from "@convex-dev/migrations/convex.config.js";
+const app = defineApp();
+app.use(migrations);
+export default app;
+```
 
-const MAX_LEGACY_SEMESTERS = 6; // соответствует текущему MAX_WORKLOAD_SEMESTERS
+```ts
+// convex/migrations.ts
+import { Migrations } from "@convex-dev/migrations";
+import { components } from "./_generated/api";
+import type { DataModel } from "./_generated/dataModel";
+export const migrations = new Migrations<DataModel>(components.migrations);
+export const run = migrations.runner();
+```
 
-function parseNumberField(raw: string | undefined): number {
-  if (raw === undefined || raw === "") return 0;
-  const n = parseFloat(raw);
-  return Number.isFinite(n) ? n : 0; // 'abc' → NaN → 0, с логом ниже
-}
+### Backfill: плоские поля → `semesters[]` (ключ = `academicYearSemesters._id`)
 
-export const backfillWorkloadSemestersInternal = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const workloads = await ctx.db.query("workloads").collect();
-    let updatedWorkloads = 0;
-    let updatedItems = 0;
-    let warnings = 0;
+**Канон = `semesterDefinition.number`, прямой матч (НЕ сортировка).** Плоские
+данные не хранили semesterId — только позицию (колонка N). Резолв: колонка N →
+семестр года, чей `semesterDefinition.number === N`. Храним при этом
+`academicYearSemesters._id` (как `distributionEntries`/`journals`), а number —
+только для матча.
 
-    for (const wl of workloads) {
-      let changed = false;
-      const newItems = wl.items.map((item: any) => {
-        if (item.semesters) return item; // идемпотентность
+⚠️ **Тонкость (иначе баг):** строка `academicYearSemesters` НЕ содержит поля
+`number` — оно в `semesterDefinitions`, джойн через `semesterDefinitionId`.
+Поэтому сортировать/матчить `a.semesterNumber` на raw-доке НЕЛЬЗЯ — сперва
+строим `map: number → academicYearSemesters._id` через джойн.
 
-        const semesters: { weeks: number; hours: number; groupCount: number }[] = [];
-        for (let i = 1; i <= MAX_LEGACY_SEMESTERS; i++) {
-          const weeksRaw = item[`weeks${i}`];
-          const hoursRaw = item[`hours${i}`];
-          const groupCountRaw = item[`groupCount${i}`];
-          // Семестры 1-2 required в старой схеме — если оба undefined,
-          // это конец реально заполненных семестров у этого item.
-          if (weeksRaw === undefined && hoursRaw === undefined && groupCountRaw === undefined) {
-            break; // остановиться на последнем присутствующем семестре
-          }
-          if (isNaN(parseFloat(weeksRaw ?? "")) && weeksRaw !== undefined) warnings++;
-          semesters.push({
-            weeks: parseNumberField(weeksRaw),
-            hours: parseNumberField(hoursRaw),
-            groupCount: parseNumberField(groupCountRaw),
-          });
-        }
-        changed = true;
-        updatedItems++;
-        return { ...item, semesters };
-      });
+Нагрузки, где для колонки N нет семестра с `number===N`, логируются (ручная
+сверка).
 
-      if (changed) {
-        await ctx.db.patch(wl._id, { items: newItems });
-        updatedWorkloads++;
-      }
+```ts
+// convex/workloadMigrations.ts
+import { migrations } from "./migrations";
+
+const MAX_LEGACY = 6;
+const num = (raw: unknown) => {
+  const n = parseFloat(typeof raw === "string" ? raw : "");
+  return Number.isFinite(n) ? n : 0; // ''/undefined/'abc' → 0
+};
+
+export const backfillWorkloadSemesters = migrations.define({
+  table: "workloads",
+  migrateOne: async (ctx, wl) => {
+    // number живёт в semesterDefinitions — джойн через semesterDefinitionId.
+    const defs = await ctx.db.query("semesterDefinitions").collect();
+    const numberByDef = new Map(defs.map((d) => [d._id, d.number]));
+
+    const yearSems = await ctx.db
+      .query("academicYearSemesters")
+      .withIndex("by_academicYear", (q) =>
+        q.eq("academicYearId", wl.academicYearId as any)
+      )
+      .collect();
+
+    // Канон: map number → academicYearSemesters._id (прямой матч, не позиция).
+    const semIdByNumber = new Map<number, string>();
+    for (const s of yearSems) {
+      const n = numberByDef.get(s.semesterDefinitionId);
+      if (n !== undefined) semIdByNumber.set(n, s._id);
     }
 
-    console.log(
-      `[Migration] backfillWorkloadSemesters: ${updatedWorkloads} workloads, ${updatedItems} items, ${warnings} unparsable numeric fields defaulted to 0`
-    );
-    return { updatedWorkloads, updatedItems, warnings };
-  },
-});
-
-export const backfillWorkloadSemesters = action({
-  args: {},
-  handler: async (ctx) => {
-    const result = await ctx.runMutation(
-      internal.migration.actions.backfillWorkloadSemestersInternal,
-      {}
-    );
-    console.log(`[Migration] backfillWorkloadSemesters done: ${JSON.stringify(result)}`);
-    return result;
+    const items = wl.items.map((item: any) => {
+      if (item.semesters) return item; // идемпотентно
+      const semesters: any[] = [];
+      for (let i = 1; i <= MAX_LEGACY; i++) {
+        const w = item[`weeks${i}`], h = item[`hours${i}`], g = item[`groupCount${i}`];
+        if (w === undefined && h === undefined && g === undefined) break;
+        const semId = semIdByNumber.get(i); // колонка N → семестр с number === N
+        if (!semId) {
+          console.warn(`[mig] wl ${wl._id} item ${item.id}: нет семестра number=${i} — колонка пропущена`);
+          continue;
+        }
+        semesters.push({ semesterId: semId, weeks: num(w), hours: num(h), groupCount: num(g) });
+      }
+      return { ...item, semesters };
+    });
+    await ctx.db.patch(wl._id, { items });
   },
 });
 ```
 
-```bash
-echo "migration/actions:backfillWorkloadSemesters" > \
-  convex/migrations/20260722_120000_backfill_workload_semesters.txt
+```sh
+npx convex run workloadMigrations:backfillWorkloadSemesters '{dryRun:true}'   # превью
+npx convex run workloadMigrations:backfillWorkloadSemesters                    # запуск
+npx convex run --component migrations lib:getStatus --watch                    # прогресс
 ```
 
-Для Фазы 5 (drop) — зеркальный скрипт `dropLegacyWorkloadFields`, который
-`ctx.db.patch(item.., {weeks1: undefined, ..., groupCount6: undefined})`
-на каждом item (или полностью пересобирает `items` без этих ключей) —
-регистрируется вторым `.txt` файлом с более поздним таймстампом.
+Батчинг/возобновление/трекинг компонент делает сам — не нужен ручной
+full-scan/идемпотентность/`.paginate`.
 
-**Замечание по объёму данных:** количество существующих `workloads` записей
-не определено этим READ-ONLY исследованием (нужен реальный доступ к
-Convex dev/prod dashboard или `npx convex data workloads` чтобы посчитать
-точно) — миграция написана как full-table scan (`ctx.db.query("workloads").collect()`),
-что нормально при объёме таблицы в разумных пределах (десятки-сотни
-записей, судя по природе фичи — по одной записи на преподавателя на
-учебный год); если таблица окажется на порядки больше, потребуется
-курсорная пагинация (`.paginate`) — проверить перед запуском в проде.
+### Фаза 5 (drop плоских полей) — вторая `migrations.define`
+
+Вторая define с `migrateOne`, убирающим `weeks{N}/hours{N}/hoursPerGroup{N}/
+groupCount{N}` ключи (оставляя `semesters`), запускается serial-раннером
+ПОСЛЕ сужения схемы.
 
 ---
 
@@ -450,6 +518,24 @@ Convex dev/prod dashboard или `npx convex data workloads` чтобы посч
 ---
 
 ## 6. Риски и связанные баги
+
+**Раскол сортировки семестров — РЕШЁН (канон = `semesterDefinition.number`):**
+был подтверждён — wizard/journals сортили по `startDate`
+(`convex/workloads/mutations.ts:91` — `semesters.sort((a,b)=>a.startDate...)`),
+reports по `semesterNumber` (`src/pages/reports.vue:423`). **Решение:** канон =
+`semesterDefinition.number`, прямой матч (не сортировка). Обязательная правка в
+рамках миграции: `mutations.ts:91` — резолвить семестр по number, а не по
+startDate (ещё лучше — wizard шлёт `semesterId` напрямую, тогда резолв не нужен).
+Именно этот number-матч использует backfill (§4).
+
+**Легаси числовые `semesterId`:** в системе есть и реальные
+`v.id("academicYearSemesters")`, и легаси числовые строковые semesterId
+(`addDistribution:128` кастует `as any`) — поэтому `semesterId: v.string()`
+транзиторно, сузить до `v.id("academicYearSemesters")` после чистки.
+
+**Backfill наследует позиционную двусмысленность:** плоские данные не
+хранили привязку колонки к семестру; резолв позиция→semesterId best-effort
+по канону, с логом неоднозначных (dev пуст, фича молодая → объём мал).
 
 **Что чинит миграция (не регрессировать по пути назад):**
 - **Defect #1**: `weeks3`/`groupCount3` (и 4-6) никогда явно
@@ -536,7 +622,7 @@ Convex dev/prod dashboard или `npx convex data workloads` чтобы посч
 |---|---|---|
 | Schema/validator | 1 (`convex/schema/workloadItem.ts`) + `convex/schema.ts` (1 строка) | ~40 (замена 24 плоских полей на 1 array field, обе фазы 1 и 5) |
 | Mutation | `convex/workloads/mutations.ts` | ~5 (только типы, логика insert/patch не меняется) |
-| Migration | 2 новых файла в `convex/migration/actions.ts` + 2 файла в `convex/migrations/*.txt` | ~120 (backfill + drop скрипты, включая логирование) |
+| Migration | `convex/workloadMigrations.ts` (2 `migrations.define`: backfill + drop) | ~120 (backfill + drop скрипты, включая логирование) |
 | Pure helpers | `convex/workloads/lib.ts` | ~60 (новая форма `WorkloadItemLike`, `semesterValue`, `itemsNeedingJournals`, удаление legacy после Фазы 4) |
 | Тесты (pure helpers) | `convex/workloads/__tests__/lib.spec.ts` | ~80 (дублирование/замена фикстур под массив) |
 | Тип-слой | `src/types/workload.ts` | ~20 |
@@ -544,6 +630,8 @@ Convex dev/prod dashboard или `npx convex data workloads` чтобы посч
 | Wizard | `src/components/Workload/WorkloadJournalWizard.vue` | ~15 (только `selectSemester`, L359-383) |
 | Store | `src/stores/workloadStore.ts` | ~0-5 (транзитивно через типы, логика не меняется) |
 | **Новые характеризационные тесты (Фаза 0)** | 1-2 новых spec-файла (`WorkloadManagement.spec.ts` или извлечённые helpers + spec) | ~250-350 (13 кейсов из §5, plus test setup/fixtures) |
+| Компонент миграций (setup) | `convex/convex.config.ts` (создать) + `convex/migrations.ts` (создать) + `@convex-dev/migrations` (npm) | ~30 (см. §4) |
+| Унификация порядка семестров | `convex/workloads/mutations.ts:91` (`createJournalsFromWorkloadGroups`, startDate-сортировка → прямой матч по `semesterDefinition.number`) | ~5 |
 
 **Итого: ~9-10 существующих файлов кода + 2-3 новых миграционных файла + 1-2 новых test-файла, суммарно ориентировочно 700-900 LOC diff по всем фазам вместе (включая тесты).** Основная концентрация риска и объёма — `WorkloadManagement.vue` (единственный файл с прямым UI-биндингом на все 24 поля).
 
@@ -562,3 +650,8 @@ Convex dev/prod dashboard или `npx convex data workloads` чтобы посч
 3. Согласовано ли с пользователями изменение CSV-экспорта (переход с
    жёстких 2 семестров на динамическое число) как часть этой миграции, или
    вынести отдельным тикетом после? (см. §6, «Что чинит миграция»).
+4. ✅ **РЕШЕНО — Канон порядка семестров = `semesterDefinition.number`**
+   (прямой матч, не сортировка; ключ хранения = `academicYearSemesters._id`).
+   Требует правки `mutations.ts:91` (startDate → number-резолв) в рамках миграции.
+5. **Когда сузить `semesterId` string → `v.id("academicYearSemesters")`**
+   (после чистки легаси числовых id).

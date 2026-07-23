@@ -6,13 +6,12 @@ Welcome to the MARS 2.0 documentation! This folder contains all technical docume
 
 ### System Documentation
 
-#### [Migrations Guide](./MIGRATIONS.md)
-Complete guide for the Convex migration system covering:
-- How migrations work
-- Creating new migrations
-- Migration patterns and best practices
-- Build process integration
-- Troubleshooting
+#### Migrations — [@convex-dev/migrations](https://www.convex.dev/components/migrations)
+Stateful migration component (replaced the former self-written `run-migrations.sh` + `.txt` system):
+- Define with `migrations.define({ table, migrateOne })` in `convex/*Migrations.ts`
+- Run: `npx convex run <file>:<name> '{dryRun:true}'` then without `dryRun`
+- Status: `npm run migrate:status`
+- Setup lives in `convex/convex.config.ts` + `convex/migrations.ts`
 
 **When to read**: Before creating database schema changes or data migrations.
 
@@ -109,7 +108,7 @@ mars-2.0/
 │   └── ...               # Other domains
 ├── docs/                 # Documentation (you are here!)
 ├── scripts/              # Build and utility scripts
-│   └── run-migrations.sh # Migration runner
+│   └── (migrations run via @convex-dev/migrations — see convex/migrations.ts)
 ├── src/                  # Vue 3 frontend
 │   ├── components/       # Vue components
 │   ├── pages/            # Page components
@@ -229,7 +228,7 @@ export const useMyEntityStore = defineStore('myEntity', () => {
 | `npm run dev:all` | Start both servers |
 | `npm run build` | Build frontend |
 | `npm run build:convex` | Deploy Convex + run migrations |
-| `npm run migrate` | Run migrations only |
+| `npm run migrate:status` | Show migration status |
 | `npm run test` | Run unit tests |
 | `npm run test:e2e` | Run E2E tests |
 | `npm run preview` | Preview production build |
@@ -275,7 +274,7 @@ npx convex deployments list
 
 **State management?** → `src/stores/`
 
-**Migrations?** → `convex/migrations/` + [MIGRATIONS.md](./MIGRATIONS.md)
+**Migrations?** → `convex/migrations.ts` + `convex/*Migrations.ts` (@convex-dev/migrations)
 
 ---
 
@@ -294,8 +293,10 @@ npx convex deployments list
 Always use the migration system for schema changes:
 
 ```bash
-# See full guide in MIGRATIONS.md
-npm run migrate
+# Define in convex/*Migrations.ts via migrations.define, then:
+npx convex run <file>:<migrationName> '{dryRun:true}'   # preview
+npx convex run <file>:<migrationName>                    # execute
+npm run migrate:status                                   # progress
 ```
 
 ### Code Style
@@ -317,7 +318,7 @@ npm run migrate
 
 **Schema validation error**
 - Check for missing required fields
-- Create a migration to fix data (see [MIGRATIONS.md](./MIGRATIONS.md))
+- Create a migration to fix data (`migrations.define` in `convex/*Migrations.ts`)
 
 **Deployment fails**
 - Check `migrations.log` for errors
@@ -343,7 +344,7 @@ npm run migrate
 
 - [Main README](../README.md) - Project overview
 - [Backend README](../backend/README.md) - Legacy backend docs
-- [Migrations Guide](./MIGRATIONS.md) - Migration system
+- Migrations — @convex-dev/migrations (`convex/migrations.ts`)
 
 ---
 
