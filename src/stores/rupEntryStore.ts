@@ -386,7 +386,7 @@ export const useRupEntryStore = defineStore(
         }, "Failed to update RUP entry");
     }
 
-    function updateRupEntryOrder(
+    async function updateRupEntryOrder(
       academicYearId: string,
       specialtyIds: string[],
       oldIndex: number,
@@ -396,13 +396,12 @@ export const useRupEntryStore = defineStore(
         academicYearId,
         specialtyIds
       );
-      const [movedItem] = contextItems.splice(oldIndex, 1);
-      contextItems.splice(newIndex, 0, movedItem);
-      contextItems.forEach((item, index) => {
-        const originalItem = rupEntries.value.find((i) => i.id === item.id);
-        if (originalItem) {
-          originalItem.position = index;
-        }
+      const reordered = [...contextItems];
+      const [movedItem] = reordered.splice(oldIndex, 1);
+      reordered.splice(newIndex, 0, movedItem);
+
+      await convex.mutation(api.rupEntries.mutations.reorder, {
+        orderedIds: reordered.map((item) => item.id as any),
       });
     }
 

@@ -105,6 +105,19 @@ export const remove = mutation({
 });
 
 /**
+ * Reorder RUP entries (atomic position update based on new id order)
+ */
+export const reorder = mutation({
+  args: { orderedIds: v.array(v.id("rupEntries")) },
+  handler: async (ctx, { orderedIds }) => {
+    await Promise.all(
+      orderedIds.map((id, index) => ctx.db.patch(id, { position: index, ...updateTimestamp() }))
+    );
+    return { success: true };
+  },
+});
+
+/**
  * Add a distribution entry to a RUP entry
  */
 export const addDistribution = mutation({

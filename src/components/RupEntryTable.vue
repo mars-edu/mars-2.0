@@ -207,12 +207,14 @@ onMounted(() => {
       ghostClass: "ghost",
       onEnd: (evt) => {
         if (evt.oldIndex !== undefined && evt.newIndex !== undefined) {
-          rupEntryStore.updateRupEntryOrder(
-            props.academicYearId,
-            props.specialtyIds || [],
-            evt.oldIndex,
-            evt.newIndex
-          );
+          rupEntryStore
+            .updateRupEntryOrder(
+              props.academicYearId,
+              props.specialtyIds || [],
+              evt.oldIndex,
+              evt.newIndex
+            )
+            .catch((err) => console.error("Failed to persist RUP entry order", err));
         }
       },
     });

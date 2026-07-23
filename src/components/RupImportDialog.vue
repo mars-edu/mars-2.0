@@ -147,7 +147,7 @@ import { useRupEntryStore, type RupEntry } from "@/stores/rupEntryStore";
 import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
-import { useSemesterStore } from "@/stores/semesterStore";
+import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Select from "@/components/ui/Select.vue";
@@ -167,10 +167,10 @@ const rupEntryStore = useRupEntryStore();
 const ktpStore = useKtpStore();
 const courseStore = useCourseStore();
 const academicYearStore = useAcademicYearStore();
-const semesterStore = useSemesterStore();
+const academicYearSemesterStore = useAcademicYearSemesterStore();
 const { getAllRupEntries: allRups, isLoading } = storeToRefs(rupEntryStore);
 const { academicYears } = storeToRefs(academicYearStore);
-const { semesters } = storeToRefs(semesterStore);
+const { academicYearSemesters } = storeToRefs(academicYearSemesterStore);
 
 const selectedRupId = ref<string | null>(null);
 const selectedAcademicYear = ref<string>("");
@@ -190,12 +190,55 @@ const academicYearOptions = computed(() => {
 });
 
 const semesterOptions = computed(() => {
-  // Add custom semesters from store if any
-  return semesters.value.map((semester) => ({
+  const list = selectedAcademicYear.value
+    ? academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(
+        selectedAcademicYear.value
+      )
+    : academicYearSemesters.value;
+  return list.map((semester) => ({
     value: semester.id,
-    text: semester.shortName || semester.fullName,
+    text: semester.semesterName || `Семестр ${semester.semesterNumber}`,
   }));
 });
+
+// Resolve the currently selected semester's id + semesterNumber (as string),
+// mirroring the id-or-number tolerance in
+// rupEntryStore.getAutoSelectedSemesterForRupEntry — legacy KTPs may store
+// semesterId as the numeric semesterNumber instead of the real id.
+const selectedSemesterMatch = computed(() => {
+  if (!selectedSemester.value) return null;
+  const semester = academicYearSemesterStore.getAcademicYearSemesterById(
+    selectedSemester.value
+  );
+  return {
+    id: selectedSemester.value,
+    number: semester ? String(semester.semesterNumber) : null,
+  };
+});
+
+// Tolerant KTP lookup: matches KTPs whose semesterId equals either the
+// selected semester's real id or its legacy numeric semesterNumber.
+const findKtpForRup = (rupId: string) => {
+  const match = selectedSemesterMatch.value;
+  if (!match) {
+    return ktpStore.findKtpByRupEntryId(
+      rupId,
+      selectedAcademicYear.value,
+      selectedSemester.value
+    );
+  }
+
+  return (
+    ktpStore.findKtpByRupEntryId(rupId, selectedAcademicYear.value, match.id) ||
+    (match.number
+      ? ktpStore.findKtpByRupEntryId(
+          rupId,
+          selectedAcademicYear.value,
+          match.number
+        )
+      : undefined)
+  );
+};
 
 // Filter available RUPs excluding the current one and by selected filters
 const availableRups = computed(() => {
@@ -222,8 +265,7 @@ const availableRups = computed(() => {
 // Get themes for the selected RUP
 const selectedRupThemes = computed(() => {
   if (!selectedRupId.value) return [];
-  // Use direct KTP ID method instead of rupEntry-based method
-  const ktp = ktpStore.findKtpByRupEntryId(selectedRupId.value, selectedAcademicYear.value, selectedSemester.value);
+  const ktp = findKtpForRup(selectedRupId.value);
   return ktp ? ktpStore.getDetailsByKtpId(ktp.id) : [];
 });
 
@@ -233,8 +275,7 @@ const getCourseNumber = (courseId: string) => {
 };
 
 const getThemeCount = (rupId: string) => {
-  // Use direct KTP ID method instead of rupEntry-based method
-  const ktp = ktpStore.findKtpByRupEntryId(rupId, selectedAcademicYear.value, selectedSemester.value);
+  const ktp = findKtpForRup(rupId);
   return ktp ? ktpStore.getDetailsByKtpId(ktp.id).length : 0;
 };
 
@@ -267,12 +308,15 @@ const handleImport = async () => {
       return;
     }
 
-    // Copy themes to current parent
+    // Copy themes to current parent (full content shape, including hour breakdown)
     const importedThemes: Partial<KtpDetail>[] = themesToImport.map(
       (theme, index) => ({
         position: index + 1,
         theme: theme.theme,
         totalHours: theme.totalHours,
+        theoretical: theme.theoretical,
+        practical: theme.practical,
+        individual: theme.individual,
         srsp: theme.srsp,
         srs: theme.srs,
         homework: theme.homework,
@@ -285,6 +329,22 @@ const handleImport = async () => {
     if (!ktp) {
       throw new Error("KTP не найден");
     }
+
+    const existingThemesCount = ktpStore.getDetailsByKtpId(ktp.id).length;
+    if (existingThemesCount > 0) {
+      const confirmed = await new Promise<boolean>((resolve) => {
+        f7.dialog.confirm(
+          `Импорт заменит существующие темы (${existingThemesCount}). Продолжить?`,
+          "Импорт тем",
+          () => resolve(true),
+          () => resolve(false)
+        );
+      });
+      if (!confirmed) {
+        return;
+      }
+    }
+
     const result = await ktpStore.bulkReplaceKtpDetails(
       ktp.id,
       importedThemes as Array<Partial<KtpDetail> & { position: number }>
