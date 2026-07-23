@@ -704,6 +704,7 @@ import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore
 import { useSidebar } from "@/composables/useSidebar";
 import type { WorkloadItem, SavedWorkload } from "@/types/workload";
 import { MAX_WORKLOAD_SEMESTERS } from "@convex/schema/workloadItem";
+import { formatHours, recalcWorkloadItem, computeWorkloadTotal, seedWorkloadItemsFromRup } from "@/lib/workloadHours";
 
 // Icons
 import IconUser from "~icons/lucide/user";
@@ -967,9 +968,7 @@ const filteredWorkloads = computed(() => {
   });
 });
 
-const totalCurrentWorkloadHours = computed(() => {
-  return currentWorkloadItems.value.reduce((sum, item) => sum + (item.totalHours || 0), 0);
-});
+const totalCurrentWorkloadHours = computed(() => computeWorkloadTotal(currentWorkloadItems.value));
 
 function onSelectTeacher(id: string | null) {
   selectedTeacherId.value = id;
@@ -983,110 +982,14 @@ function addSubjectFromRup(
   opts: { language?: string; individual?: boolean; specialtyIds?: string[] } = {}
 ) {
   const chosenSpecs = opts.specialtyIds?.length ? opts.specialtyIds : rup.specialtyIds;
-  const newItem: WorkloadItem = {
-    id: crypto.randomUUID(),
-    subjectId: rup.id,
+  const items = seedWorkloadItemsFromRup(rup, {
     department: getSpecialtyCodes(chosenSpecs),
-    specialtyIds: chosenSpecs,
-    course: "1", // Fallback, could be derived
-    studentCount: "0",
-    weeks1: "18",
-    weeks2: "20",
-    hours1: "0",
-    hours2: "0",
-    hoursPerGroup1: "0",
-    hoursPerGroup2: "0",
-    groupCount1: "1",
-    groupCount2: "1",
-    totalHours: 0,
-    index: rup.moduleIndex,
-    description: rup.moduleName,
     language: opts.language || rup.language || "ru",
-  };
-
-  // Set initial hours from distribution entries if available
-  rup.distributionEntries.forEach((entry, idx) => {
-    const semNum = idx + 1;
-    if (semNum <= semesterCount.value) {
-        newItem[`hoursPerGroup${semNum}`] = entry.hours || "0";
-        const weeks = parseFloat(newItem[`weeks${semNum}`]) || 1;
-        newItem[`hours${semNum}`] = (parseFloat(entry.hours || "0") / weeks).toString();
-    }
+    individual: opts.individual,
+    specialtyIds: chosenSpecs,
+    semesterCount: semesterCount.value,
   });
-
-  currentWorkloadItems.value.push(newItem);
-  recalculateItem(newItem.id);
-
-  // Paired individual-hours child row (excluded from journal wizard & counts).
-  if (opts.individual && hasIndividual(rup)) {
-    const indItem: WorkloadItem = {
-      id: `${newItem.id}_ind`,
-      subjectId: rup.id,
-      department: "Индивидуальные",
-      course: newItem.course,
-      studentCount: newItem.studentCount,
-      weeks1: "18",
-      weeks2: "20",
-      hours1: "0",
-      hours2: "0",
-      hoursPerGroup1: "0",
-      hoursPerGroup2: "0",
-      groupCount1: "0",
-      groupCount2: "0",
-      totalHours: 0,
-      index: rup.moduleIndex,
-      description: "",
-      language: newItem.language,
-    };
-    // Per-semester individual hours from the RUP distribution.
-    let filledFromDist = false;
-    rup.distributionEntries.forEach((entry, idx) => {
-      const semNum = idx + 1;
-      if (semNum > semesterCount.value) return;
-      const ih = parseFloat(entry.individualHours || "0") || 0;
-      if (ih > 0) {
-        filledFromDist = true;
-        indItem[`hoursPerGroup${semNum}`] = String(ih);
-        indItem[`groupCount${semNum}`] = "1";
-        const weeks = parseFloat(indItem[`weeks${semNum}`] || "1") || 1;
-        indItem[`hours${semNum}`] = (ih / weeks).toString();
-      }
-    });
-    // Fallback: no per-semester individualHours, but the RUP entry carries a
-    // top-level individualAdditionalHours / individualHours. Distribute evenly
-    // across the semesters the subject actually runs in (those with hours > 0).
-    if (!filledFromDist) {
-      const fallback =
-        parseFloat(rup.individualAdditionalHours || "0") ||
-        parseFloat(rup.individualHours || "0") ||
-        0;
-      if (fallback > 0) {
-        const activeSemesters: number[] = [];
-        rup.distributionEntries.forEach((entry, idx) => {
-          const semNum = idx + 1;
-          if (semNum > semesterCount.value) return;
-          if ((parseFloat(entry.hours || "0") || 0) > 0) activeSemesters.push(semNum);
-        });
-        // If no distribution rows have hours (edge case), spread across all semesters.
-        const targetSemesters = activeSemesters.length
-          ? activeSemesters
-          : Array.from({ length: semesterCount.value }, (_, i) => i + 1);
-        const per = fallback / targetSemesters.length;
-        for (const semNum of targetSemesters) {
-          indItem[`hoursPerGroup${semNum}`] = String(per);
-          indItem[`groupCount${semNum}`] = "1";
-          const weeks = parseFloat(indItem[`weeks${semNum}`] || "1") || 1;
-          indItem[`hours${semNum}`] = (per / weeks).toString();
-        }
-      }
-    }
-    let indTotal = 0;
-    for (let i = 1; i <= semesterCount.value; i++) {
-      indTotal += parseFloat(indItem[`hoursPerGroup${i}`] || "0") * parseFloat(indItem[`groupCount${i}`] || "0");
-    }
-    indItem.totalHours = Math.round(indTotal);
-    currentWorkloadItems.value.push(indItem);
-  }
+  currentWorkloadItems.value.push(...items);
 }
 
 function getSpecialtyCodes(ids: string[]) {
@@ -1096,19 +999,7 @@ function getSpecialtyCodes(ids: string[]) {
 function recalculateItem(id: string) {
   const item = currentWorkloadItems.value.find(i => i.id === id);
   if (!item) return;
-
-  let total = 0;
-  for (let i = 1; i <= semesterCount.value; i++) {
-    const weeks = parseFloat(item[`weeks${i}`] || '0');
-    const hours = parseFloat(item[`hours${i}`] || '0');
-    const groupCount = parseFloat(item[`groupCount${i}`] || '0');
-    
-    const hoursPerGroup = weeks * hours;
-    item[`hoursPerGroup${i}`] = hoursPerGroup.toString();
-    total += hoursPerGroup * groupCount;
-  }
-
-  item.totalHours = Math.round(total);
+  recalcWorkloadItem(item, semesterCount.value);
 }
 
 function adjustValue(id: string, field: string, delta: number) {
@@ -1133,11 +1024,6 @@ function disciplineCount(items: WorkloadItem[]) {
 }
 function previewItems(items: WorkloadItem[]) {
   return items.filter(i => !i.id.endsWith("_ind"));
-}
-
-function formatHours(val: any) {
-  const n = parseFloat(val || '0');
-  return Number.isInteger(n) ? n : n.toFixed(1);
 }
 
 async function handleSaveWorkload() {
