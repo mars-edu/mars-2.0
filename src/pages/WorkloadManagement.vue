@@ -705,6 +705,7 @@ import { useSidebar } from "@/composables/useSidebar";
 import type { WorkloadItem, SavedWorkload } from "@/types/workload";
 import { MAX_WORKLOAD_SEMESTERS } from "@convex/schema/workloadItem";
 import { formatHours, recalcWorkloadItem, computeWorkloadTotal, seedWorkloadItemsFromRup } from "@/lib/workloadHours";
+import { buildWorkloadCsvContent, buildAllWorkloadsCsvContent } from "@/lib/workloadCsv";
 
 // Icons
 import IconUser from "~icons/lucide/user";
@@ -1088,39 +1089,8 @@ function getAcademicYearName(id: string) {
   return academicYearOptions.value.find(o => o.value === id)?.text || id;
 }
 
-// Escapes a CSV cell: neutralizes formula injection (=, +, -, @, tab, CR)
-// by prefixing a leading apostrophe, then doubles embedded quotes and wraps
-// the value in quotes.
-function escapeCsvCell(value: unknown): string {
-  let str = String(value ?? '');
-  if (/^[=+\-@\t\r]/.test(str)) {
-    str = `'${str}`;
-  }
-  return `"${str.replace(/"/g, '""')}"`;
-}
-
 function downloadWorkload(workload: SavedWorkload) {
-  const headers = ['Предмет', 'Отделение', 'Курс', 'Студенты', 'Недели 1', 'Недели 2', 'Часы 1', 'Часы 2', 'На группу 1', 'На группу 2', 'Группы 1', 'Группы 2', 'Всего часов'];
-  const rows = workload.items.map(item => [
-    item.description,
-    item.department,
-    item.course,
-    item.studentCount,
-    item.weeks1,
-    item.weeks2,
-    item.hours1,
-    item.hours2,
-    item.hoursPerGroup1,
-    item.hoursPerGroup2,
-    item.groupCount1,
-    item.groupCount2,
-    item.totalHours
-  ]);
-
-  const csvContent = [
-    headers.map(escapeCsvCell).join(','),
-    ...rows.map(row => row.map(escapeCsvCell).join(','))
-  ].join('\n');
+  const csvContent = buildWorkloadCsvContent(workload);
 
   const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -1135,35 +1105,7 @@ function downloadWorkload(workload: SavedWorkload) {
 function downloadAllWorkloads() {
   if (filteredWorkloads.value.length === 0) return;
   
-  const headers = ['Преподаватель', 'Учебный год', 'Предмет', 'Отделение', 'Курс', 'Студенты', 'Недели 1', 'Недели 2', 'Часы 1', 'Часы 2', 'На группу 1', 'На группу 2', 'Группы 1', 'Группы 2', 'Всего часов'];
-  const rows: any[][] = [];
-  
-  filteredWorkloads.value.forEach(workload => {
-    workload.items.forEach(item => {
-      rows.push([
-        workload.teacherName,
-        getAcademicYearName(workload.academicYearId),
-        item.description,
-        item.department,
-        item.course,
-        item.studentCount,
-        item.weeks1,
-        item.weeks2,
-        item.hours1,
-        item.hours2,
-        item.hoursPerGroup1,
-        item.hoursPerGroup2,
-        item.groupCount1,
-        item.groupCount2,
-        item.totalHours
-      ]);
-    });
-  });
-
-  const csvContent = [
-    headers.map(escapeCsvCell).join(','),
-    ...rows.map(row => row.map(escapeCsvCell).join(','))
-  ].join('\n');
+  const csvContent = buildAllWorkloadsCsvContent(filteredWorkloads.value, getAcademicYearName);
 
   const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);

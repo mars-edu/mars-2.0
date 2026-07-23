@@ -342,4 +342,60 @@ describe("seedWorkloadItemsFromRup", () => {
     expect(items[0].id).toBe("deterministic-id");
     expect(items[1].id).toBe("deterministic-id_ind");
   });
+
+  // Part B / #11: pin the shape of the main item against what the workloads
+  // Convex schema expects, so extraction/refactoring can't silently drop or
+  // rename a field the schema requires.
+  it("main item has all keys the workloads schema expects", () => {
+    const rup = makeRup({
+      distributionEntries: [makeDist({ hours: "36" }), makeDist({ hours: "40" })],
+    });
+    const items = seedWorkloadItemsFromRup(rup, {
+      department: "ИТ",
+      language: "ru",
+      individual: false,
+      specialtyIds: ["spec1"],
+      semesterCount: 2,
+      idFactory: () => "main-shape",
+    });
+    const main = items[0];
+    const expectedKeys = [
+      "id",
+      "subjectId",
+      "department",
+      "course",
+      "studentCount",
+      "weeks1",
+      "weeks2",
+      "hours1",
+      "hours2",
+      "hoursPerGroup1",
+      "hoursPerGroup2",
+      "groupCount1",
+      "groupCount2",
+      "totalHours",
+      "index",
+      "description",
+      "language",
+      "specialtyIds",
+    ];
+    for (const key of expectedKeys) {
+      expect(main).toHaveProperty(key);
+    }
+  });
+
+  it("main item's totalHours is a number, matching the schema's v.number()", () => {
+    const rup = makeRup({
+      distributionEntries: [makeDist({ hours: "36" }), makeDist({ hours: "40" })],
+    });
+    const items = seedWorkloadItemsFromRup(rup, {
+      department: "ИТ",
+      language: "ru",
+      individual: false,
+      specialtyIds: ["spec1"],
+      semesterCount: 2,
+      idFactory: () => "main-numeric",
+    });
+    expect(typeof items[0].totalHours).toBe("number");
+  });
 });

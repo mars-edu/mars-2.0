@@ -76,7 +76,14 @@ Repo: `mars-2.0` (Vue 3 + Pinia + Convex).
 
 ### 1.5 Главная страница (наибольшая концентрация сайтов)
 
-`src/pages/WorkloadManagement.vue` (1323 строки). Все находки:
+`src/pages/WorkloadManagement.vue`. Все находки:
+
+> **ОБНОВЛЕНО (Фаза 0):** чистая логика `recalculateItem`, `addSubjectFromRup`
+> (seeding + `_ind`), `formatHours`, `totalCurrentWorkloadHours` ИЗВЛЕЧЕНА в
+> `src/lib/workloadHours.ts`; CSV (`escapeCsvCell` + билдеры) — в
+> `src/lib/workloadCsv.ts`. `.vue` теперь делегирует. Рефактор фаз 3+ трогает
+> ЭТИ МОДУЛИ (под тестами), а в `.vue` — только шаблон/биндинги. Строчные ссылки
+> ниже — для исходного расположения, логика та же.
 
 **Шапка таблицы / рендер сетки (шаблон), строки 67-224:**
 - L67-70: `:colspan="semesterCount"` × 4 заголовка колонок (Недели/Часы/НаГруппу/Группы).
@@ -228,11 +235,17 @@ number-поле.
 
 **Фазы (каждая — отдельный самодостаточный деплой):**
 
-**Фаза 0 — Characterization tests (см. §5).**
-Зафиксировать текущее поведение `recalculateItem`, seeding в
-`addSubjectFromRup` (включая `_ind` fallback), `itemsNeedingJournals`,
-CSV-экспорт shape, save payload shape. Без реализации — только тесты,
-которые сейчас проходят. Это gate перед любым кодом ниже.
+**Фаза 0 — Characterization tests. ✅ СДЕЛАНО (2026-07-23, коммиты da326cc + …).**
+Чистая hours-логика ИЗВЛЕЧЕНА из `WorkloadManagement.vue` (behavior-preserving):
+- `src/lib/workloadHours.ts` — `recalcWorkloadItem`, `seedWorkloadItemsFromRup`,
+  `computeWorkloadTotal`, `formatHours`, `hasIndividual` (−114 строк из god-компонента).
+- `src/lib/workloadCsv.ts` — `escapeCsvCell`, `buildWorkloadCsvContent`,
+  `buildAllWorkloadsCsvContent` (DOM/Blob остались в `.vue`).
+Тесты (jest, **59 assertion’ов**): `workloadHours.spec.ts` (23) + `workloadCsv.spec.ts`
+(20) + `lib.spec.ts` (16, `semesterValue`/`itemsNeedingJournals` — база wizard
+`plannedHours`). Пинят ТЕКУЩЕЕ поведение, включая баги (помечены): defect #1
+(семестр 3+ зануляется), NaN от нечисловых часов, CSV-хардкод 2 семестров, `_ind`
+в CSV. Это gate — при рефакторинге ниже эти тесты флипаются намеренно.
 
 **Фаза 1 — Schema: добавить `semesters` рядом с плоскими полями (аддитивно).**
 - `convex/schema/workloadItem.ts`: добавить
@@ -454,11 +467,12 @@ groupCount{N}` ключи (оставляя `semesters`), запускается
 
 ## 5. Характеризационные тесты (написать ПЕРВЫМИ, Фаза 0)
 
-Сейчас тестов на `WorkloadManagement.vue` нет вообще. Предлагаемый набор
-(Vitest + `@vue/test-utils`, либо чистые unit-тесты извлечённой логики
-если `recalculateItem`/`addSubjectFromRup` вынести в testable helper перед
-рефакторингом — рекомендуется сделать это извлечение как часть Фазы 0,
-раз тестов сейчас нет вообще):
+**СТАТУС: ✅ реализовано (jest).** Логика извлечена в `src/lib/workloadHours.ts`
++ `src/lib/workloadCsv.ts`; тесты — `src/lib/__tests__/workloadHours.spec.ts`
+(23), `src/lib/__tests__/workloadCsv.spec.ts` (20), существующий
+`convex/workloads/__tests__/lib.spec.ts` (16). Раннер — **jest** (не vitest),
+чистые unit-тесты извлечённых функций. Ниже — исходный список кейсов (все
+покрыты):
 
 1. **`recalculateItem` — базовая арифметика.**
    `weeks=18, hours=2, groupCount=1` → `hoursPerGroup=36`, `totalHours=36`
