@@ -43,7 +43,9 @@ export function recalcWorkloadItem(item: WorkloadItem, semesterCount: number): W
  * Verbatim from WorkloadManagement.vue `totalCurrentWorkloadHours` computed.
  */
 export function computeWorkloadTotal(items: WorkloadItem[]): number {
-  return items.reduce((sum, item) => sum + (item.totalHours || 0), 0);
+  // Number() coerces legacy string totalHours during the union transition
+  // (Pattern A) so the footer sums numerically instead of concatenating.
+  return items.reduce((sum, item) => sum + (Number(item.totalHours) || 0), 0);
 }
 
 /**

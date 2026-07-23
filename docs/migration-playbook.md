@@ -33,7 +33,7 @@ Drop хранимого поля (Convex): `v.optional(...)` (деплой) → 
    `npx convex deploy` → OK (принимает и строки, и числа).
 2. **Migrate** — данные old→new (@convex-dev/migrations):
    ```
-   npx convex run workloadMigrations:totalHoursToNumber
+   npx convex run migrations/workloads:totalHoursToNumber
    ```
 3. **Contract** — сузить до нового типа:
    ```ts
@@ -56,7 +56,7 @@ Drop хранимого поля (Convex): `v.optional(...)` (деплой) → 
 в окне сохранится**. Автоматизируется одной командой (`scripts/migrate.sh`):
 
 ```
-bash scripts/migrate.sh workloadMigrations:totalHoursToNumber
+bash scripts/migrate.sh migrations/workloads:totalHoursToNumber
 ```
 Скрипт: временно `{ schemaValidation: false }` в `schema.ts` → deploy → run
 migration → восстановить строгую схему → deploy. См. `scripts/migrate.sh`.
@@ -78,5 +78,5 @@ migration → восстановить строгую схему → deploy. С�
 
 ## Данные транзитора всегда идемпотентны
 `migrateOne` пропускает уже-мигрированные (`typeof x === "number"`) → повторный
-прогон безопасен. Пиши миграции в `convex/*Migrations.ts` через
+прогон безопасен. Пиши миграции в `convex/migrations/*.ts` через
 `migrations.define`.

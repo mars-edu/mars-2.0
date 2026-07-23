@@ -1,6 +1,6 @@
 import { Migrations } from "@convex-dev/migrations";
-import { components } from "./_generated/api";
-import type { DataModel } from "./_generated/dataModel";
+import { components } from "../_generated/api";
+import type { DataModel } from "../_generated/dataModel";
 
 /**
  * Official stateful migration runner (@convex-dev/migrations).
@@ -18,5 +18,5 @@ import type { DataModel } from "./_generated/dataModel";
  */
 export const migrations = new Migrations<DataModel>(components.migrations);
 
-/** Generic runner: `npx convex run migrations:run '{fn:"workloadMigrations:backfillX"}'`. */
+/** Generic runner: `npx convex run migrations:run '{fn:"migrations/workloads:backfillX"}'`. */
 export const run = migrations.runner();

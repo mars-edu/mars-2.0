@@ -11,7 +11,9 @@ export const workloadsTables = {
     teacherId: v.optional(v.id("teachers")),
     teacherName: v.string(), // Keep for display/fallback
     academicYearId: v.string(), // academic year ID reference
-    totalHours: v.number(),
+    // TRANSITIONAL union (Pattern A, docs/migration-playbook.md) — prod has legacy
+    // string; migrate then narrow to v.number().
+    totalHours: v.union(v.string(), v.number()),
     items: v.array(workloadItemValidator),
     // Workflow status (ported from concept SavedWorkload flags)
     journalsCreated: v.optional(v.boolean()),

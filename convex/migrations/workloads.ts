@@ -1,4 +1,4 @@
-import { migrations } from "./migrations";
+import { migrations } from "./index";
 
 /**
  * One-off: convert each workload item's `totalHours` from legacy string ("18")
@@ -13,7 +13,7 @@ import { migrations } from "./migrations";
  * ─── If migrating on PROD: use Pattern A (union), the Convex-canonical way ───
  *   1. Widen `workloadItemValidator.totalHours` (+ top-level workloads.totalHours)
  *      to `v.union(v.string(), v.number())` in convex/schema/. `npx convex deploy`.
- *   2. `npx convex run workloadMigrations:totalHoursToNumber '{"dryRun":true}'` → preview,
+ *   2. `npx convex run migrations/workloads:totalHoursToNumber '{"dryRun":true}'` → preview,
  *      then without dryRun → run.
  *   3. Narrow both back to `v.number()`. `npx convex deploy`.
  *   (Pattern B / scripts/migrate.sh — schemaValidation:false — is DEV-ONLY; Convex

@@ -16,7 +16,7 @@
 # Usage:
 #   CONVEX_DEPLOY_KEY=<key> bash scripts/migrate.sh <file:migrationName> ['<json-args>']
 # Example:
-#   bash scripts/migrate.sh workloadMigrations:totalHoursToNumber
+#   bash scripts/migrate.sh migrations/workloads:totalHoursToNumber
 #
 # ⚠️  Deploys the ENTIRE current codebase to the target deployment TWICE, and
 #     runs with GLOBAL schema validation OFF during the window. Small/trusted

@@ -60,10 +60,11 @@ export const workloadItemValidator = v.object({
   groupCount5: v.optional(v.string()),
   groupCount6: v.optional(v.string()),
 
-  // Numeric (Layer-1 server validation): a non-numeric total can no longer be
-  // persisted. Per-semester weeks/hours/groupCount remain strings until the
-  // array-model migration (see MIGRATION-workload-array-plan.md).
-  totalHours: v.number(),
+  // TRANSITIONAL union (Pattern A expand-contract, see docs/migration-playbook.md):
+  // prod holds legacy string totalHours; new writes are number. Run
+  // migrations/workloads:totalHoursToNumber, then narrow to v.number().
+  // (Long-term this derived field should not be stored at all — playbook Правило #0.)
+  totalHours: v.union(v.string(), v.number()),
   teacherName: v.optional(v.string()),
   index: v.optional(v.string()),
   description: v.optional(v.string()),
