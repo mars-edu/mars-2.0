@@ -10,6 +10,11 @@
 - `/tmp/claude-1001/-home-olge-SOFT-git-MARS-mars-2-0/476b4c19-e4f7-4ccd-8338-4e1a3d8d0f23/tasks/wnyzhxwbh.output` (workload)
 - `/tmp/claude-1001/-home-olge-SOFT-git-MARS-mars-2-0/476b4c19-e4f7-4ccd-8338-4e1a3d8d0f23/tasks/wkwrz113f.output` (rup)
 
+> **Статус (2026-07-23):** починки этой волны в PR #3 (github mars-edu/mars-2.0
+> #3 → experental-convex-api). Прод Convex-бэкенд задеплоен (union-схема,
+> компонент миграций), `totalHours` мигрирован string→number на проде.
+> Фронт-деплой + narrow `totalHours`→`v.number()` — pending.
+
 ---
 
 ## Три системных корня (объясняют большинство дефектов)
@@ -69,6 +74,14 @@
 `:value="formatHours(...)"` + `@input`, пишущий сырое значение обратно —
 модель точная, отображение чистое. `recalculateItem` не тронут. Проверено:
 48ч/18нед → 48 (было 49), groupCount 3 → 144 (было 146), 36ч/18нед → 36.
+
+### 3б. Регрессия ввода десятичных (введена фиксом #3, найдена ревью) ✅ ИСПРАВЛЕНО
+`WorkloadManagement.vue` — часовой инпут `:value="formatHours(...)"` +
+`@input`, введённый фиксом #3, схлопывал десятичную точку прямо во время
+набора («4.5» → «45»), потому что модель обновлялась на каждый инпут раньше,
+чем пользователь успевал ввести точку.
+**Фикс:** `@input` → `@change` (модель меняется только на blur, а не на
+каждый символ). Подтверждено живым смоук-тестом на проде.
 
 ### 4. Два разных определения «плановых часов»
 `src/services/teacher-workload-calculator.ts:383` vs страница L1007
@@ -137,12 +150,18 @@ weekCount (18, 36…) → 26 недостижимо, кнопка «заверш
   два предмета по 25.5 хранятся как "26"; итог 52, истина 51.
 - **Нет серверной валидации часов** `convex/workloads/mutations.ts:15` —
   `totalHours` и строки часов сохраняются как есть; `'abc'` проходит `v.string()`.
+  ⚠️ ЧАСТИЧНО (2026-07-23): `item.totalHours` теперь `v.union(v.string(), v.number())`
+  (транзитор, мигрирован на проде в number). Полная серверная
+  валидация/пересчёт (Layer 3) — отдельно.
 - **Семестр по сортировке дат, а не по номеру** `mutations.ts:116` — при
   перепутанных датах часы 1-го семестра попадают в осенний диапазон.
 - **Двойной счёт объединённых журналов** `journalStore.ts:132` + калькулятор
   171-189 — дочерние события идут через fallback (полные плановые часы) плюс
   часы родителя по оценкам.
 - **CSV без экранирования кавычек + инъекция формул** `WorkloadManagement.vue:1210`.
+  ✅ ИСПРАВЛЕНО (2026-07-23): `escapeCsvCell` (удвоение кавычек + guard формул
+  `=+-@`), извлечён в `src/lib/workloadCsv.ts`. NB: план Фазы 3 заменит CSV
+  на XLSX через exceljs (см. MIGRATION-workload-array-plan.md §3).
 - **Удаление нагрузки не удаляет журналы/события** `convex/workloads/mutations.ts:67`.
 - **Жёсткое окно с 1 сентября** ломает весенний старт `calculator.ts:256`.
 
@@ -230,6 +249,11 @@ KTP, journals, calendarEvents, workloads, scheduledControls остаются в�
   groupId на каждый добавленный язык `:1095`; `copyFromSource` перезаписывает
   `selectedLanguages` → сохранение удаляет другие варианты `:707`.
 - **Удаление семестра сиротит distributionEntries** `convex/academicYearSemesters/mutations.ts:53`.
+  ✅ ИСПРАВЛЕНО (2026-07-23): `remove` мутация каскадит `distributionEntries`
+  по `by_semester` перед удалением. ⚠️ ещё 7 таблиц (journals,
+  scheduledIntermediate/FinalControls, ktps, educationSchedules, vacations,
+  sessions) с `semesterId` НЕ каскадятся — решение блокировать-vs-каскадить
+  открыто.
 - **Drag-reorder не сохраняется** — `updateRupEntryOrder` мутирует
   computed-производные объекты `rupEntryStore.ts:445`.
 - **Импорт-диалог сломан отдельно**: фильтр семестра никогда не совпадёт с
@@ -254,6 +278,9 @@ KTP, journals, calendarEvents, workloads, scheduledControls остаются в�
   (атомарный путь) не используется `mutations.ts:297`.
 - Refine часов принимает `'Infinity'`, hex, пробелы `RupEntryPopup.vue:949`.
 - 57 строк мёртвого диалога удаления, неэкранированный HTML `RupEntryPopup.vue:1266`.
+- Поле-метка «3» в РУП-попапе — сломанная i18n-подпись (`field3Value`),
+  косметика, не влияет на данные (уже присутствовало до этой волны фиксов).
+- Поле `groupHours` — реализовано.
 
 ---
 
