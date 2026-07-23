@@ -54,7 +54,7 @@ Repo: `mars-2.0` (Vue 3 + Pinia + Convex).
 | File:Line | Role |
 |---|---|
 | `convex/schema/workloadItem.ts:1-72` | `workloadItemValidator` — источник истины формы `WorkloadItem` на бэкенде. Определяет 24 плоских поля + `MAX_WORKLOAD_SEMESTERS = 6` (комментарий в файле уже явно называет текущую форму "known limitation — the proper model is a per-semester array", т.е. миграция была предвидена). |
-| `convex/schema.ts:998-1013` | `workloads: defineTable({..., items: v.array(workloadItemValidator), ...})` — таблица, использующая тот же валидатор. |
+| `convex/schema/workloads.ts` | `workloads: defineTable({..., items: v.array(workloadItemValidator), ...})` — таблица, использующая тот же валидатор. |
 
 ### 1.2 Mutation (Convex)
 
@@ -385,7 +385,7 @@ export default app;
 ```
 
 ```ts
-// convex/migrations.ts
+// convex/migrations/index.ts
 import { Migrations } from "@convex-dev/migrations";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
@@ -410,7 +410,7 @@ export const run = migrations.runner();
 сверка).
 
 ```ts
-// convex/workloadMigrations.ts
+// convex/migrations/workloadSemesters.ts
 import { migrations } from "./migrations";
 
 const MAX_LEGACY = 6;
@@ -461,8 +461,8 @@ export const backfillWorkloadSemesters = migrations.define({
 ```
 
 ```sh
-npx convex run workloadMigrations:backfillWorkloadSemesters '{dryRun:true}'   # превью
-npx convex run workloadMigrations:backfillWorkloadSemesters                    # запуск
+npx convex run migrations/workloadSemesters:backfillWorkloadSemesters '{dryRun:true}'   # превью
+npx convex run migrations/workloadSemesters:backfillWorkloadSemesters                    # запуск
 npx convex run --component migrations lib:getStatus --watch                    # прогресс
 ```
 
@@ -648,7 +648,7 @@ startDate (ещё лучше — wizard шлёт `semesterId` напрямую, 
 |---|---|---|
 | Schema/validator | 1 (`convex/schema/workloadItem.ts`) + `convex/schema.ts` (1 строка) | ~40 (замена 24 плоских полей на 1 array field, обе фазы 1 и 5) |
 | Mutation | `convex/workloads/mutations.ts` | ~5 (только типы, логика insert/patch не меняется) |
-| Migration | `convex/workloadMigrations.ts` (2 `migrations.define`: backfill + drop) | ~120 (backfill + drop скрипты, включая логирование) |
+| Migration | `convex/migrations/workloadSemesters.ts` (2 `migrations.define`: backfill + drop) | ~120 (backfill + drop скрипты, включая логирование) |
 | Pure helpers | `convex/workloads/lib.ts` | ~60 (новая форма `WorkloadItemLike`, `semesterValue`, `itemsNeedingJournals`, удаление legacy после Фазы 4) |
 | Тесты (pure helpers) | `convex/workloads/__tests__/lib.spec.ts` | ~80 (дублирование/замена фикстур под массив) |
 | Тип-слой | `src/types/workload.ts` | ~20 |
@@ -656,7 +656,7 @@ startDate (ещё лучше — wizard шлёт `semesterId` напрямую, 
 | Wizard | `src/components/Workload/WorkloadJournalWizard.vue` | ~15 (только `selectSemester`, L359-383) |
 | Store | `src/stores/workloadStore.ts` | ~0-5 (транзитивно через типы, логика не меняется) |
 | **Новые характеризационные тесты (Фаза 0)** | 1-2 новых spec-файла (`WorkloadManagement.spec.ts` или извлечённые helpers + spec) | ~250-350 (13 кейсов из §5, plus test setup/fixtures) |
-| Компонент миграций (setup) | `convex/convex.config.ts` (создать) + `convex/migrations.ts` (создать) + `@convex-dev/migrations` (npm) | ~30 (см. §4) |
+| Компонент миграций (setup) | `convex/convex.config.ts` (создать) + `convex/migrations/index.ts` + `@convex-dev/migrations` (npm) | ~30 (см. §4) |
 | Унификация порядка семестров | `convex/workloads/mutations.ts:91` (`createJournalsFromWorkloadGroups`, startDate-сортировка → прямой матч по `semesterDefinition.number`) | ~5 |
 
 **Итого: ~9-10 существующих файлов кода + 2-3 новых миграционных файла + 1-2 новых test-файла, суммарно ориентировочно 700-900 LOC diff по всем фазам вместе (включая тесты).** Основная концентрация риска и объёма — `WorkloadManagement.vue` (единственный файл с прямым UI-биндингом на все 24 поля).

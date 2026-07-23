@@ -28,7 +28,7 @@
 ## A. `rupEntry.totalHours` — ПЛАН часов дисциплины
 
 **Что:** сколько всего часов заложено на дисциплину в Рабочем Учебном Плане.
-Строка. `convex/schema.ts:350` (`totalHours: v.string()`), тип
+Строка. `convex/schema/rup.ts` (`totalHours: v.string()`), тип
 `src/types/rup-entry.ts:30`.
 
 **Где задаётся:** форма РУП — `RupEntryPopup.vue:200` (`v-model="step.totalHours"`),
@@ -100,7 +100,7 @@ totalHours = Math.round( Σ_i  hoursPerGroup_i × groupCount_i )
 ## C. `workload.totalHours` (верхний уровень) — общая нагрузка преподавателя
 
 **Что:** суммарная годовая нагрузка преподавателя в часах. Число.
-`convex/schema.ts:1002`, `src/types/workload.ts:46`.
+`convex/schema/workloads.ts`, `src/types/workload.ts:46`.
 
 **Формула (`WorkloadManagement.vue:971`, `totalCurrentWorkloadHours`):**
 ```
@@ -149,7 +149,7 @@ remainingHours = Math.max(0, plannedHours − cumulativeHours)
 
 ## F. `ktpDetail.totalHours` — часы темы в КТП (отдельный домен)
 
-**Что:** часы на тему в Календарно-Тематическом Плане. `convex/schema.ts:544`
+**Что:** часы на тему в Календарно-Тематическом Плане. `convex/schema/calendar.ts`
 (`v.optional(v.number())`), тип `src/types/ktp.ts:32`.
 
 **Считается/суммируется:** `useKtpDetail.ts:92-96` (Σ по темам),
