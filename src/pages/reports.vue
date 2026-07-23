@@ -544,6 +544,22 @@ async function generateWorkloadReport() {
         filterStartDate = new Date(semester.startDate);
         filterEndDate = new Date(semester.endDate);
       }
+    } else {
+      // full_year: bound the window to the SELECTED academic year's span, else
+      // generateWorkloadSummary sums events from ALL academic years (Form-2 bug).
+      const sems = availableSemesters.value;
+      if (sems.length) {
+        filterStartDate = new Date(
+          Math.min(...sems.map((s) => new Date(s.startDate).getTime()))
+        );
+        filterEndDate = new Date(
+          Math.max(...sems.map((s) => new Date(s.endDate).getTime()))
+        );
+      } else {
+        // Fallback: academic year Sep 1 (startYear) → Aug 31 (endYear).
+        filterStartDate = new Date(academicYear.startYear, 8, 1);
+        filterEndDate = new Date(academicYear.endYear, 7, 31);
+      }
     }
 
     // Enrich students with course information

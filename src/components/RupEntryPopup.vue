@@ -834,8 +834,12 @@ watch(
           editVariantIds.value = variantIdMap;
 
           const first = variants[0];
-          step.value = { ...first };
-          selectedSpecialtyIds.value = first.specialtyIds || [];
+          // Deep copy: a shallow { ...first } shares nested arrays
+          // (distributionEntries, specialtyIds) with the store's Convex query
+          // cache, so unsaved popup edits would mutate cached data. (#4 —
+          // prefill from the CLICKED variant instead of variants[0] — deferred.)
+          step.value = JSON.parse(JSON.stringify(first));
+          selectedSpecialtyIds.value = first.specialtyIds ? [...first.specialtyIds] : [];
           
           const hasSrs = first.distributionEntries?.some((e: any) => Number(e.srsHours) > 0);
           const hasSrsp = first.distributionEntries?.some((e: any) => Number(e.srspHours) > 0);
