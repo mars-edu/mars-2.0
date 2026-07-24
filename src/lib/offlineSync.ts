@@ -102,7 +102,7 @@ export async function getPendingMutations(): Promise<QueuedMutation[]> {
   });
 
   // Sort by creation time
-  return mutations.sort((a, b) => a.createdAt - b.createdAt);
+  return mutations.sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
 }
 
 /**

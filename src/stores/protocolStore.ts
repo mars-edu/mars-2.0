@@ -60,7 +60,7 @@ export const useProtocolStore = defineStore("protocol", () => {
       );
 
       const merged: ProtocolEntry[] = [...substitutions, ...makeupRequests];
-      merged.sort((a, b) => b.createdAt - a.createdAt);
+      merged.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
       entries.value = merged;
     } catch (err) {
       console.error("[protocolStore] Failed to fetch protocol entries:", err);
