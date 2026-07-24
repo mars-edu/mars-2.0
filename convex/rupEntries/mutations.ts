@@ -1,4 +1,4 @@
-import { mutation } from "../_generated/server";
+import { mutation } from "../functions";
 import { v } from "convex/values";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
 
@@ -75,8 +75,7 @@ export const update = mutation({
 
     await ctx.db.patch(id, {
       ...cleanUpdates,
-      ...updateTimestamp(),
-    });
+      });
 
     return await ctx.db.get(id);
   },
@@ -111,7 +110,7 @@ export const reorder = mutation({
   args: { orderedIds: v.array(v.id("rupEntries")) },
   handler: async (ctx, { orderedIds }) => {
     await Promise.all(
-      orderedIds.map((id, index) => ctx.db.patch(id, { position: index, ...updateTimestamp() }))
+      orderedIds.map((id, index) => ctx.db.patch(id, { position: index, }))
     );
     return { success: true };
   },
@@ -174,8 +173,7 @@ export const updateDistribution = mutation({
 
     await ctx.db.patch(id, {
       ...cleanUpdates,
-      ...updateTimestamp(),
-    });
+      });
 
     return await ctx.db.get(id);
   },
@@ -245,8 +243,7 @@ export const updateWithDistributions = mutation({
 
     await ctx.db.patch(id, {
       ...cleanUpdates,
-      ...updateTimestamp(),
-    });
+      });
 
     // Get existing distribution entries
     const existingDistributions = await ctx.db
@@ -298,8 +295,7 @@ export const updateWithDistributions = mutation({
           examEnabled: entry.examEnabled,
           creditEnabled: entry.creditEnabled,
           controlLessonEnabled: entry.controlLessonEnabled,
-          ...updateTimestamp(),
-        });
+          });
       }
     }
 

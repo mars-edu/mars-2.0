@@ -1,4 +1,4 @@
-import type { MutationCtx } from "../_generated/server";
+import type { MutationCtx } from "../functions";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { m, getUserLocale, type Locale, withI18nMutation, setLocale } from "../lib/i18n";
@@ -73,9 +73,7 @@ export const createSubstitution = withI18nMutation({
       serviceLetterNumber: args.serviceLetterNumber,
       journalSnapshot,
       createdBy: args.createdBy,
-      createdAt: new Date(now).toISOString(),
-      updatedAt: new Date(now).toISOString(),
-    });
+      });
 
     const fromTeacherName = formatTeacherName(fromTeacher);
     for (const admin of adminUsers) {
@@ -88,8 +86,7 @@ export const createSubstitution = withI18nMutation({
         title: m.backend_substitution_request_title(),
         message: m.backend_substitution_request_msg({ fromTeacher: fromTeacherName, discipline: journalSnapshot.disciplineName, startDate: args.startDate, endDate: args.endDate }),
         metadata: { substitutionId, journalId: args.journalId },
-        createdAt: new Date(now).toISOString(),
-      });
+        });
     }
 
     return substitutionId;
@@ -133,9 +130,7 @@ export const createBulkSubstitutions = withI18nMutation({
           disciplineId: event.rupEntryId ?? "",
           semesterId: semesterRecord._id,
           academicYearId: semesterRecord.academicYearId as string,
-          createdAt: new Date(now).toISOString(),
-          updatedAt: new Date(now).toISOString(),
-        });
+          });
         journal = await ctx.db.get(newJournalId);
       }
 
@@ -164,9 +159,7 @@ export const createBulkSubstitutions = withI18nMutation({
         serviceLetterNumber: args.serviceLetterNumber,
         journalSnapshot,
         createdBy: args.createdBy,
-        createdAt: new Date(now).toISOString(),
-        updatedAt: new Date(now).toISOString(),
-      });
+        });
 
       const fromTeacherName = formatTeacherName(fromTeacher);
       for (const admin of adminUsers) {
@@ -179,8 +172,7 @@ export const createBulkSubstitutions = withI18nMutation({
           title: m.backend_substitution_request_title(),
           message: m.backend_substitution_request_msg({ fromTeacher: fromTeacherName, discipline: journalSnapshot.disciplineName, startDate: args.startDate, endDate: args.endDate }),
           metadata: { substitutionId, journalId },
-          createdAt: new Date(now).toISOString(),
-        });
+          });
       }
 
       substitutionIds.push(substitutionId);
@@ -209,8 +201,7 @@ export const acceptSubstitution = withI18nMutation({
     await ctx.db.patch(args.substitutionId, {
       status: "accepted",
       acceptedAt: now,
-      updatedAt: new Date(now).toISOString(),
-    });
+      });
 
     // If isPrimary, update the calendar event's teacher and record history
     if (substitution.isPrimary) {
@@ -222,8 +213,7 @@ export const acceptSubstitution = withI18nMutation({
 
           await ctx.db.patch(calendarEvent._id, {
             teacherId: substitution.toTeacherId,
-            updatedAt: new Date(now).toISOString(),
-          });
+            });
 
           const [fromTeacher, toTeacher] = await Promise.all([
             oldTeacherId ? ctx.db.get(oldTeacherId as Id<"teachers">) : null,
@@ -240,8 +230,7 @@ export const acceptSubstitution = withI18nMutation({
             toTeacherName: formatTeacherName(toTeacher),
             reason: substitution.reason,
             changedBy: args.userId,
-            createdAt: new Date(now).toISOString(),
-          });
+            });
         }
       }
     }
@@ -260,8 +249,7 @@ export const acceptSubstitution = withI18nMutation({
         ? m.backend_substitution_accepted_primary({ discipline: disciplineName })
         : m.backend_substitution_accepted_temp({ discipline: disciplineName, startDate: substitution.startDate, endDate: substitution.endDate }),
       metadata: { substitutionId: args.substitutionId, journalId: substitution.journalId },
-      createdAt: new Date(now).toISOString(),
-    });
+      });
 
     // Notify the original teacher in their locale
     const fromTeacher = await ctx.db.get(substitution.fromTeacherId as Id<"teachers">);
@@ -278,8 +266,7 @@ export const acceptSubstitution = withI18nMutation({
         message: substitution.isPrimary
           ? m.backend_substitution_accepted_from_primary({ discipline: disciplineName })
           : m.backend_substitution_accepted_from({ discipline: disciplineName }),
-        createdAt: new Date(now).toISOString(),
-      });
+        });
     }
 
     return { success: true };
@@ -306,7 +293,6 @@ export const rejectSubstitution = withI18nMutation({
     await ctx.db.patch(args.substitutionId, {
       status: "rejected",
       rejectedAt: now,
-      updatedAt: new Date(now).toISOString(),
       rejectionReason: args.rejectionReason,
     });
 
@@ -321,8 +307,7 @@ export const rejectSubstitution = withI18nMutation({
         status: "unread",
         title: m.backend_substitution_rejected_title(),
         message: m.backend_substitution_rejected_msg({ discipline: substitution.journalSnapshot?.disciplineName ?? "", reason: reasonSuffix }),
-        createdAt: new Date(now).toISOString(),
-      });
+        });
     }
 
     return { success: true };
@@ -349,8 +334,7 @@ export const completeSubstitution = withI18nMutation({
 
     await ctx.db.patch(args.substitutionId, {
       status: "completed",
-      updatedAt: new Date().toISOString(),
-    });
+      });
 
     return { success: true };
   },
@@ -371,8 +355,7 @@ export const cancelSubstitution = withI18nMutation({
 
     await ctx.db.patch(args.substitutionId, {
       status: "cancelled",
-      updatedAt: new Date(now).toISOString(),
-    });
+      });
 
     const reasonSuffix = args.reason ? `: ${args.reason}` : "";
     const disciplineName = substitution.journalSnapshot?.disciplineName ?? "";
@@ -386,8 +369,7 @@ export const cancelSubstitution = withI18nMutation({
         status: "unread",
         title: m.backend_substitution_cancelled_title(),
         message: m.backend_substitution_cancelled_msg({ discipline: disciplineName, reason: reasonSuffix }),
-        createdAt: new Date(now).toISOString(),
-      });
+        });
     }
 
     const fromTeacher = await ctx.db.get(substitution.fromTeacherId as Id<"teachers">);
@@ -400,8 +382,7 @@ export const cancelSubstitution = withI18nMutation({
         status: "unread",
         title: m.backend_substitution_cancelled_title(),
         message: m.backend_substitution_cancelled_msg({ discipline: disciplineName, reason: reasonSuffix }),
-        createdAt: new Date(now).toISOString(),
-      });
+        });
     }
 
     return { success: true };

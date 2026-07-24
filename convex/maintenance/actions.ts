@@ -2,7 +2,7 @@
  * Maintenance actions for clearing/resetting Convex data.
  */
 
-import { action, internalMutation } from "../_generated/server";
+import { action, internalMutation } from "../functions";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 

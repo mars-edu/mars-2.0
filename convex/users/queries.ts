@@ -1,4 +1,4 @@
-import { query } from "../_generated/server";
+import { query } from "../functions";
 import { v } from "convex/values";
 
 /**
@@ -29,9 +29,7 @@ export const getUserProfile = query({
       office: user.office,
       department: user.department,
       degree: user.degree,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
+      };
   },
 });
 

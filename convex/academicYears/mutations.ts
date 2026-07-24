@@ -1,4 +1,4 @@
-import { mutation } from "../_generated/server";
+import { mutation } from "../functions";
 import { v } from "convex/values";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
 
@@ -22,8 +22,7 @@ export const create = mutation({
         if (year.isActive) {
           await ctx.db.patch(year._id, {
             isActive: false,
-            ...updateTimestamp(),
-          });
+            });
         }
       }
     }
@@ -56,8 +55,7 @@ export const update = mutation({
         if (year._id !== id && year.isActive) {
           await ctx.db.patch(year._id, {
             isActive: false,
-            ...updateTimestamp(),
-          });
+            });
         }
       }
     }
@@ -69,8 +67,7 @@ export const update = mutation({
 
     await ctx.db.patch(id, {
       ...cleanUpdates,
-      ...updateTimestamp(),
-    });
+      });
 
     return await ctx.db.get(id);
   },
@@ -87,8 +84,7 @@ export const setActive = mutation({
     for (const year of allYears) {
       await ctx.db.patch(year._id, {
         isActive: year._id === args.id,
-        ...updateTimestamp(),
-      });
+        });
     }
 
     return await ctx.db.get(args.id);

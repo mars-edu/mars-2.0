@@ -1,4 +1,4 @@
-import { action, internalMutation } from "../_generated/server";
+import { action, internalMutation } from "../functions";
 import { v, ConvexError } from "convex/values";
 import { api, internal } from "../_generated/api";
 import { validateToken } from "../auth/helpers";
@@ -8,7 +8,7 @@ import {
   normalizeCategoryId,
 } from "./lib";
 import type { Id } from "../_generated/dataModel";
-import type { ActionCtx } from "../_generated/server";
+import type { ActionCtx } from "../functions";
 
 const localizedContentValidator = v.object({
   ru: v.optional(v.string()),
@@ -81,9 +81,7 @@ export const createInternal = internalMutation({
       expiresAt: args.expiresAt,
       isPublished: args.isPublished,
       createdBy: args.createdBy,
-      createdAt: new Date(now).toISOString(),
-      updatedAt: new Date(now).toISOString(),
-    });
+      });
   },
 });
 
@@ -110,8 +108,7 @@ export const updateInternal = internalMutation({
       expiresAt: args.expiresAt,
       isPublished: args.isPublished,
       updatedBy: args.updatedBy,
-      updatedAt: new Date().toISOString(),
-    });
+      });
 
     return { success: true };
   },
@@ -141,8 +138,7 @@ export const saveCategoriesInternal = internalMutation({
           labels: category.labels,
           position: category.position,
           updatedBy: args.updatedBy,
-          updatedAt: new Date(now).toISOString(),
-        });
+          });
       } else {
         await ctx.db.insert("announcementCategories", {
           slug: category.id,
@@ -150,9 +146,7 @@ export const saveCategoriesInternal = internalMutation({
           position: category.position,
           createdBy: args.updatedBy,
           updatedBy: args.updatedBy,
-          createdAt: new Date(now).toISOString(),
-          updatedAt: new Date(now).toISOString(),
-        });
+          });
       }
     }
 
@@ -181,8 +175,7 @@ export const setPublishedInternal = internalMutation({
     await ctx.db.patch(args.announcementId, {
       isPublished: args.isPublished,
       updatedBy: args.updatedBy,
-      updatedAt: new Date().toISOString(),
-    });
+      });
 
     return { success: true };
   },

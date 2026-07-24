@@ -1,4 +1,4 @@
-import { mutation } from "../_generated/server";
+import { mutation } from "../functions";
 import { v } from "convex/values";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
 
@@ -46,8 +46,7 @@ export const update = mutation({
 
     await ctx.db.patch(id, {
       ...cleanUpdates,
-      ...updateTimestamp(),
-    });
+      });
 
     return await ctx.db.get(id);
   },
@@ -137,8 +136,7 @@ export const reorder = mutation({
     for (const update of args.updates) {
       await ctx.db.patch(update.id, {
         order: update.order,
-        ...updateTimestamp(),
-      });
+        });
     }
     return { success: true };
   },

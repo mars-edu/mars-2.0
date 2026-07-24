@@ -1,7 +1,7 @@
 // convex/livekit/chat.ts
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText, convertToModelMessages, stepCountIs, type UIMessage } from 'ai';
-import type { ActionCtx } from '../_generated/server';
+import type { ActionCtx } from "../functions";
 import { api } from '../_generated/api';
 import { validateToken } from '../auth/helpers';
 import { buildSystemPrompt } from './marsSystemPrompt';

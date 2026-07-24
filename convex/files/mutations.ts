@@ -1,4 +1,4 @@
-import { mutation } from "../_generated/server";
+import { mutation } from "../functions";
 import { v } from "convex/values";
 
 /**
@@ -41,8 +41,7 @@ export const storeFileMetadata = mutation({
       contentType: args.contentType,
       size: args.size,
       uploadedBy: undefined, // Can be set if auth is available
-      createdAt: new Date().toISOString(),
-    });
+      });
 
     return fileId;
   },

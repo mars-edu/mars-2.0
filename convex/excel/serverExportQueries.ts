@@ -4,7 +4,7 @@
  * Returns minimal data needed for Excel generation.
  */
 
-import { internalQuery } from "../_generated/server";
+import { internalQuery } from "../functions";
 import { v } from "convex/values";
 
 /**

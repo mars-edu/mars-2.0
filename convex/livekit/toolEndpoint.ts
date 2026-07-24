@@ -1,4 +1,4 @@
-import type { ActionCtx } from '../_generated/server';
+import type { ActionCtx } from "../functions";
 import { createMarsTools } from './tools';
 import { resolveUser } from './chat';
 

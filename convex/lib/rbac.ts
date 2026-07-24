@@ -1,6 +1,6 @@
 import { ConvexError } from "convex/values";
 import type { Id } from "../_generated/dataModel";
-import type { QueryCtx, MutationCtx } from "../_generated/server";
+import type { QueryCtx, MutationCtx } from "../functions";
 
 export function isPermissionActive(
   activeFrom: number | undefined,

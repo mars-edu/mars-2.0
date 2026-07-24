@@ -30,8 +30,7 @@ export const createNotification = withI18nMutation({
       title: args.title,
       message: args.message,
       metadata: args.metadata,
-      createdAt: new Date().toISOString(),
-    });
+      });
 
     return notificationId;
   },
@@ -184,9 +183,7 @@ export const createJournalClosureReminder = withI18nMutation({
       message: args.message,
       createdBy: args.createdBy,
       isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
+      });
 
     // Create notifications for all teachers — each in their own locale
     const teachers = await ctx.db.query("teachers").collect();
@@ -204,8 +201,7 @@ export const createJournalClosureReminder = withI18nMutation({
         metadata: {
           deadline: args.deadline,
         },
-        createdAt: new Date().toISOString(),
-      });
+        });
     }
 
     return reminderId;
@@ -229,8 +225,7 @@ export const deactivateJournalClosureReminder = withI18nMutation({
 
     await ctx.db.patch(args.reminderId, {
       isActive: false,
-      updatedAt: new Date().toISOString(),
-    });
+      });
 
     return { success: true };
   },

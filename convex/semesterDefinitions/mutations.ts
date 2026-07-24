@@ -1,4 +1,4 @@
-import { mutation } from "../_generated/server";
+import { mutation } from "../functions";
 import { v } from "convex/values";
 
 /**
@@ -18,9 +18,7 @@ export const create = mutation({
       shortName: args.shortName,
       fullName: args.fullName,
       number: args.number,
-      createdAt: new Date(now).toISOString(),
-      updatedAt: new Date(now).toISOString(),
-    });
+      });
   },
 });
 
@@ -41,8 +39,7 @@ export const update = mutation({
 
     await ctx.db.patch(id, {
       ...updates,
-      updatedAt: new Date(now).toISOString(),
-    });
+      });
 
     return id;
   },

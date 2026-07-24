@@ -1,6 +1,6 @@
 // convex/http.ts
 import { httpRouter } from 'convex/server';
-import { httpAction } from './_generated/server';
+import { httpAction } from "./functions";
 import {
   createLiveKitToken,
   generateRoomName,

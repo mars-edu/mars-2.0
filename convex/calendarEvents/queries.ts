@@ -1,4 +1,4 @@
-import { query, internalQuery, action } from "../_generated/server";
+import { query, internalQuery, action } from "../functions";
 import { v } from "convex/values";
 import { validateToken } from "../auth/helpers";
 import { internal } from "../_generated/api";

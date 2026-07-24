@@ -2,7 +2,7 @@
 import { dynamicTool } from 'ai';
 import { z } from 'zod';
 import { api } from '../_generated/api';
-import type { ActionCtx } from '../_generated/server';
+import type { ActionCtx } from "../functions";
 import type { Id, Doc } from '../_generated/dataModel';
 
 import { MARS_TOOLS_CONFIG } from './toolsConfig';

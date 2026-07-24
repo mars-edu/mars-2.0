@@ -5,7 +5,7 @@
  * Compile:       `npm run build:paraglide:backend`
  */
 
-import type { MutationCtx, QueryCtx, ActionCtx } from "../_generated/server";
+import type { MutationCtx, QueryCtx, ActionCtx } from "../functions";
 import type { Id } from "../_generated/dataModel";
 import { setLocale } from "../paraglide/runtime.js";
 
@@ -39,7 +39,7 @@ export async function getUserLocale(
  * because `withI18n` only sets the locale once for the executing user!
  */
 import { customMutation, customQuery } from "convex-helpers/server/customFunctions";
-import { mutation, query } from "../_generated/server";
+import { mutation, query } from "../functions";
 
 export const withI18nMutation = customMutation(mutation, {
   args: {},

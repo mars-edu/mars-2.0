@@ -1,4 +1,4 @@
-import { mutation, internalMutation } from "../_generated/server";
+import { mutation, internalMutation } from "../functions";
 import { v } from "convex/values";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
 
@@ -78,8 +78,7 @@ export const update = mutation({
     await ctx.db.patch(id, {
       ...cleanUpdates,
       searchName: `${merged.surname} ${merged.firstName} ${merged.patronymic}`,
-      ...updateTimestamp(),
-    });
+      });
 
     return await ctx.db.get(id);
   },

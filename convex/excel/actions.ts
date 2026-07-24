@@ -8,7 +8,7 @@
 
 "use node";
 
-import { action } from "../_generated/server";
+import { action } from "../functions";
 import type { Id } from "../_generated/dataModel";
 import { v } from "convex/values";
 

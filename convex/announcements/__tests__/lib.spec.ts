@@ -15,7 +15,6 @@ const baseAnnouncement = {
   displayDate: "5 марта",
   isPublished: true,
   createdBy: "user-id",
-  createdAt: new Date(1000).toISOString(),
   updatedAt: 1000,
 };
 
@@ -25,12 +24,10 @@ describe("announcement feed helpers", () => {
     const activeOlder = {
       ...baseAnnouncement,
       _id: "older",
-      createdAt: new Date(1000).toISOString(),
-    };
+      };
     const activeNewer = {
       ...baseAnnouncement,
       _id: "newer",
-      createdAt: new Date(4000).toISOString(),
       publishAt: new Date(3000).toISOString(),
       expiresAt: new Date(6000).toISOString(),
     };
@@ -38,8 +35,7 @@ describe("announcement feed helpers", () => {
       ...baseAnnouncement,
       _id: "draft",
       isPublished: false,
-      createdAt: new Date(9000).toISOString(),
-    };
+      };
     const future = {
       ...baseAnnouncement,
       _id: "future",
@@ -61,9 +57,9 @@ describe("announcement feed helpers", () => {
 
   it("applies category, kind, and limit filters", () => {
     const items = [
-      { ...baseAnnouncement, _id: "custom-news", kind: "news", category: "student-life", createdAt: new Date(3000).toISOString() },
-      { ...baseAnnouncement, _id: "event-news", kind: "news", category: "events", createdAt: new Date(2000).toISOString() },
-      { ...baseAnnouncement, _id: "academic-announcement", createdAt: new Date(1000).toISOString() },
+      { ...baseAnnouncement, _id: "custom-news", kind: "news", category: "student-life", },
+      { ...baseAnnouncement, _id: "event-news", kind: "news", category: "events", },
+      { ...baseAnnouncement, _id: "academic-announcement", },
     ];
 
     const result = filterActiveAnnouncements(items, {

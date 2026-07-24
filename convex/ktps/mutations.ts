@@ -1,4 +1,4 @@
-import { mutation } from "../_generated/server";
+import { mutation } from "../functions";
 import { v } from "convex/values";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
 import { validateReorder } from "./lib";
@@ -50,8 +50,7 @@ export const update = mutation({
 
     await ctx.db.patch(id, {
       ...cleanUpdates,
-      ...updateTimestamp(),
-    });
+      });
 
     return await ctx.db.get(id);
   },
@@ -133,8 +132,7 @@ export const updateDetail = mutation({
 
     await ctx.db.patch(id, {
       ...cleanUpdates,
-      ...updateTimestamp(),
-    });
+      });
 
     return await ctx.db.get(id);
   },
@@ -160,8 +158,7 @@ export const removeDetail = mutation({
         if (siblings[i].position !== i + 1) {
           await ctx.db.patch(siblings[i]._id, {
             position: i + 1,
-            ...updateTimestamp(),
-          });
+            });
         }
       }
     }
@@ -197,8 +194,7 @@ export const reorderDetails = mutation({
     for (let i = 0; i < args.orderedIds.length; i++) {
       await ctx.db.patch(args.orderedIds[i], {
         position: i + 1,
-        ...updateTimestamp(),
-      });
+        });
     }
 
     return { success: true, reordered: args.orderedIds.length };
@@ -221,8 +217,7 @@ export const clearDetails = mutation({
     }
 
     await ctx.db.patch(args.ktpId, {
-      ...updateTimestamp(),
-    });
+      });
 
     return { success: true, deleted: details.length };
   },

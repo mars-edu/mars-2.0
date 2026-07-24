@@ -1,4 +1,4 @@
-import { query } from "../_generated/server";
+import { query } from "../functions";
 import type { Id } from "../_generated/dataModel";
 
 export const getTests = query({

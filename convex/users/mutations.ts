@@ -1,4 +1,4 @@
-import { mutation, action } from "../_generated/server";
+import { mutation, action } from "../functions";
 import { v } from "convex/values";
 import { api } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
@@ -22,8 +22,7 @@ export const updateProfilePicture = mutation({
 
     await ctx.db.patch(args.userId, {
       avatar: args.avatarUrl,
-      updatedAt: new Date().toISOString(),
-    });
+      });
 
     return {
       success: true,
@@ -78,8 +77,7 @@ export const removeProfilePicture = mutation({
 
     await ctx.db.patch(args.userId, {
       avatar: undefined,
-      updatedAt: new Date().toISOString(),
-    });
+      });
 
     return {
       success: true,
@@ -105,8 +103,7 @@ export const updateTheme = mutation({
 
     await ctx.db.patch(args.userId, {
       theme: args.theme,
-      updatedAt: new Date().toISOString(),
-    });
+      });
 
     return {
       success: true,
@@ -142,8 +139,7 @@ export const updateProfile = mutation({
 
     await ctx.db.patch(args.userId, {
       ...profileData,
-      updatedAt: new Date().toISOString(),
-    });
+      });
 
     return {
       success: true,
@@ -166,8 +162,7 @@ export const updateLocale = mutation({
 
     await ctx.db.patch(args.userId, {
       locale: args.locale,
-      updatedAt: new Date().toISOString(),
-    });
+      });
 
     return { success: true };
   },

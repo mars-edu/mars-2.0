@@ -7,7 +7,7 @@
  * Or reset and reseed: npx convex run testSeed:resetAndSeed
  */
 
-import { action, internalMutation } from "./_generated/server";
+import { action, internalMutation } from "./functions";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { hashPassword } from "./auth/helpers";
@@ -72,9 +72,7 @@ const seedBasicDataInternal = internalMutation({
       const baseId = await ctx.db.insert("bases", {
         value: baseData.value,
         name: baseData.name,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
+        });
 
       console.log(`[TestSeed] Created base: ${baseData.value} (${baseId})`);
       createdBases.push(baseId);
@@ -154,9 +152,7 @@ const seedTestUsersInternal = internalMutation({
         email: userData.email,
         passwordHash,
         roles: userData.roles,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
+        });
 
       console.log(`[TestSeed] Created test user: ${userData.username} (${userId})`);
       createdUsers.push(userId);

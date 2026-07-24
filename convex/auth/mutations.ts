@@ -1,4 +1,4 @@
-import { mutation, action, internalMutation, internalQuery } from "../_generated/server";
+import { mutation, action, internalMutation, internalQuery } from "../functions";
 import { v, ConvexError } from "convex/values";
 import { createTimestamps } from "../lib/validators";
 import { api, internal } from "../_generated/api";

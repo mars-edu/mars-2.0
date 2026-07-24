@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { mutation } from "./functions";
 
 export const run = mutation({
   handler: async (ctx) => {

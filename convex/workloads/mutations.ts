@@ -1,4 +1,4 @@
-import { mutation } from "../_generated/server";
+import { mutation } from "../functions";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
@@ -23,15 +23,13 @@ export const save = mutation({
       // Update existing
       await ctx.db.patch(id, {
         ...data,
-        ...updateTimestamp(),
-      });
+        });
       return id;
     } else {
       // Create new
       return await ctx.db.insert("workloads", {
         ...data,
-        ...createTimestamps(),
-      });
+        });
     }
   },
 });
@@ -145,8 +143,7 @@ export const createJournalsFromWorkloadGroups = mutation({
         semester: semesterRecord._id,
         useCustomPeriod: false,
         weeklySchedules: g.weeklySchedules,
-        ...createTimestamps(),
-      });
+        });
 
       const journalId = await ctx.db.insert("journals", {
         calendarEventId,
@@ -155,16 +152,14 @@ export const createJournalsFromWorkloadGroups = mutation({
         academicYearId: workload.academicYearId,
         semesterId: semesterRecord._id,
         workloadId: args.workloadId as string,
-        ...createTimestamps(),
-      });
+        });
       journalsCreated++;
 
       for (const studentId of studentIds) {
         await ctx.db.insert("journalStudents", {
           journalId,
           studentId,
-          createdAt: new Date().toISOString(),
-        });
+          });
       }
     }
 
@@ -179,8 +174,7 @@ export const createJournalsFromWorkloadGroups = mutation({
     await ctx.db.patch(args.workloadId, {
       journalsCreated: createdSemesters.length > 0,
       journalsCreatedSemesters: createdSemesters,
-      ...updateTimestamp(),
-    });
+      });
 
     return { journalsCreated };
   },
@@ -194,8 +188,7 @@ export const setAddedToSchedule = mutation({
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, {
       addedToSchedule: args.value,
-      ...updateTimestamp(),
-    });
+      });
     return { success: true };
   },
 });

@@ -1,4 +1,4 @@
-import { mutation } from "../_generated/server";
+import { mutation } from "../functions";
 import { v } from "convex/values";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
 
@@ -50,8 +50,7 @@ export const update = mutation({
 
     await ctx.db.patch(id, {
       ...cleanUpdates,
-      ...updateTimestamp(),
-    });
+      });
 
     return await ctx.db.get(id);
   },
@@ -114,8 +113,7 @@ export const addStudent = mutation({
     return await ctx.db.insert("journalStudents", {
       journalId: args.journalId,
       studentId: args.studentId,
-      createdAt: new Date().toISOString(),
-    });
+      });
   },
 });
 
@@ -166,8 +164,7 @@ export const batchAddStudents = mutation({
         const id = await ctx.db.insert("journalStudents", {
           journalId: args.journalId,
           studentId,
-          createdAt: new Date().toISOString(),
-        });
+          });
         added.push(id);
       }
     }

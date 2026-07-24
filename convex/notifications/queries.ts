@@ -1,4 +1,4 @@
-import { query } from "../_generated/server";
+import { query } from "../functions";
 import { v } from "convex/values";
 import { m, withI18nQuery } from "../lib/i18n";
 

@@ -1,4 +1,4 @@
-import { mutation } from "../_generated/server";
+import { mutation } from "../functions";
 import { v } from "convex/values";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
 import { requirePermission } from "../lib/rbac";
@@ -57,8 +57,7 @@ export const updateMark = mutation({
         columnLabel: args.columnLabel,
         columnDate: args.columnDate,
         changedBy: userId,
-        createdAt: new Date(now).toISOString(),
-      });
+        });
     }
 
     if (existingMark) {
@@ -73,8 +72,7 @@ export const updateMark = mutation({
         sessionId: args.sessionId,
         scheduledControlId: args.scheduledControlId,
         updatedBy: userId,
-        updatedAt: new Date(now).toISOString(),
-      });
+        });
       return existingMark._id;
     } else {
       // Create new mark
@@ -82,9 +80,7 @@ export const updateMark = mutation({
         ...markData,
         createdBy: userId,
         updatedBy: userId,
-        createdAt: new Date(now).toISOString(),
-        updatedAt: new Date(now).toISOString(),
-      });
+        });
 
       // Create history for new mark with value
       if (args.value && userId) {
@@ -98,8 +94,7 @@ export const updateMark = mutation({
           columnLabel: args.columnLabel,
           columnDate: args.columnDate,
           changedBy: userId,
-          createdAt: new Date(now).toISOString(),
-        });
+          });
       }
 
       return markId;
@@ -165,16 +160,14 @@ export const batchUpdateMarks = mutation({
           columnLabel: mark.columnLabel,
           columnDate: mark.columnDate,
           changedBy: args.userId,
-          createdAt: new Date(now).toISOString(),
-        });
+          });
       }
 
       if (existingMark) {
         await ctx.db.patch(existingMark._id, {
           ...mark,
           updatedBy: args.userId,
-          updatedAt: new Date(now).toISOString(),
-        });
+          });
         results.push(existingMark._id);
       } else {
         const markId = await ctx.db.insert("marks", {
@@ -182,9 +175,7 @@ export const batchUpdateMarks = mutation({
           ...mark,
           createdBy: args.userId,
           updatedBy: args.userId,
-          createdAt: new Date(now).toISOString(),
-          updatedAt: new Date(now).toISOString(),
-        });
+          });
         results.push(markId);
       }
     }
@@ -236,8 +227,7 @@ export const deleteMark = mutation({
         columnLabel: existingMark.columnLabel,
         columnDate: existingMark.columnDate,
         changedBy: args.userId,
-        createdAt: new Date().toISOString(),
-      });
+        });
     }
 
     await ctx.db.delete(existingMark._id);
@@ -302,8 +292,7 @@ export const initializeJournal = mutation({
         await ctx.db.insert("journalStudents", {
           journalId: journal._id,
           studentId,
-          createdAt: timestamps.createdAt,
-        });
+          });
       }
     }
 

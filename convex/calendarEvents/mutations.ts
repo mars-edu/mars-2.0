@@ -1,4 +1,4 @@
-import { mutation } from "../_generated/server";
+import { mutation } from "../functions";
 import { v, ConvexError } from "convex/values";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
 import { validateIndividualJournals } from "./lib";
@@ -110,8 +110,7 @@ export const update = mutation({
 
     await ctx.db.patch(id, {
       ...cleanUpdates,
-      ...updateTimestamp(),
-    });
+      });
 
     const result = await ctx.db.get(id);
 
@@ -264,8 +263,7 @@ export const updateIndividualJournalsConfig = mutation({
 
     await ctx.db.patch(args.mainEventId, {
       gradingType: args.gradingType,
-      ...updateTimestamp(),
-    });
+      });
 
     const keptEventIds = new Set(
       args.individualJournals.map((j) => j.eventId).filter(Boolean)
@@ -301,8 +299,7 @@ export const updateIndividualJournalsConfig = mutation({
         await ctx.db.patch(j.eventId as any, {
           participants: j.studentIds,
           weeklySchedules: j.weeklySchedules,
-          ...updateTimestamp(),
-        });
+          });
         childIds.push(j.eventId);
       } else {
         const timestamps = createTimestamps();

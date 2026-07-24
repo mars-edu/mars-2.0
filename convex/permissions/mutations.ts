@@ -1,4 +1,4 @@
-import { mutation, internalMutation } from "../_generated/server";
+import { mutation, internalMutation } from "../functions";
 import { v, ConvexError } from "convex/values";
 import { requirePermission } from "../lib/rbac";
 import { roleValidator } from "../lib/validators";

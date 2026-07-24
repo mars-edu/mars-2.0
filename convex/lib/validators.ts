@@ -55,9 +55,7 @@ export const weeklyScheduleValidator = v.object({
 export function createTimestamps() {
   const now = Date.now();
   return {
-    createdAt: new Date(now).toISOString(),
-    updatedAt: new Date(now).toISOString(),
-  };
+    };
 }
 
 /**
@@ -65,6 +63,5 @@ export function createTimestamps() {
  */
 export function updateTimestamp() {
   return {
-    updatedAt: new Date().toISOString(),
-  };
+    };
 }
