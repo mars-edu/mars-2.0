@@ -49,8 +49,8 @@ export const calendarTables = {
         })),
       })
     ),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_rupEntryId", ["rupEntryId"])
     .index("by_teacherId", ["teacherId"])
@@ -70,8 +70,8 @@ export const calendarTables = {
     name: v.optional(v.string()),
     color: v.optional(v.string()), // hex, e.g. '#FACC15'
     languages: v.optional(v.array(v.string())), // subset of ['KZ','RU','EN']
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_rupEntryId", ["rupEntryId"])
     .index("by_eventId", ["eventId"])
@@ -93,8 +93,8 @@ export const calendarTables = {
     individual: v.optional(v.number()),
     homework: v.string(),
     notes: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_ktpId", ["ktpId"])
     .index("by_ktpId_position", ["ktpId", "position"]),

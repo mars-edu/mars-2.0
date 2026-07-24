@@ -34,8 +34,8 @@ export const createTest = mutation({
     const testId = await ctx.db.insert("tests", {
       ...args,
       createdBy: user._id,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
 
     return testId;
@@ -62,7 +62,7 @@ export const updateTest = mutation({
     const { id, ...updates } = args;
     await ctx.db.patch(id, {
       ...updates,
-      updatedAt: Date.now(),
+      updatedAt: new Date().toISOString(),
     });
   },
 });
@@ -97,8 +97,8 @@ export const assignTest = mutation({
       status: "active",
       date: args.date,
       createdBy: user?._id,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
 
     return assignmentId;

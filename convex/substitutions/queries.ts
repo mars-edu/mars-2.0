@@ -213,7 +213,7 @@ export const listProtocolWithRoleAccessInternal = internalQuery({
       })
     );
 
-    enriched.sort((a, b) => b.createdAt - a.createdAt);
+    enriched.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
     return enriched;
   },

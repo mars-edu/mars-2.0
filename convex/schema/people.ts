@@ -41,8 +41,8 @@ export const peopleTables = {
         })
       )
     ),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_specialty", ["specialty"])
     .index("by_academicYear", ["academicYearId"])
@@ -67,8 +67,8 @@ export const peopleTables = {
     userId: v.optional(v.id("users")), // linked user account
     email: v.optional(v.string()),
     username: v.optional(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_userId", ["userId"])
     .index("by_position", ["position"])
@@ -91,7 +91,7 @@ export const peopleTables = {
     toTeacherName: v.optional(v.string()), // Snapshot of new teacher name
     reason: v.optional(v.string()),
     changedBy: v.id("users"), // Admin who approved the change
-    createdAt: v.number(),
+    createdAt: v.string(),
   })
     .index("by_calendarEvent", ["calendarEventId"])
     .index("by_createdAt", ["createdAt"]),

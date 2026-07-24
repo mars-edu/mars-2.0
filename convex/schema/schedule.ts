@@ -13,8 +13,8 @@ export const scheduleTables = {
     order: v.number(),
     academicYearId: v.string(),
     semesterId: v.id("academicYearSemesters"),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_order", ["order"])
     .index("by_academicYear", ["academicYearId"])
@@ -31,8 +31,8 @@ export const scheduleTables = {
     semesterId: v.id("academicYearSemesters"),
     startDate: v.string(), // ISO date
     endDate: v.string(), // ISO date
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_academicYear", ["academicYearId"])
     .index("by_semester", ["semesterId"]),
@@ -74,8 +74,8 @@ export const scheduleTables = {
     createdBy: v.id("users"), // User who created the substitution
     acceptedAt: v.optional(v.number()),
     rejectedAt: v.optional(v.number()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_journal", ["journalId"])
     .index("by_fromTeacher", ["fromTeacherId"])
@@ -114,8 +114,8 @@ export const scheduleTables = {
         groupName: v.optional(v.string()),
       })
     ),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_journal", ["journalId"])
     .index("by_teacher", ["teacherId"])

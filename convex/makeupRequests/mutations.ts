@@ -41,8 +41,8 @@ export const createMakeupRequest = withI18nMutation({
       dates: args.dates,
       status: "pending",
       journalSnapshot,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: new Date(now).toISOString(),
+      updatedAt: new Date(now).toISOString(),
     });
 
     const adminUsers = await getAdminUsers(ctx);
@@ -63,7 +63,7 @@ export const createMakeupRequest = withI18nMutation({
         title: m.backend_makeup_request_title(),
         message: m.backend_makeup_request_msg({ teacher: teacherName, discipline: journalSnapshot.disciplineName }),
         metadata: { journalId: args.journalId },
-        createdAt: now,
+        createdAt: new Date(now).toISOString(),
       });
     }
 
@@ -89,7 +89,7 @@ export const acceptMakeupRequest = withI18nMutation({
 
     await ctx.db.patch(args.makeupRequestId, {
       status: "accepted",
-      updatedAt: now,
+      updatedAt: new Date(now).toISOString(),
     });
 
     return { success: true };
@@ -116,7 +116,7 @@ export const rejectMakeupRequest = withI18nMutation({
     await ctx.db.patch(args.makeupRequestId, {
       status: "rejected",
       rejectionReason: args.rejectionReason,
-      updatedAt: now,
+      updatedAt: new Date(now).toISOString(),
     });
 
     return { success: true };

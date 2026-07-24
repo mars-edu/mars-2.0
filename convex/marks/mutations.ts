@@ -57,7 +57,7 @@ export const updateMark = mutation({
         columnLabel: args.columnLabel,
         columnDate: args.columnDate,
         changedBy: userId,
-        createdAt: now,
+        createdAt: new Date(now).toISOString(),
       });
     }
 
@@ -73,7 +73,7 @@ export const updateMark = mutation({
         sessionId: args.sessionId,
         scheduledControlId: args.scheduledControlId,
         updatedBy: userId,
-        updatedAt: now,
+        updatedAt: new Date(now).toISOString(),
       });
       return existingMark._id;
     } else {
@@ -82,8 +82,8 @@ export const updateMark = mutation({
         ...markData,
         createdBy: userId,
         updatedBy: userId,
-        createdAt: now,
-        updatedAt: now,
+        createdAt: new Date(now).toISOString(),
+        updatedAt: new Date(now).toISOString(),
       });
 
       // Create history for new mark with value
@@ -98,7 +98,7 @@ export const updateMark = mutation({
           columnLabel: args.columnLabel,
           columnDate: args.columnDate,
           changedBy: userId,
-          createdAt: now,
+          createdAt: new Date(now).toISOString(),
         });
       }
 
@@ -165,7 +165,7 @@ export const batchUpdateMarks = mutation({
           columnLabel: mark.columnLabel,
           columnDate: mark.columnDate,
           changedBy: args.userId,
-          createdAt: now,
+          createdAt: new Date(now).toISOString(),
         });
       }
 
@@ -173,7 +173,7 @@ export const batchUpdateMarks = mutation({
         await ctx.db.patch(existingMark._id, {
           ...mark,
           updatedBy: args.userId,
-          updatedAt: now,
+          updatedAt: new Date(now).toISOString(),
         });
         results.push(existingMark._id);
       } else {
@@ -182,8 +182,8 @@ export const batchUpdateMarks = mutation({
           ...mark,
           createdBy: args.userId,
           updatedBy: args.userId,
-          createdAt: now,
-          updatedAt: now,
+          createdAt: new Date(now).toISOString(),
+          updatedAt: new Date(now).toISOString(),
         });
         results.push(markId);
       }
@@ -236,7 +236,7 @@ export const deleteMark = mutation({
         columnLabel: existingMark.columnLabel,
         columnDate: existingMark.columnDate,
         changedBy: args.userId,
-        createdAt: Date.now(),
+        createdAt: new Date().toISOString(),
       });
     }
 

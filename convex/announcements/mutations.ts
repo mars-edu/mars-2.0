@@ -34,8 +34,8 @@ const announcementInputFields = {
   titles: localizedContentValidator,
   descriptions: localizedContentValidator,
   displayDate: v.string(),
-  publishAt: v.optional(v.number()),
-  expiresAt: v.optional(v.number()),
+  publishAt: v.optional(v.string()),
+  expiresAt: v.optional(v.string()),
   isPublished: v.boolean(),
 };
 
@@ -81,8 +81,8 @@ export const createInternal = internalMutation({
       expiresAt: args.expiresAt,
       isPublished: args.isPublished,
       createdBy: args.createdBy,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: new Date(now).toISOString(),
+      updatedAt: new Date(now).toISOString(),
     });
   },
 });
@@ -110,7 +110,7 @@ export const updateInternal = internalMutation({
       expiresAt: args.expiresAt,
       isPublished: args.isPublished,
       updatedBy: args.updatedBy,
-      updatedAt: Date.now(),
+      updatedAt: new Date().toISOString(),
     });
 
     return { success: true };
@@ -141,7 +141,7 @@ export const saveCategoriesInternal = internalMutation({
           labels: category.labels,
           position: category.position,
           updatedBy: args.updatedBy,
-          updatedAt: now,
+          updatedAt: new Date(now).toISOString(),
         });
       } else {
         await ctx.db.insert("announcementCategories", {
@@ -150,8 +150,8 @@ export const saveCategoriesInternal = internalMutation({
           position: category.position,
           createdBy: args.updatedBy,
           updatedBy: args.updatedBy,
-          createdAt: now,
-          updatedAt: now,
+          createdAt: new Date(now).toISOString(),
+          updatedAt: new Date(now).toISOString(),
         });
       }
     }
@@ -181,7 +181,7 @@ export const setPublishedInternal = internalMutation({
     await ctx.db.patch(args.announcementId, {
       isPublished: args.isPublished,
       updatedBy: args.updatedBy,
-      updatedAt: Date.now(),
+      updatedAt: new Date().toISOString(),
     });
 
     return { success: true };

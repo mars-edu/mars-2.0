@@ -8,13 +8,13 @@ export type AnnouncementFeedItem = {
   kind: string;
   category: string;
   isPublished: boolean;
-  publishAt?: number;
-  expiresAt?: number;
-  createdAt: number;
+  publishAt?: string;
+  expiresAt?: string;
+  createdAt: string;
 };
 
 export type AnnouncementFeedFilters = {
-  now?: number;
+  now?: string;
   category?: string;
   kind?: string;
   limit?: number;

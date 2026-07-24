@@ -11,8 +11,8 @@ export const academicTables = {
     startYear: v.number(),
     endYear: v.number(),
     isActive: v.boolean(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_active", ["isActive"])
     .index("by_startYear", ["startYear"]),
@@ -27,8 +27,8 @@ export const academicTables = {
     shortName: v.string(),
     fullName: v.optional(v.string()),
     number: v.number(), // Semester number (1-8)
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   }).index("by_number", ["number"]),
 
   /**
@@ -41,8 +41,8 @@ export const academicTables = {
     semesterDefinitionId: v.id("semesterDefinitions"),
     startDate: v.string(), // ISO date
     endDate: v.string(), // ISO date
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_academicYear", ["academicYearId"])
     .index("by_semesterDefinition", ["semesterDefinitionId"]),
@@ -60,8 +60,8 @@ export const academicTables = {
     orderNumber: v.optional(v.string()),
     hasModule: v.optional(v.boolean()),
     isHighlighted: v.optional(v.boolean()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   }).index("by_code", ["code"]),
 
   /**
@@ -72,8 +72,8 @@ export const academicTables = {
     number: v.string(),
     name: v.optional(v.string()),
     semesters: v.optional(v.array(v.string())),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   }),
 
   /**
@@ -83,8 +83,8 @@ export const academicTables = {
   bases: defineTable({
     value: v.number(), // 9 or 11
     name: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   }),
 
   /**
@@ -94,8 +94,8 @@ export const academicTables = {
   positions: defineTable({
     name: v.string(),
     shortName: v.optional(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   }),
 
   /**
@@ -108,8 +108,8 @@ export const academicTables = {
     type: v.string(), // 'lecture' | 'lab' | 'gym' | 'other'
     description: v.optional(v.string()),
     isActive: v.optional(v.boolean()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   }),
 
   /**
@@ -120,8 +120,8 @@ export const academicTables = {
     moduleIndex: v.string(),
     moduleName: v.string(),
     learningOutcome: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   }),
 
   /**
@@ -131,7 +131,7 @@ export const academicTables = {
   modules: defineTable({
     name: v.string(),
     index: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   }),
 };

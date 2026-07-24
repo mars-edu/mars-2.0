@@ -17,8 +17,8 @@ export const journalsTables = {
     mergedJournalIds: v.optional(v.array(v.string())),
     parentIndividualJournalId: v.optional(v.string()),
     workloadId: v.optional(v.string()), // Back-ref when generated from a workload
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_calendarEvent", ["calendarEventId"])
     .index("by_academicYear_semester", ["academicYearId", "semesterId"])
@@ -31,7 +31,7 @@ export const journalsTables = {
   journalStudents: defineTable({
     journalId: v.id("journals"),
     studentId: v.string(), // Reference to students
-    createdAt: v.number(),
+    createdAt: v.string(),
   })
     .index("by_journal", ["journalId"])
     .index("by_student", ["studentId"])
@@ -58,8 +58,8 @@ export const journalsTables = {
     scheduledControlId: v.optional(v.string()),
     createdBy: v.optional(v.id("users")),
     updatedBy: v.optional(v.id("users")),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_journal", ["journalId"])
     .index("by_student", ["studentId"])
@@ -85,7 +85,7 @@ export const journalsTables = {
     columnLabel: v.optional(v.string()),
     columnDate: v.optional(v.string()),
     changedBy: v.id("users"),
-    createdAt: v.number(),
+    createdAt: v.string(),
   })
     .index("by_journal", ["journalId"])
     .index("by_journal_student", ["journalId", "studentId"])
@@ -102,8 +102,8 @@ export const journalsTables = {
     message: v.string(), // Announcement text
     createdBy: v.id("users"), // Admin who created the reminder
     isActive: v.boolean(), // Whether this reminder is currently active
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_academicYear", ["academicYearId"])
     .index("by_semester", ["semesterId"])

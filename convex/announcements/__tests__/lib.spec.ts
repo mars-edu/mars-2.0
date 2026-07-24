@@ -15,40 +15,40 @@ const baseAnnouncement = {
   displayDate: "5 марта",
   isPublished: true,
   createdBy: "user-id",
-  createdAt: 1000,
+  createdAt: new Date(1000).toISOString(),
   updatedAt: 1000,
 };
 
 describe("announcement feed helpers", () => {
   it("returns only published announcements inside the active window ordered newest first", () => {
-    const now = 5000;
+    const now = new Date(5000).toISOString();
     const activeOlder = {
       ...baseAnnouncement,
       _id: "older",
-      createdAt: 1000,
+      createdAt: new Date(1000).toISOString(),
     };
     const activeNewer = {
       ...baseAnnouncement,
       _id: "newer",
-      createdAt: 4000,
-      publishAt: 3000,
-      expiresAt: 6000,
+      createdAt: new Date(4000).toISOString(),
+      publishAt: new Date(3000).toISOString(),
+      expiresAt: new Date(6000).toISOString(),
     };
     const draft = {
       ...baseAnnouncement,
       _id: "draft",
       isPublished: false,
-      createdAt: 9000,
+      createdAt: new Date(9000).toISOString(),
     };
     const future = {
       ...baseAnnouncement,
       _id: "future",
-      publishAt: 6000,
+      publishAt: new Date(6000).toISOString(),
     };
     const expired = {
       ...baseAnnouncement,
       _id: "expired",
-      expiresAt: 4000,
+      expiresAt: new Date(4000).toISOString(),
     };
 
     const result = filterActiveAnnouncements(
@@ -61,13 +61,13 @@ describe("announcement feed helpers", () => {
 
   it("applies category, kind, and limit filters", () => {
     const items = [
-      { ...baseAnnouncement, _id: "custom-news", kind: "news", category: "student-life", createdAt: 3000 },
-      { ...baseAnnouncement, _id: "event-news", kind: "news", category: "events", createdAt: 2000 },
-      { ...baseAnnouncement, _id: "academic-announcement", createdAt: 1000 },
+      { ...baseAnnouncement, _id: "custom-news", kind: "news", category: "student-life", createdAt: new Date(3000).toISOString() },
+      { ...baseAnnouncement, _id: "event-news", kind: "news", category: "events", createdAt: new Date(2000).toISOString() },
+      { ...baseAnnouncement, _id: "academic-announcement", createdAt: new Date(1000).toISOString() },
     ];
 
     const result = filterActiveAnnouncements(items, {
-      now: 5000,
+      now: new Date(5000).toISOString(),
       category: "student-life",
       kind: "news",
       limit: 1,

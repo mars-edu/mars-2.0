@@ -41,7 +41,7 @@ export const storeFileMetadata = mutation({
       contentType: args.contentType,
       size: args.size,
       uploadedBy: undefined, // Can be set if auth is available
-      createdAt: Date.now(),
+      createdAt: new Date().toISOString(),
     });
 
     return fileId;

@@ -6,8 +6,8 @@ import { v } from "convex/values";
 
 // Common timestamp fields used across most tables
 export const timestampFields = {
-  createdAt: v.number(),
-  updatedAt: v.number(),
+  createdAt: v.string(),
+  updatedAt: v.string(),
 };
 
 // Gender validator
@@ -55,8 +55,8 @@ export const weeklyScheduleValidator = v.object({
 export function createTimestamps() {
   const now = Date.now();
   return {
-    createdAt: now,
-    updatedAt: now,
+    createdAt: new Date(now).toISOString(),
+    updatedAt: new Date(now).toISOString(),
   };
 }
 
@@ -65,6 +65,6 @@ export function createTimestamps() {
  */
 export function updateTimestamp() {
   return {
-    updatedAt: Date.now(),
+    updatedAt: new Date().toISOString(),
   };
 }

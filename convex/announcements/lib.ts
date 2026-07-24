@@ -61,11 +61,11 @@ export function assertHasLocalizedContent(
 
 export function isActiveAnnouncement<T extends AnnouncementFeedItem>(
   item: T,
-  now = Date.now()
+  now = new Date().toISOString()
 ) {
   if (!item.isPublished) return false;
-  if (item.publishAt !== undefined && item.publishAt > now) return false;
-  if (item.expiresAt !== undefined && item.expiresAt <= now) return false;
+  if (item.publishAt !== undefined && item.publishAt.localeCompare(now) > 0) return false;
+  if (item.expiresAt !== undefined && item.expiresAt.localeCompare(now) <= 0) return false;
   return true;
 }
 
@@ -73,13 +73,13 @@ export function filterActiveAnnouncements<T extends AnnouncementFeedItem>(
   items: T[],
   filters: AnnouncementFeedFilters = {}
 ) {
-  const now = filters.now ?? Date.now();
+  const now = filters.now ?? new Date().toISOString();
   const limit = Math.max(0, filters.limit ?? 20);
 
   return items
     .filter((item) => isActiveAnnouncement(item, now))
     .filter((item) => !filters.category || item.category === filters.category)
     .filter((item) => !filters.kind || item.kind === filters.kind)
-    .sort((a, b) => b.createdAt - a.createdAt)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, limit);
 }

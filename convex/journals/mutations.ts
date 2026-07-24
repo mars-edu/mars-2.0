@@ -114,7 +114,7 @@ export const addStudent = mutation({
     return await ctx.db.insert("journalStudents", {
       journalId: args.journalId,
       studentId: args.studentId,
-      createdAt: Date.now(),
+      createdAt: new Date().toISOString(),
     });
   },
 });
@@ -166,7 +166,7 @@ export const batchAddStudents = mutation({
         const id = await ctx.db.insert("journalStudents", {
           journalId: args.journalId,
           studentId,
-          createdAt: Date.now(),
+          createdAt: new Date().toISOString(),
         });
         added.push(id);
       }

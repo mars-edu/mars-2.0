@@ -28,8 +28,8 @@ export const getUser = query({
       office: v.optional(v.string()),
       department: v.optional(v.string()),
       degree: v.optional(v.string()),
-      createdAt: v.number(),
-      updatedAt: v.number(),
+      createdAt: v.string(),
+      updatedAt: v.string(),
     }),
     v.null()
   ),
@@ -64,8 +64,8 @@ export const getUserByUsername = query({
           v.literal("PARENT")
         )
       ),
-      createdAt: v.number(),
-      updatedAt: v.number(),
+      createdAt: v.string(),
+      updatedAt: v.string(),
     }),
     v.null()
   ),
@@ -131,8 +131,8 @@ export const listUsers = query({
           v.literal("PARENT")
         )
       ),
-      createdAt: v.number(),
-      updatedAt: v.number(),
+      createdAt: v.string(),
+      updatedAt: v.string(),
     })
   ),
   handler: async (ctx) => {

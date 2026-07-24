@@ -22,7 +22,7 @@ export const updateProfilePicture = mutation({
 
     await ctx.db.patch(args.userId, {
       avatar: args.avatarUrl,
-      updatedAt: Date.now(),
+      updatedAt: new Date().toISOString(),
     });
 
     return {
@@ -78,7 +78,7 @@ export const removeProfilePicture = mutation({
 
     await ctx.db.patch(args.userId, {
       avatar: undefined,
-      updatedAt: Date.now(),
+      updatedAt: new Date().toISOString(),
     });
 
     return {
@@ -105,7 +105,7 @@ export const updateTheme = mutation({
 
     await ctx.db.patch(args.userId, {
       theme: args.theme,
-      updatedAt: Date.now(),
+      updatedAt: new Date().toISOString(),
     });
 
     return {
@@ -142,7 +142,7 @@ export const updateProfile = mutation({
 
     await ctx.db.patch(args.userId, {
       ...profileData,
-      updatedAt: Date.now(),
+      updatedAt: new Date().toISOString(),
     });
 
     return {
@@ -166,7 +166,7 @@ export const updateLocale = mutation({
 
     await ctx.db.patch(args.userId, {
       locale: args.locale,
-      updatedAt: Date.now(),
+      updatedAt: new Date().toISOString(),
     });
 
     return { success: true };

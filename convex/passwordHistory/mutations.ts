@@ -23,7 +23,7 @@ export const logPasswordChange = internalMutation({
       changeType: args.changeType,
       teacherId: args.teacherId,
       notes: args.notes,
-      createdAt: Date.now(),
+      createdAt: new Date().toISOString(),
     });
     return historyId;
   },

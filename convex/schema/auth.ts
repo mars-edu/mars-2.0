@@ -28,8 +28,8 @@ export const authTables = {
     office: v.optional(v.string()),
     department: v.optional(v.string()),
     degree: v.optional(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_username", ["username"])
     .index("by_email", ["email"]),
@@ -111,8 +111,8 @@ export const authTables = {
     semesterId: v.id("academicYearSemesters"),
     startDate: v.string(),
     endDate: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_academicYear", ["academicYearId"])
     .index("by_semester", ["semesterId"]),
@@ -131,7 +131,7 @@ export const authTables = {
     ),
     teacherId: v.optional(v.string()), // Reference to teacher if applicable
     notes: v.optional(v.string()),
-    createdAt: v.number(),
+    createdAt: v.string(),
   })
     .index("by_userId", ["userId"])
     .index("by_teacherId", ["teacherId"])

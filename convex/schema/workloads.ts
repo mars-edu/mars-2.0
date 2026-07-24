@@ -20,8 +20,8 @@ export const workloadsTables = {
     // Semester numbers (1/2) that already have journals generated.
     journalsCreatedSemesters: v.optional(v.array(v.number())),
     addedToSchedule: v.optional(v.boolean()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_academicYear", ["academicYearId"])
     .index("by_teacher", ["teacherId"]),

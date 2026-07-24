@@ -163,7 +163,7 @@ export const createJournalsFromWorkloadGroups = mutation({
         await ctx.db.insert("journalStudents", {
           journalId,
           studentId,
-          createdAt: Date.now(),
+          createdAt: new Date().toISOString(),
         });
       }
     }

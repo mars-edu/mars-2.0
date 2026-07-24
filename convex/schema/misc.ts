@@ -14,7 +14,7 @@ export const miscTables = {
     contentType: v.string(),
     size: v.number(),
     uploadedBy: v.optional(v.id("users")),
-    createdAt: v.number(),
+    createdAt: v.string(),
   })
     .index("by_key", ["key"])
     .index("by_uploadedBy", ["uploadedBy"]),
@@ -34,7 +34,7 @@ export const miscTables = {
       v.literal("failed")
     ),
     error: v.optional(v.string()),
-    createdAt: v.number(),
+    createdAt: v.string(),
     syncedAt: v.optional(v.number()),
   })
     .index("by_userId_status", ["userId", "status"])
@@ -67,7 +67,7 @@ export const miscTables = {
         deadline: v.optional(v.string()), // ISO date
       })
     ),
-    createdAt: v.number(),
+    createdAt: v.string(),
     readAt: v.optional(v.number()),
   })
     .index("by_userId", ["userId"])
@@ -93,13 +93,13 @@ export const miscTables = {
       en: v.optional(v.string()),
     }),
     displayDate: v.string(),
-    publishAt: v.optional(v.number()),
-    expiresAt: v.optional(v.number()),
+    publishAt: v.optional(v.string()), // null if immediate
+    expiresAt: v.optional(v.string()), // null if never
     isPublished: v.boolean(),
     createdBy: v.id("users"),
     updatedBy: v.optional(v.id("users")),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_isPublished", ["isPublished"])
     .index("by_category", ["category"])
@@ -119,8 +119,8 @@ export const miscTables = {
     position: v.number(),
     createdBy: v.id("users"),
     updatedBy: v.optional(v.id("users")),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_slug", ["slug"])
     .index("by_position", ["position"]),

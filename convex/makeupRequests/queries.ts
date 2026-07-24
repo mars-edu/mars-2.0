@@ -52,7 +52,7 @@ export const listMakeupRequestsInternal = internalQuery({
       teacher: teacherMap.get(req.teacherId),
     }));
 
-    enriched.sort((a, b) => b.createdAt - a.createdAt);
+    enriched.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return enriched;
   },
 });

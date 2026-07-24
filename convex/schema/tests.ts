@@ -20,8 +20,8 @@ export const testsTables = {
     isPractice: v.optional(v.boolean()),
     shuffleQuestions: v.optional(v.boolean()),
     createdBy: v.optional(v.id("users")),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   }),
 
   /**
@@ -33,8 +33,8 @@ export const testsTables = {
     status: v.union(v.literal("active"), v.literal("completed")),
     date: v.string(), // ISO date
     createdBy: v.optional(v.id("users")),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_test", ["testId"])
     .index("by_journal", ["journalId"]),

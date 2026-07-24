@@ -18,8 +18,8 @@ export const create = mutation({
       semesterDefinitionId: args.semesterDefinitionId,
       startDate: args.startDate,
       endDate: args.endDate,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: new Date(now).toISOString(),
+      updatedAt: new Date(now).toISOString(),
     });
   },
 });
@@ -40,7 +40,7 @@ export const update = mutation({
 
     await ctx.db.patch(id, {
       ...updates,
-      updatedAt: now,
+      updatedAt: new Date(now).toISOString(),
     });
 
     return id;

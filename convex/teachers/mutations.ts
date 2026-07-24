@@ -16,8 +16,8 @@ export const createTeacherInternal = internalMutation({
     userId: v.optional(v.id("users")),
     email: v.optional(v.string()),
     username: v.optional(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("teachers", {

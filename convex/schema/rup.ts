@@ -26,8 +26,8 @@ export const rupTables = {
     individualHours: v.string(),
     individualAdditionalHours: v.optional(v.string()),
     position: v.number(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_academicYear", ["academicYearId"])
     .index("by_position", ["academicYearId", "position"])
@@ -49,8 +49,8 @@ export const rupTables = {
     examEnabled: v.optional(v.boolean()),
     creditEnabled: v.optional(v.boolean()),
     controlLessonEnabled: v.optional(v.boolean()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_rupEntry", ["rupEntryId"])
     .index("by_semester", ["semesterId"]),
@@ -62,8 +62,8 @@ export const rupTables = {
   intermediateControls: defineTable({
     name: v.string(),
     shortName: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   }),
 
   /**
@@ -73,8 +73,8 @@ export const rupTables = {
   finalControls: defineTable({
     name: v.string(),
     shortName: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   }),
 
   /**
@@ -89,8 +89,8 @@ export const rupTables = {
     rupEntryId: v.optional(v.string()),
     semesterId: v.id("academicYearSemesters"),
     date: v.optional(v.string()), // ISO date (legacy)
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_academicYear", ["academicYearId"])
     .index("by_rupEntryId", ["rupEntryId"])
@@ -108,8 +108,8 @@ export const rupTables = {
     rupEntryId: v.optional(v.string()),
     semesterId: v.id("academicYearSemesters"),
     date: v.optional(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_academicYear", ["academicYearId"])
     .index("by_rupEntryId", ["rupEntryId"])

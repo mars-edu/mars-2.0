@@ -72,8 +72,8 @@ const seedBasicDataInternal = internalMutation({
       const baseId = await ctx.db.insert("bases", {
         value: baseData.value,
         name: baseData.name,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
       console.log(`[TestSeed] Created base: ${baseData.value} (${baseId})`);
@@ -154,8 +154,8 @@ const seedTestUsersInternal = internalMutation({
         email: userData.email,
         passwordHash,
         roles: userData.roles,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
       console.log(`[TestSeed] Created test user: ${userData.username} (${userId})`);
