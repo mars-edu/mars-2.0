@@ -305,9 +305,12 @@ export const useRupEntryStore = defineStore(
 
     async function addRupEntries(items: RupEntry[]) {
       return await withLoading(loading, error, async () => {
-        // Create all items in Convex
+        // Create all items in Convex. `create` is the atomic single-entry
+        // mutation and has no distributionEntries arg, so per-semester rows
+        // are added afterwards via addDistribution (same pattern as the
+        // singular addRupEntry above) to avoid silently dropping them.
                 for (const item of items) {
-                  await convex.mutation(api.rupEntries.mutations.create, {
+                  const id = await convex.mutation(api.rupEntries.mutations.create, {
                     specialtyIds: item.specialtyIds,
                     academicYearId: item.academicYearId,
                     baseClass: item.baseClass ?? [9],
@@ -329,6 +332,25 @@ export const useRupEntryStore = defineStore(
                     individualAdditionalHours: item.individualAdditionalHours || "",
                     position: item.position,
                   });
+
+                  if (item.distributionEntries && item.distributionEntries.length > 0) {
+                    for (const dist of item.distributionEntries) {
+                      await convex.mutation(api.rupEntries.mutations.addDistribution, {
+                        rupEntryId: id,
+                        academicYearId: dist.academicYearId,
+                        semesterId: dist.semesterId,
+                        hours: dist.hours,
+                        srsHours: (dist as any).srsHours,
+                        srspHours: (dist as any).srspHours,
+                        individualHours: (dist as any).individualHours,
+                        intermediateControlId: dist.intermediateControlId ?? undefined,
+                        finalControlId: dist.finalControlId ?? undefined,
+                        examEnabled: dist.examEnabled,
+                        creditEnabled: dist.creditEnabled,
+                        controlLessonEnabled: dist.controlLessonEnabled,
+                      });
+                    }
+                  }
                 }
 
                 // The reactive query will automatically update rupEntries

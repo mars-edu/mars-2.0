@@ -945,6 +945,11 @@ const distributionEntrySchema = z.object({
   controlLessonEnabled: z.boolean().optional(),
 });
 
+// Strict hours validator: integer or one-decimal-group string, no
+// leading +/-, no exponent notation, no hex, no whitespace. Empty string
+// stays allowed to preserve existing optional-field behavior.
+const isHours = (v: string) => v === "" || /^\d+(\.\d+)?$/.test(v);
+
 const rupEntrySchema = z.object({
   moduleIndex: z.string().min(1, "Индекс модуля обязателен"),
   moduleName: z.string().min(1, "Наименование модуля обязательно"),
@@ -953,31 +958,31 @@ const rupEntrySchema = z.object({
     .min(1, "Наименование результата обучения/дисциплина обязательно"),
   totalCredits: z
     .string()
-    .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+    .refine(isHours, {
       message: "Кредиты должны быть положительным числом",
     })
     .optional(),
   totalHours: z
     .string()
-    .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+    .refine(isHours, {
       message: "Общие часы должны быть положительным числом",
     })
     .optional(),
   groupHours: z
     .string()
-    .refine((v) => v === "" || (!isNaN(Number(v)) && Number(v) >= 0), {
+    .refine(isHours, {
       message: "Групповые часы должны быть числом ≥ 0",
     })
     .optional(),
   theoreticalHours: z
     .string()
-    .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+    .refine(isHours, {
       message: "Теоретические часы должны быть положительным числом",
     })
     .optional(),
   labPracticalHours: z
     .string()
-    .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+    .refine(isHours, {
       message: "Лабораторно-практические часы должны быть положительным числом",
     })
     .optional(),
@@ -989,31 +994,31 @@ const rupEntrySchema = z.object({
     .optional(),
   srspHours: z
     .string()
-    .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+    .refine(isHours, {
       message: "Часы СРСП должны быть положительным числом",
     })
     .optional(),
   srsHours: z
     .string()
-    .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+    .refine(isHours, {
       message: "Часы СРС должны быть положительным числом",
     })
     .optional(),
   trainingPracticeHours: z
     .string()
-    .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+    .refine(isHours, {
       message: "Часы практики должны быть положительным числом",
     })
     .optional(),
   individualHours: z
     .string()
-    .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+    .refine(isHours, {
       message: "Индивидуальные часы должны быть положительным числом",
     })
     .optional(),
   individualAdditionalHours: z
     .string()
-    .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+    .refine(isHours, {
       message: "Индивидуальные (дополнительно) должны быть положительным числом",
     })
     .optional(),
@@ -1215,33 +1220,53 @@ function distributeHoursFromField(
     return Number.isInteger(n) ? String(n) : n.toFixed(2);
   };
 
+  // Distribute `total` evenly across `count` formatted values whose sum
+  // always equals `total`: the first count-1 entries get the rounded
+  // per-entry share, and the last entry absorbs whatever remainder is left
+  // (avoids "33.33 x 3 = 99.99" drift when total doesn't divide evenly).
+  const distributeFmt = (total: number, count: number): string[] => {
+    if (count <= 0) return [];
+    if (count === 1) return [fmt(total)];
+    const per = total / count;
+    const values: string[] = [];
+    let sum = 0;
+    for (let i = 0; i < count - 1; i++) {
+      const val = fmt(per);
+      values.push(val);
+      sum += num(val);
+    }
+    values.push(fmt(total - sum));
+    return values;
+  };
+
   const count = s.distributionEntries.length;
 
   if (field === "srspHours") {
     visibleColumns.value.srsp = true;
     const total = num(s.srspHours);
-    const per = total / count;
-    s.distributionEntries.forEach((e) => {
-      (e as any).srspHours = fmt(per);
+    const values = distributeFmt(total, count);
+    s.distributionEntries.forEach((e, i) => {
+      (e as any).srspHours = values[i];
     });
   } else if (field === "srsHours") {
     visibleColumns.value.srs = true;
     const total = num(s.srsHours);
-    const per = total / count;
-    s.distributionEntries.forEach((e) => {
-      (e as any).srsHours = fmt(per);
+    const values = distributeFmt(total, count);
+    s.distributionEntries.forEach((e, i) => {
+      (e as any).srsHours = values[i];
     });
   } else if (field === "individualAdditionalHours") {
     visibleColumns.value.individual = true;
     const totalIndividual = num(s.individualAdditionalHours);
     const totalAll = num(s.totalHours);
-    const perIndividual = totalIndividual / count;
-    const perGroup = Math.max(0, (totalAll - totalIndividual) / count);
-    s.distributionEntries.forEach((e) => {
-      (e as any).individualHours = fmt(perIndividual);
+    const individualValues = distributeFmt(totalIndividual, count);
+    const groupTotal = Math.max(0, totalAll - totalIndividual);
+    const groupValues = distributeFmt(groupTotal, count);
+    s.distributionEntries.forEach((e, i) => {
+      (e as any).individualHours = individualValues[i];
       // Only overwrite group hours if totalHours is set — otherwise leave user values
       if (totalAll > 0) {
-        e.hours = fmt(perGroup);
+        e.hours = groupValues[i];
       }
     });
   }
