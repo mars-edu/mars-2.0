@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
+import { ConvexError } from "convex/values";
 import { useConvexQuery } from "convex-vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
@@ -569,28 +570,56 @@ export const useRupEntryStore = defineStore(
         }, "Failed to add multi-language RUP entry");
     }
 
+    // Translate the server's RUP_ENTRY_HAS_REFERENCES ConvexError into a human
+    // message. Called around delete mutations so all UI handlers get a clear
+    // Russian alert without duplicating parsing at every call site.
+    function rethrowRupDeleteError(err: unknown, groupMode: boolean): never {
+      if (err instanceof ConvexError) {
+        const data = err.data as { code?: string; references?: Record<string, number> } | undefined;
+        if (data?.code === "RUP_ENTRY_HAS_REFERENCES" && data.references) {
+          const labels: Record<string, string> = {
+            calendarEvents: "события календаря",
+            ktps: "КТП",
+            journals: "журналы",
+            scheduledIntermediateControls: "ПРК (планы)",
+            scheduledFinalControls: "экзамены (планы)",
+          };
+          const parts = Object.entries(data.references).map(
+            ([k, n]) => `${labels[k] ?? k}: ${n}`
+          );
+          const subject = groupMode ? "Группа записей РУП" : "Запись РУП";
+          throw new Error(`${subject} используется. Сначала удалите: ${parts.join(", ")}.`);
+        }
+      }
+      throw err;
+    }
+
     async function deleteRupEntryGroup(groupId: string) {
       return await withLoading(loading, error, async () => {
-        const itemsInGroup = rupEntries.value.filter(
-                  (c) => c.groupId === groupId
-                );
-                for (const item of itemsInGroup) {
-                  await convex.mutation(api.rupEntries.mutations.remove, {
-                    id: item.id as any,
-                  });
-                }
-                error.value = null;
-        }, "Failed to delete RUP entry group");
+        // Atomic on the server: all variants + their distributionEntries are
+        // pre-checked for references, then deleted together (or nothing goes,
+        // throwing RUP_ENTRY_HAS_REFERENCES with per-table counts).
+        try {
+          await convex.mutation(api.rupEntries.mutations.removeGroup, { groupId });
+        } catch (err) {
+          rethrowRupDeleteError(err, true);
+        }
+        error.value = null;
+      }, "Failed to delete RUP entry group");
     }
 
     async function deleteRupEntry(id: string) {
       return await withLoading(loading, error, async () => {
-        // Use Convex - cascade delete handled by mutation
-                await convex.mutation(api.rupEntries.mutations.remove, {
-                  id: id as any,
-                });
-                error.value = null;
-        }, "Failed to delete RUP entry");
+        // Cascade of distributionEntries is atomic in the mutation. If live
+        // refs exist (calendarEvents/ktps/journals/scheduled*), the server
+        // throws RUP_ENTRY_HAS_REFERENCES — we translate it here.
+        try {
+          await convex.mutation(api.rupEntries.mutations.remove, { id: id as any });
+        } catch (err) {
+          rethrowRupDeleteError(err, false);
+        }
+        error.value = null;
+      }, "Failed to delete RUP entry");
     }
 
     function clearError() {

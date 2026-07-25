@@ -1,5 +1,5 @@
 import { mutation } from "../functions";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
 import type { Id } from "../_generated/dataModel";
 
@@ -83,24 +83,125 @@ export const update = mutation({
 });
 
 /**
- * Delete a RUP entry (also deletes its distribution entries)
+ * Delete a RUP entry.
+ *
+ * Cascades `distributionEntries` (RUP-owned configuration, safe to remove).
+ * BLOCKS the delete if the entry is still referenced by live user data —
+ * calendarEvents (lessons), ktps (thematic plan), journals (grade books),
+ * scheduledIntermediate/FinalControls — throwing a `ConvexError` with a
+ * per-table count so the caller can surface a clear message and let the
+ * user detach or delete those first. Silently cascading them would drop
+ * teachers' journals/marks/events with no warning.
  */
 export const remove = mutation({
   args: { id: v.id("rupEntries") },
   handler: async (ctx, args) => {
-    // Delete all distribution entries for this RUP entry
+    const rupIdStr = args.id as unknown as string;
+
+    // Count live references. String-typed foreign keys use their own indexes;
+    // journals.disciplineId has no index (falls back to a scan + filter).
+    const [events, ktps, ic, fc, journals] = await Promise.all([
+      ctx.db
+        .query("calendarEvents")
+        .withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", rupIdStr))
+        .collect(),
+      ctx.db
+        .query("ktps")
+        .withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", rupIdStr))
+        .collect(),
+      ctx.db
+        .query("scheduledIntermediateControls")
+        .withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", rupIdStr))
+        .collect(),
+      ctx.db
+        .query("scheduledFinalControls")
+        .withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", rupIdStr))
+        .collect(),
+      ctx.db
+        .query("journals")
+        .filter((q) => q.eq(q.field("disciplineId"), rupIdStr))
+        .collect(),
+    ]);
+
+    const refs: Record<string, number> = {};
+    if (events.length) refs.calendarEvents = events.length;
+    if (ktps.length) refs.ktps = ktps.length;
+    if (ic.length) refs.scheduledIntermediateControls = ic.length;
+    if (fc.length) refs.scheduledFinalControls = fc.length;
+    if (journals.length) refs.journals = journals.length;
+
+    if (Object.keys(refs).length > 0) {
+      throw new ConvexError({
+        code: "RUP_ENTRY_HAS_REFERENCES",
+        message: "Запись РУП используется — сначала удалите ссылки",
+        references: refs,
+      });
+    }
+
+    // Safe: cascade only the RUP-owned distributionEntries + the entry itself.
     const distributions = await ctx.db
       .query("distributionEntries")
       .withIndex("by_rupEntry", (q) => q.eq("rupEntryId", args.id))
       .collect();
-
     for (const dist of distributions) {
       await ctx.db.delete(dist._id);
     }
-
-    // Delete the RUP entry
     await ctx.db.delete(args.id);
     return { success: true };
+  },
+});
+
+/**
+ * Delete an entire language-variant group atomically. Pre-checks references
+ * for ALL variants first (same rules as `remove`) so we don't partially delete
+ * some variants before hitting a blocker on another — either the whole group
+ * goes, or nothing goes and a ConvexError lists what's in the way.
+ */
+export const removeGroup = mutation({
+  args: { groupId: v.string() },
+  handler: async (ctx, args) => {
+    const variants = await ctx.db
+      .query("rupEntries")
+      .filter((q) => q.eq(q.field("groupId"), args.groupId))
+      .collect();
+    if (variants.length === 0) return { success: true, deleted: 0 };
+
+    // Aggregate references across the WHOLE group before deleting anything.
+    const totalRefs: Record<string, number> = {};
+    for (const v of variants) {
+      const idStr = v._id as unknown as string;
+      const [events, ktps, ic, fc, journals] = await Promise.all([
+        ctx.db.query("calendarEvents").withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", idStr)).collect(),
+        ctx.db.query("ktps").withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", idStr)).collect(),
+        ctx.db.query("scheduledIntermediateControls").withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", idStr)).collect(),
+        ctx.db.query("scheduledFinalControls").withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", idStr)).collect(),
+        ctx.db.query("journals").filter((q) => q.eq(q.field("disciplineId"), idStr)).collect(),
+      ]);
+      if (events.length) totalRefs.calendarEvents = (totalRefs.calendarEvents ?? 0) + events.length;
+      if (ktps.length) totalRefs.ktps = (totalRefs.ktps ?? 0) + ktps.length;
+      if (ic.length) totalRefs.scheduledIntermediateControls = (totalRefs.scheduledIntermediateControls ?? 0) + ic.length;
+      if (fc.length) totalRefs.scheduledFinalControls = (totalRefs.scheduledFinalControls ?? 0) + fc.length;
+      if (journals.length) totalRefs.journals = (totalRefs.journals ?? 0) + journals.length;
+    }
+    if (Object.keys(totalRefs).length > 0) {
+      throw new ConvexError({
+        code: "RUP_ENTRY_HAS_REFERENCES",
+        message: "Группа записей РУП используется — сначала удалите ссылки",
+        references: totalRefs,
+      });
+    }
+
+    let deleted = 0;
+    for (const variant of variants) {
+      const dists = await ctx.db
+        .query("distributionEntries")
+        .withIndex("by_rupEntry", (q) => q.eq("rupEntryId", variant._id))
+        .collect();
+      for (const d of dists) await ctx.db.delete(d._id);
+      await ctx.db.delete(variant._id);
+      deleted++;
+    }
+    return { success: true, deleted };
   },
 });
 
