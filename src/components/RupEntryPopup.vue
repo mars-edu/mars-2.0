@@ -1094,77 +1094,67 @@ async function submit() {
     return;
   }
 
+  const baseClass = props.baseClass ? [props.baseClass] : [9];
+  const s = step.value;
+
+  // variants: existing lang -> id from editVariantIds; new lang -> no id
+  const variants = selectedLanguages.value.map((lang) => {
+    const texts = languageTexts.value[lang] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
+    const id = editVariantIds.value[lang];
+    return {
+      ...(id ? { id: id as any } : {}),
+      language: lang,
+      moduleIndex: texts.moduleIndex,
+      moduleName: texts.moduleName,
+      learningOutcome: texts.learningOutcome,
+    };
+  });
+
+  // removedVariantIds: any editVariantIds entry whose lang is no longer selected
+  const removedVariantIds = Object.entries(editVariantIds.value)
+    .filter(([lang]) => !selectedLanguages.value.includes(lang))
+    .map(([, id]) => id as any);
+
   try {
-    const baseClass = props.baseClass ? [props.baseClass] : [9];
-
-    const entryData = step.value;
-
-    if (props.editMode && props.initialData) {
-      // Edit mode: update each language variant
-      for (const lang of selectedLanguages.value) {
-        const texts = languageTexts.value[lang] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
-        const variantId = editVariantIds.value[lang];
-
-        if (variantId) {
-          await rupEntryStore.updateRupEntry(variantId, {
-            ...entryData,
-            specialtyIds: selectedSpecialtyIds.value,
-            baseClass,
-            language: lang,
-            moduleIndex: texts.moduleIndex,
-            moduleName: texts.moduleName,
-            learningOutcome: texts.learningOutcome,
-          });
-        } else {
-          // New language added during edit - create new variant with same groupId
-          const existingGroupId = props.initialData.groupId || crypto.randomUUID();
-          await rupEntryStore.addRupEntry(
-            props.academicYearId,
-            selectedSpecialtyIds.value,
-            {
-              ...entryData,
-              baseClass,
-              language: lang,
-              groupId: existingGroupId,
-              moduleIndex: texts.moduleIndex,
-              moduleName: texts.moduleName,
-              learningOutcome: texts.learningOutcome,
-            }
-          );
-        }
-      }
-
-      // Delete removed language variants
-      for (const [lang, variantId] of Object.entries(editVariantIds.value)) {
-        if (!selectedLanguages.value.includes(lang)) {
-          await rupEntryStore.deleteRupEntry(variantId);
-        }
-      }
-    } else {
-      // Create mode: one entry, one variant per selected language
-      const groupId = crypto.randomUUID();
-
-      for (const lang of selectedLanguages.value) {
-        const texts = languageTexts.value[lang] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
-        await rupEntryStore.addRupEntry(
-          props.academicYearId,
-          selectedSpecialtyIds.value,
-          {
-            ...entryData,
-            baseClass,
-            language: lang,
-            groupId,
-            moduleIndex: texts.moduleIndex,
-            moduleName: texts.moduleName,
-            learningOutcome: texts.learningOutcome,
-          }
-        );
-      }
-    }
+    await rupEntryStore.saveRupEntryGroup({
+      groupId: props.editMode && props.initialData ? props.initialData.groupId : undefined,
+      specialtyIds: selectedSpecialtyIds.value,
+      academicYearId: props.academicYearId,
+      baseClass,
+      position: props.editMode && props.initialData ? props.initialData.position : undefined,
+      totalCredits: String(s.totalCredits ?? ""),
+      totalHours: String(s.totalHours ?? ""),
+      groupHours: s.groupHours ? String(s.groupHours) : undefined,
+      theoreticalHours: String(s.theoreticalHours ?? ""),
+      labPracticalHours: String(s.labPracticalHours ?? ""),
+      field3Value: String(s.field3Value ?? ""),
+      srspHours: String(s.srspHours ?? ""),
+      srsHours: String(s.srsHours ?? ""),
+      trainingPracticeHours: String(s.trainingPracticeHours ?? ""),
+      individualHours: String(s.individualHours ?? ""),
+      individualAdditionalHours: s.individualAdditionalHours ? String(s.individualAdditionalHours) : undefined,
+      variants,
+      removedVariantIds: removedVariantIds.length ? removedVariantIds : undefined,
+      distributionEntries: s.distributionEntries?.length
+        ? s.distributionEntries.map((d) => ({
+            academicYearId: d.academicYearId,
+            semesterId: d.semesterId,
+            hours: d.hours,
+            srsHours: (d as any).srsHours,
+            srspHours: (d as any).srspHours,
+            individualHours: (d as any).individualHours,
+            intermediateControlId: d.intermediateControlId ?? undefined,
+            finalControlId: d.finalControlId ?? undefined,
+            examEnabled: d.examEnabled,
+            creditEnabled: d.creditEnabled,
+            controlLessonEnabled: d.controlLessonEnabled,
+          }))
+        : undefined,
+    });
     captureBaseline();
     emit("submit");
-  } catch (error) {
-    console.error("Failed to save rupEntry data:", error);
+  } catch (err) {
+    f7.dialog.alert(err instanceof Error ? err.message : "Ошибка при сохранении");
   }
 }
 

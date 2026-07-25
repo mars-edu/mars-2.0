@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { ConvexError } from "convex/values";
+import type { FunctionArgs } from "convex/server";
 import { useConvexQuery } from "convex-vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
@@ -594,6 +595,23 @@ export const useRupEntryStore = defineStore(
       throw err;
     }
 
+    // Atomic upsert of an entire language-variant group (create or edit) in
+    // ONE server mutation — replaces the client-side N×M loop that used to
+    // live in RupEntryPopup.vue::submit(). See saveRupEntryGroup in
+    // convex/rupEntries/mutations.ts for the full contract.
+    async function saveRupEntryGroup(
+      payload: FunctionArgs<typeof api.rupEntries.mutations.saveRupEntryGroup>
+    ) {
+      return await withLoading(loading, error, async () => {
+        try {
+          return await convex.mutation(api.rupEntries.mutations.saveRupEntryGroup, payload);
+        } catch (err) {
+          rethrowRupDeleteError(err, true);
+          throw err;
+        }
+      }, "Failed to save RUP entry group");
+    }
+
     async function deleteRupEntryGroup(groupId: string) {
       return await withLoading(loading, error, async () => {
         // Atomic on the server: all variants + their distributionEntries are
@@ -651,6 +669,7 @@ export const useRupEntryStore = defineStore(
       updateRupEntryOrder,
       duplicateRupEntry,
       addRupEntryMultiLanguage,
+      saveRupEntryGroup,
       deleteRupEntryGroup,
       deleteRupEntry,
       clearError,
