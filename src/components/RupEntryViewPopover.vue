@@ -291,6 +291,7 @@ import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { useSpecialtyStore, type Specialty } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
+import { parseNumber } from "@/utils/parseNumber";
 
 const props = defineProps<{
   item: RupEntry | null;
@@ -360,17 +361,12 @@ const currentSemHours = computed(() => {
   const entry = props.item.distributionEntries[0];
   if (!entry) return null;
 
-  const num = (v: string | undefined | null) => {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : 0;
-  };
-
   const total =
-    num(entry.hours) +
-    num(props.item.srsHours) +
-    num(props.item.srspHours) +
-    num(props.item.trainingPracticeHours) +
-    num(props.item.individualAdditionalHours || props.item.individualHours);
+    parseNumber(entry.hours) +
+    parseNumber(props.item.srsHours) +
+    parseNumber(props.item.srspHours) +
+    parseNumber(props.item.trainingPracticeHours) +
+    parseNumber(props.item.individualAdditionalHours || props.item.individualHours);
 
   if (!total) return null;
 
@@ -394,22 +390,22 @@ function semesterSharedValue(value: string | undefined) {
 // semesters that carry hours (so the "Индив." column is populated when the data
 // only lives at the entry level — the case for prod's История Казахстана etc.).
 function individualCellValue(entry: DistributionEntry) {
-  const own = parseFloat(entry.individualHours || "0") || 0;
+  const own = parseNumber(entry.individualHours);
   if (own > 0) return String(own);
   const item = props.item;
   if (!item) return "—";
   const distSum = (item.distributionEntries || []).reduce(
-    (s: number, d: any) => s + (parseFloat(d.individualHours || "0") || 0),
+    (s: number, d: any) => s + parseNumber(d.individualHours),
     0
   );
   if (distSum > 0) return "—"; // this row has none, but other rows do — leave "—"
   const fallback =
-    parseFloat(item.individualAdditionalHours || "0") ||
-    parseFloat(item.individualHours || "0") ||
+    parseNumber(item.individualAdditionalHours) ||
+    parseNumber(item.individualHours) ||
     0;
   if (fallback <= 0) return "—";
   const active = (item.distributionEntries || []).filter(
-    (d: any) => (parseFloat(d.hours || "0") || 0) > 0
+    (d: any) => parseNumber(d.hours) > 0
   );
   const count = active.length || (item.distributionEntries || []).length || 1;
   if (

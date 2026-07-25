@@ -866,7 +866,11 @@ const attendanceStudents = computed(() =>
 );
 
 const attendanceJournals = computed(() =>
-  relevantJournals.value.map((j) => ({ id: j.id, title: j.title }))
+  relevantJournals.value.map((j) => ({
+    id: j.id,
+    title: j.title,
+    disciplineId: j.journal.disciplineId,
+  }))
 );
 
 const transcriptStudents = computed(() =>

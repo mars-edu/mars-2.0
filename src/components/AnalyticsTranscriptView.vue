@@ -159,6 +159,8 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 import IconChevronDown from "~icons/lucide/chevron-down";
 import IconCheck from "~icons/lucide/check";
 import type { Mark } from "@/types/marks";
+import { useRupEntryStore } from "@/stores/rupEntryStore";
+import { parseNumber } from "@/utils/parseNumber";
 
 interface StudentInfo {
   id: string;
@@ -169,6 +171,7 @@ interface StudentInfo {
 interface JournalInfo {
   id: string;
   title: string;
+  disciplineId?: string;
 }
 
 const props = defineProps<{
@@ -185,6 +188,8 @@ const yearToOptions = [2022, 2023, 2024, 2025, 2026, 2027];
 const selectedIds = ref<string[]>([]);
 const dropdownOpen = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
+
+const rupEntryStore = useRupEntryStore();
 
 const filteredStudents = computed(() =>
   props.students.filter((s) => {
@@ -223,7 +228,8 @@ const gradeColor = (score: number | null) => {
   return "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400";
 };
 
-const CREDITS_DEFAULT = 3;
+// Fallback credit count when the RUP entry has no (or an unparseable) totalCredits value.
+const CREDITS_FALLBACK = 3;
 
 const getTranscript = (studentId: string) => {
   const student = props.students.find((s) => s.id === studentId);
@@ -238,7 +244,7 @@ const getTranscript = (studentId: string) => {
       marks.forEach((m: Mark) => {
         if (!Array.isArray(m.values)) return;
         m.values.forEach((v) => {
-          const n = typeof v === "number" ? v : parseFloat(String(v).replace(",", "."));
+          const n = typeof v === "number" ? v : parseNumber(v, NaN);
           if (Number.isFinite(n)) numericValues.push(n);
         });
       });
@@ -246,10 +252,17 @@ const getTranscript = (studentId: string) => {
       if (numericValues.length === 0) return null;
       const score = numericValues.reduce((a, b) => a + b, 0) / numericValues.length;
       const details = getGradeDetails(score);
+
+      const rup = journal.disciplineId
+        ? rupEntryStore.getRupEntryById(journal.disciplineId as any)
+        : undefined;
+      const parsedCredits = parseNumber(rup?.totalCredits, NaN);
+      const credits = Number.isFinite(parsedCredits) && parsedCredits > 0 ? parsedCredits : CREDITS_FALLBACK;
+
       return {
         disciplineId: journal.id,
         title: journal.title,
-        credits: CREDITS_DEFAULT,
+        credits,
         score,
         ...details,
       };
