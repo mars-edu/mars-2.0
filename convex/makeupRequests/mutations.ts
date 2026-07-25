@@ -19,8 +19,6 @@ export const createMakeupRequest = withI18nMutation({
     ),
   },
   handler: async (ctx, args) => {
-    const now = Date.now();
-
     const journal = await ctx.db.get(args.journalId);
     if (!journal) throw new Error(m.backend_journal_not_found());
 
@@ -74,7 +72,6 @@ export const acceptMakeupRequest = withI18nMutation({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const now = Date.now();
     const request = await ctx.db.get(args.makeupRequestId);
     if (!request) throw new Error(m.backend_makeup_request_not_found());
 
@@ -99,7 +96,6 @@ export const rejectMakeupRequest = withI18nMutation({
     rejectionReason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const now = Date.now();
     const request = await ctx.db.get(args.makeupRequestId);
     if (!request) throw new Error(m.backend_makeup_request_not_found());
 

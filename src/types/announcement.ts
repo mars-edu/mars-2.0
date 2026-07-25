@@ -18,8 +18,8 @@ export interface AnnouncementCreatePayload {
   titles: AnnouncementContent;
   descriptions: AnnouncementContent;
   displayDate: string;
-  publishAt?: number;
-  expiresAt?: number;
+  publishAt?: string;
+  expiresAt?: string;
   isPublished?: boolean;
 }
 

@@ -48,7 +48,6 @@ export const createSubstitution = withI18nMutation({
     createdBy: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const now = Date.now();
     const journal = await ctx.db.get(args.journalId);
     if (!journal) throw new Error(m.backend_journal_not_found());
 
@@ -108,7 +107,6 @@ export const createBulkSubstitutions = withI18nMutation({
     createdBy: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const now = Date.now();
     const substitutionIds: string[] = [];
     const adminUsers = await getAdminUsers(ctx);
 
@@ -347,7 +345,6 @@ export const cancelSubstitution = withI18nMutation({
     reason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const now = Date.now();
     const substitution = await ctx.db.get(args.substitutionId);
     if (!substitution) throw new Error(m.backend_substitution_not_found());
 

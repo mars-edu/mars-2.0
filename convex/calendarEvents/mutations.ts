@@ -2,6 +2,7 @@ import { mutation } from "../functions";
 import { v, ConvexError } from "convex/values";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
 import { validateIndividualJournals } from "./lib";
+import type { Id } from "../_generated/dataModel";
 
 const weeklyScheduleValidator = v.object({
   weekId: v.number(),
@@ -296,7 +297,7 @@ export const updateIndividualJournalsConfig = mutation({
         if (!children.some((c) => c._id === j.eventId)) {
           throw new ConvexError("Журнал не принадлежит этому событию");
         }
-        await ctx.db.patch(j.eventId as any, {
+        await ctx.db.patch(j.eventId as Id<"calendarEvents">, {
           participants: j.studentIds,
           weeklySchedules: j.weeklySchedules,
           });

@@ -14,7 +14,7 @@ type MarkHistoryRecord = {
   columnLabel?: string;
   columnDate?: string;
   changedBy: string;
-  createdAt: number;
+  createdAt: string;
 };
 
 export const useJournalHistoryStore = defineStore("journal-history", () => {

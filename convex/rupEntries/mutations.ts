@@ -1,6 +1,7 @@
 import { mutation } from "../functions";
 import { v } from "convex/values";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
+import type { Id } from "../_generated/dataModel";
 
 /**
  * Create a RUP entry
@@ -283,7 +284,7 @@ export const updateWithDistributions = mutation({
         });
       } else {
         // Existing entry - update it
-        await ctx.db.patch(entry.id as any, {
+        await ctx.db.patch(entry.id as Id<"distributionEntries">, {
           academicYearId: entry.academicYearId,
           semesterId: entry.semesterId as any,
           hours: entry.hours,

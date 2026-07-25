@@ -24,8 +24,8 @@ export interface EnrichedSubstitution {
   createdBy: Id<"users">;
   acceptedAt?: number;
   rejectedAt?: number;
-  createdAt: number;
-  updatedAt: number;
+  createdAt: string;
+  updatedAt: string;
   journal: { _id: Id<"journals">; calendarEventId?: string; [key: string]: any } | null;
   fromTeacher: { _id: string; surname: string; firstName: string; patronymic?: string; [key: string]: any } | undefined;
   toTeacher: { _id: string; surname: string; firstName: string; patronymic?: string; [key: string]: any } | undefined;

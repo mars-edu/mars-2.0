@@ -8,8 +8,12 @@ import {
   internalAction as baseInternalAction,
   httpAction as baseHttpAction
 } from "./_generated/server";
-import { DataModel, Id } from "./_generated/dataModel";
-import { GenericDatabaseWriter, WithoutSystemFields, DocumentByName, TableNamesInDataModel } from "convex/server";
+import type { DataModel, Id } from "./_generated/dataModel";
+import type { GenericDatabaseWriter, WithoutSystemFields, DocumentByName, TableNamesInDataModel } from "convex/server";
+
+// Re-export the ctx types so callers can import them from "../functions" alongside
+// the custom mutation/query builders (the codemod pointed all imports here).
+export type { QueryCtx, MutationCtx, ActionCtx } from "./_generated/server";
 
 type OmitTimestamps<T> = Omit<T, "createdAt" | "updatedAt">;
 

@@ -7,8 +7,8 @@ export interface Discipline {
   moduleIndex: string;
   moduleName: string;
   learningOutcome: string;
-  createdAt: number;
-  updatedAt: number;
+  createdAt: string;
+  updatedAt: string;
   isHighlighted?: boolean;
 }
 

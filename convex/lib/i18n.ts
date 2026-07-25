@@ -40,6 +40,7 @@ export async function getUserLocale(
  */
 import { customMutation, customQuery } from "convex-helpers/server/customFunctions";
 import { mutation, query } from "../functions";
+import type { TimestampedDatabaseWriter } from "../functions";
 
 export const withI18nMutation = customMutation(mutation, {
   args: {},
@@ -50,7 +51,15 @@ export const withI18nMutation = customMutation(mutation, {
       locale = await getUserLocale(ctx, id);
     }
     setLocale(locale);
-    return { ctx, args };
+    // `mutation` (from "../functions") already wraps ctx.db with the timestamped
+    // writer at runtime. The generic signature of `customMutation` types its
+    // `input` callback's `ctx` against the *base* GenericMutationCtx, so without
+    // this explicit re-assertion the wrap is lost at the type level and
+    // ctx.db.insert/patch would (incorrectly) require createdAt/updatedAt again.
+    return {
+      ctx: { db: ctx.db as unknown as TimestampedDatabaseWriter },
+      args: {},
+    };
   },
 });
 
