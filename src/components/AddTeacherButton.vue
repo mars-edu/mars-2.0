@@ -120,7 +120,7 @@
 import { ref, computed } from "vue";
 import { f7, f7Popover, f7Input } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
-import { z } from "zod";
+import { teacherSchema } from "@/validators/teacher";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
@@ -149,16 +149,7 @@ const employmentYearOptions = computed(() =>
   }))
 );
 
-const teacherSchema = z.object({
-  surname: z.string().min(1, "Пожалуйста, введите фамилию преподавателя"),
-  firstName: z.string().min(1, "Пожалуйста, введите имя преподавателя"),
-  patronymic: z.string().min(1, "Пожалуйста, введите отчество преподавателя"),
-  position: z.string().min(1, "Пожалуйста, введите должность"),
-  employmentYear: z.string().min(1, "Пожалуйста, выберите год поступления"),
-  gender: z.enum(["male", "female"], {
-    message: "Пожалуйста, выберите пол",
-  }),
-});
+
 
 const validationResult = computed(() => {
   return teacherSchema.safeParse({

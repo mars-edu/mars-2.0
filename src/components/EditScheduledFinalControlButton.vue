@@ -95,7 +95,7 @@ import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import Select from "@/components/ui/Select.vue";
 import DateInput from "@/components/ui/DateInput.vue";
-import { z } from "zod";
+import { scheduledControlSchema } from '@/validators/control';
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import type { ScheduledFinalControl } from "@/stores/scheduledFinalControlStore";
@@ -144,26 +144,8 @@ watch(selectedControlId, (newId) => {
   }
 });
 
-const controlSchema = z
-  .object({
-    controlId: z.string().min(1),
-    shortName: z.string().min(1),
-    startDate: z.array(z.date()).min(1),
-    endDate: z.array(z.date()).min(1),
-  })
-  .refine(
-    (data) =>
-      data.startDate.length > 0 &&
-      data.endDate.length > 0 &&
-      data.endDate[0] >= data.startDate[0],
-    {
-      message: "Дата окончания должна быть позже даты начала",
-      path: ["endDate"],
-    }
-  );
-
 const validationResult = computed(() => {
-  return controlSchema.safeParse({
+  return scheduledControlSchema.safeParse({
     controlId: selectedControlId.value,
     shortName: shortName.value,
     startDate: startDate.value,

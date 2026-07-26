@@ -92,7 +92,7 @@ import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { f7, f7Popover, f7Input } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
-import { z } from "zod";
+import { vacationSchema } from "@/validators/schedule";
 import { useVacationStore } from "@/stores/vacationStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
@@ -115,25 +115,7 @@ const startDate = ref<Date[]>([]);
 const endDate = ref<Date[]>([]);
 const formError = ref("");
 
-const vacationSchema = z
-  .object({
-    shortName: z
-      .string()
-      .min(1, "Пожалуйста, введите краткое название каникул"),
-    fullName: z.string().min(1, "Пожалуйста, введите полное название каникул"),
-    startDate: z.array(z.date()).min(1, "Пожалуйста, укажите дату начала"),
-    endDate: z.array(z.date()).min(1, "Пожалуйста, укажите дату окончания"),
-  })
-  .refine(
-    (data) =>
-      data.startDate.length > 0 &&
-      data.endDate.length > 0 &&
-      data.endDate[0] >= data.startDate[0],
-    {
-      message: "Дата окончания должна быть позже даты начала",
-      path: ["endDate"],
-    }
-  );
+
 
 const validationResult = computed(() => {
   return vacationSchema.safeParse({

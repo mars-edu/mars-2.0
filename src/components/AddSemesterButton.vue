@@ -71,7 +71,7 @@
 import { ref, computed } from "vue";
 import { f7, f7Popover, f7Input } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
-import { z } from "zod";
+import { semesterCreateSchema } from "@/validators/semester";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
@@ -91,13 +91,8 @@ const semesterNumber = ref<number | string>("");
 const shortName = ref("");
 const formError = ref("");
 
-const semesterSchema = z.object({
-  number: z.coerce.number().min(1, "Пожалуйста, введите номер семестра"),
-  shortName: z.string().min(1, "Пожалуйста, введите название семестра"),
-});
-
 const validationResult = computed(() => {
-  return semesterSchema.safeParse({
+  return semesterCreateSchema.safeParse({
     number: semesterNumber.value,
     shortName: shortName.value,
   });

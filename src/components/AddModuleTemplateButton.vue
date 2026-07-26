@@ -61,7 +61,7 @@ import { ref, computed, onMounted, watch } from "vue";
 import { f7, f7Popover, f7Input } from "framework7-vue";
 import { useColumnConfigStore } from "@/stores/columnConfig";
 import { useModuleStore } from "@/stores/moduleStore";
-import { z } from "zod";
+import { moduleTemplateSchema } from '@/validators/module-template';
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const props = defineProps<{
@@ -84,19 +84,8 @@ watch(
   { immediate: true }
 );
 
-const moduleTemplateSchema = computed(() => {
-  return z.object({
-    fields: z
-      .array(z.string())
-      .refine(
-        (fields) => fields.some((field) => field.trim() !== ""),
-        "Пожалуйста, заполните хотя бы одно поле"
-      ),
-  });
-});
-
 const validationResult = computed(() => {
-  return moduleTemplateSchema.value.safeParse({
+  return moduleTemplateSchema.safeParse({
     fields: formData.value,
   });
 });

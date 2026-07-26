@@ -75,7 +75,7 @@ import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { f7 } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
-import { z } from "zod";
+import { academicYearSemesterSchema } from '@/validators/academic-year';
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";
@@ -102,38 +102,6 @@ const semesterOptions = computed(() => {
   }));
 });
 
-const academicYearSemesterSchema = z
-  .object({
-    semesterId: z
-      .string()
-      .min(1, "Пожалуйста, выберите семестр"),
-    startDate: z
-      .array(z.date())
-      .min(1, "Пожалуйста, укажите дату начала")
-      .refine(
-        (dates) => dates.length > 0 && !isNaN(dates[0].getTime()),
-        "Дата начала указана некорректно"
-      ),
-    endDate: z
-      .array(z.date())
-      .min(1, "Пожалуйста, укажите дату окончания")
-      .refine(
-        (dates) => dates.length > 0 && !isNaN(dates[0].getTime()),
-        "Дата окончания указана некорректно"
-      ),
-  })
-  .refine(
-    (data) =>
-      data.startDate.length > 0 &&
-      data.endDate.length > 0 &&
-      !isNaN(data.startDate[0].getTime()) &&
-      !isNaN(data.endDate[0].getTime()) &&
-      data.endDate[0] >= data.startDate[0],
-    {
-      message: "Дата окончания должна быть позже даты начала",
-      path: ["endDate"],
-    }
-  );
 
 const validationResult = computed(() => {
   return academicYearSemesterSchema.safeParse({

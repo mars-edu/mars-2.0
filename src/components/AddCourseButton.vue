@@ -76,7 +76,7 @@
 import { ref, computed } from "vue";
 import { f7, f7Popover, f7Input } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
-import { z } from "zod";
+import { courseSchema } from '@/validators/course';
 import { useCourseStore } from "@/stores/courseStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import Select from "@/components/ui/Select.vue";
@@ -123,10 +123,6 @@ const duplicateSemesters = computed(() => {
   return duplicates;
 });
 
-const courseSchema = z.object({
-  number: z.string().min(1, "Пожалуйста, введите номер курса"),
-  semesters: z.array(z.string()).optional(),
-});
 
 const validationResult = computed(() => {
   return courseSchema.safeParse({

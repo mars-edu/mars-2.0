@@ -87,7 +87,7 @@
 import { ref, computed } from "vue";
 import { f7, f7Popover, f7Input, f7Checkbox } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
-import { z } from "zod";
+import { academicYearSchema } from '@/validators/academic-year';
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
@@ -101,26 +101,6 @@ const endYear = ref<number | null>(null);
 const isActive = ref(false);
 const formError = ref("");
 
-const academicYearSchema = z
-  .object({
-    startYear: z
-      .number({
-        error: "Пожалуйста, введите год начала",
-      })
-      .int()
-      .positive("Год начала должен быть положительным числом"),
-    endYear: z
-      .number({
-        error: "Пожалуйста, введите год окончания",
-      })
-      .int()
-      .positive("Год окончания должен быть положительным числом"),
-    isActive: z.boolean(),
-  })
-  .refine((data) => data.endYear > data.startYear, {
-    message: "Год окончания должен быть больше года начала",
-    path: ["endYear"],
-  });
 
 const validationResult = computed(() => {
   return academicYearSchema.safeParse({

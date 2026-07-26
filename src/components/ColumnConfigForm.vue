@@ -80,7 +80,7 @@ import IconTrash from "~icons/lucide/trash-2";
 import IconPlus from "~icons/lucide/plus";
 import { useColumnConfigStore } from "@/stores/columnConfig";
 import { useSelectedItemsStore } from "@/stores/selectedItemsStore";
-import { z } from "zod";
+import { columnConfigSchema } from '@/validators/column-config';
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 interface Column {
@@ -98,19 +98,7 @@ const props = defineProps({
 const columnStore = useColumnConfigStore();
 const selectedItemsStore = useSelectedItemsStore();
 
-const columnSchema = z.object({
-  columns: z
-    .array(
-      z.object({
-        name: z.string(),
-        width: z.number().min(1).max(3),
-      })
-    )
-    .refine(
-      (columns) => columns.some((col) => col.name.trim() !== ""),
-      "Пожалуйста, укажите название хотя бы для одного столбца"
-    ),
-});
+
 
 const currentCourseId = computed(
   () => props.courseId || selectedItemsStore.selectedCourseId
@@ -131,7 +119,7 @@ const columns = computed({
 });
 
 const formError = computed(() => {
-  const result = columnSchema.safeParse({ columns: columns.value });
+  const result = columnConfigSchema.safeParse({ columns: columns.value });
   if (!result.success) {
     return result.error.issues[0].message;
   }
@@ -201,7 +189,7 @@ const deleteColumn = (index: number) => {
 };
 
 const handleSaveColumns = () => {
-  const validationResult = columnSchema.safeParse({ columns: columns.value });
+  const validationResult = columnConfigSchema.safeParse({ columns: columns.value });
   if (!validationResult.success) return;
 
   shouldResetOnClose.value = false;

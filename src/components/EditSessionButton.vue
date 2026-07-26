@@ -104,7 +104,7 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import DateInput from "@/components/ui/DateInput.vue";
-import { z } from "zod";
+import { sessionSchema } from "@/validators/schedule";
 import { useSessionStore } from "@/stores/sessionStore";
 import type { Session } from "@/stores/sessionStore";
 
@@ -131,23 +131,7 @@ watchEffect(() => {
   }
 });
 
-const sessionSchema = z
-  .object({
-    shortName: z.string().min(1),
-    fullName: z.string().min(1),
-    startDate: z.array(z.date()).min(1),
-    endDate: z.array(z.date()).min(1),
-  })
-  .refine(
-    (data) =>
-      data.startDate.length > 0 &&
-      data.endDate.length > 0 &&
-      data.endDate[0] >= data.startDate[0],
-    {
-      message: "Дата окончания должна быть позже даты начала",
-      path: ["endDate"],
-    }
-  );
+
 
 const validationResult = computed(() => {
   return sessionSchema.safeParse({
