@@ -1103,9 +1103,12 @@ function downloadWorkload(workload: SavedWorkload) {
 }
 
 function downloadAllWorkloads() {
-  if (filteredWorkloads.value.length === 0) return;
-  
-  const csvContent = buildAllWorkloadsCsvContent(filteredWorkloads.value, getAcademicYearName);
+  // Button reads "Скачать всё" — export the entire saved list, not the
+  // currently-filtered subset (search / teacher / year filters are for
+  // display only; a "download only what I see" flow would be per-row).
+  if (allWorkloads.value.length === 0) return;
+
+  const csvContent = buildAllWorkloadsCsvContent(allWorkloads.value, getAcademicYearName);
 
   const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);

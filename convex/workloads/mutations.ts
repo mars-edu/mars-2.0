@@ -1,5 +1,5 @@
 import { mutation } from "../functions";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
 import { workloadItemValidator } from "../schema/workloadItem";
@@ -37,9 +37,27 @@ export const save = mutation({
 /**
  * Delete a workload
  */
+/**
+ * Delete a workload. BLOCKS if journals generated from it still exist
+ * (workloads own the journals via `by_workload` back-ref) — silently
+ * cascading would destroy teachers' grade books. Caller must explicitly
+ * detach/delete the journals first (or use the wizard's regenerate flow).
+ */
 export const remove = mutation({
   args: { id: v.id("workloads") },
   handler: async (ctx, args) => {
+    const workloadIdStr = args.id as unknown as string;
+    const journals = await ctx.db
+      .query("journals")
+      .withIndex("by_workload", (q) => q.eq("workloadId", workloadIdStr))
+      .collect();
+    if (journals.length > 0) {
+      throw new ConvexError({
+        code: "WORKLOAD_HAS_JOURNALS",
+        message: "Нагрузка используется — сначала удалите созданные из неё журналы",
+        references: { journals: journals.length },
+      });
+    }
     await ctx.db.delete(args.id);
     return { success: true };
   },

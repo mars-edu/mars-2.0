@@ -235,12 +235,8 @@ function calculateActualHours(
     };
   }
 
-  // Create a map of lesson dates to hours
-  const lessonDateMap = new Map<string, number>();
-  lessonDates.forEach((lesson) => {
-    const dateKey = lesson.date.format(DATE_STORAGE_FORMAT);
-    lessonDateMap.set(dateKey, (lessonDateMap.get(dateKey) || 0) + lesson.hours);
-  });
+  // (Dead lessonDateMap dropped — never read downstream; actual-hours math
+  // uses markedDates + per-day accumulator further below.)
 
   // Get all marked dates (dates where lesson was held based on journal marks)
   const markedDates = new Set<string>();
