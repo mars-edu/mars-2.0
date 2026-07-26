@@ -14,7 +14,7 @@ import {
  * from RupHourFields' down-arrow buttons.
  *
  * `step` is passed in as a Ref (the popup's edited entry) so the composable
- * can mutate `step.value.distributionEntries` in place — matching the
+ * can mutate `editedEntry.value.distributionEntries` in place — matching the
  * template's v-model expectations inside RupDistributionTable.
  */
 export type DistributeField =
@@ -36,7 +36,7 @@ export interface DistributionEntryLike {
   controlLessonEnabled?: boolean;
 }
 
-interface StepLike extends RupEntryHoursInput {
+interface RupFormEntry extends RupEntryHoursInput {
   distributionEntries: DistributionEntryLike[];
 }
 
@@ -48,7 +48,7 @@ export interface UseRupHourDistributionOptions {
 }
 
 export function useRupHourDistribution(
-  step: Ref<StepLike | null | undefined>,
+  editedEntry: Ref<RupFormEntry | null | undefined>,
   opts: UseRupHourDistributionOptions
 ) {
   const visibleColumns = ref({
@@ -58,11 +58,11 @@ export function useRupHourDistribution(
   });
 
   const summary = computed<DistributionSummary>(() =>
-    computeDistributionSummary(step.value)
+    computeDistributionSummary(editedEntry.value)
   );
 
   function addDistributionEntry() {
-    const s = step.value;
+    const s = editedEntry.value;
     if (!s) return;
     s.distributionEntries.push({
       id: crypto.randomUUID(),
@@ -80,7 +80,7 @@ export function useRupHourDistribution(
   }
 
   function removeDistributionEntry(entryId: string) {
-    const s = step.value;
+    const s = editedEntry.value;
     if (!s) return;
     const idx = s.distributionEntries.findIndex((e) => e.id === entryId);
     if (idx !== -1) s.distributionEntries.splice(idx, 1);
@@ -95,7 +95,7 @@ export function useRupHourDistribution(
    * is set (otherwise leave user-entered group hours alone).
    */
   function distributeHoursFromField(field: DistributeField) {
-    const s = step.value;
+    const s = editedEntry.value;
     if (!s || !s.distributionEntries.length) {
       opts.onEmptyDistributeAttempt?.();
       return;

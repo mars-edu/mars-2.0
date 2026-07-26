@@ -42,12 +42,12 @@
             />
 
             <RupHourFields
-              v-model:step="step"
+              v-model:editedEntry="editedEntry"
               @distribute="distributeHoursFromField"
             />
 
               <RupDistributionTable
-                :entries="step.distributionEntries"
+                :entries="editedEntry.distributionEntries"
                 :visible-columns="visibleColumns"
                 :summary="distributionSummary"
                 @add="addDistributionEntry"
@@ -134,16 +134,16 @@ const {
   buildRemovedVariantIds,
 } = useLanguageVariants();
 
-// Form-core (step + zod validation across ALL lang tabs + dirty-tracking)
+// Form-core (editedEntry + zod validation across ALL lang tabs + dirty-tracking)
 // extracted to useRupEntryForm.
 const {
-  step,
+  editedEntry,
   formError,
   isFormValid,
   captureBaseline,
   isFormDirty,
 } = useRupEntryForm({
-  createEmptyStep: createEmptyEntry,
+  createEmpty: createEmptyEntry,
   selectedSpecialtyIds,
   selectedLanguages,
   languageTexts,
@@ -163,7 +163,7 @@ const {
   removeDistributionEntry,
   distributeHoursFromField,
   reset: resetDistribution,
-} = useRupHourDistribution(step, {
+} = useRupHourDistribution(editedEntry, {
   academicYearIdFor: () => props.academicYearId,
   onEmptyDistributeAttempt: () =>
     f7.dialog.alert("Сначала добавьте запись в распределение часов"),
@@ -187,17 +187,17 @@ const baseLabel = computed(() => {
 
 function copyFromSource(source: any) {
   // Copy numeric fields
-  step.value.totalCredits = source.totalCredits ?? "";
-  step.value.totalHours = source.totalHours ?? "";
-  step.value.groupHours = source.groupHours ?? "";
-  step.value.theoreticalHours = source.theoreticalHours ?? "";
-  step.value.labPracticalHours = source.labPracticalHours ?? "";
-  step.value.field3Value = source.field3Value ?? "";
-  step.value.srspHours = source.srspHours ?? "";
-  step.value.srsHours = source.srsHours ?? "";
-  step.value.trainingPracticeHours = source.trainingPracticeHours ?? "";
-  step.value.individualHours = source.individualHours ?? "";
-  step.value.individualAdditionalHours = source.individualAdditionalHours ?? "";
+  editedEntry.value.totalCredits = source.totalCredits ?? "";
+  editedEntry.value.totalHours = source.totalHours ?? "";
+  editedEntry.value.groupHours = source.groupHours ?? "";
+  editedEntry.value.theoreticalHours = source.theoreticalHours ?? "";
+  editedEntry.value.labPracticalHours = source.labPracticalHours ?? "";
+  editedEntry.value.field3Value = source.field3Value ?? "";
+  editedEntry.value.srspHours = source.srspHours ?? "";
+  editedEntry.value.srsHours = source.srsHours ?? "";
+  editedEntry.value.trainingPracticeHours = source.trainingPracticeHours ?? "";
+  editedEntry.value.individualHours = source.individualHours ?? "";
+  editedEntry.value.individualAdditionalHours = source.individualAdditionalHours ?? "";
 
   // Copy text fields per language — use all variants if grouped, else just the source itself.
   // Do NOT overwrite selectedLanguages: the user's own language selection is
@@ -246,7 +246,7 @@ watch(
           // mutating the store's Convex query cache via nested arrays
           // (distributionEntries / specialtyIds).
           const clicked = variants.find((v: any) => v.id === val.id) ?? variants[0];
-          step.value = JSON.parse(JSON.stringify(clicked));
+          editedEntry.value = JSON.parse(JSON.stringify(clicked));
           selectedSpecialtyIds.value = clicked.specialtyIds ? [...clicked.specialtyIds] : [];
 
           const hasSrs = clicked.distributionEntries?.some((e: any) => Number(e.srsHours) > 0);
@@ -258,7 +258,7 @@ watch(
             individual: !!hasIndiv,
           };
         } else {
-          step.value = { ...val };
+          editedEntry.value = { ...val };
           selectedLanguages.value = [val.language || "ru"];
           activeLanguageTab.value = val.language || "ru";
           languageTexts.value = {
@@ -281,7 +281,7 @@ watch(
           };
         }
       } else {
-        step.value = { ...val };
+        editedEntry.value = { ...val };
         selectedLanguages.value = [val.language || "ru"];
         activeLanguageTab.value = val.language || "ru";
         languageTexts.value = {
@@ -304,7 +304,7 @@ watch(
         };
       }
     } else {
-      step.value = createEmptyEntry();
+      editedEntry.value = createEmptyEntry();
       selectedLanguages.value = ["ru"];
       activeLanguageTab.value = "ru";
       languageTexts.value = { ru: { moduleIndex: "", moduleName: "", learningOutcome: "" } };
@@ -319,8 +319,8 @@ watch(
 watch(
   selectedSpecialtyIds,
   (newIds) => {
-    if (step.value) {
-      step.value.specialtyIds = newIds;
+    if (editedEntry.value) {
+      editedEntry.value.specialtyIds = newIds;
     }
   },
   { immediate: true }
@@ -329,7 +329,7 @@ watch(
 onMounted(() => {
   // specialtyStore.fetchSpecialties() moved into RupSpecialtyPicker's own onMounted.
   if (!props.editMode || !props.initialData) {
-    step.value = createEmptyEntry();
+    editedEntry.value = createEmptyEntry();
     selectedSpecialtyIds.value = props.specialtyIds || [];
     resetLanguages();
   }
@@ -341,7 +341,7 @@ onMounted(() => {
 // validationResult / formError / isFormValid provided by useRupEntryForm.
 
 function resetLocalState() {
-  step.value = createEmptyEntry() as typeof step.value;
+  editedEntry.value = createEmptyEntry() as typeof editedEntry.value;
   selectedSpecialtyIds.value = [];
   resetLanguages();
   integrationPanel.value?.reset();
@@ -369,7 +369,7 @@ async function submit() {
   }
 
   const baseClass = props.baseClass ? [props.baseClass] : [9];
-  const s = step.value;
+  const s = editedEntry.value;
 
   // Variant payloads (existing lang -> id patch, new lang -> insert) +
   // removedVariantIds (deselected langs) come from useLanguageVariants.

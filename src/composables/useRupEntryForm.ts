@@ -6,7 +6,7 @@ import type { LanguageTexts } from "@/composables/useLanguageVariants";
  * Owns the RUP-entry form's coordination bits (extracted from RupEntryPopup,
  * spec P3 composables step 3):
  *
- * - the edited `step` ref (created via a caller-supplied factory so the store
+ * - the edited `editedEntry` ref (created via a caller-supplied factory so the store
  *   dependency stays with the popup, not the composable);
  * - per-language zod validation (all selected tabs, not just active), with
  *   `[<lang>]` error-message prefixing;
@@ -15,22 +15,22 @@ import type { LanguageTexts } from "@/composables/useLanguageVariants";
  * Language/specialty state is READ through getters so the popup keeps a
  * single source of truth (useLanguageVariants + local selectedSpecialtyIds).
  */
-export interface UseRupEntryFormOptions<Step> {
-  createEmptyStep: () => Step;
+export interface UseRupEntryFormOptions<Entry> {
+  createEmpty: () => Entry;
   selectedSpecialtyIds: Ref<string[]>;
   selectedLanguages: Ref<string[]>;
   languageTexts: Ref<LanguageTexts>;
   getLanguageName: (code: string) => string;
 }
 
-export function useRupEntryForm<Step extends Record<string, unknown> & {
+export function useRupEntryForm<Entry extends Record<string, unknown> & {
   distributionEntries?: unknown[];
-}>(opts: UseRupEntryFormOptions<Step>) {
-  const step = ref<Step>(opts.createEmptyStep()) as Ref<Step>;
+}>(opts: UseRupEntryFormOptions<Entry>) {
+  const editedEntry = ref<Entry>(opts.createEmpty()) as Ref<Entry>;
 
   // --- Validation: iterate every selected language tab; first failing wins.
   const validationResult = computed(() => {
-    const s = step.value;
+    const s = editedEntry.value;
     if (!s) {
       return { success: false, error: { issues: [{ message: "Нет данных" }] } };
     }
@@ -85,7 +85,7 @@ export function useRupEntryForm<Step extends Record<string, unknown> & {
 
   function serializeFormState(): string {
     return JSON.stringify({
-      step: step.value,
+      editedEntry: editedEntry.value,
       selectedSpecialtyIds: opts.selectedSpecialtyIds.value,
       selectedLanguages: [...opts.selectedLanguages.value].sort(),
       languageTexts: opts.languageTexts.value,
@@ -99,7 +99,7 @@ export function useRupEntryForm<Step extends Record<string, unknown> & {
   }
 
   return {
-    step,
+    editedEntry,
     validationResult,
     formError,
     isFormValid,

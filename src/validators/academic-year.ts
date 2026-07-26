@@ -2,16 +2,15 @@ import { z } from "zod";
 
 export const academicYearSchema = z
   .object({
-    startYear: z
-      .number({
-        error: "Пожалуйста, введите год начала",
-      })
+    // Coerce so empty/null callers get the friendly "введите год" message
+    // instead of Zod's generic "Expected number, received null" (raw z.number
+    // rejects null and gives the ugly built-in error).
+    startYear: z.coerce
+      .number({ error: "Пожалуйста, введите год начала" })
       .int()
       .positive("Год начала должен быть положительным числом"),
-    endYear: z
-      .number({
-        error: "Пожалуйста, введите год окончания",
-      })
+    endYear: z.coerce
+      .number({ error: "Пожалуйста, введите год окончания" })
       .int()
       .positive("Год окончания должен быть положительным числом"),
     isActive: z.boolean(),

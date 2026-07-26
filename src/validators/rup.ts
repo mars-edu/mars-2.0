@@ -6,7 +6,7 @@ export const distributionEntrySchema = z.object({
   semesterId: z.string().min(1, "Семестр обязателен"),
   hours: z
     .string()
-    .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+    .refine(isHours, {
       message: "Объем часов должен быть положительным числом",
     })
     .optional(),
@@ -54,7 +54,7 @@ export const rupEntrySchema = z.object({
     .optional(),
   field3Value: z
     .string()
-    .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+    .refine(isHours, {
       message: "Поле 3 должно быть положительным числом",
     })
     .optional(),
@@ -88,5 +88,5 @@ export const rupEntrySchema = z.object({
       message: "Индивидуальные (дополнительно) должны быть положительным числом",
     })
     .optional(),
-  distributionEntries: z.array(distributionEntrySchema).min(0),
+  distributionEntries: z.array(distributionEntrySchema),
 });
