@@ -68,7 +68,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watchEffect } from "vue";
 import { f7, f7Popover, f7Input } from "framework7-vue";
-import { z } from "zod";
+import { educationScheduleSchema } from "@/validators/schedule";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import type { EducationSchedule } from "@/stores/educationScheduleStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
@@ -99,15 +99,8 @@ watchEffect(() => {
 let startTimePicker: any = null;
 let endTimePicker: any = null;
 
-const timeRegex = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
-
-const scheduleSchema = z.object({
-  startTime: z.string().regex(timeRegex, "Неверный формат времени (HH:mm)"),
-  endTime: z.string().regex(timeRegex, "Неверный формат времени (HH:mm)"),
-});
-
 const validationResult = computed(() => {
-  return scheduleSchema.safeParse({
+  return educationScheduleSchema.safeParse({
     startTime: startTime.value,
     endTime: endTime.value,
   });

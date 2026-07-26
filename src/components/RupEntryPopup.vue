@@ -71,13 +71,14 @@
 import { ref, computed, onMounted, watch, nextTick } from "vue";
 import { f7Popover, f7Checkbox, f7Button, f7 } from "framework7-vue";
 import IconCircleCheck from "~icons/lucide/circle-check";
-import { isHours } from "@/lib/rupHours";
+// isHours no longer needed here — refines live in @/validators/rup.
 import RupIntegrationPanel from "@/components/RupIntegrationPanel.vue";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
-import { z } from "zod";
+// zod schemas moved to @/validators/rup.
+import { rupEntrySchema } from "@/validators/rup";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
@@ -343,100 +344,7 @@ onMounted(() => {
   nextTick(() => captureBaseline());
 });
 
-const distributionEntrySchema = z.object({
-  academicYearId: z.string().min(1, "Учебный год обязателен"),
-  semesterId: z.string().min(1, "Семестр обязателен"),
-  hours: z
-    .string()
-    .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
-      message: "Объем часов должен быть положительным числом",
-    })
-    .optional(),
-  finalControlId: z.string().nullable().optional(),
-  examEnabled: z.boolean().optional(),
-  creditEnabled: z.boolean().optional(),
-  controlLessonEnabled: z.boolean().optional(),
-});
 
-// Strict hours validator: integer or one-decimal-group string, no
-// leading +/-, no exponent notation, no hex, no whitespace. Empty string
-// stays allowed to preserve existing optional-field behavior.
-// isHours moved to @/lib/rupHours — imported at top.
-
-const rupEntrySchema = z.object({
-  moduleIndex: z.string().min(1, "Индекс модуля обязателен"),
-  moduleName: z.string().min(1, "Наименование модуля обязательно"),
-  learningOutcome: z
-    .string()
-    .min(1, "Наименование результата обучения/дисциплина обязательно"),
-  totalCredits: z
-    .string()
-    .refine(isHours, {
-      message: "Кредиты должны быть положительным числом",
-    })
-    .optional(),
-  totalHours: z
-    .string()
-    .refine(isHours, {
-      message: "Общие часы должны быть положительным числом",
-    })
-    .optional(),
-  groupHours: z
-    .string()
-    .refine(isHours, {
-      message: "Групповые часы должны быть числом ≥ 0",
-    })
-    .optional(),
-  theoreticalHours: z
-    .string()
-    .refine(isHours, {
-      message: "Теоретические часы должны быть положительным числом",
-    })
-    .optional(),
-  labPracticalHours: z
-    .string()
-    .refine(isHours, {
-      message: "Лабораторно-практические часы должны быть положительным числом",
-    })
-    .optional(),
-  field3Value: z
-    .string()
-    .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
-      message: "Поле 3 должно быть положительным числом",
-    })
-    .optional(),
-  srspHours: z
-    .string()
-    .refine(isHours, {
-      message: "Часы СРСП должны быть положительным числом",
-    })
-    .optional(),
-  srsHours: z
-    .string()
-    .refine(isHours, {
-      message: "Часы СРС должны быть положительным числом",
-    })
-    .optional(),
-  trainingPracticeHours: z
-    .string()
-    .refine(isHours, {
-      message: "Часы практики должны быть положительным числом",
-    })
-    .optional(),
-  individualHours: z
-    .string()
-    .refine(isHours, {
-      message: "Индивидуальные часы должны быть положительным числом",
-    })
-    .optional(),
-  individualAdditionalHours: z
-    .string()
-    .refine(isHours, {
-      message: "Индивидуальные (дополнительно) должны быть положительным числом",
-    })
-    .optional(),
-  distributionEntries: z.array(distributionEntrySchema).min(0),
-});
 
 const validationResult = computed(() => {
   const s = step.value;

@@ -78,7 +78,7 @@
 <script setup lang="ts">
 import { ref, computed, watchEffect } from "vue";
 import { f7, f7Popover, f7Input, f7Checkbox } from "framework7-vue";
-import { z } from "zod";
+import { academicYearSchema } from '@/validators/academic-year';
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
@@ -109,22 +109,6 @@ watchEffect(() => {
   }
 });
 
-const academicYearSchema = z
-  .object({
-    startYear: z
-      .number()
-      .int()
-      .positive("Год начала должен быть положительным числом"),
-    endYear: z
-      .number()
-      .int()
-      .positive("Год окончания должен быть положительным числом"),
-    isActive: z.boolean(),
-  })
-  .refine((data) => data.endYear > data.startYear, {
-    message: "Год окончания должен быть больше года начала",
-    path: ["endYear"],
-  });
 
 const validationResult = computed(() => {
   return academicYearSchema.safeParse({

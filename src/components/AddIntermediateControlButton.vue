@@ -78,7 +78,7 @@
 import { ref, computed } from "vue";
 import { f7, f7Popover, f7Input } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
-import { z } from "zod";
+import { intermediateControlSchema } from "@/validators/control";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
@@ -90,10 +90,6 @@ const controlName = ref("");
 const controlShortName = ref("");
 const formError = ref("");
 
-const intermediateControlSchema = z.object({
-  name: z.string().min(1, "Пожалуйста, введите полное название"),
-  shortName: z.string().min(1, "Пожалуйста, введите краткое название"),
-});
 
 const validationResult = computed(() => {
   return intermediateControlSchema.safeParse({

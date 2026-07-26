@@ -70,7 +70,7 @@
 import { ref, computed, watch } from "vue";
 import { f7, f7Popover, f7Input, f7Checkbox } from "framework7-vue";
 import IconTrash from "~icons/lucide/trash-2";
-import { z } from "zod";
+import { languageSchema } from "@/validators/language";
 import { useLanguageStore } from "@/stores/languageStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
@@ -88,10 +88,6 @@ const languageName = ref("");
 const languageCode = ref("");
 const formError = ref("");
 
-const languageSchema = z.object({
-  name: z.string().min(1, "Пожалуйста, введите название языка"),
-  code: z.string().min(1, "Пожалуйста, введите код языка"),
-});
 
 const validationResult = computed(() => {
   return languageSchema.safeParse({

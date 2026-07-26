@@ -146,7 +146,7 @@
 import { ref, computed, watchEffect } from "vue";
 import { f7, f7Popover, f7Input, f7Button } from "framework7-vue";
 import IconTrash from "~icons/lucide/trash-2";
-import { z } from "zod";
+import { studentSchema } from "@/validators/student";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
@@ -223,18 +223,7 @@ watchEffect(() => {
   }
 });
 
-const studentSchema = z.object({
-  surname: z.string().min(1, "Пожалуйста, введите фамилию студента"),
-  firstName: z.string().min(1, "Пожалуйста, введите имя студента"),
-  patronymic: z.string().min(1, "Пожалуйста, введите отчество студента"),
-  academicYear: z.string().min(1, "Пожалуйста, выберите год поступления"),
-  specialty: z.string().min(1, "Пожалуйста, выберите специальность"),
-  language: z.string().min(1, "Пожалуйста, выберите язык обучения"),
-  base: z.string().min(1, "Пожалуйста, введите базу"),
-  gender: z.enum(["male", "female"], {
-    error: "Пожалуйста, выберите пол",
-  }),
-});
+
 
 const validationResult = computed(() => {
   return studentSchema.safeParse({

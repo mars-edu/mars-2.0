@@ -175,7 +175,7 @@
 import { ref, computed } from "vue";
 import { f7, f7Popover, f7Input, f7Button } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
-import { z } from "zod";
+import { studentCreateSchema } from "@/validators/student";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useLanguageStore } from "@/stores/languageStore";
@@ -237,23 +237,10 @@ onMounted(() => {
   academicYear.value = academicYearStore.getActiveAcademicYear?.id || "";
 });
 
-const studentSchema = z.object({
-  surname: z.string().min(1, "Пожалуйста, введите фамилию студента"),
-  firstName: z.string().min(1, "Пожалуйста, введите имя студента"),
-  patronymic: z.string().min(1, "Пожалуйста, введите отчество студента"),
-  academicYear: z.string().min(1, "Пожалуйста, выберите год поступления"),
-  specialty: z.string().min(1, "Пожалуйста, выберите специальность"),
-  language: z.string().min(1, "Пожалуйста, выберите язык обучения"),
-  base: z.string().min(1, "Пожалуйста, введите базу"),
-  gender: z.enum(["male", "female"], {
-    error: "Пожалуйста, выберите пол",
-  }),
-  orderNumber: z.string().min(1, "Пожалуйста, введите номер приказа"),
-  orderDate: z.string().min(1, "Пожалуйста, выберите дату приказа"),
-});
+
 
 const validationResult = computed(() => {
-  return studentSchema.safeParse({
+  return studentCreateSchema.safeParse({
     surname: surname.value,
     firstName: firstName.value,
     patronymic: patronymic.value,

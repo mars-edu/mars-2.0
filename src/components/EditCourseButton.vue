@@ -76,7 +76,7 @@
 import { ref, computed, watch } from "vue";
 import { f7, f7Popover, f7Input } from "framework7-vue";
 import IconTrash from "~icons/lucide/trash-2";
-import { z } from "zod";
+import { courseSchema } from '@/validators/course';
 import { useCourseStore } from "@/stores/courseStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { useNestedParent } from "@/composables/useNestedParent";
@@ -142,10 +142,6 @@ const duplicateSemesters = computed(() => {
   return duplicates;
 });
 
-const courseSchema = z.object({
-  number: z.string().min(1, "Пожалуйста, введите номер курса"),
-  semesters: z.array(z.string()).optional(),
-});
 
 const validationResult = computed(() => {
   return courseSchema.safeParse({

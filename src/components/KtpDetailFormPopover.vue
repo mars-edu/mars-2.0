@@ -177,7 +177,7 @@ import { f7, f7Popover, f7Input } from "framework7-vue";
 import IconTrash from "~icons/lucide/trash-2";
 import IconLock from "~icons/lucide/lock";
 import IconAlertTriangle from "~icons/lucide/alert-triangle";
-import { z } from "zod";
+import { ktpDetailFormSchema } from '@/validators/ktp';
 import { useKtpStore, type KtpDetail } from "@/stores/ktpStore";
 import { useNestedParent } from "@/composables/useNestedParent";
 import { toNullableNumber } from "@/lib/ktpHelpers";
@@ -271,20 +271,8 @@ watch(
   }
 );
 
-const formSchema = z.object({
-  theme: z.string().min(1, "Тема не может быть пустой."),
-  totalHours: z.number().nullable(),
-  srsp: z.number().nullable(),
-  srs: z.number().nullable(),
-  theoretical: z.number().nullable(),
-  practical: z.number().nullable(),
-  individual: z.number().nullable(),
-  homework: z.string().nullable(),
-  notes: z.string().nullable(),
-});
-
 const validationResult = computed(() => {
-  return formSchema.safeParse({
+  return ktpDetailFormSchema.safeParse({
     ...formData,
     totalHours: toNullableNumber(formData.totalHours),
     srsp: toNullableNumber(formData.srsp),

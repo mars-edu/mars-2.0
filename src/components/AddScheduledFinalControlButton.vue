@@ -93,7 +93,7 @@ import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { f7, f7Popover, f7Input } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
-import { z } from "zod";
+import { scheduledControlSchema } from '@/validators/control';
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
@@ -139,26 +139,8 @@ watch(selectedControlId, (newId) => {
   }
 });
 
-const controlSchema = z
-  .object({
-    controlId: z.string().min(1, "Пожалуйста, выберите форму контроля"),
-    shortName: z.string().min(1, "Пожалуйста, введите название"),
-    startDate: z.array(z.date()).min(1, "Пожалуйста, укажите дату начала"),
-    endDate: z.array(z.date()).min(1, "Пожалуйста, укажите дату окончания"),
-  })
-  .refine(
-    (data) =>
-      data.startDate.length > 0 &&
-      data.endDate.length > 0 &&
-      data.endDate[0] >= data.startDate[0],
-    {
-      message: "Дата окончания должна быть позже даты начала",
-      path: ["endDate"],
-    }
-  );
-
 const validationResult = computed(() => {
-  return controlSchema.safeParse({
+  return scheduledControlSchema.safeParse({
     controlId: selectedControlId.value,
     shortName: shortName.value,
     startDate: startDate.value,

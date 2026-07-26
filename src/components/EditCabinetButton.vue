@@ -100,7 +100,7 @@ import { ref, computed, watchEffect } from "vue";
 import { useFormValidation } from "@/composables/useFormValidation";
 import { f7, f7Input } from "framework7-vue";
 import IconTrash from "~icons/lucide/trash-2";
-import { z } from "zod";
+import { cabinetSchema } from '@/validators/cabinet';
 import { useCabinetStore } from "@/stores/cabinetStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
@@ -130,12 +130,6 @@ watchEffect(() => {
   }
 });
 
-const cabinetSchema = z.object({
-  name: z.string().min(1, "Пожалуйста, введите название кабинета"),
-  capacity: z.number().min(1, "Вместимость должна быть больше 0"),
-  type: z.string().min(1, "Пожалуйста, выберите тип кабинета"),
-  description: z.string().optional().default(""),
-});
 
 const { formError, isFormValid } = useFormValidation(cabinetSchema, () => ({
     name: cabinetName.value,

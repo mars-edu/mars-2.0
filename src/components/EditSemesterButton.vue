@@ -62,7 +62,7 @@ import IconTrash from "~icons/lucide/trash-2";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
-import { z } from "zod";
+import { semesterEditSchema } from "@/validators/semester";
 import { useSemesterStore } from "@/stores/semesterStore";
 const props = defineProps<{ semesterId: string }>();
 
@@ -75,12 +75,8 @@ const semester = computed(() =>
 const shortName = ref("");
 const formError = ref("");
 
-const semesterSchema = z.object({
-  shortName: z.string().min(1, "Пожалуйста, введите название семестра"),
-});
-
 const validationResult = computed(() => {
-  return semesterSchema.safeParse({
+  return semesterEditSchema.safeParse({
     shortName: shortName.value,
   });
 });
