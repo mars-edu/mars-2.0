@@ -71,12 +71,7 @@
 import { ref, computed, onMounted, watch, nextTick } from "vue";
 import { f7Popover, f7Checkbox, f7Button, f7 } from "framework7-vue";
 import IconCircleCheck from "~icons/lucide/circle-check";
-import {
-  isHours,
-  distributeFmt,
-  computeDistributionSummary,
-} from "@/lib/rupHours";
-import { parseNumber } from "@/utils/parseNumber";
+import { isHours } from "@/lib/rupHours";
 import RupIntegrationPanel from "@/components/RupIntegrationPanel.vue";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
@@ -91,6 +86,7 @@ import Input from "@/components/ui/Input.vue";
 import RupSpecialtyPicker from "@/components/RupSpecialtyPicker.vue";
 import RupLanguageTabs from "@/components/RupLanguageTabs.vue";
 import { useLanguageVariants } from "@/composables/useLanguageVariants";
+import { useRupHourDistribution } from "@/composables/useRupHourDistribution";
 import RupHourFields from "@/components/RupHourFields.vue";
 import RupDistributionTable from "@/components/RupDistributionTable.vue";
 
@@ -142,11 +138,19 @@ const {
 // (currently none — kept nullable in case future actions land there).
 const languageTabs = ref<InstanceType<typeof RupLanguageTabs> | null>(null);
 
-// Distribution table optional per-semester columns (revealed by down-arrow buttons)
-const visibleColumns = ref({
-  srs: false,
-  srsp: false,
-  individual: false,
+// Distribution rows + optional columns + summary + distribute helpers moved
+// into useRupHourDistribution.
+const {
+  visibleColumns,
+  summary: distributionSummary,
+  addDistributionEntry,
+  removeDistributionEntry,
+  distributeHoursFromField,
+  reset: resetDistribution,
+} = useRupHourDistribution(step, {
+  academicYearIdFor: () => props.academicYearId,
+  onEmptyDistributeAttempt: () =>
+    f7.dialog.alert("Сначала добавьте запись в распределение часов"),
 });
 
 // distributionGridStyle moved to RupDistributionTable.
@@ -162,10 +166,7 @@ const baseLabel = computed(() => {
   return base === 11 ? "База 11 классов" : "База 9 классов";
 });
 
-const distributionSummary = computed(() =>
-  computeDistributionSummary(step.value)
-);
-
+// distributionSummary provided by useRupHourDistribution above.
 // availableIntegration/ConnectYears+Subjects moved into RupIntegrationPanel.
 
 function copyFromSource(source: any) {
@@ -491,7 +492,7 @@ function resetLocalState() {
   selectedSpecialtyIds.value = [];
   resetLanguages();
   integrationPanel.value?.reset();
-  visibleColumns.value = { srs: false, srsp: false, individual: false };
+  resetDistribution();
 }
 
 function handlePopoverClosed() {
@@ -565,82 +566,8 @@ async function submit() {
   }
 }
 
-function addDistributionEntry() {
-  const s = step.value;
-  if (!s) return;
-
-  s.distributionEntries.push({
-    id: crypto.randomUUID(),
-    academicYearId: props.academicYearId,
-    semesterId: "",
-    hours: "",
-    srsHours: "",
-    srspHours: "",
-    individualHours: "",
-    finalControlId: null,
-    examEnabled: false,
-    creditEnabled: false,
-    controlLessonEnabled: false,
-  });
-}
-
-function removeDistributionEntry(entryId: string) {
-  const s = step.value;
-  if (!s) return;
-
-  const entryIndex = s.distributionEntries.findIndex(
-    (entry) => entry.id === entryId
-  );
-  if (entryIndex !== -1) {
-    s.distributionEntries.splice(entryIndex, 1);
-  }
-}
-
-// Down-arrow: reveal the per-semester column AND auto-distribute the top-level
-// value evenly across rows. For "individualAdditionalHours" we additionally
-// recompute each row's group hours so that group + individual = totalHours/N.
-function distributeHoursFromField(
-  field: "srspHours" | "srsHours" | "individualAdditionalHours"
-) {
-  const s = step.value;
-  if (!s || !s.distributionEntries.length) {
-    f7.dialog.alert("Сначала добавьте запись в распределение часов");
-    return;
-  }
-
-  // num/fmt/distributeFmt moved to @/lib/rupHours (parseNumber handles comma).
-
-  const count = s.distributionEntries.length;
-
-  if (field === "srspHours") {
-    visibleColumns.value.srsp = true;
-    const values = distributeFmt(parseNumber(s.srspHours), count);
-    s.distributionEntries.forEach((e, i) => {
-      (e as any).srspHours = values[i];
-    });
-  } else if (field === "srsHours") {
-    visibleColumns.value.srs = true;
-    const values = distributeFmt(parseNumber(s.srsHours), count);
-    s.distributionEntries.forEach((e, i) => {
-      (e as any).srsHours = values[i];
-    });
-  } else if (field === "individualAdditionalHours") {
-    visibleColumns.value.individual = true;
-    const totalIndividual = parseNumber(s.individualAdditionalHours);
-    const totalAll = parseNumber(s.totalHours);
-    const individualValues = distributeFmt(totalIndividual, count);
-    const groupTotal = Math.max(0, totalAll - totalIndividual);
-    const groupValues = distributeFmt(groupTotal, count);
-    s.distributionEntries.forEach((e, i) => {
-      (e as any).individualHours = individualValues[i];
-      // Only overwrite group hours if totalHours is set — otherwise leave user values
-      if (totalAll > 0) {
-        e.hours = groupValues[i];
-      }
-    });
-  }
-}
-
+// addDistributionEntry / removeDistributionEntry / distributeHoursFromField
+// provided by useRupHourDistribution above.
 // getFinalControlOptionsForYear moved into RupDistributionTable.
 
 function showDeleteConfirmation() {
