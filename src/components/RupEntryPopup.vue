@@ -110,13 +110,49 @@ const academicYearStore = useAcademicYearStore();
 const semesterStore = useSemesterStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 
+/**
+ * The form only edits hour-fields + distributionEntries. Everything else on
+ * a RupEntry (id/specialtyIds/academicYearId/baseClass/language/groupId/
+ * moduleIndex/moduleName/learningOutcome/position/timestamps) either lives in
+ * separate refs (selectedSpecialtyIds / useLanguageVariants) or is read from
+ * props/initialData at submit time — no reason to carry it in the editable
+ * form state.
+ */
 function createEmptyEntry() {
-  return rupEntryStore.createEmptyRupEntry(
-    props.academicYearId,
-    props.specialtyIds || [],
-    props.baseClass ?? 9,
-    "ru"
-  );
+  return {
+    totalCredits: "",
+    totalHours: "",
+    groupHours: "",
+    theoreticalHours: "",
+    labPracticalHours: "",
+    field3Value: "",
+    srspHours: "",
+    srsHours: "",
+    trainingPracticeHours: "",
+    individualHours: "",
+    individualAdditionalHours: "",
+    distributionEntries: [] as any[],
+  };
+}
+
+/** Extract just the hour + distribution slice of a full RupEntry variant. */
+function pickHoursForm(v: any) {
+  return {
+    totalCredits: v.totalCredits ?? "",
+    totalHours: v.totalHours ?? "",
+    groupHours: v.groupHours ?? "",
+    theoreticalHours: v.theoreticalHours ?? "",
+    labPracticalHours: v.labPracticalHours ?? "",
+    field3Value: v.field3Value ?? "",
+    srspHours: v.srspHours ?? "",
+    srsHours: v.srsHours ?? "",
+    trainingPracticeHours: v.trainingPracticeHours ?? "",
+    individualHours: v.individualHours ?? "",
+    individualAdditionalHours: v.individualAdditionalHours ?? "",
+    // Deep-copy distributionEntries so unsaved popup edits don't mutate the
+    // store's Convex query cache.
+    distributionEntries: JSON.parse(JSON.stringify(v.distributionEntries ?? [])),
+  };
 }
 
 const selectedSpecialtyIds = ref<string[]>([]);
@@ -242,11 +278,9 @@ watch(
 
           // Prefill from the CLICKED variant (matches props.initialData.id),
           // not variants[0] — hour fields may diverge across language variants
-          // and the user expects to see what they clicked. Deep-copy avoids
-          // mutating the store's Convex query cache via nested arrays
-          // (distributionEntries / specialtyIds).
+          // and the user expects to see what they clicked.
           const clicked = variants.find((v: any) => v.id === val.id) ?? variants[0];
-          editedEntry.value = JSON.parse(JSON.stringify(clicked));
+          editedEntry.value = pickHoursForm(clicked);
           selectedSpecialtyIds.value = clicked.specialtyIds ? [...clicked.specialtyIds] : [];
 
           const hasSrs = clicked.distributionEntries?.some((e: any) => Number(e.srsHours) > 0);
@@ -258,7 +292,7 @@ watch(
             individual: !!hasIndiv,
           };
         } else {
-          editedEntry.value = { ...val };
+          editedEntry.value = pickHoursForm(val);
           selectedLanguages.value = [val.language || "ru"];
           activeLanguageTab.value = val.language || "ru";
           languageTexts.value = {
@@ -281,7 +315,7 @@ watch(
           };
         }
       } else {
-        editedEntry.value = { ...val };
+        editedEntry.value = pickHoursForm(val);
         selectedLanguages.value = [val.language || "ru"];
         activeLanguageTab.value = val.language || "ru";
         languageTexts.value = {
@@ -316,15 +350,8 @@ watch(
   { immediate: true }
 );
 
-watch(
-  selectedSpecialtyIds,
-  (newIds) => {
-    if (editedEntry.value) {
-      editedEntry.value.specialtyIds = newIds;
-    }
-  },
-  { immediate: true }
-);
+// Dead-mirror watch removed: submit uses selectedSpecialtyIds.value directly;
+// editedEntry no longer carries a specialtyIds field.
 
 onMounted(() => {
   // specialtyStore.fetchSpecialties() moved into RupSpecialtyPicker's own onMounted.
@@ -341,7 +368,7 @@ onMounted(() => {
 // validationResult / formError / isFormValid provided by useRupEntryForm.
 
 function resetLocalState() {
-  editedEntry.value = createEmptyEntry() as typeof editedEntry.value;
+  editedEntry.value = createEmptyEntry();
   selectedSpecialtyIds.value = [];
   resetLanguages();
   integrationPanel.value?.reset();
