@@ -331,11 +331,30 @@ const semesterRecord = computed(() => {
     .slice()
     .sort((a: any, b: any) => String(a.startDate).localeCompare(String(b.startDate)))[(semester.value ?? 1) - 1] ?? null;
 });
-const weekCount = computed(() => {
-  const r = semesterRecord.value;
-  if (!r) return 0;
-  return Math.max(0, Math.ceil(dayjs(r.endDate).diff(dayjs(r.startDate), "day") / 7));
-});
+/**
+ * Count actual occurrences of a specific weekday between two ISO dates
+ * (inclusive). `weekId` uses ISO Monday=1..Sunday=7 (matches WEEKDAYS above);
+ * dayjs `.day()` returns 0=Sun..6=Sat, so Sunday remaps 7 → 0.
+ *
+ * Fixes the old `weekCount = ceil(daySpan/7)` bug: a semester spanning
+ * 19 weeks + 4 days would report 20, but a Friday-only slot in that range
+ * only actually happens 19 or 20 times depending on where the semester starts.
+ * Multiplying every slot by the same rounded count over/undercounted per-day.
+ */
+function countWeekdayOccurrences(
+  startISO: string,
+  endISO: string,
+  weekId: number
+): number {
+  const start = dayjs(startISO);
+  const end = dayjs(endISO);
+  if (!start.isValid() || !end.isValid() || end.isBefore(start)) return 0;
+  const targetDow = weekId === 7 ? 0 : weekId;
+  const offset = (targetDow - start.day() + 7) % 7;
+  const first = start.add(offset, "day");
+  if (first.isAfter(end)) return 0;
+  return Math.floor(end.diff(first, "day") / 7) + 1;
+}
 const scheduleSlots = computed(() => {
   const r = semesterRecord.value;
   const list = r ? educationScheduleStore.getSchedulesBySemester(r.id) : educationScheduleStore.getActiveYearSchedules;
@@ -483,8 +502,21 @@ function toggleDay(j: Staged, weekId: number) {
 
 const targetHours = (j: Staged) => disciplines.value.find((d) => d.id === j.itemId)?.plannedHours ?? 0;
 function stagedHours(j: Staged) {
+  const r = semesterRecord.value;
+  if (!r) return 0;
   const ids = scheduleSlots.value.map((s: any) => s.id);
-  return computeWeeklySlotHours(j.daySlots.filter((s) => s.startId && s.endId), ids) * weekCount.value;
+  // Sum per-slot: (slot's weekly hours) × (actual occurrences of its weekday
+  // in the semester date range). Fixes the flat `× weekCount` overcount when
+  // some weekdays fall an extra time and others don't (spec bug #10).
+  return j.daySlots
+    .filter((s) => s.startId && s.endId)
+    .reduce(
+      (sum, slot) =>
+        sum +
+        computeWeeklySlotHours([slot], ids) *
+          countWeekdayOccurrences(r.startDate, r.endDate, slot.weekId),
+      0
+    );
 }
 function stagedValid(j: Staged) {
   return j.studentIds.length > 0 && stagedHours(j) === targetHours(j);

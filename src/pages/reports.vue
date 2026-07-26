@@ -51,6 +51,14 @@
                   name="period"
                 />
 
+                <Select
+                  v-model="selectedMonthKey"
+                  :options="monthOptions"
+                  label="Месяц (для Формы 1)"
+                  placeholder="Месяц"
+                  name="month"
+                />
+
                 <div class="flex flex-col gap-2">
                   <button
                     @click="generateWorkloadReport"
@@ -376,6 +384,9 @@ const marksStore = useMarksStore();
 const selectedTeacherId = ref("");
 const selectedAcademicYearId = ref("");
 const selectedPeriod = ref("full_year");
+// Form-1 (daily) needs a specific month; used to be hardcoded to the first
+// month of the period. Now user-picked, defaults to first available.
+const selectedMonthKey = ref<string>("");
 const isGenerating = ref(false);
 const lastGeneratedReport = ref("");
 const reportData = ref<TeacherWorkloadExportPayload | null>(null);
@@ -421,6 +432,31 @@ const availableSemesters = computed(() => {
   return academicYearSemesterStore
     .getAcademicYearSemestersByAcademicYear(selectedAcademicYearId.value)
     .sort((a, b) => a.semesterNumber - b.semesterNumber);
+});
+
+// Months belonging to the currently-selected period (specific semester's
+// months, or ALL year months when period=full_year). Drives the Form-1
+// month picker; defaults to the first month whenever the list changes.
+const monthOptions = computed(() => {
+  const sems =
+    selectedPeriod.value === "full_year"
+      ? availableSemesters.value
+      : availableSemesters.value.filter((s) => s.id === selectedPeriod.value);
+  return computeMonthsFromSemesters(sems).map((m) => ({
+    value: m.key,
+    text: m.name,
+  }));
+});
+
+watchEffect(() => {
+  const opts = monthOptions.value;
+  if (opts.length === 0) {
+    selectedMonthKey.value = "";
+    return;
+  }
+  if (!opts.some((o) => o.value === selectedMonthKey.value)) {
+    selectedMonthKey.value = opts[0].value;
+  }
 });
 
 const periodOptions = computed(() => {
@@ -584,9 +620,13 @@ async function generateWorkloadReport() {
       throw new Error(reports_no_months_error());
     }
 
-    const firstMonth = semesterMonths[0];
-    const reportMonth = firstMonth.month;
-    const reportYear = firstMonth.year;
+    // Pick the user-selected month (Form-1 is per-month); fall back to the
+    // first available if the picker somehow points at a stale key.
+    const pickedMonth =
+      semesterMonths.find((m) => m.key === selectedMonthKey.value) ??
+      semesterMonths[0];
+    const reportMonth = pickedMonth.month;
+    const reportYear = pickedMonth.year;
     
     const allJournals = Object.values(journalStore.journalsByCourse).flat();
 
