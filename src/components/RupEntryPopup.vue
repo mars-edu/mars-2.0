@@ -77,8 +77,7 @@ import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
-// zod schemas moved to @/validators/rup.
-import { rupEntrySchema } from "@/validators/rup";
+// zod schemas moved to @/validators/rup (used by useRupEntryForm).
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
@@ -88,6 +87,7 @@ import RupSpecialtyPicker from "@/components/RupSpecialtyPicker.vue";
 import RupLanguageTabs from "@/components/RupLanguageTabs.vue";
 import { useLanguageVariants } from "@/composables/useLanguageVariants";
 import { useRupHourDistribution } from "@/composables/useRupHourDistribution";
+import { useRupEntryForm } from "@/composables/useRupEntryForm";
 import RupHourFields from "@/components/RupHourFields.vue";
 import RupDistributionTable from "@/components/RupDistributionTable.vue";
 
@@ -119,7 +119,6 @@ function createEmptyEntry() {
   );
 }
 
-const step = ref(createEmptyEntry());
 const selectedSpecialtyIds = ref<string[]>([]);
 
 // Language-variant state + helpers extracted to a composable.
@@ -134,6 +133,22 @@ const {
   buildSaveVariants,
   buildRemovedVariantIds,
 } = useLanguageVariants();
+
+// Form-core (step + zod validation across ALL lang tabs + dirty-tracking)
+// extracted to useRupEntryForm.
+const {
+  step,
+  formError,
+  isFormValid,
+  captureBaseline,
+  isFormDirty,
+} = useRupEntryForm({
+  createEmptyStep: createEmptyEntry,
+  selectedSpecialtyIds,
+  selectedLanguages,
+  languageTexts,
+  getLanguageName,
+});
 
 // Ref only needed if the parent wants to call component methods on RupLanguageTabs
 // (currently none — kept nullable in case future actions land there).
@@ -213,30 +228,7 @@ function applySource(subjectId: string) {
   copyFromSource(source);
 }
 
-// Dirty-state tracking for unsaved changes confirmation
-let dirtyBaseline = "";
-
-function serializeFormState() {
-  return JSON.stringify({
-    step: step.value,
-    selectedSpecialtyIds: selectedSpecialtyIds.value,
-    selectedLanguages: [...selectedLanguages.value].sort(),
-    languageTexts: languageTexts.value,
-  });
-}
-
-function captureBaseline() {
-  dirtyBaseline = serializeFormState();
-}
-
-function isFormDirty() {
-  return serializeFormState() !== dirtyBaseline;
-}
-
-// toggleLanguage moved into RupLanguageTabs. getLanguageName is used by
-// validationResult below to prefix errors with the offending tab; keep a small
-// helper here reading the same store.
-// getLanguageName provided by useLanguageVariants (destructured above).
+// Dirty-tracking + validation moved to useRupEntryForm (destructured above).
 
 watch(
   () => [props.initialData, props.editMode],
@@ -346,57 +338,10 @@ onMounted(() => {
 
 
 
-const validationResult = computed(() => {
-  const s = step.value;
-  if (!s)
-    return { success: false, error: { issues: [{ message: "Нет данных" }] } };
-  // Validate ALL selected language tabs, not just the active one — otherwise
-  // a user could fill RU, switch to KZ (leaving it blank), and hit Save,
-  // producing empty variants server-side. Iterate; first failing tab wins.
-  for (const lang of selectedLanguages.value) {
-    const texts = languageTexts.value[lang] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
-    const parsed = rupEntrySchema.safeParse({
-      moduleIndex: texts.moduleIndex,
-      moduleName: texts.moduleName,
-      learningOutcome: texts.learningOutcome,
-      totalCredits: String(s.totalCredits),
-      totalHours: String(s.totalHours),
-      groupHours: String(s.groupHours ?? ""),
-      theoreticalHours: String(s.theoreticalHours),
-      labPracticalHours: String(s.labPracticalHours),
-      field3Value: String(s.field3Value),
-      srspHours: String(s.srspHours),
-      srsHours: String(s.srsHours),
-      trainingPracticeHours: String(s.trainingPracticeHours),
-      individualHours: String(s.individualHours),
-      individualAdditionalHours: String(s.individualAdditionalHours ?? ""),
-      distributionEntries: s.distributionEntries,
-    });
-    if (!parsed.success) {
-      // Prefix per-language errors so the user knows which tab to fix.
-      const langLabel = getLanguageName(lang);
-      const issues = parsed.error.issues.map((i) => ({
-        ...i,
-        message: `[${langLabel}] ${i.message}`,
-      }));
-      return { success: false, error: { issues } } as typeof parsed;
-    }
-  }
-  // All tabs valid — return the last successful parse for the computed shape.
-  return { success: true } as { success: true };
-});
-
-const formError = computed(() => {
-  if (validationResult.value.success) return "";
-  const issues = validationResult.value.error.issues;
-  if (issues.length > 0) return issues[0].message;
-  return "";
-});
-
-const isFormValid = computed(() => validationResult.value.success);
+// validationResult / formError / isFormValid provided by useRupEntryForm.
 
 function resetLocalState() {
-  step.value = createEmptyEntry();
+  step.value = createEmptyEntry() as typeof step.value;
   selectedSpecialtyIds.value = [];
   resetLanguages();
   integrationPanel.value?.reset();
