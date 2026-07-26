@@ -588,11 +588,12 @@ async function generateWorkloadReport() {
       rupEntries,
       enrichedStudents,
       filterStartDate,
-      filterEndDate
+      filterEndDate,
+      academicYears.value
     );
 
     const { distributions: monthlyDistribution, months: reportMonths } =
-      generateMonthlyDistribution(teacherEvents, rupEntries, enrichedStudents, availableSemesters.value);
+      generateMonthlyDistribution(teacherEvents, rupEntries, enrichedStudents, availableSemesters.value, academicYears.value);
 
     const allMonthsWorkload = generateAllMonthsWorkload(
       teacherEvents,
@@ -600,7 +601,8 @@ async function generateWorkloadReport() {
       enrichedStudents,
       availableSemesters.value,
       allJournals,
-      marksStore.journalMarks
+      marksStore.journalMarks,
+      academicYears.value
     );
 
     reportData.value = {

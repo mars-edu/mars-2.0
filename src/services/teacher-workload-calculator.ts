@@ -14,6 +14,27 @@ import type { CalendarEvent, WeeklySchedule } from "@/types/calendar";
 import type { RupEntry } from "@/types/rup-entry";
 import type { AcademicYearSemester } from "@/types/academic-year-semester";
 import type { Journal } from "@/types/journal";
+import type { AcademicYear } from "@/types/academic-year";
+import { DEFAULT_ACADEMIC_HOUR_MINUTES } from "@/types/academic-year";
+
+/**
+ * Resolve the academic-hour length (in minutes) for a given RUP entry's
+ * academic year. Falls back to the KZ standard (45 min) when the year
+ * list wasn't supplied or the entry's year has no override set — this is
+ * distinct from the lower-level `calculateLessonHours` default of 60
+ * (astronomic minutes), which is used only by callers that never opt in
+ * to per-year resolution.
+ */
+function resolveAcademicHourMinutes(
+  rupEntry: { academicYearId?: string },
+  academicYears?: AcademicYear[]
+): number {
+  if (!academicYears || !rupEntry.academicYearId) {
+    return DEFAULT_ACADEMIC_HOUR_MINUTES;
+  }
+  const year = academicYears.find((y) => y.id === rupEntry.academicYearId);
+  return year?.academicHourMinutes ?? DEFAULT_ACADEMIC_HOUR_MINUTES;
+}
 
 /**
  * Calculate lesson hours from time range
@@ -23,7 +44,8 @@ import type { Journal } from "@/types/journal";
  */
 export function calculateLessonHours(
   startTime?: string,
-  endTime?: string
+  endTime?: string,
+  academicHourMinutes: number = 60
 ): number {
   if (!startTime || !endTime) {
     // Default to 1 hour if times not specified
@@ -50,7 +72,7 @@ export function calculateLessonHours(
     }
 
     // Convert minutes to hours (e.g., 90 minutes = 1.5 hours)
-    return diffMinutes / 60;
+    return diffMinutes / academicHourMinutes;
   } catch (error) {
     console.error("Error calculating lesson hours:", error);
     return 1;
@@ -67,7 +89,8 @@ export function calculateLessonHours(
 export function calculateLessonDates(
   event: CalendarEvent,
   filterStartDate?: Date,
-  filterEndDate?: Date
+  filterEndDate?: Date,
+  academicHourMinutes: number = 60
 ): { date: dayjs.Dayjs; weekId: number; hours: number }[] {
   // Generate all event days based on weekly schedules
   const eventDays = getEventDays(event);
@@ -95,7 +118,8 @@ export function calculateLessonDates(
     // Calculate hours from the weekly schedule's time range
     const hours = calculateLessonHours(
       weeklySchedule?.startTime,
-      weeklySchedule?.endTime
+      weeklySchedule?.endTime,
+      academicHourMinutes
     );
 
     return {
@@ -143,7 +167,8 @@ function calculateActualHours(
   month: number,
   year: number,
   academicYearStart: number,
-  daysInMonth: number
+  daysInMonth: number,
+  academicHourMinutes: number = 60
 ): { dailyActualHours: (number | null)[]; actualHoursMonth: number; cumulativeHoursYear: number } {
   console.log(`[calculateActualHours] Looking for journal: event.id=${event.id}, rupEntry.id=${rupEntry.id}`);
 
@@ -260,7 +285,8 @@ function calculateActualHours(
   const allLessonDates = calculateLessonDates(
     event,
     septemberStart.toDate(),
-    currentMonthEnd.toDate()
+    currentMonthEnd.toDate(),
+    academicHourMinutes
   );
 
   // Create map of all lesson dates to hours for cumulative calculation
@@ -306,7 +332,8 @@ export function generateDailyWorkload(
   year: number,
   academicYearStart: number, // Academic year start year (e.g., 2024 for 2024/2025)
   journals: Journal[],
-  journalMarks: Record<string, JournalMarks>
+  journalMarks: Record<string, JournalMarks>,
+  academicYears?: AcademicYear[]
 ): WorkloadEntry[] {
   const entries: WorkloadEntry[] = [];
 
@@ -327,6 +354,7 @@ export function generateDailyWorkload(
       rupEntry: RupEntry;
       groupName: string;
       lessonDates: { date: dayjs.Dayjs; weekId: number; hours: number }[];
+      academicHourMinutes: number;
     }
   >();
 
@@ -344,11 +372,14 @@ export function generateDailyWorkload(
     );
     const groupName = generateGroupName(eventStudents);
 
+    const academicHourMinutes = resolveAcademicHourMinutes(rupEntry, academicYears);
+
     // Calculate lesson dates within the month
     const lessonDates = calculateLessonDates(
       event,
       monthStart.toDate(),
-      monthEnd.toDate()
+      monthEnd.toDate(),
+      academicHourMinutes
     );
 
     if (lessonDates.length === 0) {
@@ -367,6 +398,7 @@ export function generateDailyWorkload(
         rupEntry,
         groupName,
         lessonDates,
+        academicHourMinutes,
       });
     } else {
       // Merge lesson dates if same subject/group from multiple events
@@ -395,7 +427,8 @@ export function generateDailyWorkload(
       month,
       year,
       academicYearStart,
-      daysInMonth
+      daysInMonth,
+      group.academicHourMinutes
     );
 
     // Use actual hours from journal for daily columns
@@ -440,7 +473,8 @@ export function generateWorkloadSummary(
   rupEntryItems: RupEntry[],
   students: Student[],
   filterStartDate?: Date,
-  filterEndDate?: Date
+  filterEndDate?: Date,
+  academicYears?: AcademicYear[]
 ): WorkloadSummaryEntry[] {
   const summaries: WorkloadSummaryEntry[] = [];
 
@@ -469,7 +503,8 @@ export function generateWorkloadSummary(
     const lessonDates = calculateLessonDates(
       event,
       filterStartDate,
-      filterEndDate
+      filterEndDate,
+      resolveAcademicHourMinutes(rupEntry, academicYears)
     );
 
     // Sum total hours
@@ -639,7 +674,8 @@ export function generateMonthlyDistribution(
   events: CalendarEvent[],
   rupEntryItems: RupEntry[],
   students: Student[],
-  semesters: AcademicYearSemester[]
+  semesters: AcademicYearSemester[],
+  academicYears?: AcademicYear[]
 ): { distributions: MonthlyDistributionEntry[]; months: MonthInfo[] } {
   console.log("[generateMonthlyDistribution] Starting with:", {
     eventsCount: events.length,
@@ -683,7 +719,12 @@ export function generateMonthlyDistribution(
     const groupName = generateGroupName(eventStudents);
 
     // Calculate all lesson dates for this event
-    const lessonDates = calculateLessonDates(event);
+    const lessonDates = calculateLessonDates(
+      event,
+      undefined,
+      undefined,
+      resolveAcademicHourMinutes(rupEntry, academicYears)
+    );
 
     // Group hours by month
     for (const lesson of lessonDates) {
@@ -746,7 +787,8 @@ export function generateAllMonthsWorkload(
   students: Student[],
   semesters: AcademicYearSemester[],
   journals: Journal[],
-  journalMarks: Record<string, JournalMarks>
+  journalMarks: Record<string, JournalMarks>,
+  academicYears?: AcademicYear[]
 ): MonthWorkloadData[] {
   console.log("[generateAllMonthsWorkload] Starting...");
 
@@ -800,7 +842,8 @@ export function generateAllMonthsWorkload(
       monthInfo.year,
       academicYearStart,
       journals,
-      journalMarks
+      journalMarks,
+      academicYears
     );
 
     // Create a map of existing entries by subject/group key
