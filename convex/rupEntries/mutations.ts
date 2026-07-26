@@ -643,6 +643,18 @@ export const saveRupEntryGroup = mutation({
       });
     }
 
+    // Every variant must have non-empty texts — the client validates per-tab,
+    // but enforce here too so a direct API caller can't create empty variants.
+    for (const v of variants) {
+      if (!v.moduleIndex.trim() || !v.moduleName.trim() || !v.learningOutcome.trim()) {
+        throw new ConvexError({
+          code: "EMPTY_VARIANT_TEXT",
+          message: `Языковой вариант "${v.language}": заполните индекс, название и результат обучения`,
+          language: v.language,
+        });
+      }
+    }
+
     // --- 2. Resolve group id (new group gets a fresh one).
     const gid = groupId ?? crypto.randomUUID();
 

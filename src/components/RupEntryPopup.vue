@@ -693,21 +693,18 @@ function copyFromSource(source: any) {
   step.value.individualHours = source.individualHours ?? "";
   step.value.individualAdditionalHours = source.individualAdditionalHours ?? "";
 
-  // Copy text fields per language — use all variants if grouped, else just the source itself
+  // Copy text fields per language — use all variants if grouped, else just the source itself.
+  // Do NOT overwrite selectedLanguages: the user's own language selection is
+  // theirs; we only pre-fill texts for the languages they ALREADY have selected
+  // (falling back to the source's own language when the user hasn't opted in).
   const variants = source.groupId
     ? rupEntryStore.getGroupedVariants(source.groupId)
     : [source];
 
-  const langs = Array.from(
-    new Set(variants.map((v: any) => v.language || "ru"))
-  );
-  if (langs.length > 0) {
-    selectedLanguages.value = langs as string[];
-    activeLanguageTab.value = langs[0] as string;
-  }
-
   for (const v of variants) {
     const lang = v.language || "ru";
+    // Only pre-fill languages the user actually cares about.
+    if (!selectedLanguages.value.includes(lang)) continue;
     languageTexts.value[lang] = {
       moduleIndex: v.moduleIndex || "",
       moduleName: v.moduleName || "",
@@ -716,19 +713,18 @@ function copyFromSource(source: any) {
   }
 }
 
-function handleIntegration(subjectId: string) {
+// Both "integrate from another year" and "connect to a group" flows do the
+// same thing at this level: look the source entry up by id and copy its
+// hours/texts into the form. Keep the two handler names for template binding
+// clarity, share the body.
+function applySource(subjectId: string) {
   if (!subjectId) return;
   const source = rupEntryStore.rupEntries.find((e) => e.id === subjectId);
   if (!source) return;
   copyFromSource(source);
 }
-
-function handleConnect(subjectId: string) {
-  if (!subjectId) return;
-  const source = rupEntryStore.rupEntries.find((e) => e.id === subjectId);
-  if (!source) return;
-  copyFromSource(source);
-}
+const handleIntegration = applySource;
+const handleConnect = applySource;
 
 // Dirty-state tracking for unsaved changes confirmation
 let dirtyBaseline = "";
@@ -821,17 +817,18 @@ watch(
           languageTexts.value = texts;
           editVariantIds.value = variantIdMap;
 
-          const first = variants[0];
-          // Deep copy: a shallow { ...first } shares nested arrays
-          // (distributionEntries, specialtyIds) with the store's Convex query
-          // cache, so unsaved popup edits would mutate cached data. (#4 —
-          // prefill from the CLICKED variant instead of variants[0] — deferred.)
-          step.value = JSON.parse(JSON.stringify(first));
-          selectedSpecialtyIds.value = first.specialtyIds ? [...first.specialtyIds] : [];
-          
-          const hasSrs = first.distributionEntries?.some((e: any) => Number(e.srsHours) > 0);
-          const hasSrsp = first.distributionEntries?.some((e: any) => Number(e.srspHours) > 0);
-          const hasIndiv = first.distributionEntries?.some((e: any) => Number(e.individualHours) > 0);
+          // Prefill from the CLICKED variant (matches props.initialData.id),
+          // not variants[0] — hour fields may diverge across language variants
+          // and the user expects to see what they clicked. Deep-copy avoids
+          // mutating the store's Convex query cache via nested arrays
+          // (distributionEntries / specialtyIds).
+          const clicked = variants.find((v: any) => v.id === val.id) ?? variants[0];
+          step.value = JSON.parse(JSON.stringify(clicked));
+          selectedSpecialtyIds.value = clicked.specialtyIds ? [...clicked.specialtyIds] : [];
+
+          const hasSrs = clicked.distributionEntries?.some((e: any) => Number(e.srsHours) > 0);
+          const hasSrsp = clicked.distributionEntries?.some((e: any) => Number(e.srspHours) > 0);
+          const hasIndiv = clicked.distributionEntries?.some((e: any) => Number(e.individualHours) > 0);
           visibleColumns.value = {
             srs: !!hasSrs,
             srsp: !!hasSrsp,
@@ -1017,24 +1014,40 @@ const validationResult = computed(() => {
   const s = step.value;
   if (!s)
     return { success: false, error: { issues: [{ message: "Нет данных" }] } };
-  const texts = languageTexts.value[activeLanguageTab.value] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
-  return rupEntrySchema.safeParse({
-    moduleIndex: texts.moduleIndex,
-    moduleName: texts.moduleName,
-    learningOutcome: texts.learningOutcome,
-    totalCredits: String(s.totalCredits),
-    totalHours: String(s.totalHours),
-    groupHours: String(s.groupHours ?? ""),
-    theoreticalHours: String(s.theoreticalHours),
-    labPracticalHours: String(s.labPracticalHours),
-    field3Value: String(s.field3Value),
-    srspHours: String(s.srspHours),
-    srsHours: String(s.srsHours),
-    trainingPracticeHours: String(s.trainingPracticeHours),
-    individualHours: String(s.individualHours),
-    individualAdditionalHours: String(s.individualAdditionalHours ?? ""),
-    distributionEntries: s.distributionEntries,
-  });
+  // Validate ALL selected language tabs, not just the active one — otherwise
+  // a user could fill RU, switch to KZ (leaving it blank), and hit Save,
+  // producing empty variants server-side. Iterate; first failing tab wins.
+  for (const lang of selectedLanguages.value) {
+    const texts = languageTexts.value[lang] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
+    const parsed = rupEntrySchema.safeParse({
+      moduleIndex: texts.moduleIndex,
+      moduleName: texts.moduleName,
+      learningOutcome: texts.learningOutcome,
+      totalCredits: String(s.totalCredits),
+      totalHours: String(s.totalHours),
+      groupHours: String(s.groupHours ?? ""),
+      theoreticalHours: String(s.theoreticalHours),
+      labPracticalHours: String(s.labPracticalHours),
+      field3Value: String(s.field3Value),
+      srspHours: String(s.srspHours),
+      srsHours: String(s.srsHours),
+      trainingPracticeHours: String(s.trainingPracticeHours),
+      individualHours: String(s.individualHours),
+      individualAdditionalHours: String(s.individualAdditionalHours ?? ""),
+      distributionEntries: s.distributionEntries,
+    });
+    if (!parsed.success) {
+      // Prefix per-language errors so the user knows which tab to fix.
+      const langLabel = getLanguageName(lang);
+      const issues = parsed.error.issues.map((i) => ({
+        ...i,
+        message: `[${langLabel}] ${i.message}`,
+      }));
+      return { success: false, error: { issues } } as typeof parsed;
+    }
+  }
+  // All tabs valid — return the last successful parse for the computed shape.
+  return { success: true } as { success: true };
 });
 
 const formError = computed(() => {
