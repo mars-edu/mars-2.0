@@ -14,6 +14,16 @@ export const academicYearSchema = z
       .int()
       .positive("Год окончания должен быть положительным числом"),
     isActive: z.boolean(),
+    // Length of one academic hour in minutes. Optional (default 45 applied
+    // at read-side via DEFAULT_ACADEMIC_HOUR_MINUTES). .catch(undefined)
+    // turns blank/NaN/negative into "not set" without preprocess boilerplate.
+    academicHourMinutes: z.coerce
+      .number({ error: "Длительность академ. часа должна быть числом" })
+      .int("Длительность академ. часа должна быть целым числом")
+      .positive("Длительность академ. часа должна быть > 0")
+      .max(180, "Длительность академ. часа не может быть больше 180 мин")
+      .optional()
+      .catch(undefined),
   })
   .refine((data) => data.endYear > data.startYear, {
     message: "Год окончания должен быть больше года начала",
