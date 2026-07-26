@@ -256,10 +256,11 @@ function copyFromSource(source: any) {
 }
 
 // Called from RupIntegrationPanel's @apply-source event with the chosen
-// source subject id (both Integration and Connect flows).
+// source subject id (both Integration and Connect flows). Uses the store's
+// indexed getRupEntryById (Map lookup) — cheaper than scanning rupEntries.
 function applySource(subjectId: string) {
   if (!subjectId) return;
-  const source = rupEntryStore.rupEntries.find((e) => e.id === subjectId);
+  const source = rupEntryStore.getRupEntryById(subjectId);
   if (!source) return;
   copyFromSource(source);
 }
@@ -276,16 +277,19 @@ watch(
         if (variants.length > 0) {
           loadLanguageVariants(variants, val.language);
 
-          // Prefill from the CLICKED variant (matches props.initialData.id),
-          // not variants[0] — hour fields may diverge across language variants
-          // and the user expects to see what they clicked.
-          const clicked = variants.find((v: any) => v.id === val.id) ?? variants[0];
-          editedEntry.value = pickHoursForm(clicked);
-          selectedSpecialtyIds.value = clicked.specialtyIds ? [...clicked.specialtyIds] : [];
+          // Prefill from the entry the user opened (props.initialData.id).
+          // Parents pass a shallow snapshot ({ ...item }) or a live ref;
+          // re-read via the store so we always show the current values
+          // (Convex reactivity keeps rupEntries fresh even if the parent's
+          // snapshot froze). Fall back to `val` if the store lookup misses
+          // during a sync race — better stale than showing another variant.
+          const source = rupEntryStore.getRupEntryById(val.id) ?? val;
+          editedEntry.value = pickHoursForm(source);
+          selectedSpecialtyIds.value = source.specialtyIds ? [...source.specialtyIds] : [];
 
-          const hasSrs = clicked.distributionEntries?.some((e: any) => Number(e.srsHours) > 0);
-          const hasSrsp = clicked.distributionEntries?.some((e: any) => Number(e.srspHours) > 0);
-          const hasIndiv = clicked.distributionEntries?.some((e: any) => Number(e.individualHours) > 0);
+          const hasSrs = source.distributionEntries?.some((e: any) => Number(e.srsHours) > 0);
+          const hasSrsp = source.distributionEntries?.some((e: any) => Number(e.srspHours) > 0);
+          const hasIndiv = source.distributionEntries?.some((e: any) => Number(e.individualHours) > 0);
           visibleColumns.value = {
             srs: !!hasSrs,
             srsp: !!hasSrsp,
