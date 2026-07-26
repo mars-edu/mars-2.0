@@ -41,128 +41,10 @@
               v-model:active="activeLanguageTab"
             />
 
-            <div class="mt-6 pt-4 border-t border-border grid grid-cols-2 gap-x-8 gap-y-4">
-                <Input
-                  :id="'total-credits-'"
-                  v-model="step.totalCredits"
-                  label="Всего кредитов"
-                  type="text" inputmode="numeric"
-                  placeholder="0"
-                />
-
-                <Input
-                  :id="'total-hours-'"
-                  v-model="step.totalHours"
-                  label="Всего часов"
-                  type="text" inputmode="numeric"
-                  placeholder="0"
-                />
-
-                <Input
-                  :id="'group-hours-'"
-                  v-model="step.groupHours"
-                  label="Групповые"
-                  type="text" inputmode="numeric"
-                  placeholder="0"
-                />
-
-                <Input
-                  :id="'theoretical-hours-'"
-                  v-model="step.theoreticalHours"
-                  label="Теоретических"
-                  type="text" inputmode="numeric"
-                  placeholder="0"
-                />
-
-                <Input
-                  :id="'lab-practical-hours-'"
-                  v-model="step.labPracticalHours"
-                  label="Лабараторно-практических"
-                  type="text" inputmode="numeric"
-                  placeholder="0"
-                />
-
-                <Input
-                  :id="'field3-value-'"
-                  v-model="step.field3Value"
-                  label="3"
-                  type="text" inputmode="numeric"
-                  placeholder="0"
-                />
-
-                <Input
-                  :id="'srsp-hours-'"
-                  v-model="step.srspHours"
-                  label="Самостоятельная работа студента с педагогом"
-                  type="text" inputmode="numeric"
-                  placeholder="0"
-                >
-                  <template #button>
-                    <button
-                      type="button"
-                      title="Распределить по семестрам"
-                      class="w-6 h-6 flex items-center justify-center rounded-md bg-transparent border-0 p-0 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer transition-colors active:scale-95"
-                      @click="distributeHoursFromField('srspHours')"
-                    >
-                      <IconArrowDown class="w-4 h-4" />
-                    </button>
-                  </template>
-                </Input>
-
-                <Input
-                  :id="'srs-hours-'"
-                  v-model="step.srsHours"
-                  label="Самостоятельная работа студента"
-                  type="text" inputmode="numeric"
-                  placeholder="0"
-                >
-                  <template #button>
-                    <button
-                      type="button"
-                      title="Распределить по семестрам"
-                      class="w-6 h-6 flex items-center justify-center rounded-md bg-transparent border-0 p-0 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer transition-colors active:scale-95"
-                      @click="distributeHoursFromField('srsHours')"
-                    >
-                      <IconArrowDown class="w-4 h-4" />
-                    </button>
-                  </template>
-                </Input>
-
-                <Input
-                  :id="'training-practice-hours-'"
-                  v-model="step.trainingPracticeHours"
-                  label="Производственное обучение / профессиональная практика"
-                  type="text" inputmode="numeric"
-                  placeholder="0"
-                />
-
-                <Input
-                  :id="'individual-hours-'"
-                  v-model="step.individualHours"
-                  label="Индивидуальные"
-                  type="text" inputmode="numeric"
-                  placeholder="0"
-                />
-
-                <Input
-                  :id="'individual-additional-hours-'"
-                  v-model="step.individualAdditionalHours"
-                  label="Индивидуальные (дополнительно)"
-                  type="text" inputmode="numeric"
-                  placeholder="0"
-                >
-                  <template #button>
-                    <button
-                      type="button"
-                      title="Распределить по семестрам"
-                      class="w-6 h-6 flex items-center justify-center rounded-md bg-transparent border-0 p-0 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer transition-colors active:scale-95"
-                      @click="distributeHoursFromField('individualAdditionalHours')"
-                    >
-                      <IconArrowDown class="w-4 h-4" />
-                    </button>
-                  </template>
-                </Input>
-              </div>
+            <RupHourFields
+              v-model:step="step"
+              @distribute="distributeHoursFromField"
+            />
 
               <div class="mt-6 pt-4 border-t border-border">
                 <div class="flex items-center justify-between mb-2">
@@ -368,7 +250,6 @@ import { ref, computed, onMounted, watch, nextTick } from "vue";
 import { f7Popover, f7Checkbox, f7Button, f7 } from "framework7-vue";
 import IconTrash from "~icons/lucide/trash-2";
 import IconCircleCheck from "~icons/lucide/circle-check";
-import IconArrowDown from "~icons/lucide/arrow-down";
 import IconPlus from "~icons/lucide/plus";
 import {
   isHours,
@@ -391,6 +272,7 @@ import Select from "@/components/ui/Select.vue";
 import Input from "@/components/ui/Input.vue";
 import RupSpecialtyPicker from "@/components/RupSpecialtyPicker.vue";
 import RupLanguageTabs, { type LanguageTexts } from "@/components/RupLanguageTabs.vue";
+import RupHourFields from "@/components/RupHourFields.vue";
 import { useLanguageStore } from "@/stores/languageStore";
 
 const emit = defineEmits<{
