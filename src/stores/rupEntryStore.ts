@@ -571,25 +571,41 @@ export const useRupEntryStore = defineStore(
         }, "Failed to add multi-language RUP entry");
     }
 
+    // Server-side ref-scan tables + their Russian labels, in display order.
+    // Whitelist: unknown keys from the server payload are ignored (not printed
+    // as raw table names) — same list is used in `scanRefs` in the mutation.
+    const RUP_REF_LABELS = [
+      ["calendarEvents", "события календаря"],
+      ["ktps", "КТП"],
+      ["journals", "журналы"],
+      ["scheduledIntermediateControls", "ПРК (планы)"],
+      ["scheduledFinalControls", "экзамены (планы)"],
+    ] as const;
+
+    function formatRupReferences(refs: unknown): string {
+      if (!refs || typeof refs !== "object") return "";
+      const r = refs as Record<string, unknown>;
+      const parts: string[] = [];
+      for (const [key, label] of RUP_REF_LABELS) {
+        const n = r[key];
+        if (typeof n === "number" && n > 0) parts.push(`${label}: ${n}`);
+      }
+      return parts.join(", ");
+    }
+
     // Translate the server's RUP_ENTRY_HAS_REFERENCES ConvexError into a human
-    // message. Called around delete mutations so all UI handlers get a clear
-    // Russian alert without duplicating parsing at every call site.
+    // message. Called around delete/save mutations so all UI handlers get a
+    // clear Russian alert without duplicating parsing at every call site.
     function rethrowRupDeleteError(err: unknown, groupMode: boolean): never {
       if (err instanceof ConvexError) {
-        const data = err.data as { code?: string; references?: Record<string, number> } | undefined;
-        if (data?.code === "RUP_ENTRY_HAS_REFERENCES" && data.references) {
-          const labels: Record<string, string> = {
-            calendarEvents: "события календаря",
-            ktps: "КТП",
-            journals: "журналы",
-            scheduledIntermediateControls: "ПРК (планы)",
-            scheduledFinalControls: "экзамены (планы)",
-          };
-          const parts = Object.entries(data.references).map(
-            ([k, n]) => `${labels[k] ?? k}: ${n}`
-          );
+        const data = err.data as { code?: string; references?: unknown } | undefined;
+        if (data?.code === "RUP_ENTRY_HAS_REFERENCES") {
+          const list = formatRupReferences(data.references);
           const subject = groupMode ? "Группа записей РУП" : "Запись РУП";
-          throw new Error(`${subject} используется. Сначала удалите: ${parts.join(", ")}.`);
+          if (list) {
+            throw new Error(`${subject} используется. Сначала удалите: ${list}.`);
+          }
+          throw new Error(`${subject} используется — сначала удалите ссылки.`);
         }
       }
       throw err;
