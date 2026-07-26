@@ -11,6 +11,11 @@ export const academicTables = {
     startYear: v.number(),
     endYear: v.number(),
     isActive: v.boolean(),
+    // Length of one academic hour in minutes for this year (default 45 when
+    // undefined — Kazakhstan college standard). Drives calculator's
+    // astronomical→academic conversion; per-year so the regulation can be
+    // adjusted (e.g. 40/45/50) without a code change or global flag.
+    academicHourMinutes: v.optional(v.number()),
     createdAt: v.string(),
     updatedAt: v.string(),
   })

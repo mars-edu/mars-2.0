@@ -53,6 +53,24 @@
             </div>
           </div>
 
+          <div class="space-y-2">
+            <label class="text-sm text-foreground" for="academic-hour-minutes">
+              Длительность академического часа (мин)
+            </label>
+            <f7-input
+              id="academic-hour-minutes"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              v-model:value="academicHourMinutes"
+              placeholder="45"
+            ></f7-input>
+            <p class="text-xs text-muted-foreground">
+              Стандарт РК — 45. Изменение пересчитает «факт» часов препода
+              для отчётов этого года.
+            </p>
+          </div>
+
           <div class="flex items-center">
             <f7-checkbox
               id="is-active"
@@ -97,6 +115,8 @@ const academicYear = computed(() => academicYearStore.getAcademicYearById(props.
 const startYear = ref<number>(0);
 const endYear = ref<number>(0);
 const isActive = ref(false);
+// String-typed for f7-input; blank/undefined = "use default 45".
+const academicHourMinutes = ref<string>("");
 const formError = ref("");
 
 // Update form fields whenever academic year data changes
@@ -106,6 +126,10 @@ watchEffect(() => {
     startYear.value = academicYear.value.startYear;
     endYear.value = academicYear.value.endYear;
     isActive.value = academicYear.value.isActive;
+    academicHourMinutes.value =
+      academicYear.value.academicHourMinutes != null
+        ? String(academicYear.value.academicHourMinutes)
+        : "";
   }
 });
 
@@ -138,11 +162,23 @@ const handleUpdateAcademicYear = async () => {
   }
 
   try {
+    // Parse minutes: blank = undefined (use default 45 downstream); reject
+    // 0 / negative / non-finite to avoid divide-by-zero in the calculator.
+    let parsedMinutes: number | undefined = undefined;
+    if (academicHourMinutes.value.trim() !== "") {
+      const n = Number(academicHourMinutes.value);
+      if (!Number.isFinite(n) || n <= 0) {
+        formError.value = "Длительность академ. часа должна быть > 0";
+        return;
+      }
+      parsedMinutes = n;
+    }
     await academicYearStore.updateAcademicYear(academicYear.value.id, {
       name: `${startYear.value}-${endYear.value}`,
       startYear: Number(startYear.value),
       endYear: Number(endYear.value),
       isActive: isActive.value,
+      academicHourMinutes: parsedMinutes,
     });
     closeEditAcademicYearPopover();
   } catch (error) {

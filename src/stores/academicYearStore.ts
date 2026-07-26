@@ -29,6 +29,7 @@ export const useAcademicYearStore = defineStore(
           startYear: year.startYear,
           endYear: year.endYear,
           isActive: year.isActive,
+          academicHourMinutes: year.academicHourMinutes,
           createdAt: new Date(year.createdAt),
           updatedAt: new Date(year.updatedAt),
         }));
@@ -73,6 +74,7 @@ export const useAcademicYearStore = defineStore(
                   startYear: academicYearData.startYear,
                   endYear: academicYearData.endYear,
                   isActive: academicYearData.isActive,
+                  academicHourMinutes: academicYearData.academicHourMinutes,
                 });
                 const newAcademicYear = await convex.query(api.academicYears.queries.getById, { id });
                 if (newAcademicYear) {
@@ -106,6 +108,7 @@ export const useAcademicYearStore = defineStore(
                   startYear: academicYearData.startYear,
                   endYear: academicYearData.endYear,
                   isActive: academicYearData.isActive,
+                  academicHourMinutes: academicYearData.academicHourMinutes,
                 });
 
                 if (updated) {

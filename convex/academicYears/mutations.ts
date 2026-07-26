@@ -11,6 +11,7 @@ export const create = mutation({
     startYear: v.number(),
     endYear: v.number(),
     isActive: v.boolean(),
+    academicHourMinutes: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const timestamps = createTimestamps();
@@ -44,6 +45,7 @@ export const update = mutation({
     startYear: v.optional(v.number()),
     endYear: v.optional(v.number()),
     isActive: v.optional(v.boolean()),
+    academicHourMinutes: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
