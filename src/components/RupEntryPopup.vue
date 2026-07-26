@@ -517,6 +517,12 @@ import IconCircleCheck from "~icons/lucide/circle-check";
 import IconArrowDown from "~icons/lucide/arrow-down";
 import IconLink from "~icons/lucide/link";
 import IconPlus from "~icons/lucide/plus";
+import {
+  isHours,
+  distributeFmt,
+  computeDistributionSummary,
+} from "@/lib/rupHours";
+import { parseNumber } from "@/utils/parseNumber";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";
@@ -620,27 +626,9 @@ const baseLabel = computed(() => {
   return base === 11 ? "База 11 классов" : "База 9 классов";
 });
 
-const distributionSummary = computed(() => {
-  const s = step.value;
-  if (!s || !s.distributionEntries) return { group: 0, srs: 0, srsp: 0, individual: 0, targetGroup: 0, targetSrs: 0, targetSrsp: 0, targetIndividual: 0 };
-  let sumGroup = 0, sumSrs = 0, sumSrsp = 0, sumIndividual = 0;
-  for (const entry of s.distributionEntries) {
-    sumGroup += Number(entry.hours) || 0;
-    sumSrs += Number((entry as any).srsHours) || 0;
-    sumSrsp += Number((entry as any).srspHours) || 0;
-    sumIndividual += Number((entry as any).individualHours) || 0;
-  }
-  return {
-    group: Number(sumGroup.toFixed(2)),
-    srs: Number(sumSrs.toFixed(2)),
-    srsp: Number(sumSrsp.toFixed(2)),
-    individual: Number(sumIndividual.toFixed(2)),
-    targetGroup: Number(((Number(s.totalHours) || 0) - (Number(s.individualAdditionalHours) || 0)).toFixed(2)),
-    targetSrs: Number(Number(s.srsHours || 0).toFixed(2)),
-    targetSrsp: Number(Number(s.srspHours || 0).toFixed(2)),
-    targetIndividual: Number(Number(s.individualAdditionalHours || 0).toFixed(2)),
-  };
-});
+const distributionSummary = computed(() =>
+  computeDistributionSummary(step.value)
+);
 
 const availableIntegrationYears = computed(() =>
   academicYearStore.academicYears
@@ -948,7 +936,7 @@ const distributionEntrySchema = z.object({
 // Strict hours validator: integer or one-decimal-group string, no
 // leading +/-, no exponent notation, no hex, no whitespace. Empty string
 // stays allowed to preserve existing optional-field behavior.
-const isHours = (v: string) => v === "" || /^\d+(\.\d+)?$/.test(v);
+// isHours moved to @/lib/rupHours — imported at top.
 
 const rupEntrySchema = z.object({
   moduleIndex: z.string().min(1, "Индекс модуля обязателен"),
@@ -1201,54 +1189,26 @@ function distributeHoursFromField(
     return;
   }
 
-  const num = (v: string | undefined | null) => {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : 0;
-  };
-  const fmt = (n: number) => {
-    if (!Number.isFinite(n)) return "0";
-    return Number.isInteger(n) ? String(n) : n.toFixed(2);
-  };
-
-  // Distribute `total` evenly across `count` formatted values whose sum
-  // always equals `total`: the first count-1 entries get the rounded
-  // per-entry share, and the last entry absorbs whatever remainder is left
-  // (avoids "33.33 x 3 = 99.99" drift when total doesn't divide evenly).
-  const distributeFmt = (total: number, count: number): string[] => {
-    if (count <= 0) return [];
-    if (count === 1) return [fmt(total)];
-    const per = total / count;
-    const values: string[] = [];
-    let sum = 0;
-    for (let i = 0; i < count - 1; i++) {
-      const val = fmt(per);
-      values.push(val);
-      sum += num(val);
-    }
-    values.push(fmt(total - sum));
-    return values;
-  };
+  // num/fmt/distributeFmt moved to @/lib/rupHours (parseNumber handles comma).
 
   const count = s.distributionEntries.length;
 
   if (field === "srspHours") {
     visibleColumns.value.srsp = true;
-    const total = num(s.srspHours);
-    const values = distributeFmt(total, count);
+    const values = distributeFmt(parseNumber(s.srspHours), count);
     s.distributionEntries.forEach((e, i) => {
       (e as any).srspHours = values[i];
     });
   } else if (field === "srsHours") {
     visibleColumns.value.srs = true;
-    const total = num(s.srsHours);
-    const values = distributeFmt(total, count);
+    const values = distributeFmt(parseNumber(s.srsHours), count);
     s.distributionEntries.forEach((e, i) => {
       (e as any).srsHours = values[i];
     });
   } else if (field === "individualAdditionalHours") {
     visibleColumns.value.individual = true;
-    const totalIndividual = num(s.individualAdditionalHours);
-    const totalAll = num(s.totalHours);
+    const totalIndividual = parseNumber(s.individualAdditionalHours);
+    const totalAll = parseNumber(s.totalHours);
     const individualValues = distributeFmt(totalIndividual, count);
     const groupTotal = Math.max(0, totalAll - totalIndividual);
     const groupValues = distributeFmt(groupTotal, count);
