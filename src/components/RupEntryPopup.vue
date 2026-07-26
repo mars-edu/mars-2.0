@@ -34,73 +34,12 @@
             <!-- Specialty selection -->
             <RupSpecialtyPicker v-model="selectedSpecialtyIds" />
 
-            <!-- Language chips (concept-style: colored pills) -->
-            <div class="mb-4">
-              <label class="text-sm text-foreground mb-2 block font-medium flex items-center gap-2">
-                <IconGlobe class="w-4 h-4 text-muted-foreground" />
-                Языки обучения
-              </label>
-              <div class="flex flex-wrap gap-2">
-                <button
-                  v-for="lang in languageOptions"
-                  :key="lang.code"
-                  type="button"
-                  @click="toggleLanguage(lang.code)"
-                  class="lang-pill"
-                  :class="
-                    selectedLanguages.includes(lang.code)
-                      ? `lang-pill-active lang-pill-${lang.code}`
-                      : 'lang-pill-inactive'
-                  "
-                >
-                  {{ lang.name }}
-                </button>
-              </div>
-            </div>
-
-            <!-- Language sections for each selected language -->
-            <div class="space-y-6">
-              <div
-                v-for="lang in selectedLanguages"
-                :key="lang"
-                class="p-4 bg-muted/50 rounded-xl border border-border"
-              >
-                <div class="flex items-center gap-2 mb-4">
-                  <div
-                    class="w-2 h-2 rounded-full"
-                    :class="{
-                      'bg-yellow-500': lang === 'kk',
-                      'bg-gray-900': lang === 'ru',
-                      'bg-purple-500': lang === 'en',
-                    }"
-                  ></div>
-                  <span class="text-sm font-bold uppercase">{{ getLanguageName(lang) }}</span>
-                </div>
-
-                <div class="space-y-4">
-                  <Input
-                    :id="'module-index-' + lang"
-                    v-model="languageTexts[lang].moduleIndex"
-                    label="Индекс модуля/дисциплины"
-                    placeholder="Введите индекс"
-                  />
-
-                  <Input
-                    :id="'learning-outcome-' + lang"
-                    v-model="languageTexts[lang].learningOutcome"
-                    label="Наименование результата обучения/дисциплина"
-                    placeholder="Введите результат"
-                  />
-
-                  <Input
-                    :id="'module-name-' + lang"
-                    v-model="languageTexts[lang].moduleName"
-                    label="Наименование модуля"
-                    placeholder="Введите наименование"
-                  />
-                </div>
-              </div>
-            </div>
+            <RupLanguageTabs
+              ref="languageTabs"
+              v-model:selected="selectedLanguages"
+              v-model:texts="languageTexts"
+              v-model:active="activeLanguageTab"
+            />
 
             <div class="mt-6 pt-4 border-t border-border grid grid-cols-2 gap-x-8 gap-y-4">
                 <Input
@@ -428,7 +367,6 @@
 import { ref, computed, onMounted, watch, nextTick } from "vue";
 import { f7Popover, f7Checkbox, f7Button, f7 } from "framework7-vue";
 import IconTrash from "~icons/lucide/trash-2";
-import IconGlobe from "~icons/lucide/globe";
 import IconCircleCheck from "~icons/lucide/circle-check";
 import IconArrowDown from "~icons/lucide/arrow-down";
 import IconPlus from "~icons/lucide/plus";
@@ -452,6 +390,7 @@ import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import Select from "@/components/ui/Select.vue";
 import Input from "@/components/ui/Input.vue";
 import RupSpecialtyPicker from "@/components/RupSpecialtyPicker.vue";
+import RupLanguageTabs, { type LanguageTexts } from "@/components/RupLanguageTabs.vue";
 import { useLanguageStore } from "@/stores/languageStore";
 
 const emit = defineEmits<{
@@ -491,16 +430,12 @@ const selectedSpecialtyIds = ref<string[]>([]);
 const selectedLanguages = ref<string[]>(["ru"]);
 const activeLanguageTab = ref("ru");
 
-// Language options from store
-const languageOptions = computed(() =>
-  languageStore.languages.map((lang) => ({
-    code: lang.code,
-    name: lang.name,
-  }))
-);
+// Language chip options + toggle live in RupLanguageTabs — parent only keeps
+// the shared state (selected/texts/active) it needs for validation & submit.
+const languageTabs = ref<InstanceType<typeof RupLanguageTabs> | null>(null);
 
 // Per-language text fields: { [langCode]: { moduleIndex, moduleName, learningOutcome } }
-const languageTexts = ref<Record<string, { moduleIndex: string; moduleName: string; learningOutcome: string }>>({
+const languageTexts = ref<LanguageTexts>({
   ru: { moduleIndex: "", moduleName: "", learningOutcome: "" },
 });
 
@@ -606,40 +541,12 @@ function isFormDirty() {
   return serializeFormState() !== dirtyBaseline;
 }
 
-function toggleLanguage(code: string) {
-  const idx = selectedLanguages.value.indexOf(code);
-  if (idx > -1) {
-    if (selectedLanguages.value.length > 1) {
-      selectedLanguages.value.splice(idx, 1);
-      delete languageTexts.value[code];
-      if (activeLanguageTab.value === code) {
-        activeLanguageTab.value = selectedLanguages.value[0];
-      }
-    }
-  } else {
-    selectedLanguages.value.push(code);
-    if (!languageTexts.value[code]) {
-      languageTexts.value[code] = { moduleIndex: "", moduleName: "", learningOutcome: "" };
-    }
-  }
+// toggleLanguage moved into RupLanguageTabs. getLanguageName is used by
+// validationResult below to prefix errors with the offending tab; keep a small
+// helper here reading the same store.
+function getLanguageName(code: string): string {
+  return languageStore.languages.find((l) => l.code === code)?.name ?? code;
 }
-
-function getLanguageName(code: string) {
-  return languageOptions.value.find((l) => l.code === code)?.name ?? code;
-}
-
-const currentLanguageTexts = computed({
-  get() {
-    const lang = activeLanguageTab.value;
-    if (!languageTexts.value[lang]) {
-      languageTexts.value[lang] = { moduleIndex: "", moduleName: "", learningOutcome: "" };
-    }
-    return languageTexts.value[lang];
-  },
-  set(val) {
-    languageTexts.value[activeLanguageTab.value] = val;
-  },
-});
 
 watch(
   () => [props.initialData, props.editMode],
