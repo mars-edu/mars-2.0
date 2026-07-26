@@ -1933,7 +1933,10 @@ export async function exportTeacherWorkloadToExcel(
     richText: [
       { text: "____________айы/Месяц " },
       {
-        text: payload.month,
+        // Form-1 now renders one section per month via populateForm1MultiMonth;
+        // this header cell is a legacy single-month label. Fallback to empty
+        // (each month section carries its own name in-band).
+        text: payload.month ?? "",
         font: {
           bold: true,
           underline: true,

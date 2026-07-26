@@ -62,8 +62,11 @@ export interface TeacherWorkloadExportPayload {
   institutionName: string;
   teacherFullName: string;
   academicYear: string;
-  month: string;
-  entries: WorkloadEntry[];
+  // month + entries are legacy single-month artefacts — Form-1 now renders
+  // every month from allMonthsWorkload. Kept optional for the excel exporter's
+  // still-existing header cell (F8, "Месяц ...") until multi-month header lands.
+  month?: string;
+  entries?: WorkloadEntry[];
   summaryEntries: WorkloadSummaryEntry[];
   monthlyDistribution: MonthlyDistributionEntry[];
   months?: MonthInfo[];
