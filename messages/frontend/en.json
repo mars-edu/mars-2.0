@@ -175,7 +175,6 @@
   "auth_remember_me": "Remember me",
   "auth_no_account": "Don't have an account? Sign up",
   "auth_email": "Email",
-
   "home_home": "Home",
   "home_schedule": "Schedule",
   "home_journals": "Journals",
@@ -212,7 +211,6 @@
   "home_schedule_tomorrow": "Tomorrow",
   "home_schedule_room_prefix": "Room",
   "home_schedule_add_lesson": "Add Lesson",
-
   "profile_title": "Profile",
   "profile_change_photo": "Change photo",
   "profile_upload_photo": "Upload photo",
@@ -240,7 +238,6 @@
   "profile_not_auth_error": "Error: user is not authenticated",
   "profile_upload_error": "Error uploading photo. Please try again.",
   "profile_remove_error": "Error removing photo. Please try again.",
-
   "settings_title": "Settings",
   "settings_collapse_all": "Collapse all",
   "settings_expand_all": "Expand all",
@@ -260,7 +257,6 @@
   "settings_intermediate_controls": "Intermediate control:",
   "settings_no_intermediate_controls": "No intermediate controls",
   "settings_no_intermediate_controls_desc": "No intermediate controls have been added to the system",
-
   "notifications_title": "Notifications",
   "notifications_mark_all_read": "Mark all as read",
   "notifications_important": "Important announcement",
@@ -281,7 +277,6 @@
   "notifications_substitution_reject_error": "Error rejecting substitution",
   "notifications_reject_reason": "Rejection reason (optional):",
   "notifications_reject_title": "Reject substitution",
-
   "journal_title": "Journals",
   "journal_academic_year": "Academic year:",
   "journal_semester": "Semester:",
@@ -407,8 +402,7 @@
   "student_table_not_found": "No students found",
   "student_status_expelled": "Expelled",
   "student_status_transferred": "Transferred",
-  "student_status_academic_leave": "Academic leave",
-
+  "student_status_academic_leave": "Leave",
   "protocol_discipline_fallback": "Discipline",
   "protocol_title": "Protocol",
   "protocol_teacher": "Teacher:",
@@ -434,7 +428,6 @@
   "protocol_confirm_reject": "Reject substitution?",
   "protocol_confirm_desc": "This action will be recorded in the protocol and cannot be undone. The substitution status will be updated.",
   "protocol_wait": "Please wait...",
-
   "planning_title": "Planning",
   "planning_subtitle": "Calendar of lessons and events",
   "planning_teacher": "Teacher:",
@@ -446,7 +439,6 @@
   "planning_tab_week": "Week",
   "planning_tab_month": "Month",
   "planning_tab_year": "Year",
-
   "rup_title": "Working Curriculum Plans:",
   "rup_academic_year": "Enrollment year:",
   "rup_specialties": "Specialties:",
@@ -467,7 +459,6 @@
   "rup_import_done_msg": "Imported {count} items into the selected specialty.",
   "rup_import_done_title": "Import complete",
   "rup_module_duplicated": "Module duplicated",
-
   "analytics_title": "Analytics",
   "analytics_subtitle": "Student performance",
   "analytics_academic_year": "Academic year:",
@@ -495,7 +486,6 @@
   "analytics_no_students_error": "No students matching current filters. Please select at least one student.",
   "analytics_no_disciplines": "No disciplines found for selected filters — the table may be empty.",
   "analytics_export_error": "Error exporting to Excel. See console for details.",
-
   "reports_generate_error": "Error generating report",
   "reports_no_months_error": "Failed to calculate months from semesters. Check the semester date settings for the academic year.",
   "reports_period_full_year_label": "for the full academic year",
@@ -519,7 +509,6 @@
   "reports_no_schedule": "No schedule data for this teacher. Please ensure the teacher has lessons in the calendar.",
   "reports_full_year": "Full academic year",
   "reports_semester_period": "Semester {number}",
-
   "catalog_specialty_title": "Specialty Catalog",
   "catalog_specialty_search": "Search by specialty...",
   "catalog_col_num": "#",
@@ -543,7 +532,6 @@
   "catalog_discipline_search": "Search...",
   "catalog_col_module": "Module",
   "catalog_col_learning_outcome": "Learning Outcome",
-
   "edu_schedule_title": "Education process schedule:",
   "edu_schedule_collapse_all": "Collapse all",
   "edu_schedule_expand_all": "Expand all",
@@ -566,7 +554,6 @@
   "edu_schedule_no_intermediate_controls": "No intermediate controls",
   "edu_schedule_no_intermediate_controls_desc": "No intermediate controls added for this academic year",
   "edu_schedule_semester_label": "Semester {number}",
-
   "student_card_title": "Student Records",
   "student_card_search": "Search by full name...",
   "student_card_year": "Enrollment year:",
@@ -580,8 +567,6 @@
   "student_card_col_course": "Course",
   "student_card_col_status": "Status",
   "student_status_active": "Studying",
-  "student_status_expelled": "Expelled",
-  "student_status_academic_leave": "Leave",
   "student_status_debt": "Debt",
   "student_status_graduated": "Graduated",
   "student_status_active_full": "Studying",
@@ -714,5 +699,13 @@
   "makeup_hours_select_date": "Select date...",
   "protocol_makeup_request_label": "MAKEUP",
   "protocol_makeup_request_title": "Makeup Hours Request",
-  "protocol_makeup_dates_label": "Makeup Dates"
+  "protocol_makeup_dates_label": "Makeup Dates",
+  "rup_ref_ktps": "KTP ({count})",
+  "rup_ref_journals": "journal(s) ({count})",
+  "rup_delete_blocked_entry": "RUP entry is in use. Please delete first: {list}.",
+  "rup_delete_blocked_group": "RUP entry group is in use. Please delete first: {list}.",
+  "rup_delete_blocked_generic": "RUP entry/group is in use — delete references first.",
+  "rup_ref_calendar_events": "calendar events ({count})",
+  "rup_ref_scheduled_intermediate_controls": "intermediate-control plans ({count})",
+  "rup_ref_scheduled_final_controls": "final-exam plans ({count})"
 }

@@ -175,7 +175,6 @@
   "auth_remember_me": "Запомнить меня",
   "auth_no_account": "Нет аккаунта? Зарегистрироваться",
   "auth_email": "Email",
-
   "home_home": "Главная",
   "home_schedule": "Расписание",
   "home_journals": "Журналы",
@@ -212,7 +211,6 @@
   "home_schedule_tomorrow": "Завтра",
   "home_schedule_room_prefix": "Ауд.",
   "home_schedule_add_lesson": "Добавить пару",
-
   "profile_title": "Профиль",
   "profile_change_photo": "Изменить фото",
   "profile_upload_photo": "Загрузить фото",
@@ -240,7 +238,6 @@
   "profile_not_auth_error": "Ошибка: пользователь не авторизован",
   "profile_upload_error": "Ошибка при загрузке фото. Попробуйте еще раз.",
   "profile_remove_error": "Ошибка при удалении фото. Попробуйте еще раз.",
-
   "settings_title": "Система образовательного процесса",
   "settings_collapse_all": "Свернуть все",
   "settings_expand_all": "Развернуть все",
@@ -260,7 +257,6 @@
   "settings_intermediate_controls": "Виды промежуточного контроля",
   "settings_no_intermediate_controls": "Нет промежуточных контролей",
   "settings_no_intermediate_controls_desc": "Промежуточный контроль не добавлен в систему",
-
   "notifications_title": "Уведомления",
   "notifications_mark_all_read": "Отметить все как прочитанные",
   "notifications_important": "Важное объявление",
@@ -281,7 +277,6 @@
   "notifications_substitution_reject_error": "Ошибка при отклонении замены",
   "notifications_reject_reason": "Причина отклонения (необязательно):",
   "notifications_reject_title": "Отклонить замену",
-
   "journal_title": "Журналы",
   "journal_academic_year": "Учебный год:",
   "journal_semester": "Семестр:",
@@ -410,8 +405,7 @@
   "student_table_not_found": "Обучающиеся не найдены",
   "student_status_expelled": "Отчислен",
   "student_status_transferred": "Переведён",
-  "student_status_academic_leave": "Акад. отпуск",
-
+  "student_status_academic_leave": "Академ",
   "protocol_discipline_fallback": "Дисциплина",
   "protocol_title": "Протокол",
   "protocol_teacher": "Преподаватель:",
@@ -437,7 +431,6 @@
   "protocol_confirm_reject": "Отклонить замену?",
   "protocol_confirm_desc": "Это действие будет зафиксировано в протоколе и не может быть отменено. Статус замены будет обновлён.",
   "protocol_wait": "Подождите...",
-
   "planning_title": "Планирование",
   "planning_subtitle": "Календарь занятий и мероприятий",
   "planning_teacher": "Преподаватель:",
@@ -449,7 +442,6 @@
   "planning_tab_week": "Неделя",
   "planning_tab_month": "Месяц",
   "planning_tab_year": "Год",
-
   "rup_title": "Рабочие учебные планы:",
   "rup_academic_year": "Год поступления:",
   "rup_specialties": "Специальности:",
@@ -470,7 +462,6 @@
   "rup_import_done_msg": "Импортировано {count} элементов в выбранную специальность.",
   "rup_import_done_title": "Импорт завершен",
   "rup_module_duplicated": "Модуль дублирован",
-
   "analytics_title": "Аналитика",
   "analytics_subtitle": "Успеваемость обучающихся",
   "analytics_academic_year": "Учебный год:",
@@ -498,7 +489,6 @@
   "analytics_no_students_error": "Нет обучающихся, соответствующих текущим фильтрам. Выберите хотя бы одного обучающегося.",
   "analytics_no_disciplines": "Дисциплины не найдены для выбранных фильтров — таблица может быть пустой.",
   "analytics_export_error": "Ошибка при экспорте в Excel. Подробности в консоли.",
-
   "reports_generate_error": "Ошибка при генерации отчета",
   "reports_no_months_error": "Не удалось вычислить месяцы из семестров. Проверьте настройки дат семестров для учебного года.",
   "reports_period_full_year_label": "за весь учебный год",
@@ -522,7 +512,6 @@
   "reports_no_schedule": "Нет данных о расписании преподавателя. Пожалуйста, убедитесь, что у преподавателя есть занятия в календаре.",
   "reports_full_year": "За весь учебный год",
   "reports_semester_period": "За {number} семестр",
-
   "catalog_specialty_title": "Каталог специальностей",
   "catalog_specialty_search": "Поиск по специальности...",
   "catalog_col_num": "№",
@@ -546,7 +535,6 @@
   "catalog_discipline_search": "Поиск...",
   "catalog_col_module": "Модуль",
   "catalog_col_learning_outcome": "Результат обучения",
-
   "edu_schedule_title": "График образовательного процесса:",
   "edu_schedule_collapse_all": "Свернуть все",
   "edu_schedule_expand_all": "Развернуть все",
@@ -569,7 +557,6 @@
   "edu_schedule_no_intermediate_controls": "Нет промежуточных контролей",
   "edu_schedule_no_intermediate_controls_desc": "Для данного учебного года промежуточные контроли не добавлены",
   "edu_schedule_semester_label": "Семестр {number}",
-
   "student_card_title": "Картотека обучающихся",
   "student_card_search": "Поиск по ФИО...",
   "student_card_year": "Год поступления:",
@@ -583,8 +570,6 @@
   "student_card_col_course": "Курс",
   "student_card_col_status": "Статус",
   "student_status_active": "Учится",
-  "student_status_expelled": "Отчислен",
-  "student_status_academic_leave": "Академ",
   "student_status_debt": "Долг",
   "student_status_graduated": "Выпуск",
   "student_status_active_full": "Учится",
@@ -717,5 +702,13 @@
   "makeup_hours_select_date": "Выберите дату...",
   "protocol_makeup_request_label": "ОТРАБОТКА",
   "protocol_makeup_request_title": "Запрос на отработку часов",
-  "protocol_makeup_dates_label": "Даты отработки"
+  "protocol_makeup_dates_label": "Даты отработки",
+  "rup_ref_ktps": "КТП ({count})",
+  "rup_ref_journals": "журнал(ов) ({count})",
+  "rup_delete_blocked_entry": "Запись РУП используется. Сначала удалите: {list}.",
+  "rup_delete_blocked_group": "Группа записей РУП используется. Сначала удалите: {list}.",
+  "rup_delete_blocked_generic": "Запись/группа РУП используется — сначала удалите ссылки.",
+  "rup_ref_calendar_events": "события календаря ({count})",
+  "rup_ref_scheduled_intermediate_controls": "ПРК планы ({count})",
+  "rup_ref_scheduled_final_controls": "экзамены планы ({count})"
 }

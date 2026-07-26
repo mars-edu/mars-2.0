@@ -175,7 +175,6 @@
   "auth_remember_me": "Менің есімімде ұстап қалу",
   "auth_no_account": "Тіркелгіңіз жоқ па? Тіркелу",
   "auth_email": "Электрондық пошта",
-
   "home_home": "Басты",
   "home_schedule": "Кесте",
   "home_journals": "Журналдар",
@@ -212,7 +211,6 @@
   "home_schedule_tomorrow": "Ертең",
   "home_schedule_room_prefix": "Ауд.",
   "home_schedule_add_lesson": "Сабақ қосу",
-
   "profile_title": "Профиль",
   "profile_change_photo": "Фотоны өзгерту",
   "profile_upload_photo": "Фото жүктеу",
@@ -240,7 +238,6 @@
   "profile_not_auth_error": "Қате: пайдаланушы авторланбаған",
   "profile_upload_error": "Фотоны жүктеу кезінде қате. Қайталап көріңіз.",
   "profile_remove_error": "Фотоны жою кезінде қате. Қайталап көріңіз.",
-
   "settings_title": "Баптаулар",
   "settings_collapse_all": "Барлығын жию",
   "settings_expand_all": "Барлығын жаю",
@@ -260,7 +257,6 @@
   "settings_intermediate_controls": "Аралық бақылау:",
   "settings_no_intermediate_controls": "Аралық бақылаулар жоқ",
   "settings_no_intermediate_controls_desc": "Жүйеге аралық бақылау қосылмаған",
-
   "notifications_title": "Хабарландырулар",
   "notifications_mark_all_read": "Барлығын оқылды деп белгілеу",
   "notifications_important": "Маңызды хабарландыру",
@@ -281,7 +277,6 @@
   "notifications_substitution_reject_error": "Алмастыруды қабылдамау кезінде қате",
   "notifications_reject_reason": "Қабылдамау себебі (міндетті емес):",
   "notifications_reject_title": "Алмастыруды қабылдамау",
-
   "journal_title": "Журналдар",
   "journal_academic_year": "Оқу жылы:",
   "journal_semester": "Семестр:",
@@ -407,8 +402,7 @@
   "student_table_not_found": "Студенттер табылмады",
   "student_status_expelled": "Шығарылды",
   "student_status_transferred": "Ауыстырылды",
-  "student_status_academic_leave": "Академиялық демалыс",
-
+  "student_status_academic_leave": "Академ",
   "protocol_discipline_fallback": "Пән",
   "protocol_title": "Хаттама",
   "protocol_teacher": "Оқытушы:",
@@ -434,7 +428,6 @@
   "protocol_confirm_reject": "Алмастыруды қабылдамау?",
   "protocol_confirm_desc": "Бұл әрекет хаттамада тіркеледі және болдырылмайды. Алмастыру мәртебесі жаңартылады.",
   "protocol_wait": "Күтіңіз...",
-
   "planning_title": "Жоспарлау",
   "planning_subtitle": "Сабақтар мен іс-шаралар күнтізбесі",
   "planning_teacher": "Оқытушы:",
@@ -446,7 +439,6 @@
   "planning_tab_week": "Апта",
   "planning_tab_month": "Ай",
   "planning_tab_year": "Жыл",
-
   "rup_title": "Жұмыс оқу жоспарлары:",
   "rup_academic_year": "Қабылдану жылы:",
   "rup_specialties": "Мамандықтар:",
@@ -467,7 +459,6 @@
   "rup_import_done_msg": "Таңдалған мамандыққа {count} элемент импортталды.",
   "rup_import_done_title": "Импорт аяқталды",
   "rup_module_duplicated": "Модуль көшірілді",
-
   "analytics_title": "Аналитика",
   "analytics_subtitle": "Оқушылардың үлгерімі",
   "analytics_academic_year": "Оқу жылы:",
@@ -495,7 +486,6 @@
   "analytics_no_students_error": "Ағымдағы сүзгілерге сәйкес оқушылар жоқ. Кемінде бір оқушыны таңдаңыз.",
   "analytics_no_disciplines": "Таңдалған сүзгілер үшін пәндер табылмады — кесте бос болуы мүмкін.",
   "analytics_export_error": "Excel-ге экспорттау кезінде қате. Толығырақ консольде.",
-
   "reports_generate_error": "Есепті жасау кезінде қате орын алды",
   "reports_no_months_error": "Семестрлерден айларды есептеу мүмкін болмады. Оқу жылының семестр күн параметрлерін тексеріңіз.",
   "reports_period_full_year_label": "бүкіл оқу жылына",
@@ -519,7 +509,6 @@
   "reports_no_schedule": "Оқытушының кесте деректері жоқ. Оқытушының күнтізбеде сабақтары бар екенін тексеріңіз.",
   "reports_full_year": "Бүкіл оқу жылы үшін",
   "reports_semester_period": "{number} семестр үшін",
-
   "catalog_specialty_title": "Мамандықтар каталогы",
   "catalog_specialty_search": "Мамандық бойынша іздеу...",
   "catalog_col_num": "№",
@@ -543,7 +532,6 @@
   "catalog_discipline_search": "Іздеу...",
   "catalog_col_module": "Модуль",
   "catalog_col_learning_outcome": "Оқу нәтижесі",
-
   "edu_schedule_title": "Білім беру процесінің кестесі:",
   "edu_schedule_collapse_all": "Барлығын жию",
   "edu_schedule_expand_all": "Барлығын жаю",
@@ -566,7 +554,6 @@
   "edu_schedule_no_intermediate_controls": "Аралық бақылаулар жоқ",
   "edu_schedule_no_intermediate_controls_desc": "Бұл оқу жылына аралық бақылаулар қосылмаған",
   "edu_schedule_semester_label": "{number} семестр",
-
   "student_card_title": "Оқушылар картотекасы",
   "student_card_search": "Аты-жөні бойынша іздеу...",
   "student_card_year": "Қабылдану жылы:",
@@ -580,8 +567,6 @@
   "student_card_col_course": "Курс",
   "student_card_col_status": "Мәртебесі",
   "student_status_active": "Оқиды",
-  "student_status_expelled": "Шығарылды",
-  "student_status_academic_leave": "Академ",
   "student_status_debt": "Берешек",
   "student_status_graduated": "Түлек",
   "student_status_active_full": "Оқиды",
@@ -714,5 +699,13 @@
   "makeup_hours_select_date": "Күнді таңдаңыз...",
   "protocol_makeup_request_label": "ӨТЕУ",
   "protocol_makeup_request_title": "Сағаттарды өтеу сұранысы",
-  "protocol_makeup_dates_label": "Өтеу күндері"
+  "protocol_makeup_dates_label": "Өтеу күндері",
+  "rup_ref_ktps": "КТЖ ({count})",
+  "rup_ref_journals": "журнал(дар) ({count})",
+  "rup_delete_blocked_entry": "ЖОЖ жазбасы қолданылуда. Алдымен жойыңыз: {list}.",
+  "rup_delete_blocked_group": "ЖОЖ жазбалар тобы қолданылуда. Алдымен жойыңыз: {list}.",
+  "rup_delete_blocked_generic": "ЖОЖ жазбасы/тобы қолданылуда — алдымен сілтемелерді жойыңыз.",
+  "rup_ref_calendar_events": "күнтізбе оқиғалары ({count})",
+  "rup_ref_scheduled_intermediate_controls": "АБК жоспарлары ({count})",
+  "rup_ref_scheduled_final_controls": "емтихан жоспарлары ({count})"
 }
