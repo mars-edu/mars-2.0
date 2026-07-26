@@ -15,14 +15,16 @@ import * as m from "@/paraglide/messages";
  * tests + code review, not by tsc. If cross-project sharing arrives, move
  * this into a shared module and import from both sides.
  */
-type RupRefLabel = (inputs: { count: unknown }) => string;
-
-const RUP_REF_LABELS: Record<string, RupRefLabel> = {
-  calendarEvents: m.rup_ref_calendar_events,
-  ktps: m.rup_ref_ktps,
-  journals: m.rup_ref_journals,
-  scheduledIntermediateControls: m.rup_ref_scheduled_intermediate_controls,
-  scheduledFinalControls: m.rup_ref_scheduled_final_controls,
+// Wrap paraglide messages (which return the branded `LocalizedString`) into
+// plain `(count) => string` so the SSOT map has a uniform, simple shape.
+const RUP_REF_LABELS: Record<string, (n: number) => string> = {
+  calendarEvents: (count) => m.rup_ref_calendar_events({ count }),
+  ktps: (count) => m.rup_ref_ktps({ count }),
+  journals: (count) => m.rup_ref_journals({ count }),
+  scheduledIntermediateControls: (count) =>
+    m.rup_ref_scheduled_intermediate_controls({ count }),
+  scheduledFinalControls: (count) =>
+    m.rup_ref_scheduled_final_controls({ count }),
 };
 
 const DISPLAY_ORDER = Object.keys(RUP_REF_LABELS);
@@ -42,7 +44,7 @@ export function formatRupReferences(refs: unknown): string {
   for (const key of DISPLAY_ORDER) {
     const n = r[key];
     if (typeof n === "number" && n > 0) {
-      parts.push(RUP_REF_LABELS[key]({ count: n }));
+      parts.push(RUP_REF_LABELS[key](n));
     }
   }
   return parts.join(", ");
@@ -57,8 +59,10 @@ export function formatRupDeleteBlockedMessage(
   groupMode: boolean
 ): string {
   const list = formatRupReferences(refs);
-  if (!list) return m.rup_delete_blocked_generic();
-  return groupMode
-    ? m.rup_delete_blocked_group({ list })
-    : m.rup_delete_blocked_entry({ list });
+  if (!list) return String(m.rup_delete_blocked_generic());
+  return String(
+    groupMode
+      ? m.rup_delete_blocked_group({ list })
+      : m.rup_delete_blocked_entry({ list })
+  );
 }
