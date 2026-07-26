@@ -88,10 +88,7 @@ import { useLanguageStore } from "@/stores/languageStore";
  * marks that language active, which the parent's validation uses to hint
  * "which tab has the error" (see rupEntrySchema `[{lang}]` prefix).
  */
-export type LanguageTexts = Record<
-  string,
-  { moduleIndex: string; moduleName: string; learningOutcome: string }
->;
+import type { LanguageTexts } from "@/composables/useLanguageVariants";
 
 const props = defineProps<{
   selected: string[];

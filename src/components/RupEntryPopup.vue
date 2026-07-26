@@ -89,10 +89,10 @@ import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import Select from "@/components/ui/Select.vue";
 import Input from "@/components/ui/Input.vue";
 import RupSpecialtyPicker from "@/components/RupSpecialtyPicker.vue";
-import RupLanguageTabs, { type LanguageTexts } from "@/components/RupLanguageTabs.vue";
+import RupLanguageTabs from "@/components/RupLanguageTabs.vue";
+import { useLanguageVariants } from "@/composables/useLanguageVariants";
 import RupHourFields from "@/components/RupHourFields.vue";
 import RupDistributionTable from "@/components/RupDistributionTable.vue";
-import { useLanguageStore } from "@/stores/languageStore";
 
 const emit = defineEmits<{
   (e: "submit"): void;
@@ -112,7 +112,6 @@ const rupEntryStore = useRupEntryStore();
 const academicYearStore = useAcademicYearStore();
 const semesterStore = useSemesterStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
-const languageStore = useLanguageStore();
 
 function createEmptyEntry() {
   return rupEntryStore.createEmptyRupEntry(
@@ -126,19 +125,22 @@ function createEmptyEntry() {
 const step = ref(createEmptyEntry());
 const selectedSpecialtyIds = ref<string[]>([]);
 
-const selectedLanguages = ref<string[]>(["ru"]);
-const activeLanguageTab = ref("ru");
+// Language-variant state + helpers extracted to a composable.
+const {
+  selectedLanguages,
+  activeLanguageTab,
+  languageTexts,
+  editVariantIds,
+  getLanguageName,
+  reset: resetLanguages,
+  loadFromVariants: loadLanguageVariants,
+  buildSaveVariants,
+  buildRemovedVariantIds,
+} = useLanguageVariants();
 
-// Language chip options + toggle live in RupLanguageTabs — parent only keeps
-// the shared state (selected/texts/active) it needs for validation & submit.
+// Ref only needed if the parent wants to call component methods on RupLanguageTabs
+// (currently none — kept nullable in case future actions land there).
 const languageTabs = ref<InstanceType<typeof RupLanguageTabs> | null>(null);
-
-// Per-language text fields: { [langCode]: { moduleIndex, moduleName, learningOutcome } }
-const languageTexts = ref<LanguageTexts>({
-  ru: { moduleIndex: "", moduleName: "", learningOutcome: "" },
-});
-
-const editVariantIds = ref<Record<string, string>>({});
 
 // Distribution table optional per-semester columns (revealed by down-arrow buttons)
 const visibleColumns = ref({
@@ -232,9 +234,7 @@ function isFormDirty() {
 // toggleLanguage moved into RupLanguageTabs. getLanguageName is used by
 // validationResult below to prefix errors with the offending tab; keep a small
 // helper here reading the same store.
-function getLanguageName(code: string): string {
-  return languageStore.languages.find((l) => l.code === code)?.name ?? code;
-}
+// getLanguageName provided by useLanguageVariants (destructured above).
 
 watch(
   () => [props.initialData, props.editMode],
@@ -244,23 +244,7 @@ watch(
       if (val.groupId) {
         const variants = rupEntryStore.getGroupedVariants(val.groupId);
         if (variants.length > 0) {
-          const langs = variants.map((v: any) => v.language || "ru");
-          selectedLanguages.value = [...new Set(langs)];
-          activeLanguageTab.value = val.language || langs[0];
-
-          const texts: Record<string, { moduleIndex: string; moduleName: string; learningOutcome: string }> = {};
-          const variantIdMap: Record<string, string> = {};
-          for (const v of variants) {
-            const lang = v.language || "ru";
-            texts[lang] = {
-              moduleIndex: v.moduleIndex,
-              moduleName: v.moduleName,
-              learningOutcome: v.learningOutcome,
-            };
-            variantIdMap[lang] = v.id;
-          }
-          languageTexts.value = texts;
-          editVariantIds.value = variantIdMap;
+          loadLanguageVariants(variants, val.language);
 
           // Prefill from the CLICKED variant (matches props.initialData.id),
           // not variants[0] — hour fields may diverge across language variants
@@ -353,9 +337,7 @@ onMounted(() => {
   if (!props.editMode || !props.initialData) {
     step.value = createEmptyEntry();
     selectedSpecialtyIds.value = props.specialtyIds || [];
-    selectedLanguages.value = ["ru"];
-    activeLanguageTab.value = "ru";
-    languageTexts.value = { ru: { moduleIndex: "", moduleName: "", learningOutcome: "" } };
+    resetLanguages();
   }
   nextTick(() => captureBaseline());
 });
@@ -507,10 +489,7 @@ const isFormValid = computed(() => validationResult.value.success);
 function resetLocalState() {
   step.value = createEmptyEntry();
   selectedSpecialtyIds.value = [];
-  selectedLanguages.value = ["ru"];
-  activeLanguageTab.value = "ru";
-  languageTexts.value = { ru: { moduleIndex: "", moduleName: "", learningOutcome: "" } };
-  editVariantIds.value = {};
+  resetLanguages();
   integrationPanel.value?.reset();
   visibleColumns.value = { srs: false, srsp: false, individual: false };
 }
@@ -538,23 +517,10 @@ async function submit() {
   const baseClass = props.baseClass ? [props.baseClass] : [9];
   const s = step.value;
 
-  // variants: existing lang -> id from editVariantIds; new lang -> no id
-  const variants = selectedLanguages.value.map((lang) => {
-    const texts = languageTexts.value[lang] ?? { moduleIndex: "", moduleName: "", learningOutcome: "" };
-    const id = editVariantIds.value[lang];
-    return {
-      ...(id ? { id: id as any } : {}),
-      language: lang,
-      moduleIndex: texts.moduleIndex,
-      moduleName: texts.moduleName,
-      learningOutcome: texts.learningOutcome,
-    };
-  });
-
-  // removedVariantIds: any editVariantIds entry whose lang is no longer selected
-  const removedVariantIds = Object.entries(editVariantIds.value)
-    .filter(([lang]) => !selectedLanguages.value.includes(lang))
-    .map(([, id]) => id as any);
+  // Variant payloads (existing lang -> id patch, new lang -> insert) +
+  // removedVariantIds (deselected langs) come from useLanguageVariants.
+  const variants = buildSaveVariants();
+  const removedVariantIds = buildRemovedVariantIds();
 
   try {
     await rupEntryStore.saveRupEntryGroup({
