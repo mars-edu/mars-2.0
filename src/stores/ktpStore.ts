@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { convex } from "@/lib/convexClient";
+import type { Id } from "@convex/_generated/dataModel";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import type { ParsedLesson, Ktp, KtpDetail } from "@/types/ktp";
@@ -94,7 +95,7 @@ export const useKtpStore = defineStore("ktp", () => {
     const id = await convex.mutation(api.ktps.mutations.create, {
       rupEntryId,
       academicYearId,
-      semesterId: semesterId as any,
+      semesterId: semesterId as Id<"academicYearSemesters">,
       eventId,
       name,
       color: extra?.color,

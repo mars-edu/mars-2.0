@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
+import type { Id } from "@convex/_generated/dataModel";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
@@ -68,7 +69,7 @@ export const useVacationStore = defineStore(
                   academicYearId: vacationData.academicYearId,
                   startDate: vacationData.startDate,
                   endDate: vacationData.endDate,
-                  semesterId: vacationData.semesterId as any,
+                  semesterId: vacationData.semesterId as Id<"academicYearSemesters">,
                 });
                 // Don't push to vacations.value - the reactive subscription will handle it
                 error.value = null;
@@ -88,7 +89,7 @@ export const useVacationStore = defineStore(
                   academicYearId: vacationData.academicYearId,
                   startDate: vacationData.startDate,
                   endDate: vacationData.endDate,
-                  semesterId: vacationData.semesterId as any,
+                  semesterId: vacationData.semesterId as Id<"academicYearSemesters">,
                 });
                 // Don't update vacations.value - the reactive subscription will handle it
                 error.value = null;

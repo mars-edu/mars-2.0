@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import { useAcademicYearStore } from "./academicYearStore";
 import { convex } from "@/lib/convexClient";
+import type { Id } from "@convex/_generated/dataModel";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
@@ -86,7 +87,7 @@ export const useEducationScheduleStore = defineStore(
                   endTime: scheduleData.endTime,
                   order: nextLessonNumber,
                   academicYearId: scheduleData.academicYearId,
-                  semesterId: scheduleData.semesterId as any,
+                  semesterId: scheduleData.semesterId as Id<"academicYearSemesters">,
                 });
                 // Don't push to schedules.value - the reactive subscription will handle it
                 error.value = null;
@@ -108,7 +109,7 @@ export const useEducationScheduleStore = defineStore(
                   startTime: scheduleData.startTime,
                   endTime: scheduleData.endTime,
                   order: scheduleData.lessonNumber,
-                  semesterId: scheduleData.semesterId as any,
+                  semesterId: scheduleData.semesterId as Id<"academicYearSemesters">,
                 });
                 // Don't update schedules.value - the reactive subscription will handle it
                 error.value = null;
