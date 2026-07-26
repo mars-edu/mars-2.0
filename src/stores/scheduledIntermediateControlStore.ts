@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
+import type { Id } from "@convex/_generated/dataModel";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
@@ -86,7 +87,7 @@ export const useScheduledIntermediateControlStore = defineStore(
                   shortName: controlData.shortName,
                   startDate: controlData.startDate,
                   endDate: controlData.endDate,
-                  semesterId: controlData.semesterId as string,
+                  semesterId: controlData.semesterId as Id<"academicYearSemesters">,
                 });
                 // Don't push to scheduledIntermediateControls.value - the reactive subscription will handle it
                 error.value = null;
@@ -108,7 +109,7 @@ export const useScheduledIntermediateControlStore = defineStore(
                   shortName: controlData.shortName,
                   startDate: controlData.startDate,
                   endDate: controlData.endDate,
-                  semesterId: controlData.semesterId as string,
+                  semesterId: controlData.semesterId as Id<"academicYearSemesters">,
                 });
                 // Don't update scheduledIntermediateControls.value - the reactive subscription will handle it
                 error.value = null;

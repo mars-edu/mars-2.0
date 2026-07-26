@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { convex } from "@/lib/convexClient";
+import type { Id } from "@convex/_generated/dataModel";
 import { api } from "@convex/_generated/api";
 import { ConvexError } from "convex/values";
 import type { FunctionArgs } from "convex/server";
@@ -286,7 +287,7 @@ export const useRupEntryStore = defineStore(
                     await convex.mutation(api.rupEntries.mutations.addDistribution, {
                       rupEntryId: id,
                       academicYearId: dist.academicYearId,
-                      semesterId: dist.semesterId,
+                      semesterId: dist.semesterId as Id<"academicYearSemesters">,
                       hours: dist.hours,
                       srsHours: (dist as any).srsHours,
                       srspHours: (dist as any).srspHours,
@@ -341,7 +342,7 @@ export const useRupEntryStore = defineStore(
                       await convex.mutation(api.rupEntries.mutations.addDistribution, {
                         rupEntryId: id,
                         academicYearId: dist.academicYearId,
-                        semesterId: dist.semesterId,
+                        semesterId: dist.semesterId as Id<"academicYearSemesters">,
                         hours: dist.hours,
                         srsHours: (dist as any).srsHours,
                         srspHours: (dist as any).srspHours,
@@ -392,7 +393,7 @@ export const useRupEntryStore = defineStore(
                   distributionEntries: (data.distributionEntries || []).map((d) => ({
                     id: d.id,
                     academicYearId: d.academicYearId,
-                    semesterId: d.semesterId,
+                    semesterId: d.semesterId as Id<"academicYearSemesters">,
                     hours: d.hours,
                     srsHours: (d as any).srsHours,
                     srspHours: (d as any).srspHours,
@@ -506,7 +507,7 @@ export const useRupEntryStore = defineStore(
                   await convex.mutation(api.rupEntries.mutations.addDistribution, {
                     rupEntryId: id,
                     academicYearId: dist.academicYearId,
-                    semesterId: dist.semesterId,
+                    semesterId: dist.semesterId as Id<"academicYearSemesters">,
                     hours: dist.hours,
                     srsHours: (dist as any).srsHours,
                     srspHours: (dist as any).srspHours,

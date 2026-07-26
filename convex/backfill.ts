@@ -1,4 +1,5 @@
 import { mutation } from "./functions";
+import type { Id } from "./_generated/dataModel";
 
 export const run = mutation({
   handler: async (ctx) => {
@@ -35,7 +36,7 @@ export const run = mutation({
       if (!schedule.semesterId) {
         const semId = await getSemesterId(schedule.academicYearId);
         if (semId) {
-          await ctx.db.patch(schedule._id, { semesterId: semId as any });
+          await ctx.db.patch(schedule._id, { semesterId: semId as Id<"academicYearSemesters"> });
           updatedSchedules++;
         }
       }
@@ -47,7 +48,7 @@ export const run = mutation({
       if (!vacation.semesterId) {
         const semId = await getSemesterId(vacation.academicYearId);
         if (semId) {
-          await ctx.db.patch(vacation._id, { semesterId: semId as any });
+          await ctx.db.patch(vacation._id, { semesterId: semId as Id<"academicYearSemesters"> });
           updatedVacations++;
         }
       }
@@ -59,7 +60,7 @@ export const run = mutation({
       if (!final.semesterId) {
         const semId = await getSemesterId(final.academicYearId);
         if (semId) {
-          await ctx.db.patch(final._id, { semesterId: semId as any });
+          await ctx.db.patch(final._id, { semesterId: semId as Id<"academicYearSemesters"> });
           updatedFinals++;
         }
       }
@@ -71,7 +72,7 @@ export const run = mutation({
       if (!intermediate.semesterId) {
         const semId = await getSemesterId(intermediate.academicYearId);
         if (semId) {
-          await ctx.db.patch(intermediate._id, { semesterId: semId as any });
+          await ctx.db.patch(intermediate._id, { semesterId: semId as Id<"academicYearSemesters"> });
           updatedIntermediates++;
         }
       }

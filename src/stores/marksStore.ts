@@ -3,8 +3,8 @@ import { ref, shallowRef, computed, triggerRef } from "vue";
 import type { Mark, StudentMark, JournalMarks } from "@/types/marks";
 import { useUserStore } from "./userStore";
 import { convex } from "@/lib/convexClient";
-import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import { api } from "@convex/_generated/api";
 
 export const useMarksStore = defineStore(
   "marks",
@@ -241,7 +241,7 @@ export const useMarksStore = defineStore(
           disciplineId,
           groupName,
           academicYearId: academicYear,
-          semesterId: semester,
+          semesterId: semester as Id<"academicYearSemesters">,
           studentIds: students,
         });
         

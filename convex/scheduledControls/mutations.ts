@@ -13,7 +13,7 @@ export const createFinal = mutation({
     startDate: v.string(),
     endDate: v.string(),
     rupEntryId: v.optional(v.string()),
-    semesterId: v.string(),
+    semesterId: v.id("academicYearSemesters"),
     date: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -21,7 +21,7 @@ export const createFinal = mutation({
 
     return await ctx.db.insert("scheduledFinalControls", {
       ...args,
-      semesterId: args.semesterId as any,
+      semesterId: args.semesterId,
       ...timestamps,
     });
   },
@@ -38,7 +38,7 @@ export const createIntermediate = mutation({
     startDate: v.string(),
     endDate: v.string(),
     rupEntryId: v.optional(v.string()),
-    semesterId: v.string(),
+    semesterId: v.id("academicYearSemesters"),
     date: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -46,7 +46,7 @@ export const createIntermediate = mutation({
 
     return await ctx.db.insert("scheduledIntermediateControls", {
       ...args,
-      semesterId: args.semesterId as any,
+      semesterId: args.semesterId,
       ...timestamps,
     });
   },
@@ -64,7 +64,7 @@ export const updateFinal = mutation({
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
     rupEntryId: v.optional(v.string()),
-    semesterId: v.optional(v.string()),
+    semesterId: v.optional(v.id("academicYearSemesters")),
     date: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -95,7 +95,7 @@ export const updateIntermediate = mutation({
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
     rupEntryId: v.optional(v.string()),
-    semesterId: v.optional(v.string()),
+    semesterId: v.optional(v.id("academicYearSemesters")),
     date: v.optional(v.string()),
   },
   handler: async (ctx, args) => {

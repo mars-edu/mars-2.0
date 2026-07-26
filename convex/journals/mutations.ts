@@ -11,7 +11,7 @@ export const create = mutation({
     disciplineId: v.string(),
     groupName: v.optional(v.string()),
     academicYearId: v.string(),
-    semesterId: v.string(),
+    semesterId: v.id("academicYearSemesters"),
     isMixedGroup: v.optional(v.boolean()),
     isIndividualJournal: v.optional(v.boolean()),
     mergedJournalIds: v.optional(v.array(v.string())),
@@ -21,7 +21,7 @@ export const create = mutation({
     const timestamps = createTimestamps();
     return await ctx.db.insert("journals", {
       ...args,
-      semesterId: args.semesterId as any,
+      semesterId: args.semesterId,
       ...timestamps,
     });
   },

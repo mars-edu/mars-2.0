@@ -71,11 +71,11 @@ export const getIntermediateByRupEntryId = query({
  * Get scheduled final controls by semester
  */
 export const getFinalBySemester = query({
-  args: { semesterId: v.string() },
+  args: { semesterId: v.id("academicYearSemesters") },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("scheduledFinalControls")
-      .withIndex("by_semester", (q) => q.eq("semesterId", args.semesterId as any))
+      .withIndex("by_semester", (q) => q.eq("semesterId", args.semesterId))
       .collect();
   },
 });
@@ -84,11 +84,11 @@ export const getFinalBySemester = query({
  * Get scheduled intermediate controls by semester
  */
 export const getIntermediateBySemester = query({
-  args: { semesterId: v.string() },
+  args: { semesterId: v.id("academicYearSemesters") },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("scheduledIntermediateControls")
-      .withIndex("by_semester", (q) => q.eq("semesterId", args.semesterId as any))
+      .withIndex("by_semester", (q) => q.eq("semesterId", args.semesterId))
       .collect();
   },
 });

@@ -108,7 +108,7 @@ export const authTables = {
     shortName: v.string(),
     fullName: v.string(),
     academicYearId: v.string(),
-    semesterId: v.id("academicYearSemesters"),
+    semesterId: v.optional(v.id("academicYearSemesters")),
     startDate: v.string(),
     endDate: v.string(),
     createdAt: v.string(),

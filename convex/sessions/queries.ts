@@ -38,11 +38,11 @@ export const getByAcademicYear = query({
  * Get sessions by semester
  */
 export const getBySemester = query({
-  args: { semesterId: v.string() },
+  args: { semesterId: v.id("academicYearSemesters") },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("sessions")
-      .withIndex("by_semester", (q) => q.eq("semesterId", args.semesterId as any))
+      .withIndex("by_semester", (q) => q.eq("semesterId", args.semesterId))
       .collect();
   },
 });

@@ -42,7 +42,7 @@ export const getByCalendarEvent = query({
 export const getByAcademicYearSemester = query({
   args: {
     academicYearId: v.string(),
-    semesterId: v.string(),
+    semesterId: v.id("academicYearSemesters"),
   },
   handler: async (ctx, args) => {
     return await ctx.db

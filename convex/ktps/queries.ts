@@ -127,7 +127,7 @@ export const getByEventId = query({
 export const getByAcademicYearAndSemester = query({
   args: {
     academicYearId: v.string(),
-    semesterId: v.string(),
+    semesterId: v.id("academicYearSemesters"),
   },
   handler: async (ctx, args) => {
     const ktps = await ctx.db

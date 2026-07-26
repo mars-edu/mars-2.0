@@ -245,7 +245,7 @@ export const initializeJournal = mutation({
     disciplineId: v.string(),
     groupName: v.optional(v.string()),
     academicYearId: v.string(),
-    semesterId: v.string(),
+    semesterId: v.id("academicYearSemesters"),
     studentIds: v.array(v.string()),
     isMixedGroup: v.optional(v.boolean()),
     isIndividualJournal: v.optional(v.boolean()),
@@ -268,7 +268,7 @@ export const initializeJournal = mutation({
       // Create new journal
       const journalId = await ctx.db.insert("journals", {
         ...journalData,
-        semesterId: journalData.semesterId as any,
+        semesterId: journalData.semesterId,
         ...timestamps,
       });
       journal = await ctx.db.get(journalId);

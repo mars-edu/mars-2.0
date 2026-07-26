@@ -237,7 +237,7 @@ export const addDistribution = mutation({
   args: {
     rupEntryId: v.id("rupEntries"),
     academicYearId: v.string(),
-    semesterId: v.string(),
+    semesterId: v.id("academicYearSemesters"),
     hours: v.string(),
     srsHours: v.optional(v.string()),
     srspHours: v.optional(v.string()),
@@ -253,7 +253,7 @@ export const addDistribution = mutation({
 
     return await ctx.db.insert("distributionEntries", {
       ...args,
-      semesterId: args.semesterId as any,
+      semesterId: args.semesterId,
       ...timestamps,
     });
   },
@@ -266,7 +266,7 @@ export const updateDistribution = mutation({
   args: {
     id: v.id("distributionEntries"),
     academicYearId: v.optional(v.string()),
-    semesterId: v.optional(v.string()),
+    semesterId: v.optional(v.id("academicYearSemesters")),
     hours: v.optional(v.string()),
     srsHours: v.optional(v.string()),
     srspHours: v.optional(v.string()),
@@ -334,7 +334,7 @@ export const updateWithDistributions = mutation({
       v.object({
         id: v.string(),
         academicYearId: v.string(),
-        semesterId: v.string(),
+        semesterId: v.id("academicYearSemesters"),
         hours: v.string(),
         srsHours: v.optional(v.string()),
         srspHours: v.optional(v.string()),
@@ -383,7 +383,7 @@ export const updateWithDistributions = mutation({
         await ctx.db.insert("distributionEntries", {
           rupEntryId: id,
           academicYearId: entry.academicYearId,
-          semesterId: entry.semesterId as any,
+          semesterId: entry.semesterId,
           hours: entry.hours,
           srsHours: entry.srsHours,
           srspHours: entry.srspHours,
@@ -399,7 +399,7 @@ export const updateWithDistributions = mutation({
         // Existing entry - update it
         await ctx.db.patch(entry.id as Id<"distributionEntries">, {
           academicYearId: entry.academicYearId,
-          semesterId: entry.semesterId as any,
+          semesterId: entry.semesterId,
           hours: entry.hours,
           srsHours: entry.srsHours,
           srspHours: entry.srspHours,
@@ -457,7 +457,7 @@ export const createMultiLanguage = mutation({
       v.array(
         v.object({
           academicYearId: v.string(),
-          semesterId: v.string(),
+          semesterId: v.id("academicYearSemesters"),
           hours: v.string(),
           srsHours: v.optional(v.string()),
           srspHours: v.optional(v.string()),
@@ -492,7 +492,7 @@ export const createMultiLanguage = mutation({
           await ctx.db.insert("distributionEntries", {
             rupEntryId: id,
             academicYearId: dist.academicYearId,
-            semesterId: dist.semesterId as any,
+            semesterId: dist.semesterId,
             hours: dist.hours,
             srsHours: dist.srsHours,
             srspHours: dist.srspHours,
@@ -566,7 +566,7 @@ export const saveRupEntryGroup = mutation({
       v.array(
         v.object({
           academicYearId: v.string(),
-          semesterId: v.string(),
+          semesterId: v.id("academicYearSemesters"),
           hours: v.string(),
           srsHours: v.optional(v.string()),
           srspHours: v.optional(v.string()),
@@ -747,7 +747,7 @@ export const saveRupEntryGroup = mutation({
           await ctx.db.insert("distributionEntries", {
             rupEntryId: variantId,
             academicYearId: dist.academicYearId,
-            semesterId: dist.semesterId as any,
+            semesterId: dist.semesterId,
             hours: dist.hours,
             srsHours: dist.srsHours,
             srspHours: dist.srspHours,
