@@ -515,8 +515,14 @@ async function generateWorkloadReport() {
     if (teacher?.id) teacherIdCandidates.add(teacher.id);
     if (teacher?.userId) teacherIdCandidates.add(teacher.userId);
 
-    const teacherEvents = calendarStore.events.filter((e) =>
-      teacherIdCandidates.has(e.teacherId || "")
+    // Exclude events that are children of a merged individual journal:
+    // their hours are already counted by the parent merge (through marks),
+    // and calculator's "no journal found" fallback would otherwise re-add
+    // their scheduled hours — the audit's silent double-count (#5).
+    const teacherEvents = calendarStore.events.filter(
+      (e: any) =>
+        teacherIdCandidates.has(e.teacherId || "") &&
+        !e.parentIndividualJournalId
     );
 
     // Get period date range for filtering

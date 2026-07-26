@@ -393,7 +393,10 @@ function selectSemester(sem: number) {
       index: rup?.moduleIndex ?? item.index ?? "",
       course: item.course || "1",
       groupCount: parseInt(semesterValue(item as any, sem as any, "groupCount")) || 1,
-      plannedHours: Math.round(parseFloat(semesterValue(item as any, sem as any, "hoursPerGroup")) || 0),
+      // Keep fractional precision — Math.round(25.5)=26 used to seed an
+      // unreachable strict-equality target that stagedHours (integer slot
+      // sums) could never match, blocking wizard 'finish' forever (#4).
+      plannedHours: parseFloat(semesterValue(item as any, sem as any, "hoursPerGroup")) || 0,
       specialties,
       defaultLang: (item as any).language ?? rup?.language ?? "ru",
     } as Discipline;
@@ -519,7 +522,13 @@ function stagedHours(j: Staged) {
     );
 }
 function stagedValid(j: Staged) {
-  return j.studentIds.length > 0 && stagedHours(j) === targetHours(j);
+  // Epsilon comparison instead of strict === so fractional plans (e.g. 25.5)
+  // aren't blocked forever by float precision drift; 0.01 h ≈ 36 seconds,
+  // tighter than any real slot granularity.
+  return (
+    j.studentIds.length > 0 &&
+    Math.abs(stagedHours(j) - targetHours(j)) < 0.01
+  );
 }
 function discComplete(d: Discipline) {
   const list = stagedFor(d.id);
