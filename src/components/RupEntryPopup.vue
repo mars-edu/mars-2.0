@@ -46,191 +46,13 @@
               @distribute="distributeHoursFromField"
             />
 
-              <div class="mt-6 pt-4 border-t border-border">
-                <div class="flex items-center justify-between mb-2">
-                  <div class="text-sm font-semibold text-foreground">
-                    Распределение по курсам и семестрам
-                  </div>
-                  <f7-button
-                    small
-                    fill
-                    @click="addDistributionEntry"
-                    class="add-distribution-btn"
-                  >
-                    <IconPlus class="w-3.5 h-3.5 mr-1" />
-                    Добавить
-                  </f7-button>
-                </div>
-
-                <div class="distribution-table border border-input rounded-lg">
-                  <div class="overflow-x-auto">
-                    <div
-                      class="distribution-grid distribution-header"
-                      :style="distributionGridStyle"
-                    >
-                      <div>Учебный год</div>
-                      <div>Семестр</div>
-                      <div class="text-center">Групп</div>
-                      <div v-if="visibleColumns.srs" class="text-center">СРС</div>
-                      <div v-if="visibleColumns.srsp" class="text-center">СРСП</div>
-                      <div v-if="visibleColumns.individual" class="text-center">Индив.</div>
-                      <div>Форма контроля</div>
-                      <div></div>
-                    </div>
-
-                    <div
-                      v-if="step.distributionEntries.length === 0"
-                      class="text-center py-6 text-muted-foreground text-sm bg-card"
-                    >
-                      Нет записей распределения. Нажмите «Добавить», чтобы создать первую запись.
-                    </div>
-
-                    <div v-else class="distribution-body">
-                      <div
-                        v-for="entry in step.distributionEntries"
-                        :key="entry.id"
-                        class="distribution-grid distribution-row"
-                        :style="distributionGridStyle"
-                      >
-                        <Select
-                          :modelValue="entry.academicYearId"
-                          :options="
-                            academicYearStore.academicYears.map((year) => ({
-                              value: year.id,
-                              text: `${year.startYear}-${year.endYear}`,
-                            }))
-                          "
-                          placeholder="Выберите год"
-                          search-placeholder="Поиск учебного года..."
-                          @update:modelValue="
-                            (value) => {
-                              entry.academicYearId = value;
-                              entry.semesterId = '';
-                              entry.finalControlId = null;
-                            }
-                          "
-                        />
-
-                        <Select
-                          :modelValue="entry.semesterId"
-                          :options="
-                            academicYearSemesterStore
-                              .getAcademicYearSemestersByAcademicYear(
-                                entry.academicYearId
-                              )
-                              .map((academicYearSemester) => ({
-                                value: academicYearSemester.id,
-                                text: `Семестр ${academicYearSemester.semesterNumber}`,
-                              }))
-                          "
-                          placeholder="Выберите семестр"
-                          search-placeholder="Поиск семестра..."
-                          @update:modelValue="
-                            (value) => {
-                              entry.semesterId = value;
-                            }
-                          "
-                        />
-
-                        <Input
-                          v-model="entry.hours"
-                          type="text" inputmode="numeric"
-                          placeholder="0"
-                          :show-checkmark="false"
-                          :clear-button="false"
-                          class="distribution-hours-input"
-                        />
-
-                        <Input
-                          v-if="visibleColumns.srs"
-                          v-model="(entry as any).srsHours"
-                          type="text" inputmode="numeric"
-                          placeholder="0"
-                          :show-checkmark="false"
-                          :clear-button="false"
-                          class="distribution-hours-input"
-                        />
-                        <Input
-                          v-if="visibleColumns.srsp"
-                          v-model="(entry as any).srspHours"
-                          type="text" inputmode="numeric"
-                          placeholder="0"
-                          :show-checkmark="false"
-                          :clear-button="false"
-                          class="distribution-hours-input"
-                        />
-                        <Input
-                          v-if="visibleColumns.individual"
-                          v-model="(entry as any).individualHours"
-                          type="text" inputmode="numeric"
-                          placeholder="0"
-                          :show-checkmark="false"
-                          :clear-button="false"
-                          class="distribution-hours-input"
-                        />
-
-                        <Select
-                          :modelValue="entry.finalControlId ?? ''"
-                          @update:modelValue="
-                            entry.finalControlId = $event || null
-                          "
-                          :options="
-                            getFinalControlOptionsForYear(
-                              entry.academicYearId,
-                              entry.semesterId
-                            )
-                          "
-                          placeholder="Выберите форму контроля"
-                          search-placeholder="Поиск формы контроля..."
-                        />
-
-                        <div class="distribution-actions">
-                          <f7-button
-                            small
-                            @click="removeDistributionEntry(entry.id)"
-                            class="remove-entry-btn"
-                          >
-                            <IconTrash class="w-3.5 h-3.5" />
-                          </f7-button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                v-if="step.distributionEntries.length > 0"
-                class="mt-4 p-4 bg-muted/50 rounded-xl border border-border text-sm"
-              >
-                <div class="font-semibold mb-2">Итоги распределения:</div>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <span class="text-muted-foreground">Групп:</span>
-                    <span class="text-muted-foreground font-medium">
-                      {{ distributionSummary.group }} / {{ distributionSummary.targetGroup }}
-                    </span>
-                  </div>
-                  <div v-if="visibleColumns.srs">
-                    <span class="text-muted-foreground">СРС:</span>
-                    <span class="text-muted-foreground font-medium">
-                      {{ distributionSummary.srs }} / {{ distributionSummary.targetSrs }}
-                    </span>
-                  </div>
-                  <div v-if="visibleColumns.srsp">
-                    <span class="text-muted-foreground">СРСП:</span>
-                    <span class="text-muted-foreground font-medium">
-                      {{ distributionSummary.srsp }} / {{ distributionSummary.targetSrsp }}
-                    </span>
-                  </div>
-                  <div v-if="visibleColumns.individual">
-                    <span class="text-muted-foreground">Индивидуальные:</span>
-                    <span class="text-muted-foreground font-medium">
-                      {{ distributionSummary.individual }} / {{ distributionSummary.targetIndividual }}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <RupDistributionTable
+                :entries="step.distributionEntries"
+                :visible-columns="visibleColumns"
+                :summary="distributionSummary"
+                @add="addDistributionEntry"
+                @remove="removeDistributionEntry"
+              />
 
           </div>
         </div>
@@ -248,9 +70,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from "vue";
 import { f7Popover, f7Checkbox, f7Button, f7 } from "framework7-vue";
-import IconTrash from "~icons/lucide/trash-2";
 import IconCircleCheck from "~icons/lucide/circle-check";
-import IconPlus from "~icons/lucide/plus";
 import {
   isHours,
   distributeFmt,
@@ -262,8 +82,6 @@ import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
-import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
-import { useFinalControlStore } from "@/stores/finalControlStore";
 import { z } from "zod";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
@@ -273,6 +91,7 @@ import Input from "@/components/ui/Input.vue";
 import RupSpecialtyPicker from "@/components/RupSpecialtyPicker.vue";
 import RupLanguageTabs, { type LanguageTexts } from "@/components/RupLanguageTabs.vue";
 import RupHourFields from "@/components/RupHourFields.vue";
+import RupDistributionTable from "@/components/RupDistributionTable.vue";
 import { useLanguageStore } from "@/stores/languageStore";
 
 const emit = defineEmits<{
@@ -294,8 +113,6 @@ const academicYearStore = useAcademicYearStore();
 const semesterStore = useSemesterStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const languageStore = useLanguageStore();
-const scheduledFinalControlStore = useScheduledFinalControlStore();
-const finalControlStore = useFinalControlStore();
 
 function createEmptyEntry() {
   return rupEntryStore.createEmptyRupEntry(
@@ -330,19 +147,8 @@ const visibleColumns = ref({
   individual: false,
 });
 
-const distributionGridStyle = computed(() => {
-  const extraCount =
-    (visibleColumns.value.srs ? 1 : 0) +
-    (visibleColumns.value.srsp ? 1 : 0) +
-    (visibleColumns.value.individual ? 1 : 0);
-  // year | semester | group | (extras) | control | delete
-  return {
-    gridTemplateColumns: `minmax(160px,1fr) minmax(160px,1fr) 100px ${"100px ".repeat(extraCount)}minmax(220px,1.4fr) 32px`,
-    minWidth: `${760 + extraCount * 110}px`,
-  };
-});
+// distributionGridStyle moved to RupDistributionTable.
 
-// Integration with subject from another year
 // Integration/Connect state moved to RupIntegrationPanel — parent only holds
 // a template ref so resetLocalState() can reset it via .reset().
 const integrationPanel = ref<InstanceType<typeof RupIntegrationPanel> | null>(null);
@@ -869,41 +675,7 @@ function distributeHoursFromField(
   }
 }
 
-function getFinalControlOptionsForYear(
-  academicYearId: string,
-  semesterId?: string
-) {
-  if (!academicYearId) {
-    return [{ value: "", text: "Не выбрано" }];
-  }
-
-  const allScheduledControls =
-    scheduledFinalControlStore.getScheduledFinalControlsByAcademicYear(
-      academicYearId
-    );
-
-  // Filter by semesterId if provided
-  const scheduledControls = semesterId
-    ? allScheduledControls.filter((control) => {
-        // Get the final control details to check if it matches the semester
-        const finalControl = finalControlStore.getFinalControlById(
-          control.finalControlId
-        );
-        if (!finalControl) return true; // Include if we can't determine
-        // Since we're looking at scheduled controls, they should already be semester-specific
-        // This is a pass-through filter for now - the backend should handle this
-        return true;
-      })
-    : allScheduledControls;
-
-  return [
-    { value: "", text: "Не выбрано" },
-    ...scheduledControls.map((control) => ({
-      value: control.id,
-      text: control.shortName,
-    })),
-  ];
-}
+// getFinalControlOptionsForYear moved into RupDistributionTable.
 
 function showDeleteConfirmation() {
   if (!props.initialData || !props.initialData.id) return;
