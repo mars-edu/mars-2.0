@@ -32,17 +32,7 @@
             />
 
             <!-- Specialty selection -->
-            <div class="mb-6">
-              <TagsSelector
-                v-model="selectedSpecialtyIds"
-                :items="specialtyOptions"
-                label="Специальности"
-                placeholder="Выберите специальности..."
-                display-field="text"
-                :show-search="false"
-                helper-text="Выберите одну или несколько специальностей для данного модуля"
-              />
-            </div>
+            <RupSpecialtyPicker v-model="selectedSpecialtyIds" />
 
             <!-- Language chips (concept-style: colored pills) -->
             <div class="mb-4">
@@ -461,8 +451,7 @@ import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import Select from "@/components/ui/Select.vue";
 import Input from "@/components/ui/Input.vue";
-import TagsSelector from "@/components/ui/TagsSelector.vue";
-import { useSpecialtyStore } from "@/stores/specialtyStore";
+import RupSpecialtyPicker from "@/components/RupSpecialtyPicker.vue";
 import { useLanguageStore } from "@/stores/languageStore";
 
 const emit = defineEmits<{
@@ -483,7 +472,6 @@ const rupEntryStore = useRupEntryStore();
 const academicYearStore = useAcademicYearStore();
 const semesterStore = useSemesterStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
-const specialtyStore = useSpecialtyStore();
 const languageStore = useLanguageStore();
 const scheduledFinalControlStore = useScheduledFinalControlStore();
 const finalControlStore = useFinalControlStore();
@@ -653,16 +641,6 @@ const currentLanguageTexts = computed({
   },
 });
 
-// Specialty options for TagsSelector
-const specialtyOptions = computed(() =>
-  specialtyStore.specialties.map((specialty) => ({
-    id: specialty.id,
-    text: specialty.codeName || specialty.name,
-    codeName: specialty.codeName,
-    name: specialty.name,
-  }))
-);
-
 watch(
   () => [props.initialData, props.editMode],
   ([val, edit]) => {
@@ -775,8 +753,8 @@ watch(
   { immediate: true }
 );
 
-onMounted(async () => {
-  await specialtyStore.fetchSpecialties();
+onMounted(() => {
+  // specialtyStore.fetchSpecialties() moved into RupSpecialtyPicker's own onMounted.
   if (!props.editMode || !props.initialData) {
     step.value = createEmptyEntry();
     selectedSpecialtyIds.value = props.specialtyIds || [];
