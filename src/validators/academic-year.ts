@@ -24,10 +24,22 @@ export const academicYearSchema = z
       .max(180, "Длительность академ. часа не может быть больше 180 мин")
       .optional()
       .catch(undefined),
+    // Education technology this year runs under — required (Phase 1 widen:
+    // schema field itself is still optional on the backend until the prod
+    // backfill runs, but the UI always requires picking one going forward).
+    technologyId: z.string().min(1, "Пожалуйста, выберите технологию обучения"),
+    // ISO dates (YYYY-MM-DD) — replaces the hardcoded Sept-1 assumption in
+    // the calculator. Required in the UI for the same reason as above.
+    startDate: z.string().min(1, "Пожалуйста, укажите дату начала учебного года"),
+    endDate: z.string().min(1, "Пожалуйста, укажите дату окончания учебного года"),
   })
   .refine((data) => data.endYear > data.startYear, {
     message: "Год окончания должен быть больше года начала",
     path: ["endYear"],
+  })
+  .refine((data) => new Date(data.endDate) > new Date(data.startDate), {
+    message: "Дата окончания должна быть позже даты начала",
+    path: ["endDate"],
   });
 
 export const academicYearSemesterSchema = z

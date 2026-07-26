@@ -3,24 +3,49 @@ import { v } from "convex/values";
 
 export const academicTables = {
   /**
+   * Education technologies — parent entity for academic years. Colleges/
+   * universities may run multiple technologies in parallel (e.g. "Классическая"
+   * linear vs "Кредитная"). Each academic year points to one technology, which
+   * is the source of truth for `academicHourMinutes` (a year may still override
+   * it — see `academicYears.academicHourMinutes`).
+   */
+  educationTechnologies: defineTable({
+    name: v.string(), // "Классическая", "Кредитная", "Модульная"
+    shortName: v.optional(v.string()),
+    academicHourMinutes: v.number(), // 45 / 40 / 60 (required — tech IS the source of truth)
+    isDefault: v.boolean(), // exactly one true — legacy fallback
+    description: v.optional(v.string()),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  }).index("by_isDefault", ["isDefault"]),
+
+  /**
    * Academic years - tracks school year periods
    * Migrated from: academicYearStore.ts
    */
   academicYears: defineTable({
     name: v.string(),
-    startYear: v.number(),
+    startYear: v.number(), // legacy — keep for name derivation + fallback
     endYear: v.number(),
     isActive: v.boolean(),
     // Length of one academic hour in minutes for this year (default 45 when
     // undefined — Kazakhstan college standard). Drives calculator's
     // astronomical→academic conversion; per-year so the regulation can be
     // adjusted (e.g. 40/45/50) without a code change or global flag.
+    // EXISTING per-year override — keep as-is even after technologyId lands.
     academicHourMinutes: v.optional(v.number()),
+    // Expand-contract widen step (docs/migration-playbook.md Pattern A):
+    // optional here, narrowed to required once the prod backfill migration
+    // (convex/migrations/educationTechnologyBackfill.ts) has run successfully.
+    technologyId: v.optional(v.id("educationTechnologies")),
+    startDate: v.optional(v.string()), // ISO date — narrowed in Phase 3
+    endDate: v.optional(v.string()), // ISO date — narrowed in Phase 3
     createdAt: v.string(),
     updatedAt: v.string(),
   })
     .index("by_active", ["isActive"])
-    .index("by_startYear", ["startYear"]),
+    .index("by_startYear", ["startYear"])
+    .index("by_technology", ["technologyId"]),
 
   /**
    * Global semester definitions (settings)

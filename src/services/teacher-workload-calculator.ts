@@ -37,6 +37,27 @@ function resolveAcademicHourMinutes(
 }
 
 /**
+ * Resolve the start of the cumulative-hours window for a given academic
+ * year. Uses the year's explicit `startDate` when set (Phase 1 of the
+ * educationTechnology + per-year dates feature — see
+ * convex/migrations/educationTechnologyBackfill.ts for the prod backfill).
+ *
+ * TODO(Phase 3 — narrow-phase PR, after the prod backfill migration has run
+ * and `academicYears.startDate` is required in the schema): drop the Sept-1
+ * fallback below and make `year` a required, non-optional parameter — every
+ * year is guaranteed to have `startDate` by then.
+ */
+export function resolveYearStart(
+  year: AcademicYear | undefined,
+  academicYearStart: number
+): dayjs.Dayjs {
+  if (year?.startDate) {
+    return dayjs(year.startDate).startOf("day");
+  }
+  return dayjs(new Date(academicYearStart, 8, 1)).startOf("day"); // Sept 1 fallback
+}
+
+/**
  * Calculate lesson hours from time range
  * @param startTime Time string in format "HH:mm" (e.g., "09:00")
  * @param endTime Time string in format "HH:mm" (e.g., "10:30")
@@ -168,7 +189,8 @@ function calculateActualHours(
   year: number,
   academicYearStart: number,
   daysInMonth: number,
-  academicHourMinutes: number = 60
+  academicHourMinutes: number = 60,
+  currentYear?: AcademicYear
 ): { dailyActualHours: (number | null)[]; actualHoursMonth: number; cumulativeHoursYear: number } {
   console.log(`[calculateActualHours] Looking for journal: event.id=${event.id}, rupEntry.id=${rupEntry.id}`);
 
@@ -274,13 +296,14 @@ function calculateActualHours(
   // Calculate cumulative hours from September through current month
   // Need to recalculate ALL lesson dates from Sept-current month (not just current month)
   let cumulativeHoursYear = 0;
-  const septemberStart = dayjs(new Date(academicYearStart, 8, 1)).startOf("day"); // Sept 1
+  const yearStart = resolveYearStart(currentYear, academicYearStart);
   const currentMonthEnd = dayjs(new Date(year, month + 1, 0)).endOf("day"); // Last day of current month
 
-  // Calculate all lesson dates for Sept through current month
+  // Calculate all lesson dates for [yearStart, current month] — yearStart is
+  // the year's explicit startDate when set, else Sept 1 (see resolveYearStart).
   const allLessonDates = calculateLessonDates(
     event,
-    septemberStart.toDate(),
+    yearStart.toDate(),
     currentMonthEnd.toDate(),
     academicHourMinutes
   );
@@ -292,13 +315,13 @@ function calculateActualHours(
     allLessonDateMap.set(dateKey, (allLessonDateMap.get(dateKey) || 0) + lesson.hours);
   });
 
-  // Sum hours for marked dates within Sept-current month
+  // Sum hours for marked dates within [yearStart, current month]
   markedDates.forEach((dateKey) => {
     const hours = allLessonDateMap.get(dateKey);
     if (hours) {
       const lessonDate = dayjs(dateKey);
       if (
-        lessonDate.valueOf() >= septemberStart.valueOf() &&
+        lessonDate.valueOf() >= yearStart.valueOf() &&
         lessonDate.valueOf() <= currentMonthEnd.valueOf()
       ) {
         cumulativeHoursYear += hours;
@@ -351,6 +374,7 @@ export function generateDailyWorkload(
       groupName: string;
       lessonDates: { date: dayjs.Dayjs; weekId: number; hours: number }[];
       academicHourMinutes: number;
+      academicYear?: AcademicYear;
     }
   >();
 
@@ -369,6 +393,7 @@ export function generateDailyWorkload(
     const groupName = generateGroupName(eventStudents);
 
     const academicHourMinutes = resolveAcademicHourMinutes(rupEntry, academicYears);
+    const academicYear = academicYears?.find((y) => y.id === rupEntry.academicYearId);
 
     // Calculate lesson dates within the month
     const lessonDates = calculateLessonDates(
@@ -395,6 +420,7 @@ export function generateDailyWorkload(
         groupName,
         lessonDates,
         academicHourMinutes,
+        academicYear,
       });
     } else {
       // Merge lesson dates if same subject/group from multiple events
@@ -424,7 +450,8 @@ export function generateDailyWorkload(
       year,
       academicYearStart,
       daysInMonth,
-      group.academicHourMinutes
+      group.academicHourMinutes,
+      group.academicYear
     );
 
     // Use actual hours from journal for daily columns

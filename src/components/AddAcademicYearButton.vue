@@ -62,6 +62,34 @@
             </div>
           </div>
 
+          <Select
+            v-model="technologyId"
+            :options="technologyOptions"
+            label="Технология обучения"
+            placeholder="Выберите технологию"
+          />
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="text-sm text-foreground" for="year-start-date">
+                Дата начала <span class="text-destructive ml-1">*</span>
+              </label>
+              <DateInput
+                v-model:value="startDate"
+                placeholder="Дата"
+              />
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm text-foreground" for="year-end-date">
+                Дата окончания <span class="text-destructive ml-1">*</span>
+              </label>
+              <DateInput
+                v-model:value="endDate"
+                placeholder="Дата"
+              />
+            </div>
+          </div>
+
           <div class="flex items-center">
             <f7-checkbox
               id="is-active"
@@ -75,8 +103,8 @@
 
         <PopoverFooter
           :on-save="handleSaveAcademicYear"
-          :disabled="!isFormValid || academicYearStore.isLoading"
-          :is-loading="academicYearStore.isLoading"
+          :disabled="!isFormValid || academicYearStore.loading"
+          :is-loading="academicYearStore.loading"
         />
       </div>
     </GuardedPopover>
@@ -84,22 +112,62 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
+import dayjs from "dayjs";
 import { f7, f7Popover, f7Input, f7Checkbox } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
+import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { academicYearSchema } from '@/validators/academic-year';
 import { useAcademicYearStore } from "@/stores/academicYearStore";
+import { useEducationTechnologyStore } from "@/stores/educationTechnologyStore";
 import PopoverHeader from "@/components/ui/PopoverHeader.vue";
 import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
+import Select from "@/components/ui/Select.vue";
+import DateInput from "@/components/ui/DateInput.vue";
 
 const academicYearStore = useAcademicYearStore();
+const educationTechnologyStore = useEducationTechnologyStore();
 
 
 const startYear = ref<number | null>(null);
 const endYear = ref<number | null>(null);
 const isActive = ref(false);
+const technologyId = ref<string | number>("");
+const startDate = ref<Date[]>([]);
+const endDate = ref<Date[]>([]);
 const formError = ref("");
+
+const technologyOptions = computed(() =>
+  educationTechnologyStore.technologies.map((tech) => ({
+    value: tech.id,
+    text: tech.name,
+  }))
+);
+
+// Pre-select the default technology for new years.
+watch(
+  () => educationTechnologyStore.getDefaultTechnology,
+  (defaultTech) => {
+    if (defaultTech && !technologyId.value) {
+      technologyId.value = defaultTech.id;
+    }
+  },
+  { immediate: true }
+);
+
+// Auto-suggest Sept 1 / Jun 30 defaults when the years change — only while
+// the corresponding date field is still empty (don't clobber a manual pick).
+watch(startYear, (newStartYear) => {
+  if (newStartYear && startDate.value.length === 0) {
+    startDate.value = [new Date(Number(newStartYear), 8, 1)];
+  }
+});
+watch(endYear, (newEndYear) => {
+  if (newEndYear && endDate.value.length === 0) {
+    endDate.value = [new Date(Number(newEndYear), 5, 30)];
+  }
+});
 
 
 const validationResult = computed(() => {
@@ -107,6 +175,9 @@ const validationResult = computed(() => {
     startYear: startYear.value ? Number(startYear.value) : null,
     endYear: endYear.value ? Number(endYear.value) : null,
     isActive: isActive.value,
+    technologyId: String(technologyId.value ?? ""),
+    startDate: startDate.value[0] ? dayjs(startDate.value[0]).format(DATE_STORAGE_FORMAT) : "",
+    endDate: endDate.value[0] ? dayjs(endDate.value[0]).format(DATE_STORAGE_FORMAT) : "",
   });
 });
 
@@ -133,11 +204,17 @@ const handleSaveAcademicYear = async () => {
   }
 
   try {
+    const data = validationResult.value.success ? validationResult.value.data : null;
+    if (!data) return;
+
     await academicYearStore.addAcademicYear({
       name: `${startYear.value}-${endYear.value}`,
       startYear: Number(startYear.value),
       endYear: Number(endYear.value),
       isActive: isActive.value,
+      technologyId: data.technologyId,
+      startDate: data.startDate,
+      endDate: data.endDate,
     });
     closeAddAcademicYearPopover();
   } catch (error) {
@@ -150,6 +227,9 @@ const resetForm = () => {
   startYear.value = null;
   endYear.value = null;
   isActive.value = false;
+  technologyId.value = educationTechnologyStore.getDefaultTechnology?.id ?? "";
+  startDate.value = [];
+  endDate.value = [];
   formError.value = "";
   academicYearStore.clearError();
 };

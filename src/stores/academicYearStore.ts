@@ -5,6 +5,8 @@ import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
 import type { AcademicYear } from "@/types/academic-year";
+import { DEFAULT_ACADEMIC_HOUR_MINUTES } from "@/types/academic-year";
+import { useEducationTechnologyStore } from "@/stores/educationTechnologyStore";
 
 const DEFAULT_ACADEMIC_YEARS: AcademicYear[] = [];
 
@@ -14,6 +16,7 @@ export const useAcademicYearStore = defineStore(
     const academicYears = ref<AcademicYear[]>([...DEFAULT_ACADEMIC_YEARS]);
     const loading = ref(false);
     const error = ref<string | null>(null);
+    const educationTechnologyStore = useEducationTechnologyStore();
 
     // Reactive subscription to Convex
     const { data: convexYears } = useConvexQuery(
@@ -21,18 +24,36 @@ export const useAcademicYearStore = defineStore(
       ref({})
     );
 
-    watch(convexYears, (newData) => {
+    // Recompute whenever either the years OR the technologies list changes —
+    // technologies can arrive after years on first load, and we need the
+    // resolved academicHourMinutes to update once they do.
+    watch([convexYears, () => educationTechnologyStore.technologies], ([newData]) => {
       if (newData) {
-        academicYears.value = newData.map((year) => ({
-          id: year._id,
-          name: year.name,
-          startYear: year.startYear,
-          endYear: year.endYear,
-          isActive: year.isActive,
-          academicHourMinutes: year.academicHourMinutes,
-          createdAt: new Date(year.createdAt),
-          updatedAt: new Date(year.updatedAt),
-        }));
+        academicYears.value = newData.map((year) => {
+          const tech = year.technologyId
+            ? educationTechnologyStore.getById(year.technologyId)
+            : undefined;
+          return {
+            id: year._id,
+            name: year.name,
+            startYear: year.startYear,
+            endYear: year.endYear,
+            isActive: year.isActive,
+            // Per-year override wins, else fall back to the technology's
+            // value, else the global KZ-standard default. This keeps
+            // `resolveAcademicHourMinutes` in teacher-workload-calculator.ts
+            // working unchanged — it still just reads year.academicHourMinutes.
+            academicHourMinutes:
+              year.academicHourMinutes ??
+              tech?.academicHourMinutes ??
+              DEFAULT_ACADEMIC_HOUR_MINUTES,
+            technologyId: year.technologyId,
+            startDate: year.startDate,
+            endDate: year.endDate,
+            createdAt: new Date(year.createdAt),
+            updatedAt: new Date(year.updatedAt),
+          };
+        });
       }
     });
 
@@ -75,6 +96,9 @@ export const useAcademicYearStore = defineStore(
                   endYear: academicYearData.endYear,
                   isActive: academicYearData.isActive,
                   academicHourMinutes: academicYearData.academicHourMinutes,
+                  technologyId: academicYearData.technologyId as any,
+                  startDate: academicYearData.startDate,
+                  endDate: academicYearData.endDate,
                 });
                 const newAcademicYear = await convex.query(api.academicYears.queries.getById, { id });
                 if (newAcademicYear) {
@@ -84,6 +108,10 @@ export const useAcademicYearStore = defineStore(
                     startYear: newAcademicYear.startYear,
                     endYear: newAcademicYear.endYear,
                     isActive: newAcademicYear.isActive,
+                    academicHourMinutes: newAcademicYear.academicHourMinutes,
+                    technologyId: newAcademicYear.technologyId,
+                    startDate: newAcademicYear.startDate,
+                    endDate: newAcademicYear.endDate,
                     createdAt: new Date(newAcademicYear.createdAt),
                     updatedAt: new Date(newAcademicYear.updatedAt),
                   };
@@ -109,6 +137,9 @@ export const useAcademicYearStore = defineStore(
                   endYear: academicYearData.endYear,
                   isActive: academicYearData.isActive,
                   academicHourMinutes: academicYearData.academicHourMinutes,
+                  technologyId: academicYearData.technologyId as any,
+                  startDate: academicYearData.startDate,
+                  endDate: academicYearData.endDate,
                 });
 
                 if (updated) {
@@ -118,6 +149,10 @@ export const useAcademicYearStore = defineStore(
                     startYear: updated.startYear,
                     endYear: updated.endYear,
                     isActive: updated.isActive,
+                    academicHourMinutes: updated.academicHourMinutes,
+                    technologyId: updated.technologyId,
+                    startDate: updated.startDate,
+                    endDate: updated.endDate,
                     createdAt: new Date(updated.createdAt),
                     updatedAt: new Date(updated.updatedAt),
                   };

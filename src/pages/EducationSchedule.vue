@@ -37,6 +37,72 @@
 
           <!-- Top-level view: Academic Years + Semesters -->
           <Accordion v-model:expanded-items="expandedAccordions">
+            <AccordionItem id="education-technologies">
+              <template #title>Технологии обучения</template>
+              <template #actions>
+                <AddEducationTechnologyButton />
+              </template>
+              <div
+                v-if="educationTechnologyStore.loading"
+                class="p-4 flex justify-center"
+              >
+                <f7-preloader></f7-preloader>
+              </div>
+              <div
+                v-else-if="educationTechnologyStore.error"
+                class="p-4 text-destructive"
+              >
+                {{ educationTechnologyStore.error }}
+              </div>
+              <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <div
+                  v-for="technology in educationTechnologyStore.technologies"
+                  :key="technology.id"
+                  class="relative group p-4 rounded-xl border transition-all"
+                  :id="`education-technology-item-${technology.id}`"
+                >
+                  <div class="flex flex-col gap-1 w-full">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-bold text-foreground flex items-center gap-2">
+                        {{ technology.name }}
+                        <span
+                          v-if="technology.shortName"
+                          class="text-[10px] font-normal px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                        >
+                          {{ technology.shortName }}
+                        </span>
+                      </span>
+                      <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          class="p-1 text-muted-foreground hover:text-primary transition-colors"
+                          @click.stop="openEditEducationTechnology(technology)"
+                          aria-label="Edit Education Technology"
+                          type="button"
+                        >
+                          <IconPencil class="w-[14px] h-[14px]" />
+                        </button>
+                      </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-1">
+                      <span class="text-xs text-muted-foreground">
+                        {{ technology.academicHourMinutes }} мин
+                      </span>
+                      <span
+                        v-if="technology.isDefault"
+                        class="text-[10px] font-bold uppercase tracking-wider text-primary"
+                      >
+                        По умолчанию
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <EditEducationTechnologyButton
+                  v-if="selectedEducationTechnologyId"
+                  :education-technology-id="selectedEducationTechnologyId"
+                />
+              </div>
+            </AccordionItem>
+
             <AccordionItem id="academic-years" >
               <template #title>{{ edu_schedule_academic_year() }}</template>
               <template #actions>
@@ -531,6 +597,10 @@ import AddAcademicYearButton from "@/components/AddAcademicYearButton.vue";
 import EditAcademicYearButton from "@/components/EditAcademicYearButton.vue";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import type { AcademicYear } from "@/stores/academicYearStore";
+import AddEducationTechnologyButton from "@/components/AddEducationTechnologyButton.vue";
+import EditEducationTechnologyButton from "@/components/EditEducationTechnologyButton.vue";
+import { useEducationTechnologyStore } from "@/stores/educationTechnologyStore";
+import type { EducationTechnology } from "@/types/education-technology";
 import AddAcademicYearSemesterButton from "@/components/AddAcademicYearSemesterButton.vue";
 import EditAcademicYearSemesterButton from "@/components/EditAcademicYearSemesterButton.vue";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
@@ -588,6 +658,9 @@ const educationScheduleStore = useEducationScheduleStore();
 const academicYearStore = useAcademicYearStore();
 const { academicYears } = storeToRefs(academicYearStore);
 
+const educationTechnologyStore = useEducationTechnologyStore();
+const selectedEducationTechnologyId = ref<string | null>(null);
+
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const vacationStore = useVacationStore();
 const scheduledFinalControlStore = useScheduledFinalControlStore();
@@ -610,6 +683,7 @@ const selectedScheduledIntermediateControlId = ref<string | null>(null);
 
 // Accordion IDs depend on whether a semester is selected
 const topLevelAccordionIds = [
+  "education-technologies",
   "academic-years",
   "semesters",
 ];
@@ -842,6 +916,17 @@ const openEditAcademicYear = async (academicYear: AcademicYear) => {
   );
   if (targetEl) {
     f7.popover.open(`#edit-academic-year-popover-${academicYear.id}`, targetEl);
+  }
+};
+
+const openEditEducationTechnology = async (technology: EducationTechnology) => {
+  selectedEducationTechnologyId.value = technology.id;
+  await nextTick();
+  const targetEl = document.getElementById(
+    `education-technology-item-${technology.id}`
+  );
+  if (targetEl) {
+    f7.popover.open(`#edit-education-technology-popover-${technology.id}`, targetEl);
   }
 };
 
