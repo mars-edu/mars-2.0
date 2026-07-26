@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+export const timeRegex = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+
+export const educationScheduleSchema = z.object({
+  startTime: z.string().regex(timeRegex, "Неверный формат времени (HH:mm)"),
+  endTime: z.string().regex(timeRegex, "Неверный формат времени (HH:mm)"),
+});
+
 export const sessionSchema = z
   .object({
     shortName: z.string().min(1, "Пожалуйста, введите краткое название сессии"),
