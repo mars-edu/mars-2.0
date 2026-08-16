@@ -34,12 +34,12 @@ export const academicTables = {
     // adjusted (e.g. 40/45/50) without a code change or global flag.
     // EXISTING per-year override — keep as-is even after technologyId lands.
     academicHourMinutes: v.optional(v.number()),
-    // Expand-contract widen step (docs/migration-playbook.md Pattern A):
-    // optional here, narrowed to required once the prod backfill migration
-    // (convex/migrations/educationTechnologyBackfill.ts) has run successfully.
+    // Expand-contract contract step (docs/migration-playbook.md Pattern A):
+    // narrowed to required after the prod backfill migration
+    // (convex/migrations/educationTechnologyBackfill.ts) filled every row.
     technologyId: v.optional(v.id("educationTechnologies")),
-    startDate: v.optional(v.string()), // ISO date — narrowed in Phase 3
-    endDate: v.optional(v.string()), // ISO date — narrowed in Phase 3
+    startDate: v.optional(v.string()), // ISO date — start of the academic year
+    endDate: v.optional(v.string()), // ISO date — end of the academic year
     createdAt: v.string(),
     updatedAt: v.string(),
   })

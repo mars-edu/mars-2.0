@@ -477,21 +477,34 @@ export const updatePasswordInternal = internalMutation({
 });
 
 /**
- * Update user password
+ * Set password for a user by username or ID
  */
-export const updatePassword = action({
+export const setUserPassword = action({
   args: {
-    userId: v.id("users"),
-    currentPassword: v.string(),
+    username: v.string(),
     newPassword: v.string(),
   },
-  handler: async (ctx, args) => {
-    // Get user
-    const user = await ctx.runQuery(api.auth.queries.getUserByUsername, {
-      username: "", // We need a different approach
+  handler: async (ctx, args): Promise<{ success: boolean; userId: string; username: string }> => {
+    const user = await ctx.runQuery(
+      internal.auth.mutations.getUserWithPasswordInternal,
+      { username: args.username.trim() }
+    );
+
+    if (!user) {
+      throw new ConvexError({ code: "user_not_found" });
+    }
+
+    const passwordHash = hashPassword(args.newPassword);
+
+    await ctx.runMutation(internal.auth.mutations.updatePasswordInternal, {
+      userId: user._id,
+      passwordHash,
     });
 
-    // This needs to be implemented with proper user lookup
-    throw new Error("Not implemented - needs user lookup by ID");
+    return {
+      success: true,
+      userId: user._id,
+      username: user.username,
+    };
   },
 });
