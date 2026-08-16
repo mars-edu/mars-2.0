@@ -29,6 +29,8 @@ export interface LoginResponse {
   user?: User;
   token?: string;
   message?: string;
+  isExplicitInvalid?: boolean;
+  isNetworkError?: boolean;
 }
 
 /**

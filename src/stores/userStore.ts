@@ -150,12 +150,15 @@ export const useUserStore = defineStore(
         if (response.success && response.user) {
           setUser(response.user);
           localStorage.setItem("stored_user", JSON.stringify(response.user));
-        } else {
-          console.log("[UserStore] Background validation failed, logging out");
+        } else if (response.isExplicitInvalid) {
+          console.log("[UserStore] Token is explicitly invalid on backend, logging out");
           logout();
           if (f7.views?.main?.router) {
             f7.views.main.router.navigate("/login/");
           }
+        } else {
+          // Network or server reconnection glitch — keep session intact!
+          console.log("[UserStore] Background validation transient error, preserving active session");
         }
       } catch {
         // Network error: keep existing auth state, don't log out

@@ -139,6 +139,7 @@ export default class AuthService {
       if (!result.valid || !result.user) {
         return {
           success: false,
+          isExplicitInvalid: true,
           message: t("invalid_token"),
         };
       }
@@ -146,6 +147,7 @@ export default class AuthService {
       if (!isValidUser(result.user)) {
         return {
           success: false,
+          isExplicitInvalid: true,
           message: t("server_error"),
         };
       }
@@ -155,9 +157,10 @@ export default class AuthService {
         user: result.user,
       };
     } catch (error) {
-      console.error("[AuthService] Token validation failed:", error);
+      console.warn("[AuthService] Token validation network/server error (keeping session):", error);
       return {
         success: false,
+        isNetworkError: true,
         message: getErrorMessage(error),
       };
     }
