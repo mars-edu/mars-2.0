@@ -57,6 +57,24 @@
               />
             </div>
           </div>
+
+          <div class="space-y-2">
+            <label class="text-sm text-foreground" for="weeks-count">
+              Учебных недель
+            </label>
+            <f7-input
+              id="weeks-count"
+              type="number"
+              min="1"
+              max="52"
+              v-model:value="weeksCount"
+              placeholder="18"
+            ></f7-input>
+            <p class="text-xs text-muted-foreground">
+              Норматив учебных недель (не календарная длина семестра).
+              Подставляется в нагрузку при добавлении дисциплины. По умолчанию 18.
+            </p>
+          </div>
         </div>
 
         <PopoverFooter
@@ -73,7 +91,7 @@
 import { ref, computed, watch } from "vue";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
-import { f7 } from "framework7-vue";
+import { f7, f7Input } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
 import { academicYearSemesterSchema } from '@/validators/academic-year';
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
@@ -93,6 +111,7 @@ const semesterStore = useSemesterStore();
 const selectedSemesterId = ref<string | number>("");
 const startDate = ref<Date[]>([]);
 const endDate = ref<Date[]>([]);
+const weeksCount = ref<number | null>(null);
 const formError = ref("");
 
 const semesterOptions = computed(() => {
@@ -167,6 +186,7 @@ const handleSaveAcademicYearSemester = async () => {
       semesterDefinitionId: selectedSemester.id,
       startDate: dayjs(startDate.value[0]).format(DATE_STORAGE_FORMAT),
       endDate: dayjs(endDate.value[0]).format(DATE_STORAGE_FORMAT),
+      weeksCount: weeksCount.value ?? undefined,
     });
     closeAddAcademicYearSemesterPopover();
   } catch (error) {
@@ -179,6 +199,7 @@ const resetForm = () => {
   selectedSemesterId.value = "";
   startDate.value = [];
   endDate.value = [];
+  weeksCount.value = null;
   formError.value = "";
   academicYearSemesterStore.clearError();
 };

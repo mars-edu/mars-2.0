@@ -92,6 +92,13 @@ export const academicTables = {
     semesterDefinitionId: v.id("semesterDefinitions"),
     startDate: v.string(), // ISO date
     endDate: v.string(), // ISO date
+    // Teaching weeks in this semester — the normative figure, NOT the calendar
+    // span (a 20-week semester may hold 18 teaching weeks, the rest being the
+    // exam session). Seeds `weeks{N}` when a discipline is added to a workload;
+    // previously hardcoded 18/20 for semesters 1/2 with nothing for 3+, which
+    // silently zeroed third-semester hours. Defaults to
+    // DEFAULT_SEMESTER_WEEKS (18) when unset.
+    weeksCount: v.optional(v.number()),
     createdAt: v.string(),
     updatedAt: v.string(),
   })

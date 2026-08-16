@@ -781,6 +781,25 @@ const semesterCount = computed(() => {
   return semesters.length || 2;
 });
 
+/**
+ * Teaching weeks per semester NUMBER (1-based), read from each semester's
+ * configured `weeksCount`. Feeds seedWorkloadItemsFromRup so a newly added
+ * discipline gets real weeks for every semester of the year — including the
+ * third and beyond, which used to get nothing and silently lost their hours.
+ */
+const semesterWeeks = computed<Record<number, number>>(() => {
+  if (!selectedAcademicYearId.value) return {};
+  const map: Record<number, number> = {};
+  for (const s of academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(
+    selectedAcademicYearId.value
+  )) {
+    if (typeof s.weeksCount === "number" && s.weeksCount > 0) {
+      map[s.semesterNumber] = s.weeksCount;
+    }
+  }
+  return map;
+});
+
 const selectedTeacherName = computed(() => {
   const teacher = teachers.value.find(t => t.id === selectedTeacherId.value);
   return teacher ? getTeacherFullName(teacher) : "";
@@ -989,6 +1008,7 @@ function addSubjectFromRup(
     individual: opts.individual,
     specialtyIds: chosenSpecs,
     semesterCount: semesterCount.value,
+    semesterWeeks: semesterWeeks.value,
   });
   currentWorkloadItems.value.push(...items);
 }

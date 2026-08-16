@@ -36,6 +36,7 @@ export const useAcademicYearSemesterStore = defineStore(
           semesterName: s.semesterDefinition?.shortName || "",
           startDate: s.startDate,
           endDate: s.endDate,
+          weeksCount: s.weeksCount,
           createdAt: new Date(s.createdAt),
           updatedAt: new Date(s.updatedAt),
         }));
@@ -119,6 +120,7 @@ export const useAcademicYearSemesterStore = defineStore(
       semesterDefinitionId: string;
       startDate: string;
       endDate: string;
+      weeksCount?: number;
     }) {
       return await withLoading(loading, error, async () => {
         // Validate that dates are not empty
@@ -147,6 +149,7 @@ export const useAcademicYearSemesterStore = defineStore(
                   semesterDefinitionId: semesterData.semesterDefinitionId as any,
                   startDate: semesterData.startDate,
                   endDate: semesterData.endDate,
+                  weeksCount: semesterData.weeksCount,
                 });
                 // Don't push to academicYearSemesters.value - the reactive subscription will handle it
                 error.value = null;
@@ -159,6 +162,7 @@ export const useAcademicYearSemesterStore = defineStore(
         semesterDefinitionId?: string;
         startDate?: string;
         endDate?: string;
+        weeksCount?: number;
       }
     ) {
       return await withLoading(loading, error, async () => {
@@ -209,6 +213,7 @@ export const useAcademicYearSemesterStore = defineStore(
                   semesterDefinitionId: semesterData.semesterDefinitionId as any,
                   startDate: semesterData.startDate,
                   endDate: semesterData.endDate,
+                  weeksCount: semesterData.weeksCount,
                 });
                 // Don't update academicYearSemesters.value - the reactive subscription will handle it
                 error.value = null;

@@ -10,6 +10,7 @@ export const create = mutation({
     semesterDefinitionId: v.id("semesterDefinitions"),
     startDate: v.string(),
     endDate: v.string(),
+    weeksCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -18,6 +19,7 @@ export const create = mutation({
       semesterDefinitionId: args.semesterDefinitionId,
       startDate: args.startDate,
       endDate: args.endDate,
+      weeksCount: args.weeksCount,
       });
   },
 });
@@ -31,6 +33,7 @@ export const update = mutation({
     semesterDefinitionId: v.optional(v.id("semesterDefinitions")),
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
+    weeksCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;

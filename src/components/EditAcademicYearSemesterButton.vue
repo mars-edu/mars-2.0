@@ -47,6 +47,24 @@
               />
             </div>
           </div>
+
+          <div class="space-y-2">
+            <label class="text-sm text-foreground" for="weeks-count">
+              Учебных недель
+            </label>
+            <f7-input
+              id="weeks-count"
+              type="number"
+              min="1"
+              max="52"
+              v-model:value="weeksCount"
+              placeholder="18"
+            ></f7-input>
+            <p class="text-xs text-muted-foreground">
+              Норматив учебных недель (не календарная длина семестра).
+              Подставляется в нагрузку при добавлении дисциплины. По умолчанию 18.
+            </p>
+          </div>
         </div>
 
         <PopoverFooter
@@ -63,7 +81,7 @@
 import { ref, computed, watchEffect, watch } from "vue";
 import dayjs from "dayjs";
 import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
-import { f7 } from "framework7-vue";
+import { f7, f7Input } from "framework7-vue";
 import { academicYearSemesterSchema } from '@/validators/academic-year';
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useSemesterStore } from "@/stores/semesterStore";
@@ -88,6 +106,7 @@ const academicYearSemester = computed(() =>
 const selectedSemesterId = ref<string | number>("");
 const startDate = ref<Date[]>([new Date()]);
 const endDate = ref<Date[]>([new Date()]);
+const weeksCount = ref<number | null>(null);
 const formError = ref("");
 
 const semesterOptions = computed(() => {
@@ -111,6 +130,7 @@ watchEffect(() => {
       startDate.value = [];
     }
 
+    weeksCount.value = academicYearSemester.value.weeksCount ?? null;
     if (academicYearSemester.value.endDate) {
       const parsedEndDate = new Date(academicYearSemester.value.endDate);
       endDate.value = !isNaN(parsedEndDate.getTime()) ? [parsedEndDate] : [];
@@ -176,6 +196,7 @@ const handleUpdateAcademicYearSemester = async () => {
         semesterDefinitionId: selectedSemester.id,
         startDate: dayjs(startDate.value[0]).format(DATE_STORAGE_FORMAT),
         endDate: dayjs(endDate.value[0]).format(DATE_STORAGE_FORMAT),
+        weeksCount: weeksCount.value ?? undefined,
       }
     );
     closeEditAcademicYearSemesterPopover();

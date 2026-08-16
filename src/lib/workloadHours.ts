@@ -9,6 +9,7 @@
 
 import type { WorkloadItem } from "@/types/workload";
 import type { RupEntry } from "@/types/rup-entry";
+import { DEFAULT_SEMESTER_WEEKS } from "@/types/academic-year-semester";
 
 /**
  * Verbatim from WorkloadManagement.vue `formatHours(val)`.
@@ -77,7 +78,28 @@ export interface SeedWorkloadItemsOpts {
   individual?: boolean;
   specialtyIds: string[];
   semesterCount: number;
+  /**
+   * Teaching weeks per semester number (1-based): `{ 1: 18, 2: 20, 3: 18 }`.
+   * Sourced from `academicYearSemesters.weeksCount` by the caller. Missing
+   * entries fall back to DEFAULT_SEMESTER_WEEKS — previously semesters 1/2
+   * were hardcoded to 18/20 and 3+ got nothing, which silently zeroed their
+   * hours (audit defect #1).
+   */
+  semesterWeeks?: Record<number, number>;
   idFactory?: () => string;
+}
+
+/** Weeks for a semester number: explicit config → shared default. */
+function weeksForSemester(
+  semNum: number,
+  semesterWeeks?: Record<number, number>
+): string {
+  const configured = semesterWeeks?.[semNum];
+  return String(
+    typeof configured === "number" && configured > 0
+      ? configured
+      : DEFAULT_SEMESTER_WEEKS
+  );
 }
 
 /**
@@ -100,8 +122,10 @@ export function seedWorkloadItemsFromRup(rup: RupEntry, opts: SeedWorkloadItemsO
     specialtyIds: opts.specialtyIds,
     course: "1", // Fallback, could be derived
     studentCount: "0",
-    weeks1: "18",
-    weeks2: "20",
+    // weeks1/weeks2 are required by the WorkloadItem type; seeded from config
+    // like every other semester (the loop below covers 3+ and re-applies these).
+    weeks1: weeksForSemester(1, opts.semesterWeeks),
+    weeks2: weeksForSemester(2, opts.semesterWeeks),
     hours1: "0",
     hours2: "0",
     hoursPerGroup1: "0",
@@ -113,6 +137,17 @@ export function seedWorkloadItemsFromRup(rup: RupEntry, opts: SeedWorkloadItemsO
     description: rup.moduleName,
     language: opts.language || rup.language || "ru",
   };
+
+  // Weeks for EVERY semester of the year, from the semesters' configured
+  // weeksCount. Previously only weeks1/weeks2 existed (hardcoded 18/20), so a
+  // third semester's hours were recalculated against weeks3 = 0 and silently
+  // vanished (audit defect #1).
+  for (let i = 1; i <= semesterCount; i++) {
+    newItem[`weeks${i}`] = weeksForSemester(i, opts.semesterWeeks);
+    if (newItem[`hours${i}`] === undefined) newItem[`hours${i}`] = "0";
+    if (newItem[`hoursPerGroup${i}`] === undefined) newItem[`hoursPerGroup${i}`] = "0";
+    if (newItem[`groupCount${i}`] === undefined) newItem[`groupCount${i}`] = "1";
+  }
 
   // Set initial hours from distribution entries if available
   rup.distributionEntries.forEach((entry, idx) => {
@@ -135,8 +170,8 @@ export function seedWorkloadItemsFromRup(rup: RupEntry, opts: SeedWorkloadItemsO
       department: "Индивидуальные",
       course: newItem.course,
       studentCount: newItem.studentCount,
-      weeks1: "18",
-      weeks2: "20",
+      weeks1: weeksForSemester(1, opts.semesterWeeks),
+      weeks2: weeksForSemester(2, opts.semesterWeeks),
       hours1: "0",
       hours2: "0",
       hoursPerGroup1: "0",
@@ -148,6 +183,12 @@ export function seedWorkloadItemsFromRup(rup: RupEntry, opts: SeedWorkloadItemsO
       description: "",
       language: newItem.language,
     };
+    for (let i = 1; i <= semesterCount; i++) {
+      indItem[`weeks${i}`] = weeksForSemester(i, opts.semesterWeeks);
+      if (indItem[`hours${i}`] === undefined) indItem[`hours${i}`] = "0";
+      if (indItem[`hoursPerGroup${i}`] === undefined) indItem[`hoursPerGroup${i}`] = "0";
+      if (indItem[`groupCount${i}`] === undefined) indItem[`groupCount${i}`] = "0";
+    }
     // Per-semester individual hours from the RUP distribution.
     let filledFromDist = false;
     rup.distributionEntries.forEach((entry, idx) => {

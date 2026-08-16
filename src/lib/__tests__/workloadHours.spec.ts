@@ -204,17 +204,44 @@ describe("seedWorkloadItemsFromRup", () => {
     expect(items).toHaveLength(1);
     const main = items[0];
     expect(main.id).toBe("main1");
+    // No semesterWeeks passed → every semester falls back to
+    // DEFAULT_SEMESTER_WEEKS (18). The old 18/20 hardcode is gone; weeks now
+    // come from each semester's configured weeksCount.
     expect(main.weeks1).toBe("18");
-    expect(main.weeks2).toBe("20");
+    expect(main.weeks2).toBe("18");
     expect(main.hoursPerGroup1).toBe("36");
     expect(main.hoursPerGroup2).toBe("40");
+    expect(main.hours1).toBe("2");
+    expect(main.hours2).toBe((40 / 18).toString());
+    expect(main.totalHours).toBe(76);
+  });
+
+  it("semesterWeeks config drives weeks per semester (replaces the old 18/20 hardcode)", () => {
+    const rup = makeRup({
+      distributionEntries: [makeDist({ hours: "36" }), makeDist({ hours: "40" })],
+    });
+    const items = seedWorkloadItemsFromRup(rup, {
+      department: "ИТ",
+      language: "ru",
+      individual: false,
+      specialtyIds: ["spec1"],
+      semesterCount: 2,
+      semesterWeeks: { 1: 18, 2: 20 },
+      idFactory: () => "cfg1",
+    });
+    const main = items[0];
+    expect(main.weeks1).toBe("18");
+    expect(main.weeks2).toBe("20");
     expect(main.hours1).toBe("2");
     expect(main.hours2).toBe("2");
     expect(main.totalHours).toBe(76);
   });
 
-  it("known bug #1 (characterize, don't fix): 3-semester year zeroes the 3rd semester because weeks3/groupCount3 are never seeded", () => {
-    // characterizes defect #1 — expected to change when array migration fixes seeding.
+  it("defect #1 FIXED: a 3-semester year now seeds weeks/groupCount for semester 3, so its hours survive", () => {
+    // Was a characterization pin for defect #1: weeks3/groupCount3 were never
+    // initialized (only 1/2 were hardcoded 18/20), so recalcWorkloadItem read
+    // weeks3 = 0 and silently zeroed the third semester. Seeding now fills every
+    // semester up to semesterCount from the configured weeksCount.
     const rup = makeRup({
       distributionEntries: [makeDist({ hours: "36" }), makeDist({ hours: "40" }), makeDist({ hours: "20" })],
     });
@@ -224,15 +251,14 @@ describe("seedWorkloadItemsFromRup", () => {
       individual: false,
       specialtyIds: ["spec1"],
       semesterCount: 3,
+      semesterWeeks: { 1: 18, 2: 20, 3: 18 },
       idFactory: () => "main2",
     });
     const main = items[0];
-    // hoursPerGroup3 gets briefly set to "20" during seeding, but recalcWorkloadItem
-    // (called right after) reads weeks3/groupCount3 which were never initialized on
-    // the item literal, so it overwrites hoursPerGroup3 back to "0" and the 3rd
-    // semester's hours never enter the total.
-    expect(main.hoursPerGroup3).toBe("0");
-    expect(main.totalHours).toBe(76); // 36 + 40, third semester dropped
+    expect(main.weeks3).toBe("18");
+    expect(main.groupCount3).toBe("1");
+    expect(main.hoursPerGroup3).toBe("20");
+    expect(main.totalHours).toBe(96); // 36 + 40 + 20 — third semester counted
   });
 
   it("_ind row, filledFromDist=true: per-semester individualHours from distributionEntries", () => {
