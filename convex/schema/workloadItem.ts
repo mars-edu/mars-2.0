@@ -20,6 +20,30 @@ import { v } from "convex/values";
 export const MAX_WORKLOAD_SEMESTERS = 6;
 
 /**
+ * One semester's slice of a workload item — the target model replacing the 24
+ * flat `weeks{N}` / `hours{N}` / `hoursPerGroup{N}` / `groupCount{N}` fields.
+ *
+ * Keyed by `semesterId`, not by position: the flat model encoded the semester
+ * as a NUMBER IN THE FIELD NAME, so a row's meaning depended on sort order,
+ * and semesters beyond the two hardcoded slots silently lost their hours.
+ * Every other table in the schema already references a semester by id.
+ *
+ * `hoursPerGroup` is deliberately absent — it is `weeks * hours`, and storing
+ * a derived value is exactly what let the stored copy drift from its inputs.
+ *
+ * Array order carries no meaning; display sorts by `semesterDefinition.number`.
+ *
+ * Phase 1 (this commit) adds it as optional alongside the flat fields — nothing
+ * writes it yet. See MIGRATION-workload-array-plan-v4.md for the phase plan.
+ */
+export const workloadSemesterEntryValidator = v.object({
+  semesterId: v.id("academicYearSemesters"),
+  weeks: v.number(),
+  hours: v.number(), // hours per week
+  groupCount: v.number(),
+});
+
+/**
  * Shared validator for a single workload line item. Used by BOTH the
  * `workloads` schema table and the `workloads.save` mutation so the two can
  * never drift apart (they were previously duplicated literals limited to
@@ -59,6 +83,13 @@ export const workloadItemValidator = v.object({
   groupCount4: v.optional(v.string()),
   groupCount5: v.optional(v.string()),
   groupCount6: v.optional(v.string()),
+
+  /**
+   * Target per-semester model (expand phase). Optional while the flat fields
+   * above remain the source of truth — nothing writes this yet; Phase 2
+   * backfills it, Phase 3 switches readers, Phase 5 drops the flat 24.
+   */
+  semesters: v.optional(v.array(workloadSemesterEntryValidator)),
 
   // TRANSITIONAL union (Pattern A expand-contract, see docs/migration-playbook.md):
   // prod holds legacy string totalHours; new writes are number. Run
