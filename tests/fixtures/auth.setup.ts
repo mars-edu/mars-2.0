@@ -5,18 +5,29 @@ const authFile = 'tests/.auth/user.json';
 
 setup('authenticate as teacher', async ({ page }) => {
   await page.goto('/login');
+  await page.waitForLoadState('networkidle');
 
-  // Fill in login form
-  await page.locator('input[type="email"]').fill(testUsers.teacher.email);
-  await page.locator('input[type="password"]').fill(testUsers.teacher.password);
+  // Fill in login form with resilient locators
+  const usernameInput = page
+    .locator('input[placeholder*="ФИО"], input[placeholder*="login"], input[name="username"], input[type="text"]:visible')
+    .first();
+  const passwordInput = page
+    .locator('input[placeholder*="пароль"], input[placeholder*="password"], input[type="password"]:visible')
+    .first();
+
+  await usernameInput.fill(testUsers.teacher.username || testUsers.teacher.fullName);
+  await passwordInput.fill(testUsers.teacher.password);
 
   // Click login button
-  await page.getByRole('button', { name: /login|войти/i }).click();
+  const loginButton = page
+    .getByRole('button', { name: /войти|login/i })
+    .or(page.locator('button[type="submit"]:visible'))
+    .first();
+  await loginButton.click();
 
   // Wait for navigation to complete
-  await page.waitForURL('**/home', { timeout: 10000 }).catch(() => {
-    // If redirect doesn't happen, authentication might have failed
-    // but we'll save the state anyway for testing purposes
+  await page.waitForURL(/\/home\/?/, { timeout: 30000 }).catch(() => {
+    // If redirect doesn't happen, authentication might have failed or already completed
   });
 
   // Save authentication state
