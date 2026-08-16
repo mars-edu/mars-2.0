@@ -1,6 +1,7 @@
 <template>
   <GuardedPopover
     id="notification-center-popover"
+    :centered="false"
     class="notification-popover"
     @popover:open="refresh"
   >

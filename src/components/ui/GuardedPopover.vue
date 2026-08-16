@@ -3,7 +3,7 @@
     :is="componentName"
     v-bind="$attrs"
     :id="id"
-    class="popover-center"
+    :class="{ 'popover-center': centered }"
     :before-close="handleBeforeClose"
     :close-by-backdrop-click="resolvedCloseByBackdropClick"
     :close-on-escape="resolvedCloseOnEscape"
@@ -40,6 +40,7 @@ const props = withDefaults(
     id: string;
     kind?: ModalType;
     guardUnsaved?: boolean;
+    centered?: boolean;
     isDirty?: () => boolean;
     onClosed?: () => void;
     beforeClose?: (ctx: BeforeCloseContext) => boolean | void;
@@ -49,6 +50,7 @@ const props = withDefaults(
   {
     kind: "popover",
     guardUnsaved: true,
+    centered: true,
   }
 );
 
