@@ -2,7 +2,7 @@ name: Deploy
 
 on:
   push:
-    branches: [main, experental-convex-api]
+    branches: [main, dev]
 
 env:
   NODE_VERSION: "22.18.0"
