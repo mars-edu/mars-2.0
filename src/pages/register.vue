@@ -1,5 +1,6 @@
 <template>
   <f7-page name="register" class="flex flex-col min-h-screen bg-background">
+    <AuthHeader />
     <div class="hidden md:flex h-full min-h-screen">
       <div
         class="w-1/2 bg-gradient-to-br from-red-500 to-red-700 flex flex-col items-center justify-center p-12 relative overflow-hidden"
@@ -337,6 +338,7 @@
 import { ref, reactive } from "vue";
 import { f7 } from "framework7-vue";
 import Logo from "../components/Logo/Logo.vue";
+import AuthHeader from "../components/AuthHeader.vue";
 import { vMaska } from "maska/vue";
 import AuthService from "../services/auth";
 import {
