@@ -704,7 +704,13 @@ import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore
 import { useSidebar } from "@/composables/useSidebar";
 import type { WorkloadItem, SavedWorkload } from "@/types/workload";
 import { MAX_WORKLOAD_SEMESTERS } from "@convex/schema/workloadItem";
-import { formatHours, recalcWorkloadItem, computeWorkloadTotal, seedWorkloadItemsFromRup } from "@/lib/workloadHours";
+import {
+  formatHours,
+  recalcWorkloadItem,
+  computeWorkloadTotal,
+  seedWorkloadItemsFromRup,
+  type YearSemesterRef,
+} from "@/lib/workloadHours";
 import { buildWorkloadCsvContent, buildAllWorkloadsCsvContent } from "@/lib/workloadCsv";
 
 // Icons
@@ -782,22 +788,18 @@ const semesterCount = computed(() => {
 });
 
 /**
- * Teaching weeks per semester NUMBER (1-based), read from each semester's
- * configured `weeksCount`. Feeds seedWorkloadItemsFromRup so a newly added
- * discipline gets real weeks for every semester of the year — including the
- * third and beyond, which used to get nothing and silently lost their hours.
+ * The selected year's semesters as `YearSemesterRef`s (id + 1-based number +
+ * configured `weeksCount`), sorted by number. Feeds seedWorkloadItemsFromRup
+ * so a newly added discipline gets an explicit `semesters[]` entry for every
+ * semester of the year — including the third and beyond, which used to get
+ * nothing and silently lost their hours (audit defect #1).
  */
-const semesterWeeks = computed<Record<number, number>>(() => {
-  if (!selectedAcademicYearId.value) return {};
-  const map: Record<number, number> = {};
-  for (const s of academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(
-    selectedAcademicYearId.value
-  )) {
-    if (typeof s.weeksCount === "number" && s.weeksCount > 0) {
-      map[s.semesterNumber] = s.weeksCount;
-    }
-  }
-  return map;
+const yearSemesterRefs = computed<YearSemesterRef[]>(() => {
+  if (!selectedAcademicYearId.value) return [];
+  return academicYearSemesterStore
+    .getAcademicYearSemestersByAcademicYear(selectedAcademicYearId.value)
+    .map((s) => ({ semesterId: s.id, number: s.semesterNumber, weeks: s.weeksCount }))
+    .sort((a, b) => a.number - b.number);
 });
 
 const selectedTeacherName = computed(() => {
@@ -1007,8 +1009,7 @@ function addSubjectFromRup(
     language: opts.language || rup.language || "ru",
     individual: opts.individual,
     specialtyIds: chosenSpecs,
-    semesterCount: semesterCount.value,
-    semesterWeeks: semesterWeeks.value,
+    yearSemesters: yearSemesterRefs.value,
   });
   currentWorkloadItems.value.push(...items);
 }

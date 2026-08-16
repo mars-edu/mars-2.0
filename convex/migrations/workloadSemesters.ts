@@ -43,6 +43,14 @@ import { migrations } from "./index";
  *      number of populated flat columns.
  *   4. Phase 3 (separate PR) switches the readers over.
  *
+ * ⚠️ RE-RUN THIS right before the Phase-3 UI half ships. Between the core and
+ * the UI landing, the old UI still edits the flat fields and `recalcWorkloadItem`
+ * (correctly) keeps them authoritative while leaving `semesters[]` alone — so
+ * any workload edited in that window has a stale array. This migration is
+ * idempotent only for items whose array is EMPTY, so the re-run needs
+ * `{"reset": true}` semantics or a targeted patch; check the drift first with
+ * the dry run and decide.
+ *
  * Rollback: the array is an unused optional field at this point — the running
  * code ignores it. Worst case, patch `semesters: undefined` back off.
  */

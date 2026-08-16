@@ -7,24 +7,34 @@
  * here so it can be unit-tested without a Convex harness.
  */
 
+/** Mirrors `src/types/workload.ts` `WorkloadSemesterEntry` / the Convex validator. */
+export interface WorkloadSemesterEntryLike {
+  semesterId: string;
+  weeks: number;
+  hours: number; // hours per week
+  groupCount: number;
+}
+
 export interface WorkloadItemLike {
   id: string;
   subjectId: string;
   course: string;
   department: string;
   studentCount: string;
-  weeks1: string;
-  weeks2: string;
+  weeks1?: string;
+  weeks2?: string;
   weeks3?: string;
-  hours1: string;
-  hours2: string;
+  hours1?: string;
+  hours2?: string;
   hours3?: string;
-  hoursPerGroup1: string;
-  hoursPerGroup2: string;
+  hoursPerGroup1?: string;
+  hoursPerGroup2?: string;
   hoursPerGroup3?: string;
-  groupCount1: string;
-  groupCount2: string;
+  groupCount1?: string;
+  groupCount2?: string;
   groupCount3?: string;
+  /** Target per-semester model (Phase 3 dual-read); see the plan. */
+  semesters?: WorkloadSemesterEntryLike[];
   totalHours: number;
   index?: string;
   description?: string;
@@ -34,7 +44,7 @@ export interface WorkloadItemLike {
 export type SemesterNumber = 1 | 2 | 3;
 type SemesterField = "weeks" | "hours" | "hoursPerGroup" | "groupCount";
 
-/** Read a per-semester field (e.g. hoursPerGroup2) defaulting to "0". */
+/** Read a per-semester flat field (e.g. hoursPerGroup2) defaulting to "0". */
 export function semesterValue(
   item: WorkloadItemLike,
   semester: SemesterNumber,
@@ -45,17 +55,49 @@ export function semesterValue(
 }
 
 /**
+ * Hours contributed per group by one semester entry: weeks * hours-per-week.
+ */
+export function hoursPerGroup(e: WorkloadSemesterEntryLike): number {
+  return e.weeks * e.hours;
+}
+
+/**
+ * Find an item's `semesters[]` entry for a given semester id (undefined if
+ * absent, e.g. a legacy row without an array yet, or a semester the item
+ * simply has no hours in).
+ */
+export function semesterEntry(
+  item: WorkloadItemLike,
+  semesterId: string
+): WorkloadSemesterEntryLike | undefined {
+  return item.semesters?.find((s) => s.semesterId === semesterId);
+}
+
+/**
  * Items that should produce journals for the given semester: real (non-`_ind`)
  * disciplines that carry either planned hours or a planned group count.
+ *
+ * Dual-read (Phase 3, dies in Phase 5): prefers `item.semesters` keyed by
+ * `semesterId` when present; falls back to the legacy flat fields keyed by
+ * ordinal for rows that haven't been migrated to the array yet.
  */
 export function itemsNeedingJournals(
   items: WorkloadItemLike[],
-  semester: SemesterNumber
+  semesterId: string,
+  semesterNumber?: SemesterNumber
 ): WorkloadItemLike[] {
   return items.filter((item) => {
     if (item.id.endsWith("_ind")) return false;
-    const hours = parseFloat(semesterValue(item, semester, "hoursPerGroup")) || 0;
-    const groups = parseInt(semesterValue(item, semester, "groupCount")) || 0;
+
+    if (item.semesters && item.semesters.length > 0) {
+      const entry = semesterEntry(item, semesterId);
+      if (!entry) return false;
+      return hoursPerGroup(entry) > 0 || entry.groupCount > 0;
+    }
+
+    if (semesterNumber === undefined) return false;
+    const hours = parseFloat(semesterValue(item, semesterNumber, "hoursPerGroup")) || 0;
+    const groups = parseInt(semesterValue(item, semesterNumber, "groupCount")) || 0;
     return hours > 0 || groups > 0;
   });
 }
