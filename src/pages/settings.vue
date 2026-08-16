@@ -14,99 +14,73 @@
         class="flex-1 flex flex-col min-w-0 bg-background overflow-hidden transition-all duration-200"
         :class="contentMargin"
       >
-        <div class="flex flex-1 overflow-hidden">
-          <!-- Local Sidebar for Tabs -->
-          <div class="w-72 bg-card border-r border-border p-6 space-y-2 hidden md:block">
-            <button 
-              v-for="tab in tabs"
-              :key="tab.id"
-              @click="activeTab = tab.id"
-              class="w-full flex items-center gap-3 p-3 rounded-xl font-bold transition-colors text-left"
-              :class="activeTab === tab.id ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'"
-              type="button"
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 bg-background transition-all duration-200">
+          <div class="max-w-6xl mx-auto space-y-8">
+            <h1 class="text-2xl md:text-3xl font-bold text-foreground mb-8">{{ settings_title() }}</h1>
+            
+            <!-- Semesters Section -->
+            <SettingsSection
+              :title="settings_semesters()"
+              :items="semesterItems"
+              allow-delete
+              @edit="openEditSemester"
+              @delete="deleteSemesterItem"
             >
-              <component :is="tab.icon" class="w-5 h-5" />
-              {{ tab.name }}
-            </button>
-          </div>
+              <template #action>
+                <AddSemesterButton />
+              </template>
+            </SettingsSection>
 
-          <div
-            class="flex-1 overflow-y-auto p-4 md:p-8 bg-background transition-all duration-200"
-          >
-            <div v-if="activeTab === 'system'">
-              <h1 class="text-2xl md:text-3xl font-bold text-foreground mb-8">{{ settings_title() }}</h1>
-              
-              <!-- Semesters Section -->
-              <SettingsSection
-                :title="settings_semesters()"
-                :items="semesterItems"
-                allow-delete
-                @edit="openEditSemester"
-                @delete="deleteSemesterItem"
-              >
-                <template #action>
-                  <AddSemesterButton />
-                </template>
-              </SettingsSection>
+            <!-- Courses Section -->
+            <SettingsSection
+              :title="settings_courses()"
+              :items="courseItems"
+              allow-delete
+              @edit="openEditCourse"
+              @delete="deleteCourseItem"
+            >
+              <template #action>
+                <AddCourseButton />
+              </template>
+            </SettingsSection>
 
-              <!-- Courses Section -->
-              <SettingsSection
-                :title="settings_courses()"
-                :items="courseItems"
-                allow-delete
-                @edit="openEditCourse"
-                @delete="deleteCourseItem"
-              >
-                <template #action>
-                  <AddCourseButton />
-                </template>
-              </SettingsSection>
+            <!-- Languages Section -->
+            <SettingsSection
+              :title="settings_languages()"
+              :items="languageItems"
+              allow-delete
+              @edit="openEditLanguage"
+              @delete="deleteLanguageItem"
+            >
+              <template #action>
+                <AddLanguageButton />
+              </template>
+            </SettingsSection>
 
-              <!-- Languages Section -->
-              <SettingsSection
-                :title="settings_languages()"
-                :items="languageItems"
-                allow-delete
-                @edit="openEditLanguage"
-                @delete="deleteLanguageItem"
-              >
-                <template #action>
-                  <AddLanguageButton />
-                </template>
-              </SettingsSection>
+            <!-- Controls Section -->
+            <SettingsSection
+              :title="settings_final_controls()"
+              :items="finalControlItems"
+              allow-delete
+              @edit="openEditFinalControl"
+              @delete="deleteFinalControlItem"
+            >
+              <template #action>
+                <AddFinalControlButton />
+              </template>
+            </SettingsSection>
 
-              <!-- Controls Section -->
-              <SettingsSection
-                :title="settings_final_controls()"
-                :items="finalControlItems"
-                allow-delete
-                @edit="openEditFinalControl"
-                @delete="deleteFinalControlItem"
-              >
-                <template #action>
-                  <AddFinalControlButton />
-                </template>
-              </SettingsSection>
-
-              <SettingsSection
-                :title="settings_intermediate_controls()"
-                :items="intermediateControlItems"
-                allow-delete
-                @edit="openEditIntermediateControl"
-                @delete="deleteIntermediateControlItem"
-              >
-                <template #action>
-                  <AddIntermediateControlButton />
-                </template>
-              </SettingsSection>
-            </div>
-            <div v-else class="flex flex-col items-center justify-center min-h-[400px] text-center">
-              <div class="p-4 bg-muted rounded-full mb-4">
-                <component :is="tabs.find(t => t.id === activeTab)?.icon" class="w-12 h-12 text-muted-foreground" />
-              </div>
-              <h2 class="text-xl font-bold text-foreground mb-2">Раздел в разработке</h2>
-              <p class="text-muted-foreground">Раздел "{{ tabs.find(t => t.id === activeTab)?.name }}" находится в разработке</p>
-            </div>
+            <SettingsSection
+              :title="settings_intermediate_controls()"
+              :items="intermediateControlItems"
+              allow-delete
+              @edit="openEditIntermediateControl"
+              @delete="deleteIntermediateControlItem"
+            >
+              <template #action>
+                <AddIntermediateControlButton />
+              </template>
+            </SettingsSection>
           </div>
         </div>
       </div>
@@ -125,12 +99,6 @@
 import { ref, computed, nextTick } from "vue";
 import { storeToRefs } from "pinia";
 import { f7Page, f7, f7PageContent } from "framework7-vue";
-import IconCalendar from "~icons/lucide/calendar";
-import IconBookOpen from "~icons/lucide/book-open";
-import IconGlobe from "~icons/lucide/globe";
-import IconCircleCheck from "~icons/lucide/circle-check";
-import IconUser from "~icons/lucide/user";
-import IconSettings from "~icons/lucide/settings";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import SettingsSection from "@/components/SettingsSection.vue";
@@ -167,7 +135,6 @@ import {
 const { contentMargin } = useSidebar();
 
 const activeNavItem = ref("settings");
-const activeTab = ref("system");
 
 const courseStore = useCourseStore();
 const semesterStore = useSemesterStore();
@@ -180,12 +147,6 @@ const { semesters } = storeToRefs(semesterStore);
 const { languages } = storeToRefs(languageStore);
 const { sortedFinalControls } = storeToRefs(finalControlStore);
 const { sortedIntermediateControls } = storeToRefs(intermediateControlStore);
-
-const tabs = [
-  { id: 'profile', name: 'Профиль', icon: IconUser },
-  { id: 'interface', name: 'Интерфейс', icon: IconSettings },
-  { id: 'system', name: 'Система образовательного процесса', icon: IconBookOpen },
-];
 
 // Data Mappings for SettingsSection
 const semesterItems = computed(() => semesters.value.map(s => ({

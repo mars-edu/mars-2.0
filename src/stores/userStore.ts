@@ -3,6 +3,7 @@ import AuthService from "../services/auth";
 import { computed, ref } from "vue";
 import type { User, UserState } from "../types/user";
 import { Role } from "../types/user";
+import { f7 } from "framework7-vue";
 
 console.log("[UserStore] Store definition initiated");
 
@@ -110,11 +111,17 @@ export const useUserStore = defineStore(
         if (payload.exp && Math.floor(Date.now() / 1000) >= payload.exp) {
           console.log("[UserStore] Stored token is expired, logging out");
           logout();
+          if (f7.views?.main?.router) {
+            f7.views.main.router.navigate("/login/");
+          }
           return;
         }
       } catch {
         console.log("[UserStore] Failed to decode token, logging out");
         logout();
+        if (f7.views?.main?.router) {
+          f7.views.main.router.navigate("/login/");
+        }
         return;
       }
 
@@ -146,6 +153,9 @@ export const useUserStore = defineStore(
         } else {
           console.log("[UserStore] Background validation failed, logging out");
           logout();
+          if (f7.views?.main?.router) {
+            f7.views.main.router.navigate("/login/");
+          }
         }
       } catch {
         // Network error: keep existing auth state, don't log out
