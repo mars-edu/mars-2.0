@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - "package.json"
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch:
 
 jobs:
   update-package-lock:
@@ -18,29 +18,23 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
 
-      - name: Install dependencies and generate package-lock.json
-        run: npm install
-
-      - name: Install backend dependencies and generate backend/package-lock.json
-        run: |
-          cd backend
-          npm install
-          cd ..
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
 
       - name: Check for changes
         id: git-check
         run: |
-          git diff --exit-code package-lock.json || echo "changes_root=true" >> $GITHUB_OUTPUT
-          git diff --exit-code backend/package-lock.json || echo "changes_backend=true" >> $GITHUB_OUTPUT
+          git diff --exit-code package-lock.json || echo "changed=true" >> $GITHUB_OUTPUT
 
-      - name: Commit and push if any package-lock.json has changed
-        if: steps.git-check.outputs.changes_root == 'true' || steps.git-check.outputs.changes_backend == 'true'
+      - name: Commit updated package-lock.json
+        if: steps.git-check.outputs.changed == 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add package-lock.json backend/package-lock.json
+          git add package-lock.json
           git commit -m "chore: update package-lock.json"
           git push
+
