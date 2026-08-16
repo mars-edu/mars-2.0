@@ -49,22 +49,23 @@ jobs:
         run: npx playwright install-deps chromium
 
       - name: Generate Convex client
-        run: npx convex dev --local --once
+        run: npx convex codegen
         env:
-          CONVEX_AGENT_MODE: anonymous
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
-      - name: Execute convex server
-        run: npm run dev:all &
+      - name: Start dev server
+        run: npm run dev &
         env:
-          CONVEX_AGENT_MODE: anonymous
+          VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
+          VITE_CONVEX_SITE_URL: ${{ secrets.VITE_CONVEX_SITE_URL }}
 
       - name: Wait for server to be ready
         run: npx wait-on http://localhost:5173 --timeout 60000
 
       - name: Seed test data
-        run: npx convex run testSeed:resetAndSeed --url http://127.0.0.1:3210
+        run: npx convex run testSeed:resetAndSeed
         env:
-          CONVEX_AGENT_MODE: anonymous
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
       - name: Run Playwright tests
         run: npm run test:e2e -- --shard=${{ matrix.shard }}/3 --reporter=blob
