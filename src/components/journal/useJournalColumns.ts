@@ -17,6 +17,7 @@ import {
 } from "@/constants/calendar";
 import { getEventDays, type SemesterInfo } from "@/utils/eventDate";
 import type { Mark } from "@/types/marks";
+import type { DistributionEntry } from "@/types/rup-entry";
 import {
   type EducationSchedule,
   useEducationScheduleStore,
@@ -173,35 +174,32 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
       debug?: Record<string, unknown>;
     }[] = [];
 
-    const relevantDistributionEntries = (rupEntryItem?.distributionEntries || [])
-      .filter((entry: any) => {
+    const relevantDistributionEntries: DistributionEntry[] = (rupEntryItem?.distributionEntries || [])
+      .filter((entry: DistributionEntry) => {
         if (!semesterFilter) return true;
         if (entry?.semesterId == null) return false;
 
         // Match by UUID only
         return String(entry.semesterId) === semesterFilter;
       })
-      .filter((entry: any) => {
+      .filter((entry: DistributionEntry) => {
         if (!academicYearId) return true;
         return String(entry?.academicYearId ?? "") === String(academicYearId);
-      })
-      .map((entry: any) => entry);
-
-
+      });
 
     const distributionIntermediateControlIds = Array.from(
       new Set(
         relevantDistributionEntries
-          .map((entry: any) => entry.intermediateControlId)
-          .filter((id: unknown): id is string => typeof id === "string" && id.length > 0)
+          .map((entry) => entry.intermediateControlId)
+          .filter((id): id is string => Boolean(id))
       )
     );
 
     const distributionFinalControlIds = Array.from(
       new Set(
         relevantDistributionEntries
-          .map((entry: any) => entry.finalControlId)
-          .filter((id: unknown): id is string => typeof id === "string" && id.length > 0)
+          .map((entry) => entry.finalControlId)
+          .filter((id): id is string => Boolean(id))
       )
     );
 
