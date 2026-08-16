@@ -289,9 +289,9 @@ export const useRupEntryStore = defineStore(
                       academicYearId: dist.academicYearId,
                       semesterId: dist.semesterId as Id<"academicYearSemesters">,
                       hours: dist.hours,
-                      srsHours: (dist as any).srsHours,
-                      srspHours: (dist as any).srspHours,
-                      individualHours: (dist as any).individualHours,
+                      srsHours: dist.srsHours,
+                      srspHours: dist.srspHours,
+                      individualHours: dist.individualHours,
                       intermediateControlId: dist.intermediateControlId ?? undefined,
                       finalControlId: dist.finalControlId ?? undefined,
                       examEnabled: dist.examEnabled,
@@ -344,9 +344,9 @@ export const useRupEntryStore = defineStore(
                         academicYearId: dist.academicYearId,
                         semesterId: dist.semesterId as Id<"academicYearSemesters">,
                         hours: dist.hours,
-                        srsHours: (dist as any).srsHours,
-                        srspHours: (dist as any).srspHours,
-                        individualHours: (dist as any).individualHours,
+                        srsHours: dist.srsHours,
+                        srspHours: dist.srspHours,
+                        individualHours: dist.individualHours,
                         intermediateControlId: dist.intermediateControlId ?? undefined,
                         finalControlId: dist.finalControlId ?? undefined,
                         examEnabled: dist.examEnabled,
@@ -369,7 +369,7 @@ export const useRupEntryStore = defineStore(
       return await withLoading(loading, error, async () => {
         // Use Convex - update parent item with distribution entries
                 const updated = await convex.mutation(api.rupEntries.mutations.updateWithDistributions, {
-                  id: id as any,
+                  id: id as Id<"rupEntries">,
                   specialtyIds: data.specialtyIds,
                   academicYearId: data.academicYearId,
                   baseClass: data.baseClass,
@@ -395,9 +395,9 @@ export const useRupEntryStore = defineStore(
                     academicYearId: d.academicYearId,
                     semesterId: d.semesterId as Id<"academicYearSemesters">,
                     hours: d.hours,
-                    srsHours: (d as any).srsHours,
-                    srspHours: (d as any).srspHours,
-                    individualHours: (d as any).individualHours,
+                    srsHours: d.srsHours,
+                    srspHours: d.srspHours,
+                    individualHours: d.individualHours,
                     intermediateControlId: d.intermediateControlId,
                     finalControlId: d.finalControlId,
                     examEnabled: d.examEnabled,
@@ -427,7 +427,7 @@ export const useRupEntryStore = defineStore(
       reordered.splice(newIndex, 0, movedItem);
 
       await convex.mutation(api.rupEntries.mutations.reorder, {
-        orderedIds: reordered.map((item) => item.id as any),
+        orderedIds: reordered.map((item) => item.id as Id<"rupEntries">),
       });
     }
 
@@ -454,7 +454,7 @@ export const useRupEntryStore = defineStore(
                 // Update positions in Convex
                 for (const item of itemsInContext) {
                   await convex.mutation(api.rupEntries.mutations.update, {
-                    id: item.id as any,
+                    id: item.id as Id<"rupEntries">,
                     specialtyIds: item.specialtyIds,
                     academicYearId: item.academicYearId,
                     moduleIndex: item.moduleIndex,
@@ -509,9 +509,9 @@ export const useRupEntryStore = defineStore(
                     academicYearId: dist.academicYearId,
                     semesterId: dist.semesterId as Id<"academicYearSemesters">,
                     hours: dist.hours,
-                    srsHours: (dist as any).srsHours,
-                    srspHours: (dist as any).srspHours,
-                    individualHours: (dist as any).individualHours,
+                    srsHours: dist.srsHours,
+                    srspHours: dist.srspHours,
+                    individualHours: dist.individualHours,
                     intermediateControlId: dist.intermediateControlId ?? undefined,
                     finalControlId: dist.finalControlId ?? undefined,
                     examEnabled: dist.examEnabled,
@@ -624,7 +624,7 @@ export const useRupEntryStore = defineStore(
         // refs exist (calendarEvents/ktps/journals/scheduled*), the server
         // throws RUP_ENTRY_HAS_REFERENCES — we translate it here.
         try {
-          await convex.mutation(api.rupEntries.mutations.remove, { id: id as any });
+          await convex.mutation(api.rupEntries.mutations.remove, { id: id as Id<"rupEntries"> });
         } catch (err) {
           rethrowRupDeleteError(err, false);
         }

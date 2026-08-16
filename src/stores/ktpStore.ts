@@ -43,7 +43,7 @@ export const useKtpStore = defineStore("ktp", () => {
   // The list query embeds each ktp's details, so one subscription
   // covers both headers and detail rows. Mutations below never mirror
   // state locally; the subscription auto-refreshes after every write.
-  const ktpsResult = useConvexQuery(api.ktps.queries.list, ref({})) as any;
+  const ktpsResult = useConvexQuery(api.ktps.queries.list, ref({}));
 
   const ktps = computed<Ktp[]>(() => {
     if (!ktpsResult.data.value) return [];
@@ -142,7 +142,7 @@ export const useKtpStore = defineStore("ktp", () => {
       Object.entries(data).filter(([, v]) => v !== undefined)
     );
     await convex.mutation(api.ktps.mutations.update, {
-      id: id as any,
+      id: id as Id<"ktps">,
       ...cleanData,
     });
   }
@@ -160,7 +160,7 @@ export const useKtpStore = defineStore("ktp", () => {
     const newPosition =
       ktpDetails.value.filter((d) => d.ktpId === ktpId).length + 1;
     await convex.mutation(api.ktps.mutations.addDetail, {
-      ktpId: ktpId as any,
+      ktpId: ktpId as Id<"ktps">,
       position: newPosition,
       theme: data.theme || "",
       totalHours: data.totalHours ?? undefined,
@@ -179,7 +179,7 @@ export const useKtpStore = defineStore("ktp", () => {
     data: Partial<Omit<KtpDetail, "id" | "ktpId">>
   ) {
     await convex.mutation(api.ktps.mutations.updateDetail, {
-      id: id as any,
+      id: id as Id<"ktps">,
       position: data.position,
       theme: data.theme,
       totalHours: data.totalHours ?? undefined,
@@ -196,13 +196,13 @@ export const useKtpStore = defineStore("ktp", () => {
   async function deleteKtpDetail(id: string) {
     // Backend renumbers remaining siblings; subscription delivers the result
     await convex.mutation(api.ktps.mutations.removeDetail, {
-      id: id as any,
+      id: id as Id<"ktps">,
     });
   }
 
   async function clearKtpDetails(ktpId: string) {
     await convex.mutation(api.ktps.mutations.clearDetails, {
-      ktpId: ktpId as any,
+      ktpId: ktpId as Id<"ktps">,
     });
   }
 
@@ -220,7 +220,7 @@ export const useKtpStore = defineStore("ktp", () => {
 
     // Cascades to details server-side
     await convex.mutation(api.ktps.mutations.remove, {
-      id: ktp.id as any,
+      id: ktp.id as Id<"ktps">,
     });
 
     return { success: true, deleted: deletedDetails };
@@ -235,7 +235,7 @@ export const useKtpStore = defineStore("ktp", () => {
     ).length;
 
     await convex.mutation(api.ktps.mutations.remove, {
-      id: ktpId as any,
+      id: ktpId as Id<"ktps">,
     });
 
     return { success: true, deleted: deletedDetails };
@@ -253,8 +253,8 @@ export const useKtpStore = defineStore("ktp", () => {
       }
 
       await convex.mutation(api.ktps.mutations.reorderDetails, {
-        ktpId: ktpId as any,
-        orderedIds: filteredOrder as any,
+        ktpId: ktpId as Id<"ktps">,
+        orderedIds: filteredOrder as Id<"ktpDetails">[],
       });
 
       return { success: true, reordered: filteredOrder.length };
@@ -280,7 +280,7 @@ export const useKtpStore = defineStore("ktp", () => {
       }));
 
       const result = await convex.mutation(api.ktps.mutations.bulkImportDetails, {
-        ktpId: ktpId as any,
+        ktpId: ktpId as Id<"ktps">,
         details,
         replace: true,
       });
@@ -318,7 +318,7 @@ export const useKtpStore = defineStore("ktp", () => {
       }));
 
       const result = await convex.mutation(api.ktps.mutations.bulkImportDetails, {
-        ktpId: ktpId as any,
+        ktpId: ktpId as Id<"ktps">,
         details: payload,
         replace: true,
       });

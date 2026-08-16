@@ -33,7 +33,7 @@ export const useMarksStore = defineStore(
         const journal = await convex.query(api.journals.queries.getByCalendarEvent, {
           calendarEventId,
         });
-        const journalId = (journal as any)?._id ? String((journal as any)._id) : null;
+        const journalId = journal?._id ? String(journal._id) : null;
         if (journalId) {
           cacheBackendJournalId(calendarEventId, journalId);
           return journalId;
@@ -105,7 +105,7 @@ export const useMarksStore = defineStore(
           const backendJournalId = await ensureBackendJournalId(journalId);
           if (!backendJournalId) return null;
           const result = await convex.query(api.marks.queries.getJournalMarks, {
-            journalId: backendJournalId as any,
+            journalId: backendJournalId as Id<"journals">,
           });
           return result;
         } catch (e) {
@@ -140,7 +140,7 @@ export const useMarksStore = defineStore(
           }
 
           result = await convex.query(api.marks.queries.getJournalMarks, {
-            journalId: backendJournalId as any,
+            journalId: backendJournalId as Id<"journals">,
           });
         }
         
@@ -245,9 +245,7 @@ export const useMarksStore = defineStore(
           studentIds: students,
         });
         
-        const backendJournalId = (journal as any)?._id
-          ? String((journal as any)._id)
-          : null;
+        const backendJournalId = journal?._id ? String(journal._id) : null;
         if (backendJournalId) {
           cacheBackendJournalId(journalId, backendJournalId);
         }
@@ -487,7 +485,7 @@ export const useMarksStore = defineStore(
 
             console.log("[marksStore] Using Convex to update mark");
             await convex.mutation(api.marks.mutations.updateMark, {
-              journalId: backendJournalId as any,
+              journalId: backendJournalId as Id<"journals">,
               studentId,
               columnIndex: markIndex,
               rowIndex: valueIndex,
@@ -573,7 +571,7 @@ export const useMarksStore = defineStore(
                 // Retry the mark update
                 console.log("[marksStore] Retrying mark update after initialization...");
                 await convex.mutation(api.marks.mutations.updateMark, {
-                  journalId: backendJournalId as any,
+                  journalId: backendJournalId as Id<"journals">,
                   studentId,
                   columnIndex: markIndex,
                   rowIndex: valueIndex,
@@ -686,7 +684,7 @@ export const useMarksStore = defineStore(
               const rawUserId = userStore.currentUser?.id;
               const userId = rawUserId ? (rawUserId as Id<"users">) : undefined;
               await convex.mutation(api.marks.mutations.updateMark, {
-                journalId: backendParentJournalId as any,
+                journalId: backendParentJournalId as Id<"journals">,
                 studentId,
                 columnIndex: markIndex,
                 rowIndex: valueIndex,
@@ -781,7 +779,7 @@ export const useMarksStore = defineStore(
         const rawUserId = userStore.currentUser?.id;
         const userId = rawUserId ? (rawUserId as Id<"users">) : undefined;
         await convex.mutation(api.marks.mutations.updateMark, {
-          journalId: backendMainJournalId as any,
+          journalId: backendMainJournalId as Id<"journals">,
           studentId,
           columnIndex: mainMarkIndex,
           rowIndex: valueIndex,
