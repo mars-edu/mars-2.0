@@ -1,0 +1,115 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [experental-convex-api]
+
+env:
+  NODE_VERSION: "22.18.0"
+  CF_ACCOUNT_ID: "1baf07e2bf54af133428fea840266f45"
+  CF_PROJECT: "convex-mars-2-0"
+  CF_PRODUCTION_URL: "https://next.iam-mars.kz"
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Notify: started ────────────────────────────────────────────────
+      - name: Telegram — started
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          MESSAGE="🚀 <b>Deploy started</b>%0A%0A\
+          <b>Branch:</b> <code>${GITHUB_REF_NAME}</code>%0A\
+          <b>Commit:</b> <code>${SHORT_SHA}</code>%0A\
+          <b>By:</b> ${GITHUB_ACTOR}%0A\
+          <a href=\"https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\">→ View run</a>"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d parse_mode="HTML" \
+            -d disable_web_page_preview="true" \
+            -d text="$MESSAGE" > /dev/null
+
+      # ── 2. Setup ──────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      # ── 3. Gate: type check ───────────────────────────────────────────────
+      - name: Type check (tsc)
+        run: npm run tsc
+
+      # ── 4. Build paraglide i18n ───────────────────────────────────────────
+      - name: Build paraglide (i18n)
+        run: npm run build:paraglide
+
+      # ── 5. Deploy Convex backend (first, so frontend can build against it) ─
+      - name: Deploy Convex backend
+        run: npx convex deploy --check-build-environment disable
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+
+      # ── 6. Build frontend ─────────────────────────────────────────────────
+      - name: Build frontend
+        run: npm run build
+        env:
+          NODE_ENV: production
+          NO_COLOR: "1"
+          VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
+          VITE_CONVEX_SITE_URL: ${{ secrets.VITE_CONVEX_SITE_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      # ── 7. Deploy to Cloudflare Pages ─────────────────────────────────────
+      - name: Deploy to Cloudflare Pages
+        run: |
+          npx wrangler pages deploy dist/ \
+            --project-name "$CF_PROJECT" \
+            --branch main \
+            --commit-hash "$GITHUB_SHA" \
+            --commit-message "$(git log -1 --pretty=%s)"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ env.CF_ACCOUNT_ID }}
+
+      # ── 8. Notify: success ────────────────────────────────────────────────
+      - name: Telegram — success
+        if: success()
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          COMMIT_MSG="$(git log -1 --pretty=%s)"
+          MESSAGE="✅ <b>Deploy succeeded</b>%0A%0A\
+          <b>Branch:</b> <code>${GITHUB_REF_NAME}</code>%0A\
+          <b>Commit:</b> <code>${SHORT_SHA}</code> — ${COMMIT_MSG}%0A\
+          <b>By:</b> ${GITHUB_ACTOR}%0A\
+          <a href=\"${{ env.CF_PRODUCTION_URL }}\">→ Open app</a>  |  <a href=\"https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\">→ Run log</a>"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d parse_mode="HTML" \
+            -d disable_web_page_preview="true" \
+            -d text="$MESSAGE" > /dev/null
+
+      # ── 9. Notify: failure ────────────────────────────────────────────────
+      - name: Telegram — failure
+        if: failure()
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          COMMIT_MSG="$(git log -1 --pretty=%s 2>/dev/null || echo 'unknown')"
+          MESSAGE="❌ <b>Deploy failed</b>%0A%0A\
+          <b>Branch:</b> <code>${GITHUB_REF_NAME}</code>%0A\
+          <b>Commit:</b> <code>${SHORT_SHA}</code> — ${COMMIT_MSG}%0A\
+          <b>By:</b> ${GITHUB_ACTOR}%0A\
+          <a href=\"https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\">→ View failed run</a>"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d parse_mode="HTML" \
+            -d disable_web_page_preview="true" \
+            -d text="$MESSAGE" > /dev/null
