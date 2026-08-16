@@ -37,29 +37,24 @@ function resolveAcademicHourMinutes(
 }
 
 /**
- * Resolve the start of the cumulative-hours window for a given academic
- * year. Uses the year's explicit `startDate` when set (Phase 1 of the
- * educationTechnology + per-year dates feature — see
- * convex/migrations/educationTechnologyBackfill.ts for the prod backfill).
+ * Resolve the start of the cumulative-hours window for a given academic year.
  *
- * TODO(Phase 3 — narrow-phase PR, after the prod backfill migration has run
- * and `academicYears.startDate` is required in the schema): drop the Sept-1
- * fallback below and make `year` a required, non-optional parameter — every
- * year is guaranteed to have `startDate` by then.
+ * `startDate` is required on `academicYears` since the Phase 3 narrow (the
+ * backfill in convex/migrations/educationTechnologyBackfill.ts filled every
+ * row), so whenever the caller hands us a year we trust it outright.
+ *
+ * `year` stays nullable only because per-year resolution is opt-in: top-level
+ * callers take `academicYears?` and the event's year may not be in the list.
+ * That path derives Sept 1 from the numeric start — the pre-feature behavior,
+ * not a data-gap patch.
  */
 export function resolveYearStart(
   year: AcademicYear | undefined,
   academicYearStart: number
 ): dayjs.Dayjs {
-  if (year?.startDate) {
+  if (year) {
     return dayjs(year.startDate).startOf("day");
   }
-  // Phase 1 temporary fallback — Phase 3 PR will drop this once startDate is required.
-  // Log a warning so wrong-hour calculations for years without startDate are visible.
-  console.warn(
-    `[resolveYearStart] academicYear has no startDate — using Sept 1 fallback for year ${academicYearStart}. ` +
-    "Run the educationTechnologyBackfill migration to fix this."
-  );
   return dayjs(new Date(academicYearStart, 8, 1)).startOf("day");
 }
 

@@ -195,6 +195,10 @@ export const useAcademicYearStore = defineStore(
                   startYear: year.startYear,
                   endYear: year.endYear,
                   isActive: year.isActive,
+                  academicHourMinutes: year.academicHourMinutes,
+                  technologyId: year.technologyId,
+                  startDate: year.startDate,
+                  endDate: year.endDate,
                   createdAt: new Date(year.createdAt),
                   updatedAt: new Date(year.updatedAt),
                 }));
