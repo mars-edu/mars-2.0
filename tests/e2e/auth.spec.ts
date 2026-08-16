@@ -134,4 +134,77 @@ test.describe('Authentication', () => {
     expect(finalUrl).toMatch(/\/home\/?$/);
     expect(finalUrl).not.toContain('/login');
   });
+
+  test('should display AuthHeader with language and theme controls on login page', async ({ page }) => {
+    await page.goto('/login');
+    await page.waitForLoadState('networkidle');
+
+    // Verify AuthHeader is visible
+    const authHeader = page.locator('header').first();
+    await expect(authHeader).toBeVisible();
+
+    // Verify Language switcher buttons (RU, KK, EN)
+    const ruButton = page.getByRole('button', { name: /^RU$/i });
+    const kkButton = page.getByRole('button', { name: /^KK$/i });
+    const enButton = page.getByRole('button', { name: /^EN$/i });
+
+    await expect(ruButton).toBeVisible();
+    await expect(kkButton).toBeVisible();
+    await expect(enButton).toBeVisible();
+
+    // Switch to English and verify
+    await enButton.click();
+    await page.waitForTimeout(500);
+
+    // Switch back to Russian
+    await ruButton.click();
+    await page.waitForTimeout(500);
+  });
+
+  test('should allow toggling theme on login page', async ({ page }) => {
+    await page.goto('/login');
+    await page.waitForLoadState('networkidle');
+
+    // Locate theme toggle container
+    const themeButtons = page.locator('header button[title]');
+    const themeCount = await themeButtons.count();
+    expect(themeCount).toBeGreaterThanOrEqual(2);
+
+    // Click dark theme button
+    const darkButton = page.locator('header button[title*="Темная"], header button[title*="Dark"]').first();
+    if (await darkButton.count() > 0) {
+      await darkButton.click();
+      await page.waitForTimeout(500);
+      const isDark = await page.evaluate(() => document.documentElement.classList.contains('dark') || document.documentElement.getAttribute('data-theme') === 'dark');
+      expect(isDark).toBeTruthy();
+    }
+
+    // Switch back to light theme
+    const lightButton = page.locator('header button[title*="Светлая"], header button[title*="Light"]').first();
+    if (await lightButton.count() > 0) {
+      await lightButton.click();
+      await page.waitForTimeout(500);
+    }
+  });
+
+  test('should login with leading and trailing whitespace in username', async ({ page }) => {
+    await page.goto('/login');
+    await page.waitForLoadState('networkidle');
+
+    const usernameInput = page.locator('input[placeholder="Введите ФИО"]:visible').first();
+    const passwordInput = page.locator('input[placeholder="Введите пароль"]:visible').first();
+
+    await expect(usernameInput).toBeVisible({ timeout: 30000 });
+    // Intentionally pass leading/trailing whitespace
+    await usernameInput.fill('   Килаш Расул Жангелдыулы   ');
+
+    await expect(passwordInput).toBeVisible({ timeout: 30000 });
+    await passwordInput.fill('teachertest');
+
+    const loginButton = page.getByRole('button', { name: /Войти/i }).filter({ visible: true }).first();
+    await loginButton.click();
+
+    await page.waitForURL(/\/home\/?/, { timeout: 120000 });
+    expect(page.url()).toMatch(/\/home\/?$/);
+  });
 });
