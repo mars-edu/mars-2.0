@@ -124,25 +124,6 @@ export const isEmailAvailable = query({
  */
 export const listUsers = query({
   args: {},
-  returns: v.array(
-    v.object({
-      _id: v.id("users"),
-      firstName: v.string(),
-      lastName: v.string(),
-      username: v.string(),
-      email: v.string(),
-      roles: v.array(
-        v.union(
-          v.literal("ADMIN"),
-          v.literal("TEACHER"),
-          v.literal("STUDENT"),
-          v.literal("PARENT")
-        )
-      ),
-      createdAt: v.string(),
-      updatedAt: v.string(),
-    })
-  ),
   handler: async (ctx) => {
     const users = await ctx.db.query("users").collect();
 

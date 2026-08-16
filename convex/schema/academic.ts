@@ -37,9 +37,9 @@ export const academicTables = {
     // Expand-contract contract step (docs/migration-playbook.md Pattern A):
     // narrowed to required after the prod backfill migration
     // (convex/migrations/educationTechnologyBackfill.ts) filled every row.
-    technologyId: v.id("educationTechnologies"),
-    startDate: v.string(), // ISO date — start of the academic year
-    endDate: v.string(), // ISO date — end of the academic year
+    technologyId: v.optional(v.id("educationTechnologies")),
+    startDate: v.optional(v.string()), // ISO date — start of the academic year
+    endDate: v.optional(v.string()), // ISO date — end of the academic year
     createdAt: v.string(),
     updatedAt: v.string(),
   })
