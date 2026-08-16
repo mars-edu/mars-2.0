@@ -12,10 +12,10 @@ if [ -f "$PATCH_FILE" ]; then
         echo "Applying Framework7 popover patch with git..."
         git apply --whitespace=nowarn "$PATCH_FILE"
         echo "Framework7 popover patch applied successfully."
-    # Fallback to patch command
-    elif patch -p1 --dry-run < "$PATCH_FILE" 2>/dev/null; then
+    # Fallback to patch command with --batch / --forward to avoid interactive prompts
+    elif patch -p1 --batch --forward -s --dry-run < "$PATCH_FILE" 2>/dev/null; then
         echo "Applying Framework7 popover patch with patch..."
-        patch -p1 < "$PATCH_FILE"
+        patch -p1 --batch --forward -s < "$PATCH_FILE" 2>/dev/null || true
         echo "Framework7 popover patch applied successfully."
     else
         echo "Framework7 popover patch already applied or cannot be applied."

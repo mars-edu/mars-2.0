@@ -42,21 +42,21 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm ci
 
-      # ── 3. Gate: type check ───────────────────────────────────────────────
-      - name: Type check (tsc)
-        run: npm run tsc
-
-      # ── 4. Build paraglide i18n ───────────────────────────────────────────
+      # ── 3. Build paraglide i18n ───────────────────────────────────────────
       - name: Build paraglide (i18n)
         run: npm run build:paraglide
 
-      # ── 5. Deploy Convex backend (first, so frontend can build against it) ─
+      # ── 4. Deploy Convex backend ──────────────────────────────────────────
       - name: Deploy Convex backend
         run: npx convex deploy --check-build-environment disable
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+
+      # ── 5. Gate: type check ───────────────────────────────────────────────
+      - name: Type check (tsc)
+        run: npm run tsc
 
       # ── 6. Build frontend ─────────────────────────────────────────────────
       - name: Build frontend
