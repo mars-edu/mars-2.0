@@ -5,6 +5,8 @@
     :data-page-id="`login-${pageId}`"
     data-page-name="login"
   >
+    <AuthHeader />
+
     <div class="hidden md:flex h-full">
       <div
         class="w-1/2 bg-gradient-to-br from-red-500 to-red-700 flex flex-col items-center justify-center p-12 relative overflow-hidden"
@@ -204,6 +206,7 @@ import { ref, reactive, onMounted, onBeforeMount, computed } from "vue";
 import { f7 } from "framework7-vue";
 import AuthService from "../services/auth";
 import Logo from "../components/Logo/Logo.vue";
+import AuthHeader from "../components/AuthHeader.vue";
 import { useUserStore } from "../stores/userStore";
 import {
   auth_welcome_title,

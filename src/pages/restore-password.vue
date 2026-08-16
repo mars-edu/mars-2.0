@@ -3,6 +3,8 @@
     name="restore-password"
     class="flex flex-col min-h-screen bg-background"
   >
+    <AuthHeader />
+
     <div class="hidden md:flex h-full">
       <div
         class="w-1/2 bg-gradient-to-br from-red-500 to-red-700 flex flex-col items-center justify-center p-12 relative overflow-hidden"
@@ -22,9 +24,6 @@
       <div
         class="w-1/2 flex items-center justify-center p-8 bg-background relative"
       >
-        <Logo
-          class="absolute top-8 right-8 text-red-600 transform hover:scale-105 transition-transform duration-300"
-        />
         <div
           class="bg-card rounded-3xl p-12 shadow-xl max-w-md w-full transform hover:shadow-2xl transition-all duration-300"
         >
@@ -238,6 +237,7 @@
 import { ref, reactive } from "vue";
 import { f7 } from "framework7-vue";
 import Logo from "../components/Logo/Logo.vue";
+import AuthHeader from "../components/AuthHeader.vue";
 import {
   auth_restore_password_title,
   auth_restore_password_subtitle,
