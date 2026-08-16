@@ -56,10 +56,36 @@ const ALL_NAV_ITEMS: Omit<NavigationItem, "label">[] = [
   { id: "settings", resource: "settings", icon: "settings", route: "/settings/" },
 ];
 
+// ── Default Role Fallback Matrix ──────────────────────────────────────────────
+const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
+  ADMIN: [
+    "home", "planning", "journals", "rup", "reports", "testing",
+    "courses", "protocol", "analytics", "schedule", "timetable",
+    "workload", "cabinet-management", "specialty-catalog", "student-card",
+    "discipline-catalog", "teacher-card", "settings"
+  ],
+  TEACHER: [
+    "home", "planning", "journals", "rup", "reports", "testing",
+    "courses", "protocol", "schedule", "settings"
+  ],
+  STUDENT: ["home", "journals", "schedule", "testing", "settings"],
+  PARENT: ["home", "journals", "schedule", "settings"],
+};
+
+function getInitialPermissions(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem("cached_permissions");
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
 // ── Singleton permissions state ────────────────────────────────────────────────
 // One shared reactive ref for the entire app. All consumers (components, route
 // guards, middleware) read from this same ref — no per-call subscriptions.
-const myPermissions = ref<string[]>([]);
+const myPermissions = ref<string[]>(getInitialPermissions());
 let _convexUnsub: (() => void) | null = null;
 let _initialized = false;
 
@@ -89,6 +115,11 @@ export function initRBAC(): void {
 
       if (!userId) {
         myPermissions.value = [];
+        try {
+          localStorage.removeItem("cached_permissions");
+        } catch {
+          // ignore
+        }
         return;
       }
 
@@ -97,6 +128,11 @@ export function initRBAC(): void {
         { userId: userId as Id<"users"> },
         (data) => {
           myPermissions.value = data ?? [];
+          try {
+            localStorage.setItem("cached_permissions", JSON.stringify(data ?? []));
+          } catch {
+            // ignore
+          }
         }
       );
     },
@@ -111,7 +147,12 @@ export function initRBAC(): void {
  * creating any Vue reactive side-effects (no watch, no computed).
  */
 export function canNavigateGlobal(resource: string): boolean {
-  return myPermissions.value.includes(resource);
+  if (myPermissions.value.length > 0) {
+    return myPermissions.value.includes(resource);
+  }
+  const userStore = useUserStore();
+  const roles = userStore.currentUser?.roles || [];
+  return roles.some((role) => DEFAULT_ROLE_PERMISSIONS[role]?.includes(resource));
 }
 
 /**
@@ -123,9 +164,15 @@ export function canNavigateGlobal(resource: string): boolean {
  */
 export function useRBAC() {
   const localeStore = useLocaleStore();
+  const userStore = useUserStore();
 
-  const canNavigate = (resource: string): boolean =>
-    myPermissions.value.includes(resource);
+  const canNavigate = (resource: string): boolean => {
+    if (myPermissions.value.length > 0) {
+      return myPermissions.value.includes(resource);
+    }
+    const roles = userStore.currentUser?.roles || [];
+    return roles.some((role) => DEFAULT_ROLE_PERMISSIONS[role]?.includes(resource));
+  };
 
   const getNavigationItems = computed<NavigationItem[]>(() => {
     void localeStore.locale; // reactive dependency for i18n re-render
