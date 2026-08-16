@@ -149,7 +149,7 @@ import IconTrash from "~icons/lucide/trash-2";
 import { studentSchema } from "@/validators/student";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
-import { useLanguageStore } from "@/stores/languageStore";
+import { useStudyLanguageStore } from "@/stores/studyLanguageStore";
 import { useBaseStore } from "@/stores/baseStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { storeToRefs } from "pinia";
@@ -164,7 +164,7 @@ const props = defineProps<{
 
 const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
-const languageStore = useLanguageStore();
+const languageStore = useStudyLanguageStore();
 const baseStore = useBaseStore();
 const academicYearStore = useAcademicYearStore();
 const { languageOptions } = storeToRefs(languageStore);

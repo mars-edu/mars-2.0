@@ -35,11 +35,7 @@
         <div class="flex items-center gap-2 mb-4">
           <div
             class="w-2 h-2 rounded-full"
-            :class="{
-              'bg-yellow-500': lang === 'kk',
-              'bg-gray-900': lang === 'ru',
-              'bg-purple-500': lang === 'en',
-            }"
+            :style="{ backgroundColor: getLanguageColor(lang) }"
           ></div>
           <span class="text-sm font-bold uppercase">{{ getLanguageName(lang) }}</span>
         </div>
@@ -76,7 +72,7 @@
 import { computed } from "vue";
 import Input from "@/components/ui/Input.vue";
 import IconGlobe from "~icons/lucide/globe";
-import { useLanguageStore } from "@/stores/languageStore";
+import { useStudyLanguageStore } from "@/stores/studyLanguageStore";
 
 /**
  * Extracted from RupEntryPopup (spec P3, step 3). Owns the "language chips +
@@ -102,7 +98,7 @@ const emit = defineEmits<{
   (e: "update:active", value: string): void;
 }>();
 
-const languageStore = useLanguageStore();
+const languageStore = useStudyLanguageStore();
 
 const languageOptions = computed(() =>
   languageStore.languages.map((l) => ({ code: l.code, name: l.name }))
@@ -110,6 +106,23 @@ const languageOptions = computed(() =>
 
 function getLanguageName(code: string): string {
   return languageOptions.value.find((l) => l.code === code)?.name ?? code;
+}
+
+// Fallback colors mirror the previously-hardcoded pill classes (used only
+// when a language row hasn't been given a `color` yet, e.g. legacy rows
+// created before this field existed).
+const FALLBACK_LANGUAGE_COLORS: Record<string, string> = {
+  kk: "#eab308", // bg-yellow-500
+  ru: "#111827", // bg-gray-900
+  en: "#a855f7", // bg-purple-500
+};
+
+function getLanguageColor(code: string): string {
+  return (
+    languageStore.getByCode(code)?.color ??
+    FALLBACK_LANGUAGE_COLORS[code] ??
+    "#6b7280"
+  );
 }
 
 function toggleLanguage(code: string) {

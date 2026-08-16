@@ -427,7 +427,7 @@ import { useNestedParent } from "@/composables/useNestedParent";
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
-import { useLanguageStore } from "@/stores/languageStore";
+import { useStudyLanguageStore } from "@/stores/studyLanguageStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { useEducationScheduleStore } from "@/stores/educationScheduleStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
@@ -506,7 +506,7 @@ const requestClose = () => {
 const rupEntryStore = useRupEntryStore();
 const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
-const languageStore = useLanguageStore();
+const languageStore = useStudyLanguageStore();
 const courseStore = useCourseStore();
 const educationScheduleStore = useEducationScheduleStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();

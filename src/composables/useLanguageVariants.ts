@@ -1,5 +1,6 @@
 import { ref } from "vue";
-import { useLanguageStore } from "@/stores/languageStore";
+import { useStudyLanguageStore } from "@/stores/studyLanguageStore";
+import { DEFAULT_STUDY_LANGUAGE_CODE } from "@/types/study-language";
 
 /** Per-language text fields keyed by language code. */
 export type LanguageTexts = Record<
@@ -34,24 +35,29 @@ interface SaveVariant {
  * hand-thread four refs + four helpers.
  */
 export function useLanguageVariants() {
-  const selectedLanguages = ref<string[]>(["ru"]);
-  const activeLanguageTab = ref("ru");
+  const languageStore = useStudyLanguageStore();
+
+  function defaultLanguageCode(): string {
+    return languageStore.getDefaultLanguage?.code ?? DEFAULT_STUDY_LANGUAGE_CODE;
+  }
+
+  const selectedLanguages = ref<string[]>([defaultLanguageCode()]);
+  const activeLanguageTab = ref(defaultLanguageCode());
   const languageTexts = ref<LanguageTexts>({
-    ru: { moduleIndex: "", moduleName: "", learningOutcome: "" },
+    [defaultLanguageCode()]: { moduleIndex: "", moduleName: "", learningOutcome: "" },
   });
   const editVariantIds = ref<Record<string, string>>({});
-
-  const languageStore = useLanguageStore();
 
   function getLanguageName(code: string): string {
     return languageStore.languages.find((l) => l.code === code)?.name ?? code;
   }
 
-  /** Reset to the create-mode default (single ru variant, no ids). */
+  /** Reset to the create-mode default (single default-language variant, no ids). */
   function reset() {
-    selectedLanguages.value = ["ru"];
-    activeLanguageTab.value = "ru";
-    languageTexts.value = { ru: { moduleIndex: "", moduleName: "", learningOutcome: "" } };
+    const code = defaultLanguageCode();
+    selectedLanguages.value = [code];
+    activeLanguageTab.value = code;
+    languageTexts.value = { [code]: { moduleIndex: "", moduleName: "", learningOutcome: "" } };
     editVariantIds.value = {};
   }
 

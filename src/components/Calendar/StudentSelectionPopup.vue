@@ -183,7 +183,7 @@ import PopoverFooter from "@/components/ui/PopoverFooter.vue";
 import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
-import { useLanguageStore } from "@/stores/languageStore";
+import { useStudyLanguageStore } from "@/stores/studyLanguageStore";
 import { useBaseStore } from "@/stores/baseStore";
 import { useCourseStore } from "@/stores/courseStore";
 import { useSemesterStore } from "@/stores/semesterStore";
@@ -203,7 +203,7 @@ const emit = defineEmits<{
 
 const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
-const languageStore = useLanguageStore();
+const languageStore = useStudyLanguageStore();
 const baseStore = useBaseStore();
 const rupEntryStore = useRupEntryStore();
 const courseStore = useCourseStore();
