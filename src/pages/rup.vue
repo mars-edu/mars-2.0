@@ -381,7 +381,6 @@ onMounted(async () => {
 
 <style scoped>
 .specialty-info-popover.popover {
-  margin-top: -160px !important; /* FIXME: workaround */
 }
 
 .rup-accordion :deep(.border) {

@@ -54,7 +54,13 @@ export function resolveYearStart(
   if (year?.startDate) {
     return dayjs(year.startDate).startOf("day");
   }
-  return dayjs(new Date(academicYearStart, 8, 1)).startOf("day"); // Sept 1 fallback
+  // Phase 1 temporary fallback — Phase 3 PR will drop this once startDate is required.
+  // Log a warning so wrong-hour calculations for years without startDate are visible.
+  console.warn(
+    `[resolveYearStart] academicYear has no startDate — using Sept 1 fallback for year ${academicYearStart}. ` +
+    "Run the educationTechnologyBackfill migration to fix this."
+  );
+  return dayjs(new Date(academicYearStart, 8, 1)).startOf("day");
 }
 
 /**
@@ -192,27 +198,7 @@ function calculateActualHours(
   academicHourMinutes: number = 60,
   currentYear?: AcademicYear
 ): { dailyActualHours: (number | null)[]; actualHoursMonth: number; cumulativeHoursYear: number } {
-  console.log(`[calculateActualHours] Looking for journal: event.id=${event.id}, rupEntry.id=${rupEntry.id}`);
-
   // Find the journal for this event
-  const journal = journals.find(
-    (j) => j.disciplineId === rupEntry.id && j.id === event.id.toString()
-  );
-
-  if (journal) {
-    console.log(`[calculateActualHours] Journal found: id=${journal.id}, disciplineId=${journal.disciplineId}, group=${journal.group}`);
-  } else {
-    console.log(`[calculateActualHours] No journal found. Looking for event.id=${event.id.toString()}, rupEntry.id=${rupEntry.id}`);
-    console.log(`[calculateActualHours] Available journals:`, journals.map(j => ({
-      id: j.id,
-      disciplineId: j.disciplineId,
-      group: j.group,
-      matchesEvent: j.id === event.id.toString(),
-      matchesRupEntry: j.disciplineId === rupEntry.id
-    })));
-  }
-
-  // Initialize daily hours array (null for all days)
   const dailyActualHours: (number | null)[] = Array(daysInMonth).fill(null);
 
   if (!journal) {
@@ -237,7 +223,6 @@ function calculateActualHours(
 
   // Get marks for this journal
   const marks = journalMarks[journal.id];
-  console.log(`[calculateActualHours] Marks lookup for journal ${journal.id}:`, marks ? `found, ${marks.studentMarks?.length || 0} students` : 'not found');
 
   if (!marks || !marks.studentMarks || marks.studentMarks.length === 0) {
     // No marks found - fall back to scheduled hours
@@ -274,7 +259,6 @@ function calculateActualHours(
     });
   });
 
-  console.log(`[calculateActualHours] Marked dates (lessons held): ${markedDates.size}`, Array.from(markedDates).slice(0, 5));
 
   // Calculate actual hours for the current month AND fill daily hours array
   let actualHoursMonth = 0;
@@ -330,7 +314,6 @@ function calculateActualHours(
   });
 
   const nonNullDays = dailyActualHours.filter(h => h !== null).length;
-  console.log(`[calculateActualHours] Result: actualMonth=${actualHoursMonth}, cumulative=${cumulativeHoursYear}, nonNullDays=${nonNullDays}`);
 
   return {
     dailyActualHours,
@@ -356,14 +339,12 @@ export function generateDailyWorkload(
 ): WorkloadEntry[] {
   const entries: WorkloadEntry[] = [];
 
-  console.log(`[Calculator] generateDailyWorkload called: month=${month}, year=${year}, events=${events.length}, journals=${journals.length}`);
 
   // Get month boundaries
   const monthStart = dayjs(new Date(year, month, 1)).startOf("day");
   const monthEnd = dayjs(new Date(year, month + 1, 0)).endOf("day"); // Last day of month
   const daysInMonth = monthEnd.date();
 
-  console.log(`[Calculator] Month boundaries: ${monthStart.format(DATE_STORAGE_FORMAT)} to ${monthEnd.format(DATE_STORAGE_FORMAT)}, days: ${daysInMonth}`);
 
   // Group events by subject/group combination
   const eventGroups = new Map<
@@ -382,7 +363,6 @@ export function generateDailyWorkload(
     // Get subject/module info
     const rupEntry = rupEntryItems.find((c) => c.id === event.rupEntryId);
     if (!rupEntry) {
-      console.log(`[Calculator] Skipping event ${event.id}: no rupEntry found for rupEntryId=${event.rupEntryId}`);
       continue;
     }
 
@@ -404,11 +384,9 @@ export function generateDailyWorkload(
     );
 
     if (lessonDates.length === 0) {
-      console.log(`[Calculator] Event ${event.id} (${rupEntry.moduleName} - ${groupName}): no lessons in this month`);
       continue;
     }
 
-    console.log(`[Calculator] Event ${event.id} (${rupEntry.moduleName} - ${groupName}): ${lessonDates.length} lessons found`);
 
     // Create unique key for subject/group combination
     const key = `${rupEntry.id}-${groupName}`;
@@ -430,13 +408,11 @@ export function generateDailyWorkload(
   }
 
   // Convert grouped data to workload entries
-  console.log(`[Calculator] Processing ${eventGroups.size} event groups into entries`);
 
   let rowNumber = 1;
   for (const [key, group] of eventGroups) {
     const plannedHours = parseFloat(group.rupEntry.totalHours) || 0;
 
-    console.log(`[Calculator] Processing group: ${group.rupEntry.moduleName} - ${group.groupName}, planned=${plannedHours}, lessons=${group.lessonDates.length}`);
 
     // Calculate actual taught hours from journal marks (includes daily breakdown)
     const { dailyActualHours, actualHoursMonth, cumulativeHoursYear } = calculateActualHours(
@@ -483,7 +459,6 @@ export function generateDailyWorkload(
     rowNumber++;
   }
 
-  console.log(`[Calculator] Total entries created: ${entries.length}`);
   return entries;
 }
 
@@ -605,14 +580,7 @@ const MONTH_NAMES: Record<number, { key: string; name: string }> = {
 export function computeMonthsFromSemesters(
   semesters: AcademicYearSemester[]
 ): MonthInfo[] {
-  console.log("[computeMonthsFromSemesters] Input semesters:", semesters.length);
   semesters.forEach((sem, idx) => {
-    console.log(`[computeMonthsFromSemesters] Semester ${idx}:`, {
-      id: sem.id,
-      semesterNumber: sem.semesterNumber,
-      startDate: sem.startDate,
-      endDate: sem.endDate,
-    });
   });
 
   const monthsMap = new Map<string, { info: MonthInfo; sortKey: number }>();
@@ -626,14 +594,6 @@ export function computeMonthsFromSemesters(
     const start = dayjs(semester.startDate);
     const end = dayjs(semester.endDate);
 
-    console.log(`[computeMonthsFromSemesters] Processing semester ${semester.semesterNumber}:`, {
-      startDate: semester.startDate,
-      endDate: semester.endDate,
-      startParsed: start.format(DATE_STORAGE_FORMAT),
-      endParsed: end.format(DATE_STORAGE_FORMAT),
-      startValid: start.isValid(),
-      endValid: end.isValid(),
-    });
 
     if (!start.isValid() || !end.isValid()) {
       console.warn("[computeMonthsFromSemesters] Invalid dates for semester:", semester.id);
@@ -642,7 +602,6 @@ export function computeMonthsFromSemesters(
 
     // Iterate through each month in the semester range
     let current = start.startOf("month");
-    console.log(`[computeMonthsFromSemesters] Iterating from ${current.format("YYYY-MM")} to ${end.format("YYYY-MM")}`);
 
     while (current.isBefore(end) || current.isSame(end, "month")) {
       const year = current.year();
@@ -653,13 +612,6 @@ export function computeMonthsFromSemesters(
 
       if (!monthsMap.has(uniqueKey)) {
         const monthData = MONTH_NAMES[month];
-        console.log(`[computeMonthsFromSemesters] Adding month:`, {
-          uniqueKey,
-          year,
-          month,
-          monthName: monthData.key,
-          sortKey,
-        });
         monthsMap.set(uniqueKey, {
           info: {
             key: monthData.key,
@@ -675,15 +627,12 @@ export function computeMonthsFromSemesters(
     }
   }
 
-  console.log("[computeMonthsFromSemesters] Total unique months found:", monthsMap.size);
 
   // Sort by sortKey (chronological order)
   const sorted = Array.from(monthsMap.values())
     .sort((a, b) => a.sortKey - b.sortKey);
 
-  console.log("[computeMonthsFromSemesters] Sorted months:");
   sorted.forEach((item, idx) => {
-    console.log(`  ${idx}: ${item.info.key} (${item.info.year}-${item.info.month}) sortKey=${item.sortKey}`);
   });
 
   return sorted.map((item) => item.info);
@@ -700,12 +649,6 @@ export function generateMonthlyDistribution(
   semesters: AcademicYearSemester[],
   academicYears?: AcademicYear[]
 ): { distributions: MonthlyDistributionEntry[]; months: MonthInfo[] } {
-  console.log("[generateMonthlyDistribution] Starting with:", {
-    eventsCount: events.length,
-    rupEntryItemsCount: rupEntryItems.length,
-    studentsCount: students.length,
-    semestersCount: semesters.length,
-  });
 
   if (!semesters || semesters.length === 0) {
     throw new Error("Semesters are required to compute monthly distribution. Please configure semester date ranges for the academic year.");
@@ -714,8 +657,6 @@ export function generateMonthlyDistribution(
   const distributions: MonthlyDistributionEntry[] = [];
   const academicMonths = computeMonthsFromSemesters(semesters);
 
-  console.log("[generateMonthlyDistribution] Computed academic months:", academicMonths.length);
-  console.log("[generateMonthlyDistribution] Month order:", academicMonths.map(m => `${m.key}(${m.year})`).join(", "));
 
   if (academicMonths.length === 0) {
     throw new Error("No valid months found in semester date ranges. Please check semester start and end dates.");
@@ -788,14 +729,6 @@ export function generateMonthlyDistribution(
     }
   }
 
-  console.log("[generateMonthlyDistribution] Final result:", {
-    distributionsCount: distributions.length,
-    monthsCount: academicMonths.length,
-    monthsOrder: academicMonths.map(m => m.key),
-    firstDistribution: distributions[0] ? {
-      groupName: distributions[0].groupName,
-    } : null,
-  });
 
   return { distributions, months: academicMonths };
 }
@@ -813,7 +746,6 @@ export function generateAllMonthsWorkload(
   journalMarks: Record<string, JournalMarks>,
   academicYears?: AcademicYear[]
 ): MonthWorkloadData[] {
-  console.log("[generateAllMonthsWorkload] Starting...");
 
   // Compute months from semesters
   const months = computeMonthsFromSemesters(semesters);
@@ -821,7 +753,6 @@ export function generateAllMonthsWorkload(
     throw new Error("No months found in semester date ranges");
   }
 
-  console.log("[generateAllMonthsWorkload] Months to process:", months.map(m => `${m.key}(${m.year})`).join(", "));
 
   // Get academic year start for cumulative calculations
   const academicYearStart = months[0].year;
@@ -849,12 +780,10 @@ export function generateAllMonthsWorkload(
     }
   }
 
-  console.log(`[generateAllMonthsWorkload] Found ${allSubjectGroups.size} unique subject/group combinations`);
 
   const allMonthsData: MonthWorkloadData[] = [];
 
   for (const monthInfo of months) {
-    console.log(`[generateAllMonthsWorkload] Processing ${monthInfo.key} ${monthInfo.year}...`);
 
     // Generate workload entries for this month
     const monthEntries = generateDailyWorkload(
@@ -933,9 +862,7 @@ export function generateAllMonthsWorkload(
       totalHours,
     });
 
-    console.log(`[generateAllMonthsWorkload] ${monthInfo.key}: ${entries.length} entries (${monthEntries.length} with hours), ${totalHours} total hours`);
   }
 
-  console.log(`[generateAllMonthsWorkload] Done. Generated data for ${allMonthsData.length} months`);
   return allMonthsData;
 }
