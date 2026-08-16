@@ -1,11 +1,42 @@
 import { defineStore } from "pinia";
 import AuthService from "../services/auth";
 import { computed, ref } from "vue";
-import type { User, UserState } from "../types/user";
+import type { User } from "../types/user";
 import { Role } from "../types/user";
 import { f7 } from "framework7-vue";
+import { convex } from "../lib/convexClient";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 
 console.log("[UserStore] Store definition initiated");
+
+let userLiveUnsub: (() => void) | null = null;
+
+function decodeTokenPayload(tokenStr: string): {
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  roles: Role[];
+  exp?: number;
+} | null {
+  try {
+    const parts = tokenStr.split(".");
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1]));
+    if (!payload.userId || !Array.isArray(payload.roles)) return null;
+    return {
+      id: payload.userId,
+      username: payload.username || "",
+      firstName: payload.firstName || "",
+      lastName: payload.lastName || "",
+      roles: payload.roles as Role[],
+      exp: payload.exp,
+    };
+  } catch {
+    return null;
+  }
+}
 
 export const useUserStore = defineStore(
   "user",
@@ -21,6 +52,24 @@ export const useUserStore = defineStore(
       isAuthenticated: isAuthenticated.value,
       token: token.value ? "[HIDDEN]" : null,
     });
+
+    // Multi-tab logout & session synchronization
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", (event) => {
+        if (event.key === "auth_token") {
+          if (!event.newValue) {
+            console.log("[UserStore] auth_token cleared in another tab, syncing logout");
+            logout();
+            if (f7.views?.main?.router) {
+              f7.views.main.router.navigate("/login/");
+            }
+          } else if (event.newValue !== token.value) {
+            console.log("[UserStore] auth_token updated in another tab, syncing session");
+            initialize();
+          }
+        }
+      });
+    }
 
     const hasRole = (role: Role) => {
       return currentUser.value?.roles.includes(role) || false;
@@ -53,6 +102,44 @@ export const useUserStore = defineStore(
       return currentUser.value?.roles.includes(Role.PARENT) || false;
     });
 
+    function startLiveUserSubscription(userId: string) {
+      if (userLiveUnsub) {
+        userLiveUnsub();
+        userLiveUnsub = null;
+      }
+
+      try {
+        userLiveUnsub = convex.onUpdate(
+          api.auth.queries.getUser,
+          { userId: userId as Id<"users"> },
+          (dbUser) => {
+            if (dbUser && currentUser.value && currentUser.value.id === userId) {
+              console.log("[UserStore] Live user data updated from Convex:", dbUser.roles);
+              currentUser.value = {
+                ...currentUser.value,
+                firstName: dbUser.firstName,
+                lastName: dbUser.lastName,
+                middleName: dbUser.middleName,
+                username: dbUser.username,
+                email: dbUser.email,
+                roles: dbUser.roles as Role[],
+                avatar: dbUser.avatar,
+                theme: dbUser.theme,
+                locale: dbUser.locale,
+                phone: dbUser.phone,
+                office: dbUser.office,
+                department: dbUser.department,
+                degree: dbUser.degree,
+              };
+              localStorage.setItem("stored_user", JSON.stringify(currentUser.value));
+            }
+          }
+        );
+      } catch (err) {
+        console.warn("[UserStore] Failed to establish live user subscription:", err);
+      }
+    }
+
     function setUser(user: User) {
       console.log("[UserStore] Setting user:", {
         userId: user.id,
@@ -60,6 +147,7 @@ export const useUserStore = defineStore(
       });
       currentUser.value = user;
       isAuthenticated.value = true;
+      startLiveUserSubscription(user.id);
       console.log(
         "[UserStore] User set successfully, authentication state updated"
       );
@@ -74,6 +162,11 @@ export const useUserStore = defineStore(
 
     function logout() {
       console.log("[UserStore] Logging out user");
+      if (userLiveUnsub) {
+        userLiveUnsub();
+        userLiveUnsub = null;
+      }
+
       const previousUser = currentUser.value;
       const previousAuthState = isAuthenticated.value;
 
@@ -82,6 +175,8 @@ export const useUserStore = defineStore(
       token.value = null;
       localStorage.removeItem("auth_token");
       localStorage.removeItem("stored_user");
+      sessionStorage.removeItem("auth_token");
+      sessionStorage.removeItem("stored_user");
 
       console.log("[UserStore] Logout completed:", {
         previousUser: previousUser
@@ -94,7 +189,7 @@ export const useUserStore = defineStore(
 
     async function initialize() {
       console.log("[UserStore] Initializing user store");
-      const storedToken = localStorage.getItem("auth_token");
+      const storedToken = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
 
       if (!storedToken) {
         console.log("[UserStore] No stored token found");
@@ -103,20 +198,9 @@ export const useUserStore = defineStore(
 
       token.value = storedToken;
 
-      // Check expiry locally via base64-decoded JWT payload — no network needed
-      try {
-        const payloadBase64 = storedToken.split(".")[1];
-        if (!payloadBase64) throw new Error("Invalid token format");
-        const payload = JSON.parse(atob(payloadBase64));
-        if (payload.exp && Math.floor(Date.now() / 1000) >= payload.exp) {
-          console.log("[UserStore] Stored token is expired, logging out");
-          logout();
-          if (f7.views?.main?.router) {
-            f7.views.main.router.navigate("/login/");
-          }
-          return;
-        }
-      } catch {
+      // 1. Synchronously decode token payload for instant 0ms state
+      const decoded = decodeTokenPayload(storedToken);
+      if (!decoded) {
         console.log("[UserStore] Failed to decode token, logging out");
         logout();
         if (f7.views?.main?.router) {
@@ -125,22 +209,49 @@ export const useUserStore = defineStore(
         return;
       }
 
-      // Restore from cache for instant render — no network round-trip
-      const storedUser = localStorage.getItem("stored_user");
+      // Check token expiration
+      if (decoded.exp && Math.floor(Date.now() / 1000) >= decoded.exp) {
+        console.log("[UserStore] Stored token is expired, logging out");
+        logout();
+        if (f7.views?.main?.router) {
+          f7.views.main.router.navigate("/login/");
+        }
+        return;
+      }
+
+      // Set instantaneous synchronous user from JWT claims (0ms latency)
+      currentUser.value = {
+        id: decoded.id,
+        username: decoded.username,
+        firstName: decoded.firstName,
+        lastName: decoded.lastName,
+        email: "",
+        roles: decoded.roles,
+      };
+      isAuthenticated.value = true;
+
+      // 2. Restore full profile from cache if present
+      const storedUser = localStorage.getItem("stored_user") || sessionStorage.getItem("stored_user");
       if (storedUser) {
         try {
           const user = JSON.parse(storedUser);
           if (user?.id && Array.isArray(user?.roles)) {
-            console.log("[UserStore] Restored user from cache");
-            setUser(user);
+            console.log("[UserStore] Restored rich user profile from cache");
+            currentUser.value = {
+              ...currentUser.value,
+              ...user,
+            };
           }
         } catch {
           // ignore malformed cache
         }
       }
 
+      // 3. Connect live Convex subscription for realtime role & profile updates
+      startLiveUserSubscription(decoded.id);
+
       console.log("[UserStore] Initialization completed, validating token in background");
-      // Background validation — does not block render
+      // 4. Background validation — does not block render
       validateTokenInBackground(storedToken);
     }
 

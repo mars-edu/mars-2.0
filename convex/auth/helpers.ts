@@ -24,15 +24,24 @@ export function verifyPassword(password: string, hash: string): boolean {
   return bcrypt.compareSync(password, hash);
 }
 
+export interface AuthTokenPayload {
+  userId: string;
+  roles: string[];
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+}
+
 /**
- * Generate a JWT token
+ * Generate a JWT token with rich claims and rememberMe duration
  */
 export async function generateToken(
-  payload: { userId: string; roles: string[] },
+  payload: AuthTokenPayload,
   secret: string,
-  expiresIn: string = "28d"
+  remember: boolean = true
 ): Promise<string> {
   const secretKey = new TextEncoder().encode(secret);
+  const expiresIn = remember ? "30d" : "12h";
 
   const token = await new jose.SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
@@ -49,7 +58,7 @@ export async function generateToken(
 export async function validateToken(
   token: string,
   secret: string
-): Promise<{ userId: string; roles: string[] }> {
+): Promise<AuthTokenPayload> {
   const secretKey = new TextEncoder().encode(secret);
 
   const { payload } = await jose.jwtVerify(token, secretKey);
@@ -61,6 +70,9 @@ export async function validateToken(
   return {
     userId: payload.userId as string,
     roles: payload.roles as string[],
+    username: payload.username as string | undefined,
+    firstName: payload.firstName as string | undefined,
+    lastName: payload.lastName as string | undefined,
   };
 }
 

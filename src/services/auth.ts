@@ -96,8 +96,9 @@ export default class AuthService {
   static async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
       const result = await convex.action(api.auth.mutations.login, {
-        username: credentials.username,
+        username: credentials.username.trim(),
         password: credentials.password,
+        remember: credentials.remember ?? true,
       }) as ConvexAuthResponse;
 
       if (!isValidUser(result.user)) {
