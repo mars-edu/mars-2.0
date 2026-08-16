@@ -15,6 +15,13 @@ import VueApexCharts from "vue3-apexcharts";
 
 Framework7.use(Framework7Vue);
 
+if (typeof window !== "undefined") {
+  window.addEventListener("vite:preloadError", () => {
+    console.warn("[Vite] Preload error detected, reloading page to fetch latest deployment bundle...");
+    window.location.reload();
+  });
+}
+
 if (import.meta.env.DEV && typeof window !== "undefined" && "serviceWorker" in navigator) {
   navigator.serviceWorker.getRegistrations().then((registrations) => {
     registrations.forEach((registration) => {

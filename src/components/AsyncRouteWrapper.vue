@@ -66,8 +66,19 @@ onUnmounted(() => {
   }
 });
 
-onErrorCaptured((error) => {
+onErrorCaptured((error: any) => {
   console.error('[AsyncRouteWrapper] Error loading component:', error);
+  const errorMsg = error?.message || String(error);
+  if (
+    errorMsg.includes("Failed to fetch dynamically imported module") ||
+    errorMsg.includes("Unable to preload CSS") ||
+    errorMsg.includes("Importing a module script failed") ||
+    errorMsg.includes("dynamically imported")
+  ) {
+    console.warn("[AsyncRouteWrapper] Stale asset chunk detected from previous deployment, refreshing page...");
+    window.location.reload();
+    return false;
+  }
   isError.value = true;
   if (isLoading.value) {
     isLoading.value = false;
