@@ -199,6 +199,10 @@ function calculateActualHours(
   currentYear?: AcademicYear
 ): { dailyActualHours: (number | null)[]; actualHoursMonth: number; cumulativeHoursYear: number } {
   // Find the journal for this event
+  const journal = journals.find(
+    (j) => j.disciplineId === rupEntry.id && j.id === event.id.toString()
+  );
+
   const dailyActualHours: (number | null)[] = Array(daysInMonth).fill(null);
 
   if (!journal) {

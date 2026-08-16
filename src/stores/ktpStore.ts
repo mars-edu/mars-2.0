@@ -5,6 +5,7 @@ import type { Id } from "@convex/_generated/dataModel";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import type { ParsedLesson, Ktp, KtpDetail } from "@/types/ktp";
+export type { ParsedLesson, Ktp, KtpDetail };
 
 function mapKtp(ktp: any): Ktp {
   return {
@@ -179,7 +180,7 @@ export const useKtpStore = defineStore("ktp", () => {
     data: Partial<Omit<KtpDetail, "id" | "ktpId">>
   ) {
     await convex.mutation(api.ktps.mutations.updateDetail, {
-      id: id as Id<"ktps">,
+      id: id as Id<"ktpDetails">,
       position: data.position,
       theme: data.theme,
       totalHours: data.totalHours ?? undefined,
@@ -196,7 +197,7 @@ export const useKtpStore = defineStore("ktp", () => {
   async function deleteKtpDetail(id: string) {
     // Backend renumbers remaining siblings; subscription delivers the result
     await convex.mutation(api.ktps.mutations.removeDetail, {
-      id: id as Id<"ktps">,
+      id: id as Id<"ktpDetails">,
     });
   }
 

@@ -6,3 +6,8 @@ export interface MakeupDateEntry {
   startScheduleId: string;
   endScheduleId: string;
 }
+
+export interface MakeupHoursData {
+  reason: string;
+  dates: MakeupDateEntry[];
+}

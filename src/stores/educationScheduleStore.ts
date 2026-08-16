@@ -7,6 +7,7 @@ import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
 import type { EducationSchedule } from "@/types/education-schedule";
+export type { EducationSchedule };
 
 export const useEducationScheduleStore = defineStore(
   "educationSchedule",

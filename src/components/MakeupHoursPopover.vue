@@ -137,15 +137,10 @@ import {
   makeup_hours_select_date,
 } from "@/paraglide/messages";
 
-export interface MakeupHoursData {
-  reason: string;
-  dates: Array<{
-    existingDate: string;
-    newDate: string;
-    startScheduleId: string;
-    endScheduleId: string;
-  }>;
-}
+import {
+  type MakeupHoursData,
+  type MakeupDateEntry,
+} from "@/types/makeup-request";
 
 const props = defineProps<{
   journalDates: Array<{ isoDate: string; label: string }>;

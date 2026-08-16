@@ -193,7 +193,7 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
       new Set(
         relevantDistributionEntries
           .map((entry: any) => entry.intermediateControlId)
-          .filter((id): id is string => typeof id === "string" && id.length > 0)
+          .filter((id: unknown): id is string => typeof id === "string" && id.length > 0)
       )
     );
 
@@ -201,7 +201,7 @@ export function useJournalColumns(opts: UseJournalColumnsOptions) {
       new Set(
         relevantDistributionEntries
           .map((entry: any) => entry.finalControlId)
-          .filter((id): id is string => typeof id === "string" && id.length > 0)
+          .filter((id: unknown): id is string => typeof id === "string" && id.length > 0)
       )
     );
 

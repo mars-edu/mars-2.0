@@ -11,7 +11,7 @@ import { f7 } from "framework7-vue";
 import { useMakeupRequestStore } from "@/stores/makeupRequestStore";
 import { useUserStore } from "@/stores/userStore";
 import { useTeacherStore } from "@/stores/teacherStore";
-import type { MakeupHoursData } from "@/components/MakeupHoursPopover.vue";
+import type { MakeupHoursData } from "@/types/makeup-request";
 
 export interface UseMakeupHoursOptions {
   canonicalTemplate: Ref<any[]>;
