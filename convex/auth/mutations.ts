@@ -49,10 +49,17 @@ export const createUserInternal = internalMutation({
 export const getUserWithPasswordInternal = internalQuery({
   args: { username: v.string() },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const trimmed = args.username.trim();
+    const exact = await ctx.db
       .query("users")
-      .withIndex("by_username", (q) => q.eq("username", args.username))
+      .withIndex("by_username", (q) => q.eq("username", trimmed))
       .unique();
+    if (exact) return exact;
+
+    // Fallback: case-insensitive match for mobile keyboards/autocapitalize
+    const lower = trimmed.toLowerCase();
+    const all = await ctx.db.query("users").collect();
+    return all.find((u) => u.username?.trim().toLowerCase() === lower) ?? null;
   },
 });
 
@@ -96,10 +103,13 @@ export const register = action({
       degree?: string;
     };
   }> => {
+    const trimmedUsername = args.username.trim();
+    const trimmedEmail = args.email.trim();
+
     // Check if username is available
     const isUsernameAvailable = await ctx.runQuery(
       api.auth.queries.isUsernameAvailable,
-      { username: args.username }
+      { username: trimmedUsername }
     );
     if (!isUsernameAvailable) {
       throw new ConvexError({ code: "auth_username_taken" });
@@ -108,7 +118,7 @@ export const register = action({
     // Check if email is available
     const isEmailAvailable = await ctx.runQuery(
       api.auth.queries.isEmailAvailable,
-      { email: args.email }
+      { email: trimmedEmail }
     );
     if (!isEmailAvailable) {
       throw new ConvexError({ code: "auth_email_taken" });
@@ -119,24 +129,31 @@ export const register = action({
 
     // Create user
     const userId = await ctx.runMutation(internal.auth.mutations.createUserInternal, {
-      firstName: args.firstName,
-      lastName: args.lastName,
-      middleName: args.middleName,
-      username: args.username,
-      email: args.email,
+      firstName: args.firstName.trim(),
+      lastName: args.lastName.trim(),
+      middleName: args.middleName?.trim(),
+      username: trimmedUsername,
+      email: trimmedEmail,
       passwordHash,
       roles: args.roles || ["STUDENT"],
     });
 
-    // Generate token
+    // Generate token with rich claims
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
       throw new ConvexError({ code: "server_error" });
     }
 
     const token = await generateToken(
-      { userId: userId, roles: args.roles || ["STUDENT"] },
-      jwtSecret
+      {
+        userId: userId,
+        roles: args.roles || ["STUDENT"],
+        username: trimmedUsername,
+        firstName: args.firstName.trim(),
+        lastName: args.lastName.trim(),
+      },
+      jwtSecret,
+      true
     );
 
     return {
@@ -144,11 +161,11 @@ export const register = action({
       token,
       user: {
         id: userId,
-        firstName: args.firstName,
-        lastName: args.lastName,
-        middleName: args.middleName,
-        username: args.username,
-        email: args.email,
+        firstName: args.firstName.trim(),
+        lastName: args.lastName.trim(),
+        middleName: args.middleName?.trim(),
+        username: trimmedUsername,
+        email: trimmedEmail,
         roles: args.roles || ["STUDENT"],
         avatar: undefined,
         phone: undefined,
@@ -167,6 +184,7 @@ export const login = action({
   args: {
     username: v.string(),
     password: v.string(),
+    remember: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<{
     token: string;
@@ -185,12 +203,12 @@ export const login = action({
       degree?: string;
     };
   }> => {
-    // Get user by username. NB: never log the attempted username or the password
-    // hash (even a prefix) — those end up in provider logs and enable user
-    // enumeration / hash-leak attacks.
+    const trimmedUsername = args.username.trim();
+
+    // Get user by username with case-insensitive fallback
     const user = await ctx.runQuery(
       internal.auth.mutations.getUserWithPasswordInternal,
-      { username: args.username }
+      { username: trimmedUsername }
     );
 
     if (!user) {
@@ -202,15 +220,22 @@ export const login = action({
       throw new ConvexError({ code: "auth_invalid_credentials" });
     }
 
-    // Generate token
+    // Generate token with rich claims and rememberMe duration
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
       throw new ConvexError({ code: "server_error" });
     }
 
     const token = await generateToken(
-      { userId: user._id, roles: user.roles },
-      jwtSecret
+      {
+        userId: user._id,
+        roles: user.roles,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+      jwtSecret,
+      args.remember !== false
     );
 
     return {
@@ -243,55 +268,61 @@ export const validateTokenAction = action({
     userId: string | null;
     roles: string[];
     user: any;
+    isExplicitInvalid?: boolean;
   }> => {
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
       throw new ConvexError({ code: "server_error" });
     }
 
+    let payload;
     try {
-      // Never log token payload / userId — those are per-request identifiers
-      // that end up in provider logs and enable session-hijacking / IDOR aid.
-      const payload = await validateToken(args.token, jwtSecret);
-
-      // Get user to ensure they still exist
-      const user = await ctx.runQuery(api.auth.queries.getUser, {
-        userId: payload.userId as any,
-      });
-
-      if (!user) {
-        throw new ConvexError({ code: "auth_token_invalid" });
-      }
-
-      return {
-        valid: true,
-        userId: payload.userId,
-        roles: payload.roles,
-        user: {
-          id: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          middleName: user.middleName,
-          username: user.username,
-          email: user.email,
-          roles: user.roles,
-          avatar: user.avatar,
-          phone: user.phone,
-          office: user.office,
-          department: user.department,
-          degree: user.degree,
-        },
-      };
+      payload = await validateToken(args.token, jwtSecret);
     } catch {
-      // Swallow the error class silently — logging exception text can leak
-      // JWT internals or crypto library states.
+      // JWT decoding / signature / expiry error -> explicitly invalid
       return {
         valid: false,
+        isExplicitInvalid: true,
         userId: null,
         roles: [],
         user: null,
       };
     }
+
+    // Check if user still exists in database
+    const user = await ctx.runQuery(api.auth.queries.getUser, {
+      userId: payload.userId as any,
+    });
+
+    if (!user) {
+      return {
+        valid: false,
+        isExplicitInvalid: true,
+        userId: null,
+        roles: [],
+        user: null,
+      };
+    }
+
+    return {
+      valid: true,
+      userId: payload.userId,
+      roles: user.roles,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        middleName: user.middleName,
+        username: user.username,
+        email: user.email,
+        roles: user.roles,
+        avatar: user.avatar,
+        phone: user.phone,
+        office: user.office,
+        department: user.department,
+        degree: user.degree,
+      },
+    };
   },
 });
 

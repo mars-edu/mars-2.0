@@ -64,15 +64,16 @@
             </div>
 
             <div class="flex items-center justify-between py-2">
-              <!-- <f7-checkbox
-                v-model:checked="rememberMe"
-                class="text-foreground hover:text-primary transition-colors duration-200 flex items-center"
-              >
-                Запомнить меня
-              </f7-checkbox> -->
+              <div class="flex items-center space-x-2">
+                <f7-checkbox
+                  v-model:checked="rememberMe"
+                  class="!flex-shrink-0"
+                />
+                <span class="text-sm text-muted-foreground">Запомнить меня</span>
+              </div>
               <f7-link
                 href="/restore-password"
-                class="text-primary hover:text-primary/80 font-medium transition-colors duration-200 underline-offset-2 hover:underline whitespace-nowrap"
+                class="text-primary hover:text-primary/80 font-medium transition-colors duration-200 underline-offset-2 hover:underline whitespace-nowrap text-sm"
               >
                 {{ auth_forgot_password() }}
               </f7-link>
@@ -164,14 +165,16 @@
             </div>
 
             <div class="flex items-center justify-between space-x-4">
-              <!-- <f7-checkbox
-                v-model:checked="rememberMe"
-                class="text-foreground flex items-center"
-                >Запомнить меня</f7-checkbox
-              > -->
+              <div class="flex items-center space-x-2">
+                <f7-checkbox
+                  v-model:checked="rememberMe"
+                  class="!flex-shrink-0"
+                />
+                <span class="text-sm text-muted-foreground">Запомнить</span>
+              </div>
               <f7-link
                 href="/restore-password"
-                class="text-primary hover:text-primary/80 font-medium whitespace-nowrap"
+                class="text-primary hover:text-primary/80 font-medium whitespace-nowrap text-sm"
                 >{{ auth_forgot_password() }}</f7-link
               >
             </div>
