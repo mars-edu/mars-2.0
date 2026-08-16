@@ -43,7 +43,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, defineAsyncComponent } from "vue";
+
+const apexchart = defineAsyncComponent(() => import("vue3-apexcharts"));
 
 const props = defineProps<{
   monthlyData: { month: string; avgScore: number }[];

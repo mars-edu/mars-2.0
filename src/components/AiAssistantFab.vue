@@ -9,22 +9,34 @@
     kind="popup"
     :guard-unsaved="false"
     :close-on-escape="true"
+    @popup:open="isPanelOpened = true"
   >
     <template #default="{ requestClose }">
-      <AiAssistantPanel @close="requestClose" />
+      <Suspense v-if="isPanelOpened">
+        <template #default>
+          <AiAssistantPanel @close="requestClose" />
+        </template>
+        <template #fallback>
+          <div class="h-full flex items-center justify-center p-8 bg-card text-muted-foreground">
+            <div class="inline-block w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        </template>
+      </Suspense>
     </template>
   </GuardedPopover>
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent } from 'vue';
+import { ref, defineAsyncComponent } from 'vue';
 import { f7, f7Fab } from 'framework7-vue';
 import IconSparkles from '~icons/lucide/sparkles';
 import GuardedPopover from '@/components/ui/GuardedPopover.vue';
 
+const isPanelOpened = ref(false);
 const AiAssistantPanel = defineAsyncComponent(() => import('./AiAssistantPanel.vue'));
 
 function openAssistant() {
+  isPanelOpened.value = true;
   f7.popup.open('#ai-assistant-popup');
 }
 </script>
