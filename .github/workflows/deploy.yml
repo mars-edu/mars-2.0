@@ -7,7 +7,7 @@ on:
 env:
   NODE_VERSION: "22.18.0"
   CF_ACCOUNT_ID: "1baf07e2bf54af133428fea840266f45"
-  CF_PROJECT: "convex-mars-2-0"
+  CF_PROJECT: "dev-mars-2-0"
   CF_PRODUCTION_URL: "https://next.iam-mars.kz"
 
 jobs:
