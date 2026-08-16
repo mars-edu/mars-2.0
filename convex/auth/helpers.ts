@@ -24,7 +24,7 @@ export function verifyPassword(password: string, hash: string): boolean {
   return bcrypt.compareSync(password, hash);
 }
 
-export interface AuthTokenPayload {
+export interface AuthTokenPayload extends jose.JWTPayload {
   userId: string;
   roles: string[];
   username?: string;

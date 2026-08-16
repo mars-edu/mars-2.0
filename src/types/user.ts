@@ -9,6 +9,7 @@ export interface User {
   roles: Role[];
   avatar?: string;
   theme?: Theme;
+  locale?: "ru" | "kk" | "en";
   username?: string;
   phone?: string;
   office?: string;
