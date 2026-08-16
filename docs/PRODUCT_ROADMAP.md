@@ -1,62 +1,62 @@
-# 🗺️ MARS 2.0 — Strategic Product Business Roadmap & Flow
+# 🗺️ MARS 2.0 — Стратегическая дорожная карта и бизнес-процессы продукта
 
 > **MARS 2.0 (Минимальная Автоматизация Расписания Специальностей)**  
-> Next-Generation Education Management & AI-Powered Operations Platform for Technical & Vocational Education (TVET / ТиПО) and Higher Education.
+> Интеллектуальная система управления образовательным процессом и расписанием для колледжей (ТиПО) и вузов Республики Казахстан.
 
 ---
 
-## 📑 Table of Contents
-1. [Core Business Process Flow](#1-core-business-process-flow)
-2. [Strategic Product Horizons & Roadmap (Gantt)](#2-strategic-product-horizons--roadmap-gantt)
-3. [Multi-Layer System & AI Architecture](#3-multi-layer-system--ai-architecture)
-4. [Persona Value Stream & User Journeys](#4-persona-value-stream--user-journeys)
-5. [Domain Capability Breakdown](#5-domain-capability-breakdown)
-6. [Key Objectives & Strategic OKRs](#6-key-objectives--strategic-okrs)
+## 📑 Содержание
+1. [Сквозной бизнес-процесс системы](#1-сквозной-бизнес-процесс-системы)
+2. [Стратегические горизонты и дорожная карта (Gantt)](#2-стратегические-горизонты-и-дорожная-карта-gantt)
+3. [Многоуровневая архитектура системы и ИИ](#3-многоуровневая-архитектура-системы-и-ии)
+4. [Потоки ценности по ролям пользователей](#4-потоки-ценности-по-ролям-пользователей)
+5. [Функциональная матрица модулей](#5-функциональная-матрица-модулей)
+6. [Ключевые цели и результаты (OKRs)](#6-ключевые-цели-и-результаты-okrs)
 
 ---
 
-## 1. Core Business Process Flow
+## 1. Сквозной бизнес-процесс системы
 
-The following flow illustrates how pedagogical data originates from institutional standards down to student grading, administrative approval gates, and state compliance reporting:
+Диаграмма иллюстрирует полный жизненный цикл данных: от стандартов ГОСО и формирования РУП до ежедневного оценивания в журналах, согласования замен через протокол и формирования государственной отчетности:
 
 ```mermaid
 flowchart TD
-    subgraph S1["1. Academic Planning & Curriculum Setup"]
-        A1["Academic Year & Semesters<br/>(academicYears / academicYearSemesters)"] --> A2["Specialties & Disciplines Catalog<br/>(specialties / disciplines)"]
-        A2 --> A3["Education Technologies<br/>(Dual / Credit-Modular / Linear)"]
-        A3 --> A4["Working Curriculum (РУП)<br/>(rupEntries + distributionEntries)"]
+    subgraph S1["1. Академическое планирование и учебные планы"]
+        A1["Учебные года и семестры<br/>(academicYears / academicYearSemesters)"] --> A2["Справочники специальностей и дисциплин<br/>(specialties / disciplines)"]
+        A2 --> A3["Образовательные технологии<br/>(Дуальное / Кредитно-модульное / Линейное)"]
+        A3 --> A4["Рабочий учебный план (РУП)<br/>(rupEntries + distributionEntries)"]
     end
 
-    subgraph S2["2. Faculty Workload & Scheduling"]
-        A4 --> B1["Teacher Workload Generation<br/>(workloads matrix)"]
-        B1 --> B2["Educational Schedule & Calendar<br/>(educationSchedules / calendarEvents)"]
-        B2 --> B3["Classroom Inventory & Capacity<br/>(cabinets allocation)"]
+    subgraph S2["2. Распределение нагрузки и расписание"]
+        A4 --> B1["Расчет нагрузки преподавателей<br/>(workloads — матрица нагрузки)"]
+        B1 --> B2["Учебное расписание и календарь<br/>(educationSchedules / calendarEvents)"]
+        B2 --> B3["Учет фонда аудиторий<br/>(cabinets — вместимость и типы)"]
     end
 
-    subgraph S3["3. Operational Execution & Teaching"]
-        A4 --> C1["Calendar-Thematic Planning (КТП)<br/>(ktps / ktpDetails themes & hours)"]
-        B2 & C1 --> C2["Electronic Journal & Attendance<br/>(journals / marks / markHistory)"]
-        C2 --> C3["Individual Trajectory Journals<br/>(mergedJournals / sub-journals)"]
-        C2 --> C4["Testing & Assessments<br/>(tests / testAssignments / testResults)"]
+    subgraph S3["3. Проведение занятий и оценивание"]
+        A4 --> C1["Календарно-тематический план (КТП)<br/>(ktps / ktpDetails — темы и часы)"]
+        B2 & C1 --> C2["Электронный журнал и посещаемость<br/>(journals / marks / markHistory)"]
+        C2 --> C3["Журналы индивидуальных занятий<br/>(mergedJournals / индивидуальные часы)"]
+        C2 --> C4["Система тестирования и контроля<br/>(tests / testAssignments / testResults)"]
     end
 
-    subgraph S4["4. Exception Handling & Governance"]
-        C2 -.->|Missed Lesson / Sickness| D1["Substitution Request (Замена)<br/>(substitutions + service letters)"]
-        C2 -.->|Rescheduling Need| D2["Makeup Request (Отработка)<br/>(makeupRequests)"]
-        D1 & D2 --> D3{"Central Protocol Review<br/>(protocol.vue approval gate)"}
-        D3 -->|Approved| B2
-        D3 -->|Rejected| C2
+    subgraph S4["4. Управление отклонениями и согласования"]
+        C2 -.->|Пропуск урока / Больничный| D1["Заявка на замену преподавателя<br/>(substitutions + служебные записки)"]
+        C2 -.->|Необходимость переноса| D2["Заявка на отработку часов<br/>(makeupRequests)"]
+        D1 & D2 --> D3{"Протокол согласования<br/>(Центральный шлюз руководства)"}
+        D3 -->|Утверждено| B2
+        D3 -->|Отклонено| C2
     end
 
-    subgraph S5["5. Analytics, Transcripts & Compliance"]
-        C2 & C4 --> E1["Real-time Performance Analytics<br/>(GPA, attendance %, letter grades)"]
-        E1 --> E2["Official Transcripts (Транскрипт)<br/>(ECTS letter grades + GPA)"]
-        E1 --> E3["Ministry State Reporting<br/>(Forms Ф-1, Ф-2, НОБД compliance)"]
+    subgraph S5["5. Аналитика, ведомости и отчетность"]
+        C2 & C4 --> E1["Аналитика успеваемости в реальном времени<br/>(GPA, % посещаемости, распределение оценок)"]
+        E1 --> E2["Официальный транскрипт студента<br/>(Буквенные оценки ECTS + расчет GPA)"]
+        E1 --> E3["Государственная отчетность МОН РК<br/>(Формы Ф-1, Ф-2, выгрузка в НОБД)"]
     end
 
-    subgraph S6["6. Real-Time AI Copilot & Voice Core"]
-        AI1["Voice LiveKit Agent (Gemini 2.5)"] <-->|13 Domain Tool APIs| C2 & B2 & E1
-        AI2["Vercel AI Streaming Chat Panel"] <-->|Authenticated Context| C2 & B2 & E1
+    subgraph S6["6. Голосовой и чат-ассистент на базе ИИ"]
+        AI1["Голосовой агент LiveKit (Gemini 2.5)"] <-->|13 API-инструментов системы| C2 & B2 & E1
+        AI2["Потоковый ИИ-чат (Vercel AI SDK)"] <-->|Авторизованный контекст| C2 & B2 & E1
     end
 
     classDef planning fill:#3B82F6,stroke:#1D4ED8,color:#fff;
@@ -76,96 +76,96 @@ flowchart TD
 
 ---
 
-## 2. Strategic Product Horizons & Roadmap (Gantt)
+## 2. Стратегические горизонты и дорожная карта (Gantt)
 
 ```mermaid
 gantt
-    title MARS 2.0 Strategic Product Roadmap (2026 - 2028)
+    title Стратегическая дорожная карта MARS 2.0 (2026 - 2028)
     dateFormat  YYYY-MM-DD
-    axisFormat  %Y-Q%q
+    axisFormat  %Y-Кв%q
 
-    section Phase 1: Core Foundation
-    Convex Reactive DB Migration (Deprecate tRPC)     :done, p1_1, 2026-01-01, 2026-04-15
-    Tri-lingual Localization (Paraglide RU/KK/EN)     :done, p1_2, 2026-02-15, 2026-05-01
-    Dynamic Time-Bounded RBAC System                 :done, p1_3, 2026-03-01, 2026-05-28
-    LiveKit Realtime Voice + AI Chat Copilot (13 tools) :done, p1_4, 2026-03-10, 2026-06-15
-    Protocol Admin Approval Gate (Substitutions/Makeups) :done, p1_5, 2026-05-15, 2026-06-20
-    Individual Journals & Budget Subsystem           :done, p1_6, 2026-06-01, 2026-07-15
+    section Этап 1: Базовый фундамент
+    Миграция на реактивный Convex DB (вывод tRPC)     :done, p1_1, 2026-01-01, 2026-04-15
+    Трехъязычная локализация Paraglide (RU/KK/EN)     :done, p1_2, 2026-02-15, 2026-05-01
+    Динамическая система ролей и прав RBAC            :done, p1_3, 2026-03-01, 2026-05-28
+    Голосовой ИИ LiveKit + Чат-ассистент (13 тулов)   :done, p1_4, 2026-03-10, 2026-06-15
+    Шлюз утверждения замен и отработок (Протокол)     :done, p1_5, 2026-05-15, 2026-06-20
+    Подсистема индивидуальных журналов и бюджета      :done, p1_6, 2026-06-01, 2026-07-15
 
-    section Phase 2: Workload & Hardening (Q3 2026)
-    Bundle Optimization & Lazy-Loading (Apex/AI)      :done, p2_1, 2026-08-01, 2026-08-16
-    0ms Instant Role-Fallback Permissions & Cache     :done, p2_2, 2026-08-10, 2026-08-17
-    Workload Migration: Flat Weeks -> Semester Array  :active, p2_3, 2026-08-15, 2026-09-30
-    Planned Hours Canonical Reconciliation (totalHours) :active, p2_4, 2026-08-20, 2026-09-25
-    High-Performance ExcelJS Journal Engine           :active, p2_5, 2026-09-01, 2026-09-30
+    section Этап 2: Нагрузка и оптимизация (Q3 2026)
+    Оптимизация бандла и ленивая загрузка (Apex/AI)   :done, p2_1, 2026-08-01, 2026-08-16
+    Мгновенный 0ms рендеринг меню и кэш прав RBAC     :done, p2_2, 2026-08-10, 2026-08-17
+    Миграция нагрузки: плоские недели -> массив семестров :active, p2_3, 2026-08-15, 2026-09-30
+    Сверка канонических плановых часов (totalHours)   :active, p2_4, 2026-08-20, 2026-09-25
+    Высокопроизводительный экспорт в Excel (ExcelJS)  :active, p2_5, 2026-09-01, 2026-09-30
 
-    section Phase 3: Intelligence & Logistics (Q4 2026)
-    Full Offline-First PWA Synchronization            :crit, p3_1, 2026-10-01, 2026-11-15
-    Automated Timetable Clash & Room Conflict Engine  :p3_2, 2026-10-15, 2026-11-30
-    Student Academic Debt & Retake Management Portal  :p3_3, 2026-11-01, 2026-12-15
-    WebPush & Telegram Notification Bot Hub           :p3_4, 2026-11-15, 2026-12-31
-    Ministry of Education (НОБД / МОН РК) XML/JSON API:p3_5, 2026-12-01, 2026-12-31
+    section Этап 3: Интеллект и логистика (Q4 2026)
+    Офлайн-режим PWA с синхронизацией очередей        :crit, p3_1, 2026-10-01, 2026-11-15
+    Автоматический детектор конфликтов аудиторий и пар :p3_2, 2026-10-15, 2026-11-30
+    Портал академических задолженностей и пересдач    :p3_3, 2026-11-01, 2026-12-15
+    Центр уведомлений: WebPush и Telegram-бот         :p3_4, 2026-11-15, 2026-12-31
+    Интеграция с базой НОБД / МОН РК (XML/JSON API)   :p3_5, 2026-12-01, 2026-12-31
 
-    section Phase 4: Enterprise & Ecosystem (2027)
-    AI Automated Constraint-Satisfaction Timetable Gen :p4_1, 2027-01-05, 2027-04-30
-    Capacitor Native iOS & Android App Store Release  :p4_2, 2027-02-01, 2027-05-31
-    Multi-College Enterprise Tenancy Architecture     :p4_3, 2027-04-01, 2027-08-31
-    SSO with eGov.kz / Digital ID / Kundelik / Bilim  :p4_4, 2027-06-01, 2027-09-30
-    LMS Course Materials & Video Lecture Repository   :p4_5, 2027-08-01, 2027-11-30
+    section Этап 4: Экосистема и масштабирование (2027)
+    ИИ-генератор расписания на основе ограничений     :p4_1, 2027-01-05, 2027-04-30
+    Мобильные приложения в App Store и Google Play    :p4_2, 2027-02-01, 2027-05-31
+    Мультитенантная архитектура для сети колледжей    :p4_3, 2027-04-01, 2027-08-31
+    Единая авторизация (SSO) с eGov.kz / Kundelik/Bilim :p4_4, 2027-06-01, 2027-09-30
+    Репозиторий учебных материалов и видеолекций КТП  :p4_5, 2027-08-01, 2027-11-30
 
-    section Phase 5: Predictive AI & National Scale (2028+)
-    Predictive Drop-out & Academic Debt Early-Warning :p5_1, 2028-01-05, 2028-06-30
-    Autonomous Multilingual Voice Tutor for Students  :p5_2, 2028-03-01, 2028-09-30
-    WorldSkills Kazakhstan National Competency Matrix :p5_3, 2028-06-01, 2028-12-31
+    section Этап 5: Предиктивный ИИ и нац. масштаб (2028+)
+    Предиктивная система раннего предупреждения отчислений :p5_1, 2028-01-05, 2028-06-30
+    Автономный многоязычный ИИ-репетитор для студентов :p5_2, 2028-03-01, 2028-09-30
+    Национальная матрица компетенций WorldSkills KZ   :p5_3, 2028-06-01, 2028-12-31
 ```
 
 ---
 
-## 3. Multi-Layer System & AI Architecture
+## 3. Многоуровневая архитектура системы и ИИ
 
 ```mermaid
 graph TB
-    subgraph UI_Layer["1. Presentation & Mobile-First Client Layer"]
-        F7["Framework7 9 (iOS/Material)"]
+    subgraph UI_Layer["1. Клиентский интерфейс (Mobile-First UI)"]
+        F7["Framework7 9 (Компоненты iOS/Material)"]
         VUE["Vue 3 Composition API"]
-        TW["Tailwind CSS + Scoped Themes"]
+        TW["Tailwind CSS + Темы оформления"]
         PARA["Paraglide JS (RU, KK, EN)"]
-        CHARTS["ApexCharts (Lazy-Loaded)"]
+        CHARTS["ApexCharts (Ленивая загрузка)"]
     end
 
-    subgraph Client_State["2. State, Caching & Offline PWA Layer"]
-        PINIA["Pinia Reactive Stores"]
-        LOCAL["localForage (IndexedDB Cache)"]
-        SW["Service Worker (Workbox Auto-Update)"]
-        RBAC_C["0ms Role-Fallback RBAC Cache"]
-        OFF_Q["Client Offline Queue Engine"]
+    subgraph Client_State["2. Управление состоянием и офлайн-кэш"]
+        PINIA["Реактивные хранилища Pinia"]
+        LOCAL["localForage (Кэш в IndexedDB)"]
+        SW["Service Worker (PWA автообновление)"]
+        RBAC_C["0ms Кэш прав доступа RBAC"]
+        OFF_Q["Клиентская очередь синхронизации"]
     end
 
-    subgraph Sync_Transport["3. Real-Time Transport & Edge Gateway"]
-        WS["Convex WebSocket Realtime Subscriptions (convex-vue)"]
+    subgraph Sync_Transport["3. Транспорт реального времени"]
+        WS["Convex WebSocket-подписки (convex-vue)"]
         HTTP["Convex HTTP Actions (/api/*)"]
-        RTC["LiveKit WebRTC Audio Stream (48kHz Opus)"]
+        RTC["LiveKit WebRTC аудиопоток (48кГц Opus)"]
     end
 
-    subgraph AI_Core["4. AI & Autonomous Agent Core"]
-        LK_AGENT["Standalone LiveKit Agent (agent/agent.ts)"]
+    subgraph AI_Core["4. Ядро искусственного интеллекта"]
+        LK_AGENT["Автономный агент LiveKit (agent/agent.ts)"]
         GEMINI["Google Gemini 2.5 Flash Native Audio"]
         V_SDK["Vercel AI SDK (@ai-sdk/vue + Streaming)"]
-        TOOLS["13 Domain Tool Handlers (Schedule, Marks, RUP, Students)"]
+        TOOLS["13 доменных инструментов (Расписание, Оценки, РУП)"]
     end
 
-    subgraph Backend_DB["5. Convex Serverless Backend (Rust Core)"]
-        SCHEMAS["Schema Definitions (10 Domain Modules)"]
-        MIGRATIONS["@convex-dev/migrations (Expand-Contract Engine)"]
-        RBAC_B["Dynamic Role & Time-Bounded Security Engine"]
-        MUT_QUERIES["Queries & Mutations (ACID Optimistic Concurrency)"]
+    subgraph Backend_DB["5. Серверная БД Convex (Rust Core)"]
+        SCHEMAS["Схемы данных (10 доменных модулей)"]
+        MIGRATIONS["@convex-dev/migrations (Бесшовные миграции)"]
+        RBAC_B["Серверный движок контроля доступа"]
+        MUT_QUERIES["Мутации и запросы (ACID транзакции)"]
     end
 
-    subgraph External_Integrations["6. External Services & Cloudflare Edge"]
+    subgraph External_Integrations["6. Внешние сервисы и CDN Cloudflare"]
         CF_PAGES["Cloudflare Pages Edge CDN (iam-mars.kz)"]
-        LK_CLOUD["LiveKit Cloud Cluster"]
-        TG_BOT["Telegram Notification Bot"]
-        EXCEL["ExcelJS Engine (Server & Client Zip Stream)"]
+        LK_CLOUD["Облачный кластер LiveKit"]
+        TG_BOT["Telegram-бот оповещений"]
+        EXCEL["Движок ExcelJS (Потоковая выгрузка архивов)"]
     end
 
     UI_Layer --> Client_State
@@ -178,24 +178,24 @@ graph TB
 
 ---
 
-## 4. Persona Value Stream & User Journeys
+## 4. Потоки ценности по ролям пользователей
 
 ```mermaid
 flowchart LR
-    subgraph Personas["Key Stakeholders"]
-        P1["👑 Leadership<br/>(Director / Vice-Dean)"]
-        P2["📐 Methodologists<br/>(Учебная часть)"]
-        P3["👨‍🏫 Faculty / Teachers<br/>(Преподаватели)"]
-        P4["🎓 Students<br/>(Студенты)"]
-        P5["👨‍👩‍👧 Parents<br/>(Родители)"]
+    subgraph Personas["Ключевые пользователи"]
+        P1["👑 Руководство<br/>(Директор / Зам. директора)"]
+        P2["📐 Учебная часть<br/>(Методисты / Завучи)"]
+        P3["👨‍🏫 Преподаватели<br/>(Педагогический состав)"]
+        P4["🎓 Студенты<br/>(Обучающиеся)"]
+        P5["👨‍👩‍👧 Родители<br/>(Законные представители)"]
     end
 
-    subgraph Outcomes["Delivered Value & Strategic Outcomes"]
-        O1["Real-time Institutional KPIs, GPA monitoring & 1-Click Ministry Reports (Ф-1, Ф-2)"]
-        O2["Automated RUP working plan to workload distribution with zero calculation errors"]
-        O3["Fast grade entry, automated formula averages, instant substitutions & AI Voice assistance"]
-        O4["Transparent daily schedule, real-time grades, transcripts & integrated testing"]
-        O5["Immediate attendance visibility, debt alerts & bilingual progress tracking"]
+    subgraph Outcomes["Создаваемая ценность и результаты"]
+        O1["KPI в реальном времени, мониторинг GPA и отчеты МОН РК в 1 клик (Ф-1, Ф-2)"]
+        O2["Автоматический перенос РУП в нагрузку преподавателей с нулевой погрешностью"]
+        O3["Быстрое выставление оценок, авторасчет формул, мгновенные замены и ИИ-помощник"]
+        O4["Актуальное расписание, прозрачные оценки, транскрипт с GPA и онлайн-тесты"]
+        O5["Контроль посещаемости, мгновенные уведомления об пропусках и успеваемости"]
     end
 
     P1 --> O1
@@ -207,45 +207,45 @@ flowchart LR
 
 ---
 
-## 5. Domain Capability Breakdown
+## 5. Функциональная матрица модулей
 
-| # | Business Domain | Core Capabilities | Current Status | Key Target Metric |
+| # | Доменная область | Основные возможности | Текущий статус | Ключевой показатель (KPI) |
 |---|---|---|---|---|
-| **1** | **Academic Planning (РУП & КТП)** | Modular disciplines, learning outcomes, credit distribution, multilingual RUP variants (`ru`, `kk`, `en`), KTP-to-RUP synchronization. | **Production-Ready** | 100% curriculum compliance, 0-second budget reconciliation. |
-| **2** | **Teacher Workload** | Automated faculty load matrix from RUP, 6-semester distribution, hourly conversion by education technology, Excel export. | **In Migration** | Elimination of manual load spreadsheets, automated over-hours alert. |
-| **3** | **Electronic Journal** | Daily gradebook, periodic checkpoints (РК-1, РК-2), formula weighted grading, individual sub-journals, audit history. | **Production-Ready** | Sub-50ms mark entry response, 100% cell mutation auditability. |
-| **4** | **Timetable & Logistics** | Weekly slot grids, multi-step scheduling wizard, substitutions (Замены), makeup hours (Отработки), central protocol gate. | **Production-Ready** | 0 timetable collisions, complete audit trail for all schedule exceptions. |
-| **5** | **Student & Faculty SIS** | Student lifecycle, 9-year vs 11-year base tracking, course transfer orders (№ Приказа), teacher directory, password reset audit. | **Production-Ready** | Instant full-text search across 5,000+ student profiles. |
-| **6** | **Assessment & Testing** | Question bank management, test assignments directly to journals, automatic scoring, time limit enforcement. | **Implemented** | Automated grading sync with electronic journal records. |
-| **7** | **Analytics & Reporting** | Cohort KPIs, GPA computation, ECTS transcripts, Ministry Form 1 (monthly) and Form 2 (annual faculty report). | **Production-Ready** | 1-click generation of national compliance filings. |
-| **8** | **AI Voice & Chat Copilot** | Gemini 2.5 Flash Native Audio WebRTC assistant + Vercel AI SDK chat with 13 authenticated domain tools. | **Production-Ready** | <800ms voice query latency for schedule and mark lookups. |
-| **9** | **Security & Dynamic RBAC** | Action-level (`navigate`, `read`, `write`) permissions, time-bounded access, 0ms role-fallback, immutable audit log. | **Production-Ready** | Zero unauthorized access incidents, continuous audit compliance. |
+| **1** | **Академическое планирование (РУП и КТП)** | Модульные дисциплины, результаты обучения (РО), распределение кредитов, мультиязычные РУП (`ru`, `kk`, `en`), привязка тем КТП к часам РУП. | **Готово к эксплуатации** | 100% соответствие ГОСО, 0 секунд на сверку баланса часов. |
+| **2** | **Нагрузка преподавателей** | Автогенерация матрицы нагрузки из РУП, раскладка по 6 семестрам, конвертация в астрономические часы, экспорт в Excel. | **В процессе миграции** | Полный отказ от ручных Excel-таблиц, автопредупреждения о перегрузке. |
+| **3** | **Электронный журнал** | Ежедневный журнал, рубежные контроли (РК-1, РК-2), формульный расчет итогов, индивидуальные траектории, аудит изменений ячеек. | **Готово к эксплуатации** | Отклик ввода оценки <50 мс, 100% логирование правок оценок. |
+| **4** | **Расписание и логистика** | Сетка пар и звонков, мастер создания занятий, модуль временных замен (Замены), отработка пропущенных часов, центральный протокол. | **Готово к эксплуатации** | 0 накладок в расписании, полный аудит всех служебных записок. |
+| **5** | **Контингент студентов и кадры** | База 9/11 классов, статусы движения, приказы о переводе на следующий курс (№ Приказа), карточки преподавателей, история паролей. | **Готово к эксплуатации** | Мгновенный полнотекстовый поиск по 5000+ студентам. |
+| **6** | **Тестирование и контроль знаний** | Банк тестовых заданий, привязка тестов к журналам, автопроверка результатов, таймер ограничения времени. | **Внедрено** | Автоматический перенос баллов за тесты в электронный журнал. |
+| **7** | **Аналитика и отчетность** | Сводные KPI колледжа, расчет GPA, транскрипты ECTS, государственные отчеты: Форма Ф-1 (ежемесячная) и Форма Ф-2 (годовая). | **Готово к эксплуатации** | Формирование государственной отчетности в 1 клик. |
+| **8** | **ИИ-ассистент (Голос и Чат)** | WebRTC голосовой агент Gemini 2.5 Native Audio + чат-панель с 13 инструментами поиска расписания, оценок и тем КТП. | **Готово к эксплуатации** | Задержка голосового ответа <800 мс при запросе расписания. |
+| **9** | **Безопасность и RBAC** | Действия (`navigate`, `read`, `write`), временные окна доступа, 0ms ролевой fallback, неизменяемый журнал аудита прав. | **Готово к эксплуатации** | 0 инцидентов несанкционированного доступа, соответствие требованиям ИБ. |
 
 ---
 
-## 6. Key Objectives & Strategic OKRs
+## 6. Ключевые цели и результаты (OKRs)
 
 ```mermaid
 mindmap
-  root((MARS 2.0 OKRs))
-    O1: Academic Excellence
-      KR1: 100% automated validation of RUP and KTP hours
-      KR2: Zero calculation discrepancies between planned and executed workload
-      KR3: Instant generation of Ministry Forms Ф-1 & Ф-2
-    O2: Operational Velocity
-      KR1: Sub-1 second grade entry and real-time synchronization
-      KR2: 90% reduction in schedule substitution processing time via Protocol Gate
-      KR3: Full offline PWA support for uninterrupted classroom gradebook entry
-    O3: AI-First User Experience
-      KR1: Sub-800ms response time for Gemini 2.5 LiveKit Voice queries
-      KR2: 13 domain tools supporting autonomous teacher and student task resolution
-      KR3: Tri-lingual parity (Kazakh, Russian, English) across 100% of workflows
-    O4: Enterprise Security & Scale
-      KR1: Dynamic RBAC with sub-1ms client-side permission evaluation
-      KR2: Zero-downtime database migrations via @convex-dev/migrations
-      KR3: Multi-institution tenancy ready for national college rollouts
+  root((Цели MARS 2.0))
+    Цель 1: Академическое превосходство
+      КР1: 100% автопроверка соответствия часов РУП и КТП
+      КР2: 0 расхождений между плановой и фактической нагрузкой преподавателей
+      КР3: Мгновенное формирование форм МОН РК Ф-1 и Ф-2
+    Цель 2: Скорость и надежность
+      КР1: Отклик выставления оценки менее 1 секунды в реальном времени
+      КР2: Сокращение времени оформления замен на 90% через протокол
+      КР3: Полноценная работа журнала в офлайн-режиме PWA во время пар
+    Цель 3: ИИ-ассистент первого выбора
+      КР1: Время отклика голосового ассистента Gemini 2.5 менее 800 мс
+      КР2: 13 специализированных инструментов для преподавателей и студентов
+      КР3: 100% паритет всех функций на казахском, русском и английском языках
+    Цель 4: Корпоративная масштабируемость
+      КР1: Динамический RBAC с проверкой прав на клиенте за 0 мс
+      КР2: Бесшовные миграции данных без остановки сервиса (@convex-dev/migrations)
+      КР3: Готовность к развертыванию на сеть из 50+ колледжей региона
 ```
 
 ---
 
-*Document version: 2.0.0 | Last updated: August 17, 2026 | Architecture: Convex + Vue 3 + LiveKit AI*
+*Версия документа: 2.0.0 | Дата обновления: 17 августа 2026 | Стек: Convex + Vue 3 + Framework7 + LiveKit AI*
