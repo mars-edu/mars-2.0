@@ -2,7 +2,7 @@ name: Deploy to Production
 
 on:
   push:
-    branches: [experental-convex-api]
+    branches: [main]
 
 env:
   NODE_VERSION: "22.18.0"

@@ -2,9 +2,9 @@ name: Playwright Tests
 
 on:
   push:
-    branches: [experental-convex-api, fix/rup-reorder-import]
+    branches: [main, experental-convex-api]
   pull_request:
-    branches: [experental-convex-api]
+    branches: [main]
 
 jobs:
   test:
