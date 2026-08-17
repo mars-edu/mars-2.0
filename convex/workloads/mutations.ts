@@ -1,6 +1,6 @@
 import { mutation } from "../functions";
 import { v, ConvexError } from "convex/values";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import { createTimestamps, updateTimestamp } from "../lib/validators";
 import { workloadItemValidator } from "../schema/workloadItem";
 
@@ -77,7 +77,16 @@ export const remove = mutation({
 export const createJournalsFromWorkloadGroups = mutation({
   args: {
     workloadId: v.id("workloads"),
-    semester: v.number(),
+    // Canonical path (Phase 3+): the wizard resolves and passes the semester
+    // record's id directly — no ordinal, no sorting.
+    semesterId: v.optional(v.id("academicYearSemesters")),
+    // Legacy path: the ordinal (1-based) into the year's semesters, sorted by
+    // `semesterDefinition.number`. Kept optional and accepted alongside
+    // `semesterId` so the mutation stays callable by the still-deployed old
+    // frontend while GitHub Actions is blocked on billing (Convex backend
+    // ships ahead of the frontend bundle). Remove once Phase 4/5 retires the
+    // old frontend for good.
+    semester: v.optional(v.number()),
     groups: v.array(
       v.object({
         subjectId: v.string(),
@@ -97,15 +106,38 @@ export const createJournalsFromWorkloadGroups = mutation({
     const workload = await ctx.db.get(args.workloadId);
     if (!workload) throw new Error("Нагрузка не найдена");
 
-    // Resolve the academic-year semester record (sorted by startDate → 1,2,3).
-    const semesters = await ctx.db
-      .query("academicYearSemesters")
-      .withIndex("by_academicYear", (q) =>
-        q.eq("academicYearId", workload.academicYearId as Id<"academicYears">)
-      )
-      .collect();
-    semesters.sort((a, b) => a.startDate.localeCompare(b.startDate));
-    const semesterRecord = semesters[args.semester - 1];
+    // Resolve the academic-year semester record.
+    let semesterRecord: Doc<"academicYearSemesters"> | null = null;
+    if (args.semesterId !== undefined) {
+      // Canonical path: the wizard already knows the semester's id — no
+      // sorting, no ordinal, no ambiguity.
+      semesterRecord = await ctx.db.get(args.semesterId);
+    } else if (args.semester !== undefined) {
+      // Legacy ordinal fallback (still-deployed old frontend). Ordering is
+      // the canonical `semesterDefinition.number` join — NOT the old
+      // startDate.localeCompare sort, which is the same defect-#2 sibling
+      // fixed everywhere else in this migration. On prod, with exactly two
+      // semesters per year, both orderings agree, so no data rekey is needed.
+      const semesters = await ctx.db
+        .query("academicYearSemesters")
+        .withIndex("by_academicYear", (q) =>
+          q.eq("academicYearId", workload.academicYearId as Id<"academicYears">)
+        )
+        .collect();
+      const withNumbers = await Promise.all(
+        semesters.map(async (s) => ({
+          semester: s,
+          number: (await ctx.db.get(s.semesterDefinitionId))?.number ?? 0,
+        }))
+      );
+      withNumbers.sort((a, b) => a.number - b.number);
+      semesterRecord = withNumbers[args.semester - 1]?.semester ?? null;
+    } else {
+      throw new ConvexError({
+        code: "MISSING_SEMESTER",
+        message: "Не указан семестр: требуется semesterId либо semester",
+      });
+    }
     if (!semesterRecord) throw new Error("Семестр не найден для учебного года");
 
     // Idempotency: drop journals previously generated from this workload FOR
@@ -182,11 +214,20 @@ export const createJournalsFromWorkloadGroups = mutation({
     }
 
     // Track which semesters have journals (union add / remove for this run).
+    // `journalsCreatedSemesters` stays `number[]` keyed by the canonical
+    // `semesterDefinition.number` (plan §4.3.6) — resolved via the definition
+    // join, not stored as semesterIds, regardless of which arg shape the
+    // caller used to identify the semester.
+    const semesterDefinition = await ctx.db.get(semesterRecord.semesterDefinitionId);
+    const semesterNumber = semesterDefinition?.number;
+    if (semesterNumber === undefined) {
+      throw new Error("Не удалось определить номер семестра");
+    }
     const prevSemesters = (workload.journalsCreatedSemesters ?? []).filter(
-      (s) => s !== args.semester
+      (s) => s !== semesterNumber
     );
     const createdSemesters =
-      journalsCreated > 0 ? [...prevSemesters, args.semester] : prevSemesters;
+      journalsCreated > 0 ? [...prevSemesters, semesterNumber] : prevSemesters;
     createdSemesters.sort((a, b) => a - b);
 
     await ctx.db.patch(args.workloadId, {

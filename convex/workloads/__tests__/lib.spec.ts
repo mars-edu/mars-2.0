@@ -50,6 +50,14 @@ describe("hoursPerGroup", () => {
   it("derives weeks * hours", () => {
     expect(hoursPerGroup({ semesterId: S1, weeks: 18, hours: 2, groupCount: 1 })).toBe(36);
   });
+
+  it("stays fractional — 25.5 does not round to 26 (fix #11/0185ceb)", () => {
+    // e.g. 17 weeks * 1.5 hours/week = 25.5. A previous bug rounded this to
+    // 26, seeding an unreachable strict-equality target in the wizard's
+    // stagedValid check (integer slot-hour sums could never hit 26) and
+    // permanently disabling "Завершить".
+    expect(hoursPerGroup({ semesterId: S1, weeks: 17, hours: 1.5, groupCount: 1 })).toBe(25.5);
+  });
 });
 
 describe("semesterEntry", () => {
@@ -139,6 +147,34 @@ describe("itemsNeedingJournals", () => {
       const arrayResult = itemsNeedingJournals([arrayItem], S1);
       expect(flatResult).toHaveLength(1);
       expect(arrayResult).toHaveLength(1);
+    });
+  });
+
+  describe("three-semester academic year (D2)", () => {
+    const S3 = "sem-id-3";
+    const threeSemItem = (over: Partial<WorkloadItemLike> = {}) =>
+      item({
+        semesters: [
+          { semesterId: S1, weeks: 18, hours: 2, groupCount: 1 },
+          { semesterId: S2, weeks: 0, hours: 0, groupCount: 0 },
+          { semesterId: S3, weeks: 16, hours: 1.5, groupCount: 1 },
+        ],
+        ...over,
+      });
+
+    it("picks only the items with hours/groups in the requested semester", () => {
+      const items = [threeSemItem({ id: "i1" })];
+      expect(itemsNeedingJournals(items, S1)).toHaveLength(1);
+      expect(itemsNeedingJournals(items, S2)).toHaveLength(0);
+      expect(itemsNeedingJournals(items, S3)).toHaveLength(1);
+    });
+
+    it("a third semester is reachable — not just the first two ordinals", () => {
+      const items = [threeSemItem({ id: "i1" })];
+      const result = itemsNeedingJournals(items, S3);
+      expect(result[0]?.id).toBe("i1");
+      const entry = result[0]?.semesters?.find((s) => s.semesterId === S3);
+      expect(entry && hoursPerGroup(entry)).toBe(24);
     });
   });
 });
