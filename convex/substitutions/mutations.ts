@@ -125,7 +125,7 @@ export const createBulkSubstitutions = withI18nMutation({
 
         const newJournalId = await ctx.db.insert("journals", {
           calendarEventId,
-          disciplineId: event.rupEntryId ?? "",
+          disciplineId: event.rupEntryId,
           semesterId: semesterRecord._id,
           academicYearId: semesterRecord.academicYearId,
           });
