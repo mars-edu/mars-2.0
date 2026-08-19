@@ -120,22 +120,9 @@
             <td v-if="showLanguage" class="px-6 py-4 text-center">
               <span
                 class="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide"
-                :class="{
-                  'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400':
-                    student.language === 'ru',
-                  'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-400':
-                    student.language === 'kk',
-                  'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400':
-                    student.language === 'en',
-                }"
+                :class="getLanguageBadgeClass(student.language)"
               >
-                {{
-                  student.language === "kk"
-                    ? "Kz"
-                    : student.language === "ru"
-                    ? "Ru"
-                    : student.language || "—"
-                }}
+                {{ getLanguageLabel(student.language) }}
               </span>
             </td>
             <td

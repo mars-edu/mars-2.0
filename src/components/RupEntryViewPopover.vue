@@ -310,19 +310,16 @@ const intermediateControlStore = useIntermediateControlStore();
 const specialtyStore = useSpecialtyStore();
 const languageStore = useStudyLanguageStore();
 
-const languageVariants = computed<RupEntry[]>(() => {
-  if (!props.item) return [];
-  if (props.item.groupId) {
-    return rupEntryStore.getGroupedVariants(props.item.groupId);
-  }
-  return [props.item];
-});
-
 const itemLanguages = computed<string[]>(() => {
-  const langs = languageVariants.value
-    .map((v) => v.language)
-    .filter((l): l is string => !!l);
-  return Array.from(new Set(langs));
+  if (!props.item) return [];
+  if (props.item.variants && props.item.variants.length > 0) {
+    return props.item.variants.map((v) => v.language);
+  }
+  if (props.item.groupId) {
+    const grouped = rupEntryStore.getGroupedVariants(props.item.groupId);
+    if (grouped.length > 0) return grouped.map((g) => g.language).filter(Boolean);
+  }
+  return props.item.language ? [props.item.language] : [];
 });
 
 const itemBases = computed<number[]>(() => {

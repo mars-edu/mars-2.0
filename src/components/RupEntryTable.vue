@@ -33,25 +33,17 @@
                       v-for="v in item.variants"
                       :key="v.language"
                       class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide"
-                      :class="{
-                        'bg-indigo-100 text-indigo-700': v.language === 'ru',
-                        'bg-teal-100 text-teal-700': v.language === 'kk',
-                        'bg-purple-100 text-purple-700': v.language === 'en',
-                      }"
+                      :class="getLanguageBadgeClass(v.language)"
                     >
-                      {{ v.language.toUpperCase() }}
+                      {{ getLanguageLabel(v.language) }}
                     </span>
                   </template>
                   <span
                     v-else-if="item.language"
                     class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide"
-                    :class="{
-                      'bg-indigo-100 text-indigo-700': item.language === 'ru',
-                      'bg-teal-100 text-teal-700': item.language === 'kk',
-                      'bg-purple-100 text-purple-700': item.language === 'en',
-                    }"
+                    :class="getLanguageBadgeClass(item.language)"
                   >
-                    {{ item.language.toUpperCase() }}
+                    {{ getLanguageLabel(item.language) }}
                   </span>
                 </div>
                 <div
@@ -175,6 +167,7 @@
 <script setup lang="ts">
 import { computed, ref, nextTick, onMounted, onBeforeUnmount } from "vue";
 import { useRupEntryStore, type RupEntry } from "@/stores/rupEntryStore";
+import { getLanguageLabel, getLanguageBadgeClass } from "@/utils/languageBadge";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { f7 } from "framework7-vue";
