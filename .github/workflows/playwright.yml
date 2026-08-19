@@ -42,11 +42,7 @@ jobs:
 
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
-
-      - name: Install Playwright system deps
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
+        run: npx playwright install chromium
 
       - name: Generate Convex client
         run: npx convex codegen
@@ -63,7 +59,7 @@ jobs:
         run: npx wait-on http://localhost:5173 --timeout 60000
 
       - name: Seed test data
-        run: npx convex run testSeed:resetAndSeed
+        run: npx convex run testSeed:seedTestData
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
