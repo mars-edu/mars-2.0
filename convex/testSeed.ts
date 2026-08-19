@@ -103,7 +103,7 @@ const seedTestUsersInternal = internalMutation({
         username: "Килаш Расул Жангелдыулы",
         email: "kilash.rasul@test.mars.edu",
         password: "teachertest",
-        roles: ["TEACHER" as const],
+        roles: ["ADMIN" as const, "TEACHER" as const],
       },
       {
         firstName: "Админ",
@@ -208,6 +208,9 @@ export const resetAndSeed: any = action({
 
     // Clear existing test data
     await ctx.runMutation(internal.testSeed.clearTestDataInternal, {});
+
+    // Seed permissions
+    await ctx.runMutation(internal.permissions.mutations.seedPermissions, {});
 
     // Seed basic data (bases) first
     await ctx.runMutation(internal.testSeed.seedBasicDataInternal, {});

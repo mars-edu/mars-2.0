@@ -172,7 +172,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { f7, f7Popover, f7Input, f7Button } from "framework7-vue";
 import IconPlus from "~icons/lucide/plus";
 import { studentCreateSchema } from "@/validators/student";
@@ -201,6 +201,8 @@ const firstName = ref("");
 const patronymic = ref("");
 const academicYear = ref("");
 const specialty = ref("");
+const language = ref("");
+const base = ref<number | "">("");
 
 const filteredSpecialtyOptions = computed(() => {
   if (!academicYear.value) {

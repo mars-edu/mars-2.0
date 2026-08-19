@@ -69,7 +69,7 @@ async function loginIfNeeded(page: Page) {
 }
 
 async function openAddPopup(page: Page): Promise<Locator> {
-  const popup = page.locator("#add-event-popup:visible, #add-event-popover:visible");
+  const popup = page.locator("#add-event-popup:visible, #add-event-popover:visible").first();
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const addButtonById = page.locator("#add-button").first();
     if (
@@ -126,6 +126,7 @@ test.describe.serial("Planning Add Popup Unsaved Guard", () => {
 
   test("shows custom alert on dirty close via Cancel button", async ({ page }) => {
     const popup = await openAddPopup(page);
+    await selectFirstDisciplineOption(page, popup);
 
     await popup.getByRole("button", { name: "Отмена" }).click();
     await unsavedDialog(page);
@@ -133,6 +134,7 @@ test.describe.serial("Planning Add Popup Unsaved Guard", () => {
 
   test("shows custom alert on dirty close via backdrop click", async ({ page }) => {
     const popup = await openAddPopup(page);
+    await selectFirstDisciplineOption(page, popup);
 
     await page.locator(".popup-backdrop:visible").first().click({ force: true });
     await unsavedDialog(page);
@@ -140,6 +142,7 @@ test.describe.serial("Planning Add Popup Unsaved Guard", () => {
 
   test("shows custom alert on dirty close via Escape", async ({ page }) => {
     const popup = await openAddPopup(page);
+    await selectFirstDisciplineOption(page, popup);
 
     await page.keyboard.press("Escape");
     await unsavedDialog(page);

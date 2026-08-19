@@ -162,7 +162,7 @@ test.describe("Planning → Journal E2E flow", () => {
 
     // Ensure at least one academic year exists and at least one semester is defined for it.
     await page.goto("/education-schedule");
-    await expect(page.getByText("График образовательного процесса:")).toBeVisible({
+    await expect(page.getByText(/График образовательного процесса/i).first()).toBeVisible({
       timeout: 30_000,
     });
 

@@ -80,8 +80,23 @@ onErrorCaptured((error: any) => {
     const now = Date.now();
     if (now - last > 10000) {
       sessionStorage.setItem(key, String(now));
-      console.warn("[AsyncRouteWrapper] Stale asset chunk detected from previous deployment, reloading once...");
-      window.location.reload();
+      console.warn("[AsyncRouteWrapper] Stale asset chunk detected from previous deployment, clearing caches & service workers then reloading...");
+      (async () => {
+        try {
+          if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            await Promise.all(cacheNames.map((name) => caches.delete(name)));
+          }
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map((r) => r.unregister()));
+          }
+        } catch (e) {
+          console.error('[AsyncRouteWrapper] Error clearing caches:', e);
+        } finally {
+          window.location.reload();
+        }
+      })();
       return false;
     }
   }
