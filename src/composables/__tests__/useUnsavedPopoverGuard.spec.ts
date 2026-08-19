@@ -91,14 +91,27 @@ describe("useUnsavedPopoverGuard", () => {
     expect(guard.beforeClose({ reason: "cancel" })).toBe(true);
   });
 
-  it("requestClose closes with cancel reason", () => {
+  it("requestClose closes with cancel reason when clean", () => {
+    const guard = useUnsavedPopoverGuard({
+      popoverSelector: "#test-popover",
+      isDirty: () => false,
+    });
+
+    guard.requestClose();
+    expect(popoverCloseMock).toHaveBeenCalledWith("#test-popover", true, "cancel");
+  });
+
+  it("requestClose prompts discard and closes on confirm when dirty", async () => {
+    confirmDiscardMock.mockResolvedValue(true);
     const guard = useUnsavedPopoverGuard({
       popoverSelector: "#test-popover",
       isDirty: () => true,
     });
 
     guard.requestClose();
-    expect(popoverCloseMock).toHaveBeenCalledWith("#test-popover", true, "cancel");
+    expect(confirmDiscardMock).toHaveBeenCalledTimes(1);
+    await flushPromises();
+    expect(popoverCloseMock).toHaveBeenCalledWith("#test-popover", true, "discard-confirmed");
   });
 
   it("allowNextClose bypasses guard once", () => {

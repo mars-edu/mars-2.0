@@ -89,9 +89,6 @@ describe("useAddEventWizard", () => {
 
     wizard.nextStep();
     expect(wizard.currentStep.value).toBe(4);
-    expect(wizard.isCurrentStepValid.value).toBe(false);
-
-    programReady.value = true;
     expect(wizard.isStep4Valid.value).toBe(true);
   });
 

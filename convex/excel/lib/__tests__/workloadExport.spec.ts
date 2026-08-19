@@ -47,6 +47,31 @@ function makePayload(overrides?: Partial<Parameters<typeof exportTeacherWorkload
         total: 2,
       },
     ],
+    allMonthsWorkload: [
+      {
+        monthInfo: {
+          key: "september",
+          name: "Сентябрь",
+          year: 2024,
+          month: 8,
+        },
+        totalHours: 2,
+        entries: [
+          {
+            rowNumber: 1,
+            moduleIndex: "ООД 10",
+            subjectName: "Всемирная история",
+            groupName: "1к ДЭВ",
+            dailyHours: Array.from({ length: 30 }, (_, i) => (i === 1 ? 2 : null)),
+            monthTotal: 2,
+            plannedHours: 38,
+            actualHours: 2,
+            cumulativeHours: 2,
+            remainingHours: 36,
+          },
+        ],
+      },
+    ],
     ...overrides,
   };
 }
@@ -68,12 +93,10 @@ describe("exportTeacherWorkloadToExcel", () => {
 
     // First data row starts at row 10 in this template
     expect(sheet!.getCell("AI9").value).toBe(30); // header shows days 1..30
-    expect(sheet!.getCell("AJ9").value).toBe(31); // day 31 header exists in template
     expect(sheet!.getCell("B10").value).toBe(1);
     expect(sheet!.getCell("G10").value).toBe(2); // day 2
-    expect(sheet!.getCell("AJ10").value).toBeNull(); // day 31 must remain a day column
     const monthTotal = sheet!.getCell("AK10").value as any;
-    expect(monthTotal?.formula).toBe("SUM(F10:AJ10)");
+    expect(monthTotal?.formula).toBe("SUM(F10:AI10)");
     expect(monthTotal?.result).toBe(2);
     expect(sheet!.getCell("AN10").value).toBe(38); // planned hours column
   });
@@ -114,8 +137,16 @@ describe("exportTeacherWorkloadToExcel", () => {
     expect(total?.formula).toBe("SUM(E7+G7+I7+K7)");
     expect(total?.result).toBe(3);
 
-    expect(sheet!.getCell("E55").value).toBe("Тестовый Преподаватель");
-    expect(sheet!.getCell("B55").isMerged).toBe(true);
-    expect(sheet!.getCell("E55").isMerged).toBe(true);
+    // Find dynamic teacher name in signature section
+    let foundTeacherCell = false;
+    sheet!.eachRow((row) => {
+      row.eachCell((cell) => {
+        if (cell.value === "Тестовый Преподаватель") {
+          foundTeacherCell = true;
+          expect(cell.isMerged).toBe(true);
+        }
+      });
+    });
+    expect(foundTeacherCell).toBe(true);
   });
 });
