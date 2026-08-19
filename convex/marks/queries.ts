@@ -227,3 +227,100 @@ export const getJournalStats = query({
  * Alias for getJournalHistory
  */
 export const getMarkHistory = getJournalHistory;
+
+/**
+ * Get unified journal grid data in a single server-side query:
+ * - Journal metadata + discipline title
+ * - Enriched students list (sorted by name)
+ * - Marks grouped by studentId and columnIndex
+ * - High-level statistics
+ */
+export const getJournalGridData = query({
+  args: { journalId: v.id("journals") },
+  handler: async (ctx, args) => {
+    const journal = await ctx.db.get(args.journalId);
+    if (!journal) return null;
+
+    const [rupEntry, semester, journalStudentRows, allMarks] = await Promise.all([
+      journal.disciplineId ? ctx.db.get(journal.disciplineId) : null,
+      journal.semesterId ? ctx.db.get(journal.semesterId) : null,
+      ctx.db
+        .query("journalStudents")
+        .withIndex("by_journal", (q) => q.eq("journalId", args.journalId))
+        .collect(),
+      ctx.db
+        .query("marks")
+        .withIndex("by_journal", (q) => q.eq("journalId", args.journalId))
+        .collect(),
+    ]);
+
+    // Fetch and enrich student documents
+    const studentDocs = await Promise.all(
+      journalStudentRows.map(async (row) => {
+        const student = await ctx.db
+          .query("students")
+          .filter((q) => q.eq(q.field("_id"), row.studentId as any))
+          .first();
+        const fullName = student
+          ? [student.surname, student.firstName, student.patronymic].filter(Boolean).join(" ")
+          : `Студент ${row.studentId.slice(0, 6)}`;
+        return {
+          id: row._id,
+          studentId: row.studentId,
+          name: fullName,
+          surname: student?.surname || "",
+          firstName: student?.firstName || "",
+          patronymic: student?.patronymic || "",
+          language: student?.language || "RU",
+          specialty: student?.specialty || "",
+        };
+      })
+    );
+
+    // Sort students alphabetically
+    studentDocs.sort((a, b) => a.name.localeCompare(b.name, "ru"));
+
+    // Group marks by studentId
+    const marksByStudent: Record<string, typeof allMarks> = {};
+    for (const mark of allMarks) {
+      if (!marksByStudent[mark.studentId]) {
+        marksByStudent[mark.studentId] = [];
+      }
+      marksByStudent[mark.studentId].push(mark);
+    }
+
+    // Calculate quick stats
+    const validMarks = allMarks.filter((m) => m.value !== null && m.value !== "");
+    const numericMarks = validMarks
+      .map((m) => parseInt(m.value || "0", 10))
+      .filter((n) => !isNaN(n) && n > 0);
+
+    const avgScore =
+      numericMarks.length > 0
+        ? Math.round((numericMarks.reduce((sum, m) => sum + m, 0) / numericMarks.length) * 10) / 10
+        : 0;
+
+    return {
+      journal: {
+        _id: journal._id,
+        calendarEventId: journal.calendarEventId,
+        disciplineId: journal.disciplineId,
+        disciplineName: rupEntry?.moduleName || rupEntry?.learningOutcome || "Дисциплина",
+        moduleIndex: rupEntry?.moduleIndex || "",
+        groupName: journal.groupName || "",
+        semesterId: journal.semesterId,
+        academicYearId: journal.academicYearId,
+        isIndividualJournal: journal.isIndividualJournal || false,
+        isMixedGroup: journal.isMixedGroup || false,
+      },
+      students: studentDocs,
+      marksByStudent,
+      stats: {
+        totalStudents: studentDocs.length,
+        totalMarks: allMarks.length,
+        filledMarks: validMarks.length,
+        averageScore: avgScore,
+      },
+    };
+  },
+});
