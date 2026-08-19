@@ -10,10 +10,23 @@ export async function login(
   password: string = testUsers.teacher.password,
   redirectTo: string = '/home'
 ): Promise<void> {
-  const currentUrl = page.url();
-  if (!currentUrl.includes('/login')) {
+  // If already authenticated and on an app page, skip login
+  const isAlreadyLoggedIn = await page.evaluate(() => {
+    return !!localStorage.getItem('auth_token');
+  }).catch(() => false);
+
+  if (isAlreadyLoggedIn && !page.url().includes('/login')) {
+    return;
+  }
+
+  if (!page.url().includes('/login')) {
     await page.goto('/login');
     await page.waitForLoadState('networkidle');
+  }
+
+  // Check if guest guard already redirected to /home
+  if (!page.url().includes('/login')) {
+    return;
   }
 
   // Resilient selector for username/ФИО input

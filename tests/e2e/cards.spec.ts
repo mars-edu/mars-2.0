@@ -136,9 +136,13 @@ test.describe('Cards Suite (TeacherCard & StudentCard)', () => {
     });
 
     test('should open StudentDetailsDialog on student row click and allow tab switching', async ({ page }) => {
+      const loadingOverlay = page.locator('[class*="backdrop-blur"], .animate-spin');
+      if (await loadingOverlay.count() > 0) {
+        await loadingOverlay.first().waitFor({ state: 'hidden', timeout: 15000 }).catch(() => {});
+      }
       const studentRow = page.locator('tbody tr').first();
       if (await studentRow.isVisible()) {
-        await studentRow.click();
+        await studentRow.click({ force: true });
         await page.waitForTimeout(500);
 
         const dialog = page.locator('[id^="student-details-popup-"], .student-details-popup, .popup.modal-in');

@@ -150,6 +150,7 @@
 import { computed } from "vue";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useStudentHelpers } from "@/composables/useStudentHelpers";
+import { getLanguageLabel, getLanguageBadgeClass } from "@/utils/languageBadge";
 import {
   student_card_col_num,
   student_card_col_name,

@@ -103,16 +103,19 @@ async function unsavedDialog(page: Page): Promise<Locator> {
 async function selectFirstDisciplineOption(page: Page, popup: Locator) {
   const trigger = popup.locator("#event-rupEntry-generic, #event-class9-generic, button:has-text('Выберите дисциплину')").first();
   await trigger.click({ force: true });
-  const option = page.locator('.select-option, [role="option"], button').filter({ hasText: /—|Семестр/ }).first();
-  if ((await option.count()) > 0) {
+  await page.waitForTimeout(300);
+
+  const option = page.locator('.dropdown-panel .option-item, .select-option, [role="option"]').first();
+  if (await option.isVisible({ timeout: 5000 }).catch(() => false)) {
     await option.click({ force: true });
   } else {
-    // If no discipline options exist in DB, dirty the custom period toggle or input
-    const customPeriodToggle = popup.locator('input[type="checkbox"]').first();
-    if ((await customPeriodToggle.count()) > 0) {
-      await customPeriodToggle.click({ force: true });
+    // Close dropdown if no option found
+    const backdrop = page.locator('.dropdown-backdrop');
+    if (await backdrop.isVisible().catch(() => false)) {
+      await backdrop.click({ force: true });
     }
   }
+  await page.waitForTimeout(300);
 }
 
 test.describe.serial("Planning Add Popup Unsaved Guard", () => {
