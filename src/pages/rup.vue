@@ -2,6 +2,8 @@
   <f7-page
     name="rup"
     class="flex flex-col h-screen bg-background text-foreground"
+    :data-page-id="`rup-${pageId}`"
+    data-page-name="rup"
   >
     <Header class="hidden md:block flex-shrink-0 border-b border-border" />
 
@@ -216,6 +218,7 @@
 </template>
 
 <script setup lang="ts">
+const pageId = ref(Date.now());
 import { ref, onMounted, computed } from "vue";
 import { f7Page, f7SkeletonBlock, f7, f7Popover } from "framework7-vue";
 import IconInfo from "~icons/lucide/info";

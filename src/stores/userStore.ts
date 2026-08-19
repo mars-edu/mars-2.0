@@ -23,7 +23,20 @@ function decodeTokenPayload(tokenStr: string): {
   try {
     const parts = tokenStr.split(".");
     if (parts.length !== 3) return null;
-    const payload = JSON.parse(atob(parts[1]));
+    
+    // Base64Url decode with unicode support
+    let base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    while (base64.length % 4) {
+      base64 += "=";
+    }
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const jsonStr = new TextDecoder().decode(bytes);
+    const payload = JSON.parse(jsonStr);
+
     if (!payload.userId || !Array.isArray(payload.roles)) return null;
     return {
       id: payload.userId,
@@ -33,7 +46,8 @@ function decodeTokenPayload(tokenStr: string): {
       roles: payload.roles as Role[],
       exp: payload.exp,
     };
-  } catch {
+  } catch (err) {
+    console.error("[UserStore] Error decoding token payload:", err);
     return null;
   }
 }
@@ -60,7 +74,7 @@ export const useUserStore = defineStore(
           if (!event.newValue) {
             console.log("[UserStore] auth_token cleared in another tab, syncing logout");
             logout();
-            if (f7.views?.main?.router) {
+            if (typeof f7 !== 'undefined' && f7?.views?.main?.router) {
               f7.views.main.router.navigate("/login/");
             }
           } else if (event.newValue !== token.value) {
@@ -203,7 +217,7 @@ export const useUserStore = defineStore(
       if (!decoded) {
         console.log("[UserStore] Failed to decode token, logging out");
         logout();
-        if (f7.views?.main?.router) {
+        if (typeof f7 !== 'undefined' && f7?.views?.main?.router) {
           f7.views.main.router.navigate("/login/");
         }
         return;
@@ -213,7 +227,7 @@ export const useUserStore = defineStore(
       if (decoded.exp && Math.floor(Date.now() / 1000) >= decoded.exp) {
         console.log("[UserStore] Stored token is expired, logging out");
         logout();
-        if (f7.views?.main?.router) {
+        if (typeof f7 !== 'undefined' && f7?.views?.main?.router) {
           f7.views.main.router.navigate("/login/");
         }
         return;
@@ -264,7 +278,7 @@ export const useUserStore = defineStore(
         } else if (response.isExplicitInvalid) {
           console.log("[UserStore] Token is explicitly invalid on backend, logging out");
           logout();
-          if (f7.views?.main?.router) {
+          if (typeof f7 !== 'undefined' && f7?.views?.main?.router) {
             f7.views.main.router.navigate("/login/");
           }
         } else {

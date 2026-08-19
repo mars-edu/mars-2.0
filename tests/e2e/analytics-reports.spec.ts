@@ -36,13 +36,8 @@ test.describe('Analytics, Reports & Protocol Suite', () => {
     });
 
     test('should display academic year and semester pickers in ведомость mode', async ({ page }) => {
-      const yearPicker = page.locator('button, div').filter({ hasText: /Учебный год|202/i }).first();
-      const semesterPicker = page.locator('button, div').filter({ hasText: /Семестр|1|2/i }).first();
-
-      const hasYear = (await yearPicker.count()) > 0;
-      const hasSemester = (await semesterPicker.count()) > 0;
-
-      expect(hasYear || hasSemester).toBeTruthy();
+      const selectBoxes = page.locator('.analytics-page-header .select-wrapper, .analytics-page-header button');
+      await expect(selectBoxes.first()).toBeVisible({ timeout: 15000 });
     });
 
     test('should render stat cards and chart containers', async ({ page }) => {

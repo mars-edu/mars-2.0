@@ -78,7 +78,102 @@ const seedBasicDataInternal = internalMutation({
       createdBases.push(baseId);
     }
 
-    console.log(`[TestSeed] Seeded ${createdBases.length} bases`);
+    // Seed default education technology
+    let defaultTech = await ctx.db
+      .query("educationTechnologies")
+      .withIndex("by_isDefault", (q) => q.eq("isDefault", true))
+      .first();
+
+    if (!defaultTech) {
+      const now = new Date().toISOString();
+      const techId = await ctx.db.insert("educationTechnologies", {
+        name: "Классическая",
+        shortName: "КЛ",
+        academicHourMinutes: 45,
+        isDefault: true,
+        description: "Стандартная технология",
+      });
+      defaultTech = await ctx.db.get(techId);
+    }
+
+    // Seed default academic year
+    let activeYear = await ctx.db
+      .query("academicYears")
+      .withIndex("by_active", (q) => q.eq("isActive", true))
+      .first();
+
+    if (!activeYear && defaultTech) {
+      const now = new Date().toISOString();
+      const currentYear = new Date().getFullYear();
+      const yearId = await ctx.db.insert("academicYears", {
+        name: `${currentYear}-${currentYear + 1}`,
+        startYear: currentYear,
+        endYear: currentYear + 1,
+        isActive: true,
+        technologyId: defaultTech._id,
+        startDate: `${currentYear}-09-01`,
+        endDate: `${currentYear + 1}-06-30`,
+      });
+      activeYear = await ctx.db.get(yearId);
+    }
+
+    // Seed semester definitions
+    const def1 = await ctx.db
+      .query("semesterDefinitions")
+      .withIndex("by_number", (q) => q.eq("number", 1))
+      .first();
+    let def1Id = def1?._id;
+    if (!def1) {
+      const now = new Date().toISOString();
+      def1Id = await ctx.db.insert("semesterDefinitions", {
+        name: "1 семестр",
+        shortName: "1 сем",
+        number: 1,
+      });
+    }
+
+    const def2 = await ctx.db
+      .query("semesterDefinitions")
+      .withIndex("by_number", (q) => q.eq("number", 2))
+      .first();
+    let def2Id = def2?._id;
+    if (!def2) {
+      const now = new Date().toISOString();
+      def2Id = await ctx.db.insert("semesterDefinitions", {
+        name: "2 семестр",
+        shortName: "2 сем",
+        number: 2,
+      });
+    }
+
+    // Seed academic year semesters for active year
+    if (activeYear && def1Id && def2Id) {
+      const existingSem = await ctx.db
+        .query("academicYearSemesters")
+        .withIndex("by_academicYear", (q) => q.eq("academicYearId", activeYear._id))
+        .first();
+
+      if (!existingSem) {
+        const now = new Date().toISOString();
+        const currentYear = activeYear.startYear;
+        await ctx.db.insert("academicYearSemesters", {
+          academicYearId: activeYear._id,
+          semesterDefinitionId: def1Id,
+          startDate: `${currentYear}-09-01`,
+          endDate: `${currentYear + 1}-01-15`,
+          weeksCount: 18,
+        });
+        await ctx.db.insert("academicYearSemesters", {
+          academicYearId: activeYear._id,
+          semesterDefinitionId: def2Id,
+          startDate: `${currentYear + 1}-01-16`,
+          endDate: `${currentYear + 1}-06-30`,
+          weeksCount: 20,
+        });
+      }
+    }
+
+    console.log(`[TestSeed] Seeded ${createdBases.length} bases, tech, year, and semesters`);
     return {
       success: true,
       message: `Seeded ${createdBases.length} bases`,

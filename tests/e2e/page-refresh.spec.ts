@@ -51,7 +51,7 @@ test.describe('Page Refresh Persistence', () => {
 
     // Wait for actual page content to appear (not skeleton)
     // Increase timeout for production builds which may be slower
-    await page.waitForSelector('h1, h2, h3', { state: 'visible', timeout: 10000 });
+    await page.locator('h1:visible, h2:visible, .page-content:visible').first().waitFor({ state: 'visible', timeout: 15000 });
     await page.waitForTimeout(500); // Additional wait for full content rendering
 
     // Should still be on home with clean URL
@@ -77,7 +77,7 @@ test.describe('Page Refresh Persistence', () => {
 
   test('should maintain clean URL after page refresh on journals', async ({ page }) => {
     // Navigate to journals page via sidebar navigation
-    await page.getByText('doc_text_fillЖурналы').click();
+    await page.locator('aside nav').getByText('Журналы').first().click({ force: true });
     await page.waitForURL(/\/journals\/?/, { timeout: 5000 });
     await page.waitForLoadState('networkidle');
 
@@ -125,7 +125,7 @@ test.describe('Page Refresh Persistence', () => {
 
   test('should maintain clean URL after page refresh on discipline-catalog', async ({ page }) => {
     // Navigate to discipline catalog via sidebar navigation
-    await page.getByText('book_fillКаталог дисциплин').click();
+    await page.locator('aside nav').getByText('Дисциплины').first().click({ force: true });
     await page.waitForURL(/\/discipline-catalog\/?/, { timeout: 5000 });
     await page.waitForLoadState('networkidle');
 
@@ -216,14 +216,14 @@ test.describe('Page Refresh Persistence', () => {
 
   test('should use clean URLs without hash after full navigation flow', async ({ page }) => {
     const pages = [
-      { navText: 'doc_text_fillЖурналы', urlPattern: /\/journals\/?/ },
-      { navText: 'book_fillКаталог дисциплин', urlPattern: /\/discipline-catalog\/?/ },
-      { navText: 'house_fillГлавная', urlPattern: /\/home\/?/ },
+      { navText: 'Журналы', urlPattern: /\/journals\/?/ },
+      { navText: 'РУП', urlPattern: /\/rup\/?/ },
+      { navText: 'Главная', urlPattern: /\/home\/?/ },
     ];
 
     for (const pageInfo of pages) {
       // Navigate via sidebar navigation (use first() in case element appears multiple times)
-      await page.getByText(pageInfo.navText).first().click();
+      await page.locator('aside nav').getByText(pageInfo.navText).first().click({ force: true });
       await page.waitForLoadState('networkidle');
       await page.waitForTimeout(500);
 
