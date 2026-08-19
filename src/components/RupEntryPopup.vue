@@ -86,6 +86,8 @@ import Input from "@/components/ui/Input.vue";
 import RupSpecialtyPicker from "@/components/RupSpecialtyPicker.vue";
 import RupLanguageTabs from "@/components/RupLanguageTabs.vue";
 import { useLanguageVariants } from "@/composables/useLanguageVariants";
+import { useStudyLanguageStore } from "@/stores/studyLanguageStore";
+import { DEFAULT_STUDY_LANGUAGE_CODE } from "@/types/study-language";
 import { useRupHourDistribution } from "@/composables/useRupHourDistribution";
 import { useRupEntryForm } from "@/composables/useRupEntryForm";
 import RupHourFields from "@/components/RupHourFields.vue";
@@ -156,6 +158,11 @@ function pickHoursForm(v: any) {
 }
 
 const selectedSpecialtyIds = ref<string[]>([]);
+
+const studyLanguageStore = useStudyLanguageStore();
+function defaultLanguageCode(): string {
+  return studyLanguageStore.getDefaultLanguage?.code ?? DEFAULT_STUDY_LANGUAGE_CODE;
+}
 
 // Language-variant state + helpers extracted to a composable.
 const {
@@ -244,7 +251,7 @@ function copyFromSource(source: any) {
     : [source];
 
   for (const v of variants) {
-    const lang = v.language || "ru";
+    const lang = v.language || defaultLanguageCode();
     // Only pre-fill languages the user actually cares about.
     if (!selectedLanguages.value.includes(lang)) continue;
     languageTexts.value[lang] = {
@@ -297,16 +304,16 @@ watch(
           };
         } else {
           editedEntry.value = pickHoursForm(val);
-          selectedLanguages.value = [val.language || "ru"];
-          activeLanguageTab.value = val.language || "ru";
+          selectedLanguages.value = [val.language || defaultLanguageCode()];
+          activeLanguageTab.value = val.language || defaultLanguageCode();
           languageTexts.value = {
-            [val.language || "ru"]: {
+            [val.language || defaultLanguageCode()]: {
               moduleIndex: val.moduleIndex,
               moduleName: val.moduleName,
               learningOutcome: val.learningOutcome,
             },
           };
-          editVariantIds.value = { [val.language || "ru"]: val.id };
+          editVariantIds.value = { [val.language || defaultLanguageCode()]: val.id };
           selectedSpecialtyIds.value = val.specialtyIds || [];
           
           const hasSrs = val.distributionEntries?.some((e: any) => Number(e.srsHours) > 0);
@@ -320,16 +327,16 @@ watch(
         }
       } else {
         editedEntry.value = pickHoursForm(val);
-        selectedLanguages.value = [val.language || "ru"];
-        activeLanguageTab.value = val.language || "ru";
+        selectedLanguages.value = [val.language || defaultLanguageCode()];
+        activeLanguageTab.value = val.language || defaultLanguageCode();
         languageTexts.value = {
-          [val.language || "ru"]: {
+          [val.language || defaultLanguageCode()]: {
             moduleIndex: val.moduleIndex,
             moduleName: val.moduleName,
             learningOutcome: val.learningOutcome,
           },
         };
-        editVariantIds.value = { [val.language || "ru"]: val.id };
+        editVariantIds.value = { [val.language || defaultLanguageCode()]: val.id };
         selectedSpecialtyIds.value = val.specialtyIds || [];
         
         const hasSrs = val.distributionEntries?.some((e: any) => Number(e.srsHours) > 0);

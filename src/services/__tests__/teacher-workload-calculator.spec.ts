@@ -43,10 +43,10 @@ describe("calculateLessonHours", () => {
 });
 
 // resolveYearStart backs the cumulative-hours window in calculateActualHours
-// (was previously hardcoded to Sept 1 of academicYearStart). Phase 1 of the
-// educationTechnology + per-year startDate/endDate feature: the fallback
-// stays until the prod backfill migration runs and the field is narrowed to
-// required (see convex/migrations/educationTechnologyBackfill.ts).
+// (was previously hardcoded to Sept 1 of academicYearStart). Post Phase-3
+// narrow: `startDate` is required on every academic year, so the Sept-1 path
+// is reached only when the caller didn't opt in to per-year resolution
+// (academicYears not passed / event's year not in the list).
 describe("year-start resolution", () => {
   function makeYear(overrides: Partial<AcademicYear> = {}): AcademicYear {
     return {
@@ -55,25 +55,22 @@ describe("year-start resolution", () => {
       startYear: 2025,
       endYear: 2026,
       isActive: true,
+      technologyId: "tech-1",
+      startDate: "2025-09-01",
+      endDate: "2026-06-30",
       createdAt: new Date(),
       updatedAt: new Date(),
       ...overrides,
     };
   }
 
-  test("explicit startDate wins over the Sept-1 fallback", () => {
+  test("year's startDate drives the window", () => {
     const year = makeYear({ startDate: "2025-09-01" });
     const result = resolveYearStart(year, 2025);
     expect(result.format("YYYY-MM-DD")).toBe("2025-09-01");
   });
 
-  test("no startDate → falls back to Sept 1 of academicYearStart", () => {
-    const year = makeYear({ startDate: undefined });
-    const result = resolveYearStart(year, 2025);
-    expect(result.format("YYYY-MM-DD")).toBe("2025-09-01");
-  });
-
-  test("no year at all (undefined) → falls back to Sept 1 of academicYearStart", () => {
+  test("no year at all (caller didn't opt in) → Sept 1 of academicYearStart", () => {
     const result = resolveYearStart(undefined, 2025);
     expect(result.format("YYYY-MM-DD")).toBe("2025-09-01");
   });

@@ -110,10 +110,9 @@ import AddSemesterButton from "@/components/AddSemesterButton.vue";
 import EditSemesterButton from "@/components/EditSemesterButton.vue";
 import { useSemesterStore } from "@/stores/semesterStore";
 import type { Semester } from "@/stores/semesterStore";
-import AddLanguageButton from "@/components/AddLanguageButton.vue";
-import EditLanguageButton from "@/components/EditLanguageButton.vue";
-import { useLanguageStore } from "@/stores/languageStore";
-import type { Language } from "@/stores/languageStore";
+import AddLanguageButton from "@/components/AddStudyLanguageButton.vue";
+import EditLanguageButton from "@/components/EditStudyLanguageButton.vue";
+import { useStudyLanguageStore } from "@/stores/studyLanguageStore";
 import AddFinalControlButton from "@/components/AddFinalControlButton.vue";
 import EditFinalControlButton from "@/components/EditFinalControlButton.vue";
 import { useFinalControlStore } from "@/stores/finalControlStore";
@@ -138,7 +137,7 @@ const activeNavItem = ref("settings");
 
 const courseStore = useCourseStore();
 const semesterStore = useSemesterStore();
-const languageStore = useLanguageStore();
+const languageStore = useStudyLanguageStore();
 const finalControlStore = useFinalControlStore();
 const intermediateControlStore = useIntermediateControlStore();
 
@@ -276,7 +275,7 @@ const deleteLanguageItem = (id: string) => {
      <p class="text-sm text-muted-foreground mt-1">Это действие нельзя отменить.</p>`,
     'Удаление',
     async () => {
-      try { await languageStore.deleteLanguage(id); }
+      try { await languageStore.deleteStudyLanguage(id); }
       catch { f7.dialog.alert('Не удалось удалить запись.'); }
     }
   );

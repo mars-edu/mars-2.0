@@ -72,24 +72,23 @@
                     <th rowspan="2" class="px-4 py-3 text-center w-16 font-bold">Удалить</th>
                   </tr>
                   <tr class="bg-muted/10">
-                    <template v-for="i in semesterCount" :key="`weeks-h-${i}`">
-                      <th class="px-1 py-1.5 text-center text-[9px] font-black text-muted-foreground/60 border-r border-border">{{ i }}</th>
+                    <template v-for="ref in yearSemesterRefs" :key="`weeks-h-${ref.semesterId}`">
+                      <th class="px-1 py-1.5 text-center text-[9px] font-black text-muted-foreground/60 border-r border-border">{{ ref.number }}</th>
                     </template>
-                    <template v-for="i in semesterCount" :key="`hours-h-${i}`">
-                      <th class="px-1 py-1.5 text-center text-[9px] font-black text-muted-foreground/60 border-r border-border">{{ i }}</th>
+                    <template v-for="ref in yearSemesterRefs" :key="`hours-h-${ref.semesterId}`">
+                      <th class="px-1 py-1.5 text-center text-[9px] font-black text-muted-foreground/60 border-r border-border">{{ ref.number }}</th>
                     </template>
-                    <template v-for="i in semesterCount" :key="`pergroup-h-${i}`">
-                      <th class="px-1 py-1.5 text-center text-[9px] font-black text-muted-foreground/60 border-r border-border w-16">{{ i }}</th>
+                    <template v-for="ref in yearSemesterRefs" :key="`pergroup-h-${ref.semesterId}`">
+                      <th class="px-1 py-1.5 text-center text-[9px] font-black text-muted-foreground/60 border-r border-border w-16">{{ ref.number }}</th>
                     </template>
-                    <template v-for="i in semesterCount" :key="`groups-h-${i}`">
-                      <th class="px-1 py-1.5 text-center text-[9px] font-black text-muted-foreground/60 border-r border-border">{{ i }}</th>
+                    <template v-for="ref in yearSemesterRefs" :key="`groups-h-${ref.semesterId}`">
+                      <th class="px-1 py-1.5 text-center text-[9px] font-black text-muted-foreground/60 border-r border-border">{{ ref.number }}</th>
                     </template>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-border">
+                  <template v-for="item in currentWorkloadItems" :key="item.id">
                   <tr
-                    v-for="item in currentWorkloadItems"
-                    :key="item.id"
                     class="hover:bg-muted/20 transition-colors group"
                     :class="{
                       'bg-amber-500/5': item.id.endsWith('_ind'),
@@ -150,21 +149,21 @@
                     </td>
 
                     <!-- Weeks -->
-                    <template v-for="i in semesterCount" :key="`weeks-${item.id}-${i}`">
+                    <template v-for="ref in yearSemesterRefs" :key="`weeks-${item.id}-${ref.semesterId}`">
                       <td class="px-1 py-2.5 bg-orange-50/5 border-r border-border">
                         <div class="flex items-center justify-center gap-1">
                           <button
-                            @click="adjustValue(item.id, `weeks${i}`, -1)"
+                            @click="adjustSemesterValue(item.id, ref.semesterId, 'weeks', -1)"
                             class="w-5 h-5 flex items-center justify-center bg-muted hover:bg-muted/80 rounded text-xs font-bold text-muted-foreground transition-colors"
                           >-</button>
                           <input
                             type="number"
-                            v-model="item[`weeks${i}`]"
+                            v-model.number="entryFor(item, ref.semesterId).weeks"
                             @input="recalculateItem(item.id)"
                             class="w-10 bg-transparent border-none focus:ring-0 text-sm p-0 text-center text-orange-600 font-bold outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <button
-                            @click="adjustValue(item.id, `weeks${i}`, 1)"
+                            @click="adjustSemesterValue(item.id, ref.semesterId, 'weeks', 1)"
                             class="w-5 h-5 flex items-center justify-center bg-muted hover:bg-muted/80 rounded text-xs font-bold text-muted-foreground transition-colors"
                           >+</button>
                         </div>
@@ -172,22 +171,22 @@
                     </template>
 
                     <!-- Hours -->
-                    <template v-for="i in semesterCount" :key="`hours-${item.id}-${i}`">
+                    <template v-for="ref in yearSemesterRefs" :key="`hours-${item.id}-${ref.semesterId}`">
                       <td class="px-1 py-2.5 bg-slate-50/5 border-r border-border">
                         <div class="flex items-center justify-center gap-1">
                           <button
-                            @click="adjustValue(item.id, `hours${i}`, -1)"
+                            @click="adjustSemesterValue(item.id, ref.semesterId, 'hours', -1)"
                             class="w-5 h-5 flex items-center justify-center bg-muted hover:bg-muted/80 rounded text-xs font-bold text-muted-foreground transition-colors"
                           >-</button>
                           <input
                             type="number"
                             step="0.5"
-                            :value="formatHours(item[`hours${i}`])"
-                            @change="item[`hours${i}`] = ($event.target as HTMLInputElement).value; recalculateItem(item.id)"
+                            :value="formatHours(entryFor(item, ref.semesterId).hours)"
+                            @change="entryFor(item, ref.semesterId).hours = Number(($event.target as HTMLInputElement).value) || 0; recalculateItem(item.id)"
                             class="w-10 bg-transparent border-none focus:ring-0 text-sm p-0 text-center text-slate-600 font-bold outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <button
-                            @click="adjustValue(item.id, `hours${i}`, 1)"
+                            @click="adjustSemesterValue(item.id, ref.semesterId, 'hours', 1)"
                             class="w-5 h-5 flex items-center justify-center bg-muted hover:bg-muted/80 rounded text-xs font-bold text-muted-foreground transition-colors"
                           >+</button>
                         </div>
@@ -195,28 +194,28 @@
                     </template>
 
                     <!-- Hours per group -->
-                    <template v-for="i in semesterCount" :key="`pergroup-${item.id}-${i}`">
+                    <template v-for="ref in yearSemesterRefs" :key="`pergroup-${item.id}-${ref.semesterId}`">
                       <td class="px-1 py-2.5 bg-green-50/5 text-center font-black text-green-600 border-r border-border text-sm w-16">
-                        {{ formatHours(item[`hoursPerGroup${i}`]) }}
+                        {{ formatHours(hoursPerGroup(entryFor(item, ref.semesterId))) }}
                       </td>
                     </template>
 
                     <!-- Group Count -->
-                    <template v-for="i in semesterCount" :key="`groups-${item.id}-${i}`">
+                    <template v-for="ref in yearSemesterRefs" :key="`groups-${item.id}-${ref.semesterId}`">
                       <td class="px-1 py-2.5 border-r border-border">
                         <div class="flex items-center justify-center gap-1">
                           <button
-                            @click="adjustValue(item.id, `groupCount${i}`, -1)"
+                            @click="adjustSemesterValue(item.id, ref.semesterId, 'groupCount', -1)"
                             class="w-5 h-5 flex items-center justify-center bg-muted hover:bg-muted/80 rounded text-xs font-bold text-muted-foreground transition-colors"
                           >-</button>
                           <input
                             type="number"
-                            v-model="item[`groupCount${i}`]"
+                            v-model.number="entryFor(item, ref.semesterId).groupCount"
                             @input="recalculateItem(item.id)"
                             class="w-10 bg-transparent border-none focus:ring-0 text-sm p-0 text-center font-bold text-foreground outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <button
-                            @click="adjustValue(item.id, `groupCount${i}`, 1)"
+                            @click="adjustSemesterValue(item.id, ref.semesterId, 'groupCount', 1)"
                             class="w-5 h-5 flex items-center justify-center bg-muted hover:bg-muted/80 rounded text-xs font-bold text-muted-foreground transition-colors"
                           >+</button>
                         </div>
@@ -239,6 +238,19 @@
                       </button>
                     </td>
                   </tr>
+                  <tr v-if="orphanEntriesFor(item).length" class="bg-red-500/5">
+                    <td :colspan="6 + semesterCount * 4" class="px-4 py-1.5 text-[11px] font-bold text-red-500">
+                      <span
+                        v-for="entry in orphanEntriesFor(item)"
+                        :key="entry.semesterId"
+                        class="inline-flex items-center gap-1 mr-3"
+                      >
+                        <span class="uppercase tracking-wide">Семестр не найден</span>
+                        (id: {{ entry.semesterId }}) — {{ formatHours(hoursPerGroup(entry)) }} ч./группу × {{ entry.groupCount }} гр.
+                      </span>
+                    </td>
+                  </tr>
+                  </template>
 
                   <tr v-if="currentWorkloadItems.length === 0">
                     <td :colspan="6 + semesterCount * 4" class="px-6 py-20 text-center">
@@ -537,7 +549,14 @@
                     <span v-if="item.department">•</span>
                     <span>{{ item.course }} курс</span>
                     <span>•</span>
-                    <span>группы {{ item.groupCount1 }}/{{ item.groupCount2 }}</span>
+                    <span>
+                      группы
+                      {{
+                        sortedSemesterEntries(item)
+                          .map((e) => e.groupCount)
+                          .join('/')
+                      }}
+                    </span>
                   </div>
                 </div>
                 <span class="text-xl font-black text-foreground shrink-0">{{ item.totalHours }} ч.</span>
@@ -702,10 +721,19 @@ import { useRupEntryStore, type RupEntry } from "@/stores/rupEntryStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useSidebar } from "@/composables/useSidebar";
-import type { WorkloadItem, SavedWorkload } from "@/types/workload";
+import type { WorkloadItem, WorkloadSemesterEntry, SavedWorkload } from "@/types/workload";
 import { MAX_WORKLOAD_SEMESTERS } from "@convex/schema/workloadItem";
-import { formatHours, recalcWorkloadItem, computeWorkloadTotal, seedWorkloadItemsFromRup } from "@/lib/workloadHours";
-import { buildWorkloadCsvContent, buildAllWorkloadsCsvContent } from "@/lib/workloadCsv";
+import {
+  formatHours,
+  recalcWorkloadItem,
+  computeWorkloadTotal,
+  seedWorkloadItemsFromRup,
+  findSemesterEntry,
+  hoursPerGroup,
+  type YearSemesterRef,
+} from "@/lib/workloadHours";
+import { buildWorkloadXlsxMatrix, buildAllWorkloadsXlsxMatrix } from "@/lib/workloadXlsx";
+import * as Excel from "exceljs/dist/exceljs.min.js";
 
 // Icons
 import IconUser from "~icons/lucide/user";
@@ -779,6 +807,21 @@ const semesterCount = computed(() => {
   if (!selectedAcademicYearId.value) return 2;
   const semesters = academicYearSemesterStore.getAcademicYearSemestersByAcademicYear(selectedAcademicYearId.value);
   return semesters.length || 2;
+});
+
+/**
+ * The selected year's semesters as `YearSemesterRef`s (id + 1-based number +
+ * configured `weeksCount`), sorted by number. Feeds seedWorkloadItemsFromRup
+ * so a newly added discipline gets an explicit `semesters[]` entry for every
+ * semester of the year — including the third and beyond, which used to get
+ * nothing and silently lost their hours (audit defect #1).
+ */
+const yearSemesterRefs = computed<YearSemesterRef[]>(() => {
+  if (!selectedAcademicYearId.value) return [];
+  return academicYearSemesterStore
+    .getAcademicYearSemestersByAcademicYear(selectedAcademicYearId.value)
+    .map((s) => ({ semesterId: s.id, number: s.semesterNumber, weeks: s.weeksCount }))
+    .sort((a, b) => a.number - b.number);
 });
 
 const selectedTeacherName = computed(() => {
@@ -988,7 +1031,7 @@ function addSubjectFromRup(
     language: opts.language || rup.language || "ru",
     individual: opts.individual,
     specialtyIds: chosenSpecs,
-    semesterCount: semesterCount.value,
+    yearSemesters: yearSemesterRefs.value,
   });
   currentWorkloadItems.value.push(...items);
 }
@@ -1000,14 +1043,61 @@ function getSpecialtyCodes(ids: string[]) {
 function recalculateItem(id: string) {
   const item = currentWorkloadItems.value.find(i => i.id === id);
   if (!item) return;
-  recalcWorkloadItem(item, semesterCount.value);
+  recalcWorkloadItem(item, semesterCount.value, yearSemesterRefs.value);
 }
 
-function adjustValue(id: string, field: string, delta: number) {
+/**
+ * Returns the item's array entry for a semester, creating one on demand
+ * (defensive: shouldn't happen post-backfill, but an item might predate the
+ * year's semester). Mutates `item.semesters` in place — never rebuilds the
+ * array — so bound `v-model`s keep their identity and focus across renders.
+ */
+function entryFor(item: WorkloadItem, semesterId: string): WorkloadSemesterEntry {
+  const existing = findSemesterEntry(item, semesterId);
+  if (existing) return existing;
+  const ref = yearSemesterRefs.value.find((r) => r.semesterId === semesterId);
+  const created: WorkloadSemesterEntry = {
+    semesterId,
+    weeks: ref?.weeks ?? 18,
+    hours: 0,
+    groupCount: 0,
+  };
+  if (!item.semesters) item.semesters = [];
+  item.semesters.push(created);
+  return created;
+}
+
+/** Array entries whose semesterId no longer resolves to a semester of the
+ * selected year (e.g. the semester was reassigned/deleted). Fail-visible
+ * per C1 policy — shown read-only, still counted in totalHours. */
+function orphanEntriesFor(item: WorkloadItem): WorkloadSemesterEntry[] {
+  if (!item.semesters?.length) return [];
+  const known = new Set(yearSemesterRefs.value.map((r) => r.semesterId));
+  return item.semesters.filter((e) => !known.has(e.semesterId));
+}
+
+/** item.semesters sorted by the owning academic year's semester number
+ * (orphans — unresolvable semesterId — sort last). Used by the read-only
+ * view popup, which may show a workload from a year other than the
+ * currently-selected one. */
+function sortedSemesterEntries(item: WorkloadItem): WorkloadSemesterEntry[] {
+  return [...(item.semesters ?? [])].sort((a, b) => {
+    const na = academicYearSemesterStore.getAcademicYearSemesterById(a.semesterId)?.semesterNumber ?? Infinity;
+    const nb = academicYearSemesterStore.getAcademicYearSemesterById(b.semesterId)?.semesterNumber ?? Infinity;
+    return na - nb;
+  });
+}
+
+function adjustSemesterValue(
+  id: string,
+  semesterId: string,
+  field: "weeks" | "hours" | "groupCount",
+  delta: number
+) {
   const item = currentWorkloadItems.value.find(i => i.id === id);
   if (!item) return;
-  const val = parseFloat(item[field] || '0');
-  item[field] = Math.max(0, val + delta).toString();
+  const entry = entryFor(item, semesterId);
+  entry[field] = Math.max(0, (entry[field] || 0) + delta);
   recalculateItem(id);
 }
 
@@ -1089,35 +1179,59 @@ function getAcademicYearName(id: string) {
   return academicYearOptions.value.find(o => o.value === id)?.text || id;
 }
 
-function downloadWorkload(workload: SavedWorkload) {
-  const csvContent = buildWorkloadCsvContent(workload);
+/** The given academic year's semesters as sorted YearSemesterRefs — same
+ * shape/source as `yearSemesterRefs`, but resolvable for ANY year (exports
+ * can cover a workload/year other than the currently-selected one). */
+function refsForYear(academicYearId: string): YearSemesterRef[] {
+  return academicYearSemesterStore
+    .getAcademicYearSemestersByAcademicYear(academicYearId)
+    .map((s) => ({ semesterId: s.id, number: s.semesterNumber, weeks: s.weeksCount }))
+    .sort((a, b) => a.number - b.number);
+}
 
-  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+/** Thin exceljs wrapper: matrix (headers + rows of cell values) -> a single
+ * worksheet -> Blob -> anchor-click download. Mirrors the buffer-building
+ * lib / DOM-adjacent glue split used by convex/excel/lib/workloadExport.ts. */
+async function downloadXlsxMatrix(matrix: (string | number)[][], sheetName: string, filename: string) {
+  const workbook = new Excel.Workbook();
+  const sheet = workbook.addWorksheet(sheetName);
+  sheet.addRows(matrix);
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.setAttribute('href', url);
-  link.setAttribute('download', `Нагрузка_${workload.teacherName}_${getAcademicYearName(workload.academicYearId)}.csv`);
+  link.setAttribute('download', filename);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
-function downloadAllWorkloads() {
+async function downloadWorkload(workload: SavedWorkload) {
+  const matrix = buildWorkloadXlsxMatrix(workload, refsForYear(workload.academicYearId));
+  await downloadXlsxMatrix(
+    matrix,
+    "Нагрузка",
+    `Нагрузка_${workload.teacherName}_${getAcademicYearName(workload.academicYearId)}.xlsx`
+  );
+}
+
+async function downloadAllWorkloads() {
   // Button reads "Скачать всё" — export the entire saved list, not the
   // currently-filtered subset (search / teacher / year filters are for
   // display only; a "download only what I see" flow would be per-row).
   if (allWorkloads.value.length === 0) return;
 
-  const csvContent = buildAllWorkloadsCsvContent(allWorkloads.value, getAcademicYearName);
-
-  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', `Сводная_нагрузка_${getAcademicYearName(selectedAcademicYearId.value || 'все')}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  const matrix = buildAllWorkloadsXlsxMatrix(allWorkloads.value, getAcademicYearName, refsForYear);
+  await downloadXlsxMatrix(
+    matrix,
+    "Сводная нагрузка",
+    `Сводная_нагрузка_${getAcademicYearName(selectedAcademicYearId.value || 'все')}.xlsx`
+  );
 }
 
 // Default the year to the active one once academic years have loaded.

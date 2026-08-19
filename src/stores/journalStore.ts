@@ -4,7 +4,7 @@ import { useCalendarStore } from "./calendarStore";
 import { useCourseStore } from "./courseStore";
 import { useStudentStore } from "./studentStore";
 import { useSpecialtyStore } from "./specialtyStore";
-import { useLanguageStore } from "./languageStore";
+import { useStudyLanguageStore } from "./studyLanguageStore";
 import { useRupEntryStore } from "./rupEntryStore";
 import { useAcademicYearSemesterStore } from "./academicYearSemesterStore";
 import { useEducationScheduleStore } from "./educationScheduleStore";
@@ -24,7 +24,7 @@ export const useJournalStore = defineStore(
     const courseStore = useCourseStore();
     const studentStore = useStudentStore();
     const specialtyStore = useSpecialtyStore();
-    const languageStore = useLanguageStore();
+    const languageStore = useStudyLanguageStore();
     const rupEntryStore = useRupEntryStore();
     const academicYearSemesterStore = useAcademicYearSemesterStore();
     const educationScheduleStore = useEducationScheduleStore();

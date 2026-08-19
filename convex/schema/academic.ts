@@ -20,6 +20,27 @@ export const academicTables = {
   }).index("by_isDefault", ["isDefault"]),
 
   /**
+   * Study languages (языки обучения) — reference data lookup table.
+   * NOT a foreign key target: `rupEntries.language`, `students.language`,
+   * `calendarEvents.languages[]` etc. all keep storing the plain `code`
+   * string. This table exists so the code/name/color/order/isDefault
+   * metadata behind those codes is persisted and editable from Settings
+   * instead of a hardcoded `DEFAULT_LANGUAGES` const.
+   */
+  studyLanguages: defineTable({
+    code: v.string(), // "ru" | "kk" | "en" | … — stable key used across existing data
+    name: v.string(), // "Русский", "Қазақша", "English"
+    shortName: v.optional(v.string()),
+    color: v.optional(v.string()), // hex/tailwind token for the pill in RupLanguageTabs
+    isDefault: v.boolean(), // exactly one true
+    order: v.optional(v.number()), // display ordering
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  })
+    .index("by_isDefault", ["isDefault"])
+    .index("by_code", ["code"]),
+
+  /**
    * Academic years - tracks school year periods
    * Migrated from: academicYearStore.ts
    */
@@ -71,6 +92,13 @@ export const academicTables = {
     semesterDefinitionId: v.id("semesterDefinitions"),
     startDate: v.string(), // ISO date
     endDate: v.string(), // ISO date
+    // Teaching weeks in this semester — the normative figure, NOT the calendar
+    // span (a 20-week semester may hold 18 teaching weeks, the rest being the
+    // exam session). Seeds `weeks{N}` when a discipline is added to a workload;
+    // previously hardcoded 18/20 for semesters 1/2 with nothing for 3+, which
+    // silently zeroed third-semester hours. Defaults to
+    // DEFAULT_SEMESTER_WEEKS (18) when unset.
+    weeksCount: v.optional(v.number()),
     createdAt: v.string(),
     updatedAt: v.string(),
   })

@@ -290,7 +290,7 @@ import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { useSpecialtyStore, type Specialty } from "@/stores/specialtyStore";
-import { useLanguageStore } from "@/stores/languageStore";
+import { useStudyLanguageStore } from "@/stores/studyLanguageStore";
 import { parseNumber } from "@/utils/parseNumber";
 
 const props = defineProps<{
@@ -308,7 +308,7 @@ const academicYearSemesterStore = useAcademicYearSemesterStore();
 const finalControlStore = useFinalControlStore();
 const intermediateControlStore = useIntermediateControlStore();
 const specialtyStore = useSpecialtyStore();
-const languageStore = useLanguageStore();
+const languageStore = useStudyLanguageStore();
 
 const languageVariants = computed<RupEntry[]>(() => {
   if (!props.item) return [];

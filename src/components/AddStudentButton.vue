@@ -178,7 +178,7 @@ import IconPlus from "~icons/lucide/plus";
 import { studentCreateSchema } from "@/validators/student";
 import { useStudentStore } from "@/stores/studentStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
-import { useLanguageStore } from "@/stores/languageStore";
+import { useStudyLanguageStore } from "@/stores/studyLanguageStore";
 import { useAcademicYearStore } from "@/stores/academicYearStore";
 import { useBaseStore } from "@/stores/baseStore";
 import { storeToRefs } from "pinia";
@@ -189,7 +189,7 @@ import GuardedPopover from "@/components/ui/GuardedPopover.vue";
 
 const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
-const languageStore = useLanguageStore();
+const languageStore = useStudyLanguageStore();
 const academicYearStore = useAcademicYearStore();
 const baseStore = useBaseStore();
 const { languageOptions } = storeToRefs(languageStore);

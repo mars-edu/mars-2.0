@@ -5,6 +5,7 @@ import { DATE_STORAGE_FORMAT } from "@/constants/calendar";
 import { useAcademicYearStore } from "./academicYearStore";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
+import { ConvexError } from "convex/values";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
 import type { AcademicYearSemester } from "@/types/academic-year-semester";
@@ -36,6 +37,7 @@ export const useAcademicYearSemesterStore = defineStore(
           semesterName: s.semesterDefinition?.shortName || "",
           startDate: s.startDate,
           endDate: s.endDate,
+          weeksCount: s.weeksCount,
           createdAt: new Date(s.createdAt),
           updatedAt: new Date(s.updatedAt),
         }));
@@ -119,6 +121,7 @@ export const useAcademicYearSemesterStore = defineStore(
       semesterDefinitionId: string;
       startDate: string;
       endDate: string;
+      weeksCount?: number;
     }) {
       return await withLoading(loading, error, async () => {
         // Validate that dates are not empty
@@ -147,6 +150,7 @@ export const useAcademicYearSemesterStore = defineStore(
                   semesterDefinitionId: semesterData.semesterDefinitionId as any,
                   startDate: semesterData.startDate,
                   endDate: semesterData.endDate,
+                  weeksCount: semesterData.weeksCount,
                 });
                 // Don't push to academicYearSemesters.value - the reactive subscription will handle it
                 error.value = null;
@@ -159,6 +163,7 @@ export const useAcademicYearSemesterStore = defineStore(
         semesterDefinitionId?: string;
         startDate?: string;
         endDate?: string;
+        weeksCount?: number;
       }
     ) {
       return await withLoading(loading, error, async () => {
@@ -209,18 +214,59 @@ export const useAcademicYearSemesterStore = defineStore(
                   semesterDefinitionId: semesterData.semesterDefinitionId as any,
                   startDate: semesterData.startDate,
                   endDate: semesterData.endDate,
+                  weeksCount: semesterData.weeksCount,
                 });
                 // Don't update academicYearSemesters.value - the reactive subscription will handle it
                 error.value = null;
         }, "Failed to update academic year semester");
     }
 
+    // Tables the server reports in SEMESTER_HAS_REFERENCES, with their Russian
+    // labels in display order. Unknown keys are ignored rather than printed raw.
+    const SEMESTER_REF_LABELS: ReadonlyArray<readonly [string, string]> = [
+      ["journals", "журналы"],
+      ["calendarEvents", "события календаря"],
+      ["ktps", "КТП"],
+      ["scheduledIntermediateControls", "ПРК (планы)"],
+      ["scheduledFinalControls", "экзамены (планы)"],
+      ["educationSchedules", "расписания"],
+      ["vacations", "каникулы"],
+    ];
+
+    function formatSemesterReferences(refs: unknown): string {
+      if (!refs || typeof refs !== "object") return "";
+      const r = refs as Record<string, unknown>;
+      const parts: string[] = [];
+      for (const [key, label] of SEMESTER_REF_LABELS) {
+        const n = r[key];
+        if (typeof n === "number" && n > 0) parts.push(`${label}: ${n}`);
+      }
+      return parts.join(", ");
+    }
+
     async function deleteAcademicYearSemester(id: string) {
       return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
-                await convex.mutation(api.academicYearSemesters.mutations.remove, {
-                  id: id as any,
-                });
+                try {
+                  await convex.mutation(api.academicYearSemesters.mutations.remove, {
+                    id: id as any,
+                  });
+                } catch (err) {
+                  if (err instanceof ConvexError) {
+                    const data = err.data as
+                      | { code?: string; references?: unknown }
+                      | undefined;
+                    if (data?.code === "SEMESTER_HAS_REFERENCES") {
+                      const list = formatSemesterReferences(data.references);
+                      throw new Error(
+                        list
+                          ? `Семестр используется. Сначала удалите: ${list}.`
+                          : "Семестр используется — сначала удалите связанные записи."
+                      );
+                    }
+                  }
+                  throw err;
+                }
                 // Don't filter academicYearSemesters.value - the reactive subscription will handle it
                 error.value = null;
         }, "Failed to delete academic year semester");

@@ -89,20 +89,32 @@ export const useWorkloadStore = defineStore("workload", () => {
 
   const generateJournalGroups = async (
     workloadId: string,
-    semester: number,
+    semesterId: string,
     groups: Array<{
       subjectId: string;
       groupName?: string;
       studentIds: string[];
       weeklySchedules: Array<{ weekId: number; startId?: string; endId?: string }>;
-    }>
+    }>,
+    /**
+     * Legacy ordinal, kept alongside `semesterId` only to satisfy old deployed
+     * frontend bundles calling the same mutation during the compatibility
+     * window (see convex/workloads/mutations.ts). New callers only need
+     * `semesterId`. Remove once Phase 4/5 retires the legacy arg.
+     */
+    semester?: number
   ) => {
     loading.value = true;
     error.value = null;
     try {
       return await convex.mutation(
         api.workloads.mutations.createJournalsFromWorkloadGroups,
-        { workloadId: workloadId as Id<"workloads">, semester, groups }
+        {
+          workloadId: workloadId as Id<"workloads">,
+          semesterId: semesterId as Id<"academicYearSemesters">,
+          semester,
+          groups,
+        }
       );
     } catch (err: any) {
       error.value = err.message || "Failed to generate journals";

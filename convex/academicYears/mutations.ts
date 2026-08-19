@@ -12,9 +12,11 @@ export const create = mutation({
     endYear: v.number(),
     isActive: v.boolean(),
     academicHourMinutes: v.optional(v.number()),
-    technologyId: v.optional(v.id("educationTechnologies")),
-    startDate: v.optional(v.string()),
-    endDate: v.optional(v.string()),
+    // Required since the Phase 3 narrow — every year belongs to a technology
+    // and carries explicit calendar bounds.
+    technologyId: v.id("educationTechnologies"),
+    startDate: v.string(),
+    endDate: v.string(),
   },
   handler: async (ctx, args) => {
     const timestamps = createTimestamps();

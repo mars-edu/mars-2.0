@@ -9,7 +9,7 @@
   >
     <template #default="{ requestClose }">
       <!-- Step 1: semester -->
-      <div v-if="!semester" class="flex flex-col h-full bg-background items-center justify-center p-8 text-center">
+      <div v-if="!semesterId" class="flex flex-col h-full bg-background items-center justify-center p-8 text-center">
         <div class="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mb-6 text-emerald-500">
           <IconCalendar class="w-9 h-9" />
         </div>
@@ -18,19 +18,21 @@
           Выберите учебный семестр, для дисциплин которого нужно распределить
           специальности, языки и сформировать журналы.
         </p>
-        <div class="grid grid-cols-2 gap-4 w-full max-w-md">
+        <div class="grid gap-4 w-full max-w-md" :class="yearSemesters.length > 1 ? 'grid-cols-2' : 'grid-cols-1'">
           <button
-            @click="selectSemester(1)"
-            class="py-6 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 rounded-3xl font-black transition-all active:scale-95 flex flex-col items-center gap-1"
+            v-for="(s, i) in yearSemesters"
+            :key="s.id"
+            @click="selectSemester(s.id)"
+            class="py-6 rounded-3xl font-black transition-all active:scale-95 flex flex-col items-center gap-1 border"
+            :class="i % 2 === 0
+              ? 'bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 text-emerald-600'
+              : 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-600'"
           >
-            <span class="text-3xl">Ⅰ</span><span>1 семестр</span>
+            <span class="text-3xl">{{ romanNumeral(s.semesterNumber) }}</span><span>{{ s.semesterNumber }} семестр</span>
           </button>
-          <button
-            @click="selectSemester(2)"
-            class="py-6 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-600 rounded-3xl font-black transition-all active:scale-95 flex flex-col items-center gap-1"
-          >
-            <span class="text-3xl">Ⅱ</span><span>2 семестр</span>
-          </button>
+        </div>
+        <div v-if="yearSemesters.length === 0" class="text-sm text-muted-foreground font-bold">
+          Для учебного года нагрузки не найдено семестров.
         </div>
         <button @click="requestClose" class="w-full max-w-md mt-6 py-4 bg-muted hover:bg-muted/70 text-muted-foreground rounded-2xl font-bold transition-all">
           ОТМЕНА
@@ -43,7 +45,7 @@
         <div class="p-5 border-b border-border flex items-center justify-between shrink-0">
           <div>
             <div class="flex items-center gap-2">
-              <span class="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 text-[10px] font-black rounded-lg uppercase tracking-wider border border-emerald-500/20">{{ semester }} семестр</span>
+              <span class="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 text-[10px] font-black rounded-lg uppercase tracking-wider border border-emerald-500/20">{{ semesterRecord?.semesterNumber }} семестр</span>
               <span class="text-xs text-muted-foreground font-bold">•</span>
               <span class="text-xs text-muted-foreground font-bold">Параметры журналов преподавателя</span>
             </div>
@@ -274,7 +276,8 @@ import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { computeWeeklySlotHours } from "@/components/Calendar/scheduleHours";
 import { itemsNeedingJournals, semesterValue } from "@convex/workloads/lib";
-import type { SavedWorkload } from "@/types/workload";
+import { findSemesterEntry, hoursPerGroup } from "@/lib/workloadHours";
+import type { SavedWorkload, WorkloadItem } from "@/types/workload";
 import IconBookOpen from "~icons/lucide/book-open";
 import IconCalendar from "~icons/lucide/calendar";
 import IconTrash from "~icons/lucide/trash-2";
@@ -313,7 +316,7 @@ interface Staged {
   daySlots: Array<{ weekId: number; startId: string; endId: string }>;
 }
 
-const semester = ref<number | null>(null);
+const semesterId = ref<string | null>(null);
 const activeId = ref<string | null>(null);
 const creating = ref(false);
 const staged = ref<Staged[]>([]);
@@ -324,12 +327,27 @@ let seq = 0;
 
 const specLabel = (name: string) => (name || "").split(/[\s-]+/)[0] || name;
 
-const semesterRecord = computed(() => {
-  if (!props.workload) return null;
+// Tabs on Step 1 — one per semester of the workload's academic year, sourced
+// from the data (canonical `semesterDefinition.number`, exposed as
+// `semesterNumber`), not two hardcoded buttons. Closes gap D2 (a third
+// semester was previously unreachable for journal generation).
+const yearSemesters = computed(() => {
+  if (!props.workload) return [];
   return academicYearSemesterStore
     .getAcademicYearSemestersByAcademicYear(props.workload.academicYearId)
     .slice()
-    .sort((a: any, b: any) => String(a.startDate).localeCompare(String(b.startDate)))[(semester.value ?? 1) - 1] ?? null;
+    .sort((a: any, b: any) => a.semesterNumber - b.semesterNumber);
+});
+
+const ROMAN = ["", "Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ", "Ⅶ", "Ⅷ"];
+function romanNumeral(n: number) {
+  return ROMAN[n] ?? String(n);
+}
+
+// Direct lookup by id — no startDate sort, no ordinal indexing.
+const semesterRecord = computed(() => {
+  if (!semesterId.value) return null;
+  return academicYearSemesterStore.getAcademicYearSemesterById(semesterId.value) ?? null;
 });
 /**
  * Count actual occurrences of a specific weekday between two ISO dates
@@ -375,30 +393,52 @@ const allStudents = computed(() =>
 
 const disciplines = ref<Discipline[]>([]);
 
-function selectSemester(sem: number) {
-  semester.value = sem;
+function selectSemester(id: string) {
+  semesterId.value = id;
   const wl = props.workload;
   if (!wl) return;
-  disciplines.value = itemsNeedingJournals(wl.items as any, sem as any).map((item) => {
+  const semesterNumber = academicYearSemesterStore.getAcademicYearSemesterById(id)?.semesterNumber as
+    | 1 | 2 | 3
+    | undefined;
+  // Single boundary cast: itemsNeedingJournals is typed against the Convex-
+  // side WorkloadItemLike, but the runtime objects are the richer store-side
+  // WorkloadItem (specialtyIds, language, …) — this replaces the previous
+  // per-call-site `item as any` / `sem as any` casts.
+  const items = itemsNeedingJournals(wl.items, id, semesterNumber) as unknown as WorkloadItem[];
+  disciplines.value = items.map((item) => {
     const rup: any = rupEntryStore.getRupEntryById(item.subjectId);
-    const itemSpecs = (item as any).specialtyIds as string[] | undefined;
+    const itemSpecs = item.specialtyIds;
     const specSource: string[] = itemSpecs?.length ? itemSpecs : (rup?.specialtyIds ?? []);
     const specialties: Spec[] = specSource.map((sid: string) => {
       const sp: any = specialtyStore.specialties.find((s: any) => s.id === sid);
       return { id: sid, label: sp?.codeName || specLabel(sp?.name ?? sid) };
     });
+    // Array entry is the source of truth when present; legacy flat fields
+    // (keyed by ordinal) are the dual-read fallback for rows not yet
+    // migrated to `semesters[]`.
+    const entry = findSemesterEntry(item, id);
+    const groupCount = entry
+      ? entry.groupCount || 1
+      : semesterNumber !== undefined
+        ? parseInt(semesterValue(item, semesterNumber, "groupCount")) || 1
+        : 1;
+    // Keep fractional precision — Math.round(25.5)=26 used to seed an
+    // unreachable strict-equality target that stagedHours (integer slot
+    // sums) could never match, blocking wizard 'finish' forever (#4).
+    const plannedHours = entry
+      ? hoursPerGroup(entry)
+      : semesterNumber !== undefined
+        ? parseFloat(semesterValue(item, semesterNumber, "hoursPerGroup")) || 0
+        : 0;
     return {
       id: item.id, subjectId: item.subjectId,
       name: rup?.moduleName ?? item.description ?? "Дисциплина",
       index: rup?.moduleIndex ?? item.index ?? "",
       course: item.course || "1",
-      groupCount: parseInt(semesterValue(item as any, sem as any, "groupCount")) || 1,
-      // Keep fractional precision — Math.round(25.5)=26 used to seed an
-      // unreachable strict-equality target that stagedHours (integer slot
-      // sums) could never match, blocking wizard 'finish' forever (#4).
-      plannedHours: parseFloat(semesterValue(item as any, sem as any, "hoursPerGroup")) || 0,
+      groupCount,
+      plannedHours,
       specialties,
-      defaultLang: (item as any).language ?? rup?.language ?? "ru",
+      defaultLang: item.language ?? rup?.language ?? "ru",
     } as Discipline;
   });
   if (disciplines.value[0]) setActive(disciplines.value[0].id);
@@ -409,7 +449,7 @@ watch(
   () => props.workload?.id,
   (id) => {
     if (id) {
-      semester.value = null;
+      semesterId.value = null;
       activeId.value = null;
       staged.value = [];
       disciplines.value = [];
@@ -540,7 +580,7 @@ const isComplete = computed(
 
 async function finish() {
   const wl = props.workload;
-  if (!wl?.id || !semester.value || !isComplete.value) return;
+  if (!wl?.id || !semesterId.value || !isComplete.value) return;
   creating.value = true;
   try {
     const groups = staged.value.map((j) => {
@@ -554,7 +594,12 @@ async function finish() {
           .map((s) => ({ weekId: s.weekId, startId: s.startId, endId: s.endId })),
       };
     });
-    const res = await workloadStore.generateJournalGroups(wl.id, semester.value, groups);
+    const res = await workloadStore.generateJournalGroups(
+      wl.id,
+      semesterId.value,
+      groups,
+      semesterRecord.value?.semesterNumber
+    );
     emit("created", res?.journalsCreated ?? 0);
   } finally {
     creating.value = false;
