@@ -733,6 +733,7 @@ import {
 } from "@/lib/workloadHours";
 import { buildWorkloadXlsxMatrix, buildAllWorkloadsXlsxMatrix } from "@/lib/workloadXlsx";
 import * as Excel from "exceljs/dist/exceljs.min.js";
+import { saveAs } from "file-saver";
 
 // Icons
 import IconUser from "~icons/lucide/user";
