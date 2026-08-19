@@ -256,312 +256,21 @@
 
             <!-- Semester detail sections — shown only when a semester is selected -->
             <template v-if="selectedSemesterId">
-              <AccordionItem id="schedule">
-                <template #title>{{ edu_schedule_bell() }}</template>
-                <template #actions>
-                  <div class="flex gap-2">
-                    <CopyEducationScheduleButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
-                    <AddEducationScheduleButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
-                  </div>
-                </template>
-                <div
-                  v-if="educationScheduleStore.isLoading"
-                  class="p-4 flex justify-center"
-                >
-                  <f7-preloader></f7-preloader>
-                </div>
-                <div
-                  v-else-if="educationScheduleStore.getError"
-                  class="p-4 text-destructive"
-                >
-                  {{ educationScheduleStore.getError }}
-                </div>
-                <div v-else-if="schedules.length === 0">
-                  <NoData
-                    :title="edu_schedule_no_bell()"
-                    :description="edu_schedule_no_bell_desc()"
-                    :icon="IconClock"
-                  />
-                </div>
-                <div v-else ref="schedulesGridRef" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  <div
-                    v-for="schedule in schedules"
-                    :key="schedule.id"
-                    :data-id="schedule.id"
-                    class="relative group p-4 bg-muted/20 border border-border rounded-xl hover:bg-card hover:shadow-sm transition-all cursor-pointer"
-                    :id="`schedule-item-${schedule.id}`"
-                    @click.stop="openEditSchedule(schedule)"
-                  >
-                    <div class="flex flex-col gap-1">
-                      <div class="flex items-center justify-between">
-                        <span class="text-sm font-bold text-foreground">
-                          Урок {{ schedule.lessonNumber }}
-                        </span>
-                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            class="p-1 text-muted-foreground hover:text-primary transition-colors"
-                            @click.stop="openEditSchedule(schedule)"
-                            aria-label="Edit Schedule"
-                            type="button"
-                          >
-                            <IconPencil class="w-[14px] h-[14px]" />
-                          </button>
-                          <button
-                            class="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                            @click.stop="deleteSchedule(schedule)"
-                            aria-label="Delete Schedule"
-                            type="button"
-                          >
-                            <IconTrash class="w-[14px] h-[14px]" />
-                          </button>
-                        </div>
-                      </div>
-                      <div class="flex items-center justify-between mt-1">
-                        <span class="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
-                          {{ schedule.startTime }} - {{ schedule.endTime }}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <EditEducationScheduleButton
-                    v-if="selectedScheduleId"
-                    :schedule-id="selectedScheduleId"
-                  />
-                </div>
-              </AccordionItem>
+              <BellScheduleSection
+                :selected-semester-id="selectedSemesterId"
+                :schedules="schedules"
+              />
 
-              <!-- Scheduled Final Controls Section -->
-              <AccordionItem
-                id="scheduled-final-controls"
-                
-              >
-                    <template #title>{{ edu_schedule_final_controls() }}</template>
-                    <template #actions>
-                      <div class="flex gap-2">
-                        <CopyScheduledFinalControlButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
-                        <AddScheduledFinalControlButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
-                      </div>
-                    </template>
-                    <div
-                      v-if="scheduledFinalControlStore.isLoading"
-                      class="p-4 flex justify-center"
-                    >
-                      <f7-preloader />
-                    </div>
-                    <div
-                      v-else-if="scheduledFinalControlStore.getError"
-                      class="p-4 text-destructive"
-                    >
-                      {{ scheduledFinalControlStore.getError }}
-                    </div>
-                    <div v-else-if="scheduledFinalControls.length === 0">
-                      <NoData
-                        :title="edu_schedule_no_final_controls()"
-                        :description="edu_schedule_no_final_controls_desc()"
-                        :icon="IconCircleCheck"
-                      />
-                    </div>
-                    <div
-                      v-else
-                      class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
-                    >
-                      <div
-                        v-for="control in scheduledFinalControls"
-                        :key="control.id"
-                        class="relative group p-4 rounded-xl border transition-all cursor-pointer bg-muted/30 border-border hover:border-border/80 hover:bg-card hover:shadow-sm"
-                        :id="`scheduled-final-control-item-${control.id}`"
-                        @click.stop="openEditScheduledFinalControl(control)"
-                      >
-                        <div class="flex flex-col gap-1 w-full">
-                          <div class="flex items-center justify-between">
-                            <span class="text-sm font-bold text-muted-foreground group-hover:text-foreground transition-colors">
-                              {{ control.shortName }}
-                            </span>
-                            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                class="p-1 text-muted-foreground hover:text-primary transition-colors"
-                                @click.stop="openEditScheduledFinalControl(control)"
-                                aria-label="Edit Scheduled Final Control"
-                                type="button"
-                              >
-                                <IconPencil class="w-[14px] h-[14px]" />
-                              </button>
-                              <button
-                                class="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                                @click.stop="deleteScheduledFinalControl(control)"
-                                aria-label="Delete Scheduled Final Control"
-                                type="button"
-                              >
-                                <IconTrash class="w-[14px] h-[14px]" />
-                              </button>
-                            </div>
-                          </div>
-                          <div class="flex items-center justify-between mt-1">
-                            <span class="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
-                              {{ formatUiDate(control.startDate) }} - {{ formatUiDate(control.endDate) }}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <EditScheduledFinalControlButton
-                        v-if="selectedScheduledFinalControlId"
-                        :control-id="selectedScheduledFinalControlId"
-                      />
-                    </div>
-                  </AccordionItem>
+              <ScheduledControlsSection
+                :selected-semester-id="selectedSemesterId"
+                :scheduled-final-controls="scheduledFinalControls"
+                :scheduled-intermediate-controls="scheduledIntermediateControls"
+              />
 
-                  <!-- Scheduled Intermediate Controls Section -->
-                  <AccordionItem
-                    id="scheduled-intermediate-controls"
-                    
-                  >
-                    <template #title>{{ edu_schedule_intermediate_controls() }}</template>
-                    <template #actions>
-                      <div class="flex gap-2">
-                        <CopyScheduledIntermediateControlButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
-                        <AddScheduledIntermediateControlButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
-                      </div>
-                    </template>
-                    <div
-                      v-if="scheduledIntermediateControlStore.isLoading"
-                      class="p-4 flex justify-center"
-                    >
-                      <f7-preloader />
-                    </div>
-                    <div
-                      v-else-if="scheduledIntermediateControlStore.getError"
-                      class="p-4 text-destructive"
-                    >
-                      {{ scheduledIntermediateControlStore.getError }}
-                    </div>
-                    <div v-else-if="scheduledIntermediateControls.length === 0">
-                      <NoData
-                        :title="edu_schedule_no_intermediate_controls()"
-                        :description="edu_schedule_no_intermediate_controls_desc()"
-                        :icon="IconCircleCheck"
-                      />
-                    </div>
-                    <div
-                      v-else
-                      class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
-                    >
-                      <div
-                        v-for="control in scheduledIntermediateControls"
-                        :key="control.id"
-                        class="relative group p-4 rounded-xl border transition-all cursor-pointer bg-muted/30 border-border hover:border-border/80 hover:bg-card hover:shadow-sm"
-                        :id="`scheduled-intermediate-control-item-${control.id}`"
-                        @click.stop="openEditScheduledIntermediateControl(control)"
-                      >
-                        <div class="flex flex-col gap-1 w-full">
-                          <div class="flex items-center justify-between">
-                            <span class="text-sm font-bold text-muted-foreground group-hover:text-foreground transition-colors">
-                              {{ control.shortName }}
-                            </span>
-                            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                class="p-1 text-muted-foreground hover:text-primary transition-colors"
-                                @click.stop="openEditScheduledIntermediateControl(control)"
-                                aria-label="Edit Scheduled Intermediate Control"
-                                type="button"
-                              >
-                                <IconPencil class="w-[14px] h-[14px]" />
-                              </button>
-                              <button
-                                class="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                                @click.stop="deleteScheduledIntermediateControl(control)"
-                                aria-label="Delete Scheduled Intermediate Control"
-                                type="button"
-                              >
-                                <IconTrash class="w-[14px] h-[14px]" />
-                              </button>
-                            </div>
-                          </div>
-                          <div class="flex items-center justify-between mt-1">
-                            <span class="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
-                              {{ formatUiDate(control.startDate) }} - {{ formatUiDate(control.endDate) }}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <EditScheduledIntermediateControlButton
-                        v-if="selectedScheduledIntermediateControlId"
-                        :control-id="selectedScheduledIntermediateControlId"
-                      />
-                    </div>
-                  </AccordionItem>
-
-              <AccordionItem id="vacations" >
-                <template #title>{{ edu_schedule_vacations() }}</template>
-                <template #actions>
-                  <div class="flex gap-2">
-                    <CopyVacationButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
-                    <AddVacationButton v-if="selectedSemesterId" :semester-id="selectedSemesterId" />
-                  </div>
-                </template>
-                <div
-                  v-if="vacationStore.isLoading"
-                  class="p-4 flex justify-center"
-                >
-                  <f7-preloader />
-                </div>
-                <div
-                  v-else-if="vacationStore.getError"
-                  class="p-4 text-destructive"
-                >
-                  {{ vacationStore.getError }}
-                </div>
-                <div v-else-if="vacations.length === 0">
-                  <NoData
-                    :title="edu_schedule_no_vacations()"
-                    :description="edu_schedule_no_vacations_desc()"
-                    :icon="IconSun"
-                  />
-                </div>
-                <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  <div
-                    v-for="vacation in vacations"
-                    :key="vacation.id"
-                    class="relative group p-4 rounded-xl border transition-all cursor-pointer bg-muted/30 border-border hover:border-border/80 hover:bg-card hover:shadow-sm"
-                    :id="`vacation-item-${vacation.id}`"
-                    @click.stop="openEditVacation(vacation)"
-                  >
-                    <div class="flex flex-col gap-1 w-full">
-                      <div class="flex items-center justify-between">
-                        <span class="text-sm font-bold text-muted-foreground group-hover:text-foreground transition-colors">
-                          {{ vacation.shortName }}
-                        </span>
-                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            class="p-1 text-muted-foreground hover:text-primary transition-colors"
-                            @click.stop="openEditVacation(vacation)"
-                            aria-label="Edit Vacation"
-                            type="button"
-                          >
-                            <IconPencil class="w-[14px] h-[14px]" />
-                          </button>
-                          <button
-                            class="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                            @click.stop="deleteVacation(vacation)"
-                            aria-label="Delete Vacation"
-                            type="button"
-                          >
-                            <IconTrash class="w-[14px] h-[14px]" />
-                          </button>
-                        </div>
-                      </div>
-                      <div class="flex items-center justify-between mt-1">
-                        <span class="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
-                          {{ formatUiDate(vacation.startDate) }} - {{ formatUiDate(vacation.endDate) }}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <EditVacationButton
-                    v-if="selectedVacationId"
-                    :vacation-id="selectedVacationId"
-                  />
-                </div>
-              </AccordionItem>
+              <VacationsSection
+                :selected-semester-id="selectedSemesterId"
+                :vacations="vacations"
+              />
             </template>
           </Accordion>
         </div>
@@ -582,6 +291,9 @@ import IconPencil from "~icons/lucide/pencil";
 import IconChevronUp from "~icons/lucide/chevron-up";
 import IconChevronDown from "~icons/lucide/chevron-down";
 import IconTrash from "~icons/lucide/trash-2";
+import BellScheduleSection from "@/components/schedule/BellScheduleSection.vue";
+import ScheduledControlsSection from "@/components/schedule/ScheduledControlsSection.vue";
+import VacationsSection from "@/components/schedule/VacationsSection.vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Accordion from "@/components/ui/accordion/Accordion.vue";
@@ -971,46 +683,7 @@ const openEditAcademicYearSemester = async (
   }
 };
 
-const openEditVacation = async (vacation: Vacation) => {
-  selectedVacationId.value = vacation.id;
-  await nextTick();
-  const targetEl = document.getElementById(`vacation-item-${vacation.id}`);
-  if (targetEl) {
-    f7.popover.open(`#edit-vacation-popover-${vacation.id}`, targetEl);
-  }
-};
 
-const openEditScheduledFinalControl = async (
-  control: ScheduledFinalControl
-) => {
-  selectedScheduledFinalControlId.value = control.id;
-  await nextTick();
-  const targetEl = document.getElementById(
-    `scheduled-final-control-item-${control.id}`
-  );
-  if (targetEl) {
-    f7.popover.open(
-      `#edit-scheduled-final-control-popover-${control.id}`,
-      targetEl
-    );
-  }
-};
-
-const openEditScheduledIntermediateControl = async (
-  control: ScheduledIntermediateControl
-) => {
-  selectedScheduledIntermediateControlId.value = control.id;
-  await nextTick();
-  const targetEl = document.getElementById(
-    `scheduled-intermediate-control-item-${control.id}`
-  );
-  if (targetEl) {
-    f7.popover.open(
-      `#edit-scheduled-intermediate-control-popover-${control.id}`,
-      targetEl
-    );
-  }
-};
 
 function formatUiDate(value: string | Date | undefined | null) {
   if (!value) return "";
@@ -1064,67 +737,5 @@ const deleteAcademicYearSemester = (semester: AcademicYearSemester) => {
   );
 };
 
-const deleteSchedule = (schedule: EducationSchedule) => {
-  f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить занятие номер ${schedule.lessonNumber}?</p>
-     <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
-    "Удаление расписания",
-    async () => {
-      try {
-        await educationScheduleStore.deleteSchedule(schedule.id);
-      } catch (error) {
-        console.error("Failed to delete schedule:", error);
-        f7.dialog.alert("Произошла ошибка при удалении расписания.");
-      }
-    }
-  );
-};
 
-const deleteVacation = (vacation: Vacation) => {
-  f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить каникулы "${vacation.shortName}"?</p>
-     <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
-    "Удаление каникул",
-    async () => {
-      try {
-        await vacationStore.deleteVacation(vacation.id);
-      } catch (error) {
-        console.error("Failed to delete vacation:", error);
-        f7.dialog.alert("Произошла ошибка при удалении каникул.");
-      }
-    }
-  );
-};
-
-const deleteScheduledFinalControl = (control: ScheduledFinalControl) => {
-  f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить контроль "${control.shortName}"?</p>
-     <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
-    "Удаление контроля",
-    async () => {
-      try {
-        await scheduledFinalControlStore.deleteScheduledFinalControl(control.id);
-      } catch (error) {
-        console.error("Failed to delete scheduled final control:", error);
-        f7.dialog.alert("Произошла ошибка при удалении контроля.");
-      }
-    }
-  );
-};
-
-const deleteScheduledIntermediateControl = (control: ScheduledIntermediateControl) => {
-  f7.dialog.confirm(
-    `<p>Вы уверены, что хотите удалить промежуточный контроль "${control.shortName}"?</p>
-     <p class="text-sm text-muted-foreground mt-2">Это действие нельзя отменить.</p>`,
-    "Удаление контроля",
-    async () => {
-      try {
-        await scheduledIntermediateControlStore.deleteScheduledIntermediateControl(control.id);
-      } catch (error) {
-        console.error("Failed to delete scheduled intermediate control:", error);
-        f7.dialog.alert("Произошла ошибка при удалении контроля.");
-      }
-    }
-  );
-};
 </script>

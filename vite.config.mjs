@@ -163,6 +163,9 @@ export default async () => {
       // Optimize chunk size
       chunkSizeWarningLimit: 1000,
     },
+    esbuild: {
+      drop: process.env.NODE_ENV === "production" ? ["console", "debugger"] : [],
+    },
     resolve: {
       alias: {
         "@": SRC_DIR,
