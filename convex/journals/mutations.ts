@@ -8,9 +8,9 @@ import { createTimestamps, updateTimestamp } from "../lib/validators";
 export const create = mutation({
   args: {
     calendarEventId: v.optional(v.string()),
-    disciplineId: v.string(),
+    disciplineId: v.id("rupEntries"),
     groupName: v.optional(v.string()),
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     semesterId: v.id("academicYearSemesters"),
     isMixedGroup: v.optional(v.boolean()),
     isIndividualJournal: v.optional(v.boolean()),

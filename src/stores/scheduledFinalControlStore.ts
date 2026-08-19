@@ -79,7 +79,7 @@ export const useScheduledFinalControlStore = defineStore(
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.scheduledControls.mutations.createFinal, {
                   finalControlId: controlData.finalControlId,
-                  academicYearId: controlData.academicYearId,
+                  academicYearId: controlData.academicYearId as any,
                   shortName: controlData.shortName,
                   startDate: controlData.startDate,
                   endDate: controlData.endDate,
@@ -101,7 +101,7 @@ export const useScheduledFinalControlStore = defineStore(
                 await convex.mutation(api.scheduledControls.mutations.updateFinal, {
                   id: id as any,
                   finalControlId: controlData.finalControlId,
-                  academicYearId: controlData.academicYearId,
+                  academicYearId: controlData.academicYearId as any,
                   shortName: controlData.shortName,
                   startDate: controlData.startDate,
                   endDate: controlData.endDate,
@@ -149,7 +149,7 @@ export const useScheduledFinalControlStore = defineStore(
         await convex.mutation(api.scheduledControls.mutations.copyFinalFromSemester, {
           sourceSemesterId: sourceSemesterId as any,
           targetSemesterId: targetSemesterId as any,
-          targetAcademicYearId,
+          targetAcademicYearId: targetAcademicYearId as any,
         });
         error.value = null;
         return;

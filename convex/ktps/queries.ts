@@ -59,7 +59,7 @@ export const getById = query({
  * Get ktps by RUP entry ID
  */
 export const getByRupEntryId = query({
-  args: { rupEntryId: v.string() },
+  args: { rupEntryId: v.id("rupEntries") },
   handler: async (ctx, args) => {
     const ktps = await ctx.db
       .query("ktps")
@@ -126,7 +126,7 @@ export const getByEventId = query({
  */
 export const getByAcademicYearAndSemester = query({
   args: {
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     semesterId: v.id("academicYearSemesters"),
   },
   handler: async (ctx, args) => {

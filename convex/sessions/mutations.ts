@@ -9,7 +9,7 @@ export const create = mutation({
   args: {
     shortName: v.string(),
     fullName: v.string(),
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     semesterId: v.optional(v.id("academicYearSemesters")),
     startDate: v.string(),
     endDate: v.string(),

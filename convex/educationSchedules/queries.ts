@@ -39,7 +39,7 @@ export const listSorted = query({
  * Get education schedules by academic year ID
  */
 export const listByAcademicYear = query({
-  args: { academicYearId: v.string() },
+  args: { academicYearId: v.id("academicYears") },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("educationSchedules")

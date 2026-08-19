@@ -12,7 +12,7 @@ export const save = mutation({
     id: v.optional(v.id("workloads")),
     teacherId: v.optional(v.id("teachers")),
     teacherName: v.string(),
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     totalHours: v.number(),
     items: v.array(workloadItemValidator),
   },
@@ -185,7 +185,7 @@ export const createJournalsFromWorkloadGroups = mutation({
       // downstream .unique() queries on by_journal_student.
       const studentIds = [...new Set(g.studentIds)];
       const calendarEventId = await ctx.db.insert("calendarEvents", {
-        rupEntryId: g.subjectId,
+        rupEntryId: g.subjectId as Id<"rupEntries">,
         teacherId: workload.teacherId as string | undefined,
         startDate: semesterRecord.startDate,
         endDate: semesterRecord.endDate,
@@ -197,7 +197,7 @@ export const createJournalsFromWorkloadGroups = mutation({
 
       const journalId = await ctx.db.insert("journals", {
         calendarEventId,
-        disciplineId: g.subjectId,
+        disciplineId: g.subjectId as Id<"rupEntries">,
         groupName: g.groupName,
         academicYearId: workload.academicYearId,
         semesterId: semesterRecord._id,

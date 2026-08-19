@@ -9,7 +9,7 @@ export const create = mutation({
   args: {
     shortName: v.string(),
     fullName: v.string(),
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     startDate: v.string(),
     endDate: v.string(),
     semesterId: v.id("academicYearSemesters"),
@@ -71,7 +71,7 @@ export const copyFromSemester = mutation({
   args: {
     sourceSemesterId: v.id("academicYearSemesters"),
     targetSemesterId: v.id("academicYearSemesters"),
-    targetAcademicYearId: v.string(),
+    targetAcademicYearId: v.id("academicYears"),
   },
   handler: async (ctx, args) => {
     const { sourceSemesterId, targetSemesterId, targetAcademicYearId } = args;

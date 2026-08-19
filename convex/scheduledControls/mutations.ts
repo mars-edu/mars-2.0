@@ -8,11 +8,11 @@ import { createTimestamps, updateTimestamp } from "../lib/validators";
 export const createFinal = mutation({
   args: {
     finalControlId: v.string(),
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     shortName: v.string(),
     startDate: v.string(),
     endDate: v.string(),
-    rupEntryId: v.optional(v.string()),
+    rupEntryId: v.optional(v.id("rupEntries")),
     semesterId: v.id("academicYearSemesters"),
     date: v.optional(v.string()),
   },
@@ -33,11 +33,11 @@ export const createFinal = mutation({
 export const createIntermediate = mutation({
   args: {
     intermediateControlId: v.string(),
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     shortName: v.string(),
     startDate: v.string(),
     endDate: v.string(),
-    rupEntryId: v.optional(v.string()),
+    rupEntryId: v.optional(v.id("rupEntries")),
     semesterId: v.id("academicYearSemesters"),
     date: v.optional(v.string()),
   },
@@ -63,7 +63,7 @@ export const updateFinal = mutation({
     shortName: v.optional(v.string()),
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
-    rupEntryId: v.optional(v.string()),
+    rupEntryId: v.optional(v.id("rupEntries")),
     semesterId: v.optional(v.id("academicYearSemesters")),
     date: v.optional(v.string()),
   },
@@ -94,7 +94,7 @@ export const updateIntermediate = mutation({
     shortName: v.optional(v.string()),
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
-    rupEntryId: v.optional(v.string()),
+    rupEntryId: v.optional(v.id("rupEntries")),
     semesterId: v.optional(v.id("academicYearSemesters")),
     date: v.optional(v.string()),
   },
@@ -143,7 +143,7 @@ export const copyFinalFromSemester = mutation({
   args: {
     sourceSemesterId: v.id("academicYearSemesters"),
     targetSemesterId: v.id("academicYearSemesters"),
-    targetAcademicYearId: v.string(),
+    targetAcademicYearId: v.id("academicYears"),
   },
   handler: async (ctx, args) => {
     const { sourceSemesterId, targetSemesterId, targetAcademicYearId } = args;
@@ -195,7 +195,7 @@ export const copyIntermediateFromSemester = mutation({
   args: {
     sourceSemesterId: v.id("academicYearSemesters"),
     targetSemesterId: v.id("academicYearSemesters"),
-    targetAcademicYearId: v.string(),
+    targetAcademicYearId: v.id("academicYears"),
   },
   handler: async (ctx, args) => {
     const { sourceSemesterId, targetSemesterId, targetAcademicYearId } = args;

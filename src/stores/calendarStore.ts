@@ -131,7 +131,7 @@ export const useCalendarStore = defineStore(
 
                 // Use Convex - the reactive subscription will handle updating the local state
                 const id = await convex.mutation(api.calendarEvents.mutations.create, {
-                  rupEntryId: eventData.rupEntryId,
+                  rupEntryId: eventData.rupEntryId as any,
                   ktpId,
                   teacherId: eventData.teacherId,
                   startDate: eventData.startDate,
@@ -220,7 +220,7 @@ export const useCalendarStore = defineStore(
                 const result = await convex.mutation(
                   api.calendarEvents.mutations.createWithIndividualJournals,
                   {
-                    rupEntryId: eventData.rupEntryId,
+                    rupEntryId: eventData.rupEntryId as any,
                     ktpId,
                     teacherId: eventData.teacherId,
                     startDate: eventData.startDate,
@@ -286,7 +286,7 @@ export const useCalendarStore = defineStore(
                 // Use Convex - the reactive subscription will handle updating the local state
                 const updated = await convex.mutation(api.calendarEvents.mutations.update, {
                   id: id as any,
-                  rupEntryId: eventData.rupEntryId,
+                  rupEntryId: eventData.rupEntryId as any,
                   ktpId,
                   teacherId: eventData.teacherId,
                   startDate: eventData.startDate,

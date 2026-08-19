@@ -40,11 +40,12 @@
         <div
           v-else
           @click="onCellClick(mIdx - 1)"
-          class="w-full h-full cursor-pointer flex items-center justify-center"
+          @contextmenu.prevent="$emit('show-history', mIdx - 1)"
+          class="w-full h-full cursor-pointer flex items-center justify-center group/cell"
           :title="
             header.type === 'date' && isFuture
               ? 'Нельзя выставлять оценки авансом'
-              : undefined
+              : 'Клик — редактировать, правый клик — история'
           "
         >
           <MarkCell
@@ -75,6 +76,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'cell-click', markIndex: number): void;
+  (e: 'show-history', markIndex: number): void;
   (e: 'update:editedValue', value: string): void;
   (e: 'confirm-edit'): void;
   (e: 'cancel-edit'): void;

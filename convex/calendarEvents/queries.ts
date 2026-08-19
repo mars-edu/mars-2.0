@@ -275,7 +275,7 @@ export const getByTeacher = query({
  * Get calendar events by RUP entry ID
  */
 export const getByRupEntryId = query({
-  args: { rupEntryId: v.string() },
+  args: { rupEntryId: v.id("rupEntries") },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("calendarEvents")

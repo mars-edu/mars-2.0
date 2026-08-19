@@ -109,6 +109,7 @@
         @header-click="openDateFocus"
         @paperclip-click="onPaperclipClick"
         @cell-click="handleCellClick"
+        @show-history="handleShowCellHistory"
         @student-click="showFloatingRow"
         @update:editedValue="editedValue = $event"
         @confirm-edit="confirmEdit"
@@ -162,6 +163,18 @@
       :students="students"
       @close="isRetakeModalOpen = false"
       @submit="handleRetakeSubmit"
+    />
+
+    <!-- Mark History Dialog -->
+    <MarkHistoryDialog
+      :is-open="isHistoryDialogOpen"
+      :journal-id="props.journalId"
+      :student-id="historyCellContext.studentId"
+      :student-name="historyCellContext.studentName"
+      :column-label="historyCellContext.columnLabel"
+      :column-index="historyCellContext.columnIndex"
+      :row-index="historyCellContext.rowIndex"
+      @close="isHistoryDialogOpen = false"
     />
   </div>
 </template>

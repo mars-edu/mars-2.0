@@ -10,7 +10,7 @@ export const workloadsTables = {
   workloads: defineTable({
     teacherId: v.optional(v.id("teachers")),
     teacherName: v.string(), // Keep for display/fallback
-    academicYearId: v.string(), // academic year ID reference
+    academicYearId: v.id("academicYears"),
     totalHours: v.number(),
     items: v.array(workloadItemValidator),
     // Workflow status (ported from concept SavedWorkload flags)

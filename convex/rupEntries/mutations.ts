@@ -215,7 +215,7 @@ export const saveRupEntryGroup = mutation({
     id: v.optional(v.id("rupEntries")),
     groupId: v.optional(v.string()),
     specialtyIds: v.array(v.string()),
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     baseClass: v.optional(v.array(v.number())),
     position: v.optional(v.number()),
     totalCredits: v.string(),
@@ -242,7 +242,7 @@ export const saveRupEntryGroup = mutation({
     distributionEntries: v.optional(
       v.array(
         v.object({
-          academicYearId: v.string(),
+          academicYearId: v.id("academicYears"),
           semesterId: v.id("academicYearSemesters"),
           hours: v.string(),
           srsHours: v.optional(v.string()),

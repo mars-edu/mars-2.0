@@ -7,7 +7,7 @@ export const rupTables = {
    */
   rupEntries: defineTable({
     specialtyIds: v.array(v.string()),
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     baseClass: v.optional(v.array(v.number())),
     language: v.optional(v.string()),
     groupId: v.optional(v.string()),
@@ -49,7 +49,7 @@ export const rupTables = {
    */
   distributionEntries: defineTable({
     rupEntryId: v.id("rupEntries"),
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     semesterId: v.id("academicYearSemesters"),
     hours: v.string(),
     srsHours: v.optional(v.string()),
@@ -93,11 +93,11 @@ export const rupTables = {
    */
   scheduledIntermediateControls: defineTable({
     intermediateControlId: v.string(),
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     shortName: v.string(),
     startDate: v.string(),
     endDate: v.string(),
-    rupEntryId: v.optional(v.string()),
+    rupEntryId: v.optional(v.id("rupEntries")),
     semesterId: v.id("academicYearSemesters"),
     date: v.optional(v.string()), // ISO date (legacy)
     createdAt: v.string(),
@@ -112,11 +112,11 @@ export const rupTables = {
    */
   scheduledFinalControls: defineTable({
     finalControlId: v.string(),
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     shortName: v.string(),
     startDate: v.string(),
     endDate: v.string(),
-    rupEntryId: v.optional(v.string()),
+    rupEntryId: v.optional(v.id("rupEntries")),
     semesterId: v.id("academicYearSemesters"),
     date: v.optional(v.string()),
     createdAt: v.string(),

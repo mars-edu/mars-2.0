@@ -45,7 +45,7 @@ export const getIntermediateById = query({
  * Get scheduled final controls by RUP entry ID
  */
 export const getFinalByRupEntryId = query({
-  args: { rupEntryId: v.string() },
+  args: { rupEntryId: v.id("rupEntries") },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("scheduledFinalControls")
@@ -58,7 +58,7 @@ export const getFinalByRupEntryId = query({
  * Get scheduled intermediate controls by RUP entry ID
  */
 export const getIntermediateByRupEntryId = query({
-  args: { rupEntryId: v.string() },
+  args: { rupEntryId: v.id("rupEntries") },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("scheduledIntermediateControls")

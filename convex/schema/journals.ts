@@ -8,9 +8,9 @@ export const journalsTables = {
    */
   journals: defineTable({
     calendarEventId: v.optional(v.string()), // Reference to calendarEvents
-    disciplineId: v.string(), // Reference to rupEntries
+    disciplineId: v.id("rupEntries"),
     groupName: v.optional(v.string()),
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     semesterId: v.id("academicYearSemesters"),
     isMixedGroup: v.optional(v.boolean()),
     isIndividualJournal: v.optional(v.boolean()),
@@ -96,7 +96,7 @@ export const journalsTables = {
    * NEW: System-wide journal closure notifications
    */
   journalClosureReminders: defineTable({
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     semesterId: v.optional(v.id("academicYearSemesters")),
     deadline: v.string(), // ISO date - when journals must be closed
     message: v.string(), // Announcement text

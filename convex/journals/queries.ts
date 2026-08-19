@@ -41,7 +41,7 @@ export const getByCalendarEvent = query({
  */
 export const getByAcademicYearSemester = query({
   args: {
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     semesterId: v.id("academicYearSemesters"),
   },
   handler: async (ctx, args) => {

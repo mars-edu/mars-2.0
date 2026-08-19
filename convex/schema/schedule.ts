@@ -11,7 +11,7 @@ export const scheduleTables = {
     startTime: v.string(),
     endTime: v.string(),
     order: v.number(),
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     semesterId: v.id("academicYearSemesters"),
     createdAt: v.string(),
     updatedAt: v.string(),
@@ -27,7 +27,7 @@ export const scheduleTables = {
   vacations: defineTable({
     shortName: v.string(),
     fullName: v.string(),
-    academicYearId: v.string(), // Reference to academicYears
+    academicYearId: v.id("academicYears"), // Reference to academicYears
     semesterId: v.id("academicYearSemesters"),
     startDate: v.string(), // ISO date
     endDate: v.string(), // ISO date

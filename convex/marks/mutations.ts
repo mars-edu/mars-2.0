@@ -242,9 +242,9 @@ export const deleteMark = mutation({
 export const initializeJournal = mutation({
   args: {
     calendarEventId: v.optional(v.string()),
-    disciplineId: v.string(),
+    disciplineId: v.id("rupEntries"),
     groupName: v.optional(v.string()),
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     semesterId: v.id("academicYearSemesters"),
     studentIds: v.array(v.string()),
     isMixedGroup: v.optional(v.boolean()),

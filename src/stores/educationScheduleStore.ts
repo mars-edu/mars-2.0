@@ -87,7 +87,7 @@ export const useEducationScheduleStore = defineStore(
                   startTime: scheduleData.startTime,
                   endTime: scheduleData.endTime,
                   order: nextLessonNumber,
-                  academicYearId: scheduleData.academicYearId,
+                  academicYearId: scheduleData.academicYearId as any,
                   semesterId: scheduleData.semesterId as Id<"academicYearSemesters">,
                 });
                 // Don't push to schedules.value - the reactive subscription will handle it
@@ -188,7 +188,7 @@ export const useEducationScheduleStore = defineStore(
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.educationSchedules.mutations.copySchedulesFromYear, {
                   sourceAcademicYearId,
-                  targetAcademicYearId,
+                  targetAcademicYearId: targetAcademicYearId as any,
                 });
                 error.value = null;
                 return;
@@ -204,7 +204,7 @@ export const useEducationScheduleStore = defineStore(
         await convex.mutation(api.educationSchedules.mutations.copySchedulesFromSemester, {
           sourceSemesterId: sourceSemesterId as any,
           targetSemesterId: targetSemesterId as any,
-          targetAcademicYearId,
+          targetAcademicYearId: targetAcademicYearId as any,
         });
         error.value = null;
         return;

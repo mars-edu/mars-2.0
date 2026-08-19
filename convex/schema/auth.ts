@@ -107,7 +107,7 @@ export const authTables = {
   sessions: defineTable({
     shortName: v.string(),
     fullName: v.string(),
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     semesterId: v.optional(v.id("academicYearSemesters")),
     startDate: v.string(),
     endDate: v.string(),

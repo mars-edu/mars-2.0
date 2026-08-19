@@ -261,40 +261,40 @@ export const collapseAll = mutation({
         // calendarEvents
         const events = await ctx.db
           .query("calendarEvents")
-          .withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", deadId))
+          .withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", deadId as Id<"rupEntries">))
           .collect();
         for (const e of events) {
-          if (!dryRun) await ctx.db.patch(e._id, { rupEntryId: aliveId });
+          if (!dryRun) await ctx.db.patch(e._id, { rupEntryId: aliveId as Id<"rupEntries"> });
           repointStats.calendarEvents++;
         }
 
         // ktps
         const ktps = await ctx.db
           .query("ktps")
-          .withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", deadId))
+          .withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", deadId as Id<"rupEntries">))
           .collect();
         for (const k of ktps) {
-          if (!dryRun) await ctx.db.patch(k._id, { rupEntryId: aliveId });
+          if (!dryRun) await ctx.db.patch(k._id, { rupEntryId: aliveId as Id<"rupEntries"> });
           repointStats.ktps++;
         }
 
         // scheduledIntermediateControls
         const sics = await ctx.db
           .query("scheduledIntermediateControls")
-          .withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", deadId))
+          .withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", deadId as Id<"rupEntries">))
           .collect();
         for (const s of sics) {
-          if (!dryRun) await ctx.db.patch(s._id, { rupEntryId: aliveId });
+          if (!dryRun) await ctx.db.patch(s._id, { rupEntryId: aliveId as Id<"rupEntries"> });
           repointStats.scheduledIntermediateControls++;
         }
 
         // scheduledFinalControls
         const sfcs = await ctx.db
           .query("scheduledFinalControls")
-          .withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", deadId))
+          .withIndex("by_rupEntryId", (q) => q.eq("rupEntryId", deadId as Id<"rupEntries">))
           .collect();
         for (const s of sfcs) {
-          if (!dryRun) await ctx.db.patch(s._id, { rupEntryId: aliveId });
+          if (!dryRun) await ctx.db.patch(s._id, { rupEntryId: aliveId as Id<"rupEntries"> });
           repointStats.scheduledFinalControls++;
         }
       }
@@ -304,7 +304,7 @@ export const collapseAll = mutation({
       for (const j of journals) {
         const aliveId = remap.get(j.disciplineId);
         if (aliveId) {
-          if (!dryRun) await ctx.db.patch(j._id, { disciplineId: aliveId });
+          if (!dryRun) await ctx.db.patch(j._id, { disciplineId: aliveId as Id<"rupEntries"> });
           repointStats.journals++;
         }
       }

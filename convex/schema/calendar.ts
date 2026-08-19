@@ -7,7 +7,7 @@ export const calendarTables = {
    * Migrated from: calendarStore.ts
    */
   calendarEvents: defineTable({
-    rupEntryId: v.string(), // Reference to rupEntries
+    rupEntryId: v.id("rupEntries"),
     ktpId: v.optional(v.string()), // Reference to ktps
     teacherId: v.optional(v.string()), // Reference to teachers
     startDate: v.string(), // ISO date
@@ -63,8 +63,8 @@ export const calendarTables = {
    * Migrated from: ktpStore.ts
    */
   ktps: defineTable({
-    rupEntryId: v.string(), // Reference to rupEntries
-    academicYearId: v.string(),
+    rupEntryId: v.id("rupEntries"),
+    academicYearId: v.id("academicYears"),
     semesterId: v.id("academicYearSemesters"),
     eventId: v.optional(v.string()), // Reference to calendarEvents
     name: v.optional(v.string()),

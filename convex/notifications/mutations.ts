@@ -147,7 +147,7 @@ export const deleteNotification = withI18nMutation({
  */
 export const createJournalClosureReminder = withI18nMutation({
   args: {
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     semesterId: v.optional(v.id("academicYearSemesters")),
     deadline: v.string(),
     message: v.string(),

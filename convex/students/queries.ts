@@ -128,7 +128,7 @@ export const getBySpecialty = query({
  * Get students by academic year
  */
 export const getByAcademicYear = query({
-  args: { academicYearId: v.string() },
+  args: { academicYearId: v.id("academicYears") },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("students")
@@ -145,7 +145,7 @@ export const getByAcademicYear = query({
 export const getBySpecialtyAndAcademicYear = query({
   args: {
     specialty: v.string(),
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
   },
   handler: async (ctx, args) => {
     return await ctx.db

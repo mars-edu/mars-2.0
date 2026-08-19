@@ -127,7 +127,7 @@ export const createBulkSubstitutions = withI18nMutation({
           calendarEventId,
           disciplineId: event.rupEntryId ?? "",
           semesterId: semesterRecord._id,
-          academicYearId: semesterRecord.academicYearId as string,
+          academicYearId: semesterRecord.academicYearId,
           });
         journal = await ctx.db.get(newJournalId);
       }

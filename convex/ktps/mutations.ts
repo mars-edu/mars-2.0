@@ -8,8 +8,8 @@ import { validateReorder } from "./lib";
  */
 export const create = mutation({
   args: {
-    rupEntryId: v.string(),
-    academicYearId: v.string(),
+    rupEntryId: v.id("rupEntries"),
+    academicYearId: v.id("academicYears"),
     semesterId: v.id("academicYearSemesters"),
     eventId: v.optional(v.string()),
     name: v.optional(v.string()),
@@ -32,7 +32,7 @@ export const create = mutation({
 export const update = mutation({
   args: {
     id: v.id("ktps"),
-    rupEntryId: v.optional(v.string()),
+    rupEntryId: v.optional(v.id("rupEntries")),
     academicYearId: v.optional(v.string()),
     semesterId: v.optional(v.id("academicYearSemesters")),
     eventId: v.optional(v.string()),

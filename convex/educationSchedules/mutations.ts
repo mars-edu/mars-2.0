@@ -11,7 +11,7 @@ export const create = mutation({
     startTime: v.string(),
     endTime: v.string(),
     order: v.number(),
-    academicYearId: v.string(),
+    academicYearId: v.id("academicYears"),
     semesterId: v.id("academicYearSemesters"),
   },
   handler: async (ctx, args) => {
@@ -70,7 +70,7 @@ export const remove = mutation({
 export const copySchedulesFromYear = mutation({
   args: {
     sourceAcademicYearId: v.string(),
-    targetAcademicYearId: v.string(),
+    targetAcademicYearId: v.id("academicYears"),
   },
   handler: async (ctx, args) => {
     const { sourceAcademicYearId, targetAcademicYearId } = args;
@@ -150,7 +150,7 @@ export const copySchedulesFromSemester = mutation({
   args: {
     sourceSemesterId: v.id("academicYearSemesters"),
     targetSemesterId: v.id("academicYearSemesters"),
-    targetAcademicYearId: v.string(),
+    targetAcademicYearId: v.id("academicYears"),
   },
   handler: async (ctx, args) => {
     const { sourceSemesterId, targetSemesterId, targetAcademicYearId } = args;

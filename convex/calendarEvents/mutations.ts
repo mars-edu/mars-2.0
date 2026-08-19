@@ -27,7 +27,7 @@ const journalSettingsValidator = v.object({
  */
 export const create = mutation({
   args: {
-    rupEntryId: v.string(),
+    rupEntryId: v.id("rupEntries"),
     ktpId: v.optional(v.string()),
     teacherId: v.optional(v.string()),
     startDate: v.string(),
@@ -66,7 +66,7 @@ export const create = mutation({
 export const update = mutation({
   args: {
     id: v.id("calendarEvents"),
-    rupEntryId: v.optional(v.string()),
+    rupEntryId: v.optional(v.id("rupEntries")),
     ktpId: v.optional(v.string()),
     teacherId: v.optional(v.string()),
     startDate: v.optional(v.string()),
@@ -142,7 +142,7 @@ export const remove = mutation({
  */
 export const createWithIndividualJournals = mutation({
   args: {
-    rupEntryId: v.string(),
+    rupEntryId: v.id("rupEntries"),
     ktpId: v.optional(v.string()),
     teacherId: v.optional(v.string()),
     startDate: v.string(),

@@ -94,8 +94,8 @@ export const useKtpStore = defineStore("ktp", () => {
     extra?: { color?: string; languages?: string[] }
   ): Promise<Ktp> {
     const id = await convex.mutation(api.ktps.mutations.create, {
-      rupEntryId,
-      academicYearId,
+      rupEntryId: rupEntryId as any,
+      academicYearId: academicYearId as any,
       semesterId: semesterId as Id<"academicYearSemesters">,
       eventId,
       name,

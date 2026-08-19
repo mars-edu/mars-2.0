@@ -83,7 +83,7 @@ export const useScheduledIntermediateControlStore = defineStore(
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.scheduledControls.mutations.createIntermediate, {
                   intermediateControlId: controlData.intermediateControlId,
-                  academicYearId: controlData.academicYearId,
+                  academicYearId: controlData.academicYearId as any,
                   shortName: controlData.shortName,
                   startDate: controlData.startDate,
                   endDate: controlData.endDate,
@@ -105,7 +105,7 @@ export const useScheduledIntermediateControlStore = defineStore(
                 await convex.mutation(api.scheduledControls.mutations.updateIntermediate, {
                   id: id as any,
                   intermediateControlId: controlData.intermediateControlId,
-                  academicYearId: controlData.academicYearId,
+                  academicYearId: controlData.academicYearId as any,
                   shortName: controlData.shortName,
                   startDate: controlData.startDate,
                   endDate: controlData.endDate,
@@ -153,7 +153,7 @@ export const useScheduledIntermediateControlStore = defineStore(
         await convex.mutation(api.scheduledControls.mutations.copyIntermediateFromSemester, {
           sourceSemesterId: sourceSemesterId as any,
           targetSemesterId: targetSemesterId as any,
-          targetAcademicYearId,
+          targetAcademicYearId: targetAcademicYearId as any,
         });
         error.value = null;
         return;

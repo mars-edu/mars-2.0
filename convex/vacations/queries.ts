@@ -25,7 +25,7 @@ export const getById = query({
  * Get vacations by academic year
  */
 export const getByAcademicYear = query({
-  args: { academicYearId: v.string() },
+  args: { academicYearId: v.id("academicYears") },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("vacations")
