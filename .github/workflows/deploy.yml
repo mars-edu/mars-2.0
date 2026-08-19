@@ -55,11 +55,11 @@ jobs:
           bun-version: latest
 
       - name: Install dependencies
-        run: bun install
+        run: npm ci
 
       # ── 4. Build paraglide i18n ───────────────────────────────────────────
       - name: Build paraglide (i18n)
-        run: bun run build:paraglide
+        run: npm run build:paraglide
 
       # ── 5. Deploy Convex backend ──────────────────────────────────────────
       - name: Deploy Convex backend
@@ -69,11 +69,11 @@ jobs:
 
       # ── 6. Gate: type check ───────────────────────────────────────────────
       - name: Type check (tsc)
-        run: bun run tsc
+        run: npm run tsc
 
       # ── 7. Build frontend ─────────────────────────────────────────────────
       - name: Build frontend
-        run: bun run build
+        run: npm run build
         env:
           NODE_ENV: production
           NO_COLOR: "1"
