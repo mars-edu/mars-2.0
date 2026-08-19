@@ -131,7 +131,7 @@ async function pickF7CalendarDay(page: any, opts: { offsetDays?: number } = {}) 
 
 test.describe("Planning → Journal E2E flow", () => {
   // Convex-backed flows can be slow on cold start.
-  test.setTimeout(300_000);
+  test.setTimeout(35000);
   test.describe.configure({ mode: "serial" });
 
   test("create event in Planning, open Journal, persist settings, go back", async ({

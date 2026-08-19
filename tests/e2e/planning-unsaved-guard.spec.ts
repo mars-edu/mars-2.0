@@ -118,7 +118,7 @@ async function selectFirstDisciplineOption(page: Page, popup: Locator) {
 }
 
 test.describe.serial("Planning Add Popup Unsaved Guard", () => {
-  test.setTimeout(180_000);
+  test.setTimeout(35000);
 
   test.beforeEach(async ({ page }) => {
     await loginIfNeeded(page);

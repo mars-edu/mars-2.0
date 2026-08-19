@@ -3,9 +3,10 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
+  timeout: 30000,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : process.env.HEADED ? 1 : undefined, // Reduce to 1 in CI to avoid parallel login issues
+  retries: process.env.CI ? 1 : 0,
+  workers: process.env.CI ? 2 : process.env.HEADED ? 1 : undefined, // Reduce to 1 in CI to avoid parallel login issues
   reporter: [
     ['html', { outputFolder: 'playwright-report' }],
     ['json', { outputFile: 'test-results/results.json' }],

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Authentication', () => {
   // Increase timeout for CI environment (very slow login flows)
-  test.setTimeout(150000); // 2.5 minutes
+  test.setTimeout(35000); // 2.5 minutes
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');

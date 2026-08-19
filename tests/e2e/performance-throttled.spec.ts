@@ -2,7 +2,7 @@ import { test, expect, chromium } from '@playwright/test';
 
 test.describe('Performance with Throttling', () => {
   // Set longer timeout for throttled tests
-  test.setTimeout(120000); // 120 seconds for CI
+  test.setTimeout(35000); // 120 seconds for CI
 
   test('should load home page with CPU and network throttling', async ({ baseURL }) => {
     // Launch browser with CDP access
@@ -89,7 +89,7 @@ test.describe('Performance with Throttling', () => {
 
   test('should test different throttling profiles', async ({ baseURL }) => {
     // This test runs 3 profiles sequentially, needs more time
-    test.setTimeout(180000); // 3 minutes for 3 profiles
+    test.setTimeout(35000); // 3 minutes for 3 profiles
 
     const profiles = [
       {

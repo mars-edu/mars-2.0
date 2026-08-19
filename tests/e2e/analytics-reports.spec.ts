@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { loginAsTeacher, waitForPageLoad } from '../utils/helpers';
 
 test.describe('Analytics, Reports & Protocol Suite', () => {
-  test.setTimeout(120000);
+  test.setTimeout(35000);
 
   test.beforeEach(async ({ page }) => {
     await loginAsTeacher(page);
