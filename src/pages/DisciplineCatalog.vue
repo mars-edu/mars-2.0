@@ -114,15 +114,27 @@
                       </td>
                       <td class="px-6 py-4">
                         <div class="flex flex-wrap justify-center gap-1">
+                          <template v-if="item.variants && item.variants.length > 0">
+                            <span
+                              v-for="v in item.variants"
+                              :key="v.language"
+                              class="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide"
+                              :class="{
+                                'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400': v.language === 'ru',
+                                'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-400': v.language === 'kk',
+                                'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400': v.language === 'en',
+                              }"
+                            >{{ v.language === 'kk' ? 'Kz' : v.language === 'ru' ? 'Ru' : v.language.toUpperCase() }}</span>
+                          </template>
                           <span
-                            v-if="item.language"
+                            v-else-if="item.language"
                             class="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide"
                             :class="{
                               'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400': item.language === 'ru',
                               'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-400': item.language === 'kk',
                               'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400': item.language === 'en',
                             }"
-                          >{{ item.language === 'kk' ? 'Kz' : item.language === 'ru' ? 'Ru' : 'En' }}</span>
+                          >{{ item.language === 'kk' ? 'Kz' : item.language === 'ru' ? 'Ru' : item.language.toUpperCase() }}</span>
                           <span v-else class="text-xs text-muted-foreground/40">-</span>
                         </div>
                       </td>

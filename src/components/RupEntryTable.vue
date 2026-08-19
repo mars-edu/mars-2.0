@@ -28,8 +28,22 @@
                   <div class="text-base font-medium text-foreground/90 truncate">
                     {{ item.moduleName }}
                   </div>
+                  <template v-if="item.variants && item.variants.length > 0">
+                    <span
+                      v-for="v in item.variants"
+                      :key="v.language"
+                      class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide"
+                      :class="{
+                        'bg-indigo-100 text-indigo-700': v.language === 'ru',
+                        'bg-teal-100 text-teal-700': v.language === 'kk',
+                        'bg-purple-100 text-purple-700': v.language === 'en',
+                      }"
+                    >
+                      {{ v.language.toUpperCase() }}
+                    </span>
+                  </template>
                   <span
-                    v-if="item.language"
+                    v-else-if="item.language"
                     class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide"
                     :class="{
                       'bg-indigo-100 text-indigo-700': item.language === 'ru',
@@ -306,57 +320,18 @@ function duplicateItem(item: RupEntry) {
 }
 
 function confirmDeleteItem(item: RupEntry) {
-  const hasGroup =
-    item.groupId &&
-    rupEntryStore.getGroupedVariants(item.groupId).length > 1;
   const safeName = escapeHtml(item.moduleName ?? "");
-
-  if (hasGroup) {
-    f7.dialog
-      .create({
-        title: "Удаление записи",
-        text: `<p>Удалить все языковые варианты записи "${safeName}" или только текущий?</p>`,
-        buttons: [
-          { text: "Отмена", close: true },
-          {
-            text: "Только этот язык",
-            close: true,
-            onClick: async () => {
-              try {
-                await rupEntryStore.deleteRupEntry(item.id);
-              } catch {
-                f7.dialog.alert("Произошла ошибка при удалении.");
-              }
-            },
-          },
-          {
-            text: "Все варианты",
-            close: true,
-            cssClass: "text-destructive",
-            onClick: async () => {
-              try {
-                await rupEntryStore.deleteRupEntryGroup(item.groupId!);
-              } catch {
-                f7.dialog.alert("Произошла ошибка при удалении.");
-              }
-            },
-          },
-        ],
-      })
-      .open();
-  } else {
-    f7.dialog.confirm(
-      `<p>Вы уверены, что хотите удалить запись "${safeName}"?</p><p class='text-sm text-muted-foreground mt-2'>Это действие нельзя отменить.</p>`,
-      "Удаление записи",
-      async () => {
-        try {
-          await rupEntryStore.deleteRupEntry(item.id);
-        } catch {
-          f7.dialog.alert("Произошла ошибка при удалении.");
-        }
+  f7.dialog.confirm(
+    `<p>Вы уверены, что хотите удалить запись "${safeName}"?</p><p class='text-sm text-muted-foreground mt-2'>Это действие нельзя отменить.</p>`,
+    "Удаление записи",
+    async () => {
+      try {
+        await rupEntryStore.deleteRupEntry(item.id);
+      } catch (err: any) {
+        f7.dialog.alert(err?.message || "Произошла ошибка при удалении.");
       }
-    );
-  }
+    }
+  );
 }
 
 defineExpose({

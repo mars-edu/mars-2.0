@@ -263,6 +263,7 @@ function isValidHours(val: string | undefined): boolean {
  */
 export const saveRupEntryGroup = mutation({
   args: {
+    id: v.optional(v.id("rupEntries")),
     groupId: v.optional(v.string()),
     specialtyIds: v.array(v.string()),
     academicYearId: v.string(),
@@ -429,30 +430,33 @@ export const saveRupEntryGroup = mutation({
       learningOutcome: v.learningOutcome,
     }));
 
+    // Primary variant drives the top-level projection fields
+    const primaryVariant = variants[0];
+    const primaryText = {
+      language: primaryVariant.language,
+      moduleIndex: primaryVariant.moduleIndex,
+      moduleName: primaryVariant.moduleName,
+      learningOutcome: primaryVariant.learningOutcome,
+      variants: compiledVariants,
+    };
+
+    const targetId = args.id ?? variants.find((v) => v.id)?.id;
     const allIds: Id<"rupEntries">[] = [];
-    for (const variant of variants) {
-      const { id, language, moduleIndex, moduleName, learningOutcome } = variant;
-      if (id) {
-        await ctx.db.patch(id, {
-          ...shared,
-          language,
-          moduleIndex,
-          moduleName,
-          learningOutcome,
-          variants: compiledVariants,
-        });
-        allIds.push(id);
-      } else {
-        const newId = await ctx.db.insert("rupEntries", {
-          ...shared,
-          language,
-          moduleIndex,
-          moduleName,
-          learningOutcome,
-          variants: compiledVariants,
-        });
-        allIds.push(newId);
-      }
+
+    if (targetId) {
+      // Single-row update
+      await ctx.db.patch(targetId, {
+        ...shared,
+        ...primaryText,
+      });
+      allIds.push(targetId);
+    } else {
+      // Single-row insert
+      const newId = await ctx.db.insert("rupEntries", {
+        ...shared,
+        ...primaryText,
+      });
+      allIds.push(newId);
     }
 
     if (distributionEntries) {

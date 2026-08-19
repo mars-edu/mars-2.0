@@ -278,76 +278,39 @@ watch(
   () => [props.initialData, props.editMode],
   ([val, edit]) => {
     if (edit && val) {
-      // Check if this item is part of a language group
-      if (val.groupId) {
-        const variants = rupEntryStore.getGroupedVariants(val.groupId);
-        if (variants.length > 0) {
-          loadLanguageVariants(variants, val.language);
+      const source = rupEntryStore.getRupEntryById(val.id) ?? val;
+      const variants = source.variants && source.variants.length > 0
+        ? source.variants.map((v: any) => ({ id: source.id, ...v }))
+        : source.groupId
+          ? rupEntryStore.getGroupedVariants(source.groupId)
+          : [];
 
-          // Prefill from the entry the user opened (props.initialData.id).
-          // Parents pass a shallow snapshot ({ ...item }) or a live ref;
-          // re-read via the store so we always show the current values
-          // (Convex reactivity keeps rupEntries fresh even if the parent's
-          // snapshot froze). Fall back to `val` if the store lookup misses
-          // during a sync race — better stale than showing another variant.
-          const source = rupEntryStore.getRupEntryById(val.id) ?? val;
-          editedEntry.value = pickHoursForm(source);
-          selectedSpecialtyIds.value = source.specialtyIds ? [...source.specialtyIds] : [];
-
-          const hasSrs = source.distributionEntries?.some((e: any) => Number(e.srsHours) > 0);
-          const hasSrsp = source.distributionEntries?.some((e: any) => Number(e.srspHours) > 0);
-          const hasIndiv = source.distributionEntries?.some((e: any) => Number(e.individualHours) > 0);
-          visibleColumns.value = {
-            srs: !!hasSrs,
-            srsp: !!hasSrsp,
-            individual: !!hasIndiv,
-          };
-        } else {
-          editedEntry.value = pickHoursForm(val);
-          selectedLanguages.value = [val.language || defaultLanguageCode()];
-          activeLanguageTab.value = val.language || defaultLanguageCode();
-          languageTexts.value = {
-            [val.language || defaultLanguageCode()]: {
-              moduleIndex: val.moduleIndex,
-              moduleName: val.moduleName,
-              learningOutcome: val.learningOutcome,
-            },
-          };
-          editVariantIds.value = { [val.language || defaultLanguageCode()]: val.id };
-          selectedSpecialtyIds.value = val.specialtyIds || [];
-          
-          const hasSrs = val.distributionEntries?.some((e: any) => Number(e.srsHours) > 0);
-          const hasSrsp = val.distributionEntries?.some((e: any) => Number(e.srspHours) > 0);
-          const hasIndiv = val.distributionEntries?.some((e: any) => Number(e.individualHours) > 0);
-          visibleColumns.value = {
-            srs: !!hasSrs,
-            srsp: !!hasSrsp,
-            individual: !!hasIndiv,
-          };
-        }
+      if (variants.length > 0) {
+        loadLanguageVariants(variants, source.language || defaultLanguageCode());
       } else {
-        editedEntry.value = pickHoursForm(val);
-        selectedLanguages.value = [val.language || defaultLanguageCode()];
-        activeLanguageTab.value = val.language || defaultLanguageCode();
+        selectedLanguages.value = [source.language || defaultLanguageCode()];
+        activeLanguageTab.value = source.language || defaultLanguageCode();
         languageTexts.value = {
-          [val.language || defaultLanguageCode()]: {
-            moduleIndex: val.moduleIndex,
-            moduleName: val.moduleName,
-            learningOutcome: val.learningOutcome,
+          [source.language || defaultLanguageCode()]: {
+            moduleIndex: source.moduleIndex,
+            moduleName: source.moduleName,
+            learningOutcome: source.learningOutcome,
           },
         };
-        editVariantIds.value = { [val.language || defaultLanguageCode()]: val.id };
-        selectedSpecialtyIds.value = val.specialtyIds || [];
-        
-        const hasSrs = val.distributionEntries?.some((e: any) => Number(e.srsHours) > 0);
-        const hasSrsp = val.distributionEntries?.some((e: any) => Number(e.srspHours) > 0);
-        const hasIndiv = val.distributionEntries?.some((e: any) => Number(e.individualHours) > 0);
-        visibleColumns.value = {
-          srs: !!hasSrs,
-          srsp: !!hasSrsp,
-          individual: !!hasIndiv,
-        };
+        editVariantIds.value = { [source.language || defaultLanguageCode()]: source.id };
       }
+
+      editedEntry.value = pickHoursForm(source);
+      selectedSpecialtyIds.value = source.specialtyIds ? [...source.specialtyIds] : [];
+
+      const hasSrs = source.distributionEntries?.some((e: any) => Number(e.srsHours) > 0);
+      const hasSrsp = source.distributionEntries?.some((e: any) => Number(e.srspHours) > 0);
+      const hasIndiv = source.distributionEntries?.some((e: any) => Number(e.individualHours) > 0);
+      visibleColumns.value = {
+        srs: !!hasSrs,
+        srsp: !!hasSrsp,
+        individual: !!hasIndiv,
+      };
     } else {
       editedEntry.value = createEmptyEntry();
       selectedLanguages.value = ["ru"];
@@ -416,6 +379,7 @@ async function submit() {
 
   try {
     await rupEntryStore.saveRupEntryGroup({
+      id: props.editMode && props.initialData ? (props.initialData.id as any) : undefined,
       groupId: props.editMode && props.initialData ? props.initialData.groupId : undefined,
       specialtyIds: selectedSpecialtyIds.value,
       academicYearId: props.academicYearId,
