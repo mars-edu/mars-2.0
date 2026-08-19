@@ -8,14 +8,14 @@ on:
 
 jobs:
   test:
-    timeout-minutes: 30
+    timeout-minutes: 15
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
         node-version: [22.18.0]
-        shard: [1, 2, 3]
+        shard: [1, 2, 3, 4, 5]
 
     steps:
       - name: Checkout code
@@ -49,11 +49,16 @@ jobs:
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
-      - name: Start dev server
-        run: npm run dev &
+      - name: Build frontend for production preview
+        run: npm run build
         env:
+          NODE_ENV: production
+          NO_COLOR: "1"
           VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
           VITE_CONVEX_SITE_URL: ${{ secrets.VITE_CONVEX_SITE_URL }}
+
+      - name: Start preview server
+        run: npx vite preview --host 127.0.0.1 --port 5173 &
 
       - name: Wait for server to be ready
         run: npx wait-on http://localhost:5173 --timeout 60000
@@ -64,7 +69,7 @@ jobs:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
       - name: Run Playwright tests
-        run: npm run test:e2e -- --project=chromium --shard=${{ matrix.shard }}/3 --reporter=blob
+        run: npm run test:e2e -- --project=chromium --shard=${{ matrix.shard }}/5 --reporter=blob
         env:
           CI: true
 
