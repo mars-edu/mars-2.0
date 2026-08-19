@@ -1,0 +1,23 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "notifications_title": "Хабарландырулар",
+  "notifications_deadline": "Мерзімі:",
+  "notifications_reject_reason": "Қабылдамау себебі (міндетті емес):",
+  "notifications_accept": "Қабылдау",
+  "notifications_completed": "Аяқталды",
+  "notifications_update_error": "Хабарландыруларды жаңарту кезінде қате",
+  "notifications_empty": "Хабарландырулар жоқ",
+  "notifications_substitution_accepted": "Алмастыру қабылданды",
+  "notifications_reject": "Қабылдамау",
+  "notifications_important": "Маңызды хабарландыру",
+  "notifications_mark_all_read": "Барлығын оқылды деп белгілеу",
+  "notifications_substitution_accept_error": "Алмастыруды қабылдау кезінде қате",
+  "notifications_empty_desc": "Сізде әлі хабарландырулар жоқ",
+  "notifications_reject_title": "Алмастыруды қабылдамау",
+  "notifications_substitution_reject_error": "Алмастыруды қабылдамау кезінде қате",
+  "notifications_rejected": "Қабылданбады",
+  "notifications_substitution_rejected": "Алмастыру қабылданбады",
+  "notifications_accepted": "Қабылданды",
+  "notifications_marked_read": "Барлық хабарландырулар оқылды деп белгіленді",
+  "notifications_loading": "Хабарландырулар жүктелуде..."
+}

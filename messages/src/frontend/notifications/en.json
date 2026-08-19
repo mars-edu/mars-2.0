@@ -1,0 +1,23 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "notifications_title": "Notifications",
+  "notifications_deadline": "Deadline:",
+  "notifications_reject_reason": "Rejection reason (optional):",
+  "notifications_accept": "Accept",
+  "notifications_completed": "Completed",
+  "notifications_update_error": "Error updating notifications",
+  "notifications_empty": "No notifications",
+  "notifications_substitution_accepted": "Substitution accepted",
+  "notifications_reject": "Reject",
+  "notifications_important": "Important announcement",
+  "notifications_mark_all_read": "Mark all as read",
+  "notifications_substitution_accept_error": "Error accepting substitution",
+  "notifications_empty_desc": "You have no notifications yet",
+  "notifications_reject_title": "Reject substitution",
+  "notifications_substitution_reject_error": "Error rejecting substitution",
+  "notifications_rejected": "Rejected",
+  "notifications_substitution_rejected": "Substitution rejected",
+  "notifications_accepted": "Accepted",
+  "notifications_marked_read": "All notifications marked as read",
+  "notifications_loading": "Loading notifications..."
+}

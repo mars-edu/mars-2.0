@@ -1,0 +1,23 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "notifications_title": "Уведомления",
+  "notifications_deadline": "Крайний срок:",
+  "notifications_reject_reason": "Причина отклонения (необязательно):",
+  "notifications_accept": "Принять",
+  "notifications_completed": "Завершено",
+  "notifications_update_error": "Ошибка при обновлении уведомлений",
+  "notifications_empty": "Нет уведомлений",
+  "notifications_substitution_accepted": "Замена принята",
+  "notifications_reject": "Отклонить",
+  "notifications_important": "Важное объявление",
+  "notifications_mark_all_read": "Отметить все как прочитанные",
+  "notifications_substitution_accept_error": "Ошибка при принятии замены",
+  "notifications_empty_desc": "У вас пока нет уведомлений",
+  "notifications_reject_title": "Отклонить замену",
+  "notifications_substitution_reject_error": "Ошибка при отклонении замены",
+  "notifications_rejected": "Отклонено",
+  "notifications_substitution_rejected": "Замена отклонена",
+  "notifications_accepted": "Принято",
+  "notifications_marked_read": "Все уведомления отмечены как прочитанные",
+  "notifications_loading": "Загрузка уведомлений..."
+}
