@@ -219,9 +219,12 @@
         <div v-if="slotTimeError" class="text-destructive text-sm">
           {{ slotTimeError }}
         </div>
+
+        <ScheduleConflictBanner :conflicts="step2Conflicts" />
       </section>
 
       <section v-if="currentStep === 3" id="event-form-participants" class="space-y-4">
+        <ScheduleConflictBanner :conflicts="step3Conflicts" />
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Select
@@ -419,6 +422,10 @@ import DisciplineSelect from "@/components/DisciplineSelect.vue";
 import ColorPicker from "@/components/ui/ColorPicker.vue";
 import DateInput from "@/components/ui/DateInput.vue";
 import KtpDetailPopup from "@/components/KtpDetailPopup.vue";
+import ScheduleConflictBanner from "./ScheduleConflictBanner.vue";
+import { detectScheduleConflicts } from "@/lib/scheduleConflicts";
+import { useCalendarStore } from "@/stores/calendarStore";
+import { useTeacherStore } from "@/stores/teacherStore";
 import {
   getWeekDays,
   DATE_UI_FORMAT,
@@ -511,6 +518,57 @@ const courseStore = useCourseStore();
 const educationScheduleStore = useEducationScheduleStore();
 const academicYearSemesterStore = useAcademicYearSemesterStore();
 const ktpStore = useKtpStore();
+const calendarStore = useCalendarStore();
+const teacherStore = useTeacherStore();
+
+const draftConflicts = computed(() => {
+  const activeSem = props.semesterDates;
+  const start = props.useCustomPeriod ? (props.startDate || "") : (activeSem?.startDate || "");
+  const end = props.useCustomPeriod ? (props.endDate || "") : (activeSem?.endDate || "");
+
+  if (!start || !end || selectedWeekDaysModel.value.length === 0) {
+    return [];
+  }
+
+  const rup = rupEntryStore.getRupEntryById(props.rupEntryId);
+  const teacherId = calendarStore.selectedTeacherId || undefined;
+
+  const bellSlots = educationScheduleStore.getActiveYearSchedules;
+  const studentNamesMap = new Map(
+    studentStore.students.map((s) => [s.id, studentStore.getStudentFullName(s)])
+  );
+  const teacherNamesMap = new Map(
+    teacherStore.teachers.map((t) => [t.id, teacherStore.getTeacherFullName(t)])
+  );
+
+  return detectScheduleConflicts(
+    {
+      id: props.tempEventId,
+      title: rup?.moduleName || "Новое занятие",
+      teacherId,
+      participants: participantsModel.value,
+      startDate: start,
+      endDate: end,
+      weeklySchedules: selectedWeekDaysModel.value,
+    },
+    calendarStore.events,
+    {
+      bellSlots,
+      studentNamesMap,
+      teacherNamesMap,
+      excludeEventId: props.tempEventId,
+    }
+  );
+});
+
+const step2Conflicts = computed(() =>
+  draftConflicts.value.filter((c) => c.type === "teacher")
+);
+
+const step3Conflicts = computed(() =>
+  draftConflicts.value.filter((c) => c.type === "student")
+);
+
 const { students } = storeToRefs(studentStore);
 const { specialtyOptions: storeSpecialtyOptions } = storeToRefs(specialtyStore);
 const { languageOptions: storeLanguageOptions } = storeToRefs(languageStore);
