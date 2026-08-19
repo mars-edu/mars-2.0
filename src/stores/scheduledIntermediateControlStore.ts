@@ -83,7 +83,7 @@ export const useScheduledIntermediateControlStore = defineStore(
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.scheduledControls.mutations.createIntermediate, {
                   intermediateControlId: controlData.intermediateControlId,
-                  academicYearId: controlData.academicYearId as any,
+                  academicYearId: controlData.academicYearId as Id<"academicYears">,
                   shortName: controlData.shortName,
                   startDate: controlData.startDate,
                   endDate: controlData.endDate,
@@ -103,9 +103,9 @@ export const useScheduledIntermediateControlStore = defineStore(
       return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.scheduledControls.mutations.updateIntermediate, {
-                  id: id as any,
+                  id: id as Id<"scheduledIntermediateControls">,
                   intermediateControlId: controlData.intermediateControlId,
-                  academicYearId: controlData.academicYearId as any,
+                  academicYearId: controlData.academicYearId as Id<"academicYears">,
                   shortName: controlData.shortName,
                   startDate: controlData.startDate,
                   endDate: controlData.endDate,
@@ -120,7 +120,7 @@ export const useScheduledIntermediateControlStore = defineStore(
       return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.scheduledControls.mutations.removeIntermediate, {
-                  id: id as any,
+                  id: id as Id<"scheduledIntermediateControls">,
                 });
                 // Don't filter scheduledIntermediateControls.value - the reactive subscription will handle it
                 error.value = null;
@@ -151,8 +151,8 @@ export const useScheduledIntermediateControlStore = defineStore(
     ) {
       return await withLoading(loading, error, async () => {
         await convex.mutation(api.scheduledControls.mutations.copyIntermediateFromSemester, {
-          sourceSemesterId: sourceSemesterId as any,
-          targetSemesterId: targetSemesterId as any,
+          sourceSemesterId: sourceSemesterId as Id<"academicYearSemesters">,
+          targetSemesterId: targetSemesterId as Id<"academicYearSemesters">,
           targetAcademicYearId: targetAcademicYearId as any,
         });
         error.value = null;

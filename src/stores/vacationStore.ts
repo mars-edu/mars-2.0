@@ -66,7 +66,7 @@ export const useVacationStore = defineStore(
                 await convex.mutation(api.vacations.mutations.create, {
                   shortName: vacationData.shortName,
                   fullName: vacationData.fullName,
-                  academicYearId: vacationData.academicYearId as any,
+                  academicYearId: vacationData.academicYearId as Id<"academicYears">,
                   startDate: vacationData.startDate,
                   endDate: vacationData.endDate,
                   semesterId: vacationData.semesterId as Id<"academicYearSemesters">,
@@ -83,10 +83,10 @@ export const useVacationStore = defineStore(
       return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.vacations.mutations.update, {
-                  id: id as any,
+                  id: id as Id<"vacations">,
                   shortName: vacationData.shortName,
                   fullName: vacationData.fullName,
-                  academicYearId: vacationData.academicYearId as any,
+                  academicYearId: vacationData.academicYearId as Id<"academicYears">,
                   startDate: vacationData.startDate,
                   endDate: vacationData.endDate,
                   semesterId: vacationData.semesterId as Id<"academicYearSemesters">,
@@ -100,7 +100,7 @@ export const useVacationStore = defineStore(
       return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.vacations.mutations.remove, {
-                  id: id as any,
+                  id: id as Id<"vacations">,
                 });
                 // Don't filter vacations.value - the reactive subscription will handle it
                 error.value = null;
@@ -132,8 +132,8 @@ export const useVacationStore = defineStore(
     ) {
       return await withLoading(loading, error, async () => {
         await convex.mutation(api.vacations.mutations.copyFromSemester, {
-          sourceSemesterId: sourceSemesterId as any,
-          targetSemesterId: targetSemesterId as any,
+          sourceSemesterId: sourceSemesterId as Id<"academicYearSemesters">,
+          targetSemesterId: targetSemesterId as Id<"academicYearSemesters">,
           targetAcademicYearId: targetAcademicYearId as any,
         });
         error.value = null;

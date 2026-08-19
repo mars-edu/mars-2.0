@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import type { Id } from "@convex/_generated/dataModel";
 import { withLoading } from "@/utils/storeAction";
 import type { Course } from "@/types/course";
 
@@ -81,7 +82,7 @@ export const useCourseStore = defineStore(
       return await withLoading(loading, error, async () => {
         // Use Convex - reactive subscription will automatically update the list
                 await convex.mutation(api.courses.mutations.update, {
-                  id: id as any,
+                  id: id as Id<"courses">,
                   number: courseData.number,
                   name: courseData.admissionYear,
                   semesters: courseData.semesters,
@@ -95,7 +96,7 @@ export const useCourseStore = defineStore(
       return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.courses.mutations.remove, {
-                  id: id as any,
+                  id: id as Id<"courses">,
                 });
                 // Don't filter courses.value - the reactive subscription will handle it
                 error.value = null;

@@ -1,3 +1,4 @@
+import type { Id } from "@convex/_generated/dataModel";
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import dayjs from "dayjs";
@@ -146,8 +147,8 @@ export const useAcademicYearSemesterStore = defineStore(
 
                 // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.academicYearSemesters.mutations.create, {
-                  academicYearId: semesterData.academicYearId as any,
-                  semesterDefinitionId: semesterData.semesterDefinitionId as any,
+                  academicYearId: semesterData.academicYearId as Id<"academicYears">,
+                  semesterDefinitionId: semesterData.semesterDefinitionId as Id<"semesterDefinitions">,
                   startDate: semesterData.startDate,
                   endDate: semesterData.endDate,
                   weeksCount: semesterData.weeksCount,
@@ -210,8 +211,8 @@ export const useAcademicYearSemesterStore = defineStore(
 
                 // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.academicYearSemesters.mutations.update, {
-                  id: id as any,
-                  semesterDefinitionId: semesterData.semesterDefinitionId as any,
+                  id: id as Id<"academicYearSemesters">,
+                  semesterDefinitionId: semesterData.semesterDefinitionId as Id<"semesterDefinitions">,
                   startDate: semesterData.startDate,
                   endDate: semesterData.endDate,
                   weeksCount: semesterData.weeksCount,
@@ -249,7 +250,7 @@ export const useAcademicYearSemesterStore = defineStore(
         // Use Convex - the reactive subscription will handle updating the local state
                 try {
                   await convex.mutation(api.academicYearSemesters.mutations.remove, {
-                    id: id as any,
+                    id: id as Id<"academicYearSemesters">,
                   });
                 } catch (err) {
                   if (err instanceof ConvexError) {

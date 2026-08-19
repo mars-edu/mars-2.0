@@ -1,3 +1,4 @@
+import type { Id } from "@convex/_generated/dataModel";
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import { useRupEntryStore } from "./rupEntryStore";
@@ -131,7 +132,7 @@ export const useCalendarStore = defineStore(
 
                 // Use Convex - the reactive subscription will handle updating the local state
                 const id = await convex.mutation(api.calendarEvents.mutations.create, {
-                  rupEntryId: eventData.rupEntryId as any,
+                  rupEntryId: eventData.rupEntryId as Id<"rupEntries">,
                   ktpId,
                   teacherId: eventData.teacherId,
                   startDate: eventData.startDate,
@@ -220,7 +221,7 @@ export const useCalendarStore = defineStore(
                 const result = await convex.mutation(
                   api.calendarEvents.mutations.createWithIndividualJournals,
                   {
-                    rupEntryId: eventData.rupEntryId as any,
+                    rupEntryId: eventData.rupEntryId as Id<"rupEntries">,
                     ktpId,
                     teacherId: eventData.teacherId,
                     startDate: eventData.startDate,
@@ -285,8 +286,8 @@ export const useCalendarStore = defineStore(
 
                 // Use Convex - the reactive subscription will handle updating the local state
                 const updated = await convex.mutation(api.calendarEvents.mutations.update, {
-                  id: id as any,
-                  rupEntryId: eventData.rupEntryId as any,
+                  id: id as Id<"calendarEvents">,
+                  rupEntryId: eventData.rupEntryId as Id<"rupEntries">,
                   ktpId,
                   teacherId: eventData.teacherId,
                   startDate: eventData.startDate,
@@ -351,7 +352,7 @@ export const useCalendarStore = defineStore(
     async function deleteEvent(id: string) {
       return await withLoading(loading, error, async () => {
         await convex.mutation(api.calendarEvents.mutations.remove, {
-                  id: id as any,
+                  id: id as Id<"calendarEvents">,
                 });
                 // Refresh events list after deleting
                 await fetchEventsWithRoleAccess();

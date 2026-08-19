@@ -4,6 +4,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { withLoading } from "@/utils/storeAction";
+import type { Id } from "@convex/_generated/dataModel";
 import type { AcademicYear } from "@/types/academic-year";
 import { DEFAULT_ACADEMIC_HOUR_MINUTES } from "@/types/academic-year";
 import { useEducationTechnologyStore } from "@/stores/educationTechnologyStore";
@@ -96,7 +97,7 @@ export const useAcademicYearStore = defineStore(
                   endYear: academicYearData.endYear,
                   isActive: academicYearData.isActive,
                   academicHourMinutes: academicYearData.academicHourMinutes,
-                  technologyId: academicYearData.technologyId as any,
+                  technologyId: academicYearData.technologyId as Id<"educationTechnologies">,
                   startDate: academicYearData.startDate,
                   endDate: academicYearData.endDate,
                 });
@@ -131,13 +132,13 @@ export const useAcademicYearStore = defineStore(
       return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
                 const updated = await convex.mutation(api.academicYears.mutations.update, {
-                  id: id as any,
+                  id: id as Id<"academicYears">,
                   name: academicYearData.name,
                   startYear: academicYearData.startYear,
                   endYear: academicYearData.endYear,
                   isActive: academicYearData.isActive,
                   academicHourMinutes: academicYearData.academicHourMinutes,
-                  technologyId: academicYearData.technologyId as any,
+                  technologyId: academicYearData.technologyId as Id<"educationTechnologies">,
                   startDate: academicYearData.startDate,
                   endDate: academicYearData.endDate,
                 });
@@ -167,7 +168,7 @@ export const useAcademicYearStore = defineStore(
       return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.academicYears.mutations.remove, {
-                  id: id as any,
+                  id: id as Id<"academicYears">,
                 });
                 // Don't filter academicYears.value - the reactive subscription will handle it
                 error.value = null;
@@ -178,7 +179,7 @@ export const useAcademicYearStore = defineStore(
       return await withLoading(loading, error, async () => {
         // Use Convex
                 await convex.mutation(api.academicYears.mutations.setActive, {
-                  id: id as any,
+                  id: id as Id<"academicYears">,
                 });
                 // Refresh data from backend
                 await loadFromBackend();

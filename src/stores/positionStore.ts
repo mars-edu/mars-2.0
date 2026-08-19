@@ -1,3 +1,4 @@
+import type { Id } from "@convex/_generated/dataModel";
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
@@ -59,7 +60,7 @@ export const usePositionStore = defineStore("position", () => {
     try {
       // Use Convex - reactive subscription will automatically update the list
       await convex.mutation(api.positions.mutations.update, {
-        id: id as any,
+        id: id as Id<"positions">,
         name: positionData.name,
         shortName: positionData.name,
       });
@@ -78,7 +79,7 @@ export const usePositionStore = defineStore("position", () => {
     try {
       // Use Convex - the reactive subscription will handle updating the local state
       await convex.mutation(api.positions.mutations.remove, {
-        id: id as any,
+        id: id as Id<"positions">,
       });
       // Don't filter positions.value - the reactive subscription will handle it
       error.value = null;

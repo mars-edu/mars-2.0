@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import type { Id } from "@convex/_generated/dataModel";
 import { withLoading } from "@/utils/storeAction";
 import type { IntermediateControl } from "@/types/intermediate-control";
 
@@ -78,7 +79,7 @@ export const useIntermediateControlStore = defineStore(
       return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.intermediateControls.mutations.update, {
-                  id: id as any,
+                  id: id as Id<"intermediateControls">,
                   name: controlData.name,
                   shortName: controlData.shortName,
                 });
@@ -91,7 +92,7 @@ export const useIntermediateControlStore = defineStore(
       return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.intermediateControls.mutations.remove, {
-                  id: id as any,
+                  id: id as Id<"intermediateControls">,
                 });
                 // Don't filter intermediateControls.value - the reactive subscription will handle it
                 error.value = null;

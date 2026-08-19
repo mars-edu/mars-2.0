@@ -87,7 +87,7 @@ export const useEducationScheduleStore = defineStore(
                   startTime: scheduleData.startTime,
                   endTime: scheduleData.endTime,
                   order: nextLessonNumber,
-                  academicYearId: scheduleData.academicYearId as any,
+                  academicYearId: scheduleData.academicYearId as Id<"academicYears">,
                   semesterId: scheduleData.semesterId as Id<"academicYearSemesters">,
                 });
                 // Don't push to schedules.value - the reactive subscription will handle it
@@ -105,7 +105,7 @@ export const useEducationScheduleStore = defineStore(
       return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.educationSchedules.mutations.update, {
-                  id: id as any,
+                  id: id as Id<"educationSchedules">,
                   name: scheduleData.lessonNumber ? `Lesson ${scheduleData.lessonNumber}` : undefined,
                   startTime: scheduleData.startTime,
                   endTime: scheduleData.endTime,
@@ -122,7 +122,7 @@ export const useEducationScheduleStore = defineStore(
       return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.educationSchedules.mutations.remove, {
-                  id: id as any,
+                  id: id as Id<"educationSchedules">,
                 });
                 // Don't filter schedules.value - the reactive subscription will handle it
                 error.value = null;
@@ -141,7 +141,7 @@ export const useEducationScheduleStore = defineStore(
           schedule.lessonNumber = index + 1;
         }
         return {
-          id: id as any,
+          id: id as Id<"educationSchedules">,
           order: index + 1,
         };
       });
@@ -188,7 +188,7 @@ export const useEducationScheduleStore = defineStore(
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.educationSchedules.mutations.copySchedulesFromYear, {
                   sourceAcademicYearId,
-                  targetAcademicYearId: targetAcademicYearId as any,
+                  targetAcademicYearId: targetAcademicYearId as Id<"academicYears">,
                 });
                 error.value = null;
                 return;
@@ -202,9 +202,9 @@ export const useEducationScheduleStore = defineStore(
     ) {
       return await withLoading(loading, error, async () => {
         await convex.mutation(api.educationSchedules.mutations.copySchedulesFromSemester, {
-          sourceSemesterId: sourceSemesterId as any,
-          targetSemesterId: targetSemesterId as any,
-          targetAcademicYearId: targetAcademicYearId as any,
+          sourceSemesterId: sourceSemesterId as Id<"academicYearSemesters">,
+          targetSemesterId: targetSemesterId as Id<"academicYearSemesters">,
+          targetAcademicYearId: targetAcademicYearId as Id<"academicYears">,
         });
         error.value = null;
         return;

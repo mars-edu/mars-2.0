@@ -1,3 +1,4 @@
+import type { Id } from "@convex/_generated/dataModel";
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
@@ -183,7 +184,7 @@ export const useTeacherStore = defineStore("teacher", () => {
 
       // Use Convex - reactive subscription will automatically update the list
       await convex.mutation(api.teachers.mutations.update, {
-        id: id as any,
+        id: id as Id<"teachers">,
         firstName: payload.firstName,
         surname: payload.surname,
         patronymic: payload.patronymic,
@@ -208,7 +209,7 @@ export const useTeacherStore = defineStore("teacher", () => {
 
       // Use Convex - the reactive subscription will handle updating the local state
       await convex.mutation(api.teachers.mutations.remove, {
-        id: id as any,
+        id: id as Id<"teachers">,
       });
       // Don't filter teachers.value - the reactive subscription will handle it
     } catch (e) {

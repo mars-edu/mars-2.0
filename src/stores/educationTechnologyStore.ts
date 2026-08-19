@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import type { Id } from "@convex/_generated/dataModel";
 import { withLoading } from "@/utils/storeAction";
 import type { EducationTechnology } from "@/types/education-technology";
 
@@ -78,7 +79,7 @@ export const useEducationTechnologyStore = defineStore(
     ) {
       return await withLoading(loading, error, async () => {
         const updated = await convex.mutation(api.educationTechnologies.mutations.update, {
-          id: id as any,
+          id: id as Id<"educationTechnologies">,
           name: data.name,
           shortName: data.shortName,
           academicHourMinutes: data.academicHourMinutes,
@@ -105,7 +106,7 @@ export const useEducationTechnologyStore = defineStore(
     async function deleteEducationTechnology(id: string) {
       return await withLoading(loading, error, async () => {
         await convex.mutation(api.educationTechnologies.mutations.remove, {
-          id: id as any,
+          id: id as Id<"educationTechnologies">,
         });
         error.value = null;
       }, "Failed to delete education technology");

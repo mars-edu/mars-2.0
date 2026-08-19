@@ -238,9 +238,9 @@ export const useMarksStore = defineStore(
         
         const journal = await convex.mutation(api.marks.mutations.initializeJournal, {
           calendarEventId: journalId,
-          disciplineId: disciplineId as any,
+          disciplineId: disciplineId as Id<"rupEntries">,
           groupName,
-          academicYearId: academicYear as any,
+          academicYearId: academicYear as Id<"academicYears">,
           semesterId: semester as Id<"academicYearSemesters">,
           studentIds: students,
         });

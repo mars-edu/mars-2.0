@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import type { Id } from "@convex/_generated/dataModel";
 import { withLoading } from "@/utils/storeAction";
 import type { Base } from "@/types/base";
 
@@ -88,7 +89,7 @@ export const useBaseStore = defineStore(
       return await withLoading(loading, error, async () => {
         // Use Convex - reactive subscription will automatically update the list
                 await convex.mutation(api.bases.mutations.update, {
-                  id: id as any,
+                  id: id as Id<"bases">,
                   value: baseData.value ? parseInt(baseData.value) : undefined,
                   name: baseData.text,
                 });
@@ -100,7 +101,7 @@ export const useBaseStore = defineStore(
     async function deleteBase(id: string) {
       return await withLoading(loading, error, async () => {
         await convex.mutation(api.bases.mutations.remove, {
-                  id: id as any,
+                  id: id as Id<"bases">,
                 });
                 error.value = null;
         }, "Failed to delete base");

@@ -79,7 +79,7 @@ export const useScheduledFinalControlStore = defineStore(
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.scheduledControls.mutations.createFinal, {
                   finalControlId: controlData.finalControlId,
-                  academicYearId: controlData.academicYearId as any,
+                  academicYearId: controlData.academicYearId as Id<"academicYears">,
                   shortName: controlData.shortName,
                   startDate: controlData.startDate,
                   endDate: controlData.endDate,
@@ -99,9 +99,9 @@ export const useScheduledFinalControlStore = defineStore(
       return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.scheduledControls.mutations.updateFinal, {
-                  id: id as any,
+                  id: id as Id<"scheduledFinalControls">,
                   finalControlId: controlData.finalControlId,
-                  academicYearId: controlData.academicYearId as any,
+                  academicYearId: controlData.academicYearId as Id<"academicYears">,
                   shortName: controlData.shortName,
                   startDate: controlData.startDate,
                   endDate: controlData.endDate,
@@ -116,7 +116,7 @@ export const useScheduledFinalControlStore = defineStore(
       return await withLoading(loading, error, async () => {
         // Use Convex - the reactive subscription will handle updating the local state
                 await convex.mutation(api.scheduledControls.mutations.removeFinal, {
-                  id: id as any,
+                  id: id as Id<"scheduledFinalControls">,
                 });
                 // Don't filter scheduledFinalControls.value - the reactive subscription will handle it
                 error.value = null;
@@ -147,8 +147,8 @@ export const useScheduledFinalControlStore = defineStore(
     ) {
       return await withLoading(loading, error, async () => {
         await convex.mutation(api.scheduledControls.mutations.copyFinalFromSemester, {
-          sourceSemesterId: sourceSemesterId as any,
-          targetSemesterId: targetSemesterId as any,
+          sourceSemesterId: sourceSemesterId as Id<"academicYearSemesters">,
+          targetSemesterId: targetSemesterId as Id<"academicYearSemesters">,
           targetAcademicYearId: targetAcademicYearId as any,
         });
         error.value = null;

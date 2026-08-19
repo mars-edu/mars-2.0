@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
+import type { Id } from "@convex/_generated/dataModel";
 import { withLoading } from "@/utils/storeAction";
 import type { Cabinet, AddCabinetPayload } from "@/types/cabinet";
 
@@ -67,7 +68,7 @@ export const useCabinetStore = defineStore(
     ) => {
       return await withLoading(loading, error, async () => {
         await convex.mutation(api.cabinets.mutations.update, {
-                  id: id as any,
+                  id: id as Id<"cabinets">,
                   name: payload.name,
                   capacity: payload.capacity,
                   type: payload.type,
@@ -80,7 +81,7 @@ export const useCabinetStore = defineStore(
     const deleteCabinet = async (id: string) => {
       return await withLoading(loading, error, async () => {
         await convex.mutation(api.cabinets.mutations.remove, {
-                  id: id as any,
+                  id: id as Id<"cabinets">,
                 });
         }, "Failed to delete cabinet");
     };

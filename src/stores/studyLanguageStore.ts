@@ -4,6 +4,7 @@ import { convex } from "@/lib/convexClient";
 import { api } from "@convex/_generated/api";
 import { useConvexQuery } from "convex-vue";
 import { ConvexError } from "convex/values";
+import type { Id } from "@convex/_generated/dataModel";
 import { withLoading } from "@/utils/storeAction";
 import type { StudyLanguage } from "@/types/study-language";
 import { DEFAULT_STUDY_LANGUAGE_CODE } from "@/types/study-language";
@@ -119,7 +120,7 @@ export const useStudyLanguageStore = defineStore(
     ) {
       return await withLoading(loading, error, async () => {
         const updated = await convex.mutation(api.studyLanguages.mutations.update, {
-          id: id as any,
+          id: id as Id<"studyLanguages">,
           code: data.code,
           name: data.name,
           shortName: data.shortName,
@@ -149,7 +150,7 @@ export const useStudyLanguageStore = defineStore(
       return await withLoading(loading, error, async () => {
         try {
           await convex.mutation(api.studyLanguages.mutations.remove, {
-            id: id as any,
+            id: id as Id<"studyLanguages">,
           });
         } catch (err) {
           rethrowDeleteError(err);
