@@ -1,5 +1,3 @@
-
-
 export interface DistributionEntry {
   id: string;
   academicYearId: string;
@@ -15,6 +13,12 @@ export interface DistributionEntry {
   controlLessonEnabled?: boolean;
 }
 
+export interface RupLanguageVariant {
+  language: string;
+  moduleIndex: string;
+  moduleName: string;
+  learningOutcome: string;
+}
 
 export interface RupEntry {
   id: string;
@@ -26,6 +30,10 @@ export interface RupEntry {
   moduleIndex: string;
   moduleName: string;
   learningOutcome: string;
+  /**
+   * Compiled list of all language variants for this group (P5 migration expand phase).
+   */
+  variants?: RupLanguageVariant[];
   totalCredits: string;
   totalHours: string;
   groupHours: string;

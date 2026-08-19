@@ -53,6 +53,7 @@ export const useRupEntryStore = defineStore(
         trainingPracticeHours: item.trainingPracticeHours,
         individualHours: item.individualHours,
         individualAdditionalHours: item.individualAdditionalHours ?? "",
+        variants: item.variants,
         position: item.position,
         distributionEntries: (item.distributionEntries || []).map((d: any) => ({
           id: d._id,
@@ -211,40 +212,6 @@ export const useRupEntryStore = defineStore(
         });
     });
 
-    function createEmptyRupEntry(
-      academicYearId: string,
-      specialtyIds: string[] = [],
-      baseClass: number = 9,
-      language: string = ""
-    ): RupEntry {
-      return {
-        id: crypto.randomUUID(),
-        specialtyIds,
-        academicYearId,
-        baseClass: [baseClass],
-        language,
-        groupId: undefined,
-        moduleIndex: "",
-        moduleName: "",
-        learningOutcome: "",
-        totalCredits: "",
-        totalHours: "",
-        groupHours: "",
-        theoreticalHours: "",
-        labPracticalHours: "",
-        field3Value: "",
-        srspHours: "",
-        srsHours: "",
-        trainingPracticeHours: "",
-        individualHours: "",
-        individualAdditionalHours: "",
-        distributionEntries: [],
-        position: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-    }
-
     async function addRupEntry(
       academicYearId: string,
       specialtyIds: string[],
@@ -307,111 +274,6 @@ export const useRupEntryStore = defineStore(
         }, "Failed to add RUP entry");
     }
 
-    async function addRupEntries(items: RupEntry[]) {
-      return await withLoading(loading, error, async () => {
-        // Create all items in Convex. `create` is the atomic single-entry
-        // mutation and has no distributionEntries arg, so per-semester rows
-        // are added afterwards via addDistribution (same pattern as the
-        // singular addRupEntry above) to avoid silently dropping them.
-                for (const item of items) {
-                  const id = await convex.mutation(api.rupEntries.mutations.create, {
-                    specialtyIds: item.specialtyIds,
-                    academicYearId: item.academicYearId,
-                    baseClass: item.baseClass ?? [9],
-                    language: item.language ?? "",
-                    groupId: item.groupId,
-                    moduleIndex: item.moduleIndex,
-                    moduleName: item.moduleName,
-                    learningOutcome: item.learningOutcome,
-                    totalCredits: item.totalCredits,
-                    totalHours: item.totalHours,
-                    groupHours: item.groupHours,
-                    theoreticalHours: item.theoreticalHours,
-                    labPracticalHours: item.labPracticalHours,
-                    field3Value: item.field3Value,
-                    srspHours: item.srspHours,
-                    srsHours: item.srsHours,
-                    trainingPracticeHours: item.trainingPracticeHours,
-                    individualHours: item.individualHours,
-                    individualAdditionalHours: item.individualAdditionalHours || "",
-                    position: item.position,
-                  });
-
-                  if (item.distributionEntries && item.distributionEntries.length > 0) {
-                    for (const dist of item.distributionEntries) {
-                      await convex.mutation(api.rupEntries.mutations.addDistribution, {
-                        rupEntryId: id,
-                        academicYearId: dist.academicYearId,
-                        semesterId: dist.semesterId as Id<"academicYearSemesters">,
-                        hours: dist.hours,
-                        srsHours: dist.srsHours,
-                        srspHours: dist.srspHours,
-                        individualHours: dist.individualHours,
-                        intermediateControlId: dist.intermediateControlId ?? undefined,
-                        finalControlId: dist.finalControlId ?? undefined,
-                        examEnabled: dist.examEnabled,
-                        creditEnabled: dist.creditEnabled,
-                        controlLessonEnabled: dist.controlLessonEnabled,
-                      });
-                    }
-                  }
-                }
-
-                // The reactive query will automatically update rupEntries
-                error.value = null;
-        }, "Failed to add RUP entries");
-    }
-
-    async function updateRupEntry(
-      id: string,
-      data: Partial<Omit<RupEntry, "id" | "createdAt" | "updatedAt">>
-    ) {
-      return await withLoading(loading, error, async () => {
-        // Use Convex - update parent item with distribution entries
-                const updated = await convex.mutation(api.rupEntries.mutations.updateWithDistributions, {
-                  id: id as Id<"rupEntries">,
-                  specialtyIds: data.specialtyIds,
-                  academicYearId: data.academicYearId,
-                  baseClass: data.baseClass,
-                  language: data.language,
-                  groupId: data.groupId,
-                  moduleIndex: data.moduleIndex,
-                  moduleName: data.moduleName,
-                  learningOutcome: data.learningOutcome,
-                  totalCredits: data.totalCredits,
-                  totalHours: data.totalHours,
-                  groupHours: data.groupHours,
-                  theoreticalHours: data.theoreticalHours,
-                  labPracticalHours: data.labPracticalHours,
-                  field3Value: data.field3Value,
-                  srspHours: data.srspHours,
-                  srsHours: data.srsHours,
-                  trainingPracticeHours: data.trainingPracticeHours,
-                  individualHours: data.individualHours,
-                  individualAdditionalHours: data.individualAdditionalHours,
-                  position: data.position,
-                  distributionEntries: (data.distributionEntries || []).map((d) => ({
-                    id: d.id,
-                    academicYearId: d.academicYearId,
-                    semesterId: d.semesterId as Id<"academicYearSemesters">,
-                    hours: d.hours,
-                    srsHours: d.srsHours,
-                    srspHours: d.srspHours,
-                    individualHours: d.individualHours,
-                    intermediateControlId: d.intermediateControlId,
-                    finalControlId: d.finalControlId,
-                    examEnabled: d.examEnabled,
-                    creditEnabled: d.creditEnabled,
-                    controlLessonEnabled: d.controlLessonEnabled,
-                  })),
-                });
-
-                // The reactive query will automatically update rupEntries with fresh data
-                error.value = null;
-                return updated;
-        }, "Failed to update RUP entry");
-    }
-
     async function updateRupEntryOrder(
       academicYearId: string,
       specialtyIds: string[],
@@ -451,28 +313,13 @@ export const useRupEntryStore = defineStore(
                     c.position >= insertionPosition
                 );
 
-                // Update positions in Convex
-                for (const item of itemsInContext) {
-                  await convex.mutation(api.rupEntries.mutations.update, {
-                    id: item.id as Id<"rupEntries">,
-                    specialtyIds: item.specialtyIds,
-                    academicYearId: item.academicYearId,
-                    moduleIndex: item.moduleIndex,
-                    moduleName: item.moduleName,
-                    learningOutcome: item.learningOutcome,
-                    totalCredits: item.totalCredits,
-                    totalHours: item.totalHours,
-                    groupHours: item.groupHours,
-                    theoreticalHours: item.theoreticalHours,
-                    labPracticalHours: item.labPracticalHours,
-                    field3Value: item.field3Value,
-                    srspHours: item.srspHours,
-                    srsHours: item.srsHours,
-                    trainingPracticeHours: item.trainingPracticeHours,
-                    individualHours: item.individualHours,
-                    individualAdditionalHours: item.individualAdditionalHours || "",
-                    position: item.position + 1,
-                  });
+                // Update positions in Convex using reorder
+                if (itemsInContext.length > 0) {
+                  const sortedContext = rupEntries.value
+                    .filter((c) => c.academicYearId === itemToDuplicate.academicYearId)
+                    .sort((a, b) => a.position - b.position);
+                  const orderedIds = sortedContext.map((c) => c.id as Id<"rupEntries">);
+                  await convex.mutation(api.rupEntries.mutations.reorder, { orderedIds });
                 }
 
                 // Create the duplicated item in Convex
@@ -524,53 +371,6 @@ export const useRupEntryStore = defineStore(
                 error.value = null;
                 return id;
         }, "Failed to duplicate RUP entry");
-    }
-
-    async function addRupEntryMultiLanguage(
-      academicYearId: string,
-      specialtyIds: string[],
-      languages: string[],
-      data?: Partial<
-        Omit<
-          RupEntry,
-          "id" | "createdAt" | "updatedAt" | "specialtyIds" | "academicYearId" | "language" | "groupId"
-        >
-      >
-    ) {
-      return await withLoading(loading, error, async () => {
-        const groupId = crypto.randomUUID();
-                const contextItems = getRupEntriesByContext.value(academicYearId, specialtyIds);
-                const ids: string[] = [];
-
-                for (let i = 0; i < languages.length; i++) {
-                  const id = await convex.mutation(api.rupEntries.mutations.create, {
-                    specialtyIds,
-                    academicYearId,
-                    baseClass: data?.baseClass ?? [9],
-                    language: languages[i],
-                    groupId,
-                    moduleIndex: data?.moduleIndex || "",
-                    moduleName: data?.moduleName || "",
-                    learningOutcome: data?.learningOutcome || "",
-                    totalCredits: data?.totalCredits || "",
-                    totalHours: data?.totalHours || "",
-                    groupHours: data?.groupHours || "",
-                    theoreticalHours: data?.theoreticalHours || "",
-                    labPracticalHours: data?.labPracticalHours || "",
-                    field3Value: data?.field3Value || "",
-                    srspHours: data?.srspHours || "",
-                    srsHours: data?.srsHours || "",
-                    trainingPracticeHours: data?.trainingPracticeHours || "",
-                    individualHours: data?.individualHours || "",
-                    individualAdditionalHours: data?.individualAdditionalHours || "",
-                    position: contextItems.length + i,
-                  });
-                  ids.push(id);
-                }
-
-                error.value = null;
-                return { groupId, ids };
-        }, "Failed to add multi-language RUP entry");
     }
 
     // Translate the server's RUP_ENTRY_HAS_REFERENCES ConvexError into a
@@ -654,13 +454,9 @@ export const useRupEntryStore = defineStore(
       getAllRupEntries,
       getAllModulesAndOutcomes,
       rupEntryOptions,
-      createEmptyRupEntry,
       addRupEntry,
-      addRupEntries,
-      updateRupEntry,
       updateRupEntryOrder,
       duplicateRupEntry,
-      addRupEntryMultiLanguage,
       saveRupEntryGroup,
       deleteRupEntryGroup,
       deleteRupEntry,

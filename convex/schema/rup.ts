@@ -14,6 +14,20 @@ export const rupTables = {
     moduleIndex: v.string(),
     moduleName: v.string(),
     learningOutcome: v.string(),
+    /**
+     * Target language-variant array (P5 migration expand phase).
+     * Dual-written by saveRupEntryGroup across all sibling rows in a group.
+     */
+    variants: v.optional(
+      v.array(
+        v.object({
+          language: v.string(),
+          moduleIndex: v.string(),
+          moduleName: v.string(),
+          learningOutcome: v.string(),
+        })
+      )
+    ),
     totalCredits: v.string(),
     totalHours: v.string(),
     groupHours: v.optional(v.string()),
