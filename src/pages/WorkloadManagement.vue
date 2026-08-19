@@ -1189,14 +1189,7 @@ async function downloadXlsxMatrix(matrix: (string | number)[][], sheetName: stri
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', filename);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  saveAs(blob, filename);
 }
 
 async function downloadWorkload(workload: SavedWorkload) {
