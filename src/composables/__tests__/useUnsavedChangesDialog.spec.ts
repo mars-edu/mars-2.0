@@ -26,8 +26,8 @@ const mockDOM = () => {
     querySelector: jest.fn((selector) => {
       if (selector === ".ucd-title") return { textContent: "Закрыть форму?" };
       if (selector === ".ucd-message") return { textContent: "Все несохраненные данные будут потеряны" };
-      if (selector === ".ucd-btn-confirm") return { click: () => listeners["confirm"]?.() };
-      if (selector === ".ucd-btn-cancel") return { click: () => listeners["cancel"]?.() };
+      if (selector === ".ucd-btn-confirm") return { click: () => listeners["confirm"]?.forEach((fn) => fn()) };
+      if (selector === ".ucd-btn-cancel") return { click: () => listeners["cancel"]?.forEach((fn) => fn()) };
       return null;
     }),
     querySelectorAll: jest.fn(() => elements),
