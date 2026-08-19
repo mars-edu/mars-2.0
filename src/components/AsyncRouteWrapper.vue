@@ -75,9 +75,15 @@ onErrorCaptured((error: any) => {
     errorMsg.includes("Importing a module script failed") ||
     errorMsg.includes("dynamically imported")
   ) {
-    console.warn("[AsyncRouteWrapper] Stale asset chunk detected from previous deployment, refreshing page...");
-    window.location.reload();
-    return false;
+    const key = "last_chunk_reload";
+    const last = parseInt(sessionStorage.getItem(key) || "0", 10);
+    const now = Date.now();
+    if (now - last > 10000) {
+      sessionStorage.setItem(key, String(now));
+      console.warn("[AsyncRouteWrapper] Stale asset chunk detected from previous deployment, reloading once...");
+      window.location.reload();
+      return false;
+    }
   }
   isError.value = true;
   if (isLoading.value) {
