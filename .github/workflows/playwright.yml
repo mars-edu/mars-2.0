@@ -68,7 +68,7 @@ jobs:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
       - name: Run Playwright tests
-        run: npm run test:e2e -- --shard=${{ matrix.shard }}/3 --reporter=blob
+        run: npm run test:e2e -- --project=chromium --shard=${{ matrix.shard }}/3 --reporter=blob
         env:
           CI: true
 

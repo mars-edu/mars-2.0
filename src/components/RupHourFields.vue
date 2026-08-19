@@ -36,7 +36,7 @@
       :id="'lab-practical-hours-'"
       :model-value="editedEntry.labPracticalHours"
       @update:model-value="(v: string) => update('labPracticalHours', v)"
-      label="Лабараторно-практических"
+      label="Лабораторно-практических"
       type="text" inputmode="numeric"
       placeholder="0"
     />
@@ -44,7 +44,7 @@
       :id="'field3-value-'"
       :model-value="editedEntry.field3Value"
       @update:model-value="(v: string) => update('field3Value', v)"
-      label="3"
+      label="Курсовое проектирование"
       type="text" inputmode="numeric"
       placeholder="0"
     />
