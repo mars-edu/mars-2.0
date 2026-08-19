@@ -208,3 +208,43 @@ export const backfillWorkloadSemesters = migrations.define({
     return changed ? { items } : undefined;
   },
 });
+
+/**
+ * Phase 5b migration: drop all 24 flat semester fields (`weeks1..6`,
+ * `hours1..6`, `hoursPerGroup1..6`, `groupCount1..6`) from every item in
+ * every workload document.
+ */
+export const dropFlatSemesterFields = migrations.define({
+  table: "workloads",
+  migrateOne: async (ctx, wl) => {
+    let changed = false;
+    const items = wl.items.map((item: any) => {
+      let hasFlat = false;
+      for (let i = 1; i <= MAX_LEGACY_SEMESTERS; i++) {
+        if (
+          item[`weeks${i}`] !== undefined ||
+          item[`hours${i}`] !== undefined ||
+          item[`hoursPerGroup${i}`] !== undefined ||
+          item[`groupCount${i}`] !== undefined
+        ) {
+          hasFlat = true;
+          break;
+        }
+      }
+      if (!hasFlat) return item;
+
+      const {
+        weeks1, weeks2, weeks3, weeks4, weeks5, weeks6,
+        hours1, hours2, hours3, hours4, hours5, hours6,
+        hoursPerGroup1, hoursPerGroup2, hoursPerGroup3, hoursPerGroup4, hoursPerGroup5, hoursPerGroup6,
+        groupCount1, groupCount2, groupCount3, groupCount4, groupCount5, groupCount6,
+        ...cleanItem
+      } = item;
+
+      changed = true;
+      return cleanItem;
+    });
+
+    return changed ? { items } : undefined;
+  },
+});

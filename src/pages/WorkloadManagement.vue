@@ -722,7 +722,6 @@ import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import { useSidebar } from "@/composables/useSidebar";
 import type { WorkloadItem, WorkloadSemesterEntry, SavedWorkload } from "@/types/workload";
-import { MAX_WORKLOAD_SEMESTERS } from "@convex/schema/workloadItem";
 import {
   formatHours,
   recalcWorkloadItem,
@@ -1043,7 +1042,7 @@ function getSpecialtyCodes(ids: string[]) {
 function recalculateItem(id: string) {
   const item = currentWorkloadItems.value.find(i => i.id === id);
   if (!item) return;
-  recalcWorkloadItem(item, semesterCount.value, yearSemesterRefs.value);
+  recalcWorkloadItem(item);
 }
 
 /**
@@ -1119,17 +1118,6 @@ function previewItems(items: WorkloadItem[]) {
 
 async function handleSaveWorkload() {
   if (!selectedTeacherId.value || currentWorkloadItems.value.length === 0) return;
-
-  // The workload item stores per-semester hours as flat numbered fields capped
-  // at MAX_WORKLOAD_SEMESTERS. A year with more semesters would emit extra keys
-  // the Convex validator rejects, failing the whole save — refuse with a clear
-  // message instead of a cryptic ArgumentValidationError.
-  if (semesterCount.value > MAX_WORKLOAD_SEMESTERS) {
-    f7.dialog.alert(
-      `Учебный год содержит ${semesterCount.value} семестров — сохранение поддерживает не более ${MAX_WORKLOAD_SEMESTERS}. Проверьте настройки семестров учебного года.`
-    );
-    return;
-  }
 
   const workload: SavedWorkload = {
     teacherId: selectedTeacherId.value,

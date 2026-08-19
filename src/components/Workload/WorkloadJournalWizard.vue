@@ -275,7 +275,7 @@ import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore
 import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { computeWeeklySlotHours } from "@/components/Calendar/scheduleHours";
-import { itemsNeedingJournals, semesterValue } from "@convex/workloads/lib";
+import { itemsNeedingJournals } from "@convex/workloads/lib";
 import { findSemesterEntry, hoursPerGroup } from "@/lib/workloadHours";
 import type { SavedWorkload, WorkloadItem } from "@/types/workload";
 import IconBookOpen from "~icons/lucide/book-open";
@@ -417,19 +417,8 @@ function selectSemester(id: string) {
     // (keyed by ordinal) are the dual-read fallback for rows not yet
     // migrated to `semesters[]`.
     const entry = findSemesterEntry(item, id);
-    const groupCount = entry
-      ? entry.groupCount || 1
-      : semesterNumber !== undefined
-        ? parseInt(semesterValue(item, semesterNumber, "groupCount")) || 1
-        : 1;
-    // Keep fractional precision — Math.round(25.5)=26 used to seed an
-    // unreachable strict-equality target that stagedHours (integer slot
-    // sums) could never match, blocking wizard 'finish' forever (#4).
-    const plannedHours = entry
-      ? hoursPerGroup(entry)
-      : semesterNumber !== undefined
-        ? parseFloat(semesterValue(item, semesterNumber, "hoursPerGroup")) || 0
-        : 0;
+    const groupCount = entry?.groupCount || 1;
+    const plannedHours = entry ? hoursPerGroup(entry) : 0;
     return {
       id: item.id, subjectId: item.subjectId,
       name: rup?.moduleName ?? item.description ?? "Дисциплина",

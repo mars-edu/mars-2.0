@@ -18,40 +18,14 @@ export interface WorkloadSemesterEntryLike {
 export interface WorkloadItemLike {
   id: string;
   subjectId: string;
-  course: string;
-  department: string;
-  studentCount: string;
-  weeks1?: string;
-  weeks2?: string;
-  weeks3?: string;
-  hours1?: string;
-  hours2?: string;
-  hours3?: string;
-  hoursPerGroup1?: string;
-  hoursPerGroup2?: string;
-  hoursPerGroup3?: string;
-  groupCount1?: string;
-  groupCount2?: string;
-  groupCount3?: string;
-  /** Target per-semester model (Phase 3 dual-read); see the plan. */
-  semesters?: WorkloadSemesterEntryLike[];
-  totalHours: number;
+  course?: string;
+  department?: string;
+  studentCount?: string;
+  semesters: WorkloadSemesterEntryLike[];
+  totalHours?: number;
   index?: string;
   description?: string;
   teacherName?: string;
-}
-
-export type SemesterNumber = 1 | 2 | 3;
-type SemesterField = "weeks" | "hours" | "hoursPerGroup" | "groupCount";
-
-/** Read a per-semester flat field (e.g. hoursPerGroup2) defaulting to "0". */
-export function semesterValue(
-  item: WorkloadItemLike,
-  semester: SemesterNumber,
-  base: SemesterField
-): string {
-  const key = `${base}${semester}` as keyof WorkloadItemLike;
-  return (item[key] as string | undefined) ?? "0";
 }
 
 /**
@@ -62,9 +36,7 @@ export function hoursPerGroup(e: WorkloadSemesterEntryLike): number {
 }
 
 /**
- * Find an item's `semesters[]` entry for a given semester id (undefined if
- * absent, e.g. a legacy row without an array yet, or a semester the item
- * simply has no hours in).
+ * Find an item's `semesters[]` entry for a given semester id.
  */
 export function semesterEntry(
   item: WorkloadItemLike,
@@ -76,29 +48,16 @@ export function semesterEntry(
 /**
  * Items that should produce journals for the given semester: real (non-`_ind`)
  * disciplines that carry either planned hours or a planned group count.
- *
- * Dual-read (Phase 3, dies in Phase 5): prefers `item.semesters` keyed by
- * `semesterId` when present; falls back to the legacy flat fields keyed by
- * ordinal for rows that haven't been migrated to the array yet.
  */
 export function itemsNeedingJournals(
   items: WorkloadItemLike[],
-  semesterId: string,
-  semesterNumber?: SemesterNumber
+  semesterId: string
 ): WorkloadItemLike[] {
   return items.filter((item) => {
     if (item.id.endsWith("_ind")) return false;
-
-    if (item.semesters && item.semesters.length > 0) {
-      const entry = semesterEntry(item, semesterId);
-      if (!entry) return false;
-      return hoursPerGroup(entry) > 0 || entry.groupCount > 0;
-    }
-
-    if (semesterNumber === undefined) return false;
-    const hours = parseFloat(semesterValue(item, semesterNumber, "hoursPerGroup")) || 0;
-    const groups = parseInt(semesterValue(item, semesterNumber, "groupCount")) || 0;
-    return hours > 0 || groups > 0;
+    const entry = semesterEntry(item, semesterId);
+    if (!entry) return false;
+    return hoursPerGroup(entry) > 0 || entry.groupCount > 0;
   });
 }
 

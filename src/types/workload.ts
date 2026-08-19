@@ -17,37 +17,7 @@ export interface WorkloadItem {
   department: string;
   course: string;
   studentCount: string;
-  weeks1?: string;
-  weeks2?: string;
-  weeks3?: string;
-  weeks4?: string;
-  weeks5?: string;
-  weeks6?: string;
-  hours1?: string;
-  hours2?: string;
-  hours3?: string;
-  hours4?: string;
-  hours5?: string;
-  hours6?: string;
-  hoursPerGroup1?: string;
-  hoursPerGroup2?: string;
-  hoursPerGroup3?: string;
-  hoursPerGroup4?: string;
-  hoursPerGroup5?: string;
-  hoursPerGroup6?: string;
-  groupCount1?: string;
-  groupCount2?: string;
-  groupCount3?: string;
-  groupCount4?: string;
-  groupCount5?: string;
-  groupCount6?: string;
-  /**
-   * Target per-semester model (Phase 3: dual-write alongside the flat
-   * fields above). Source of truth once present — see
-   * `recalcWorkloadItem` / `syncFlatFieldsFromSemesters` in
-   * `src/lib/workloadHours.ts`.
-   */
-  semesters?: WorkloadSemesterEntry[];
+  semesters: WorkloadSemesterEntry[];
   totalHours: number;
   teacherName?: string;
   index?: string;
@@ -69,9 +39,3 @@ export interface SavedWorkload {
   createdAt?: number;
   updatedAt?: number;
 }
-
-export type SemesterNumber = 1 | 2 | 3 | 4 | 5 | 6;
-export type FlatWeeksKey = `weeks${SemesterNumber}`;
-export type FlatHoursKey = `hours${SemesterNumber}`;
-export type FlatHoursPerGroupKey = `hoursPerGroup${SemesterNumber}`;
-export type FlatGroupCountKey = `groupCount${SemesterNumber}`;

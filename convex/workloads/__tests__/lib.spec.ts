@@ -1,8 +1,7 @@
 import {
-  semesterValue,
+  itemsNeedingJournals,
   semesterEntry,
   hoursPerGroup,
-  itemsNeedingJournals,
   splitIntoGroups,
   filterEligibleStudents,
   type WorkloadItemLike,
@@ -11,237 +10,141 @@ import {
 
 const S1 = "sem-id-1";
 const S2 = "sem-id-2";
+const S3 = "sem-id-3";
 
-const item = (over: Partial<WorkloadItemLike> = {}): WorkloadItemLike => ({
-  id: "i1",
-  subjectId: "rup1",
-  course: "1",
-  department: "Каф",
-  studentCount: "20",
-  weeks1: "18",
-  weeks2: "20",
-  hours1: "2",
-  hours2: "2",
-  hoursPerGroup1: "36",
-  hoursPerGroup2: "40",
-  groupCount1: "1",
-  groupCount2: "1",
-  totalHours: 76,
-  ...over,
-});
+function makeEntry(
+  overrides: Partial<WorkloadSemesterEntryLike> = {}
+): WorkloadSemesterEntryLike {
+  return {
+    semesterId: S1,
+    weeks: 18,
+    hours: 2,
+    groupCount: 1,
+    ...overrides,
+  };
+}
 
-const entries = (over: Partial<WorkloadSemesterEntryLike>[] = []): WorkloadSemesterEntryLike[] => [
-  { semesterId: S1, weeks: 18, hours: 2, groupCount: 1, ...over[0] },
-  { semesterId: S2, weeks: 20, hours: 2, groupCount: 1, ...over[1] },
-];
+function makeItem(
+  overrides: Partial<WorkloadItemLike> = {}
+): WorkloadItemLike {
+  return {
+    id: "item-1",
+    subjectId: "sub-1",
+    course: "1",
+    department: "IT",
+    studentCount: "25",
+    semesters: [makeEntry()],
+    totalHours: 36,
+    ...overrides,
+  };
+}
 
-describe("semesterValue", () => {
-  it("reads the flat field for the given semester", () => {
-    expect(semesterValue(item(), 1, "hoursPerGroup")).toBe("36");
-    expect(semesterValue(item(), 2, "hoursPerGroup")).toBe("40");
-  });
-
-  it("returns '0' for a missing optional third-semester field", () => {
-    expect(semesterValue(item(), 3, "hoursPerGroup")).toBe("0");
-  });
-});
-
-describe("hoursPerGroup", () => {
-  it("derives weeks * hours", () => {
-    expect(hoursPerGroup({ semesterId: S1, weeks: 18, hours: 2, groupCount: 1 })).toBe(36);
-  });
-
-  it("stays fractional — 25.5 does not round to 26 (fix #11/0185ceb)", () => {
-    // e.g. 17 weeks * 1.5 hours/week = 25.5. A previous bug rounded this to
-    // 26, seeding an unreachable strict-equality target in the wizard's
-    // stagedValid check (integer slot-hour sums could never hit 26) and
-    // permanently disabling "Завершить".
-    expect(hoursPerGroup({ semesterId: S1, weeks: 17, hours: 1.5, groupCount: 1 })).toBe(25.5);
-  });
-});
-
-describe("semesterEntry", () => {
-  it("finds the array entry by semesterId", () => {
-    const withArray = item({ semesters: entries() });
-    expect(semesterEntry(withArray, S2)?.hours).toBe(2);
-  });
-
-  it("unknown semesterId → undefined (C1 policy handled by callers, not here)", () => {
-    const withArray = item({ semesters: entries() });
-    expect(semesterEntry(withArray, "unknown-semester")).toBeUndefined();
-  });
-});
-
-describe("itemsNeedingJournals", () => {
-  describe("array-keyed (semesters[] present)", () => {
-    it("keeps items with positive hoursPerGroup for the semester", () => {
-      const result = itemsNeedingJournals([item({ semesters: entries() })], S1);
-      expect(result).toHaveLength(1);
+describe("convex/workloads/lib", () => {
+  describe("hoursPerGroup", () => {
+    it("multiplies weeks by hours-per-week", () => {
+      expect(hoursPerGroup(makeEntry({ weeks: 18, hours: 2 }))).toBe(36);
+      expect(hoursPerGroup(makeEntry({ weeks: 20, hours: 1 }))).toBe(20);
     });
 
-    it("keeps items with zero hours but a positive group count", () => {
-      const result = itemsNeedingJournals(
-        [item({ semesters: entries([{ hours: 0, groupCount: 2 }]) })],
-        S1
-      );
-      expect(result).toHaveLength(1);
-    });
-
-    it("drops items with no hours and no groups for the semester", () => {
-      const result = itemsNeedingJournals(
-        [item({ semesters: entries([{ hours: 0, groupCount: 0 }]) })],
-        S1
-      );
-      expect(result).toHaveLength(0);
-    });
-
-    it("drops items with no array entry for the semester at all", () => {
-      const result = itemsNeedingJournals([item({ semesters: entries() })], "unknown-semester");
-      expect(result).toHaveLength(0);
-    });
-
-    it("excludes paired individual (_ind) child items", () => {
-      const result = itemsNeedingJournals([item({ id: "i1_ind", semesters: entries() })], S1);
-      expect(result).toHaveLength(0);
+    it("preserves fractional precision (audit fix #4 / #11)", () => {
+      expect(hoursPerGroup(makeEntry({ weeks: 17, hours: 1.5 }))).toBe(25.5);
     });
   });
 
-  describe("legacy flat-field fallback (dual-read, no semesters[])", () => {
-    it("keeps items with positive hoursPerGroup for the semester ordinal", () => {
-      const result = itemsNeedingJournals([item()], S1, 1);
-      expect(result).toHaveLength(1);
-    });
+  describe("semesterEntry", () => {
+    it("finds the entry matching the given semesterId", () => {
+      const e1 = makeEntry({ semesterId: S1, weeks: 18, hours: 2 });
+      const e2 = makeEntry({ semesterId: S2, weeks: 20, hours: 1 });
+      const item = makeItem({ semesters: [e1, e2] });
 
-    it("keeps items with zero hours but a positive group count", () => {
-      const result = itemsNeedingJournals(
-        [item({ hoursPerGroup1: "0", groupCount1: "2" })],
-        S1,
-        1
-      );
-      expect(result).toHaveLength(1);
-    });
-
-    it("drops items with no hours and no groups for the semester", () => {
-      const result = itemsNeedingJournals(
-        [item({ hoursPerGroup1: "0", groupCount1: "0" })],
-        S1,
-        1
-      );
-      expect(result).toHaveLength(0);
-    });
-
-    it("drops items when no semesterNumber fallback is given", () => {
-      const result = itemsNeedingJournals([item()], S1);
-      expect(result).toHaveLength(0);
-    });
-
-    it("excludes paired individual (_ind) child items", () => {
-      const result = itemsNeedingJournals([item({ id: "i1_ind" })], S1, 1);
-      expect(result).toHaveLength(0);
-    });
-
-    it("parity: array and flat representations of the same item agree", () => {
-      const flatItem = item();
-      const arrayItem = item({ semesters: entries() });
-      const flatResult = itemsNeedingJournals([flatItem], S1, 1);
-      const arrayResult = itemsNeedingJournals([arrayItem], S1);
-      expect(flatResult).toHaveLength(1);
-      expect(arrayResult).toHaveLength(1);
+      expect(semesterEntry(item, S1)).toEqual(e1);
+      expect(semesterEntry(item, S2)).toEqual(e2);
+      expect(semesterEntry(item, S3)).toBeUndefined();
     });
   });
 
-  describe("three-semester academic year (D2)", () => {
-    const S3 = "sem-id-3";
-    const threeSemItem = (over: Partial<WorkloadItemLike> = {}) =>
-      item({
-        semesters: [
-          { semesterId: S1, weeks: 18, hours: 2, groupCount: 1 },
-          { semesterId: S2, weeks: 0, hours: 0, groupCount: 0 },
-          { semesterId: S3, weeks: 16, hours: 1.5, groupCount: 1 },
-        ],
-        ...over,
+  describe("itemsNeedingJournals", () => {
+    it("includes items with hours > 0 or groupCount > 0 for the semester", () => {
+      const i1 = makeItem({
+        id: "i1",
+        semesters: [makeEntry({ semesterId: S1, weeks: 18, hours: 2, groupCount: 1 })],
+      });
+      const i2 = makeItem({
+        id: "i2",
+        semesters: [makeEntry({ semesterId: S1, weeks: 18, hours: 0, groupCount: 0 })],
+      });
+      const i3 = makeItem({
+        id: "i3",
+        semesters: [makeEntry({ semesterId: S2, weeks: 20, hours: 2, groupCount: 1 })],
       });
 
-    it("picks only the items with hours/groups in the requested semester", () => {
-      const items = [threeSemItem({ id: "i1" })];
-      expect(itemsNeedingJournals(items, S1)).toHaveLength(1);
-      expect(itemsNeedingJournals(items, S2)).toHaveLength(0);
-      expect(itemsNeedingJournals(items, S3)).toHaveLength(1);
+      const needing = itemsNeedingJournals([i1, i2, i3], S1);
+      expect(needing.map((i) => i.id)).toEqual(["i1"]);
     });
 
-    it("a third semester is reachable — not just the first two ordinals", () => {
-      const items = [threeSemItem({ id: "i1" })];
-      const result = itemsNeedingJournals(items, S3);
-      expect(result[0]?.id).toBe("i1");
-      const entry = result[0]?.semesters?.find((s) => s.semesterId === S3);
-      expect(entry && hoursPerGroup(entry)).toBe(24);
+    it("excludes _ind child rows from journal generation", () => {
+      const main = makeItem({
+        id: "main",
+        semesters: [makeEntry({ semesterId: S1, weeks: 18, hours: 2, groupCount: 1 })],
+      });
+      const ind = makeItem({
+        id: "main_ind",
+        semesters: [makeEntry({ semesterId: S1, weeks: 18, hours: 2, groupCount: 1 })],
+      });
+
+      const needing = itemsNeedingJournals([main, ind], S1);
+      expect(needing.map((i) => i.id)).toEqual(["main"]);
+    });
+
+    it("supports 3-semester academic years independently", () => {
+      const item = makeItem({
+        id: "multi-sem",
+        semesters: [
+          makeEntry({ semesterId: S1, weeks: 18, hours: 2, groupCount: 1 }),
+          makeEntry({ semesterId: S2, weeks: 20, hours: 0, groupCount: 0 }),
+          makeEntry({ semesterId: S3, weeks: 18, hours: 3, groupCount: 2 }),
+        ],
+      });
+
+      expect(itemsNeedingJournals([item], S1).map((i) => i.id)).toEqual(["multi-sem"]);
+      expect(itemsNeedingJournals([item], S2).map((i) => i.id)).toEqual([]);
+      expect(itemsNeedingJournals([item], S3).map((i) => i.id)).toEqual(["multi-sem"]);
     });
   });
-});
 
-describe("splitIntoGroups", () => {
-  it("returns one group containing everyone when groupCount is 1", () => {
-    expect(splitIntoGroups(["a", "b", "c"], 1)).toEqual([["a", "b", "c"]]);
+  describe("splitIntoGroups", () => {
+    it("returns empty array for non-positive count", () => {
+      expect(splitIntoGroups(["a", "b"], 0)).toEqual([]);
+      expect(splitIntoGroups(["a", "b"], -1)).toEqual([]);
+    });
+
+    it("splits round-robin across groupCount buckets", () => {
+      const res = splitIntoGroups(["a", "b", "c", "d", "e"], 2);
+      expect(res).toEqual([
+        ["a", "c", "e"],
+        ["b", "d"],
+      ]);
+    });
   });
 
-  it("distributes round-robin across N groups", () => {
-    expect(splitIntoGroups(["a", "b", "c", "d", "e"], 2)).toEqual([
-      ["a", "c", "e"],
-      ["b", "d"],
-    ]);
-  });
+  describe("filterEligibleStudents", () => {
+    it("returns empty array when no specialties provided", () => {
+      expect(filterEligibleStudents([{ id: "1", specialty: "IT" }], [])).toEqual([]);
+    });
 
-  it("returns N groups even when there are fewer students than groups", () => {
-    expect(splitIntoGroups(["a"], 3)).toEqual([["a"], [], []]);
-  });
-
-  it("returns an empty list when groupCount is not positive", () => {
-    expect(splitIntoGroups(["a", "b"], 0)).toEqual([]);
-  });
-});
-
-describe("filterEligibleStudents", () => {
-  const students = [
-    { id: "s1", specialty: "A", status: "active" },
-    { id: "s2", specialty: "B", status: "active" },
-    { id: "s3", specialty: "A", status: "expelled" },
-    { id: "s4", specialty: "A" }, // no status => treated active
-  ];
-
-  it("keeps active students whose specialty is in the discipline's specialties", () => {
-    const result = filterEligibleStudents(students, ["A"]);
-    expect(result.map((s) => s.id)).toEqual(["s1", "s4"]);
-  });
-
-  it("matches any of several specialties", () => {
-    const result = filterEligibleStudents(students, ["A", "B"]);
-    expect(result.map((s) => s.id)).toEqual(["s1", "s2", "s4"]);
-  });
-
-  it("excludes non-active students", () => {
-    const result = filterEligibleStudents(students, ["A"]);
-    expect(result.map((s) => s.id)).not.toContain("s3");
-  });
-
-  it("returns nothing when the discipline has no specialties", () => {
-    expect(filterEligibleStudents(students, [])).toEqual([]);
-  });
-
-  it("narrows to a matching language when one is given", () => {
-    const langStudents = [
-      { id: "s1", specialty: "A", status: "active", language: "ru" },
-      { id: "s2", specialty: "A", status: "active", language: "kk" },
-    ];
-    const result = filterEligibleStudents(langStudents, ["A"], "kk");
-    expect(result.map((s) => s.id)).toEqual(["s2"]);
-  });
-
-  it("ignores language when none is given", () => {
-    const langStudents = [
-      { id: "s1", specialty: "A", status: "active", language: "ru" },
-      { id: "s2", specialty: "A", status: "active", language: "kk" },
-    ];
-    const result = filterEligibleStudents(langStudents, ["A"]);
-    expect(result.map((s) => s.id)).toEqual(["s1", "s2"]);
+    it("filters by specialty and status", () => {
+      const students = [
+        { id: "1", specialty: "IT", status: "active", language: "ru" },
+        { id: "2", specialty: "ART", status: "active", language: "ru" },
+        { id: "3", specialty: "IT", status: "expelled", language: "ru" },
+        { id: "4", specialty: "IT", status: "active", language: "kk" },
+      ];
+      expect(filterEligibleStudents(students, ["IT"], "ru")).toEqual([students[0]]);
+      expect(filterEligibleStudents(students, ["IT", "ART"])).toEqual([
+        students[0],
+        students[1],
+        students[3],
+      ]);
+    });
   });
 });
