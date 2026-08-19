@@ -13,7 +13,15 @@
 // (dual-write) so not-yet-deployed readers and a Phase-3 rollback both see
 // consistent numbers. See MIGRATION-workload-array-plan-v4.md §4 Фаза 3.
 
-import type { WorkloadItem, WorkloadSemesterEntry } from "@/types/workload";
+import type {
+  WorkloadItem,
+  WorkloadSemesterEntry,
+  SemesterNumber,
+  FlatWeeksKey,
+  FlatHoursKey,
+  FlatHoursPerGroupKey,
+  FlatGroupCountKey,
+} from "@/types/workload";
 import type { RupEntry } from "@/types/rup-entry";
 import { DEFAULT_SEMESTER_WEEKS } from "@/types/academic-year-semester";
 
@@ -55,11 +63,12 @@ export function hoursPerGroup(e: WorkloadSemesterEntry): number {
  */
 export function syncFlatFieldsFromSemesters(item: WorkloadItem, refs: YearSemesterRef[]): void {
   for (const ref of refs) {
+    const num = ref.number as SemesterNumber;
     const e = findSemesterEntry(item, ref.semesterId);
-    item[`weeks${ref.number}`] = String(e?.weeks ?? 0);
-    item[`hours${ref.number}`] = String(e?.hours ?? 0);
-    item[`hoursPerGroup${ref.number}`] = String(e ? hoursPerGroup(e) : 0);
-    item[`groupCount${ref.number}`] = String(e?.groupCount ?? 0);
+    (item as Record<FlatWeeksKey, string | undefined>)[`weeks${num}`] = String(e?.weeks ?? 0);
+    (item as Record<FlatHoursKey, string | undefined>)[`hours${num}`] = String(e?.hours ?? 0);
+    (item as Record<FlatHoursPerGroupKey, string | undefined>)[`hoursPerGroup${num}`] = String(e ? hoursPerGroup(e) : 0);
+    (item as Record<FlatGroupCountKey, string | undefined>)[`groupCount${num}`] = String(e?.groupCount ?? 0);
   }
 }
 
@@ -105,12 +114,13 @@ export function recalcWorkloadItem(
 
   let total = 0;
   for (let i = 1; i <= semesterCount; i++) {
-    const weeks = parseFloat((item[`weeks${i}`] as string) || "0");
-    const hours = parseFloat((item[`hours${i}`] as string) || "0");
-    const groupCount = parseFloat((item[`groupCount${i}`] as string) || "0");
+    const num = i as SemesterNumber;
+    const weeks = parseFloat(((item as Record<FlatWeeksKey, string | undefined>)[`weeks${num}`] as string) || "0");
+    const hours = parseFloat(((item as Record<FlatHoursKey, string | undefined>)[`hours${num}`] as string) || "0");
+    const groupCount = parseFloat(((item as Record<FlatGroupCountKey, string | undefined>)[`groupCount${num}`] as string) || "0");
 
     const hpg = weeks * hours;
-    item[`hoursPerGroup${i}`] = hpg.toString();
+    (item as Record<FlatHoursPerGroupKey, string | undefined>)[`hoursPerGroup${num}`] = hpg.toString();
     total += hpg * groupCount;
   }
 

@@ -54,7 +54,6 @@ export interface WorkloadItem {
   description?: string;
   language?: string;
   specialtyIds?: string[];
-  [key: string]: string | string[] | number | WorkloadSemesterEntry[] | undefined;
 }
 
 export interface SavedWorkload {
@@ -70,3 +69,9 @@ export interface SavedWorkload {
   createdAt?: number;
   updatedAt?: number;
 }
+
+export type SemesterNumber = 1 | 2 | 3 | 4 | 5 | 6;
+export type FlatWeeksKey = `weeks${SemesterNumber}`;
+export type FlatHoursKey = `hours${SemesterNumber}`;
+export type FlatHoursPerGroupKey = `hoursPerGroup${SemesterNumber}`;
+export type FlatGroupCountKey = `groupCount${SemesterNumber}`;
