@@ -24,6 +24,18 @@ export const getUser = query({
         )
       ),
       avatar: v.optional(v.string()),
+      theme: v.optional(
+        v.union(
+          v.literal("light"),
+          v.literal("dark"),
+          v.literal("lavanda"),
+          v.literal("coral"),
+          v.literal("graphite")
+        )
+      ),
+      locale: v.optional(
+        v.union(v.literal("ru"), v.literal("kk"), v.literal("en"))
+      ),
       phone: v.optional(v.string()),
       office: v.optional(v.string()),
       department: v.optional(v.string()),
@@ -65,25 +77,14 @@ export const getUserByUsername = query({
           v.literal("PARENT")
         )
       ),
-      avatar: v.optional(v.string()),
-      theme: v.optional(v.union(v.literal("light"), v.literal("dark"), v.literal("lavanda"), v.literal("coral"), v.literal("graphite"))),
-      locale: v.optional(v.union(v.literal("ru"), v.literal("kk"), v.literal("en"))),
-      phone: v.optional(v.string()),
-      office: v.optional(v.string()),
-      department: v.optional(v.string()),
-      degree: v.optional(v.string()),
-      createdAt: v.string(),
-      updatedAt: v.string(),
     }),
     v.null()
   ),
   handler: async (ctx, args) => {
-    const user = await ctx.db
+    return await ctx.db
       .query("users")
-      .withIndex("by_username", (q) => q.eq("username", args.username))
-      .unique();
-
-    return user;
+      .withIndex("by_username", (q) => q.eq("username", args.username.trim()))
+      .first();
   },
 });
 
@@ -94,12 +95,12 @@ export const isUsernameAvailable = query({
   args: { username: v.string() },
   returns: v.boolean(),
   handler: async (ctx, args) => {
-    const existing = await ctx.db
+    const existingUser = await ctx.db
       .query("users")
-      .withIndex("by_username", (q) => q.eq("username", args.username))
-      .unique();
+      .withIndex("by_username", (q) => q.eq("username", args.username.trim()))
+      .first();
 
-    return !existing;
+    return !existingUser;
   },
 });
 
@@ -110,24 +111,57 @@ export const isEmailAvailable = query({
   args: { email: v.string() },
   returns: v.boolean(),
   handler: async (ctx, args) => {
-    const existing = await ctx.db
+    const existingUser = await ctx.db
       .query("users")
-      .withIndex("by_email", (q) => q.eq("email", args.email))
-      .unique();
+      .withIndex("by_email", (q) => q.eq("email", args.email.trim()))
+      .first();
 
-    return !existing;
+    return !existingUser;
   },
 });
 
 /**
- * List all users (admin only)
+ * Check if username is available (excluding a specific user)
  */
-export const listUsers = query({
-  args: {},
-  handler: async (ctx) => {
-    const users = await ctx.db.query("users").collect();
+export const isUsernameAvailableForUser = query({
+  args: {
+    username: v.string(),
+    userId: v.id("users"),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) => q.eq("username", args.username.trim()))
+      .first();
 
-    // Return users without password hashes
-    return users.map(({ passwordHash, ...user }) => user);
+    if (!existingUser) {
+      return true;
+    }
+
+    return existingUser._id === args.userId;
+  },
+});
+
+/**
+ * Check if email is available (excluding a specific user)
+ */
+export const isEmailAvailableForUser = query({
+  args: {
+    email: v.string(),
+    userId: v.id("users"),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.email.trim()))
+      .first();
+
+    if (!existingUser) {
+      return true;
+    }
+
+    return existingUser._id === args.userId;
   },
 });

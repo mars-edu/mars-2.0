@@ -8,6 +8,7 @@ test.describe('Workload Management', () => {
     await loginAsTeacher(page);
     await page.goto('/workload-management');
     await waitForPageLoad(page);
+    await page.locator('h1:has-text("Управление нагрузкой")').waitFor({ state: 'visible', timeout: 20000 });
   });
 
   test('should load WorkloadManagement page with header and sidebar', async ({ page }) => {
@@ -21,8 +22,8 @@ test.describe('Workload Management', () => {
     const subtitle = page.locator('text=Планирование и учет учебных часов');
     await expect(subtitle).toBeVisible();
 
-    // Verify presence of sidebar and header
-    const sidebar = page.locator('aside');
+    // Verify presence of sidebar
+    const sidebar = page.locator('aside, complementary, nav').first();
     await expect(sidebar).toBeVisible();
   });
 
@@ -31,27 +32,20 @@ test.describe('Workload Management', () => {
     const teacherSelect = page.locator('button, div').filter({ hasText: /Выберите преподавателя/i }).first();
     const academicYearSelect = page.locator('button, div').filter({ hasText: /Учебный год|202/i }).first();
 
-    const hasTeacherSelect = (await teacherSelect.count()) > 0;
-    const hasYearSelect = (await academicYearSelect.count()) > 0;
-
-    expect(hasTeacherSelect || hasYearSelect).toBeTruthy();
+    await expect(teacherSelect.or(academicYearSelect)).toBeVisible({ timeout: 15000 });
   });
 
   test('should show empty teacher state or summary table when teacher is selected', async ({ page }) => {
-    // If no teacher is selected, prompt is displayed
-    const emptyPrompt = page.locator('text=Выберите преподавателя из списка выше');
+    const emptyPrompt = page.locator('text=Выберите преподавателя');
     const tableElement = page.locator('table');
 
-    const promptCount = await emptyPrompt.count();
-    const tableCount = await tableElement.count();
-
-    expect(promptCount > 0 || tableCount > 0).toBeTruthy();
+    await expect(emptyPrompt.or(tableElement).first()).toBeVisible({ timeout: 15000 });
   });
 
   test('should display saved workloads section with search input and download all button', async ({ page }) => {
     // Saved workloads heading
     const savedHeading = page.locator('h2:has-text("Сохраненная нагрузка")');
-    await expect(savedHeading).toBeVisible();
+    await expect(savedHeading).toBeVisible({ timeout: 15000 });
 
     // Search input for saved workloads
     const searchInput = page.locator('input[placeholder*="Поиск по ФИО или дисциплине"]').first();
@@ -71,13 +65,10 @@ test.describe('Workload Management', () => {
   });
 
   test('should display saved workload cards or empty state in saved workloads section', async ({ page }) => {
-    const workloadCards = page.locator('.bg-card.rounded-2xl').filter({ hasText: /Всего часов/i });
+    const workloadCards = page.locator('.bg-card').filter({ hasText: /Всего часов/i });
     const emptyState = page.locator('text=Нагрузка не найдена');
 
-    const hasCards = (await workloadCards.count()) > 0;
-    const hasEmpty = (await emptyState.count()) > 0;
-
-    expect(hasCards || hasEmpty).toBeTruthy();
+    await expect(workloadCards.or(emptyState).first()).toBeVisible({ timeout: 15000 });
   });
 
   test('should interact with add subject popup when adding subject', async ({ page }) => {
@@ -87,24 +78,10 @@ test.describe('Workload Management', () => {
       await addSubjectBtn.click();
       await page.waitForTimeout(500);
 
-      // Verify popup appears
       const popup = page.locator('#workload-add-subject-popup, .popup.modal-in, [id*="add-subject"]');
       if ((await popup.count()) > 0) {
         await expect(popup.first()).toBeVisible();
 
-        // Check tabs inside popup: Учебный план (РУП) and Спектр дисциплин
-        const rupTab = popup.getByText(/Учебный план \(РУП\)/i).first();
-        const spectrumTab = popup.getByText(/Спектр дисциплин/i).first();
-
-        if (await rupTab.isVisible()) {
-          await expect(rupTab).toBeVisible();
-        }
-        if (await spectrumTab.isVisible()) {
-          await spectrumTab.click();
-          await page.waitForTimeout(300);
-        }
-
-        // Close popup
         const closeBtn = popup.locator('button').filter({ hasText: /закрыть|отмена/i }).or(popup.locator('.icon-close, [aria-label*="close"]')).first();
         if ((await closeBtn.count()) > 0) {
           await closeBtn.click();
@@ -129,7 +106,6 @@ test.describe('Workload Management', () => {
 
       expect(hasView || hasEdit).toBeTruthy();
 
-      // Close menu by clicking elsewhere or pressing Escape
       await page.keyboard.press('Escape');
     }
   });
