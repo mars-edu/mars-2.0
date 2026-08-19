@@ -508,3 +508,37 @@ export const setUserPassword = action({
     };
   },
 });
+
+/**
+ * Internal mutation to assign roles to a user
+ */
+export const assignUserRoles = internalMutation({
+  args: {
+    username: v.string(),
+    roles: v.array(
+      v.union(
+        v.literal("ADMIN"),
+        v.literal("TEACHER"),
+        v.literal("STUDENT"),
+        v.literal("PARENT")
+      )
+    ),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("username"), args.username.trim()))
+      .first();
+    if (!user) {
+      throw new ConvexError({ code: "user_not_found" });
+    }
+    await ctx.db.patch(user._id, {
+      roles: args.roles,
+    });
+    return {
+      success: true,
+      userId: user._id,
+      roles: args.roles,
+    };
+  },
+});
