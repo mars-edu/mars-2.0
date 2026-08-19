@@ -21,17 +21,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Cache APT packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+            /var/lib/apt/lists
+          key: apt-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            apt-${{ runner.os }}-
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       - name: Build paraglide (i18n)
-        run: npm run build:paraglide
+        run: bun run build:paraglide
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
@@ -50,7 +65,7 @@ jobs:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
       - name: Build frontend for production preview
-        run: npm run build
+        run: bun run build
         env:
           NODE_ENV: production
           NO_COLOR: "1"
@@ -96,8 +111,13 @@ jobs:
           node-version: 22.18.0
           cache: 'npm'
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       - name: Download blob reports
         uses: actions/download-artifact@v4

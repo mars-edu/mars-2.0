@@ -42,18 +42,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Cache APT packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+            /var/lib/apt/lists
+          key: apt-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            apt-${{ runner.os }}-
+
       - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       # ── 4. Build paraglide i18n ───────────────────────────────────────────
       - name: Build paraglide (i18n)
-        run: npm run build:paraglide
+        run: bun run build:paraglide
 
       # ── 5. Deploy Convex backend ──────────────────────────────────────────
       - name: Deploy Convex backend
@@ -63,11 +78,11 @@ jobs:
 
       # ── 6. Gate: type check ───────────────────────────────────────────────
       - name: Type check (tsc)
-        run: npm run tsc
+        run: bun run tsc
 
       # ── 7. Build frontend ─────────────────────────────────────────────────
       - name: Build frontend
-        run: npm run build
+        run: bun run build
         env:
           NODE_ENV: production
           NO_COLOR: "1"
