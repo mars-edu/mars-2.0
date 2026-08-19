@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
+
 jobs:
   test:
     timeout-minutes: 15
@@ -20,16 +23,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Cache APT packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            /var/cache/apt/archives
-            /var/lib/apt/lists
-          key: apt-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            apt-${{ runner.os }}-
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
