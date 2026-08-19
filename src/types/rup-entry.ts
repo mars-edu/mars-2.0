@@ -33,7 +33,7 @@ export interface RupEntry {
   /**
    * Compiled list of all language variants for this group (P5 migration expand phase).
    */
-  variants?: RupLanguageVariant[];
+  variants: RupLanguageVariant[];
   totalCredits: string;
   totalHours: string;
   groupHours: string;

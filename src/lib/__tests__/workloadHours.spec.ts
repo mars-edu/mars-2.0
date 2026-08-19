@@ -78,6 +78,7 @@ function makeRup(overrides: Partial<RupEntry> = {}): RupEntry {
     trainingPracticeHours: "0",
     individualHours: "0",
     individualAdditionalHours: "0",
+    variants: [{ language: "ru", moduleIndex: "ООД 8", moduleName: "Информатика", learningOutcome: "Уметь писать код" }],
     distributionEntries: [makeDist({ semesterId: S1, hours: "36" }), makeDist({ semesterId: S2, hours: "40" })],
     position: 0,
     createdAt: new Date(),

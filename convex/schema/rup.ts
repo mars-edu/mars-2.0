@@ -3,7 +3,7 @@ import { v } from "convex/values";
 
 export const rupTables = {
   /**
-   * RUP entries - curriculum modules with learning outcomes
+   * RUP entries - curriculum modules with learning outcomes and embedded language variants
    */
   rupEntries: defineTable({
     specialtyIds: v.array(v.string()),
@@ -15,18 +15,15 @@ export const rupTables = {
     moduleName: v.string(),
     learningOutcome: v.string(),
     /**
-     * Target language-variant array (P5 migration expand phase).
-     * Dual-written by saveRupEntryGroup across all sibling rows in a group.
+     * Target language-variant array (P5 migration).
      */
-    variants: v.optional(
-      v.array(
-        v.object({
-          language: v.string(),
-          moduleIndex: v.string(),
-          moduleName: v.string(),
-          learningOutcome: v.string(),
-        })
-      )
+    variants: v.array(
+      v.object({
+        language: v.string(),
+        moduleIndex: v.string(),
+        moduleName: v.string(),
+        learningOutcome: v.string(),
+      })
     ),
     totalCredits: v.string(),
     totalHours: v.string(),
