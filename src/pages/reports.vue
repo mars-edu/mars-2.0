@@ -300,6 +300,8 @@ import { useSpecialtyStore } from "@/stores/specialtyStore";
 import { useUserStore } from "@/stores/userStore";
 import { useJournalStore } from "@/stores/journalStore";
 import { useMarksStore } from "@/stores/marksStore";
+import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermediateControlStore";
+import dayjs from "dayjs";
 import {
   exportTeacherWorkloadViaConvex,
   type WorkloadExportParams,
@@ -359,6 +361,7 @@ const studentStore = useStudentStore();
 const specialtyStore = useSpecialtyStore();
 const journalStore = useJournalStore();
 const marksStore = useMarksStore();
+const scheduledIntermediateControlStore = useScheduledIntermediateControlStore();
 
 const selectedTeacherId = ref("");
 const selectedAcademicYearId = ref("");
@@ -423,6 +426,19 @@ const periodOptions = computed(() => {
       value: semester.id,
       text: reports_semester_period({ number: semester.semesterNumber }),
     });
+
+    const rkControls = scheduledIntermediateControlStore
+      .getScheduledIntermediateControlsBySemester(semester.id)
+      .sort((a, b) => a.startDate.localeCompare(b.startDate));
+
+    for (const rk of rkControls) {
+      const startFmt = dayjs(rk.startDate).format("DD.MM");
+      const endFmt = dayjs(rk.endDate).format("DD.MM");
+      options.push({
+        value: `rk:${semester.id}:${rk.id}`,
+        text: `  ↳ ${semester.semesterNumber} сем. — ${rk.shortName} (${startFmt} - ${endFmt})`,
+      });
+    }
   });
 
   return options;
@@ -529,15 +545,7 @@ async function generateWorkloadReport() {
     let filterStartDate: Date | undefined;
     let filterEndDate: Date | undefined;
 
-    if (selectedPeriod.value !== "full_year") {
-      const semester = availableSemesters.value.find(
-        (s) => s.id === selectedPeriod.value
-      );
-      if (semester) {
-        filterStartDate = new Date(semester.startDate);
-        filterEndDate = new Date(semester.endDate);
-      }
-    } else {
+    if (selectedPeriod.value === "full_year") {
       // full_year: bound the window to the SELECTED academic year's span, else
       // generateWorkloadSummary sums events from ALL academic years (Form-2 bug).
       const sems = availableSemesters.value;
@@ -552,6 +560,27 @@ async function generateWorkloadReport() {
         // Fallback: academic year Sep 1 (startYear) → Aug 31 (endYear).
         filterStartDate = new Date(academicYear.startYear, 8, 1);
         filterEndDate = new Date(academicYear.endYear, 7, 31);
+      }
+    } else if (selectedPeriod.value.startsWith("rk:")) {
+      const [, semesterId, rkId] = selectedPeriod.value.split(":");
+      const rk = scheduledIntermediateControlStore.getScheduledIntermediateControlById(rkId);
+      if (rk) {
+        filterStartDate = new Date(rk.startDate);
+        filterEndDate = new Date(rk.endDate);
+      } else {
+        const semester = availableSemesters.value.find((s) => s.id === semesterId);
+        if (semester) {
+          filterStartDate = new Date(semester.startDate);
+          filterEndDate = new Date(semester.endDate);
+        }
+      }
+    } else {
+      const semester = availableSemesters.value.find(
+        (s) => s.id === selectedPeriod.value
+      );
+      if (semester) {
+        filterStartDate = new Date(semester.startDate);
+        filterEndDate = new Date(semester.endDate);
       }
     }
 
@@ -621,7 +650,14 @@ async function generateWorkloadReport() {
     };
 
     let periodForDisplay = reports_period_display_full();
-    if (selectedPeriod.value !== "full_year") {
+    if (selectedPeriod.value.startsWith("rk:")) {
+      const [, semesterId, rkId] = selectedPeriod.value.split(":");
+      const semester = availableSemesters.value.find((s) => s.id === semesterId);
+      const rk = scheduledIntermediateControlStore.getScheduledIntermediateControlById(rkId);
+      const semNum = semester?.semesterNumber ?? 1;
+      const rkLabel = rk?.shortName ?? "РК";
+      periodForDisplay = `${semNum} сем. (${rkLabel})`;
+    } else if (selectedPeriod.value !== "full_year") {
       const semester = availableSemesters.value.find(
         (s) => s.id === selectedPeriod.value
       );
@@ -650,7 +686,14 @@ async function downloadReport() {
       : academicYears.value.find((y) => y.isActive);
 
   let periodForFilename = reports_period_filename_full();
-  if (selectedPeriod.value !== "full_year") {
+  if (selectedPeriod.value.startsWith("rk:")) {
+    const [, semesterId, rkId] = selectedPeriod.value.split(":");
+    const semester = availableSemesters.value.find((s) => s.id === semesterId);
+    const rk = scheduledIntermediateControlStore.getScheduledIntermediateControlById(rkId);
+    const semNum = semester?.semesterNumber ?? 1;
+    const rkLabel = rk?.shortName ?? "РК";
+    periodForFilename = `${semNum}_сем_${rkLabel}`;
+  } else if (selectedPeriod.value !== "full_year") {
     const semester = availableSemesters.value.find(
       (s) => s.id === selectedPeriod.value
     );
