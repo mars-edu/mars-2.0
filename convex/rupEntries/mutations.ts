@@ -64,41 +64,6 @@ function mergeRefs(
 }
 
 /**
- * Create a new RUP entry
- */
-export const create = mutation({
-  args: {
-    specialtyIds: v.array(v.string()),
-    academicYearId: v.string(),
-    baseClass: v.optional(v.array(v.number())),
-    language: v.optional(v.string()),
-    groupId: v.optional(v.string()),
-    moduleIndex: v.string(),
-    moduleName: v.string(),
-    learningOutcome: v.string(),
-    totalCredits: v.string(),
-    totalHours: v.string(),
-    groupHours: v.optional(v.string()),
-    theoreticalHours: v.string(),
-    labPracticalHours: v.string(),
-    field3Value: v.string(),
-    srspHours: v.string(),
-    srsHours: v.string(),
-    trainingPracticeHours: v.string(),
-    individualHours: v.string(),
-    individualAdditionalHours: v.optional(v.string()),
-    position: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const timestamps = createTimestamps();
-    return await ctx.db.insert("rupEntries", {
-      ...args,
-      ...timestamps,
-    });
-  },
-});
-
-/**
  * Delete a single RUP entry. BLOCKS if other tables reference it.
  */
 export const remove = mutation({
@@ -185,70 +150,54 @@ export const reorder = mutation({
 });
 
 /**
- * Add a distribution entry to a RUP entry
+ * Atomic duplication of a RUP entry and its semester distributions.
  */
-export const addDistribution = mutation({
-  args: {
-    rupEntryId: v.id("rupEntries"),
-    academicYearId: v.string(),
-    semesterId: v.id("academicYearSemesters"),
-    hours: v.string(),
-    srsHours: v.optional(v.string()),
-    srspHours: v.optional(v.string()),
-    individualHours: v.optional(v.string()),
-    intermediateControlId: v.optional(v.string()),
-    finalControlId: v.optional(v.string()),
-    examEnabled: v.optional(v.boolean()),
-    creditEnabled: v.optional(v.boolean()),
-    controlLessonEnabled: v.optional(v.boolean()),
-  },
+export const duplicate = mutation({
+  args: { id: v.id("rupEntries") },
   handler: async (ctx, args) => {
-    const timestamps = createTimestamps();
-    return await ctx.db.insert("distributionEntries", {
-      ...args,
-      ...timestamps,
-    });
-  },
-});
+    const original = await ctx.db.get(args.id);
+    if (!original) {
+      throw new ConvexError({ code: "NOT_FOUND", message: "Запись РУП не найдена" });
+    }
 
-/**
- * Update a distribution entry
- */
-export const updateDistribution = mutation({
-  args: {
-    id: v.id("distributionEntries"),
-    hours: v.optional(v.string()),
-    srsHours: v.optional(v.string()),
-    srspHours: v.optional(v.string()),
-    individualHours: v.optional(v.string()),
-    intermediateControlId: v.optional(v.union(v.string(), v.null())),
-    finalControlId: v.optional(v.union(v.string(), v.null())),
-    examEnabled: v.optional(v.boolean()),
-    creditEnabled: v.optional(v.boolean()),
-    controlLessonEnabled: v.optional(v.boolean()),
-  },
-  handler: async (ctx, args) => {
-    const { id, ...updates } = args;
-    const cleanUpdates = Object.fromEntries(
-      Object.entries(updates).filter(([_, v]) => v !== undefined)
-    );
+    const insertionPosition = original.position + 1;
 
-    await ctx.db.patch(id, {
-      ...cleanUpdates,
+    // Shift positions of items that come after in the same academic year
+    const itemsInYear = await ctx.db
+      .query("rupEntries")
+      .withIndex("by_academicYear", (q) => q.eq("academicYearId", original.academicYearId))
+      .collect();
+
+    for (const item of itemsInYear) {
+      if (item.position >= insertionPosition) {
+        await ctx.db.patch(item._id, { position: item.position + 1 });
+      }
+    }
+
+    const { _id, _creationTime, ...copyFields } = original;
+
+    // Create standalone duplicate (no groupId)
+    const newId = await ctx.db.insert("rupEntries", {
+      ...copyFields,
+      groupId: undefined,
+      position: insertionPosition,
     });
 
-    return id;
-  },
-});
+    // Duplicate distribution entries
+    const dists = await ctx.db
+      .query("distributionEntries")
+      .withIndex("by_rupEntry", (q) => q.eq("rupEntryId", original._id))
+      .collect();
 
-/**
- * Remove a distribution entry
- */
-export const removeDistribution = mutation({
-  args: { id: v.id("distributionEntries") },
-  handler: async (ctx, args) => {
-    await ctx.db.delete(args.id);
-    return args.id;
+    for (const dist of dists) {
+      const { _id: _dId, _creationTime: _dCt, ...dCopy } = dist;
+      await ctx.db.insert("distributionEntries", {
+        ...dCopy,
+        rupEntryId: newId,
+      });
+    }
+
+    return newId;
   },
 });
 
