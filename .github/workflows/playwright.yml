@@ -36,10 +36,10 @@ jobs:
           bun-version: latest
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       - name: Build paraglide (i18n)
-        run: npm run build:paraglide
+        run: bun run build:paraglide
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
@@ -59,7 +59,7 @@ jobs:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
       - name: Build frontend for production preview
-        run: npm run build
+        run: bun run build
         env:
           NODE_ENV: production
           NO_COLOR: "1"
@@ -111,7 +111,7 @@ jobs:
           bun-version: latest
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       - name: Download blob reports
         uses: actions/download-artifact@v4
