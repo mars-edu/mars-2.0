@@ -97,20 +97,6 @@ export const useSemesterStore = defineStore(
         }, "Failed to delete semester");
     }
 
-    async function loadFromBackend() {
-      return await withLoading(loading, error, async () => {
-        const data = await convex.query(api.semesterDefinitions.queries.list, {});
-                semesters.value = data.map((sem) => ({
-                  id: sem._id,
-                  shortName: sem.shortName,
-                  fullName: sem.fullName,
-                  number: sem.number,
-                  createdAt: new Date(sem.createdAt),
-                  updatedAt: new Date(sem.updatedAt),
-                }));
-                error.value = null;
-        }, "Operation failed");
-    }
 
     function clearError() {
       error.value = null;
@@ -134,7 +120,6 @@ export const useSemesterStore = defineStore(
       deleteSemester,
       clearError,
       reset,
-      loadFromBackend,
     };
   },
   {

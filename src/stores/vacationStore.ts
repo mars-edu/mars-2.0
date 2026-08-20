@@ -107,23 +107,6 @@ export const useVacationStore = defineStore(
         }, "Failed to delete vacation");
     }
 
-    async function loadFromBackend() {
-      return await withLoading(loading, error, async () => {
-        const data = await convex.query(api.vacations.queries.list, {});
-                vacations.value = data.map((v) => ({
-                  id: v._id,
-                  shortName: v.shortName,
-                  fullName: v.fullName,
-                  startDate: v.startDate,
-                  endDate: v.endDate,
-                  academicYearId: v.academicYearId,
-                  semesterId: v.semesterId,
-                  createdAt: new Date(v.createdAt),
-                  updatedAt: new Date(v.updatedAt),
-                }));
-                error.value = null;
-        }, "Operation failed");
-    }
 
     async function copyFromSemester(
       sourceSemesterId: string,
@@ -202,7 +185,6 @@ export const useVacationStore = defineStore(
       reset,
       migrateOldVacationData,
       handleLegacyVacationData,
-      loadFromBackend,
     };
   },
   {

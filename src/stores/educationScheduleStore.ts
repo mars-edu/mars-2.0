@@ -162,23 +162,6 @@ export const useEducationScheduleStore = defineStore(
       }
     }
 
-    async function loadFromBackend() {
-      return await withLoading(loading, error, async () => {
-        const data = await convex.query(api.educationSchedules.queries.list, {});
-                schedules.value = data.map((s) => ({
-                  id: s._id,
-                  lessonNumber: s.order,
-                  startTime: s.startTime,
-                  endTime: s.endTime,
-                  academicYearId: s.academicYearId,
-                  semesterId: s.semesterId,
-                  createdAt: new Date(s.createdAt),
-                  updatedAt: new Date(s.updatedAt),
-                }));
-                sortSchedules();
-                error.value = null;
-        }, "Operation failed");
-    }
 
     async function copySchedulesFromYear(
       sourceAcademicYearId: string,
@@ -239,7 +222,6 @@ export const useEducationScheduleStore = defineStore(
       copySchedulesFromSemester,
       clearError,
       reset,
-      loadFromBackend,
     };
   },
   {

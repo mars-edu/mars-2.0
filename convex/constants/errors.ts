@@ -1,0 +1,43 @@
+/**
+ * Canonical typed error codes shared across Convex backend and frontend.
+ */
+export const ERROR_CODES = {
+  // Common errors
+  NOT_FOUND: "NOT_FOUND",
+  UNAUTHORIZED: "UNAUTHORIZED",
+  FORBIDDEN: "FORBIDDEN",
+  INVALID_STATE: "INVALID_STATE",
+  ALREADY_EXISTS: "ALREADY_EXISTS",
+  SERVER_ERROR: "server_error",
+
+  // Auth
+  AUTH_INVALID_CREDENTIALS: "auth_invalid_credentials",
+  AUTH_USERNAME_TAKEN: "auth_username_taken",
+  AUTH_EMAIL_TAKEN: "auth_email_taken",
+  USER_NOT_FOUND: "user_not_found",
+
+  // Academic & Semesters
+  SEMESTER_HAS_REFERENCES: "SEMESTER_HAS_REFERENCES",
+  MISSING_SEMESTER: "MISSING_SEMESTER",
+
+  // Technologies & Languages
+  CANNOT_DELETE_DEFAULT_TECH: "CANNOT_DELETE_DEFAULT_TECH",
+  TECH_HAS_REFERENCES: "TECH_HAS_REFERENCES",
+  CANNOT_DELETE_DEFAULT_LANGUAGE: "CANNOT_DELETE_DEFAULT_LANGUAGE",
+  STUDY_LANGUAGE_IN_USE: "STUDY_LANGUAGE_IN_USE",
+  STUDY_LANGUAGE_CODE_TAKEN: "STUDY_LANGUAGE_CODE_TAKEN",
+
+  // Workloads & Journals
+  WORKLOAD_HAS_JOURNALS: "WORKLOAD_HAS_JOURNALS",
+  INDIVIDUAL_JOURNALS_LOCKED: "INDIVIDUAL_JOURNALS_LOCKED",
+
+  // Announcements
+  ANNOUNCEMENT_NOT_FOUND: "announcement_not_found",
+  ANNOUNCEMENT_CATEGORY_REQUIRED: "announcement_category_required",
+
+  // RBAC & Permissions
+  PERMISSION_NOT_DEFINED: "PERMISSION_NOT_DEFINED",
+  PERMISSION_EXPIRED: "PERMISSION_EXPIRED_OR_NOT_YET_ACTIVE",
+} as const;
+
+export type ErrorCode = typeof ERROR_CODES[keyof typeof ERROR_CODES];

@@ -182,30 +182,10 @@ export const useAcademicYearStore = defineStore(
                   id: id as Id<"academicYears">,
                 });
                 // Refresh data from backend
-                await loadFromBackend();
                 error.value = null;
         }, "Failed to set active academic year");
     }
 
-    async function loadFromBackend() {
-      return await withLoading(loading, error, async () => {
-        const data = await convex.query(api.academicYears.queries.list, {});
-                academicYears.value = data.map((year) => ({
-                  id: year._id,
-                  name: year.name,
-                  startYear: year.startYear,
-                  endYear: year.endYear,
-                  isActive: year.isActive,
-                  academicHourMinutes: year.academicHourMinutes,
-                  technologyId: year.technologyId,
-                  startDate: year.startDate,
-                  endDate: year.endDate,
-                  createdAt: new Date(year.createdAt),
-                  updatedAt: new Date(year.updatedAt),
-                }));
-                error.value = null;
-        }, "Operation failed");
-    }
 
     function clearError() {
       error.value = null;
@@ -232,7 +212,6 @@ export const useAcademicYearStore = defineStore(
       setActiveAcademicYear,
       clearError,
       reset,
-      loadFromBackend,
     };
   },
   {

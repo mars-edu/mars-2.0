@@ -123,22 +123,6 @@ export const useScheduledFinalControlStore = defineStore(
         }, "Failed to delete scheduled final control");
     }
 
-    async function loadFromBackend() {
-      return await withLoading(loading, error, async () => {
-        const data = await convex.query(api.scheduledControls.queries.listFinal, {});
-                scheduledFinalControls.value = data.map((c) => ({
-                  id: c._id,
-                  academicYearId: c.academicYearId,
-                  finalControlId: c.finalControlId,
-                  shortName: c.shortName,
-                  startDate: c.startDate,
-                  endDate: c.endDate,
-                  createdAt: new Date(c.createdAt),
-                  updatedAt: new Date(c.updatedAt),
-                }));
-                error.value = null;
-        }, "Operation failed");
-    }
 
     async function copyFromSemester(
       sourceSemesterId: string,
@@ -180,7 +164,6 @@ export const useScheduledFinalControlStore = defineStore(
       clearError,
       copyFromSemester,
       reset,
-      loadFromBackend,
     };
   },
   {

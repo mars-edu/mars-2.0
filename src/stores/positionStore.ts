@@ -91,22 +91,6 @@ export const usePositionStore = defineStore("position", () => {
     }
   }
 
-  async function loadFromBackend() {
-    isLoading.value = true;
-    try {
-      const data = await convex.query(api.positions.queries.list, {});
-      positions.value = data.map((p) => ({
-        id: p._id,
-        name: p.name,
-      }));
-      error.value = null;
-    } catch (err) {
-      console.error("[positionStore] Failed to load from Convex:", err);
-      error.value = "Failed to load positions";
-    } finally {
-      isLoading.value = false;
-    }
-  }
 
   const clearError = () => {
     error.value = null;
@@ -127,6 +111,5 @@ export const usePositionStore = defineStore("position", () => {
     deletePosition,
     clearError,
     reset,
-    loadFromBackend,
   };
 });

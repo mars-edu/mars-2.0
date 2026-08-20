@@ -107,19 +107,6 @@ export const useBaseStore = defineStore(
         }, "Failed to delete base");
     }
 
-    async function loadFromBackend() {
-      return await withLoading(loading, error, async () => {
-        const data = await convex.query(api.bases.queries.list, {});
-                bases.value = data.map((b) => ({
-                  id: b._id,
-                  value: b.value.toString(),
-                  text: b.name,
-                  createdAt: new Date(b.createdAt),
-                  updatedAt: new Date(b.updatedAt),
-                }));
-                error.value = null;
-        }, "Operation failed");
-    }
 
     function clearError() {
       error.value = null;
@@ -143,7 +130,6 @@ export const useBaseStore = defineStore(
       deleteBase,
       clearError,
       reset,
-      loadFromBackend,
     };
   },
   {

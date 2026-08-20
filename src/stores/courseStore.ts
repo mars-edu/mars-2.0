@@ -103,21 +103,6 @@ export const useCourseStore = defineStore(
         }, "Failed to delete course");
     }
 
-    async function loadFromBackend() {
-      return await withLoading(loading, error, async () => {
-        const data = await convex.query(api.courses.queries.list, {});
-                courses.value = data.map((c) => ({
-                  id: c._id,
-                  number: c.number,
-                  admissionYear: c.name || "",
-                  semesters: c.semesters || [],
-                  createdAt: new Date(c.createdAt),
-                  updatedAt: new Date(c.updatedAt),
-                }));
-                sortCourses();
-                error.value = null;
-        }, "Operation failed");
-    }
 
     function clearError() {
       error.value = null;
@@ -142,7 +127,6 @@ export const useCourseStore = defineStore(
       deleteCourse,
       clearError,
       reset,
-      loadFromBackend,
     };
   },
   {

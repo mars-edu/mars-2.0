@@ -243,19 +243,6 @@ export const useStudentStore = defineStore("student", () => {
     }
   };
 
-  const loadFromBackend = async () => {
-    isLoading.value = true;
-    try {
-      const data = await convex.query(api.students.queries.list, {});
-      students.value = data.map(normalizeStudent);
-      error.value = null;
-    } catch (err) {
-      console.error("[studentStore] Failed to load from Convex:", err);
-      error.value = "Failed to load students";
-    } finally {
-      isLoading.value = false;
-    }
-  };
 
   const clearError = () => {
     error.value = null;
@@ -324,7 +311,6 @@ export const useStudentStore = defineStore("student", () => {
     getCourseByStudentId,
     getStudentFullName,
     getStudentById,
-    loadFromBackend,
   };
 }, {
   persist: true,
