@@ -1,6 +1,7 @@
 import { paginationOptsValidator } from "convex/server";
 import { query } from "../functions";
 import { v } from "convex/values";
+import { formatFullName } from "../lib/formatters";
 
 /**
  * Get all students
@@ -8,7 +9,11 @@ import { v } from "convex/values";
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("students").collect();
+    const students = await ctx.db.query("students").collect();
+    return students.map((s) => ({
+      ...s,
+      fullName: formatFullName(s),
+    }));
   },
 });
 
@@ -46,114 +51,78 @@ export const listPaginated = query({
         })
         .collect();
 
-      if (args.base !== undefined) {
+      // base and academicYearId aren't filterFields, apply post-search
+      if (args.base) {
         results = results.filter((s) => s.base === args.base);
       }
       if (args.academicYearId) {
-        results = results.filter((s) => s.academicYearId === args.academicYearId);
+        results = results.filter(
+          (s) => s.academicYearId === args.academicYearId
+        );
       }
     } else {
       // No search term — use regular index-based query
-      let query = ctx.db.query("students").order("asc");
-
-      if (args.specialty) {
-        query = query.filter((q) =>
-          q.eq(q.field("specialty"), args.specialty)
-        );
+      let query;
+      if (args.specialty && args.academicYearId) {
+        query = ctx.db
+          .query("students")
+          .withIndex("by_specialty_academicYear", (q) =>
+            q
+              .eq("specialty", args.specialty!)
+              .eq("academicYearId", args.academicYearId!)
+          );
+      } else if (args.specialty) {
+        query = ctx.db
+          .query("students")
+          .withIndex("by_specialty", (q) => q.eq("specialty", args.specialty!));
+      } else if (args.academicYearId) {
+        query = ctx.db
+          .query("students")
+          .withIndex("by_academicYear", (q) =>
+            q.eq("academicYearId", args.academicYearId!)
+          );
+      } else {
+        query = ctx.db.query("students").order("asc");
       }
+
       if (args.language) {
         query = query.filter((q) => q.eq(q.field("language"), args.language));
       }
       if (args.gender) {
         query = query.filter((q) => q.eq(q.field("gender"), args.gender));
       }
-      if (args.base !== undefined) {
+      if (args.base) {
         query = query.filter((q) => q.eq(q.field("base"), args.base));
-      }
-      if (args.academicYearId) {
-        query = query.filter((q) =>
-          q.eq(q.field("academicYearId"), args.academicYearId)
-        );
       }
       results = await query.collect();
     }
 
-    // Course filter requires joining with academicYears (always post-query)
-    if (args.course !== undefined && args.activeStartYear && args.activeStartYear > 0) {
-      const academicYears = await ctx.db.query("academicYears").collect();
-      const ayMap = new Map(academicYears.map(ay => [ay._id, ay]));
-      results = results.filter((s) => {
-        const studentAy = s.academicYearId ? ayMap.get(s.academicYearId as any) : undefined;
-        if (!studentAy) return false;
-        const course = args.activeStartYear! - studentAy.startYear + 1;
-        return course === args.course;
+    // Filter by calculated course if requested
+    if (args.course !== undefined && args.activeStartYear !== undefined) {
+      const allYears = await ctx.db.query("academicYears").collect();
+      const yearMap = new Map(allYears.map((y) => [y._id as string, y.startYear]));
+
+      results = results.filter((student) => {
+        if (!student.academicYearId) return false;
+        const studentStartYear = yearMap.get(student.academicYearId);
+        if (!studentStartYear) return false;
+        const diff = args.activeStartYear! - studentStartYear + 1;
+        const calculatedCourse = Math.max(0, diff);
+        return calculatedCourse === args.course;
       });
     }
 
     const totalCount = results.length;
     const start = (args.page - 1) * args.pageSize;
-    const items = results.slice(start, start + args.pageSize);
+    const items = results.slice(start, start + args.pageSize).map((s) => ({
+      ...s,
+      fullName: formatFullName(s),
+    }));
 
     return {
       items,
       totalCount,
     };
-  },
-});
-
-/**
- * Get student by ID
- */
-export const getById = query({
-  args: { id: v.id("students") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
-  },
-});
-
-/**
- * Get students by specialty
- */
-export const getBySpecialty = query({
-  args: { specialty: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("students")
-      .withIndex("by_specialty", (q) => q.eq("specialty", args.specialty))
-      .collect();
-  },
-});
-
-/**
- * Get students by academic year
- */
-export const getByAcademicYear = query({
-  args: { academicYearId: v.id("academicYears") },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("students")
-      .withIndex("by_academicYear", (q) =>
-        q.eq("academicYearId", args.academicYearId)
-      )
-      .collect();
-  },
-});
-
-/**
- * Get students by specialty and academic year
- */
-export const getBySpecialtyAndAcademicYear = query({
-  args: {
-    specialty: v.string(),
-    academicYearId: v.id("academicYears"),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("students")
-      .withIndex("by_specialty_academicYear", (q) =>
-        q.eq("specialty", args.specialty).eq("academicYearId", args.academicYearId)
-      )
-      .collect();
   },
 });
 
@@ -164,47 +133,66 @@ export const search = query({
   args: { searchTerm: v.string() },
   handler: async (ctx, args) => {
     if (!args.searchTerm.trim()) return [];
-    return await ctx.db
+    const students = await ctx.db
       .query("students")
       .withSearchIndex("search_by_name", (q) =>
         q.search("searchName", args.searchTerm)
       )
       .collect();
+    return students.map((s) => ({
+      ...s,
+      fullName: formatFullName(s),
+    }));
   },
 });
 
 /**
- * Get filtered students
+ * Get student by ID
  */
-export const getFiltered = query({
-  args: {
-    specialty: v.optional(v.string()),
-    language: v.optional(v.string()),
-    gender: v.optional(v.string()),
-    base: v.optional(v.number()),
-    academicYearId: v.optional(v.string()),
-  },
+export const getById = query({
+  args: { id: v.id("students") },
   handler: async (ctx, args) => {
-    let students = await ctx.db.query("students").collect();
+    const student = await ctx.db.get(args.id);
+    if (!student) return null;
+    return {
+      ...student,
+      fullName: formatFullName(student),
+    };
+  },
+});
 
-    if (args.specialty) {
-      students = students.filter((s) => s.specialty === args.specialty);
-    }
-    if (args.language) {
-      students = students.filter((s) => s.language === args.language);
-    }
-    if (args.gender) {
-      students = students.filter((s) => s.gender === args.gender);
-    }
-    if (args.base !== undefined) {
-      students = students.filter((s) => s.base === args.base);
-    }
-    if (args.academicYearId) {
-      students = students.filter(
-        (s) => s.academicYearId === args.academicYearId
-      );
-    }
+/**
+ * Get students by academic year ID
+ */
+export const getByAcademicYearId = query({
+  args: { academicYearId: v.id("academicYears") },
+  handler: async (ctx, args) => {
+    const students = await ctx.db
+      .query("students")
+      .withIndex("by_academicYear", (q) =>
+        q.eq("academicYearId", args.academicYearId)
+      )
+      .collect();
+    return students.map((s) => ({
+      ...s,
+      fullName: formatFullName(s),
+    }));
+  },
+});
 
-    return students;
+/**
+ * Get students by specialty
+ */
+export const getBySpecialty = query({
+  args: { specialty: v.string() },
+  handler: async (ctx, args) => {
+    const students = await ctx.db
+      .query("students")
+      .withIndex("by_specialty", (q) => q.eq("specialty", args.specialty))
+      .collect();
+    return students.map((s) => ({
+      ...s,
+      fullName: formatFullName(s),
+    }));
   },
 });

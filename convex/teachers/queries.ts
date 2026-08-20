@@ -1,5 +1,6 @@
 import { query } from "../functions";
 import { v } from "convex/values";
+import { formatFullName } from "../lib/formatters";
 
 /**
  * Get all teachers
@@ -7,7 +8,11 @@ import { v } from "convex/values";
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("teachers").collect();
+    const teachers = await ctx.db.query("teachers").collect();
+    return teachers.map((t) => ({
+      ...t,
+      fullName: formatFullName(t),
+    }));
   },
 });
 
@@ -17,7 +22,12 @@ export const list = query({
 export const getById = query({
   args: { id: v.id("teachers") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+    const teacher = await ctx.db.get(args.id);
+    if (!teacher) return null;
+    return {
+      ...teacher,
+      fullName: formatFullName(teacher),
+    };
   },
 });
 
@@ -27,10 +37,15 @@ export const getById = query({
 export const getByUserId = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const teacher = await ctx.db
       .query("teachers")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .unique();
+    if (!teacher) return null;
+    return {
+      ...teacher,
+      fullName: formatFullName(teacher),
+    };
   },
 });
 
@@ -40,10 +55,14 @@ export const getByUserId = query({
 export const getByPosition = query({
   args: { position: v.string() },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const teachers = await ctx.db
       .query("teachers")
       .withIndex("by_position", (q) => q.eq("position", args.position))
       .collect();
+    return teachers.map((t) => ({
+      ...t,
+      fullName: formatFullName(t),
+    }));
   },
 });
 
@@ -54,12 +73,16 @@ export const search = query({
   args: { searchTerm: v.string() },
   handler: async (ctx, args) => {
     if (!args.searchTerm.trim()) return [];
-    return await ctx.db
+    const teachers = await ctx.db
       .query("teachers")
       .withSearchIndex("search_by_name", (q) =>
         q.search("searchName", args.searchTerm)
       )
       .collect();
+    return teachers.map((t) => ({
+      ...t,
+      fullName: formatFullName(t),
+    }));
   },
 });
 
@@ -113,7 +136,10 @@ export const listPaginated = query({
 
     const totalCount = results.length;
     const start = (args.page - 1) * args.pageSize;
-    const items = results.slice(start, start + args.pageSize);
+    const items = results.slice(start, start + args.pageSize).map((t) => ({
+      ...t,
+      fullName: formatFullName(t),
+    }));
 
     return {
       items,
