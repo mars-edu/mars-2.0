@@ -75,5 +75,14 @@
   "color_gray": "Серый",
   "protocol_period_end": "г.",
   "common_no": "Нет",
-  "common_delete": "Удалить"
+  "common_delete": "Удалить",
+  "error_not_found": "Запрашиваемый ресурс не найден",
+  "error_unauthorized": "У вас нет прав для выполнения этого действия",
+  "error_forbidden": "Доступ запрещен",
+  "error_invalid_state": "Операция не может быть выполнена в текущем состоянии",
+  "error_already_exists": "Такая запись уже существует",
+  "error_cannot_delete_default_language": "Нельзя удалить язык по умолчанию — сначала назначьте другой язык по умолчанию",
+  "error_study_language_in_use": "Язык используется и не может быть удален",
+  "error_semester_has_references": "Семестр используется связанными записями",
+  "error_title": "Ошибка"
 }
