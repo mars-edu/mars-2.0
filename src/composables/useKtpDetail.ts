@@ -7,10 +7,10 @@ import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { getEventDays } from "@/utils/eventDate";
 import { DATE_UI_FORMAT } from "@/constants/calendar";
 import {
-  parseEducationalScheduleViaConvex,
-  exportKtpToExcelViaConvex,
-} from "@/services/convex-excel-export";
-import { parseKtpDocxFile } from "@/services/docx-ktp-parser";
+  parseKtpFile,
+  exportKtpDetailsToExcel,
+} from "@/services/ktpDocumentParser";
+import { notify } from "@/lib/notify";
 import { useKtpPlannedHours } from "@/composables/useKtpPlannedHours";
 import type { KtpDetail } from "@/types/ktp";
 import type { CalendarEvent } from "@/types/calendar";
@@ -129,39 +129,14 @@ export function useKtpDetail(
 
     f7.preloader.show();
     try {
-      // Template columns: № занятия, Тема, Часы, Тип занятий, Домашнее задание, Примечание
-      const dataRows = ktpDetails.value.map((item) => [
-        item.position,
-        item.theme,
-        item.totalHours ?? null,
-        null, // Тип занятий (lesson type) - not available in KTP details
-        item.homework ?? null,
-        item.notes ?? null,
-      ]);
-
-      const templatePath = "/rup_templates/Шаблон КТП Марса.xlsx";
-      await exportKtpToExcelViaConvex(
-        dataRows,
-        templatePath,
+      await exportKtpDetailsToExcel(
+        ktpDetails.value,
         learningOutcome.value
       );
-
-      f7.toast
-        .create({
-          text: "РУП успешно скачан",
-          closeTimeout: 3000,
-          cssClass: "color-green",
-        })
-        .open();
+      notify.success("РУП успешно скачан");
     } catch (error) {
       console.error("Error downloading RUP:", error);
-      f7.toast
-        .create({
-          text: `Ошибка: ${(error as Error).message}`,
-          closeTimeout: 5000,
-          cssClass: "color-red",
-        })
-        .open();
+      notify.error(`Ошибка: ${(error as Error).message}`);
     } finally {
       f7.preloader.hide();
     }
@@ -193,18 +168,7 @@ export function useKtpDetail(
         isImporting.value = true;
         ktpStore.error = null;
 
-        const isDocx =
-          file.name.toLowerCase().endsWith(".docx") ||
-          file.type ===
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-
-        const parseResult = isDocx
-          ? await parseKtpDocxFile(file)
-          : await parseEducationalScheduleViaConvex(file);
-
-        if (!parseResult.lessons.length) {
-          throw new Error("В файле не найдено ни одного урока для импорта");
-        }
+        const parseResult = await parseKtpFile(file);
 
         const importResult = await ktpStore.bulkImportKtpDetails(
           ktpId.value,
@@ -212,14 +176,7 @@ export function useKtpDetail(
         );
 
         if (importResult.success) {
-          f7.toast
-            .create({
-              text: `Успешно импортировано ${importResult.imported} уроков из файла ${parseResult.metadata.fileName}`,
-              closeTimeout: 4000,
-              cssClass: "color-green",
-            })
-            .open();
-          // Refresh current list to ensure view shows imported data for this parent
+          notify.success(`Успешно импортировано ${importResult.imported} уроков из файла ${parseResult.metadata.fileName}`);
           ktpStore.fetchDetailsForKtp(ktpId.value);
         } else {
           throw new Error(importResult.error || "Ошибка импорта данных");
@@ -231,14 +188,7 @@ export function useKtpDetail(
             ? error.message
             : "Неизвестная ошибка при обработке файла";
 
-        f7.toast
-          .create({
-            text: `Ошибка: ${errorMessage}`,
-            closeTimeout: 5000,
-            cssClass: "color-red",
-          })
-          .open();
-
+        notify.error(`Ошибка: ${errorMessage}`);
         ktpStore.error = errorMessage;
       } finally {
         isImporting.value = false;

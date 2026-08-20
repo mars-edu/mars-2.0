@@ -484,7 +484,7 @@ function showDeleteConfirmation() {
 }
 </script>
 
-<style>
+<style scoped>
 :deep(.tooltip) {
   background: rgba(0, 0, 0, 0.8);
   color: #fff;

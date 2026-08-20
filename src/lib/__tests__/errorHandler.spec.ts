@@ -27,14 +27,17 @@ describe("errorHandler", () => {
       expect(getErrorMessage(err)).toBe("Запись РУП не найдена");
     });
 
-    it("extracts message from ConvexError object data", () => {
-      const err = new ConvexError({ code: "NOT_FOUND", message: "Журнал не найден" });
-      expect(getErrorMessage(err)).toBe("Журнал не найден");
+    it("maps known Convex error codes to localized messages", () => {
+      const errWithCode = new ConvexError({ code: "NOT_FOUND" });
+      expect(getErrorMessage(errWithCode)).toBe("error_not_found");
+
+      const errUnauthorized = new ConvexError({ code: "UNAUTHORIZED" });
+      expect(getErrorMessage(errUnauthorized)).toBe("error_unauthorized");
     });
 
-    it("maps known Convex error codes to Russian descriptions", () => {
-      const err = new ConvexError({ code: "UNAUTHORIZED" });
-      expect(getErrorMessage(err)).toBe("У вас нет прав для выполнения этого действия");
+    it("extracts message from ConvexError when no code given", () => {
+      const err = new ConvexError({ message: "Журнал не найден" });
+      expect(getErrorMessage(err)).toBe("Журнал не найден");
     });
 
     it("handles string error inputs directly", () => {
