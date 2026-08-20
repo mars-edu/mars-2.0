@@ -100,60 +100,16 @@
             </div>
 
             <!-- Action menu -->
-            <DropdownMenu align="right" class="flex-shrink-0 mt-1">
-              <template #trigger="{ toggle, isOpen }">
-                <button
-                  class="p-2.5 bg-card rounded-xl shadow-sm border border-border hover:border-primary hover:text-primary transition-all flex items-center justify-center"
-                  :class="{ 'border-primary text-primary': isOpen }"
-                  @click="toggle"
-                >
-                  <IconMoreVertical class="w-5 h-5" />
-                </button>
-              </template>
-              <template #default="{ close }">
-                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
-                  @click="onDownloadClick(); close()">
-                  <IconArrowDownToLine class="w-4 h-4 flex-shrink-0" />
-                  {{ journal_download() }}
-                </button>
-                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
-                  @click="onMergeClick(); close()">
-                  <IconGitMerge class="w-4 h-4 flex-shrink-0" />
-                  {{ journal_merge() }}
-                </button>
-                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
-                  @click="onSplitClick(); close()">
-                  <IconUngroup class="w-4 h-4 flex-shrink-0" />
-                  {{ journal_split() }}
-                </button>
-                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
-                  @click="onCloseJournalClick(); close()">
-                  <IconCircleX class="w-4 h-4 flex-shrink-0" />
-                  {{ journal_close() }}
-                </button>
-                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
-                  @click="onOpenJournalClick(); close()">
-                  <IconLockOpen class="w-4 h-4 flex-shrink-0" />
-                  {{ journal_open() }}
-                </button>
-                <button class="w-full text-left px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-3"
-                  @click="onDeleteClick(); close()">
-                  <IconTrash2 class="w-4 h-4 flex-shrink-0" />
-                  {{ journal_delete() }}
-                </button>
-                <div class="h-px bg-border my-1" />
-                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
-                  @click="onReplaceClick(); close()">
-                  <IconRefreshCw class="w-4 h-4 flex-shrink-0" />
-                  {{ journal_replace() }}
-                </button>
-                <button class="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-3"
-                  @click="onSettingsClick(); close()">
-                  <IconSettings2 class="w-4 h-4 flex-shrink-0" />
-                  {{ journal_settings() }}
-                </button>
-              </template>
-            </DropdownMenu>
+            <JournalsActionMenu
+              @download="onDownloadClick"
+              @merge="onMergeClick"
+              @split="onSplitClick"
+              @close-journal="onCloseJournalClick"
+              @open-journal="onOpenJournalClick"
+              @delete="onDeleteClick"
+              @replace="onReplaceClick"
+              @settings="onSettingsClick"
+            />
           </div>
 
           <!-- Filter selects commented out — not in concept design
@@ -195,62 +151,21 @@
               />
             </div>
           -->
-            <div v-if="isSelectionMode" class="mb-3 flex items-center gap-3 bg-card p-2 rounded-xl border border-primary/20 shadow-sm">
-              <div class="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg text-primary font-bold text-sm whitespace-nowrap flex-shrink-0">
-                <IconCircleCheck class="w-4 h-4 flex-shrink-0" />
-                <span class="whitespace-nowrap">Выбрано: {{ selectedJournalIds.size }}</span>
-              </div>
-              <div class="h-6 w-px bg-border mx-1" />
-              <button
-                @click="selectAll"
-                class="px-4 py-1.5 text-sm font-bold text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg transition-colors"
-              >
-                {{ journal_select_all() }}
-              </button>
-              <button
-                @click="deselectAll"
-                class="px-4 py-1.5 text-sm font-bold text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg transition-colors"
-              >
-                {{ journal_deselect_all() }}
-              </button>
-              <div class="flex-1" />
-              <button
-                @click="exitSelectionMode"
-                class="px-4 py-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {{ common_cancel() }}
-              </button>
-              <button
-                @click="onSelectionDone"
-                :disabled="selectedJournalIds.size === 0"
-                :class="[
-                  'px-6 py-1.5 text-sm font-bold rounded-lg shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed',
-                  selectionAction === 'delete' || selectionAction === 'close'
-                    ? 'bg-red-500 hover:bg-red-600 text-white'
-                    : selectionAction === 'open'
-                      ? 'bg-green-500 hover:bg-green-600 text-white'
-                      : 'bg-primary hover:bg-primary/90 text-primary-foreground'
-                ]"
-              >
-                {{ selectionDoneText }}
-              </button>
-            </div>
+            <JournalsSelectionBar
+              :is-selection-mode="isSelectionMode"
+              :selected-count="selectedJournalIds.size"
+              :selection-action="selectionAction"
+              :done-text="selectionDoneText"
+              @select-all="selectAll"
+              @deselect-all="deselectAll"
+              @cancel="exitSelectionMode"
+              @done="onSelectionDone"
+            />
             <!-- Filter bar -->
-            <div class="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl overflow-x-auto max-w-full mb-5">
-              <button
-                v-for="f in JOURNAL_FILTERS"
-                :key="f.id"
-                type="button"
-                :aria-pressed="activeFilter === f.id"
-                @click="activeFilter = f.id"
-                class="px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 whitespace-nowrap"
-                :class="activeFilter === f.id
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'"
-              >
-                {{ f.label }}
-              </button>
-            </div>
+            <JournalsFilterBar
+              :filters="JOURNAL_FILTERS"
+              v-model:active-filter="activeFilter"
+            />
 
             <!-- Journal grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
@@ -373,6 +288,9 @@ import IconChevronDown from "~icons/lucide/chevron-down";
 import IconMoreVertical from "~icons/lucide/more-vertical";
 import IconCheck from "~icons/lucide/check";
 import IconInbox from "~icons/lucide/inbox";
+import JournalsActionMenu from "@/components/journals/JournalsActionMenu.vue";
+import JournalsSelectionBar from "@/components/journals/JournalsSelectionBar.vue";
+import JournalsFilterBar from "@/components/journals/JournalsFilterBar.vue";
 import Header from "@/components/Header/Header.vue";
 import Sidebar from "@/components/Sidebar/Sidebar.vue";
 import Select from "@/components/ui/Select.vue";

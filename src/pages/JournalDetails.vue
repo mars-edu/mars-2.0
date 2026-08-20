@@ -27,70 +27,11 @@
           />
 
           <!-- Sub-journal card grid (merged/joined journal) -->
-          <div
-            v-if="isMergedJournal"
-            class="p-4 bg-muted/50 rounded-2xl border border-border/50"
-          >
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-              <button
-                v-for="child in mergedChildJournals"
-                :key="child.id"
-                @click="selectedChildJournalId = child.id"
-                class="p-4 rounded-2xl border-2 flex flex-col gap-3 transition-all duration-300 text-left group relative overflow-hidden"
-                :class="selectedChildJournalId === child.id
-                  ? 'border-primary bg-primary/5 shadow-[0_8px_20px_-6px] shadow-primary/20 text-foreground'
-                  : 'bg-card border-border hover:border-primary/50 hover:shadow-md text-foreground'"
-              >
-                <div
-                  v-if="selectedChildJournalId === child.id"
-                  class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary shadow-[0_0_10px] shadow-primary/80 animate-pulse"
-                />
-                <div class="flex items-center gap-3 w-full">
-                  <div
-                    class="w-3 h-3 rounded-full flex-shrink-0 transition-all duration-500"
-                    :class="selectedChildJournalId === child.id
-                      ? 'bg-primary scale-110 shadow-[0_0_12px] shadow-primary/60'
-                      : 'bg-muted-foreground/40'"
-                  />
-                  <div
-                    class="text-base font-bold truncate tracking-tight leading-tight"
-                    :class="selectedChildJournalId === child.id ? 'text-foreground' : 'text-foreground/80'"
-                  >
-                    {{ child.journal ? journalStore.getDisciplineTitle(child.journal) : child.id }}
-                  </div>
-                </div>
-                <div class="flex flex-col gap-2">
-                  <div
-                    class="text-[11px] font-bold"
-                    :class="selectedChildJournalId === child.id ? 'text-primary' : 'text-muted-foreground'"
-                  >
-                    {{ child.journal ? journalStore.getJournalSubtitle(child.journal) : '' }}
-                  </div>
-                  <div class="flex items-center justify-between mt-1">
-                    <div
-                      class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-300"
-                      :class="selectedChildJournalId === child.id
-                        ? 'bg-primary/20 text-primary'
-                        : 'bg-muted text-muted-foreground'"
-                    >
-                      <IconUsers class="w-3.5 h-3.5" />
-                      <span>{{ child.journal?.students.length ?? 0 }}</span>
-                    </div>
-                    <span
-                      v-if="child.journal"
-                      class="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md border"
-                      :class="selectedChildJournalId === child.id
-                        ? 'bg-card border-primary/20 text-primary'
-                        : 'bg-card border-border text-muted-foreground'"
-                    >
-                      {{ journalStore.getJournalGroupLanguage(child.journal) }}
-                    </span>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
-
+          <MergedJournalsNav
+            :is-merged-journal="isMergedJournal"
+            :merged-child-journals="mergedChildJournals"
+            v-model:selected-child-journal-id="selectedChildJournalId"
+          />
 
           <!-- Debug Information Panel (dev mode only) -->
           <JournalDebugPanel
@@ -164,35 +105,12 @@
                 class="page-content"
                 :tab-active="activeTab === 'participants'"
               >
-                <div class="flex flex-col gap-4 p-4">
-                  <div
-                    class="flex flex-wrap items-center justify-between gap-3 bg-card border border-border rounded-lg shadow-sm p-4"
-                  >
-                    <div class="flex items-baseline gap-3">
-                      <h2 class="text-base font-bold text-foreground">
-                        {{ journal_participants_title() }}
-                      </h2>
-                      <span class="text-sm text-muted-foreground font-medium">
-                        {{ journal_participants_count({ filtered: participantsFiltered.length, total: participantsAll.length }) }}
-                      </span>
-                    </div>
-                    <SearchInput
-                      v-model="participantsSearch"
-                      :placeholder="journal_participants_search()"
-                      wrapper-class="w-full sm:w-72"
-                    />
-                  </div>
-                  <StudentTable
-                    :students="participantsFiltered"
-                    :show-row-number="true"
-                    :show-specialty="true"
-                    :show-status="true"
-                    :show-language="true"
-                    :show-course="true"
-                    :clickable="true"
-                    @row-click="handleStudentClick"
-                  />
-                </div>
+                <JournalParticipantsTab
+                  :participants-filtered="participantsFiltered"
+                  :participants-all="participantsAll"
+                  v-model:participants-search="participantsSearch"
+                  @student-click="handleStudentClick"
+                />
               </f7-tab>
 
               <f7-tab
@@ -394,6 +312,8 @@ import { useRupEntryStore } from "@/stores/rupEntryStore";
 import { useKtpStore } from "@/stores/ktpStore";
 import { useAcademicYearSemesterStore } from "@/stores/academicYearSemesterStore";
 import JournalTab from "@/components/JournalTab.vue";
+import MergedJournalsNav from "@/components/journal/MergedJournalsNav.vue";
+import JournalParticipantsTab from "@/components/journal/JournalParticipantsTab.vue";
 import JournalHeader from "@/components/JournalHeader.vue";
 import JournalDebugPanel from "@/components/JournalDebugPanel.vue";
 import FloatingJournalRow from "@/components/FloatingJournalRow.vue";
