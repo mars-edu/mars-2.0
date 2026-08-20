@@ -70,6 +70,8 @@ jobs:
       # ── 6. Gate: type check ───────────────────────────────────────────────
       - name: Type check (tsc)
         run: npm run tsc
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
       # ── 7. Build frontend ─────────────────────────────────────────────────
       - name: Build frontend
@@ -77,6 +79,7 @@ jobs:
         env:
           NODE_ENV: production
           NO_COLOR: "1"
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
           VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
           VITE_CONVEX_SITE_URL: ${{ secrets.VITE_CONVEX_SITE_URL }}
           VITE_API_URL: ${{ secrets.VITE_API_URL }}

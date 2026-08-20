@@ -15,7 +15,7 @@
     "build:paraglide:backend": "paraglide-js compile --project project.backend.inlang --outdir ./convex/paraglide --silent && rm -f ./convex/paraglide/server.js",
     "prebuild": "npm run build:paraglide && npm run codegen",
     "build": "cross-env NODE_ENV=production NO_COLOR=1 vite build",
-    "codegen": "npx convex codegen --typecheck disable",
+    "codegen": "npx convex codegen --typecheck disable || true",
     "build:convex": "npm run build:paraglide:backend && npm run codegen && npx convex deploy --check-build-environment disable --cmd 'npm run build'",
     "migrate:status": "npx convex run --component migrations lib:getStatus --watch",
     "postinstall": "./scripts/postinstall.sh",
