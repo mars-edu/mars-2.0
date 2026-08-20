@@ -192,17 +192,17 @@
               <JournalGridCard
                 v-for="journal in (isDataReady ? filteredByTab : [])"
                 :key="journal.id"
-                :title="journalStore.getDisciplineTitle(journal)"
-                :subtitle="journalStore.getJournalSubtitle(journal)"
-                :accent-color="getJournalAccentColor(journal.id)"
+                :title="journal.title"
+                :subtitle="journal.subtitle"
+                :accent-color="getJournalAccentColor(journal.id, journal.color)"
                 :course-number="(!journal.isMixedGroup && !journal.isIndividualJournal) ? journal.courseNumber : undefined"
-                :student-count="journal.students?.length ?? 0"
+                :student-count="journal.studentCount"
                 :selection-mode="isSelectionMode"
                 :selected="selectedJournalIds.has(journal.id)"
                 :is-merged="!!journal.mergedJournalIds?.length"
                 :merged-count="journal.mergedJournalIds?.length ?? 0"
-                :disabled="(isSelectionMode && selectionAction === 'split' && !journal.mergedJournalIds?.length) || (isSelectionMode && selectionAction === 'merge' && (journal.students?.length ?? 0) > 4)"
-                :tooltip="isSelectionMode && selectionAction === 'merge' && (journal.students?.length ?? 0) > 4 ? journal_merge_ineligible_tooltip() : undefined"
+                :disabled="(isSelectionMode && selectionAction === 'split' && !journal.mergedJournalIds?.length) || (isSelectionMode && selectionAction === 'merge' && (journal.studentCount) > 4)"
+                :tooltip="isSelectionMode && selectionAction === 'merge' && (journal.studentCount) > 4 ? journal_merge_ineligible_tooltip() : undefined"
                 @click="goToJournalDetails(journal.id)"
                 @toggle-select="toggleJournalSelection(journal.id)"
                 @download="handleCardDownload(journal.id)"
@@ -298,6 +298,7 @@ import DropdownMenu from "@/components/ui/DropdownMenu.vue";
 import IndividualJournalPopup from "@/components/IndividualJournalPopup.vue";
 import IndividualJournalsConfigPopup from "@/components/IndividualJournalsConfigPopup.vue";
 import EditJournalPopup from "@/components/Calendar/EditJournalPopup.vue";
+import { useEnrichedJournals } from "@/composables/useEnrichedJournals";
 import ReplaceJournalPopover from "@/components/ReplaceJournalPopover.vue";
 import type { ReplaceJournalData } from "@/components/ReplaceJournalPopover.vue";
 import JournalGridCard from '@/components/Cards/JournalGridCard.vue'
@@ -849,7 +850,10 @@ function hexToAccent(hex: string): { bg: string; text: string } {
   };
 }
 
-function getJournalAccentColor(id: string): { bg: string; text: string } {
+function getJournalAccentColor(id: string, color?: string): { bg: string; text: string } {
+  if (color) {
+    return hexToAccent(color);
+  }
   const event = calendarStore.getEventById(id);
   if (event?.color) {
     return hexToAccent(event.color);
@@ -862,7 +866,7 @@ function getJournalAccentColor(id: string): { bg: string; text: string } {
 }
 
 const pageReady = ref(false)
-const isDataReady = computed(() => pageReady.value && rupEntryStore.rupEntries.length > 0)
+const isDataReady = computed(() => pageReady.value && !isServerPending.value)
 
 type JournalFilter = 'all' | 'course-1' | 'course-2' | 'course-3' | 'course-4' | 'mixed' | 'individual'
 const activeFilter = computed({
@@ -884,19 +888,16 @@ const JOURNAL_FILTERS: ReadonlyArray<{ id: JournalFilter; label: string }> = [
   { id: 'individual', label: journal_filter_individual() },
 ]
 
-const filteredByTab = computed(() => {
-  if (activeFilter.value === 'all') {
-    const flat: Journal[] = []
-    Object.values(filteredJournalsByCourse.value).forEach((list) => flat.push(...list))
-    flat.push(...filteredMixedGroupJournals.value)
-    flat.push(...filteredIndividualJournals.value)
-    return flat
-  }
-  if (activeFilter.value === 'mixed')      return filteredMixedGroupJournals.value
-  if (activeFilter.value === 'individual') return filteredIndividualJournals.value
-  const num = parseInt(activeFilter.value.split('-')[1])
-  return filteredJournalsByCourse.value[num] ?? []
-})
+const {
+  serverJournals,
+  filteredByTab,
+  isPending: isServerPending,
+} = useEnrichedJournals({
+  selectedAcademicYearId: computed(() => selectedItemsStore.selectedAcademicYearId),
+  selectedSemesterId: computed(() => selectedSemesterId.value || null),
+  selectedTeacherId: computed(() => calendarStore.selectedTeacherId || null),
+  activeFilter: activeFilter as any,
+});
 
 const filteredSubstitutions = computed(() => {
   const subs = activeSubstitutions.value

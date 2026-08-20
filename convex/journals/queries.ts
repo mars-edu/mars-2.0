@@ -207,6 +207,9 @@ export const listEnriched = query({
         studentCount: studentCountMap.get(j._id) || 0,
         isIndividualJournal: j.isIndividualJournal || false,
         isMixedGroup: j.isMixedGroup || false,
+        mergedJournalIds: j.mergedJournalIds || event?.mergedJournalIds || [],
+        parentIndividualJournalId: j.parentIndividualJournalId || event?.parentIndividualJournalId,
+        color: event?.color,
         createdAt: j.createdAt,
         updatedAt: j.updatedAt,
       };
