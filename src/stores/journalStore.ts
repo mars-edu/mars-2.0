@@ -30,7 +30,7 @@ export const useJournalStore = defineStore(
     const educationScheduleStore = useEducationScheduleStore();
 
     function getLanguageNameByCode(code: string): string {
-      const found = languageStore.languages.find((l) => l.code === code);
+      const found = languageStore.getByCode(code);
       return found?.name || code;
     }
 
@@ -52,7 +52,7 @@ export const useJournalStore = defineStore(
       const codeNames = new Set<string>();
 
       studentIds.forEach((id) => {
-        const student = studentStore.students.find((s) => s.id === id);
+        const student = studentStore.getStudentById(id);
         if (!student) return;
 
         const specialty = specialtyStore.getSpecialtyById(student.specialty);
@@ -89,7 +89,7 @@ export const useJournalStore = defineStore(
       const codeNames = new Set<string>();
 
       studentIds.forEach((id) => {
-        const student = studentStore.students.find((s) => s.id === id);
+        const student = studentStore.getStudentById(id);
         if (!student) return;
 
         const specialty = specialtyStore.getSpecialtyById(student.specialty);
@@ -278,23 +278,22 @@ export const useJournalStore = defineStore(
       return uniqueCourses.size > 1;
     }
 
+    const _allJournalsMap = computed(() => {
+      const m = new Map<string, Journal>();
+      for (const j of individualJournals.value) m.set(j.id, j);
+      for (const j of mixedGroupJournals.value) m.set(j.id, j);
+      for (const courseNumber in journalsByCourse.value) {
+        for (const j of journalsByCourse.value[courseNumber]) {
+          if (!m.has(j.id)) m.set(j.id, j);
+        }
+      }
+      return m;
+    });
+
     const getJournalById = computed(() => {
       return (id: string) => {
-        // Check individual/merged journals first
-        const indJournal = individualJournals.value.find((j) => j.id === id);
-        if (indJournal) return indJournal;
-
-        // Check mixed group journals to get all students
-        const mixedJournal = mixedGroupJournals.value.find((j) => j.id === id);
-        if (mixedJournal) return mixedJournal;
-
-        // Then check course-specific journals
-        for (const courseNumber in journalsByCourse.value) {
-          const journal = journalsByCourse.value[courseNumber].find(
-            (j) => j.id === id
-          );
-          if (journal) return journal;
-        }
+        const found = _allJournalsMap.value.get(id);
+        if (found) return found;
 
         // Fallback: create from event if not found in computed lists
         const event: any = calendarStore.getEventById(id);

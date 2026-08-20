@@ -40,14 +40,26 @@ export const useStudyLanguageStore = defineStore(
       }
     });
 
+    const _languagesById = computed(() => {
+      const m = new Map<string, StudyLanguage>();
+      for (const l of languages.value) m.set(l.id, l);
+      return m;
+    });
+
+    const _languagesByCode = computed(() => {
+      const m = new Map<string, StudyLanguage>();
+      for (const l of languages.value) m.set(l.code, l);
+      return m;
+    });
+
     // Kept as `getLanguageById` (not `getById`) — matches the retired
     // languageStore.ts API so consumers don't churn.
     const getLanguageById = computed(() => {
-      return (id: string) => languages.value.find((l) => l.id === id);
+      return (id: string) => _languagesById.value.get(id);
     });
 
     const getByCode = computed(() => {
-      return (code: string) => languages.value.find((l) => l.code === code);
+      return (code: string) => _languagesByCode.value.get(code);
     });
 
     const getDefaultLanguage = computed(() => {
