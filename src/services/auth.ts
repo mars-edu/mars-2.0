@@ -81,7 +81,7 @@ class SessionManager {
  */
 function isValidUser(user: unknown): user is User {
   if (!user || typeof user !== "object") return false;
-  const u = user as any;
+  const u = user as Record<string, unknown>;
   return (
     typeof u.id === "string" &&
     typeof u.username === "string" &&

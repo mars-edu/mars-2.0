@@ -90,7 +90,7 @@ const loadHistory = async () => {
     error.value = null;
 
     const data = await convex.query(api.passwordHistory.queries.getPasswordHistory, {
-      userId: props.userId as any,
+      userId: props.userId as Id<"users">,
       limit: 50,
     });
 

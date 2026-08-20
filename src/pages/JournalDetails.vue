@@ -536,8 +536,8 @@ const currentSemesterText = computed(() => {
   if (!journalId.value) return "—";
   const event = calendarStore.getEventById(journalId.value);
   if (!event || !event.semester) return "—";
-  const ays = (academicYearSemesterStore as any).getAcademicYearSemesterById
-    ? (academicYearSemesterStore as any).getAcademicYearSemesterById(
+  const ays = academicYearSemesterStore.getAcademicYearSemesterById
+    ? academicYearSemesterStore.getAcademicYearSemesterById(
         event.semester
       )
     : academicYearSemesterStore.academicYearSemesters.find(
@@ -582,7 +582,7 @@ const loadedForKtpId = ref<string | null>(null);
 const ktpIdForJournal = computed(() => ensuredKtpId.value);
 
 const getSemesterById = (id: string) => {
-  const fn = (academicYearSemesterStore as any).getAcademicYearSemesterById;
+  const fn = academicYearSemesterStore.getAcademicYearSemesterById;
   if (typeof fn === "function") return fn(id);
   return academicYearSemesterStore.academicYearSemesters.find(
     (s: any) => s.id === id
@@ -614,7 +614,7 @@ watch(
 const eventWithParticipantsResult = useConvexQuery(
   api.calendarEvents.queries.getByIdWithParticipants,
   computed(() =>
-    effectiveJournalId.value ? { id: effectiveJournalId.value as any } : undefined,
+    effectiveJournalId.value ? { id: effectiveJournalId.value as Id<"journals"> } : undefined,
   ),
 ) as any;
 

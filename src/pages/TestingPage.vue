@@ -253,7 +253,7 @@ function assignTest(test: any) {
 function deleteTest(id: string) {
   f7.dialog.confirm('Вы действительно хотите удалить этот тест?', async () => {
     try {
-      await deleteTestMutation({ id: id as any });
+      await deleteTestMutation({ id: id as Id<"tests"> });
       isViewModalOpen.value = false;
       f7.toast.create({ text: 'Тест удален', position: 'bottom', closeTimeout: 2000 }).open();
     } catch (e: any) {
@@ -285,7 +285,7 @@ async function onSaveTest(payload: any) {
 async function onAssignTest(data: { testId: string; journalId: string; date: string }) {
   try {
     f7.preloader.show();
-    await assignTestMutation({ testId: data.testId as any, journalId: data.journalId as any, date: data.date });
+    await assignTestMutation({ testId: data.testId as Id<"tests">, journalId: data.journalId as Id<"journals">, date: data.date });
     f7.toast.create({ text: 'Тест назначен', position: 'bottom', closeTimeout: 2000 }).open();
     activeTab.value = 'history'; // Switch to history tab to see the assignment
   } catch (e: any) {

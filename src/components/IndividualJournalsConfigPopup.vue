@@ -260,7 +260,7 @@ async function handleSave() {
     await convex.mutation(
       api.calendarEvents.mutations.updateIndividualJournalsConfig,
       {
-        mainEventId: mainEventId.value as any,
+        mainEventId: mainEventId.value,
         gradingType: gradingType.value as "combined" | "separate",
         individualJournals: drafts.value.map((j) => ({
           eventId: existingIds.has(j.id) ? j.id : undefined,

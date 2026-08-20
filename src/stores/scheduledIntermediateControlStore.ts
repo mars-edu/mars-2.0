@@ -153,7 +153,7 @@ export const useScheduledIntermediateControlStore = defineStore(
         await convex.mutation(api.scheduledControls.mutations.copyIntermediateFromSemester, {
           sourceSemesterId: sourceSemesterId as Id<"academicYearSemesters">,
           targetSemesterId: targetSemesterId as Id<"academicYearSemesters">,
-          targetAcademicYearId: targetAcademicYearId as any,
+          targetAcademicYearId: targetAcademicYearId as Id<"academicYears">,
         });
         error.value = null;
         return;

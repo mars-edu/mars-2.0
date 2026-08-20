@@ -380,7 +380,7 @@ const handleSaveProfile = async () => {
   f7.preloader.show();
   try {
     await convex.mutation(api.users.mutations.updateProfile, {
-      userId: userStore.currentUser.id as any,
+      userId: userStore.currentUser.id as Id<"users">,
       ...editForm,
     });
 
@@ -577,7 +577,7 @@ const removeAvatar = async () => {
       console.log("[ProfilePage] Removing profile picture");
 
       await convex.mutation(api.users.mutations.removeProfilePicture, {
-        userId: userStore.currentUser!.id as any,
+        userId: userStore.currentUser!.id as Id<"users">,
       });
 
       console.log("[ProfilePage] Profile picture removed successfully");

@@ -160,7 +160,7 @@ function generateGroupName(students: Student[]): string {
   if (students.length === 0) return "Без группы";
 
   // Get unique courses
-  const courses = [...new Set(students.map((s) => (s as any).course))].sort();
+  const courses = [...new Set(students.map((s) => (s as { course?: number | string }).course))].filter(Boolean).sort();
 
   if (courses.length === 1) {
     // Single course group

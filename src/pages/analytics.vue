@@ -343,7 +343,7 @@ const relevantJournals = computed<ReportJournalEntry[]>(() => {
       }
     }
 
-    const journal = journalStore.getJournalById(event.id) as any;
+    const journal = journalStore.getJournalById(event.id);
     if (!journal) return;
 
     const title =

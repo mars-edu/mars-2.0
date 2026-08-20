@@ -379,7 +379,7 @@ async function submit() {
 
   try {
     await rupEntryStore.saveRupEntryGroup({
-      id: props.editMode && props.initialData ? (props.initialData.id as any) : undefined,
+      id: props.editMode && props.initialData ? (props.initialData.id as Id<"rupEntries">) : undefined,
       groupId: props.editMode && props.initialData ? props.initialData.groupId : undefined,
       specialtyIds: selectedSpecialtyIds.value,
       academicYearId: props.academicYearId,
