@@ -99,20 +99,6 @@ export const useIntermediateControlStore = defineStore(
         }, "Failed to delete intermediate control");
     }
 
-    async function loadFromBackend() {
-      return await withLoading(loading, error, async () => {
-        const data = await convex.query(api.intermediateControls.queries.list, {});
-                intermediateControls.value = data.map((c) => ({
-                  id: c._id,
-                  name: c.name,
-                  shortName: c.shortName,
-                  createdAt: new Date(c.createdAt),
-                  updatedAt: new Date(c.updatedAt),
-                }));
-                sortIntermediateControls();
-                error.value = null;
-        }, "Operation failed");
-    }
 
     function clearError() {
       error.value = null;
@@ -136,7 +122,6 @@ export const useIntermediateControlStore = defineStore(
       deleteIntermediateControl,
       clearError,
       reset,
-      loadFromBackend,
     };
   },
   {

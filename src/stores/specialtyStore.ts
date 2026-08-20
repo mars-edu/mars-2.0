@@ -112,25 +112,6 @@ export const useSpecialtyStore = defineStore(
         }, "Failed to delete specialty");
     };
 
-    const loadFromBackend = async () => {
-      return await withLoading(loading, error, async () => {
-        const data = await convex.query(api.specialties.queries.list, {});
-                specialties.value = data.map((specialty) => ({
-                  id: specialty._id,
-                  name: specialty.name,
-                  code: specialty.code,
-                  codeName: specialty.codeName,
-                  year: specialty.year,
-                  orderNumber: specialty.orderNumber,
-                  details: specialty.details || "",
-                  hasModule: specialty.hasModule || false,
-                  isHighlighted: specialty.isHighlighted,
-                  createdAt: new Date(specialty.createdAt),
-                  updatedAt: new Date(specialty.updatedAt),
-                }));
-                error.value = null;
-        }, "Operation failed");
-    };
 
     const clearError = () => {
       error.value = null;
@@ -155,7 +136,6 @@ export const useSpecialtyStore = defineStore(
       deleteSpecialty,
       clearError,
       reset,
-      loadFromBackend,
     };
   },
   {

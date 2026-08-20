@@ -273,25 +273,6 @@ export const useAcademicYearSemesterStore = defineStore(
         }, "Failed to delete academic year semester");
     }
 
-    async function loadFromBackend() {
-      return await withLoading(loading, error, async () => {
-        const data = await convex.query(api.academicYearSemesters.queries.list, {});
-                academicYearSemesters.value = data
-                  .filter((s: any) => s.academicYearId) // Only those with academic year
-                  .map((s: any) => ({
-                    id: s._id,
-                    academicYearId: s.academicYearId as string,
-                    semesterDefinitionId: s.semesterDefinitionId || "",
-                    semesterNumber: s.semester?.number || s.number || 1,
-                    semesterName: s.semester?.name || s.semesterName || `Семестр ${s.semester?.number || s.number || 1}`,
-                    startDate: s.startDate || "",
-                    endDate: s.endDate || "",
-                    createdAt: new Date(s.createdAt),
-                    updatedAt: new Date(s.updatedAt),
-                  }));
-                error.value = null;
-        }, "Operation failed");
-    }
 
     function clearError() {
       error.value = null;
@@ -318,7 +299,6 @@ export const useAcademicYearSemesterStore = defineStore(
       deleteAcademicYearSemester,
       clearError,
       reset,
-      loadFromBackend,
     };
   },
   {

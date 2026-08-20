@@ -11,7 +11,7 @@
  *   const template = buildMarkTemplate(childEvent);
  */
 
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs";
 import { storeToRefs } from "pinia";
 import {
   DATE_DAY_MONTH_FORMAT,
@@ -26,93 +26,16 @@ import { useIntermediateControlStore } from "@/stores/intermediateControlStore";
 import { useFinalControlStore } from "@/stores/finalControlStore";
 import { useScheduledIntermediateControlStore } from "@/stores/scheduledIntermediateControlStore";
 import { useScheduledFinalControlStore } from "@/stores/scheduledFinalControlStore";
+import {
+  initialValuesForType,
+  resolveScheduleIds,
+  countLessonsInRange,
+  computeInsertAfter,
+  insertControlMarks,
+} from "@/lib/journalDateMatrix";
 import type { Mark } from "@/types/marks";
 import type { EducationSchedule } from "@/types/education-schedule";
 import type { CalendarEvent } from "@/types/calendar";
-
-// ---------------------------------------------------------------------------
-// Pure helpers (mirrors JournalTab helpers, kept private to this module)
-// ---------------------------------------------------------------------------
-
-type MarkType = "date" | "session";
-
-const MARK_TYPE_MAP: Record<MarkType, { singleRow: boolean }> = {
-  date: { singleRow: false },
-  session: { singleRow: true },
-};
-
-const initialValuesForType = (type: MarkType, dynamicRows: number): Array<null> =>
-  MARK_TYPE_MAP[type]?.singleRow
-    ? [null]
-    : Array.from({ length: Math.max(1, dynamicRows) }, () => null);
-
-const timeToMinutes = (time: string | undefined | null): number | null => {
-  if (!time || typeof time !== "string") return null;
-  const parts = time.split(":");
-  if (parts.length < 2) return null;
-  const hours = Number(parts[0]);
-  const minutes = Number(parts[1]);
-  if (isNaN(hours) || isNaN(minutes)) return null;
-  return hours * 60 + minutes;
-};
-
-const normalizeTime = (time?: string): string | undefined => {
-  if (!time) return time;
-  const parts = time.split(":");
-  if (parts.length < 2) return time;
-  return `${String(Number(parts[0])).padStart(2, "0")}:${String(Number(parts[1])).padStart(2, "0")}`;
-};
-
-const findScheduleIdByStartTime = (
-  schedules: EducationSchedule[],
-  startTime: string
-): string | undefined => {
-  const normalized = normalizeTime(startTime);
-  const exact = schedules.find((s) => normalizeTime(s.startTime) === normalized);
-  if (exact) return exact.id;
-  const targetMin = timeToMinutes(normalized) ?? 0;
-  const candidate = schedules
-    .map((s) => ({ s, start: timeToMinutes(s.startTime) ?? 0 }))
-    .filter((x) => x.start >= targetMin)
-    .sort((a, b) => a.start - b.start)[0]?.s;
-  return candidate?.id || schedules[0]?.id;
-};
-
-const findScheduleIdByEndTime = (
-  schedules: EducationSchedule[],
-  endTime: string
-): string | undefined => {
-  const normalized = normalizeTime(endTime);
-  const exact = schedules.find((s) => normalizeTime(s.endTime) === normalized);
-  if (exact) return exact.id;
-  const targetMin = timeToMinutes(normalized) ?? 24 * 60;
-  const candidate = schedules
-    .map((s) => ({ s, end: timeToMinutes(s.endTime) ?? 0 }))
-    .filter((x) => x.end <= targetMin)
-    .sort((a, b) => b.end - a.end)[0]?.s;
-  return candidate?.id || schedules[schedules.length - 1]?.id;
-};
-
-const resolveScheduleIds = (
-  daySchedule: any,
-  schedules: EducationSchedule[]
-): { startId?: string; endId?: string } => {
-  let startId = daySchedule?.startId as string | undefined;
-  let endId = daySchedule?.endId as string | undefined;
-  if ((!startId || !endId) && daySchedule) {
-    if (!startId && daySchedule?.startTime) {
-      startId = findScheduleIdByStartTime(schedules, daySchedule.startTime);
-    }
-    if (!endId && daySchedule?.endTime) {
-      endId = findScheduleIdByEndTime(schedules, daySchedule.endTime);
-    }
-  }
-  return { startId, endId };
-};
-
-// ---------------------------------------------------------------------------
-// Composable
-// ---------------------------------------------------------------------------
 
 export function useJournalMarkTemplate() {
   const educationScheduleStore = useEducationScheduleStore();
@@ -134,18 +57,6 @@ export function useJournalMarkTemplate() {
   const { getScheduledFinalControlsByAcademicYear } = storeToRefs(
     scheduledFinalControlStore
   );
-
-  const countLessonsInRange = (startId?: string, endId?: string): number => {
-    const schedules = (getActiveYearSchedules.value || []) as EducationSchedule[];
-    if (!schedules.length) return 2;
-    if (!startId && !endId) return 2;
-    if (startId && !endId) endId = startId;
-    if (!startId && endId) startId = endId;
-    const start = schedules.find((s) => s.id === startId)?.lessonNumber;
-    const end = schedules.find((s) => s.id === endId)?.lessonNumber;
-    if (start == null || end == null) return 2;
-    return Math.max(1, Math.abs(end - start) + 1);
-  };
 
   /**
    * Build the mark-column template for a given CalendarEvent.
@@ -171,7 +82,7 @@ export function useJournalMarkTemplate() {
       const daySchedule = weeklySchedules.find((ws: any) => ws.weekId === weekId) as any;
       const schedulesArr = (getActiveYearSchedules.value || []) as EducationSchedule[];
       const { startId, endId } = resolveScheduleIds(daySchedule, schedulesArr);
-      const rows = countLessonsInRange(startId, endId);
+      const rows = countLessonsInRange(schedulesArr, startId, endId);
 
       dateMarks.push({
         type: "date",
@@ -181,8 +92,6 @@ export function useJournalMarkTemplate() {
         isoDate,
       });
     });
-
-    const marksWithSessions: Mark[] = [...dateMarks];
 
     // --- resolve rupEntry and semester filter ---
     const rupEntryId = event.rupEntryId;
@@ -227,46 +136,6 @@ export function useJournalMarkTemplate() {
     const lastAssignedDatePosByControlKey = new Map<string, number>();
     const lastDatePos = dateMeta.length > 0 ? dateMeta.length - 1 : -1;
 
-    const computeInsertAfter = (
-      start: dayjs.Dayjs | null,
-      end: dayjs.Dayjs | null,
-      fallback: number
-    ) => {
-      if (!dateMeta.length) return -1;
-      const effectiveStart = start;
-      const effectiveEnd = end ?? start;
-      const inRange = dateMeta
-        .filter((meta) => {
-          if (!meta.day) return false;
-          const startsOk =
-            !effectiveStart || !effectiveStart.isValid()
-              ? true
-              : !meta.day.isBefore(effectiveStart, "day");
-          const endsOk =
-            !effectiveEnd || !effectiveEnd.isValid()
-              ? true
-              : !meta.day.isAfter(effectiveEnd, "day");
-          return startsOk && endsOk;
-        })
-        .map((meta) => meta.datePos);
-
-      if (inRange.length > 0) return Math.max(...inRange);
-
-      if (effectiveStart && effectiveStart.isValid()) {
-        const before = dateMeta
-          .filter((meta) => meta.day && meta.day.isBefore(effectiveStart, "day"))
-          .map((meta) => meta.datePos);
-        if (before.length > 0) {
-          const maxBefore = Math.max(...before);
-          if (before.length === dateMeta.length) return maxBefore + 1000;
-          return maxBefore;
-        }
-        return -1;
-      }
-
-      return fallback;
-    };
-
     const collectSessionDateIndices = (
       start: dayjs.Dayjs | null,
       end: dayjs.Dayjs | null
@@ -293,7 +162,7 @@ export function useJournalMarkTemplate() {
 
       const start = parseControlDate(rawControl.startDate);
       const end = parseControlDate(rawControl.endDate) || start;
-      const insertAfterDatePos = computeInsertAfter(start, end, lastDatePos);
+      const insertAfterDatePos = computeInsertAfter(dateMeta, start, end, lastDatePos);
       const controlKey = `${type}:${controlId}`;
       const previousMax = lastAssignedDatePosByControlKey.get(controlKey) ?? -1;
 
@@ -442,33 +311,7 @@ export function useJournalMarkTemplate() {
       scheduled.forEach((c) => registerScheduledControl("final", controlId, c));
     });
 
-    controlInsertions
-      .sort((a, b) => {
-        if (a.insertAfterDatePos !== b.insertAfterDatePos)
-          return a.insertAfterDatePos - b.insertAfterDatePos;
-        if (a.sortKey !== b.sortKey) return a.sortKey - b.sortKey;
-        return a.secondarySortKey.localeCompare(b.secondarySortKey);
-      })
-      .forEach(({ mark, insertAfterDatePos }) => {
-        let insertIndex = 0;
-        if (insertAfterDatePos < 0) {
-          insertIndex = 0;
-        } else {
-          let seenDates = -1;
-          insertIndex = marksWithSessions.findIndex((m) => {
-            if (m.type === "date") {
-              seenDates += 1;
-              if (seenDates === insertAfterDatePos) return true;
-            }
-            return false;
-          });
-          insertIndex =
-            insertIndex === -1 ? marksWithSessions.length : insertIndex + 1;
-        }
-        marksWithSessions.splice(insertIndex, 0, mark);
-      });
-
-    return marksWithSessions;
+    return insertControlMarks(dateMarks, controlInsertions);
   };
 
   return { buildMarkTemplate };

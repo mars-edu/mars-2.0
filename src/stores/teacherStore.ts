@@ -220,30 +220,6 @@ export const useTeacherStore = defineStore("teacher", () => {
     }
   };
 
-  const loadFromBackend = async () => {
-    isLoading.value = true;
-    try {
-      const data = await convex.query(api.teachers.queries.list, {});
-      teachers.value = data.map((teacher) => ({
-        id: teacher._id,
-        userId: teacher.userId,
-        firstName: teacher.firstName,
-        surname: teacher.surname,
-        patronymic: teacher.patronymic,
-        position: teacher.position,
-        employmentYear: teacher.employmentYear,
-        gender: teacher.gender,
-        email: teacher.email,
-        username: teacher.username,
-      }));
-      error.value = null;
-    } catch (err) {
-      console.error("[teacherStore] Failed to load from Convex:", err);
-      error.value = "Failed to load teachers";
-    } finally {
-      isLoading.value = false;
-    }
-  };
 
   const clearError = () => {
     error.value = null;
@@ -283,6 +259,5 @@ export const useTeacherStore = defineStore("teacher", () => {
     getTeacherById,
     getTeacherByUserId,
     getTeacherFullNameByUserId,
-    loadFromBackend,
   };
 });

@@ -360,37 +360,6 @@ export const useCalendarStore = defineStore(
         }, "Failed to delete event");
     }
 
-    async function loadFromBackend() {
-      return await withLoading(loading, error, async () => {
-        const data = await convex.query(api.calendarEvents.queries.list, {});
-                events.value = data.map((event) => ({
-                  id: event._id,
-                  rupEntryId: event.rupEntryId,
-                  ktpId: event.ktpId,
-                  teacherId: event.teacherId,
-                  startDate: event.startDate,
-                  startTime: event.startTime,
-                  endDate: event.endDate,
-                  endTime: event.endTime,
-                  participants: event.participants,
-                  color: event.color,
-                  semester: event.semester,
-                  useCustomPeriod: event.useCustomPeriod,
-                  weeklySchedules: event.weeklySchedules,
-                  isIndividualJournal: event.isIndividualJournal,
-                  mergedJournalIds: event.mergedJournalIds,
-                  parentIndividualJournalId: event.parentIndividualJournalId,
-                  sourceGroupEventId: event.sourceGroupEventId,
-                  gradingType: event.gradingType,
-                  customTitle: event.customTitle,
-                  isClosed: event.isClosed,
-                  journalSettings: event.journalSettings,
-                  createdAt: new Date(event.createdAt),
-                  updatedAt: new Date(event.updatedAt),
-                }));
-                error.value = null;
-        }, "Operation failed");
-    }
 
     function setSelectedTeacher(teacherId: string | null) {
       selectedTeacherId.value = teacherId;
@@ -419,7 +388,6 @@ export const useCalendarStore = defineStore(
       addEventWithIndividualJournals,
       updateEvent,
       deleteEvent,
-      loadFromBackend,
       fetchEventsWithRoleAccess,
       setSelectedTeacher,
       clearError,

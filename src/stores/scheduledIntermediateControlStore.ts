@@ -127,22 +127,6 @@ export const useScheduledIntermediateControlStore = defineStore(
         }, "Failed to delete scheduled intermediate control");
     }
 
-    async function loadFromBackend() {
-      return await withLoading(loading, error, async () => {
-        const data = await convex.query(api.scheduledControls.queries.listIntermediate, {});
-                scheduledIntermediateControls.value = data.map((c) => ({
-                  id: c._id,
-                  academicYearId: c.academicYearId,
-                  intermediateControlId: c.intermediateControlId,
-                  shortName: c.shortName,
-                  startDate: c.startDate,
-                  endDate: c.endDate,
-                  createdAt: new Date(c.createdAt),
-                  updatedAt: new Date(c.updatedAt),
-                }));
-                error.value = null;
-        }, "Operation failed");
-    }
 
     async function copyFromSemester(
       sourceSemesterId: string,
@@ -186,7 +170,6 @@ export const useScheduledIntermediateControlStore = defineStore(
       clearError,
       copyFromSemester,
       reset,
-      loadFromBackend,
     };
   },
   {

@@ -97,20 +97,6 @@ export const useFinalControlStore = defineStore(
         }, "Failed to delete final control");
     }
 
-    async function loadFromBackend() {
-      return await withLoading(loading, error, async () => {
-        const data = await convex.query(api.finalControls.queries.list, {});
-                finalControls.value = data.map((c) => ({
-                  id: c._id,
-                  name: c.name,
-                  shortName: c.shortName,
-                  createdAt: new Date(c.createdAt),
-                  updatedAt: new Date(c.updatedAt),
-                }));
-                sortFinalControls();
-                error.value = null;
-        }, "Operation failed");
-    }
 
     function clearError() {
       error.value = null;
@@ -134,7 +120,6 @@ export const useFinalControlStore = defineStore(
       deleteFinalControl,
       clearError,
       reset,
-      loadFromBackend,
     };
   },
   {
