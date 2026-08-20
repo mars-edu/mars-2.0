@@ -210,7 +210,7 @@ export const useStudentStore = defineStore("student", () => {
         patronymic: payload.patronymic,
         specialty: payload.specialty,
         language: payload.language,
-        gender: payload.gender as any,
+        gender: payload.gender as "male" | "female",
         base: payload.base,
         academicYearId: payload.academicYearId,
         status: payload.status,

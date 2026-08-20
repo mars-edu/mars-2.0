@@ -149,7 +149,7 @@ export const useScheduledFinalControlStore = defineStore(
         await convex.mutation(api.scheduledControls.mutations.copyFinalFromSemester, {
           sourceSemesterId: sourceSemesterId as Id<"academicYearSemesters">,
           targetSemesterId: targetSemesterId as Id<"academicYearSemesters">,
-          targetAcademicYearId: targetAcademicYearId as any,
+          targetAcademicYearId: targetAcademicYearId as Id<"academicYears">,
         });
         error.value = null;
         return;

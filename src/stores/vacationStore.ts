@@ -134,7 +134,7 @@ export const useVacationStore = defineStore(
         await convex.mutation(api.vacations.mutations.copyFromSemester, {
           sourceSemesterId: sourceSemesterId as Id<"academicYearSemesters">,
           targetSemesterId: targetSemesterId as Id<"academicYearSemesters">,
-          targetAcademicYearId: targetAcademicYearId as any,
+          targetAcademicYearId: targetAcademicYearId as Id<"academicYears">,
         });
         error.value = null;
         return;
@@ -156,7 +156,7 @@ export const useVacationStore = defineStore(
       let hasChanges = false;
 
       vacations.value = vacations.value.map((vacation) => {
-        const oldVacation = vacation as any;
+        const oldVacation = vacation as Vacation & { name?: string };
         if (oldVacation.name && (!vacation.shortName || !vacation.fullName)) {
           hasChanges = true;
           return {

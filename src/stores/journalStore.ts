@@ -443,7 +443,7 @@ export const useJournalStore = defineStore(
 
     function getDisciplineTitle(journal: Journal) {
       if (journal.customTitle) return journal.customTitle;
-      const item = rupEntryStore.getRupEntryById(journal.disciplineId as any);
+      const item = rupEntryStore.getRupEntryById(journal.disciplineId);
       if (!item)
         return generateJournalTitle(
           [journal.courseNumber],

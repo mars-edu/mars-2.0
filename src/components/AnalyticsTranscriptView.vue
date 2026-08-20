@@ -254,7 +254,7 @@ const getTranscript = (studentId: string) => {
       const details = getGradeDetails(score);
 
       const rup = journal.disciplineId
-        ? rupEntryStore.getRupEntryById(journal.disciplineId as any)
+        ? rupEntryStore.getRupEntryById(journal.disciplineId)
         : undefined;
       const parsedCredits = parseNumber(rup?.totalCredits, NaN);
       const credits = Number.isFinite(parsedCredits) && parsedCredits > 0 ? parsedCredits : CREDITS_FALLBACK;

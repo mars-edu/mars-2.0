@@ -50,11 +50,11 @@ export const useJournalHistoryStore = defineStore("journal-history", () => {
 
       const data = options?.studentId
         ? await convex.query(api.marks.queries.getStudentMarkHistory, {
-            journalId: journal._id as any,
+            journalId: journal._id,
             studentId: options.studentId,
           })
         : await convex.query(api.marks.queries.getMarkHistory, {
-            journalId: journal._id as any,
+            journalId: journal._id,
             limit: options?.limit,
           });
 
