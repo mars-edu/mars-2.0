@@ -251,11 +251,11 @@ function assignTest(test: any) {
 }
 
 function deleteTest(id: string) {
-  f7.dialog.confirm('Вы действительно хотите удалить этот тест?', async () => {
+  confirmDelete('Удаление теста', 'Вы действительно хотите удалить этот тест?', async () => {
     try {
       await deleteTestMutation({ id: id as Id<"tests"> });
       isViewModalOpen.value = false;
-      f7.toast.create({ text: 'Тест удален', position: 'bottom', closeTimeout: 2000 }).open();
+      notify.success('Тест удален');
     } catch (e: any) {
       f7.dialog.alert('Ошибка при удалении теста: ' + e.message);
     }
@@ -270,10 +270,10 @@ async function onSaveTest(payload: any) {
       delete payload._id;
       delete payload._creationTime;
       await updateTest({ id, ...payload });
-      f7.toast.create({ text: 'Тест обновлен', position: 'bottom', closeTimeout: 2000 }).open();
+      notify.success('Тест обновлен');
     } else {
       await createTest(payload);
-      f7.toast.create({ text: 'Тест создан', position: 'bottom', closeTimeout: 2000 }).open();
+      notify.success('Тест создан');
     }
   } catch (e: any) {
     f7.dialog.alert('Ошибка: ' + e.message);
@@ -286,7 +286,7 @@ async function onAssignTest(data: { testId: string; journalId: string; date: str
   try {
     f7.preloader.show();
     await assignTestMutation({ testId: data.testId as Id<"tests">, journalId: data.journalId as Id<"journals">, date: data.date });
-    f7.toast.create({ text: 'Тест назначен', position: 'bottom', closeTimeout: 2000 }).open();
+    notify.success('Тест назначен');
     activeTab.value = 'history'; // Switch to history tab to see the assignment
   } catch (e: any) {
     f7.dialog.alert('Ошибка при назначении: ' + e.message);

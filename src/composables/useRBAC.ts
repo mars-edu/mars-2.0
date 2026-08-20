@@ -1,3 +1,4 @@
+import { STORAGE_KEYS } from "@/constants/storage";
 import { ref, computed, watch } from "vue";
 import { useUserStore } from "../stores/userStore";
 import type { Id } from "@convex/_generated/dataModel";
@@ -75,7 +76,7 @@ const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
 function getInitialPermissions(): string[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem("cached_permissions");
+    const raw = localStorage.getItem(STORAGE_KEYS.CACHED_PERMISSIONS);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -116,7 +117,7 @@ export function initRBAC(): void {
       if (!userId) {
         myPermissions.value = [];
         try {
-          localStorage.removeItem("cached_permissions");
+          localStorage.removeItem(STORAGE_KEYS.CACHED_PERMISSIONS);
         } catch {
           // ignore
         }
@@ -129,7 +130,7 @@ export function initRBAC(): void {
         (data) => {
           myPermissions.value = data ?? [];
           try {
-            localStorage.setItem("cached_permissions", JSON.stringify(data ?? []));
+            localStorage.setItem(STORAGE_KEYS.CACHED_PERMISSIONS, JSON.stringify(data ?? []));
           } catch {
             // ignore
           }

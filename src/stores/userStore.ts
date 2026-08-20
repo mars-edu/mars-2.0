@@ -1,3 +1,4 @@
+import { STORAGE_KEYS } from "@/constants/storage";
 import { defineStore } from "pinia";
 import AuthService from "../services/auth";
 import { computed, ref } from "vue";
@@ -70,7 +71,7 @@ export const useUserStore = defineStore(
     // Multi-tab logout & session synchronization
     if (typeof window !== "undefined") {
       window.addEventListener("storage", (event) => {
-        if (event.key === "auth_token") {
+        if (event.key === STORAGE_KEYS.AUTH_TOKEN) {
           if (!event.newValue) {
             console.log("[UserStore] auth_token cleared in another tab, syncing logout");
             logout();
@@ -145,7 +146,7 @@ export const useUserStore = defineStore(
                 department: dbUser.department,
                 degree: dbUser.degree,
               };
-              localStorage.setItem("stored_user", JSON.stringify(currentUser.value));
+              localStorage.setItem(STORAGE_KEYS.STORED_USER, JSON.stringify(currentUser.value));
             }
           }
         );
@@ -170,7 +171,7 @@ export const useUserStore = defineStore(
     function setToken(tokenValue: string) {
       console.log("[UserStore] Setting token");
       token.value = tokenValue;
-      localStorage.setItem("auth_token", tokenValue);
+      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, tokenValue);
       console.log("[UserStore] Token stored in localStorage");
     }
 
@@ -187,10 +188,10 @@ export const useUserStore = defineStore(
       currentUser.value = null;
       isAuthenticated.value = false;
       token.value = null;
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("stored_user");
-      sessionStorage.removeItem("auth_token");
-      sessionStorage.removeItem("stored_user");
+      localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.STORED_USER);
+      sessionStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+      sessionStorage.removeItem(STORAGE_KEYS.STORED_USER);
 
       console.log("[UserStore] Logout completed:", {
         previousUser: previousUser
@@ -203,7 +204,7 @@ export const useUserStore = defineStore(
 
     async function initialize() {
       console.log("[UserStore] Initializing user store");
-      const storedToken = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
+      const storedToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) || sessionStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
 
       if (!storedToken) {
         console.log("[UserStore] No stored token found");
@@ -245,7 +246,7 @@ export const useUserStore = defineStore(
       isAuthenticated.value = true;
 
       // 2. Restore full profile from cache if present
-      const storedUser = localStorage.getItem("stored_user") || sessionStorage.getItem("stored_user");
+      const storedUser = localStorage.getItem(STORAGE_KEYS.STORED_USER) || sessionStorage.getItem(STORAGE_KEYS.STORED_USER);
       if (storedUser) {
         try {
           const user = JSON.parse(storedUser);
@@ -274,7 +275,7 @@ export const useUserStore = defineStore(
         const response = await AuthService.validateToken(storedToken);
         if (response.success && response.user) {
           setUser(response.user);
-          localStorage.setItem("stored_user", JSON.stringify(response.user));
+          localStorage.setItem(STORAGE_KEYS.STORED_USER, JSON.stringify(response.user));
         } else if (response.isExplicitInvalid) {
           console.log("[UserStore] Token is explicitly invalid on backend, logging out");
           logout();
@@ -343,8 +344,8 @@ export const useUserStore = defineStore(
       currentUser.value = null;
       isAuthenticated.value = false;
       token.value = null;
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("stored_user");
+      localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.STORED_USER);
 
       console.log("[UserStore] Store reset completed:", {
         previousState,

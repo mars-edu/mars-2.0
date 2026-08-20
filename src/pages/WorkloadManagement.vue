@@ -441,7 +441,7 @@ function openGenerate(workload: SavedWorkload) {
 
 function onJournalsCreated(count: number) {
   generateTarget.value = null;
-  f7.toast.create({ text: `Создано журналов: ${count}`, closeTimeout: 2500 }).open();
+  notify.success(`Создано журналов: ${count}`);
 }
 
 async function toggleAddedToSchedule(workload: SavedWorkload) {
@@ -787,7 +787,7 @@ async function handleSaveWorkload() {
 
   try {
     await workloadStore.saveWorkload(workload);
-    f7.toast.create({ text: "Нагрузка сохранена", closeTimeout: 2000 }).open();
+    notify.success("Нагрузка сохранена");
     workloadStore.resetCurrentWorkload();
     showSaveConfirm.value = false;
   } catch (err) {
@@ -810,7 +810,7 @@ async function handleDeleteWorkload() {
   if (!deleteConfirmId.value) return;
   try {
     await workloadStore.deleteWorkload(deleteConfirmId.value);
-    f7.toast.create({ text: "Нагрузка удалена", closeTimeout: 2000 }).open();
+    notify.success("Нагрузка удалена");
     deleteConfirmId.value = null;
   } catch (err) {
     f7.dialog.alert("Ошибка при удалении нагрузки");

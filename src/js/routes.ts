@@ -1,3 +1,4 @@
+import { STORAGE_KEYS } from "@/constants/storage";
 import type { Router } from "framework7/types";
 import NotFoundPage from "../pages/404.vue";
 import { useUserStore } from "../stores/userStore";
@@ -18,7 +19,7 @@ type RouteConfig = Router.RouteParameters & {
 function createGuestGuard() {
   return (ctx: Router.RouteCallbackCtx) => {
     const userStore = useUserStore();
-    const hasToken = localStorage.getItem("auth_token");
+    const hasToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
 
     // If already authenticated, redirect to home
     if (userStore.isAuthenticated) {
@@ -56,7 +57,7 @@ function createGuestGuard() {
 function createAuthGuard(resource?: string) {
   return (ctx: Router.RouteCallbackCtx) => {
     const userStore = useUserStore();
-    const hasToken = localStorage.getItem("auth_token");
+    const hasToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
 
     const checkResource = async () => {
       if (!resource) return true;
