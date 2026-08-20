@@ -5,6 +5,16 @@ import { useUserStore } from "./userStore";
 import { convex } from "@/lib/convexClient";
 import type { Id } from "@convex/_generated/dataModel";
 import { api } from "@convex/_generated/api";
+import {
+  buildJournalMarksMatrix,
+} from "@/lib/marksTemplateBuilder";
+import {
+  mergeBackendMarksIntoTemplate,
+} from "@/lib/marksDataTransformer";
+import {
+  syncToParentJournals,
+  syncToMainJournal,
+} from "@/services/marksJournalSync";
 
 export const useMarksStore = defineStore(
   "marks",
@@ -73,9 +83,10 @@ export const useMarksStore = defineStore(
           : null;
         const academicYearId =
           semester?.academicYearId ||
-          String(rupEntryStore.getRupEntryById(journalInfo.disciplineId)?.academicYearId || "");
+          rupEntryStore.getRupEntryById(journalInfo.disciplineId)?.academicYearId ||
+          "";
 
-        if (!semesterId || semesterId === "" || !academicYearId || academicYearId === "") return null;
+        if (!semesterId || !academicYearId) return null;
 
         const ok = await initializeJournalBackend(
           calendarEventId,
@@ -86,39 +97,42 @@ export const useMarksStore = defineStore(
           journalInfo.students
         );
 
-        if (!ok) return null;
+        if (ok) {
+          return await resolveBackendJournalId(calendarEventId);
+        }
       } catch (err) {
-        console.warn("[marksStore] Failed to ensure backend journal:", err);
-        return null;
+        console.warn("[marksStore] Failed to auto-initialize backend journal:", err);
       }
 
-      return await resolveBackendJournalId(calendarEventId);
+      return null;
     };
 
     const preloadPromiseCache = ref<Record<string, Promise<any>>>({});
 
     const preloadJournalMarks = (journalId: string) => {
-      if (journalId in preloadPromiseCache.value) return preloadPromiseCache.value[journalId];
-      
+      if (journalId in preloadPromiseCache.value) return;
+
       const promise = (async () => {
         try {
           const backendJournalId = await ensureBackendJournalId(journalId);
           if (!backendJournalId) return null;
+
           const result = await convex.query(api.marks.queries.getJournalMarks, {
             journalId: backendJournalId as Id<"journals">,
           });
           return result;
-        } catch (e) {
-          console.error("[marksStore] Preload failed:", e);
+        } catch (err) {
+          console.warn("[marksStore] Preload failed for journal:", journalId, err);
           return null;
         }
       })();
-      
-      preloadPromiseCache.value[journalId] = promise;
-      return promise;
+
+      preloadPromiseCache.value = {
+        ...preloadPromiseCache.value,
+        [journalId]: promise,
+      };
     };
 
-    // Load journal marks from backend and merge with existing template
     const loadJournalMarks = async (journalId: string): Promise<boolean> => {
       try {
         loading.value = true;
@@ -126,15 +140,11 @@ export const useMarksStore = defineStore(
 
         let result = null;
         if (journalId in preloadPromiseCache.value) {
-          console.log("[marksStore] Using preloaded marks for journal:", journalId);
           result = await preloadPromiseCache.value[journalId];
-          // Clear cache after use so subsequent reloads fetch fresh data
           delete preloadPromiseCache.value[journalId];
         } else {
-          console.log("[marksStore] Fetching marks from backend for journal:", journalId);
           const backendJournalId = await ensureBackendJournalId(journalId);
           if (!backendJournalId) {
-            console.warn("[marksStore] Backend journal not found; cannot load marks:", journalId);
             loading.value = false;
             return false;
           }
@@ -143,70 +153,24 @@ export const useMarksStore = defineStore(
             journalId: backendJournalId as Id<"journals">,
           });
         }
-        
+
         if (!result) {
           loading.value = false;
           return false;
         }
 
-        console.log("[marksStore] Received marks from backend:", {
-          journalId,
-          marksCount: result.marks.length,
-          studentCount: result.students.length,
-        });
-
-        // Get existing journal marks (which should have the template already)
         const existingJournal = journalMarks.value[journalId];
         if (!existingJournal) {
-          console.warn("[marksStore] No existing journal template found, cannot merge marks");
           loading.value = false;
           return false;
         }
 
-        // Build a map of backend marks: studentId -> columnIndex -> rowIndex -> value
-        const backendMarksMap = new Map<string, Map<number, Map<number, string | null>>>();
-        
-        result.marks.forEach((mark: any) => {
-          if (!backendMarksMap.has(mark.studentId)) {
-            backendMarksMap.set(mark.studentId, new Map());
-          }
-          const studentMap = backendMarksMap.get(mark.studentId)!;
-          if (!studentMap.has(mark.columnIndex)) {
-            studentMap.set(mark.columnIndex, new Map());
-          }
-          studentMap.get(mark.columnIndex)!.set(mark.rowIndex, mark.value);
-        });
-
-        // Merge marks into the existing template
-        let hasChanges = false;
-        
-        existingJournal.studentMarks.forEach((student) => {
-          const studentBackendMarks = backendMarksMap.get(student.studentId);
-          if (!studentBackendMarks) return;
-
-          student.marks.forEach((templateCol, colIdx) => {
-            const colBackendMarks = studentBackendMarks.get(colIdx);
-            if (!colBackendMarks) return;
-
-            templateCol.values.forEach((_, rowIdx) => {
-              if (colBackendMarks.has(rowIdx)) {
-                templateCol.values[rowIdx] = colBackendMarks.get(rowIdx) ?? "";
-                hasChanges = true;
-              }
-            });
-          });
-        });
-
+        const hasChanges = mergeBackendMarksIntoTemplate(existingJournal, result.marks);
         if (hasChanges) {
           triggerRef(journalMarks);
+          journalMarks.value = { ...journalMarks.value };
         }
 
-        existingJournal.lastUpdated = new Date().toISOString();
-        
-        // Trigger reactivity
-        journalMarks.value = { ...journalMarks.value };
-        
-        console.log("[marksStore] Marks merged successfully into template");
         loading.value = false;
         return true;
       } catch (err) {
@@ -217,7 +181,6 @@ export const useMarksStore = defineStore(
       }
     };
 
-    // Initialize journal in backend
     const initializeJournalBackend = async (
       journalId: string,
       disciplineId: string,
@@ -226,16 +189,11 @@ export const useMarksStore = defineStore(
       semester: string,
       students: string[]
     ): Promise<boolean> => {
+      if (initializedJournals.value.has(journalId)) {
+        return true;
+      }
+
       try {
-        console.log("[marksStore] Initializing journal in backend:", {
-          journalId,
-          disciplineId,
-          groupName,
-          academicYear,
-          semester,
-          studentCount: students.length
-        });
-        
         const journal = await convex.mutation(api.marks.mutations.initializeJournal, {
           calendarEventId: journalId,
           disciplineId: disciplineId as Id<"rupEntries">,
@@ -244,37 +202,31 @@ export const useMarksStore = defineStore(
           semesterId: semester as Id<"academicYearSemesters">,
           studentIds: students,
         });
-        
+
         const backendJournalId = journal?._id ? String(journal._id) : null;
         if (backendJournalId) {
           cacheBackendJournalId(journalId, backendJournalId);
+          initializedJournals.value.add(journalId);
+          return true;
         }
-        
-        initializedJournals.value.add(journalId);
-        console.log("[marksStore] Journal initialized successfully");
-        return true;
+
+        return false;
       } catch (err) {
-        console.error("[marksStore] Error initializing journal:", err);
-        error.value = "Failed to initialize journal";
+        console.error("[marksStore] Error initializing journal in backend:", err);
         return false;
       }
     };
 
-    // Get marks for a specific journal
     const getJournalMarks = computed(() => {
       return (journalId: string): JournalMarks | null => {
-        const result = journalMarks.value[journalId] || null;
-        return result;
+        return journalMarks.value[journalId] || null;
       };
     });
 
-    // Get marks for a specific student in a journal
     const getStudentMarks = computed(() => {
       return (journalId: string, studentId: string): Mark[] | null => {
         const journal = journalMarks.value[journalId];
-        if (!journal) {
-          return null;
-        }
+        if (!journal) return null;
 
         const studentMark = journal.studentMarks.find(
           (sm) => sm.studentId === studentId
@@ -283,154 +235,20 @@ export const useMarksStore = defineStore(
       };
     });
 
-    // Initialize marks for a journal with given students and mark structure
     const initializeJournalMarks = (
       journalId: string,
       studentIds: string[],
       markTemplate: Mark[]
     ) => {
-      const uniqueStudentIds = Array.from(
-        new Set(studentIds.filter((id): id is string => typeof id === "string" && id.length > 0))
+      const existingJournal = journalMarks.value[journalId];
+      const newJournalMarks = buildJournalMarksMatrix(
+        journalId,
+        studentIds,
+        markTemplate,
+        existingJournal
       );
 
-      const cloneTemplate = () =>
-        markTemplate.map((mark) => JSON.parse(JSON.stringify(mark)) as Mark);
-
-      const findMatchingMarkIndex = (
-        templateMark: Mark,
-        existingMarks: Mark[],
-        usedIndices: Set<number>
-      ): number => {
-        const tryMatch = (predicate: (mark: Mark) => boolean) => {
-          for (let i = 0; i < existingMarks.length; i += 1) {
-            if (usedIndices.has(i)) continue;
-            const candidate = existingMarks[i];
-            if (predicate(candidate)) return i;
-          }
-          return -1;
-        };
-
-        if (templateMark.type === "date") {
-          if (templateMark.isoDate) {
-            const idx = tryMatch(
-              (mark) => mark.type === "date" && mark.isoDate === templateMark.isoDate
-            );
-            if (idx !== -1) return idx;
-          }
-          const label = templateMark.label || templateMark.date;
-          if (label) {
-            const normalizedLabel = String(label).trim();
-            const idx = tryMatch((mark) => {
-              if (mark.type !== "date") return false;
-              const matchLabel = String(mark.label || mark.date || "").trim();
-              return matchLabel === normalizedLabel;
-            });
-            if (idx !== -1) return idx;
-          }
-        }
-
-        if (templateMark.type === "session") {
-          if (templateMark.scheduledControlId) {
-            const idx = tryMatch(
-              (mark) =>
-                mark.type === "session" &&
-                mark.scheduledControlId === templateMark.scheduledControlId
-            );
-            if (idx !== -1) return idx;
-          }
-          if (templateMark.sessionId) {
-            const idx = tryMatch(
-              (mark) => mark.type === "session" && mark.sessionId === templateMark.sessionId
-            );
-            if (idx !== -1) return idx;
-          }
-          if (templateMark.label) {
-            const normalizedLabel = String(templateMark.label).trim();
-            if (normalizedLabel.length) {
-              const idx = tryMatch((mark) => {
-                if (mark.type !== "session") return false;
-                const matchLabel = String(mark.label || "").trim();
-                return matchLabel === normalizedLabel;
-              });
-              if (idx !== -1) return idx;
-            }
-          }
-        }
-
-        return tryMatch((mark) => mark.type === templateMark.type);
-      };
-
-      const mergeValuesFromExisting = (templateMark: Mark, existingMark: Mark) => {
-        if (!Array.isArray(templateMark.values)) {
-          templateMark.values = [];
-        }
-        const templateValues = Array.isArray(templateMark.values)
-          ? [...templateMark.values]
-          : [];
-        const existingValues = Array.isArray(existingMark.values)
-          ? existingMark.values
-          : [];
-
-        const merged = templateValues.map((_, idx) => {
-          if (idx < existingValues.length) {
-            return existingValues[idx] ?? null;
-          }
-          return null;
-        });
-
-        return merged;
-      };
-
-      const buildStudentMarks = (
-        studentId: string,
-        existingStudent?: StudentMark
-      ): StudentMark => {
-        const templateMarks = cloneTemplate();
-        const existingMarks = existingStudent?.marks ?? [];
-        const usedIndices = new Set<number>();
-
-        templateMarks.forEach((templateMark) => {
-          const matchIndex = findMatchingMarkIndex(
-            templateMark,
-            existingMarks,
-            usedIndices
-          );
-          if (matchIndex === -1) {
-            if (Array.isArray(templateMark.values)) {
-              templateMark.values = templateMark.values.map(() => null);
-            }
-            return;
-          }
-
-          usedIndices.add(matchIndex);
-          const existingMark = existingMarks[matchIndex];
-          const mergedValues = mergeValuesFromExisting(templateMark, existingMark);
-          templateMark.values = mergedValues;
-        });
-
-        return {
-          studentId,
-          marks: templateMarks,
-        };
-      };
-
-      const existingJournal = journalMarks.value[journalId];
-
-      const nextStudentMarks = uniqueStudentIds.map((studentId) => {
-        const existingStudent = existingJournal?.studentMarks.find(
-          (sm) => sm.studentId === studentId
-        );
-        return buildStudentMarks(studentId, existingStudent);
-      });
-
-      const newJournalMarks: JournalMarks = {
-        journalId,
-        studentMarks: nextStudentMarks,
-        lastUpdated: new Date().toISOString(),
-      };
-
       journalMarks.value[journalId] = newJournalMarks;
-
       journalMarks.value = { ...journalMarks.value };
     };
 
@@ -443,18 +261,12 @@ export const useMarksStore = defineStore(
     ): Promise<boolean> => {
       try {
         const journal = journalMarks.value[journalId];
-        if (!journal) {
-          console.error("[marksStore] Journal not found in local state:", journalId);
-          return false;
-        }
+        if (!journal) return false;
 
         const studentMark = journal.studentMarks.find(
           (sm) => sm.studentId === studentId
         );
-        if (!studentMark) {
-          console.error("[marksStore] Student not found in journal:", studentId);
-          return false;
-        }
+        if (!studentMark) return false;
 
         if (
           markIndex >= 0 &&
@@ -467,7 +279,7 @@ export const useMarksStore = defineStore(
           const rawUserId = userStore.currentUser?.id;
           const userId = rawUserId ? (rawUserId as Id<"users">) : undefined;
 
-          // Optimistic update - update UI immediately
+          // Optimistic update
           studentMark.marks[markIndex].values[valueIndex] = value;
           journal.lastUpdated = new Date().toISOString();
           triggerRef(journalMarks);
@@ -475,126 +287,36 @@ export const useMarksStore = defineStore(
           // Save to backend
           try {
             const backendJournalId = await ensureBackendJournalId(journalId);
-            if (!backendJournalId) {
-              console.warn(
-                "[marksStore] Skipping backend update; journal not initialized:",
-                journalId
-              );
-              return true;
-            }
-
-            console.log("[marksStore] Using Convex to update mark");
-            await convex.mutation(api.marks.mutations.updateMark, {
-              journalId: backendJournalId as Id<"journals">,
-              studentId,
-              columnIndex: markIndex,
-              rowIndex: valueIndex,
-              value: value || undefined,
-              columnType: mark.type,
-              columnDate: mark.isoDate,
-              columnLabel: mark.label,
-              controlType: mark.controlType,
-              controlId: mark.controlId,
-              sessionId: mark.sessionId,
-              scheduledControlId: mark.scheduledControlId,
-              userId,
-            });
-          } catch (updateError: any) {
-            // If foreign key constraint error, journal needs initialization
-            if (
-              updateError?.message?.includes("Foreign key constraint") ||
-              updateError?.message?.includes("does not exist")
-            ) {
-              console.warn("[marksStore] Journal not initialized in backend, attempting auto-initialization...");
-              
-              // Try to get journal info from other stores
-              const { useJournalStore } = await import("./journalStore");
-              const { useCalendarStore } = await import("./calendarStore");
-              const { useRupEntryStore } = await import("./rupEntryStore");
-              const { useAcademicYearSemesterStore } = await import("./academicYearSemesterStore");
-              
-              const journalStore = useJournalStore();
-              const calendarStore = useCalendarStore();
-              const rupEntryStore = useRupEntryStore();
-              const academicYearSemesterStore = useAcademicYearSemesterStore();
-              
-              const journalInfo = journalStore.getJournalById(journalId);
-              const event = calendarStore.getEventById(journalId);
-              
-              if (!journalInfo) {
-                console.error("[marksStore] Cannot auto-initialize - journal not found in store:", journalId);
-                throw updateError;
-              }
-              
-              const semesterId = event?.semester ? String(event.semester) : null;
-              const semester = semesterId
-                ? academicYearSemesterStore.getAcademicYearSemesterById(semesterId)
-                : null;
-              const academicYear = semester?.academicYearId
-                ? String(semester.academicYearId)
-                : String(
-                    rupEntryStore.getRupEntryById(journalInfo.disciplineId)
-                      ?.academicYearId || ""
-                  );
-
-              if (!semesterId || semesterId === "" || !academicYear || academicYear === "") {
-                console.error(
-                  "[marksStore] Cannot auto-initialize - missing semesterId/academicYearId:",
-                  { semesterId, academicYear }
-                );
-                throw updateError;
-              }
-              
-              console.log("[marksStore] Auto-initializing journal with:", {
-                journalId,
-                disciplineId: journalInfo.disciplineId,
-                group: journalInfo.group,
-                academicYear,
-                semesterId,
-                studentCount: journalInfo.students.length
+            if (backendJournalId) {
+              await convex.mutation(api.marks.mutations.updateMark, {
+                journalId: backendJournalId as Id<"journals">,
+                studentId,
+                columnIndex: markIndex,
+                rowIndex: valueIndex,
+                value: value || undefined,
+                columnType: mark.type,
+                columnDate: mark.isoDate,
+                columnLabel: mark.label,
+                controlType: mark.controlType,
+                controlId: mark.controlId,
+                sessionId: mark.sessionId,
+                scheduledControlId: mark.scheduledControlId,
+                userId,
               });
-              
-              const initialized = await initializeJournalBackend(
-                journalId,
-                journalInfo.disciplineId,
-                journalInfo.group,
-                academicYear,
-                semesterId,
-                journalInfo.students
-              );
-              
-              if (initialized) {
-                const backendJournalId = await resolveBackendJournalId(journalId);
-                if (!backendJournalId) {
-                  throw updateError;
-                }
-                // Retry the mark update
-                console.log("[marksStore] Retrying mark update after initialization...");
-                await convex.mutation(api.marks.mutations.updateMark, {
-                  journalId: backendJournalId as Id<"journals">,
-                  studentId,
-                  columnIndex: markIndex,
-                  rowIndex: valueIndex,
-                  value: value || undefined,
-                  columnType: mark.type,
-                  columnDate: mark.isoDate,
-                  columnLabel: mark.label,
-                  controlType: mark.controlType,
-                  controlId: mark.controlId,
-                  sessionId: mark.sessionId,
-                  scheduledControlId: mark.scheduledControlId,
-                  userId,
-                });
-                console.log("[marksStore] Mark updated successfully after auto-initialization");
-                return true;
-              }
             }
+          } catch (updateError: any) {
+            console.error("[marksStore] Error saving mark update to backend:", updateError);
             throw updateError;
           }
 
-          // After successfully saving the mark, sync to parent journals if this is an individual journal
-          await syncToParentJournals(journalId, studentId, markIndex, valueIndex, value, mark);
-          await syncToMainJournal(journalId, studentId, valueIndex, value, mark);
+          // Sync to individual parent/main journals
+          const syncCtx = {
+            ensureBackendJournalId,
+            journalMarksMap: journalMarks.value,
+            userId,
+          };
+          await syncToParentJournals(journalId, studentId, markIndex, valueIndex, value, mark, syncCtx);
+          await syncToMainJournal(journalId, studentId, valueIndex, value, mark, syncCtx);
 
           return true;
         }
@@ -607,199 +329,6 @@ export const useMarksStore = defineStore(
       }
     };
 
-    // Sync marks from individual journal to parent journals (internal helper)
-    const syncToParentJournals = async (
-      individualJournalId: string,
-      studentId: string,
-      markIndex: number,
-      valueIndex: number,
-      value: string | null,
-      mark: Mark
-    ): Promise<void> => {
-      try {
-        const { useCalendarStore } = await import("./calendarStore");
-        const calendarStore = useCalendarStore();
-
-        const individualEvent = calendarStore.getEventById(individualJournalId);
-
-        // Check if this is an individual journal
-        if (!individualEvent?.isIndividualJournal || !individualEvent.mergedJournalIds) {
-          return; // Not an individual journal, no sync needed
-        }
-
-        console.log("[marksStore] Syncing mark from individual journal to parent journals:", {
-          individualJournalId,
-          studentId,
-          parentJournals: individualEvent.mergedJournalIds,
-        });
-
-        // Find which parent journal this student belongs to
-        for (const parentJournalId of individualEvent.mergedJournalIds) {
-          const parentEvent = calendarStore.getEventById(parentJournalId);
-
-          // Check if this student is in this parent journal
-          if (parentEvent?.participants?.includes(studentId)) {
-            console.log("[marksStore] Syncing to parent journal:", {
-              parentJournalId,
-              studentId,
-            });
-
-            // Get parent journal marks
-            const parentJournal = journalMarks.value[parentJournalId];
-            if (!parentJournal) {
-              console.warn("[marksStore] Parent journal not loaded in state, skipping sync");
-              continue;
-            }
-
-            const parentStudentMark = parentJournal.studentMarks.find(
-              (sm) => sm.studentId === studentId
-            );
-
-            if (!parentStudentMark) {
-              console.warn("[marksStore] Student not found in parent journal");
-              continue;
-            }
-
-            // Update local state
-            if (
-              markIndex >= 0 &&
-              markIndex < parentStudentMark.marks.length &&
-              valueIndex >= 0 &&
-              valueIndex < parentStudentMark.marks[markIndex].values.length
-            ) {
-              parentStudentMark.marks[markIndex].values[valueIndex] = value;
-              parentJournal.lastUpdated = new Date().toISOString();
-
-            // Save to backend
-            try {
-              const backendParentJournalId = await ensureBackendJournalId(parentJournalId);
-              if (!backendParentJournalId) {
-                console.warn(
-                  "[marksStore] Skipping backend sync; parent journal not initialized:",
-                  parentJournalId
-                );
-                continue;
-              }
-              const userStore = useUserStore();
-              const rawUserId = userStore.currentUser?.id;
-              const userId = rawUserId ? (rawUserId as Id<"users">) : undefined;
-              await convex.mutation(api.marks.mutations.updateMark, {
-                journalId: backendParentJournalId as Id<"journals">,
-                studentId,
-                columnIndex: markIndex,
-                rowIndex: valueIndex,
-                value: value || undefined,
-                columnType: mark.type,
-                  columnDate: mark.isoDate,
-                  columnLabel: mark.label,
-                  controlType: mark.controlType,
-                  controlId: mark.controlId,
-                  sessionId: mark.sessionId,
-                  scheduledControlId: mark.scheduledControlId,
-                  userId,
-                });
-                console.log("[marksStore] Successfully synced mark to parent journal");
-              } catch (syncError) {
-                console.error("[marksStore] Error saving synced mark to parent journal:", syncError);
-              }
-            }
-          }
-        }
-      } catch (err) {
-        console.error("[marksStore] Error syncing individual journal marks:", err);
-      }
-    };
-
-    // «Общая» trajectory: sync CONTROL marks from a wizard-child individual
-    // journal up to its main group journal. Only control marks sync — date
-    // columns differ between the child and main grids, but control columns
-    // are shared per discipline-semester and matched by controlId.
-    const syncToMainJournal = async (
-      childJournalId: string,
-      studentId: string,
-      valueIndex: number,
-      value: string | null,
-      mark: Mark
-    ): Promise<void> => {
-      try {
-        if (mark.controlType !== "intermediate" && mark.controlType !== "final") {
-          return; // control marks only
-        }
-
-        const { useCalendarStore } = await import("./calendarStore");
-        const calendarStore = useCalendarStore();
-
-        const childEvent = calendarStore.getEventById(childJournalId);
-        if (!childEvent?.isIndividualJournal || !childEvent.sourceGroupEventId) {
-          return; // not a wizard-child individual journal
-        }
-
-        const mainEvent = calendarStore.getEventById(childEvent.sourceGroupEventId);
-        if (!mainEvent || mainEvent.gradingType !== "combined") {
-          return; // «Раздельная» or unknown: no sync
-        }
-        if (!mainEvent.participants?.includes(studentId)) {
-          return;
-        }
-
-        const mainJournal = journalMarks.value[mainEvent.id];
-        if (!mainJournal) {
-          console.warn("[marksStore] Main journal not loaded, skipping control sync");
-          return;
-        }
-        const mainStudentMark = mainJournal.studentMarks.find(
-          (sm) => sm.studentId === studentId
-        );
-        if (!mainStudentMark) return;
-
-        // Locate the SAME control column in the main grid by controlId/type —
-        // column indexes differ between grids, never reuse the child's index.
-        const mainMarkIndex = mainStudentMark.marks.findIndex(
-          (m) =>
-            m.controlType === mark.controlType &&
-            (m.controlId ?? "") === (mark.controlId ?? "") &&
-            (m.scheduledControlId ?? "") === (mark.scheduledControlId ?? "")
-        );
-        if (mainMarkIndex === -1) {
-          console.warn("[marksStore] Matching control column not found in main journal");
-          return;
-        }
-
-        const mainMark = mainStudentMark.marks[mainMarkIndex];
-        if (valueIndex < 0 || valueIndex >= mainMark.values.length) return;
-        mainMark.values[valueIndex] = value;
-        mainJournal.lastUpdated = new Date().toISOString();
-
-        const backendMainJournalId = await ensureBackendJournalId(mainEvent.id);
-        if (!backendMainJournalId) {
-          console.warn("[marksStore] Main journal not initialized in backend, skipping");
-          return;
-        }
-        const userStore = useUserStore();
-        const rawUserId = userStore.currentUser?.id;
-        const userId = rawUserId ? (rawUserId as Id<"users">) : undefined;
-        await convex.mutation(api.marks.mutations.updateMark, {
-          journalId: backendMainJournalId as Id<"journals">,
-          studentId,
-          columnIndex: mainMarkIndex,
-          rowIndex: valueIndex,
-          value: value || undefined,
-          columnType: mainMark.type,
-          columnDate: mainMark.isoDate,
-          columnLabel: mainMark.label,
-          controlType: mainMark.controlType,
-          controlId: mainMark.controlId,
-          sessionId: mainMark.sessionId,
-          scheduledControlId: mainMark.scheduledControlId,
-          userId,
-        });
-        console.log("[marksStore] Synced control mark to main journal");
-      } catch (err) {
-        console.error("[marksStore] Error syncing control mark to main journal:", err);
-      }
-    };
-
-    // Replace all row values for a specific mark (date/session/PK/etc)
     const updateStudentMarkRows = (
       journalId: string,
       studentId: string,
@@ -822,39 +351,29 @@ export const useMarksStore = defineStore(
 
       studentMark.marks[markIndex].values = adjustedValues;
       journal.lastUpdated = new Date().toISOString();
-      // Trigger reactivity for persistence
       triggerRef(journalMarks);
       return true;
     };
 
-    // Update entire marks array for a student
     const updateStudentMarks = (
       journalId: string,
       studentId: string,
       marks: Mark[]
     ) => {
       const journal = journalMarks.value[journalId];
-      if (!journal) {
-        return false;
-      }
+      if (!journal) return false;
 
       const studentMarkIndex = journal.studentMarks.findIndex(
         (sm) => sm.studentId === studentId
       );
-      if (studentMarkIndex === -1) {
-        return false;
-      }
+      if (studentMarkIndex === -1) return false;
 
-      journal.studentMarks[studentMarkIndex].marks = JSON.parse(
-        JSON.stringify(marks)
-      );
+      journal.studentMarks[studentMarkIndex].marks = JSON.parse(JSON.stringify(marks));
       journal.lastUpdated = new Date().toISOString();
-      // Trigger reactivity for persistence
       triggerRef(journalMarks);
       return true;
     };
 
-    // Batch update multiple students' marks
     const updateMultipleStudentMarks = (
       journalId: string,
       studentMarks: { studentId: string; marks: Mark[] }[]
@@ -867,46 +386,36 @@ export const useMarksStore = defineStore(
           (sm) => sm.studentId === studentId
         );
         if (studentMarkIndex !== -1) {
-          journal.studentMarks[studentMarkIndex].marks = JSON.parse(
-            JSON.stringify(marks)
-          );
+          journal.studentMarks[studentMarkIndex].marks = JSON.parse(JSON.stringify(marks));
         }
       });
 
       journal.lastUpdated = new Date().toISOString();
-      // Trigger reactivity for persistence
       journalMarks.value = { ...journalMarks.value };
       return true;
     };
 
-    // Get all marks for all students in a journal (formatted for table)
     const getJournalStudentMarks = computed(() => {
       return (journalId: string) => {
         const journal = journalMarks.value[journalId];
-        if (!journal) {
-          return [];
-        }
+        if (!journal) return [];
 
-        const result = journal.studentMarks.map((studentMark) => ({
+        return journal.studentMarks.map((studentMark) => ({
           studentId: studentMark.studentId,
           marks: studentMark.marks,
         }));
-        return result;
       };
     });
 
-    // Delete marks for a journal
     const deleteJournalMarks = (journalId: string) => {
       const exists = journalId in journalMarks.value;
       if (exists) {
         delete journalMarks.value[journalId];
-        // Trigger reactivity for persistence
         journalMarks.value = { ...journalMarks.value };
       }
       return exists;
     };
 
-    // Delete marks for a specific student in a journal
     const deleteStudentMarks = (journalId: string, studentId: string) => {
       const journal = journalMarks.value[journalId];
       if (!journal) return false;
@@ -918,19 +427,15 @@ export const useMarksStore = defineStore(
 
       journal.studentMarks.splice(index, 1);
       journal.lastUpdated = new Date().toISOString();
-      // Trigger reactivity for persistence
       journalMarks.value = { ...journalMarks.value };
       return true;
     };
 
-    // Clear all marks data
     const clearAllMarks = () => {
       journalMarks.value = {};
-      // Trigger reactivity for persistence
       journalMarks.value = { ...journalMarks.value };
     };
 
-    // Get statistics for a journal
     const getJournalStats = computed(() => {
       return (journalId: string) => {
         const journal = journalMarks.value[journalId];
