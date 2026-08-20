@@ -1,3 +1,4 @@
+import { STORAGE_KEYS } from "@/constants/storage";
 import { useUserStore } from "../stores/userStore";
 import { type User } from "../types/user";
 import { convex } from "../lib/convexClient";
@@ -13,8 +14,8 @@ import type {
 } from "../types/auth";
 
 // Constants
-const AUTH_TOKEN_KEY = "auth_token";
-const STORED_USER_KEY = "stored_user";
+const AUTH_TOKEN_KEY = STORAGE_KEYS.AUTH_TOKEN;
+const STORED_USER_KEY = STORAGE_KEYS.STORED_USER;
 
 /**
  * Session Manager handles token and user session storage
