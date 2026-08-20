@@ -1,3 +1,4 @@
+import { formatFullName } from "@/lib/formatters";
 import type { Id } from "@convex/_generated/dataModel";
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
@@ -88,12 +89,11 @@ export const useTeacherStore = defineStore("teacher", () => {
   const getTeacherFullName = (idOrTeacher: string | Teacher): string => {
     let teacher: Teacher | undefined;
     if (typeof idOrTeacher === "string") {
-      teacher = teachers.value.find((t) => t.id === idOrTeacher);
+      teacher = _teacherById.value.get(idOrTeacher);
     } else {
       teacher = idOrTeacher;
     }
-    if (!teacher) return "";
-    return `${teacher.surname} ${teacher.firstName} ${teacher.patronymic}`;
+    return formatFullName(teacher);
   };
 
   const _teacherById = computed(() => {

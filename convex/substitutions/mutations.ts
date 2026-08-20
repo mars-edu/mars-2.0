@@ -4,18 +4,10 @@ import type { Id } from "../_generated/dataModel";
 import { m, getUserLocale, type Locale, withI18nMutation, setLocale } from "../lib/i18n";
 import { requirePermission, getAdminUsers } from "../lib/rbac";
 
+import { formatFullName } from "../lib/formatters";
+
 function formatTeacherName(teacher: any | null) {
-  if (!teacher) return m.backend_unknown_teacher();
-  
-  if (teacher.surname !== undefined) {
-    return [teacher.surname, teacher.firstName, teacher.patronymic].filter(Boolean).join(" ");
-  }
-  
-  if (teacher.lastName !== undefined) {
-    return [teacher.lastName, teacher.firstName, teacher.middleName].filter(Boolean).join(" ");
-  }
-  
-  return [teacher.firstName].filter(Boolean).join(" ") || m.backend_unknown_teacher();
+  return formatFullName(teacher, m.backend_unknown_teacher());
 }
 
 async function buildJournalSnapshot(ctx: MutationCtx, journal: { disciplineId?: any; groupName?: string; semesterId: any }) {
